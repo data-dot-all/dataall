@@ -26,7 +26,7 @@ def random_table_name():
 @pytest.fixture(scope='module')
 def org1(org: typing.Callable, user, group, tenant):
     # user, group and tenant are fixtures defined in conftest
-    yield org('testorg', user.userName, group.name)
+    yield org('testorg', user.username, group.name)
 
 
 @pytest.fixture(scope='module')
@@ -37,7 +37,7 @@ def env1(environment: typing.Callable, org1: Organization, user, group
         organization=org1,
         awsAccountId="1" * 12,
         label="source_environment",
-        owner=user.userName,
+        owner=user.username,
         samlGroupName=group.name,
         environmentDefaultIAMRoleName=f"source-{group.name}",
     )
@@ -91,7 +91,7 @@ def env2(
         organization=org2,
         awsAccountId="2" * 12,
         label="target_environment",
-        owner=user2.userName,
+        owner=user2.username,
         samlGroupName=group2.name,
         environmentDefaultIAMRoleName=f"source-{group2.name}",
     )
@@ -146,7 +146,7 @@ def share1_draft(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Draft.value
     )
     yield share1
@@ -223,7 +223,7 @@ def share2_submitted(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Submitted.value
     )
     yield share2
@@ -298,7 +298,7 @@ def share3_processed(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Processed.value
     )
     yield share3
@@ -370,7 +370,7 @@ def share4_draft(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Draft.value
     )
 
@@ -380,7 +380,7 @@ def test_init(tables1, tables2):
 
 
 # Queries & mutations
-def create_share_object(client, userName, group, groupUri, environmentUri, datasetUri, itemUri=None):
+def create_share_object(client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -404,7 +404,7 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
 
     response = client.query(
         q,
-        username=userName,
+        username=username,
         groups=[group.name],
         datasetUri=datasetUri,
         itemType=ShareableType.Table.value if itemUri else None,
@@ -472,7 +472,7 @@ def get_share_object(client, user, group, shareUri, filter):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
         filter=filter,
@@ -528,7 +528,7 @@ def list_dataset_share_objects(client, user, group, datasetUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         datasetUri=datasetUri,
     )
@@ -550,7 +550,7 @@ def get_share_requests_to_me(client, user, group):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name]
     )
     # Print response
@@ -571,7 +571,7 @@ def get_share_requests_from_me(client, user, group):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name]
     )
     # Print response
@@ -594,7 +594,7 @@ def add_share_item(client, user, group, shareUri, itemUri, itemType):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
         input={
@@ -616,7 +616,7 @@ def remove_share_item(client, user, group, shareItemUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareItemUri=shareItemUri
     )
@@ -653,7 +653,7 @@ def submit_share_object(client, user, group, shareUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
     )
@@ -675,7 +675,7 @@ def approve_share_object(client, user, group, shareUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
     )
@@ -696,7 +696,7 @@ def reject_share_object(client, user, group, shareUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
     )
@@ -717,7 +717,7 @@ def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris)
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         input={
             'shareUri': shareUri,
@@ -772,7 +772,7 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=environmentUri,
         filter={},
@@ -788,7 +788,7 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     # When a user that does not belong to environment and group creates request
     create_share_object_response = create_share_object(
         client=client,
-        userName='anonymous',
+        username='anonymous',
         group=group3,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,
@@ -804,7 +804,7 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     # When a user that belongs to environment and group creates request
     create_share_object_response = create_share_object(
         client=client,
-        userName=user2.userName,
+        username=user2.username,
         group=group2,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,
@@ -822,7 +822,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     # When a user that belongs to environment and group creates request with table in the request
     create_share_object_response = create_share_object(
         client=client,
-        userName=user2.userName,
+        username=user2.username,
         group=group2,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,

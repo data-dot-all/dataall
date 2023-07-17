@@ -7,13 +7,13 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -298,7 +298,7 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         filter={'roles': [dataall.core.environment.api.enums.EnvironmentPermission.Invited.name]},
     )
@@ -314,7 +314,7 @@ def test_paging(db, client, org1, env1, user, group):
                 AwsAccountId=f'12345678901+{i}',
                 region='eu-west-1',
                 label='org',
-                owner=user.userName,
+                owner=user.username,
                 tags=[],
                 description='desc',
                 SamlGroupName=group.name,
@@ -347,7 +347,7 @@ def test_paging(db, client, org1, env1, user, group):
                 }
             }
             """,
-            username=user.userName,
+            username=user.username,
             filter={'page': page, 'pageSize': 5},
             groups=[group.name],
         )
@@ -371,7 +371,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         filter={},
     )
@@ -410,7 +410,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group2.name],
         groupUri=group2.name,
         environmentUri=env1.environmentUri,
@@ -447,7 +447,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -468,7 +468,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -491,7 +491,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -511,7 +511,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -547,7 +547,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -567,7 +567,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -607,7 +607,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name, group3.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -659,7 +659,7 @@ def test_create_environment(db, client, org1, env1, user, group):
                 }
             }
         }""",
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         input={
             'label': f'dev',

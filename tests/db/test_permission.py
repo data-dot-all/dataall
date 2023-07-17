@@ -103,7 +103,7 @@ def test_attach_tenant_policy(db, user, group, tenant):
 
         assert TenantPolicy.check_user_tenant_permission(
             session=session,
-            username=user.userName,
+            username=user.username,
             groups=[group.name],
             permission_name=MANAGE_GROUPS,
             tenant_name='dataall',
@@ -115,7 +115,7 @@ def test_unauthorized_tenant_policy(db, user, group):
         with db.scoped_session() as session:
             assert TenantPolicy.check_user_tenant_permission(
                 session=session,
-                username=user.userName,
+                username=user.username,
                 groups=[group.name],
                 permission_name='UNKNOW_PERMISSION',
                 tenant_name='dataall',

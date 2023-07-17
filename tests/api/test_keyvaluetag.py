@@ -9,7 +9,7 @@ from dataall.db import models
 
 @pytest.fixture(scope='module')
 def org1(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.userName, group.name)
+    org = org('testorg', user.username, group.name)
     yield org
 
 
@@ -17,7 +17,7 @@ def org1(db, org, tenant, user, group) -> Organization:
 def env1(
     db, org1: Organization, user, group, module_mocker, env
 ) -> Environment:
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 

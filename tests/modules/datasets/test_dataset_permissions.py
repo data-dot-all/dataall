@@ -66,7 +66,7 @@ def test_attach_resource_policy(db, user, group, dataset):
         )
         assert ResourcePolicy.check_user_resource_permission(
             session=session,
-            username=user.userName,
+            username=user.username,
             groups=[group.name],
             permission_name=UPDATE_DATASET,
             resource_uri=dataset.datasetUri,
@@ -86,7 +86,7 @@ def test_attach_tenant_policy(
 
         assert TenantPolicy.check_user_tenant_permission(
             session=session,
-            username=user.userName,
+            username=user.username,
             groups=[group.name],
             permission_name=MANAGE_DATASETS,
             tenant_name='dataall',
@@ -100,7 +100,7 @@ def test_unauthorized_resource_policy(
         with db.scoped_session() as session:
             assert ResourcePolicy.check_user_resource_permission(
                 session=session,
-                username=user.userName,
+                username=user.username,
                 groups=[group.name],
                 permission_name='UNKNOWN_PERMISSION',
                 resource_uri=dataset.datasetUri,
@@ -109,7 +109,7 @@ def test_unauthorized_resource_policy(
 
 def test_create_dataset(db, env, user, group, group_user, dataset, permissions, tenant):
     with db.scoped_session() as session:
-        set_context(RequestContext(db, user.userName, [group.name]))
+        set_context(RequestContext(db, user.username, [group.name]))
 
         TenantPolicy.attach_group_tenant_policy(
             session=session,

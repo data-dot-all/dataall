@@ -5,13 +5,13 @@ from dataall.core.vpc.db.vpc_models import Vpc
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module')
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -109,7 +109,7 @@ def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
         }
         """,
         vpcUri=vpc.vpcUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.getNetwork.vpcUri == vpc.vpcUri
@@ -126,7 +126,7 @@ def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc)
         }
         """,
         vpcUri=vpc.vpcUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.deleteNetwork

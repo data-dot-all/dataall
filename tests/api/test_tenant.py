@@ -10,7 +10,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, 'DAAdministrators'],
     )
     assert len(response.data.listTenantPermissions) >= 1
@@ -23,7 +23,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
@@ -41,7 +41,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, 'DAAdministrators'],
     )
 
@@ -77,7 +77,7 @@ def test_update_permissions(client, user, group, tenant):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, 'DAAdministrators'],
         groupUri=group.name,
     )

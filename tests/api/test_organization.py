@@ -7,31 +7,31 @@ from dataall.core.organizations.api.enums import OrganisationUserRole
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def org2(org, user2, group2, tenant):
-    org2 = org('anothertestorg', user2.userName, group2.name)
+    org2 = org('anothertestorg', user2.username, group2.name)
     yield org2
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env_dev(env, org2, user2, group2, tenant):
-    env2 = env(org2, 'dev', user2.userName, group2.name, '222222222222', 'eu-west-1', 'description')
+    env2 = env(org2, 'dev', user2.username, group2.name, '222222222222', 'eu-west-1', 'description')
     yield env2
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env_other(env, org2, user2, group2, tenant):
-    env2 = env(org2, 'other', user2.userName, group2.name, '222222222222', 'eu-west-1')
+    env2 = env(org2, 'other', user2.username, group2.name, '222222222222', 'eu-west-1')
     yield env2
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env_prod(env, org2, user2, group2, tenant):
-    env2 = env(org2, 'prod', user2.userName, group2.name, '111111111111', 'eu-west-1', 'description')
+    env2 = env(org2, 'prod', user2.username, group2.name, '111111111111', 'eu-west-1', 'description')
     yield env2
 
 
@@ -235,7 +235,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         organizationUri=org1.organizationUri,
         filter={},
@@ -255,7 +255,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         organizationUri=org1.organizationUri,
         filter={},
@@ -263,7 +263,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
 
     assert response.data.listOrganizationGroups.count == 2
 
-    env2 = env(org1, 'devg2', user.userName, group2.name, '111111111112', 'eu-west-1')
+    env2 = env(org1, 'devg2', user.username, group2.name, '111111111112', 'eu-west-1')
     assert env2.environmentUri
 
     response = client.query(
@@ -316,7 +316,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         organizationUri=org1.organizationUri,
         filter={},
@@ -336,7 +336,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         organizationUri=org1.organizationUri,
         filter={},

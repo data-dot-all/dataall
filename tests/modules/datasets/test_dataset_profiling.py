@@ -7,20 +7,20 @@ from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
 def dataset1(env1, org1, dataset, group, user) -> Dataset:
     yield dataset(
-        org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
+        org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
     )
 
 
@@ -74,7 +74,7 @@ def test_start_profiling(org1, env1, dataset1, client, module_mocker, db, user, 
                 }
             }
         """,
-        username=user.userName,
+        username=user.username,
         input={'datasetUri': dataset1.datasetUri, 'GlueTableName': 'table1'},
         groups=[group.name],
     )

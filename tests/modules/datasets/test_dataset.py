@@ -13,7 +13,7 @@ from tests.api.test_stack import update_stack_query
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
@@ -25,14 +25,14 @@ def env1(env, org1, user, group, tenant):
 
 @pytest.fixture(scope='module')
 def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
-    yield org('org2', user2.userName, group2.name)
+    yield org('org2', user2.username, group2.name)
 
 
 @pytest.fixture(scope='module')
 def env2(
     env: typing.Callable, org2: Organization, user2, group2, tenant
 ) -> Environment:
-    yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-2')
+    yield env(org2, 'dev', user2.username, group2.name, '2' * 12, 'eu-west-2')
 
 
 def test_init(db):
@@ -359,7 +359,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         session.query(Dataset).delete()
         session.commit()
     deleted_dataset = dataset(
-        org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
+        org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
     )
     module_mocker.patch(
         'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
@@ -372,7 +372,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         """,
         datasetUri=deleted_dataset.datasetUri,
         deleteFromAWS=True,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response
@@ -388,7 +388,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         }
         """,
         datasetUri=deleted_dataset.datasetUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.getDataset is None
@@ -406,7 +406,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         }
         """,
         filter=None,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.listDatasets.count == 0
@@ -521,10 +521,10 @@ def test_stewardship(client, dataset, env1, org1, db, group2, group, user, patch
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         input={
-            'owner': user.userName,
+            'owner': user.username,
             'label': f'stewardsds',
             'description': 'test dataset {name}',
             'businessOwnerEmail': 'jeff@amazon.com',

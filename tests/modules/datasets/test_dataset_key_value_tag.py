@@ -9,7 +9,7 @@ from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
 
 @pytest.fixture(scope='module')
 def org1(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.userName, group.name)
+    org = org('testorg', user.username, group.name)
     yield org
 
 
@@ -21,7 +21,7 @@ def env1(
     module_mocker.patch(
         'dataall.core.environment.api.resolvers.check_environment', return_value=True
     )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -29,7 +29,7 @@ def env1(
 def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
     with db.scoped_session():
         yield dataset(
-            org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
+            org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
         )
 
 

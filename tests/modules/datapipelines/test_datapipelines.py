@@ -6,7 +6,7 @@ from tests.api.conftest import *
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
@@ -14,7 +14,7 @@ def org1(org, user, group, tenant):
 def env1(env, org1, user, group, tenant):
     env1 = env(
         org1, 'cicd',
-        user.userName,
+        user.username,
         group.name,
         '111111111111',
         'eu-west-1',
@@ -28,7 +28,7 @@ def env2(env, org1, user, group):
     env2 = env(
         org1,
         'dev',
-        user.userName,
+        user.username,
         group.name,
         '222222222222',
         'eu-west-1',
@@ -150,7 +150,7 @@ def test_list_pipelines(client, env1, db, org1, user, group, pipeline):
         }
         """,
         filter=None,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert len(response.data.listDataPipelines['nodes']) == 1
@@ -192,7 +192,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         }
         """,
         DataPipelineUri=pipeline.DataPipelineUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.getDataPipeline.DataPipelineUri == pipeline.DataPipelineUri
@@ -203,7 +203,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         }
         """,
         DataPipelineUri=pipeline.DataPipelineUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.getDataPipelineCredsLinux
@@ -219,7 +219,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         }
         """,
         input=dict(branch='master', DataPipelineUri=pipeline.DataPipelineUri),
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.browseDataPipelineRepository
@@ -237,7 +237,7 @@ def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pi
         """,
         DataPipelineUri=pipeline.DataPipelineUri,
         deleteFromAWS=True,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.deleteDataPipeline
@@ -253,7 +253,7 @@ def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pi
         }
         """,
         filter=None,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert len(response.data.listDataPipelines['nodes']) == 0

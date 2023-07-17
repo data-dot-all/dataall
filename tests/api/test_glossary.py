@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture(scope='module')
 def _org(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.userName, group.name)
+    org = org('testorg', user.username, group.name)
     yield org
 
 
@@ -17,7 +17,7 @@ def _org(db, org, tenant, user, group) -> Organization:
 def _env(
     db, _org: Organization, user, group, env
 ) -> Environment:
-    env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(_org, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
