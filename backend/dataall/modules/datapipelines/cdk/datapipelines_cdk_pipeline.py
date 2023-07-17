@@ -100,12 +100,14 @@ class CDKPipelineStack:
 
     def initialize_repo(self):
         cmd_init = [
-            f"mkdir {self.pipeline.repo}",
-            f"cp -R data_pipeline_blueprint/* {self.pipeline.repo}/",
-            f"cd {self.pipeline.repo}",
+            f"mkdir {self.pipeline.repo} && cd {self.pipeline.repo}",
+            "cdk --version --verbose",
+            "cdk init app --generate-only --language=python --verbose",
             "git init --initial-branch main",
-            f"REPO_URL=$(aws codecommit create-repository --repository-name {self.pipeline.repo} --tags application=dataall,team={self.pipeline.SamlGroupName} --query 'repositoryMetadata.cloneUrlHttp' --output text)",
-            "git remote add origin ${REPO_URL}",
+            f"aws codecommit create-repository --repository-name {self.pipeline.repo} --region {self.pipeline_environment.region} --tags application=dataall team={self.pipeline.SamlGroupName}"
+            'git config --local credential.helper "!aws codecommit credential-helper $@"',
+            "git config --local credential.UseHttpPath true",
+            f"git remote add origin https://git-codecommit.{self.pipeline_environment.region}.amazonaws.com/v1/repos/{self.pipeline.repo}",
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
