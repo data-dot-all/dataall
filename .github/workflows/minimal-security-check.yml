@@ -1,0 +1,27 @@
+name: "Minimal Security checks"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+    - main
+    - release/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.8 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+      - name: Security check
+        run: make check-security

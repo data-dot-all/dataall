@@ -1,0 +1,71 @@
+site_name: data.all - User Guide
+nav:
+    - Introduction: index.md
+    - Components: components.md
+    - Administrate:
+      - Tenant and Organizations: organizations.md
+      - Environments and teams: environments.md
+    - Discover:
+      - Datasets: datasets.md
+      - Tables and Folders: tables.md
+      - Catalog and Glossaries: catalog.md
+      - Shares: shares.md
+    - Play:
+        - Worksheets: worksheets.md
+        - Notebooks: notebooks.md
+        - ML Studio: mlstudio.md
+        - Pipelines: pipelines.md
+        - Dashboards: dashboards.md
+        # - Warehouses: redshift.md
+    - Security: security.md
+    - Monitoring: monitoring.md
+    - Labs:
+      - Data access management: lab1.md
+      #- Data ingestion and transformation with pipelines: lab_template.md
+      #- Data exploration and profiling: lab_template.md
+      #- Exploration with Notebooks and Worksheets: lab_template.md
+      #- Creating and sharing dashboards: lab_template.md
+      #- Using ML Studio: lab_template.md
+      #- Using Redshift clusters: lab_template.md
+
+use_directory_urls: false
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+  icon:
+    logo: material/cloud-outline
+    repo: fontawesome/brands/git-alt
+  favicon: material/cloud-outline
+
+plugins:
+    - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+extra_css:
+  - assets/extra.css

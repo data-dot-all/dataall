@@ -1,0 +1,2 @@
+[run]
+omit = backend/dataall/cdkproxy/assets/*, backend/dataall/aws/*
