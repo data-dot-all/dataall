@@ -362,7 +362,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
     )
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """

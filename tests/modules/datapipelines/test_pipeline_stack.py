@@ -59,7 +59,7 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=db,
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(

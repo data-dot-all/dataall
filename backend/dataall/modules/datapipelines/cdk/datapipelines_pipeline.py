@@ -14,7 +14,7 @@ from aws_cdk.aws_s3_assets import Asset
 from botocore.exceptions import ClientError
 
 from dataall import db
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService

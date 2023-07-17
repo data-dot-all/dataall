@@ -18,8 +18,8 @@ from aws_cdk import (
 from aws_cdk.aws_glue import CfnCrawler
 
 from dataall import db
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import Environment, EnvironmentGroup

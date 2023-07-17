@@ -17,8 +17,8 @@ from aws_cdk import (
 )
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 from dataall.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import EnvironmentGroup

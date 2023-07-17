@@ -1,7 +1,7 @@
 import os
 
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.tenant_policy import TenantPolicy

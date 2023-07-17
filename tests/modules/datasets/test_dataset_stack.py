@@ -44,7 +44,7 @@ def patch_methods(mocker, db, dataset, env, org):
         'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
     lf_client = MagicMock()

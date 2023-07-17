@@ -4,7 +4,7 @@ import time
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db import stack_models as models

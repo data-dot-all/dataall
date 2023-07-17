@@ -15,7 +15,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from dataall.core.stacks.db.stack_models import Stack
-from ..aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from ..db import Engine
 from dataall.base.utils.alarm_service import AlarmService
 

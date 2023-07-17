@@ -3,7 +3,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets import Dataset
 

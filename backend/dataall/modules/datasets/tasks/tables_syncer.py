@@ -3,7 +3,7 @@ import os
 import sys
 from operator import and_
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.db import get_engine

@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
 from dataall.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 

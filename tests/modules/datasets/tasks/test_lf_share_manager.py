@@ -272,7 +272,7 @@ def test_create_shared_database(
         return_value=True,
     )
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.remote_session",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
     lf_mock = mocker.patch(
@@ -404,7 +404,7 @@ def test_create_resource_link(
         mock_glue_client,
 ):
     sts_mock = mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.remote_session",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
     glue_mock = mock_glue_client().create_resource_link
@@ -492,7 +492,7 @@ def test_revoke_table_resource_link_access(
     glue_mock.return_value = True
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.remote_session",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
 
@@ -645,7 +645,7 @@ def test_revoke_external_account_access_on_source_account(
     lf_mock = mocker.patch(f"{LF_CLIENT}.batch_revoke_permissions", return_value=True)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.remote_session",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
 

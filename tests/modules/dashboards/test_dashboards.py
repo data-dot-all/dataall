@@ -118,7 +118,7 @@ def test_request_dashboard_share(
     user2,
 ):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """
@@ -311,7 +311,7 @@ def test_delete_dashboard(
     client, env1, db, org1, user, group, module_mocker, dashboard, patch_es
 ):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """

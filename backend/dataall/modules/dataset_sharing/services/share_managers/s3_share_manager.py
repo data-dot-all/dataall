@@ -5,10 +5,10 @@ import time
 
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.db import utils
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
-from dataall.aws.handlers.iam import IAM
+from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository

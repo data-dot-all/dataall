@@ -3,7 +3,7 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import json_utils

@@ -1,9 +1,9 @@
 import json
 import logging
 
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService

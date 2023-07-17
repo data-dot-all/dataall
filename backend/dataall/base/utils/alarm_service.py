@@ -9,7 +9,7 @@ from datetime import datetime
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.stacks.db.stack_models import Stack
 
 logger = logging.getLogger(__name__)

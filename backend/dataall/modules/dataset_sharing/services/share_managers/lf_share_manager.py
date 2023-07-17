@@ -9,9 +9,8 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.ram_client import RamClient
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.sts import SessionHelper
 from dataall.db import exceptions
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService

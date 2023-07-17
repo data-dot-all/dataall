@@ -176,7 +176,7 @@ def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
 
 def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.process',
+        'dataall.core.tasks.service_handlers.Worker.process',
         return_value=[{'response': 'return value'}],
     )
     module_mocker.patch(
@@ -227,7 +227,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
 
 def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pipeline):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """

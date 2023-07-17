@@ -1,6 +1,6 @@
 import json
 
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService

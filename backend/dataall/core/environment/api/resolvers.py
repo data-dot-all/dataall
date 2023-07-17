@@ -7,9 +7,9 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from sqlalchemy import and_, exc
 
-from dataall.aws.handlers.iam import IAM
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.iam import IAM
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService

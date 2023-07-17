@@ -4,8 +4,8 @@ import sys
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sqs import SqsQueue
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sqs import SqsQueue
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.db import get_engine

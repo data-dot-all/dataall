@@ -60,7 +60,7 @@ def update_runs(db, runs):
 def test_start_profiling(org1, env1, dataset1, client, module_mocker, db, user, group):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.process', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.process', return_value=True
     )
     dataset1.GlueProfilingJobName = ('profile-job',)
     dataset1.GlueProfilingTriggerSchedule = ('cron(* 2 * * ? *)',)
@@ -116,7 +116,7 @@ def test_get_table_profiling_run(
 ):
     runs = list_profiling_runs(client, dataset1, group)
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     table = table(dataset=dataset1, name='table1', username=dataset1.owner)
@@ -160,7 +160,7 @@ def test_list_table_profiling_runs(
             .first()
         )
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     response = client.query(
@@ -193,7 +193,7 @@ def test_list_table_profiling_runs(
     )
 
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     response = client.query(

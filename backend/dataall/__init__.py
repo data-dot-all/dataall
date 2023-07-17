@@ -1,2 +1,2 @@
-from . import db, core, aws, api,  version
+from . import db, core, api,  version
 from .base import utils

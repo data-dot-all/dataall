@@ -58,11 +58,11 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=db,
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value='dataall-pivot-role-name-pytest',
     )
     mocker.patch(
-        'dataall.aws.handlers.parameter_store.ParameterStoreManager.get_parameter_value',
+        'dataall.base.aws.parameter_store.ParameterStoreManager.get_parameter_value',
         return_value='False',
     )
     mocker.patch(
@@ -74,7 +74,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=[another_group],
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_account',
+        'dataall.base.aws.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
     mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
@@ -87,7 +87,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=[permission.name for permission in permissions],
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
+        'dataall.base.aws.sts.SessionHelper.get_external_id_secret',
         return_value='secretIdvalue',
     )
 

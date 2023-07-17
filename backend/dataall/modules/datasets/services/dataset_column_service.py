@@ -1,5 +1,5 @@
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task

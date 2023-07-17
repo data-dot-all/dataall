@@ -1,7 +1,7 @@
 import logging
 
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient

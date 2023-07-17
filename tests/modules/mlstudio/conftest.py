@@ -9,7 +9,7 @@ from tests.api.conftest import *
 def patch_aws(module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
 
 @pytest.fixture(scope='module', autouse=True)

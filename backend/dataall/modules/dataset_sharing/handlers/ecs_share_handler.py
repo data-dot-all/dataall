@@ -2,7 +2,7 @@
 import logging
 import os
 
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService

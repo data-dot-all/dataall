@@ -2,12 +2,11 @@ import logging
 import os
 import sys
 import subprocess
-import boto3
 
 from botocore.exceptions import ClientError
 
 from dataall import db
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 

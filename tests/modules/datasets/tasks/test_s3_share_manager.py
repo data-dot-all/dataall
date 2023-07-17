@@ -225,12 +225,12 @@ def test_manage_bucket_policy_no_policy(
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_delegation_role_arn",
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_ids",
+        "dataall.base.aws.sts.SessionHelper.get_role_ids",
         return_value=[1, 2, 3],
     )
 
@@ -323,12 +323,12 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=iam_policy,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -376,12 +376,12 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=iam_policy,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -419,12 +419,12 @@ def test_grant_target_role_access_policy_test_no_policy(
 
     # Given
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -499,7 +499,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -606,7 +606,7 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -663,17 +663,17 @@ def test_manage_access_point_and_policy_1(
     s3_control_client().get_access_point_policy.return_value = None
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_ids",
+        "dataall.base.aws.sts.SessionHelper.get_role_ids",
         return_value=["dataset_admin_role_id:*", "source_env_admin_role_id:*" "source_account_pivot_role_id:*"],
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_delegation_role_arn",
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value=None,
     )
 
@@ -741,7 +741,7 @@ def test_manage_access_point_and_policy_2(
     s3_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -806,7 +806,7 @@ def test_manage_access_point_and_policy_3(
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -870,7 +870,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -929,7 +929,7 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -1069,17 +1069,17 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     }
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=existing_target_role_policy,
     )
 
     iam_delete_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.delete_role_policy",
+        "dataall.base.aws.iam.IAM.delete_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -1147,17 +1147,17 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     }
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=existing_target_role_policy,
     )
 
     iam_delete_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.delete_role_policy",
+        "dataall.base.aws.iam.IAM.delete_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -1246,7 +1246,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -1313,7 +1313,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
