@@ -23,14 +23,14 @@ import * as PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { useToken } from '../../../../authentication';
+import { useToken } from '../../../authentication';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusIcon,
   THEMES,
   useSettings
-} from '../../../../design';
+} from '../../../design';
 import { GlossarySearchComponent } from './GlossarySearchComponent';
 import Hit from './Hit';
 
@@ -164,7 +164,8 @@ GlossaryFilter.propTypes = {
   item: PropTypes.any,
   setFilter: PropTypes.func
 };
-const Catalog = () => {
+
+export const Catalog = () => {
   const token = useToken();
   const { settings } = useSettings();
   const theme = useTheme();
@@ -439,5 +440,3 @@ const Catalog = () => {
     </>
   );
 };
-
-export default Catalog;

@@ -14,12 +14,12 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
   requestDashboardShare,
   useClient,
   useGroups
-} from '../../../../services';
+} from '../../../services';
 
 const RequestDashboardAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
