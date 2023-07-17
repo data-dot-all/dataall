@@ -447,11 +447,12 @@ class PipelineStack(Stack):
                 commands:
                 - n 16.15.1
                 - npm install -g aws-cdk
+                - pip install aws-ddk
                 - pip install -r requirements.txt
               build:
                 commands:
                     - aws sts get-caller-identity
-                    - cdk deploy
+                    - ddk deploy
         """
         with open(f'{path}/{output_file}', 'x') as text_file:
             print(yaml, file=text_file)
@@ -524,11 +525,9 @@ class PipelineStack(Stack):
         venv_name = ".venv"
 
         cmd_init = [
-            f"mkdir {pipeline.repo} && cd {pipeline.repo}",
-            "cdk init app --generate-only --language=python",
-            "cd ..",
+            f"ddk init {pipeline.repo} --generate-only",
             f"cp app_multiaccount.py ./{pipeline.repo}/app.py",
-            f"cp ddk_app/ddk_app_stack_multiaccount.py ./{pipeline.repo}/cdk_pipeline/cdk_pipeline_stack.py",
+            f"cp ddk_app/ddk_app_stack_multiaccount.py ./{pipeline.repo}/ddk_app/ddk_app_stack.py",
             f"mkdir ./{pipeline.repo}/utils",
             f"cp -R utils/* ./{pipeline.repo}/utils/"
         ]
@@ -556,6 +555,7 @@ class PipelineStack(Stack):
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
             'envname': os.environ.get('envname', 'local'),
+            'COOKIECUTTER_CONFIG': "/dataall/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(
