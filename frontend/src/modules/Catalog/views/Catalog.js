@@ -31,8 +31,7 @@ import {
   THEMES,
   useSettings
 } from '../../../design';
-import { GlossarySearchComponent } from '../components';
-import Hit from './Hit';
+import { GlossarySearchComponent, Hit } from '../components';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {

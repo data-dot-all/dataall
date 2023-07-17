@@ -42,9 +42,7 @@ const EnvironmentView = Loadable(
 const EnvironmentList = Loadable(
   lazy(() => import('./modules/Misc/views/Environments/EnvironmentList'))
 );
-const Catalog = Loadable(
-  lazy(() => import('./modules/Catalog/views/Catalog'))
-);
+const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
   lazy(() => import('./modules/Datasets/views/DatasetList'))
