@@ -5,27 +5,15 @@ and interact with resources or do some actions in the app
 from typing import Protocol, Callable
 
 from dataall.base.context import RequestContext, get_context
-from dataall.core.permissions.db.group_policy import GroupPolicy
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.utils.decorator_utls import process_func
 
 
 class Identifiable(Protocol):
     """Protocol to identify resources for checking permissions"""
     def get_resource_uri(self) -> str:
         ...
-
-
-def _check_group_environment_permission(session, permission, uri, admin_group):
-    context: RequestContext = get_context()
-    GroupPolicy.check_group_environment_permission(
-        session=session,
-        username=context.username,
-        groups=context.groups,
-        uri=uri,
-        group=admin_group,
-        permission_name=permission,
-    )
 
 
 def _check_tenant_permission(session, permission):
@@ -50,22 +38,6 @@ def _check_resource_permission(session, uri, permission):
     )
 
 
-def _process_func(func):
-    """Helper function that helps decorate methods/functions"""
-    def no_decorated(f):
-        return f
-
-    static_func = False
-    try:
-        fn = func.__func__
-        static_func = True
-    except AttributeError:
-        fn = func
-
-    # returns a function to call and static decorator if applied
-    return fn, staticmethod if static_func else no_decorated
-
-
 def has_resource_permission(
         permission: str,
         param_name: str = None,
@@ -82,7 +54,7 @@ def has_resource_permission(
         param_name = "uri"
 
     def decorator(f):
-        fn, fn_decorator = _process_func(f)
+        fn, fn_decorator = process_func(f)
 
         def decorated(*args, **kwargs):
             uri: str
@@ -116,28 +88,13 @@ def has_tenant_permission(permission: str):
     All the information about the user is retrieved from RequestContext
     """
     def decorator(f):
-        fn, fn_decorator = _process_func(f)
+        fn, fn_decorator = process_func(f)
 
         def decorated(*args, **kwargs):
             with get_context().db_engine.scoped_session() as session:
                 _check_tenant_permission(session, permission)
 
             return fn(*args, **kwargs)
-
-        return fn_decorator(decorated)
-
-    return decorator
-
-
-def has_group_permission(permission):
-    def decorator(f):
-        fn, fn_decorator = _process_func(f)
-
-        def decorated(*args, admin_group, uri, **kwargs):
-            with get_context().db_engine.scoped_session() as session:
-                _check_group_environment_permission(session, permission, uri, admin_group)
-
-            return fn(*args, uri=uri, admin_group=admin_group, **kwargs)
 
         return fn_decorator(decorated)
 

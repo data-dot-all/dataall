@@ -3,10 +3,10 @@ import logging
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
-    has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.db import exceptions
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient

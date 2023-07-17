@@ -2,12 +2,12 @@ import logging
 
 from sqlalchemy import and_
 
+from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.vpc.db import vpc_models as models
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
-    has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.permissions.db.resource_policy import ResourcePolicy

@@ -5,10 +5,10 @@ from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.base.context import get_context
+from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
-    has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
