@@ -1,1 +1,1 @@
-from dataall.core.permissions import api, db
+from dataall.core.permissions import api
