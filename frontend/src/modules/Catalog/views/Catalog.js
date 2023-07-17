@@ -164,7 +164,7 @@ GlossaryFilter.propTypes = {
   setFilter: PropTypes.func
 };
 
-export const Catalog = () => {
+const Catalog = () => {
   const token = useToken();
   const { settings } = useSettings();
   const theme = useTheme();
@@ -439,3 +439,5 @@ export const Catalog = () => {
     </>
   );
 };
+
+export default Catalog;
