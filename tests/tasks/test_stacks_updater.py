@@ -42,7 +42,7 @@ def env(org, db):
 
 def test_stacks_update(db, org, env, mocker):
     mocker.patch(
-        'dataall.tasks.stacks_updater.update_stack',
+        'dataall.core.environment.tasks.env_stacks_updater.update_stack',
         return_value=True,
     )
     envs, others = update_stacks(engine=db, envname='local')

@@ -34,23 +34,23 @@ def patch_check_env(module_mocker):
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_es(module_mocker):
-    module_mocker.patch('dataall.searchproxy.connect', return_value={})
-    module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.base.searchproxy.connect', return_value={})
+    module_mocker.patch('dataall.base.searchproxy.search', return_value={})
+    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_stack_tasks(module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.ecs.Ecs.is_task_running',
+        'dataall.core.stacks.aws.ecs.Ecs.is_task_running',
         return_value=False,
     )
     module_mocker.patch(
-        'dataall.aws.handlers.ecs.Ecs.run_cdkproxy_task',
+        'dataall.core.stacks.aws.ecs.Ecs.run_cdkproxy_task',
         return_value='arn:aws:eu-west-1:xxxxxxxx:ecs:task/1222222222',
     )
     module_mocker.patch(
-        'dataall.aws.handlers.cloudformation.CloudFormation.describe_stack_resources',
+        'dataall.core.stacks.aws.cloudformation.CloudFormation.describe_stack_resources',
         return_value=True,
     )
 

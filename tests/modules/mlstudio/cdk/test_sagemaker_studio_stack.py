@@ -46,18 +46,18 @@ def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
         return_value=sgm_studio,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=sgm_studio,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_environment',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
         return_value=env,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_organization',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
         return_value=org,
     )
 

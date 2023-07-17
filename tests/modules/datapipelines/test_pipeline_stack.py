@@ -75,18 +75,18 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=pip_envs,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=pipeline2,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_environment',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
         return_value=env,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_organization',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
         return_value=org,
     )
 

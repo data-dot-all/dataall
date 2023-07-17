@@ -68,7 +68,7 @@ def sync_dataset(org, env, db):
 
 def test_stacks_update(db, org, env, sync_dataset, mocker):
     mocker.patch(
-        'dataall.tasks.stacks_updater.update_stack',
+        'dataall.core.environment.tasks.env_stacks_updater.update_stack',
         return_value=True,
     )
     envs, datasets = update_stacks(engine=db, envname='local')

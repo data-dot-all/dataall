@@ -107,7 +107,7 @@ def folder(org, env, db, dataset):
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+    mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
 def test_es_request():
