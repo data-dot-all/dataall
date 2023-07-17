@@ -8,7 +8,7 @@ from sqlalchemy.sql import and_
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.models import EnvironmentParameter, ConsumptionRole
-from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
@@ -769,12 +769,7 @@ class EnvironmentService:
 
     @staticmethod
     def get_environment_by_uri(session, uri) -> Environment:
-        if not uri:
-            raise exceptions.RequiredParameter('environmentUri')
-        environment: Environment = session.query(Environment).get(uri)
-        if not environment:
-            raise exceptions.ObjectNotFound(Environment.__name__, uri)
-        return environment
+        return EnvironmentRepository.get_environment_by_uri(session, uri)
 
     @staticmethod
     @has_resource_permission(permissions.GET_ENVIRONMENT)

@@ -1,5 +1,5 @@
+from dataall.base.api import gql
 from dataall.core.cognito_groups.api.resolvers import *
-from base.api import gql
 
 Group = gql.ObjectType(
     name='Group',

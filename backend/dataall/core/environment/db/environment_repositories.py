@@ -1,5 +1,7 @@
-from dataall.core.environment.db.models import EnvironmentParameter
+from dataall.core.environment.db.models import EnvironmentParameter, Environment
 from sqlalchemy.sql import and_
+
+from dataall.db import exceptions
 
 
 class EnvironmentParameterRepository:
@@ -31,3 +33,14 @@ class EnvironmentParameterRepository:
         self._session.query(EnvironmentParameter).filter(
             EnvironmentParameter.environmentUri == env_uri
         ).delete()
+
+
+class EnvironmentRepository:
+    @staticmethod
+    def get_environment_by_uri(session, uri):
+        if not uri:
+            raise exceptions.RequiredParameter('environmentUri')
+        environment: Environment = session.query(Environment).get(uri)
+        if not environment:
+            raise exceptions.ObjectNotFound(Environment.__name__, uri)
+        return environment
