@@ -26,7 +26,7 @@ import {
   useClient
 } from '../../../services';
 
-const RequestAccessModal = (props) => {
+export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -500,5 +500,3 @@ RequestAccessModal.propTypes = {
   open: PropTypes.bool.isRequired,
   stopLoader: PropTypes.func
 };
-
-export default RequestAccessModal;

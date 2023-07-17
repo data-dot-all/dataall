@@ -22,7 +22,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, useCardStyle } from '../../../design';
 import { dayjs } from '../../../utils';
 import RequestAccessModal from './RequestAccessModal';
-import RequestDashboardAccessModal from './RequestDashboardAccessModal';
+import RequestDashboardAccessModal from '../view/RequestDashboardAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>
@@ -45,7 +45,7 @@ HitICon.propTypes = {
   hit: PropTypes.object.isRequired
 };
 
-const Hit = ({ hit }) => {
+export const Hit = ({ hit }) => {
   const classes = useCardStyle();
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
@@ -338,4 +338,3 @@ const Hit = ({ hit }) => {
 Hit.propTypes = {
   hit: PropTypes.object.isRequired
 };
-export default Hit;

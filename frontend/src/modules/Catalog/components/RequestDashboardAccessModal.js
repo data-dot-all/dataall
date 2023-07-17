@@ -21,7 +21,7 @@ import {
   useGroups
 } from '../../../services';
 
-const RequestDashboardAccessModal = (props) => {
+export const RequestDashboardAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -196,5 +196,3 @@ RequestDashboardAccessModal.propTypes = {
   open: PropTypes.bool.isRequired,
   stopLoader: PropTypes.func
 };
-
-export default RequestDashboardAccessModal;

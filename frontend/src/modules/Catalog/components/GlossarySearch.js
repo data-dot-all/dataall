@@ -319,4 +319,3 @@ GlossarySearch.propTypes = {
   setQuery: PropTypes.func.isRequired,
   matches: PropTypes.array.isRequired
 };
-export default GlossarySearch;
