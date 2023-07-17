@@ -4,7 +4,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 log = logging.getLogger('aws:ecs')
 

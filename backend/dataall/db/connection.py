@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from dataall.db import Base
 from dataall.db.dbconfig import DbConfig
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 try:
     from urllib import quote_plus, unquote_plus

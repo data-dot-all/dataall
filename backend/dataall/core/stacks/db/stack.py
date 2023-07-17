@@ -6,7 +6,7 @@ from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.stacks.db import stack_models as models
 from dataall.core.stacks.db.target_type import TargetType
 from dataall.db import exceptions
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

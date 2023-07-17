@@ -7,7 +7,7 @@ from typing import Protocol, Callable
 from dataall.base.context import RequestContext, get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.utils.decorator_utls import process_func
+from dataall.base.utils.decorator_utls import process_func
 
 
 class Identifiable(Protocol):

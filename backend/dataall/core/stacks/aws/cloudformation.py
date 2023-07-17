@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.utils import json_utils
+from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
 

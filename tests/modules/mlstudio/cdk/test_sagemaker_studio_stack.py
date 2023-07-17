@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from aws_cdk.assertions import Template
 from aws_cdk import App, Stack, aws_iam

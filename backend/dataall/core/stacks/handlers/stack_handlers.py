@@ -10,7 +10,7 @@ from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db import stack_models as models
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 log = logging.getLogger(__name__)
 

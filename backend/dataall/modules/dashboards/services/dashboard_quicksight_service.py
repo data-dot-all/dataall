@@ -11,7 +11,7 @@ from dataall.core.permissions.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 
 class DashboardQuicksightService:

@@ -18,7 +18,7 @@ from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ, \
     GET_DATASET_TABLE
-from dataall.utils import json_utils
+from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
 

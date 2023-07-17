@@ -34,7 +34,7 @@ from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from dataall import db
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 

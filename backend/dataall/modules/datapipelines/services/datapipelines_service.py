@@ -16,11 +16,11 @@ from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEn
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
     CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.utils.slugify import slugify
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 

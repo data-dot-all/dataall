@@ -13,7 +13,7 @@ from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

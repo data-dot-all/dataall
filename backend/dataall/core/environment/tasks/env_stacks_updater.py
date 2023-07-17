@@ -10,7 +10,7 @@ from dataall.core.environment.services.env_stack_finder import StackFinder
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db.stack import Stack
 from dataall.db import get_engine
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

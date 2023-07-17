@@ -21,7 +21,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
-from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 

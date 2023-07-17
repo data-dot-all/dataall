@@ -26,7 +26,7 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 

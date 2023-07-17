@@ -26,7 +26,7 @@ from dataall.modules.mlstudio.services.mlstudio_permissions import (
     SGMSTUDIO_USER_URL,
     DELETE_SGMSTUDIO_USER,
 )
-from dataall.utils.slugify import slugify
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 

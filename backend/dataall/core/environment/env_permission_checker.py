@@ -1,6 +1,6 @@
 from dataall.base.context import get_context, RequestContext
 from dataall.core.permissions.db.group_policy import GroupPolicy
-from dataall.utils.decorator_utls import process_func
+from dataall.base.utils.decorator_utls import process_func
 
 
 def _check_group_environment_permission(session, permission, uri, admin_group):

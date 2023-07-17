@@ -12,7 +12,7 @@ from dataall.core.stacks.db import stack_models as StackModel
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
 from dataall.db import exceptions
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 log = logging.getLogger(__name__)
 

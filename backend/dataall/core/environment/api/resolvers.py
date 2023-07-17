@@ -21,7 +21,7 @@ from dataall.core.stacks.db.stack import Stack
 from dataall.core.vpc.db.vpc import Vpc
 from dataall.db import exceptions
 from dataall.core.permissions import permissions
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
@@ -546,7 +546,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
 
 
 def get_pivot_role_template(context: Context, source, organizationUri=None):
-    from ....utils import Parameter
+    from dataall.base.utils import Parameter
 
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(

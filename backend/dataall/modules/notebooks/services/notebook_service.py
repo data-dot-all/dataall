@@ -22,11 +22,11 @@ from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
 from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
     GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.utils.slugify import slugify
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 

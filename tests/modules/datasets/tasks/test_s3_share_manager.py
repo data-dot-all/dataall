@@ -5,7 +5,6 @@ import json
 
 from typing import Callable
 
-import dataall.modules.dataset_sharing.services.share_managers
 from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization

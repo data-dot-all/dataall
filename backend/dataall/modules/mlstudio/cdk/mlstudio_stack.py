@@ -28,7 +28,7 @@ from dataall.db import Engine, get_engine
 from dataall.modules.mlstudio.aws.ec2_client import EC2
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 
