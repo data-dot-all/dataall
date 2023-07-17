@@ -112,8 +112,8 @@ class DashboardService:
     @staticmethod
     def _set_dashboard_resource_policy(session, environment, dashboard, group):
         DashboardService._attach_dashboard_policy(session, group, dashboard)
-        if EnvironmentService.SamlGroupName != dashboard.SamlGroupName:
-            DashboardService._attach_dashboard_policy(session, EnvironmentService.SamlGroupName, dashboard)
+        if environment.SamlGroupName != dashboard.SamlGroupName:
+            DashboardService._attach_dashboard_policy(session, environment.SamlGroupName, dashboard)
 
     @staticmethod
     def _attach_dashboard_policy(session, group: str, dashboard: Dashboard):

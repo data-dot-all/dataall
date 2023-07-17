@@ -4,6 +4,7 @@ import pytest
 
 from tests.api.conftest import *
 
+
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
     org1 = org('testorg', user.username, group.name)
