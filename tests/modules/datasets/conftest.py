@@ -4,6 +4,8 @@ import pytest
 from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from tests.api.conftest import *
 
 from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocation
@@ -166,6 +168,15 @@ def table(db):
                 S3Prefix=f'{name}',
             )
             session.add(table)
+            session.commit()
+
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=table.tableUri,
+                resource_type=DatasetTable.__name__
+            )
         return table
 
     yield factory
