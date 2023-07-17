@@ -53,7 +53,6 @@ RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt" \
 
 ADD backend/dataall /dataall
 VOLUME ["/dataall"]
-ADD backend/blueprints /blueprints
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
 RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars \
