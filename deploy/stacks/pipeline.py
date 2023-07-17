@@ -120,7 +120,7 @@ class PipelineStack(Stack):
 
         else:
             source = CodePipelineSource.code_commit(
-                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
+                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall-testing'),
                 branch=self.git_branch,
             )
 
