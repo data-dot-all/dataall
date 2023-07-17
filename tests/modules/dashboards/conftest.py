@@ -6,7 +6,7 @@ from tests.api.conftest import *
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
@@ -19,7 +19,8 @@ def env1(env, org1, user, group, tenant, module_mocker):
     module_mocker.patch(
         'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username
+               , group.name, '111111111111', 'eu-west-1')
     yield env1
 
 

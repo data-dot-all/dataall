@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
@@ -6,6 +8,11 @@ from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from .client import *
+
+
+@dataclass
+class User:
+    username: str
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -54,28 +61,43 @@ def permissions(db):
         yield Permission.init_permissions(session)
 
 
+@pytest.fixture(scope='module', autouse=True)
+def user(db):
+   yield User('alice')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user2(db):
+    yield User('bob')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user3(db):
+    yield User('david')
+
+
 @pytest.fixture(scope='module')
-def group(db):
+def group(db, user):
     with db.scoped_session() as session:
-        group = Group(name='testadmins', label='testadmins', owner='alice')
+        group = Group(name='testadmins', label='testadmins', owner=user.username)
         session.add(group)
         session.commit()
         yield group
 
 
 @pytest.fixture(scope='module')
-def group2(db):
+def group2(db, user2):
     with db.scoped_session() as session:
-        group = Group(name='dataengineers', label='dataengineers', owner='bob')
+        group = Group(name='dataengineers', label='dataengineers', owner=user2.username)
         session.add(group)
         session.commit()
         yield group
 
 
 @pytest.fixture(scope='module')
-def group3(db):
+def group3(db, user3):
     with db.scoped_session() as session:
-        group = Group(name='datascientists', label='datascientists', owner='david')
+        group = Group(name='datascientists', label='datascientists', owner=user3.username)
         session.add(group)
         session.commit()
         yield group
@@ -84,7 +106,7 @@ def group3(db):
 @pytest.fixture(scope='module')
 def group4(db, user3):
     with db.scoped_session() as session:
-        group = Group(name='externals', label='externals', owner=user3.userName)
+        group = Group(name='externals', label='externals', owner=user3.username)
         session.add(group)
         session.commit()
         yield group

@@ -5,7 +5,7 @@ import dataall
 
 
 def test_update_dashboard(
-    client, env1, org1, group, module_mocker, patch_es, dashboard
+    client, env1, org1, group, patch_es, dashboard
 ):
     response = client.query(
         """

@@ -3,7 +3,6 @@ import logging
 from sqlalchemy import and_
 
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.core.environment.db.models import Environment
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.db import exceptions
 from dataall.core.permissions import permissions

@@ -1,6 +1,8 @@
+import dataclasses
 import os
 import pytest
 import dataall
+from dataclasses import dataclass
 from dataall.base.config import config
 from dataall.base.loader import load_modules, ImportMode
 
