@@ -77,9 +77,9 @@ def patch_methods(mocker, db, env, another_group, permissions):
         'dataall.aws.handlers.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
-    mocker.patch('dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
+    mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=env,
     )
     mocker.patch(
