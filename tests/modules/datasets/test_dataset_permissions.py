@@ -74,7 +74,7 @@ def test_attach_resource_policy(db, user, group, dataset):
 
 
 def test_attach_tenant_policy(
-    db, user, group, group_user, dataset, permissions, tenant
+    db, user, group, dataset, permissions, tenant
 ):
     with db.scoped_session() as session:
         TenantPolicy.attach_group_tenant_policy(
@@ -94,7 +94,7 @@ def test_attach_tenant_policy(
 
 
 def test_unauthorized_resource_policy(
-    db, user, group_user, group, dataset, permissions
+    db, user, group, dataset, permissions
 ):
     with pytest.raises(ResourceUnauthorized):
         with db.scoped_session() as session:
@@ -107,7 +107,7 @@ def test_unauthorized_resource_policy(
             )
 
 
-def test_create_dataset(db, env, user, group, group_user, dataset, permissions, tenant):
+def test_create_dataset(db, env, user, group, dataset, permissions, tenant):
     with db.scoped_session() as session:
         set_context(RequestContext(db, user.username, [group.name]))
 

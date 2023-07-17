@@ -46,7 +46,7 @@ def tenant(db):
 
 
 @pytest.fixture(scope='module')
-def group(db, user):
+def group(db):
     with db.scoped_session() as session:
         group = Group(
             name='testadmins', label='testadmins', owner='alice'
@@ -91,7 +91,7 @@ def env(org, db, group):
     yield env
 
 
-def test_attach_tenant_policy(db, user, group, tenant):
+def test_attach_tenant_policy(db, group, tenant):
     permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
         TenantPolicy.attach_group_tenant_policy(
@@ -103,19 +103,19 @@ def test_attach_tenant_policy(db, user, group, tenant):
 
         assert TenantPolicy.check_user_tenant_permission(
             session=session,
-            username=user.username,
+            username='alice',
             groups=[group.name],
             permission_name=MANAGE_GROUPS,
             tenant_name='dataall',
         )
 
 
-def test_unauthorized_tenant_policy(db, user, group):
+def test_unauthorized_tenant_policy(db, group):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
             assert TenantPolicy.check_user_tenant_permission(
                 session=session,
-                username=user.username,
+                username='alice',
                 groups=[group.name],
                 permission_name='UNKNOW_PERMISSION',
                 tenant_name='dataall',
