@@ -3,6 +3,7 @@ from dataall.core.permissions.api import (
     queries,
     resolvers,
     schema,
+    mutations
 )
 
-__all__ = ['resolvers', 'schema', 'input_types', 'queries']
+__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations']
