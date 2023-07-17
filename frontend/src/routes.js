@@ -91,13 +91,13 @@ const NotebookCreateForm = Loadable(
 );
 
 const MLStudioList = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/NotebookList'))
+  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioList'))
 );
 const MLStudioView = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/NotebookView'))
+  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioView'))
 );
 const MLStudioCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/NotebookCreateForm'))
+  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioCreateForm'))
 );
 
 const DashboardList = Loadable(
@@ -127,19 +127,6 @@ const PipelineCreateForm = Loadable(
 );
 const PipelineEditForm = Loadable(
   lazy(() => import('./modules/Misc/views/Pipelines/PipelineEditForm'))
-);
-
-const WarehouseCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Warehouses/WarehouseCreateForm'))
-);
-const WarehouseView = Loadable(
-  lazy(() => import('./modules/Misc/views/Warehouses/WarehouseView'))
-);
-const WarehouseEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Warehouses/WarehouseEditForm'))
-);
-const WarehouseImportForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Warehouses/WarehouseImportForm'))
 );
 
 const ShareList = Loadable(
@@ -219,14 +206,6 @@ const routes = [
         ]
       },
       {
-        path: 'warehouse/:uri',
-        element: <WarehouseView />
-      },
-      {
-        path: 'warehouse/:uri/edit',
-        element: <WarehouseEditForm />
-      },
-      {
         children: [
           {
             path: 'environments',
@@ -239,14 +218,6 @@ const routes = [
           {
             path: 'environments/:uri/edit',
             element: <EnvironmentEditForm />
-          },
-          {
-            path: 'environments/:uri/warehouses/new',
-            element: <WarehouseCreateForm />
-          },
-          {
-            path: 'environments/:uri/warehouses/import',
-            element: <WarehouseImportForm />
           }
         ]
       },

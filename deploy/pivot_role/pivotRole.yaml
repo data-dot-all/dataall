@@ -256,51 +256,6 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: Redshift
-            Effect: Allow
-            Action:
-              - 'redshift:DeleteTags'
-              - 'redshift:ModifyClusterIamRoles'
-              - 'redshift:DescribeClusterSecurityGroups'
-              - 'redshift:DescribeClusterSubnetGroups'
-              - 'redshift:pauseCluster'
-              - 'redshift:resumeCluster'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftRead
-            Effect: Allow
-            Action:
-              - 'redshift:DescribeClusters'
-              - 'redshift:CreateTags'
-              - 'redshift:DescribeClusterSubnetGroups'
-            Resource: '*'
-          - Sid: RedshiftCreds
-            Effect: Allow
-            Action:
-              - 'redshift:GetClusterCredentials'
-            Resource:
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbgroup:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbname:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbuser:*/*'
-          - Sid: AllowRedshiftSubnet
-            Effect: Allow
-            Action:
-              - 'redshift:CreateClusterSubnetGroup'
-            Resource: '*'
-          - Sid: AllowRedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
           - Sid: EC2SG
             Effect: Allow
             Action:
@@ -318,10 +273,7 @@ Resources:
             Effect: Allow
             Action:
               - 'ec2:DeleteNetworkInterface'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'True'
+            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
           - Sid: SageMakerNotebookActions
             Effect: Allow
             Action:
@@ -347,7 +299,8 @@ Resources:
              - 'sagemaker:ListApps'
              - 'sagemaker:DeleteApp'
             Resource: '*'
-          - Effect: Allow
+          - Sid: RamTag
+            Effect: Allow
             Action:
               - 'ram:TagResource'
             Resource: '*'
@@ -355,7 +308,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamCreateResource
+            Effect: Allow
             Action:
               - 'ram:CreateResourceShare'
             Resource: '*'
@@ -365,7 +319,8 @@ Resources:
                   - 'glue:Table'
                   - 'glue:Database'
                   - 'glue:Catalog'
-          - Effect: Allow
+          - Sid: RamUpdateResource
+            Effect: Allow
             Action:
               - 'ram:UpdateResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
@@ -375,7 +330,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamAssociateResource
+            Effect: Allow
             Action:
               - 'ram:AssociateResourceShare'
               - 'ram:DisassociateResourceShare'
@@ -384,7 +340,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamDeleteResource
+            Effect: Allow
             Action:
               - 'ram:DeleteResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
@@ -399,7 +356,7 @@ Resources:
               - "ec2:DescribeAvailabilityZones"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
-          - Sid: RamRead
+          - Sid: RamReadGlue
             Effect: Allow
             Action:
               - 'glue:PutResourcePolicy'
@@ -416,32 +373,6 @@ Resources:
             Condition:
               StringEquals:
                 'aws:RequestTag/dataall': 'true'
-          - Sid: SGandRedshift
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:DeleteSecurityGroup'
-              - 'redshift:DeleteClusterSubnetGroup'
-            Resource:
-              - '*'
-            Condition:
-              'ForAnyValue:StringEqualsIfExists':
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
-            Condition:
-              StringEqualsIfExists:
-                'aws:ResourceTag/dataall': 'true'
           - Sid: DevTools0
             Effect: Allow
             Action: 'cloudformation:ValidateTemplate'
@@ -503,6 +434,10 @@ Resources:
           - Sid: LakeFormation
             Effect: Allow
             Action:
+              - "lakeformation:RegisterResource"
+              - "lakeformation:DeregisterResource"
+              - "lakeformation:UpdateResource"
+              - "lakeformation:DescribeResource"
               - "lakeformation:AddLFTagsToResource"
               - "lakeformation:RemoveLFTagsFromResource"
               - "lakeformation:GetResourceLFTags"
@@ -536,7 +471,6 @@ Resources:
               - 'lakeformation:GetTableObjects'
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
-              - 'lakeformation:DescribeResource'
             Resource: '*'
           - Sid: Compute
             Effect: Allow
@@ -611,6 +545,7 @@ Resources:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:*"
           - Sid: QuickSightSession
             Effect: Allow
             Action:
@@ -652,7 +587,6 @@ Resources:
             Action:
               - 'iam:Get*'
               - 'iam:ListRoles'
-              - 'iam:Get*'
             Effect: Allow
             Resource: '*'
           - Sid: IAMRolePolicy

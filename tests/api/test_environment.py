@@ -1,7 +1,6 @@
 import pytest
 
 import dataall
-from dataall.db import permissions
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -11,11 +10,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
@@ -34,10 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                dashboardsEnabled
-                mlStudiosEnabled
-                pipelinesEnabled
-                warehousesEnabled
                 stack{
                  EcsTaskArn
                  EcsTaskId
@@ -54,18 +45,19 @@ def get_env(client, env1, group):
         groups=[group.name],
     )
 
+
 def test_get_environment(client, org1, env1, group):
     response = get_env(client, env1, group)
     assert (
         response.data.getEnvironment.organization.organizationUri
         == org1.organizationUri
     )
-    assert response.data.getEnvironment.owner == 'alice'
-    assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
-    assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.mlStudiosEnabled
-    assert response.data.getEnvironment.pipelinesEnabled
-    assert response.data.getEnvironment.warehousesEnabled
+    body = response.data.getEnvironment
+    assert body.owner == 'alice'
+    assert body.AwsAccountId == env1.AwsAccountId
+
+    params = {p.key: p.value for p in body.parameters}
+    assert params["dashboardsEnabled"] == "true"
 
 
 def test_get_environment_object_not_found(client, org1, env1, group):
@@ -93,7 +85,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
 
 
 def test_update_env(client, org1, env1, group):
-    query =  """
+    query = """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
                 organization{
@@ -106,10 +98,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                dashboardsEnabled
-                mlStudiosEnabled
-                pipelinesEnabled
-                warehousesEnabled
                 parameters {
                     key
                     value
@@ -124,13 +112,9 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
-            'mlStudiosEnabled': False,
-            'pipelinesEnabled': False,
-            'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
+                    'key': 'moduleEnabled',
                     'value': 'True'
                 }
             ],
@@ -146,13 +130,9 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
-            'mlStudiosEnabled': False,
-            'pipelinesEnabled': False,
-            'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
+                    'key': 'moduleEnabled',
                     'value': 'True'
                 }
             ],
@@ -170,12 +150,8 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.label == 'DEV'
     assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
     assert not response.data.updateEnvironment.dashboardsEnabled
-    assert not response.data.updateEnvironment.notebooksEnabled
-    assert not response.data.updateEnvironment.mlStudiosEnabled
-    assert not response.data.updateEnvironment.pipelinesEnabled
-    assert not response.data.updateEnvironment.warehousesEnabled
     assert response.data.updateEnvironment.parameters
-    assert response.data.updateEnvironment.parameters[0]["key"] == "notebooksEnabled"
+    assert response.data.updateEnvironment.parameters[0]["key"] == "moduleEnabled"
     assert response.data.updateEnvironment.parameters[0]["value"] == "True"
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
@@ -201,24 +177,10 @@ def test_update_params(client, org1, env1, group):
         }
     """
 
-    notebooks_enabled = {'parameters': [ {'key': 'notebooksEnabled','value': 'True'}]}
-    environment = update_params(notebooks_enabled).data.updateEnvironment
+    module_enabled = {'parameters': [ {'key': 'moduleEnabled','value': 'True'}]}
+    environment = update_params(module_enabled).data.updateEnvironment
     assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "notebooksEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # parameters should be rewritten. Notebooks should go away
-    dashboards_enabled = {'parameters': [{'key': 'dashboardsEnabled', 'value': 'True'}]}
-    environment = update_params(dashboards_enabled).data.updateEnvironment
-    assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # retrieve the environment one more time via GraphQL API, to check if it's correct
-    response = get_env(client, env1, group)
-    environment = response.data.getEnvironment
-    assert len(environment.parameters) == 1
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
+    assert environment.parameters[0]["key"] == "moduleEnabled"
     assert environment.parameters[0]["value"] == "True"
 
 
@@ -396,7 +358,7 @@ def test_paging(db, client, org1, env1, user, group):
         first_id = response.data.listEnvironments.nodes[0].environmentUri
 
 
-def test_group_invitation(db, client, env1, org1, group2, user, group3, group, dataset):
+def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
     response = client.query(
         """
         query listResourcePermissions($filter:ResourcePermissionFilter){
@@ -435,7 +397,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
-    assert permissions.CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -473,7 +434,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
         environmentUri=env1.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
-    assert permissions.CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -576,32 +536,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     )
 
     assert response.data.listAllEnvironmentGroups.count == 2
-
-    dataset = dataset(
-        org=org1, env=env1, name='dataset1', owner='bob', group=group2.name
-    )
-    assert dataset.datasetUri
-
-    response = client.query(
-        """
-        mutation removeGroupFromEnvironment($environmentUri: String!, $groupUri: String!){
-            removeGroupFromEnvironment(environmentUri: $environmentUri, groupUri: $groupUri){
-                environmentUri
-            }
-        }
-        """,
-        username='alice',
-        environmentUri=env1.environmentUri,
-        groupUri=group2.name,
-        groups=[group.name, group2.name],
-    )
-    print(response)
-
-    assert 'EnvironmentResourcesFound' in response.errors[0].message
-    with db.scoped_session() as session:
-        dataset = session.query(dataall.db.models.Dataset).get(dataset.datasetUri)
-        session.delete(dataset)
-        session.commit()
 
     response = client.query(
         """
@@ -733,7 +667,6 @@ def test_create_environment(db, client, org1, env1, user, group):
                 owner
                 EnvironmentDefaultIAMRoleName
                 EnvironmentDefaultIAMRoleImported
-                dashboardsEnabled
                 resourcePrefix
                 networks{
                  VpcId
@@ -758,18 +691,17 @@ def test_create_environment(db, client, org1, env1, user, group):
             'vpcId': 'vpc-1234567',
             'privateSubnetIds': 'subnet-1',
             'publicSubnetIds': 'subnet-21',
-            'dashboardsEnabled': True,
             'resourcePrefix': 'customer-prefix',
         },
     )
-    assert response.data.createEnvironment.dashboardsEnabled
-    assert response.data.createEnvironment.networks
-    assert (
-        response.data.createEnvironment.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
-    )
-    assert response.data.createEnvironment.EnvironmentDefaultIAMRoleImported
-    assert response.data.createEnvironment.resourcePrefix == 'customer-prefix'
-    for vpc in response.data.createEnvironment.networks:
+
+    body = response.data.createEnvironment
+
+    assert body.networks
+    assert body.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
+    assert body.EnvironmentDefaultIAMRoleImported
+    assert body.resourcePrefix == 'customer-prefix'
+    for vpc in body.networks:
         assert vpc.privateSubnetIds
         assert vpc.publicSubnetIds
         assert vpc.default

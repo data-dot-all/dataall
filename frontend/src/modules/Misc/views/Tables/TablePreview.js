@@ -5,7 +5,7 @@ import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { previewTable2, useClient } from '../../../../services';
+import { previewTable, useClient } from '../../../../services';
 
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   '& .MuiDataGrid-columnsContainer': {
@@ -23,9 +23,9 @@ const TablePreview = (props) => {
   const [result, setResult] = useState({ rows: [], fields: [] });
   const fetchData = useCallback(async () => {
     setRunning(true);
-    const response = await client.query(previewTable2(table.tableUri));
+    const response = await client.query(previewTable(table.tableUri));
     if (!response.errors) {
-      setResult(response.data.previewTable2);
+      setResult(response.data.previewTable);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

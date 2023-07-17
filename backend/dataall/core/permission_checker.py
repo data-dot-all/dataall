@@ -2,8 +2,7 @@
 Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
-import contextlib
-from typing import Protocol
+from typing import Protocol, Callable
 
 from dataall.core.context import RequestContext, get_context
 from dataall.db.api import TenantPolicy, ResourcePolicy, Environment
@@ -11,7 +10,7 @@ from dataall.db.api import TenantPolicy, ResourcePolicy, Environment
 
 class Identifiable(Protocol):
     """Protocol to identify resources for checking permissions"""
-    def get_uri(self) -> str:
+    def get_resource_uri(self) -> str:
         ...
 
 
@@ -56,9 +55,8 @@ def _process_func(func):
 
     static_func = False
     try:
-        func.__func__
-        static_func = True
         fn = func.__func__
+        static_func = True
     except AttributeError:
         fn = func
 
@@ -66,13 +64,21 @@ def _process_func(func):
     return fn, staticmethod if static_func else no_decorated
 
 
-def has_resource_permission(permission: str, resource_name: str = None):
+def has_resource_permission(
+        permission: str,
+        param_name: str = None,
+        resource_name: str = None,
+        parent_resource: Callable = None
+):
     """
     Decorator that check if a user has access to the resource.
     The method or function decorated with this decorator must have a URI of accessing resource
     Good rule of thumb: if there is a URI that accesses a specific resource,
     hence it has URI - it must be decorated with this decorator
     """
+    if not param_name:
+        param_name = "uri"
+
     def decorator(f):
         fn, fn_decorator = _process_func(f)
 
@@ -80,11 +86,19 @@ def has_resource_permission(permission: str, resource_name: str = None):
             uri: str
             if resource_name:
                 resource: Identifiable = kwargs[resource_name]
-                uri = resource.get_uri()
+                uri = resource.get_resource_uri()
             else:
-                uri = kwargs["uri"]
+                if param_name not in kwargs:
+                    raise KeyError(f"{f.__name__} doesn't have parameter {param_name}")
+                uri = kwargs[param_name]
 
             with get_context().db_engine.scoped_session() as session:
+                if parent_resource:
+                    try:
+                        uri = parent_resource(session, uri)
+                    except TypeError:
+                        uri = parent_resource.__func__(session, uri)
+
                 _check_resource_permission(session, uri, permission)
 
             return fn(*args, **kwargs)

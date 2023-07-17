@@ -33,9 +33,15 @@ const EnvironmentFeatures = (props) => {
             </Typography>
             <Typography color="textPrimary" variant="body2">
               <Label
-                color={environment.dashboardsEnabled ? 'success' : 'error'}
+                color={
+                  environment.parameters['dashboardsEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
               >
-                {environment.dashboardsEnabled ? 'Enabled' : 'Disabled'}
+                {environment.parameters['dashboardsEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>
@@ -76,8 +82,16 @@ const EnvironmentFeatures = (props) => {
               ML Studio
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.mlStudiosEnabled ? 'success' : 'error'}>
-                {environment.mlStudiosEnabled ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['mlStudiosEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['mlStudiosEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>
@@ -98,25 +112,6 @@ const EnvironmentFeatures = (props) => {
               </Label>
             </Typography>
           </ListItem>
-          {/*          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              Warehouses
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={environment.warehousesEnabled ? 'success' : 'error'}
-              >
-                {environment.warehousesEnabled ? 'Enabled' : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>*/}
         </List>
       </CardContent>
     </Card>

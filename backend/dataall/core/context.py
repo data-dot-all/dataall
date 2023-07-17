@@ -12,7 +12,6 @@ from typing import List
 
 from dataall.db.connection import Engine
 from threading import local
-import opensearchpy
 
 
 _request_storage = local()
@@ -24,7 +23,6 @@ class RequestContext:
     db_engine: Engine
     username: str
     groups: List[str]
-    es_engine: opensearchpy.OpenSearch
 
 
 def get_context() -> RequestContext:

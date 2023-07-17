@@ -28,10 +28,6 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('AwsAccountId', gql.NonNullableType(gql.String)),
         gql.Argument('region', gql.NonNullableType(gql.String)),
-        gql.Argument('dashboardsEnabled', type=gql.Boolean),
-        gql.Argument('mlStudiosEnabled', type=gql.Boolean),
-        gql.Argument('pipelinesEnabled', type=gql.Boolean),
-        gql.Argument('warehousesEnabled', type=gql.Boolean),
         gql.Argument('vpcId', gql.String),
         gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
@@ -52,10 +48,6 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('vpcId', gql.String),
         gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('dashboardsEnabled', type=gql.Boolean),
-        gql.Argument('mlStudiosEnabled', type=gql.Boolean),
-        gql.Argument('pipelinesEnabled', type=gql.Boolean),
-        gql.Argument('warehousesEnabled', type=gql.Boolean),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
     ],
@@ -96,18 +88,6 @@ EnvironmentFilter = gql.InputType(
         gql.Argument('quicksight', gql.Boolean),
         gql.Argument('sort', gql.ArrayType(EnvironmentSortCriteria)),
         gql.Argument('pageSize', gql.Integer),
-    ],
-)
-
-
-EnvironmentDataItemFilter = gql.InputType(
-    name='EnvironmentDataItemFilter',
-    arguments=[
-        gql.Argument('itemTypes', gql.ArrayType(gql.String)),
-        gql.Argument('term', gql.String),
-        gql.Argument('page', gql.Integer),
-        gql.Argument('pageSize', gql.Integer),
-        gql.Argument('uniqueDatasets', gql.Boolean)
     ],
 )
 

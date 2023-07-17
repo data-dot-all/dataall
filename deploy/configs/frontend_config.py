@@ -10,7 +10,7 @@ def create_react_env_file(
     resource_prefix,
     internet_facing='True',
     custom_domain='False',
-    cw_rum_enabled='False',
+    cw_rum_enabled='False'
 ):
     ssm = boto3.client('ssm', region_name=region)
     user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')[
@@ -32,6 +32,11 @@ def create_react_env_file(
     print(f'GraphQl API: {graphql_api_url}')
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
+
+    pivot_role_auto_create = ssm.get_parameter(Name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate")['Parameter'][
+        'Value'
+    ]
+    print(f'PivotRole auto-create is enabled: {pivot_role_auto_create}')
 
     if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
@@ -63,6 +68,7 @@ REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
 REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
+REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE={pivot_role_auto_create}
 """
         print('.env content: \n', file_content)
         f.write(file_content)

@@ -8,7 +8,6 @@ from .. import models
 from . import has_tenant_perm, ResourcePolicy, has_resource_perm
 from ..models import OrganizationGroup
 from ..models.Enums import OrganisationUserRole
-from ..paginator import Page
 
 logger = logging.getLogger(__name__)
 

@@ -9,34 +9,29 @@ users store data and work with data.**
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
     Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
 
-## :material-hammer-screwdriver: **Bootstrap your AWS account**
-*data.all*does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-steps on that AWS account in each region you want to use.
+## :material-hammer-screwdriver: **AWS account Pre-requisites**
+*data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
+steps.
 
-### 1. Create AWS IAM role
-<span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
-the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
-organization and click on link an environment to see this form)
-
-
-### 2. Setup AWS CDK
+### 1. CDK Bootstrap
 
 <span style="color:grey">*data.all*</span> uses AWS CDK to deploy and manage resources on your AWS account.
 AWS CDK requires some resources to exist on the AWS account, and provides a command called `bootstrap` to deploy these
-specific resources.
+specific resources in a particular AWS region.
 
-Moreover, we need to trust data.all infrastructure account.
+In this step we establish a trust relationship between the data.all infrastructure account and the accounts to be linked as environments.
 data.all codebase and CI/CD resources are in the data.all **tooling account**,
-while all the resources used by the platform
-are located in a **infrastructure account**. From this last one we will deploy environments and other resources
-inside each of our business accounts (the ones to be boostraped).
+and all the application resources used by the platform
+are located in a **infrastructure account**. From the infrastructure account we will deploy environments and other resources
+inside each of our business accounts. We are granting permissions to the infrastructure account 
+by setting the `--trust` parameter in the cdk bootstrap command.
 
-
-To boostrap the AWS account using AWS CDK, you need :
+To boostrap the AWS account using AWS CDK, you need the following (which are already fulfilled if you open AWS CloudShell from the environment account).
 
 1. to have AWS credentials configured in ~/.aws/credentials or as environment variables.
-2. to install cdk : `npm install -g aws-cdk`
-3. to run the following command :
+2. to install cdk: `npm install -g aws-cdk`
+
+Then, you can copy/paste the following command from the UI and run from your local machine or CloudShell:
 ````bash
 cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_ENVIRONMENT_AWS_ACCOUNT_NUMBER/ENVIRONMENT_REGION
 ````
@@ -51,8 +46,31 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````
 
 
+### 2. (For manual) Pivot role
+<span style="color:grey">*data.all*</span> assumes a certain IAM role to be able to call AWS SDK APIs on your account. 
+The Pivot Role is a super role in the environment account and thus, it is 
+protected to be assumed only by the data.all central account using an external Id.
 
-### 3. Enable AWS Lake Formation
+Since release V1.5.0, the Pivot Role can be created as part of the environment CDK stack, given that the trust between data.all and the environment account
+is already explicitly granted in the bootstraping of the account. To enable the creation of Pivot Roles as part
+of the environment stack, the `cdk.json` parameter `enable_pivot_role_auto_create` needs to be set to `true`. 
+When an environment is linked to data.all a nested stack creates a role called **dataallPivotRole-cdk**.
+
+For versions prior to V1.5.0 or if `enable_pivot_role_auto_create` is `false` the Pivot Role needs to be created manually.
+In this case, the AWS CloudFormation stack of the role can be downloaded from <span style="color:grey">*data.all*</span> environment creation form. 
+(Navigate to an organization and click on link an environment to see this form). Fill the CloudFormation stack with the parameters
+available in data.all UI to create the role named **dataallPivotRole**. 
+
+!!! note "Upgrading from manual to cdk-created Pivot Role"
+    If you have existing environments that were linked to data.all using a manually created Pivot Role you can
+    still benefit from V1.5.0 `enable_pivot_role_auto_create` feature. You just need to update that parameter in
+    the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
+    will contain the nested cdk-pivotRole stack (no actions needed) and existing environments can be updated by: a) manually, 
+    by clicking on "update stack" in the environment>stack tab  b) automatically, wait for the `stack-updater` ECS task that 
+    runs daily overnight c) automatically, set the added `enable_update_dataall_stacks_in_cicd_pipeline` parameter to `true` in 
+    the `cdk.json` config file. The `stack-updater` ECS task will be triggered from the CICD pipeline
+
+### 3. (For new accounts) AWS Lake Formation Service role
 <span style="color:grey">*data.all*</span> relies on AWS Lake Formation to manage access to your structured data.
 If AWS Lake Formation has never been
 activated on your AWS account, you need to create
@@ -67,7 +85,7 @@ aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.co
     role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
     <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
 
-### 4. Amazon Quicksight
+### 4. (For Dashboards) Subscribe to Amazon Quicksight
 
 This is an optional step. To link environments with <i><b>Dashboards enabled</b></i> , you will also need a running Amazon QuickSight subscription
 on the bootstraped account. If you have not subscribed to Quicksight before, go to your AWS account and choose the
@@ -77,6 +95,27 @@ Enterprise option as show below:
 
 ![quicksight](pictures/environments/boot_qs_2.png#zoom#shadow)
 
+
+### 5. (For ML Studio) Delete or adapt the default VPC
+If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
+it will use it to create ML Studio profiles. If no pre-existing domain is found, data.all will create a new one.
+
+Prior to V1.5.0 data.all always used the default VPC to create a new SageMaker domain. The default VPC had then to be
+customized to fulfill the networking requirements specified in the Sagemaker
+[documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html) for VPCOnly 
+domains.
+
+In V1.5.0 we introduce the creation of a suitable VPC for SageMaker as part of the environment stack. However, it is not possible to edit the VPC used by a SageMaker domain, it requires deletion and re-creation. To allow backwards
+compatibility and not delete the pre-existing domains, in V1.5.0 the default behavior is still to use the default VPC.
+
+Data.all will create a SageMaker VPC:
+- For new environments: (link environment)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if there is not a default VPC in the account
+- For pre-existing environments: (update environment)
+  - if all ML Studio profiles have been deleted (from CloudFormation as well)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if the default VPC has been deleted in the account
 
 ## :material-new-box: **Link an environment**
 ### Necessary permissions
@@ -147,7 +186,6 @@ the environment organization. There are several tabs just below the environment 
 - Teams: list of all teams onboarded to this environment.
 - Datasets: list of all datasets owned and shared with for this environment
 - Networks: VPCs created and owned by the environment
-- Warehouses: Redshift clusters imported or created in this environment
 - Subscriptions: SNS topic subscriptions enabled or disabled in the environment
 - Tags: editable key-value tags
 - Stack: CloudFormation stack details and logs
@@ -227,9 +265,9 @@ disabled as appears in the following picture.
 ![](pictures/environments/env_teams_2.png#zoom#shadow)
 
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
-new IAM role for the new team. The IAM role policies mapped to the permissions granted to the invited team
-(e.g., a team  invited without "Create Redshift clusters" permission will not have
-redshift permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
+new IAM role for the new team. The IAM role policies are mapped to the permissions and are granted to the invited team
+(e.g., a team  invited without "Create ML Studio" permission will not have
+Sagemaker permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
 
 
 !!! warning "Automated permission assignment"

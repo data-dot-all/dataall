@@ -78,15 +78,23 @@ const EnvironmentEditForm = (props) => {
             label: values.label,
             tags: values.tags,
             description: values.description,
-            dashboardsEnabled: values.dashboardsEnabled,
-            mlStudiosEnabled: values.mlStudiosEnabled,
-            pipelinesEnabled: values.pipelinesEnabled,
-            warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
                 key: 'notebooksEnabled',
                 value: String(values.notebooksEnabled)
+              },
+              {
+                key: 'mlStudiosEnabled',
+                value: String(values.mlStudiosEnabled)
+              },
+              {
+                key: 'pipelinesEnabled',
+                value: String(values.pipelinesEnabled)
+              },
+              {
+                key: 'dashboardsEnabled',
+                value: String(values.dashboardsEnabled)
               }
             ]
           }
@@ -203,11 +211,11 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                dashboardsEnabled: env.dashboardsEnabled,
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
-                mlStudiosEnabled: env.mlStudiosEnabled,
-                pipelinesEnabled: env.pipelinesEnabled,
-                warehousesEnabled: env.warehousesEnabled,
+                mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
+                pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
+                dashboardsEnabled:
+                  env.parameters['dashboardsEnabled'] === 'true',
                 resourcePrefix: env.resourcePrefix
               }}
               validationSchema={Yup.object().shape({
@@ -470,6 +478,7 @@ const EnvironmentEditForm = (props) => {
                                     </Typography>
                                   }
                                   labelPlacement="end"
+                                  value={values.mlStudiosEnabled}
                                 />
                               </FormGroup>
                             </Box>
@@ -502,37 +511,6 @@ const EnvironmentEditForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            {/*                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.warehousesEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="warehousesEnabled"
-                                      value={values.warehousesEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Warehouses{' '}
-                                      <small>
-                                        (Requires Amazon Redshift clusters)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.warehousesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>

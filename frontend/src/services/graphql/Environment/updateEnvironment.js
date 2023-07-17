@@ -16,10 +16,6 @@ export const updateEnvironment = ({ environmentUri, input }) => ({
         userRoleInEnvironment
         SamlGroupName
         AwsAccountId
-        dashboardsEnabled
-        mlStudiosEnabled
-        pipelinesEnabled
-        warehousesEnabled
         created
         parameters {
           key

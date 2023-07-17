@@ -70,5 +70,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .idea
-/backend/dataall/cdkproxy/assets/gluedataqualityjob/datahubdq.zip
-/backend/dataall/cdkproxy/assets/glueprofilingjob/datahubdq.zip

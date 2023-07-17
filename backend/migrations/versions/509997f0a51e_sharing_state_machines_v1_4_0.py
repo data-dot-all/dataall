@@ -11,10 +11,10 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import api, models, permissions, utils
-from dataall.db.models.Enums import ShareObjectStatus, ShareItemStatus
+from dataall.db import utils
 from datetime import datetime
 
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus
 
 # revision identifiers, used by Alembic.
 revision = '509997f0a51e'
