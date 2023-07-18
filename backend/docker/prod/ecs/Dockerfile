@@ -53,13 +53,10 @@ RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt" \
 
 ADD backend/dataall /dataall
 VOLUME ["/dataall"]
-ADD backend/blueprints /blueprints
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
-RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars \
-    && mkdir -p blueprints/ml_data_pipeline/engine/glue/jars
+RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars
 ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/cdkproxy/assets/glueprofilingjob/jars/
-RUN cp -f dataall/cdkproxy/assets/glueprofilingjob/jars/deequ-$DEEQU_VERSION.jar blueprints/ml_data_pipeline/engine/glue/jars/deequ-$DEEQU_VERSION.jar
 
 WORKDIR /
 
