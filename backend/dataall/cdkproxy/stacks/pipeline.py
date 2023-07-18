@@ -180,13 +180,13 @@ class PipelineStack(Stack):
         code_dir_path = os.path.realpath(
             os.path.abspath(
                 os.path.join(
-                    __file__, "..", "..", "..", "..", "blueprints", "data_pipeline_blueprint"
+                    __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
                 )
             )
         )
-
+        logger.info(f"code directory path = {code_dir_path}")
+        env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
         try:
-            env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
             codecommit_client = aws.client('codecommit', region_name=pipeline_environment.region)
             repository = PipelineStack._check_repository(codecommit_client, pipeline.repo)
             if repository:
@@ -210,7 +210,7 @@ class PipelineStack(Stack):
             else:
                 raise Exception
         except Exception as e:
-            PipelineStack.initialize_repo(pipeline, code_dir_path)
+            PipelineStack.initialize_repo(pipeline, code_dir_path, env_vars)
 
             PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
@@ -520,7 +520,7 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
-    def initialize_repo(pipeline, code_dir_path):
+    def initialize_repo(pipeline, code_dir_path, env_vars):
 
         venv_name = ".venv"
 
@@ -539,7 +539,8 @@ class PipelineStack(Stack):
             text=True,
             shell=True,  # nosec
             encoding='utf-8',
-            cwd=code_dir_path
+            cwd=code_dir_path,
+            env=env_vars
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
@@ -555,7 +556,7 @@ class PipelineStack(Stack):
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
             'envname': os.environ.get('envname', 'local'),
-            'COOKIECUTTER_CONFIG': "/dataall/cookiecutter_config.yaml",
+            'COOKIECUTTER_CONFIG': "/dataall/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(
