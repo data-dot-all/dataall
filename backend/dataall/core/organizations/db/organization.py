@@ -4,7 +4,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.permissions import permissions
-from dataall.db import exceptions, paginate
+from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_models import OrganizationGroup, OrganisationUserRole
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.environment.db.models import Environment

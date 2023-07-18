@@ -3,8 +3,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, Boolean, Enum, DateTime
 
-from dataall.db import Base
-from dataall.db import utils
+from dataall.base.db import Base
+from dataall.base.db import utils
 
 
 class NotificationType(enum.Enum):

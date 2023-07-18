@@ -16,7 +16,7 @@ from dataall.core.permissions.permission_checker import has_resource_permission,
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository

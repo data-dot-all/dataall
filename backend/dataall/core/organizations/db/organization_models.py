@@ -4,8 +4,8 @@ from enum import Enum
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Base
-from dataall.db import Resource, utils
+from dataall.base.db import Base
+from dataall.base.db import Resource, utils
 
 
 class OrganisationUserRole(Enum):

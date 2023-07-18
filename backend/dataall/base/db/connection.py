@@ -8,8 +8,8 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from dataall.db import Base
-from dataall.db.dbconfig import DbConfig
+from dataall.base.db import Base
+from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
 
 try:

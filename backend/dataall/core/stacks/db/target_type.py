@@ -1,6 +1,6 @@
 import logging
 
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 
 logger = logging.getLogger(__name__)

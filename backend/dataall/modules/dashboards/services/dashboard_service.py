@@ -6,7 +6,7 @@ from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.core.vote.db.vote import Vote
-from dataall.db.exceptions import UnauthorizedOperation
+from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer

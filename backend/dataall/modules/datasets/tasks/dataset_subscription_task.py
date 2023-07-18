@@ -8,7 +8,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.db import get_engine
+from dataall.base.db import get_engine
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService

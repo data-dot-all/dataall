@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.db import paginate
+from dataall.base.db import paginate
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetQueryResult
 
 

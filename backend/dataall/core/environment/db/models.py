@@ -3,7 +3,7 @@ import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.orm import query_expression
-from dataall.db import Resource, Base, utils
+from dataall.base.db import Resource, Base, utils
 
 from dataall.core.environment.api.enums import EnvironmentPermission
 

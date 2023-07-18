@@ -21,7 +21,7 @@ import cdk_cli_wrapper as wrapper
 from stacks import StackManager
 from ..core.organizations.db.organization_models import Organization
 from ..core.stacks.db.stack_models import Stack
-from ..db import get_engine
+from dataall.base.db import get_engine
 
 print('\n'.join(sys.path))
 

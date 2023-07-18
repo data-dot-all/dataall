@@ -1,7 +1,7 @@
 from dataall.core.environment.db.models import EnvironmentParameter, Environment
 from sqlalchemy.sql import and_
 
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 
 
 class EnvironmentParameterRepository:

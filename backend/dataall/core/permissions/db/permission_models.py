@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as DBEnum
 from sqlalchemy.orm import relationship
 
-from dataall.db import Base, utils
+from dataall.base.db import Base, utils
 
 
 class PermissionType(enum.Enum):

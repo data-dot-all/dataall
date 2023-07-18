@@ -3,7 +3,7 @@ import os
 import sys
 
 from dataall.cdkproxy.cdk_cli_wrapper import deploy_cdk_stack
-from dataall.db import get_engine
+from dataall.base.db import get_engine
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

@@ -6,7 +6,7 @@ from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
-from dataall.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
+from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
 from dataall.core.permissions.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient

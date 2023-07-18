@@ -5,7 +5,7 @@ import subprocess
 
 from botocore.exceptions import ClientError
 
-from dataall import db
+from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository

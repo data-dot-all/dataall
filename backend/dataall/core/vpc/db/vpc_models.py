@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
 
-from dataall.db import Base, Resource, utils
+from dataall.base.db import Base, Resource, utils
 
 
 class Vpc(Resource, Base):

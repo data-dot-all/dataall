@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Resource, utils
+from dataall.base.db import Resource, utils
 
 # revision identifiers, used by Alembic.
 revision = 'c5c6bbbc5de7'

@@ -6,7 +6,7 @@ from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
-from dataall.db.exceptions import ObjectNotFound
+from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository

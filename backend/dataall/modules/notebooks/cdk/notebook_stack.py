@@ -17,7 +17,7 @@ from dataall.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
-from dataall.db import Engine, get_engine
+from dataall.base.db import Engine, get_engine
 from dataall.modules.notebooks.db import models
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil

@@ -1,6 +1,6 @@
 from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db.exceptions import UnauthorizedOperation
+from dataall.base.db.exceptions import UnauthorizedOperation
 
 
 class GroupPolicy:

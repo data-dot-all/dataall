@@ -95,7 +95,7 @@ def dataset(org, env, db):
 @pytest.fixture(scope='module')
 def share(
     dataset: Dataset,
-    db: dataall.db.Engine,
+    db: dataall.base.db.Engine,
     otherenv: Environment,
 ):
     with db.scoped_session() as session:

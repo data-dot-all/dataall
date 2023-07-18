@@ -10,7 +10,7 @@ That approach should work fine for AWS Lambdas and local server that uses Flask 
 from dataclasses import dataclass
 from typing import List
 
-from dataall.db.connection import Engine
+from dataall.base.db.connection import Engine
 from threading import local
 
 

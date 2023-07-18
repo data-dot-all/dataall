@@ -5,7 +5,7 @@ import sys
 
 from sqlalchemy import and_
 
-from dataall.db import get_engine
+from dataall.base.db import get_engine
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_dataset_client import S3BucketPolicyClient
 from dataall.modules.datasets_base.db.models import Dataset

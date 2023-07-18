@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import Resource
+from dataall.base.db import Resource
 from dataall.core.permissions.db.permission_models import PermissionType, ResourcePolicyPermission, \
     TenantPolicyPermission
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET

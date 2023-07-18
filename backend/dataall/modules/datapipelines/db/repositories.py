@@ -4,7 +4,7 @@ from sqlalchemy.orm import Query
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.stacks.db.stack_models import Stack
-from dataall.db import exceptions, paginate
+from dataall.base.db import exceptions, paginate
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 
 

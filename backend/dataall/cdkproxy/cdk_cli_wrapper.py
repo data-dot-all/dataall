@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.base.aws.sts import SessionHelper
-from ..db import Engine
+from dataall.base.db import Engine
 from dataall.base.utils.alarm_service import AlarmService
 
 logger = logging.getLogger('cdksass')

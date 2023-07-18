@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.core.vote.db import vote_models as models
 from dataall.base.context import get_context
 

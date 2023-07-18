@@ -17,7 +17,7 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from dataall import db
+from dataall.base import db
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService

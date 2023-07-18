@@ -8,7 +8,7 @@ from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
 

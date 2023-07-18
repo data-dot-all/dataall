@@ -31,7 +31,7 @@ from dataall.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
 from dataall.cdkproxy.stacks.policies.data_policy import S3Policy
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
-from dataall import db
+from dataall.base import db
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil

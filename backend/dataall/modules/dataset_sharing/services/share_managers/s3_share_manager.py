@@ -4,7 +4,7 @@ import json
 import time
 
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
-from dataall.db import utils
+from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient

@@ -12,7 +12,7 @@ from sqlalchemy import orm, Column, String, Boolean
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import utils, Resource
+from dataall.base.db import utils, Resource
 
 revision = '5e5c84138af7'
 down_revision = '94697ee46c0c'

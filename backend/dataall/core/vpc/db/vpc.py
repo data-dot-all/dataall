@@ -4,7 +4,7 @@ from sqlalchemy import and_
 
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.env_permission_checker import has_group_permission
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.core.vpc.db import vpc_models as models
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission

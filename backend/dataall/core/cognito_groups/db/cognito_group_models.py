@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 
-from dataall.db import Base, Resource, utils
+from dataall.base.db import Base, Resource, utils
 
 
 class Group(Resource, Base):

@@ -19,7 +19,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.vpc.db.vpc import Vpc
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.base.utils.naming_convention import (
     NamingConventionService,

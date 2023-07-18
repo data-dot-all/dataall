@@ -1,7 +1,7 @@
 from dataall.base.context import set_context, RequestContext
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db.exceptions import ResourceUnauthorized
+from dataall.base.db.exceptions import ResourceUnauthorized
 from dataall.core.permissions.permissions import TENANT_ALL
 from dataall.modules.datasets.services.dataset_permissions import DATASET_WRITE, UPDATE_DATASET, MANAGE_DATASETS, \
     DATASET_READ

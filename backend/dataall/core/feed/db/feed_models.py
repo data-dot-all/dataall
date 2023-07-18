@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime
 
-from dataall.db import Base, utils
+from dataall.base.db import Base, utils
 
 
 class FeedMessage(Base):

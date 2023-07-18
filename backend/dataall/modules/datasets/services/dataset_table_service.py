@@ -5,7 +5,7 @@ from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db.exceptions import ResourceShared
+from dataall.base.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
