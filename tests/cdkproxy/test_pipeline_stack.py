@@ -50,10 +50,6 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         'dataall.cdkproxy.stacks.pipeline.PipelineStack._check_repository',
         return_value=None
     )
-
-    mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
-    )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
