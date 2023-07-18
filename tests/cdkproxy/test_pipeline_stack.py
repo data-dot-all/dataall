@@ -1,4 +1,5 @@
 import json
+import boto3
 import os
 import sys
 import pytest
@@ -30,16 +31,20 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=pip_envs,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
-        return_value= ({
-            'AWS_REGION': env.region,
-            'AWS_DEFAULT_REGION': env.region,
-            'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
-            'envname': 'pytest',
-            'PYTHON_PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
-            'PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
-        }, True)
+        "dataall.aws.handlers.sts.SessionHelper.remote_session",
+        return_value=boto3.Session(),
     )
+    # mocker.patch(
+    #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
+    #     return_value= ({
+    #         'AWS_REGION': env.region,
+    #         'AWS_DEFAULT_REGION': env.region,
+    #         'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
+    #         'envname': 'pytest',
+    #         'PYTHON_PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
+    #         'PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
+    #     }, True)
+    # )
     # mocker.patch(
     #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
     #     return_value=({
