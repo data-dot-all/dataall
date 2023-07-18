@@ -28,24 +28,24 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_environments',
         return_value=pip_envs,
     )
-    mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
-        return_value= ({
-            'AWS_REGION': env.region,
-            'AWS_DEFAULT_REGION': env.region,
-            'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
-            'envname': 'pytest',
-        }, True)
-    )
-    mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
-        return_value=({
-                          'AWS_REGION': env.region,
-                          'AWS_DEFAULT_REGION': env.region,
-                          'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
-                          'envname': 'pytest',
-                      }, True)
-    )
+    # mocker.patch(
+    #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
+    #     return_value= ({
+    #         'AWS_REGION': env.region,
+    #         'AWS_DEFAULT_REGION': env.region,
+    #         'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
+    #         'envname': 'pytest',
+    #     }, True)
+    # )
+    # mocker.patch(
+    #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
+    #     return_value=({
+    #                       'AWS_REGION': env.region,
+    #                       'AWS_DEFAULT_REGION': env.region,
+    #                       'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
+    #                       'envname': 'pytest',
+    #                   }, True)
+    # )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack._check_repository',
         return_value=None

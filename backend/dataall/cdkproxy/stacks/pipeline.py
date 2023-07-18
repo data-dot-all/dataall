@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 from typing import List
 
 
@@ -549,11 +550,13 @@ class PipelineStack(Stack):
     def _set_env_vars(pipeline_environment):
         aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
         env_creds = aws.get_credentials()
-
+        python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')
         env = {
             'AWS_REGION': pipeline_environment.region,
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
+            'PYTHONPATH': python_path,
+            'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
             'COOKIECUTTER_CONFIG': "/dataall/cookiecutter_config.yaml",
         }
