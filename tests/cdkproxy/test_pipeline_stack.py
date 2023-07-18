@@ -48,7 +48,7 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack._check_repository',
-        return_value=True
+        return_value=None
     )
 
     mocker.patch(
@@ -78,6 +78,7 @@ def template2(pipeline2):
 
 
 def test_resources_created_cp_trunk(template2):
+    print(template2)
     assert 'AWS::CodeCommit::Repository' in template2
     assert 'AWS::CodePipeline::Pipeline' in template2
     assert 'AWS::CodeBuild::Project' in template2
