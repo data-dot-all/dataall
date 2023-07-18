@@ -9,8 +9,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization import Organization
 from dataall.db import paginate
 from dataall.db.exceptions import ObjectNotFound
-from dataall.db.models.Enums import Language
-from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.base.utils.naming_convention import (

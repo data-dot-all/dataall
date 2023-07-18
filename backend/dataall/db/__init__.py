@@ -1,5 +1,4 @@
 from .base import Base, Resource
-from . import models
 from . import exceptions
 from .connection import (
     Engine,
@@ -12,4 +11,3 @@ from .connection import (
 )
 from .dbconfig import DbConfig
 from .paginator import paginate
-from . import api
