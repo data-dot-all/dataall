@@ -38,6 +38,23 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         }, True)
     )
     mocker.patch(
+        'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
+        return_value=({
+                          'AWS_REGION': env.region,
+                          'AWS_DEFAULT_REGION': env.region,
+                          'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
+                          'envname': 'pytest',
+                      }, True)
+    )
+    mocker.patch(
+        'dataall.cdkproxy.stacks.pipeline.PipelineStack._check_repository',
+        return_value=True
+    )
+
+    mocker.patch(
+        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
+    )
+    mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
     mocker.patch(
