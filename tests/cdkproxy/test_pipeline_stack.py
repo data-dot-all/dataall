@@ -1,7 +1,5 @@
 import json
-import boto3
 import os
-import sys
 import pytest
 from aws_cdk import App
 
@@ -31,32 +29,15 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=pip_envs,
     )
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.remote_session",
-        return_value=boto3.Session(),
+        'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
+        return_value=(os.environ, True)
     )
-    # mocker.patch(
-    #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
-    #     return_value= ({
-    #         'AWS_REGION': env.region,
-    #         'AWS_DEFAULT_REGION': env.region,
-    #         'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
-    #         'envname': 'pytest',
-    #         'PYTHON_PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
-    #         'PATH': '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH'),
-    #     }, True)
-    # )
-    # mocker.patch(
-    #     'dataall.cdkproxy.stacks.pipeline.PipelineStack._set_env_vars',
-    #     return_value=({
-    #                       'AWS_REGION': env.region,
-    #                       'AWS_DEFAULT_REGION': env.region,
-    #                       'CURRENT_AWS_ACCOUNT': env.AwsAccountId,
-    #                       'envname': 'pytest',
-    #                   }, True)
-    # )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack._check_repository',
-        return_value=None
+        return_value=False
+    )
+    mocker.patch(
+        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
@@ -82,7 +63,6 @@ def template2(pipeline2):
 
 
 def test_resources_created_cp_trunk(template2):
-    print(template2)
     assert 'AWS::CodeCommit::Repository' in template2
     assert 'AWS::CodePipeline::Pipeline' in template2
     assert 'AWS::CodeBuild::Project' in template2
