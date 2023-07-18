@@ -9,7 +9,7 @@ from ariadne import (
     graphql_sync,
 )
 
-from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
+from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.context import set_context, dispose_context, RequestContext

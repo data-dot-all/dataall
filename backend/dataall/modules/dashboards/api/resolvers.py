@@ -1,4 +1,4 @@
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote

@@ -1,4 +1,4 @@
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
 from dataall.modules.notebooks.api.enums import SagemakerNotebookRole

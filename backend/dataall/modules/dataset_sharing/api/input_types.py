@@ -1,4 +1,4 @@
-from dataall.api.constants import *
+from dataall.base.api.constants import *
 from dataall.core.organizations.api.enums import OrganisationUserRole
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 

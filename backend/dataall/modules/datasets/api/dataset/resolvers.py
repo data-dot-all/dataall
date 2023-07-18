@@ -1,6 +1,6 @@
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper

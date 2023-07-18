@@ -1,7 +1,7 @@
 import json
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.models import Environment

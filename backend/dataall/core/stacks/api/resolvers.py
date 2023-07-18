@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper

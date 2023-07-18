@@ -1,7 +1,7 @@
 import json
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.services.dataset_service import DatasetService

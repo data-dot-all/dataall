@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base import utils
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization

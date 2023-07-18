@@ -1,6 +1,6 @@
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.vpc.db.vpc import Vpc
 
 log = logging.getLogger(__name__)

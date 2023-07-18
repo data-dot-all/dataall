@@ -5,7 +5,7 @@ from dataall.modules.datasets.api.table.resolvers import (
     get_glue_table_properties,
     resolve_glossary_terms
 )
-from dataall.api.constants import GraphQLEnumMapper
+from dataall.base.api.constants import GraphQLEnumMapper
 
 TablePermission = gql.ObjectType(
     name='TablePermission',
