@@ -332,6 +332,9 @@ class Dataset:
             for k in data.keys():
                 if k != 'stewards':
                     setattr(dataset, k, data.get(k))
+            if data.get('KmsAlias') not in ["Undefined"]:
+                dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
+                dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
             if data.get('stewards') and data.get('stewards') != dataset.stewards:
                 if data.get('stewards') != dataset.SamlAdminGroupName:
                     Dataset.transfer_stewardship_to_new_stewards(

@@ -42,6 +42,7 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument('language', gql.Ref('Language')),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
     ],
 )
 
