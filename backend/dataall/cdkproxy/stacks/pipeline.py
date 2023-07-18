@@ -184,11 +184,10 @@ class PipelineStack(Stack):
                 )
             )
         )
-
+        logger.info(f"code directory path = {code_dir_path}")
+        env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
         try:
-            env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
-            codecommit_client = aws.client('codecommit', region_name=pipeline_environment.region)
-            repository = PipelineStack._check_repository(codecommit_client, pipeline.repo)
+            repository = PipelineStack._check_repository(aws, pipeline_environment.region, pipeline.repo)
             if repository:
                 PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
@@ -569,7 +568,8 @@ class PipelineStack(Stack):
         return env, aws
 
     @staticmethod
-    def _check_repository(codecommit_client, repo_name):
+    def _check_repository(aws, region, repo_name):
+        codecommit_client = aws.client('codecommit', region_name=region)
         repository = None
         logger.info(f"Checking Repository Exists: {repo_name}")
         try:
