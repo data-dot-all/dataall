@@ -556,7 +556,7 @@ class PipelineStack(Stack):
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
             'envname': os.environ.get('envname', 'local'),
-            'COOKIECUTTER_CONFIG': "/dataall/blueprints/cookiecutter_config.yaml",
+            'COOKIECUTTER_CONFIG': "/dataall/cdkproxy/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(

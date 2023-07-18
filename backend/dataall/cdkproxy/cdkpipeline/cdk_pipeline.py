@@ -269,7 +269,7 @@ app.synth()
             'PYTHONPATH': python_path,
             'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
-            'COOKIECUTTER_CONFIG': "/dataall/blueprints/cookiecutter_config.yaml",
+            'COOKIECUTTER_CONFIG': "/dataall/cdkproxy/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(
