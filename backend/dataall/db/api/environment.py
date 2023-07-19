@@ -19,15 +19,15 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import paginate
-from dataall.core.environment.db.models import EnvironmentParameter
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from ...core.context import get_context
+from dataall.core.context import get_context
+from dataall.core.environment.db.models import EnvironmentParameter
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 
 log = logging.getLogger(__name__)
 
