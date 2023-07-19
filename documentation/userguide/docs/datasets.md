@@ -1,6 +1,6 @@
 # **Datasets**
 ## **Datasets**
-In data.all, a Dataset is a representation of multiple AWS resources that helps
+In <span style="color:grey">*data.all*</span>, a Dataset is a representation of multiple AWS resources that helps
 users store data and establish the basis to make this data discoverable and shareable with other teams.
 
 When data owners create a dataset the following resources are
@@ -8,13 +8,32 @@ deployed on the selected environment and its linked AWS account:
 
 1.  Amazon S3 Bucket to store the data on AWS.
 2.  AWS KMS key to encrypt the data on AWS.
-3.  AWS IAM role that gives access to the data on Amazon S3.
+3.  AWS IAM role that gives access to the data on Amazon S3 (Dataset IAM role, see below)
 4.  AWS Glue database that is the representation of the structured data on AWS.
 
-!!!abstract "AWS Champion"
-    data.all does all the infrastructure heavy lifting for data owners using
-    **AWS CDK** and **AWS CloudFormation** service while following AWS
-    deployment and security best practices.
+### Dataset IAM role
+
+**Usage**
+
+- Assumed by Dataset owners from <span style="color:grey">*data.all*</span> UI to quickly ingest or access Dataset data
+- Assumed by Dataset Glue crawler
+- Assumed by the Dataset Glue profiling job
+
+**IAM Permissions**
+
+- read and write permissions to the Dataset S3 Bucket (ONLY this bucket)
+- encrypt/decrypt data with the Dataset KMS key (ONLY this key)
+- read and write permissions to the Dataset Glue database and tables (ONLY this database)
+- read permissions to profiling/code folder in the Environment S3 Bucket (ONLY this folder)
+- read and write permissions to profiling/results/datasetUri folder in the Environment S3 Bucket (ONLY this folder)
+- put logs permissions to log crawler and profiling jobs results
+
+**Data Governance with Lake Formation** 
+
+In addition to restricting the access via IAM policies, Dataset Glue database and tables are 
+protected using AWS Lake Formation. With Lake Formation, the Dataset IAM role gets granted
+access to the Dataset Glue database only.
+
 
 ### Tables and Folders
 
@@ -76,13 +95,22 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 
 ## :material-import: **Import a dataset**
 
-If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
-the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database:
 
-| Field             | Description                                                                | Required | Editable |Example
-|-------------------|----------------------------------------------------------------------------|----------|----------|-------------
-| Amazon S3 bucket name  | Name of the S3 bucket you want to import           | Yes      | No    |importedBucket
-| AWS Glue database name | Name of the Glue database tht you want to import         | No       | No      |anyDatabase
+If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
+the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database and a KMS key Alias. If the Glue database
+is left empty, data.all will create a Glue database pointing at the S3 Bucket. As for the KMS key Alias, data.all assumes that if nothing is specified
+the S3 Bucket is encrypted with SSE-S3 encryption.
+
+| Field                  | Description                                                                                     | Required | Editable |Example
+|------------------------|-------------------------------------------------------------------------------------------------|----------|----------|-------------
+| Amazon S3 bucket name  | Name of the S3 bucket you want to import                                                        | Yes      | No    |DOC-EXAMPLE-BUCKET
+| Amazon KMS key Alias   | Alias of the KMS key used to encrypt the S3 Bucket (do not include alias/<ALIAS>, just <ALIAS>) | Yes      | No    |somealias
+| AWS Glue database name | Name of the Glue database tht you want to import                                                | No       | No      |anyDatabase
+
+!!!success "Update imported Datasets"
+    Imported keys is an addition of V1.6.0 release. Any previously imported bucket will have a KMS Key Alias set to `Undefined`.
+    If that is the case and you want to update the Dataset and import a KMS key Alias, data.all let's you edit the Dataset on the 
+    **Edit** window.
 
 ![import_dataset](pictures/datasets/import_dataset.png#zoom#shadow)
 

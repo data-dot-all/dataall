@@ -1,3 +1,7 @@
+import random
+import string
+
+import boto3
 from aws_cdk import (
     aws_ssm,
 )
@@ -17,6 +21,7 @@ class ParamStoreStack(pyNestedClass):
         quicksight_enabled=False,
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
+        pivot_role_name='dataallPivotRole',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -88,3 +93,46 @@ class ParamStoreStack(pyNestedClass):
             parameter_name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate",
             string_value=str(enable_pivot_role_auto_create),
         )
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallPivotRoleName{envname}',
+            parameter_name=f"/dataall/{envname}/pivotRole/pivotRoleName",
+            string_value=str(pivot_role_name),
+            description=f"Stores dataall pivot role name for environment {envname}",
+        )
+
+        existing_external_id = _get_external_id_value(envname=envname, region=self.region)
+        external_id_value = existing_external_id if existing_external_id else _generate_external_id()
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallExternalId{envname}',
+            parameter_name=f"/dataall/{envname}/pivotRole/externalId",
+            string_value=str(external_id_value),
+            description=f"Stores dataall external id for environment {envname}",
+        )
+
+def _get_external_id_value(envname, region):
+    """For first deployments it returns False,
+    for existing deployments it returns the ssm parameter value generated in the first deployment
+    for prior to V1.5.1 upgrades it returns the secret from secrets manager
+    """
+    session = boto3.Session()
+    secret_id = f"dataall-externalId-{envname}"
+    parameter_path = f"/dataall/{envname}/pivotRole/externalId"
+    try:
+        ssm_client = session.client('ssm', region_name=region)
+        parameter_value = ssm_client.get_parameter(Name=parameter_path)['Parameter']['Value']
+        return parameter_value
+    except:
+        try:
+            secrets_client = session.client('secretsmanager', region_name=region)
+            secret_value = secrets_client.get_secret_value(SecretId=secret_id)['SecretString']
+            return secret_value
+        except:
+            return False
+
+def _generate_external_id():
+    allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    return ''.join(random.choice(allowed_chars) for i in range(32))

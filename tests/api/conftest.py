@@ -187,6 +187,7 @@ def dataset(client, patch_es):
         name: str,
         owner: str,
         group: str,
+        confidentiality: str = None
     ) -> models.Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -290,6 +291,7 @@ def dataset(client, patch_es):
                 'environmentUri': env.environmentUri,
                 'SamlAdminGroupName': group or random_group(),
                 'organizationUri': org.organizationUri,
+                'confidentiality': confidentiality or dataall.api.constants.ConfidentialityClassification.Unclassified.value
             },
         )
         print('==>', response)
@@ -466,7 +468,7 @@ def share(db):
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                permissions=dataall.db.permissions.SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=dataall.db.models.ShareObject.__name__,
             )
@@ -477,14 +479,6 @@ def share(db):
                 resource_uri=share.shareUri,
                 resource_type=dataall.db.models.ShareObject.__name__,
             )
-            if dataset.SamlAdminGroupName != environment.SamlGroupName:
-                dataall.db.api.ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
-                    resource_uri=share.shareUri,
-                    resource_type=dataall.db.models.ShareObject.__name__,
-                )
             session.commit()
             return share
 
@@ -562,6 +556,49 @@ def table(db):
             )
             session.add(table)
         return table
+
+    yield factory
+
+
+@pytest.fixture(scope='module', autouse=True)
+def table_with_permission(client, patch_es):
+    cache = {}
+
+    def factory(
+        dataset: models.Dataset,
+        name: str,
+        owner: str,
+        group: str,
+    ) -> models.DatasetTable:
+        key = f'{dataset.datasetUri}-{name}'
+        if cache.get(key):
+            print('found in cache ', cache[key])
+            return cache.get(key)
+        response = client.query(
+            """
+            mutation CreateDatasetTable(
+              $datasetUri: String
+              $input: NewDatasetTableInput
+            ) {
+              createDatasetTable(datasetUri: $datasetUri, input: $input) {
+                tableUri
+                name
+              }
+            }
+            """,
+            username=owner,
+            groups=[group],
+            datasetUri=dataset.datasetUri,
+            input={
+                'label': f'{name}',
+                'name': name,
+                'description': f'test table {name}',
+                'tags': random_tags(),
+                'region': dataset.region
+            },
+        )
+        print('==>', response)
+        return response.data.createDatasetTable
 
     yield factory
 

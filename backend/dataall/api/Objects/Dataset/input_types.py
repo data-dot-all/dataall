@@ -42,6 +42,7 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument('language', gql.Ref('Language')),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
     ],
 )
 
@@ -94,7 +95,7 @@ ImportDatasetInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('bucketName', gql.NonNullableType(gql.String)),
         gql.Argument('glueDatabaseName', gql.String),
-        gql.Argument('KmsKeyId', gql.String),
+        gql.Argument('KmsKeyAlias', gql.NonNullableType(gql.String)),
         gql.Argument('adminRoleName', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('owner', gql.NonNullableType(gql.String)),

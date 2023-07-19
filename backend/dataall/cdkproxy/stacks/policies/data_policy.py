@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 from aws_cdk import aws_iam as iam
+from ....aws.handlers.kms import KMS
 
 from ....db import models
 
@@ -9,6 +10,11 @@ logger = logging.getLogger()
 
 
 class DataPolicy:
+    """
+    Class including all permissions needed to work with AWS Lambda.
+    It allows data.all users to:
+    -
+    """
     def __init__(
         self,
         stack,
@@ -35,57 +41,6 @@ class DataPolicy:
         self.team = team
         self.datasets = datasets
 
-    def generate_admins_data_access_policy(self) -> iam.Policy:
-        """
-        Creates an open ws_iam.Policy for environment admins
-        """
-
-        policy: iam.Policy = iam.Policy(
-            self.stack,
-            self.id,
-            policy_name=self.name,
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        's3:List*',
-                        's3:Get*',
-                        's3:PutAccountPublicAccessBlock',
-                        's3:PutAccessPointPublicAccessBlock',
-                        's3:PutStorageLensConfiguration',
-                        's3:GetAccessPoint',
-                        's3:GetAccessPointPolicy',
-                        's3:ListAccessPoints',
-                        's3:CreateAccessPoint',
-                        's3:DeleteAccessPoint',
-                        's3:GetAccessPointPolicyStatus',
-                        's3:DeleteAccessPointPolicy',
-                        's3:PutAccessPointPolicy',
-                        's3:CreateJob',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:*'],
-                    resources=[
-                        f'arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:job/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:storage-lens/*',
-                        f'arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:accesspoint/*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:s3:::{self.resource_prefix}*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=['athena:*', 'lakeformation:*', 'glue:*', 'kms:*'],
-                    resources=['*'],
-                ),
-            ],
-        )
-        logger.debug(f'Final generated policy {policy.document.to_json()}')
-
-        return policy
-
     def generate_data_access_policy(self) -> iam.Policy:
         """
         Creates aws_iam.Policy based on team datasets
@@ -105,70 +60,97 @@ class DataPolicy:
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="ListAll",
                 actions=[
-                    's3:List*',
-                    's3:Get*',
-                    's3:PutAccountPublicAccessBlock',
-                    's3:PutAccessPointPublicAccessBlock',
-                    's3:PutStorageLensConfiguration',
-                    's3:CreateJob',
-                    's3:GetAccessPoint',
-                    's3:GetAccessPointPolicy',
-                    's3:ListAccessPoints',
-                    's3:CreateAccessPoint',
-                    's3:DeleteAccessPoint',
-                    's3:GetAccessPointPolicyStatus',
-                    's3:DeleteAccessPointPolicy',
-                    's3:PutAccessPointPolicy',
+                    "s3:ListAllMyBuckets",
+                    "s3:ListAccessPoints",
+                    "s3:GetBucketLocation",
+                    'kms:ListAliases',
+                    'kms:ListKeys',
                 ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
-                actions=['s3:*'],
-                resources=[
-                    f'arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:job/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:storage-lens/*',
-                    f'arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:accesspoint/*',
-                ],
-            ),
+                resources=["*"],
+                effect=iam.Effect.ALLOW
+            )
         ]
 
         self.set_allowed_s3_buckets_statements(statements)
-
-        self.set_athena_statements(statements)
+        self.set_allowed_kms_keys_statements(statements)
 
         return statements
 
     def set_allowed_s3_buckets_statements(self, statements):
-        allowed_buckets = [
-            f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}',
-            f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/*',
-        ]
+        allowed_buckets = []
+        allowed_access_points = []
         if self.datasets:
             dataset: models.Dataset
             for dataset in self.datasets:
-                allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}/*')
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
-        statements.extend(
-            [
-                iam.PolicyStatement(
-                    actions=['s3:*'],
-                    resources=allowed_buckets,
-                )
-            ]
-        )
+                allowed_access_points.append(f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*')
+            allowed_buckets_content = [f"{bucket}/*" for bucket in allowed_buckets]
+            statements.extend(
+                [
+                    iam.PolicyStatement(
+                        sid="ListDatasetsBuckets",
+                        actions=[
+                            "s3:ListBucket",
+                            "s3:GetBucketLocation"
+                        ],
+                        resources=allowed_buckets,
+                        effect=iam.Effect.ALLOW,
+                    ),
+                    iam.PolicyStatement(
+                        sid="ReadWriteDatasetsBuckets",
+                        actions=[
+                            "s3:PutObject",
+                            "s3:PutObjectAcl",
+                            "s3:GetObject",
+                            "s3:GetObjectAcl",
+                            "s3:GetObjectVersion",
+                            "s3:DeleteObject"
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        resources=allowed_buckets_content,
+                    ),
+                    iam.PolicyStatement(
+                        sid="ReadAccessPointsDatasetBucket",
+                        actions=[
+                            's3:GetAccessPoint',
+                            's3:GetAccessPointPolicy',
+                            's3:GetAccessPointPolicyStatus',
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        resources=allowed_access_points,
+                    )
+                ]
+            )
 
-    def set_athena_statements(self, statements):
-        statements.extend(
-            [
-                iam.PolicyStatement(
-                    actions=['athena:*'],
-                    resources=[
-                        f'arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}',
-                        f'arn:aws:athena:{self.region}:{self.account}:datacatalog/*',
-                    ],
+    def set_allowed_kms_keys_statements(self, statements):
+        allowed_buckets_kms_keys = []
+        if self.datasets:
+            dataset: models.Dataset
+            for dataset in self.datasets:
+                if dataset.imported and dataset.importedKmsKey:
+                    key_id = KMS.get_key_id(
+                        account_id=dataset.AwsAccountId,
+                        region=dataset.region,
+                        key_alias=f"alias/{dataset.KmsAlias}"
+                    )
+                    if key_id:
+                        allowed_buckets_kms_keys.append(f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
+            if len(allowed_buckets_kms_keys):
+                statements.extend(
+                    [
+                        iam.PolicyStatement(
+                            sid="KMSImportedDatasetAccess",
+                            actions=[
+                                "kms:Decrypt",
+                                "kms:Encrypt",
+                                "kms:ReEncrypt*",
+                                "kms:DescribeKey",
+                                "kms:GenerateDataKey"
+                            ],
+                            effect=iam.Effect.ALLOW,
+                            resources=allowed_buckets_kms_keys
+                        )
+                    ]
                 )
-            ]
-        )

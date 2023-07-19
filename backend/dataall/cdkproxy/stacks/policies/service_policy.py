@@ -4,11 +4,15 @@ from typing import List
 from aws_cdk import aws_iam
 
 from ....db import permissions
+from ....db import models
 
 logger = logging.getLogger()
 
 
 class ServicePolicy(object):
+    """
+    Generic Class to define AWS-services policies added to an IAM role
+    """
     def __init__(
         self,
         stack,
@@ -20,6 +24,8 @@ class ServicePolicy(object):
         tag_key,
         tag_value,
         resource_prefix,
+        environment: models.Environment,
+        team: models.EnvironmentGroup,
         permissions,
     ):
         self.stack = stack
@@ -30,6 +36,8 @@ class ServicePolicy(object):
         self.tag_key = tag_key
         self.tag_value = tag_value
         self.resource_prefix = resource_prefix
+        self.environment = environment
+        self.team = team
         self.permissions = permissions
         self.role_name = role_name
 
@@ -37,69 +45,77 @@ class ServicePolicy(object):
         """
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
-        from .redshift import Redshift
-        from .databrew import Databrew
-        from .lakeformation import LakeFormation
-        from .sagemaker import Sagemaker
         from ._lambda import Lambda
-        from .codestar import CodeStar
-        from .glue import Glue
-        from .stepfunctions import StepFunctions
-        from .quicksight import QuickSight
+        from .athena import Athena
         from .cloudformation import Cloudformation
+        from .aws_cicd import AwsCICD
+        from .databrew import Databrew
+        from .glue import Glue, GlueCatalog
+        from .quicksight import QuickSight
+        from .sagemaker import Sagemaker
+        from .secretsmanager import SecretsManager
+        from .sqs import SQS
+        from .ssm import SSM
+        from .stepfunctions import StepFunctions
 
         policies: [aws_iam.ManagedPolicy] = [
-            # This policy covers the minumum actions required independent
-            # of the service permissions given to the group.
-            # The 'glue:GetTable', 'glue:GetPartitions' and
-            # 'lakeformation:GetDataAccess' actions are additionally
-            # required for the Worksheet/Athena feature.
+            # This policy adds some minimum actions required independent from the services enabled for the group
             aws_iam.ManagedPolicy(
                 self.stack,
                 self.id,
                 managed_policy_name=f'{self.id}-0',
                 statements=[
                     aws_iam.PolicyStatement(
+                        sid="ListActions",
+                        effect=aws_iam.Effect.ALLOW,
                         actions=[
-                            'athena:ListEngineVersions',
-                            'athena:ListDataCatalogs',
-                            'athena:ListWorkGroups',
-                            'glue:GetTable',
-                            'glue:GetPartitions',
-                            'lakeformation:GetDataAccess',
-                            'kms:Decrypt',
-                            'kms:DescribeKey',
-                            'kms:Encrypt',
-                            'kms:ReEncrypt*',
-                            'kms:GenerateDataKey*',
-                            'kms:CreateGrant',
-                            'secretsmanager:GetSecretValue',
-                            'secretsmanager:DescribeSecret',
-                            'secretsmanager:ListSecrets',
-                            'ssm:GetParametersByPath',
-                            'ssm:GetParameters',
-                            'ssm:GetParameter',
                             'ec2:Describe*',
                             'logs:Describe*',
                             'logs:Get*',
                             'logs:List*',
+                            'cloudwatch:GetMetricData',
+                            'events:ListRuleNamesByTarget',
                             'iam:list*',
                             'iam:Get*',
+                            'iam:CreatePolicy',
+                            'iam:CreateServiceLinkedRole',
                             'tag:GetResources',
-                            'tag:TagResources',
-                            'tag:UntagResources',
                             'tag:GetTagValues',
                             'tag:GetTagKeys',
                         ],
                         resources=['*'],
                     ),
                     aws_iam.PolicyStatement(
+                        sid="CreateServiceRole",
+                        actions=[
+                            'iam:CreateRole',
+                        ],
+                        resources=[
+                            f'arn:aws:iam::{self.account}:role/service-role/*'
+                        ]
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid="PassRole",
                         actions=[
                             'iam:PassRole',
                         ],
                         resources=[
                             f'arn:aws:iam::{self.account}:role/{self.role_name}'
                         ],
+                        conditions={
+                            "StringEquals": {
+                                "iam:PassedToService": [
+                                    "glue.amazonaws.com",
+                                    "lambda.amazonaws.com",
+                                    "sagemaker.amazonaws.com",
+                                    "states.amazonaws.com",
+                                    "sagemaker.amazonaws.com",
+                                    "databrew.amazonaws.com",
+                                    "codebuild.amazonaws.com",
+                                    "codepipeline.amazonaws.com"
+                                ]
+                            }
+                        }
                     ),
                 ],
             )
@@ -107,11 +123,8 @@ class ServicePolicy(object):
 
         services = ServicePolicy.__subclasses__()
 
-        if permissions.CREATE_REDSHIFT_CLUSTER not in self.permissions:
-            services.remove(Redshift)
         if permissions.CREATE_DATASET not in self.permissions:
             services.remove(Databrew)
-            services.remove(LakeFormation)
             services.remove(Glue)
         if (
             permissions.CREATE_NOTEBOOK not in self.permissions
@@ -120,7 +133,7 @@ class ServicePolicy(object):
             services.remove(Sagemaker)
         if permissions.CREATE_PIPELINE not in self.permissions:
             services.remove(Lambda)
-            services.remove(CodeStar)
+            services.remove(AwsCICD)
             services.remove(StepFunctions)
         if permissions.CREATE_DASHBOARD not in self.permissions:
             services.remove(QuickSight)
@@ -130,7 +143,7 @@ class ServicePolicy(object):
             statements.extend(service.get_statements(self))
 
         statements_chunks: list = [
-            statements[i : i + 8] for i in range(0, len(statements), 8)
+            statements[i : i + 10] for i in range(0, len(statements), 10)
         ]
 
         for index, chunk in enumerate(statements_chunks):

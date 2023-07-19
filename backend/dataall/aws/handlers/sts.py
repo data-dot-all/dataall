@@ -24,10 +24,6 @@ class SessionHelper:
     """SessionHelpers is a class simplifying common aws boto3 session tasks and helpers"""
 
     @classmethod
-    def get_root_account_session(cls):
-        ENVNAME = os.environ.get('envname', 'local')
-
-    @classmethod
     def get_session(cls, base_session=None, role_arn=None):
         """Returns a boto3 session fo the given role
         Args:
@@ -52,9 +48,12 @@ class SessionHelper:
                     RoleSessionName=role_arn.split('/')[1],
                 )
             try:
+                region = os.getenv('AWS_REGION', 'eu-west-1')
                 sts = base_session.client(
                     'sts',
                     config=Config(user_agent_extra=f'{__pkg_name__}/{__version__}'),
+                    region_name=region,
+                    endpoint_url=f"https://sts.{region}.amazonaws.com"
                 )
                 response = sts.assume_role(**assume_role_dict)
                 return boto3.Session(
@@ -70,22 +69,24 @@ class SessionHelper:
             return boto3.Session()
 
     @classmethod
-    def get_secret(cls, secret_name):
+    def _get_parameter_value(cls, parameter_path=None):
         """
-        Method to get secret_string from secrets manager
+        Method to get parameter from System Manager Parameter Store
         :return:
         :rtype:
         """
-        secret_string = None
+        parameter_value = None
         region = os.getenv('AWS_REGION', 'eu-west-1')
+        if not parameter_path:
+            raise Exception('Parameter name is None')
         try:
             session = SessionHelper.get_session()
-            client = session.client('secretsmanager', region_name=region)
-            secret_string = client.get_secret_value(SecretId=secret_name).get('SecretString')
-            log.debug(f'Found Secret {secret_name}|{secret_string}')
+            client = session.client('ssm', region_name=region)
+            parameter_value = client.get_parameter(Name=parameter_path)['Parameter']['Value']
+            log.debug(f'Found Parameter {parameter_path}|{parameter_value}')
         except ClientError as e:
-            log.warning(f'Secret {secret_name} not found: {e}')
-        return secret_string
+            log.warning(f'Parameter {parameter_path} not found: {e}')
+        return parameter_value
 
     @classmethod
     def get_external_id_secret(cls):
@@ -95,7 +96,8 @@ class SessionHelper:
         :return:
         :rtype:
         """
-        return SessionHelper.get_secret(secret_name=f'dataall-externalId-{os.getenv("envname", "local")}')
+        return SessionHelper._get_parameter_value(
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId')
 
     @classmethod
     def get_delegation_role_name(cls):
@@ -103,7 +105,8 @@ class SessionHelper:
         Returns:
             string: name of the assumed role
         """
-        return SessionHelper.get_secret(secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}')
+        return SessionHelper._get_parameter_value(
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None, redshiftcluster=None):
@@ -169,6 +172,17 @@ class SessionHelper:
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(accountid, accountid, region)
 
     @classmethod
+    def get_cdk_exec_role_arn(cls, accountid, region):
+        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid using CDK Toolkit role
+        Args:
+            accountid(string) : aws account id
+        Returns:
+                string : arn of the CDKToolkit role on the target aws account id
+        """
+        log.info(f"Getting CDK exec role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-cfn-exec-role-{accountid}-{region}")
+        return 'arn:aws:iam::{}:role/cdk-hnb659fds-cfn-exec-role-{}-{}'.format(accountid, accountid, region)
+
+    @classmethod
     def get_delegation_role_id(cls, accountid):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:
@@ -211,7 +225,12 @@ class SessionHelper:
         """
         if not session:
             session = cls.get_session()
-        client = session.client('sts')
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        client = session.client(
+            'sts',
+            region_name=region,
+            endpoint_url=f"https://sts.{region}.amazonaws.com"
+        )
         response = client.get_caller_identity()
         return response['Account']
 
