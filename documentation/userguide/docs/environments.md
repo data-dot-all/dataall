@@ -11,7 +11,8 @@ users store data and work with data.**
 
 ## :material-hammer-screwdriver: **AWS account Pre-requisites**
 *data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-steps.
+steps. Only the first step, CDK bootstrap, is mandatory; the rest are needed depending on your deployment configuration
+or on the features enabled in the environment.
 
 ### 1. CDK Bootstrap
 
@@ -44,6 +45,12 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````bash
     cdk bootstrap --trust 222222222222  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://333333333333/eu-west-1
     ````
+#### Restricted CDK Execution role
+In the above command we define the `--cloudformation-execution-policies` to use the AdministratorAccess policy `arn:aws:iam::aws:policy/AdministratorAccess`. 
+This is the default policy that CDK uses to deploy resources, nevertheless it is possible to restrict it to any IAM policy created in the account.
+
+In V1.6.0 a more restricted policy is provided and directly downloadable from the UI. This more restrictive policy can be optionally used as
+`--cloudformation-execution-policies` for the CDK Execution role.
 
 
 ### 2. (For manual) Pivot role
@@ -61,7 +68,7 @@ In this case, the AWS CloudFormation stack of the role can be downloaded from <s
 (Navigate to an organization and click on link an environment to see this form). Fill the CloudFormation stack with the parameters
 available in data.all UI to create the role named **dataallPivotRole**. 
 
-!!! note "Upgrading from manual to cdk-created Pivot Role"
+!!! success "Upgrading from manual to cdk-created Pivot Role"
     If you have existing environments that were linked to data.all using a manually created Pivot Role you can
     still benefit from V1.5.0 `enable_pivot_role_auto_create` feature. You just need to update that parameter in
     the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
