@@ -699,6 +699,7 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
             )
             raise e
 
+
 def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
     from ....utils import Parameter
 
@@ -743,7 +744,8 @@ def get_cdk_exec_policy_template(context: Context, source, organizationUri=None)
                 f'Failed to get presigned URL for CDK Exec role template due to: {e}'
             )
             raise e
-            
+
+
 def get_external_id(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
