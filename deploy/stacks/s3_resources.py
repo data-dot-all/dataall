@@ -84,7 +84,7 @@ class S3ResourcesStack(pyNestedClass):
 
         ssm.StringParameter(
             self,
-            f'S3ResourcesBucketKeyParam{envname}',
+            f'S3ResourcesBucketKeyParamCDK{envname}',
             parameter_name=f'/dataall/{envname}/s3/cdk_exec_policy_prefix',
             string_value='policies/cdkExecPolicy.yaml',
         )
