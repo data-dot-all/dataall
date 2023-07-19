@@ -21,6 +21,7 @@ class Field:
         resolver=None,
         test_scope: str = None,
         test_cases: typing.List[str] = ['*'],
+        api_version=1,
         doc='',
     ):
         self.name: str = name
@@ -30,6 +31,7 @@ class Field:
         self.resolver: typing.Callable = resolver
         self.test_scope: str = test_scope
         self.test_cases: typing.List[str] = test_cases
+        self.api_version: int = api_version
 
     def gql(self, with_directives=True) -> str:
         if isinstance(self.type, GraphqlEnum):

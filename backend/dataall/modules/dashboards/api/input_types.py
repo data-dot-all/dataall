@@ -33,11 +33,3 @@ DashboardFilter = gql.InputType(
     ],
 )
 
-DashboardShareFilter = gql.InputType(
-    name='DashboardShareFilter',
-    arguments=[
-        gql.Argument(name='term', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-    ],
-)

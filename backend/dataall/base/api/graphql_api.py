@@ -17,20 +17,16 @@ class Page(gql.ObjectType):
 
 @dataclass
 class PageFilter(gql.InputType):
-    term: str
-    page: int
-    pageSize: int
+    term: str = None
+    page: int = 5
+    pageSize: int = 20
 
 
 _scalars = {
-    str: gql.NonNullableType(gql.String),
-    Optional[str]: gql.String,
-    int: gql.NonNullableType(gql.Integer),
-    Optional[int]: gql.Integer,
-    float: gql.NonNullableType(gql.Number),
-    Optional[float]: gql.Number,
-    bool: gql.NonNullableType(gql.Boolean),
-    Optional[bool]: gql.Boolean,
+    str: gql.String,
+    int: gql.Integer,
+    float: gql.Number,
+    bool: gql.Boolean,
 }
 
 _object_names = set()
@@ -49,16 +45,12 @@ def _resolve_ref(ref_type):
         raise ValueError(f"No reference with name {ref_name}")
 
 
-def _resolve_type(args_type):
-    if issubclass(args_type, gql.ObjectType):
-        return gql.Ref(args_type)
-    if issubclass(args_type, gql.InputType):
-        return gql.Ref(args_type)
-    stype = _scalars.get(args_type, None)
-    if stype:
-        return stype
-
-    return None
+def _resolve_type(arg_type):
+    if isinstance(arg_type, list):
+        return gql.ArrayType(_resolve_type(arg_type[0]))
+    if issubclass(arg_type, gql.ObjectType) or issubclass(arg_type, gql.InputType):
+        return gql.Ref(_objects[arg_type])
+    return _scalars.get(arg_type, None)
 
 
 def _process_api_func(name, field):
@@ -93,11 +85,37 @@ def _process_api_func(name, field):
             name=name,
             args=gql_args,
             type=return_type,
-            resolver=fn_decorator,
+            resolver=fn_decorator(decorated),
+            api_version=2,
         )
 
         return fn_decorator(decorated)
     return decorator
+
+
+def _process_api_class(name, object_factory):
+    if name in _object_names:
+        raise ValueError(f"The object {name} already exists in the schema")
+    _object_names.add(name)
+
+    def class_decorator(cls):
+        _objects[cls] = name
+
+        hints = get_type_hints(cls)
+        gql_args = []
+
+        for hint, value in hints.items():
+            gql_type = _resolve_type(value)
+            if not gql_type:
+                raise ValueError(f"Class {cls.__name__}  has unknown GraphQL type for {hint}")
+
+            has_default = hasattr(cls, str(hint))
+            gql_args.append((hint, gql_type if has_default else gql.NonNullableType(gql_type)))
+
+        object_factory(gql_args)
+
+        return cls
+    return class_decorator
 
 
 def api_query(name: str):
@@ -108,27 +126,21 @@ def api_mutation(name: str):
     return _process_api_func(name, gql.MutationField)
 
 
-def _process_api_class(name):
-    if name in _object_names:
-        raise ValueError(f"The object {name} already exists in the schema")
-    _object_names.add(name)
-
-    def class_decorator(cls):
-        _objects[cls] = name
-
-        hints = get_type_hints(cls)
-        for hint, value in hints.items():
-            gql_type = _resolve_type(value)
-            if not gql_type:
-                raise ValueError(f"Class {cls.__name__}  has unknown GraphQL type for {hint}")
-
-        return cls
-    return class_decorator
-
-
 def api_object(name: str):
-    return _process_api_class(name)
+    def gql_object_factory(hints):
+        return gql.ObjectType(
+            name=name,
+            fields=[gql.Field(name=hint_name, type=hint_type) for hint_name, hint_type in hints]
+        )
+
+    return _process_api_class(name, gql_object_factory)
 
 
 def api_input(name: str):
-    return _process_api_class(name)
+    def gql_input_type_factory(hints):
+        return gql.InputType(
+            name=name,
+            arguments=[gql.Argument(name=hint_name, type=hint_type) for hint_name, hint_type in hints]
+        )
+
+    return _process_api_class(name, gql_input_type_factory)

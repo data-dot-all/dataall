@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from dataall.api.context import Context
 from dataall.base.api import gql
-from dataall.base.api.graphql_api import api_mutation, api_query, api_object, Page, PageFilter
+from dataall.base.api.graphql_api import api_mutation, api_query, api_object, Page, PageFilter, api_input
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
@@ -87,7 +87,7 @@ class DashboardPage(Page):
     nodes: [DashboardShareDto]
 
 
-@api_object(name="DashboardShareFilter")
+@api_input(name="DashboardShareFilter")
 class DashboardPageFilter(PageFilter):
     pass
 
