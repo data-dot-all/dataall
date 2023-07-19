@@ -62,13 +62,3 @@ getReaderSession = gql.QueryField(
     type=gql.String,
     resolver=get_quicksight_reader_url,
 )
-
-listDashboardShares = gql.QueryField(
-    name='listDashboardShares',
-    args=[
-        gql.Argument(name='dashboardUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('DashboardShareFilter')),
-    ],
-    resolver=list_dashboard_shares,
-    type=gql.Ref('DashboardShareSearchResults'),
-)

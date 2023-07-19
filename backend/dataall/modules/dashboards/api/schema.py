@@ -1,4 +1,3 @@
-from dataall.base.api import gql
 from dataall.modules.dashboards.api.resolvers import *
 
 from dataall.core.environment.api.resolvers import resolve_environment
@@ -69,17 +68,5 @@ DashboardSearchResults = gql.ObjectType(
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(Dashboard)),
-    ],
-)
-
-DashboardShareSearchResults = gql.ObjectType(
-    name='DashboardShareSearchResults',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(DashboardShare)),
     ],
 )

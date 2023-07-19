@@ -1,4 +1,8 @@
+from dataclasses import dataclass
+
 from dataall.api.context import Context
+from dataall.base.api import gql
+from dataall.base.api.graphql_api import api_mutation, api_query, api_object, Page, PageFilter
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
@@ -63,40 +67,55 @@ def get_dashboard_organization(context: Context, source: Dashboard, **kwargs):
         return Organization.get_organization_by_uri(session, source.organizationUri)
 
 
-def request_dashboard_share(
-    context: Context,
-    source: Dashboard,
-    principalId: str = None,
-    dashboardUri: str = None,
-):
+@api_object("DashboardShare")
+@dataclass
+class DashboardShareDto(gql.ObjectType):
+    shareUri: str
+    dashboardUri: str
+    name: str
+    label: str
+    SamlGroupName: str
+    status: str
+    owner: str
+    tags: str
+    created: str
+    updated: str
+
+
+@api_object(name="DashboardShareSearchResults")
+class DashboardPage(Page):
+    nodes: [DashboardShareDto]
+
+
+@api_object(name="DashboardShareFilter")
+class DashboardPageFilter(PageFilter):
+    pass
+
+
+@api_mutation(name="requestDashboardShare")
+def request_dashboard_share(principalId: str, dashboardUri: str) -> DashboardShareDto:
     return DashboardShareService.request_dashboard_share(uri=dashboardUri, principal_id=principalId)
 
 
-def approve_dashboard_share(context: Context, source: Dashboard, shareUri: str = None):
+@api_mutation(name="approveDashboardShare")
+def approve_dashboard_share(shareUri: str) -> DashboardShareDto:
     return DashboardShareService.approve_dashboard_share(uri=shareUri)
 
 
-def reject_dashboard_share(context: Context, source: Dashboard, shareUri: str = None):
+@api_mutation(name="rejectDashboardShare")
+def reject_dashboard_share(shareUri: str) -> DashboardShareDto:
     return DashboardShareService.reject_dashboard_share(uri=shareUri)
 
 
-def list_dashboard_shares(
-    context: Context,
-    source: Dashboard,
-    dashboardUri: str = None,
-    filter: dict = None,
-):
+@api_query(name="listDashboardShares")
+def list_dashboard_shares(dashboardUri: str, filter: DashboardPageFilter) -> DashboardPage:
     if not filter:
         filter = {}
     return DashboardShareService.list_dashboard_shares(uri=dashboardUri, data=filter)
 
 
-def share_dashboard(
-    context: Context,
-    source: Dashboard,
-    principalId: str = None,
-    dashboardUri: str = None,
-):
+@api_mutation("shareDashboard")
+def share_dashboard(principalId: str, dashboardUri: str) -> DashboardShareDto:
     return DashboardShareService.share_dashboard(uri=dashboardUri, principal_id=principalId)
 
 
