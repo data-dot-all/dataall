@@ -10,7 +10,6 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.ram import Ram
 from dataall.db import exceptions, models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -454,25 +453,6 @@ class LFShareManager:
                 client, self.source_environment.AwsAccountId, revoke_entries
             )
         return revoke_entries
-
-    def delete_ram_resource_shares(self, resource_arn: str) -> [dict]:
-        """
-        Deletes resource share for the resource arn
-        Parameters
-        ----------
-        resource_arn : glue table arn
-
-        Returns
-        -------
-        list of ram associations
-        """
-        logger.info(f'Cleaning RAM resource shares for resource: {resource_arn} ...')
-        return Ram.delete_resource_shares(
-            SessionHelper.remote_session(
-                accountid=self.source_environment.AwsAccountId
-            ).client('ram', region_name=self.source_environment.region),
-            resource_arn,
-        )
 
     def handle_share_failure(
         self,

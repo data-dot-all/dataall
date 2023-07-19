@@ -29,7 +29,6 @@ class LakeFormationClient:
         principals,
         database_name,
         permissions,
-        permissions_with_grant_options=None,
     ):
         for principal in principals:
             log.info(

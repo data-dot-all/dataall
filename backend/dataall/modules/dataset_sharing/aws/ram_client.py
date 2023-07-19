@@ -3,21 +3,26 @@ import time
 
 from botocore.exceptions import ClientError
 
-from .sts import SessionHelper
+from dataall.aws.handlers.sts import SessionHelper
 
 log = logging.getLogger('aws:ram')
 
 
-class Ram:
-    @staticmethod
-    def get_resource_share_invitations(
-        client, resource_share_arns, sender_account, receiver_account
+class RamClient:
+    def __init__(self, account_id, region):
+        session = SessionHelper.remote_session(accountid=account_id)
+        self._client = session.client('ram', region_name=region)
+        self._account_id = account_id
+
+    def _get_resource_share_invitations(
+        self, resource_share_arns, receiver_account
     ):
+        sender_account = self._account_id
         log.info(f'Listing invitations for resourceShareArns: {resource_share_arns}')
         try:
             resource_share_invitations = []
 
-            paginator = client.get_paginator('get_resource_share_invitations')
+            paginator = self._client.get_paginator('get_resource_share_invitations')
             invitation_pages = paginator.paginate(resourceShareArns=resource_share_arns)
             for page in invitation_pages:
                 resource_share_invitations.extend(page.get('resourceShareInvitations'))
@@ -36,10 +41,9 @@ class Ram:
             )
             raise e
 
-    @staticmethod
-    def accept_resource_share_invitation(client, resource_share_invitation_arn):
+    def _accept_resource_share_invitation(self, resource_share_invitation_arn):
         try:
-            response = client.accept_resource_share_invitation(
+            response = self._client.accept_resource_share_invitation(
                 resourceShareInvitationArn=resource_share_invitation_arn
             )
             log.info(f'Accepted ram invitation {resource_share_invitation_arn}')
@@ -74,21 +78,18 @@ class Ram:
             log.debug('Skipping RAM invitation management for same account sharing.')
             return True
 
-        source_session = SessionHelper.remote_session(accountid=source['accountid'])
-        source_ram = source_session.client('ram', region_name=source['region'])
-
-        target_session = SessionHelper.remote_session(accountid=target['accountid'])
-        target_ram = target_session.client('ram', region_name=target['region'])
+        source_ram = RamClient(source['accountid'], target['region'])
+        target_ram = RamClient(target['accountid'], target['region'])
 
         resource_arn = (
             f'arn:aws:glue:{source["region"]}:{source["accountid"]}:'
             f'table/{data["source"]["database"]}/{data["source"]["tablename"]}'
         )
-        associations = Ram.list_resource_share_associations(source_ram, resource_arn)
+        associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
-        ram_invitations = Ram.get_resource_share_invitations(
-            target_ram, resource_share_arns, source['accountid'], target['accountid']
+        ram_invitations = target_ram._get_resource_share_invitations(
+            resource_share_arns, source['accountid'],
         )
         log.info(
             f'Found {len(ram_invitations)} RAM invitations for resourceShareArn: {resource_share_arns}'
@@ -99,8 +100,8 @@ class Ram:
                     log.info(
                         f'Invitation {invitation} is in PENDING status accepting it ...'
                     )
-                    Ram.accept_resource_share_invitation(
-                        target_ram, invitation['resourceShareInvitationArn']
+                    target_ram._accept_resource_share_invitation(
+                        invitation['resourceShareInvitationArn']
                     )
                     # Ram invitation acceptance is slow
                     time.sleep(5)
@@ -115,8 +116,8 @@ class Ram:
                     )
                     failed_invitations.append(invitation)
                     retry_share_table = True
-                    source_ram.delete_resource_share(
-                        resourceShareArn=invitation['resourceShareArn']
+                    source_ram._delete_resource_share(
+                        resource_share_arn=invitation['resourceShareArn']
                     )
 
                 elif invitation['status'] == 'ACCEPTED':
@@ -131,13 +132,12 @@ class Ram:
 
         return retry_share_table, failed_invitations
 
-    @staticmethod
-    def list_resource_share_associations(client, resource_arn):
+    def _list_resource_share_associations(self, resource_arn):
         associations = []
         try:
             log.debug(f'RAM list_resource_share_associations : {resource_arn}')
 
-            paginator = client.get_paginator(
+            paginator = self._client.get_paginator(
                 'get_resource_share_associations'
             ).paginate(
                 associationType='RESOURCE',
@@ -155,71 +155,8 @@ class Ram:
             )
             raise e
 
-    @staticmethod
-    def delete_resource_shares(client, resource_arn):
-        log.info(f'Cleaning RAM resource shares for resource: {resource_arn}')
-        try:
-            associations = Ram.list_resource_share_associations(client, resource_arn)
-            for a in associations:
-                log.info(f"Deleting resource share: {a['resourceShareArn']}")
-                client.delete_resource_share(resourceShareArn=a['resourceShareArn'])
-            return associations
-        except ClientError as e:
-            log.error(f'Failed cleaning RAM resource shares due to: {e} ')
+    def _delete_resource_share(self, resource_share_arn):
+        self._client.delete_resource_share(
+            resource_share_arn=resource_share_arn
+        )
 
-    @staticmethod
-    def delete_lfv1_resource_shares_for_table(client, resource_arn):
-        log.info(f'Cleaning LF V1 RAM resource shares for resource: {resource_arn}')
-        try:
-            associations = Ram.list_resource_share_associations(client, resource_arn)
-            for a in associations:
-                if (
-                    'LakeFormation' in a['resourceShareName']
-                    and 'LakeFormation-V2' in a['resourceShareName']
-                ):
-                    log.info(
-                        f"Found lakeformation V1 RAM association: {a['resourceShareName']}."
-                        'Deleting it ...'
-                    )
-                    client.delete_resource_share(resourceShareArn=a['resourceShareArn'])
-            return associations
-        except ClientError as e:
-            log.error(f'Failed cleaning RAM resource shares due to: {e} ')
-
-    @staticmethod
-    def delete_lakeformation_v1_resource_shares(client):
-        log.info('Cleaning LF V1 RAM resource shares...')
-
-        try:
-            resources = []
-            paginator = client.get_paginator('list_resources').paginate(
-                resourceOwner='SELF',
-                resourceRegionScope='REGIONAL',
-            )
-            for page in paginator:
-                resources.extend(page['resources'])
-
-            log.info(f'Found resources : {len(resources)}')
-            resource_shares = []
-            for r in resources:
-                paginator = client.get_paginator('get_resource_shares').paginate(
-                    resourceShareArns=[r['resourceShareArn']],
-                    resourceOwner='SELF',
-                )
-                for page in paginator:
-                    resource_shares.extend(page['resourceShares'])
-                for rs in resource_shares:
-                    if (
-                        'LakeFormation' in rs['name']
-                        and 'LakeFormation-V2' not in rs['name']
-                    ):
-                        log.info(
-                            f"Found lakeformation V1 RAM association: {rs['name']}."
-                            'Deleting it ...'
-                        )
-                        client.delete_resource_share(
-                            resourceShareArn=r['resourceShareArn']
-                        )
-
-        except ClientError as e:
-            log.error(f'Failed cleaning RAM resource shares due to: {e} ')

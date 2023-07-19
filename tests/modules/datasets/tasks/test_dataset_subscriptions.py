@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 import dataall
@@ -137,10 +139,12 @@ def share(
 
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
+    sns_client = MagicMock()
     mocker.patch(
-        'dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService.sns_call',
-        return_value=True,
+        'dataall.modules.datasets.tasks.dataset_subscription_task.SnsDatasetClient',
+        sns_client
     )
+    sns_client.publish_dataset_message.return_value = True
     subscriber = DatasetSubscriptionService(db)
     messages = [
         {

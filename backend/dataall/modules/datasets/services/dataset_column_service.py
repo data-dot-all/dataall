@@ -3,7 +3,6 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db import models
-from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.db.dataset_column_repository import DatasetColumnRepository
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
