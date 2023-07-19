@@ -346,62 +346,6 @@ class PivotRole(NestedStack):
             'PivotRolePolicy1',
             managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-1',
             statements=[
-                # Redshift
-                iam.PolicyStatement(
-                    sid='Redshift',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'redshift:DeleteTags',
-                        'redshift:ModifyClusterIamRoles',
-                        'redshift:DescribeClusterSecurityGroups',
-                        'redshift:DescribeClusterSubnetGroups',
-                        'redshift:pauseCluster',
-                        'redshift:resumeCluster',
-                    ],
-                    resources=['*'],
-                    conditions={'StringEquals': {'aws:ResourceTag/dataall': 'true'}},
-                ),
-                iam.PolicyStatement(
-                    sid='RedshiftRead',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'redshift:DescribeClusters',
-                        'redshift:CreateTags',
-                        'redshift:DescribeClusterSubnetGroups',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    sid='RedshiftCreds',
-                    effect=iam.Effect.ALLOW,
-                    actions=['redshift:GetClusterCredentials'],
-                    resources=[
-                        f'arn:aws:redshift:*:{self.account}:dbgroup:*/*',
-                        f'arn:aws:redshift:*:{self.account}:dbname:*/*',
-                        f'arn:aws:redshift:*:{self.account}:dbuser:*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    sid='AllowRedshiftSubnet',
-                    effect=iam.Effect.ALLOW,
-                    actions=['redshift:CreateClusterSubnetGroup'],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    sid='AllowRedshiftDataApi',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'redshift-data:ListTables',
-                        'redshift-data:GetStatementResult',
-                        'redshift-data:CancelStatement',
-                        'redshift-data:ListSchemas',
-                        'redshift-data:ExecuteStatement',
-                        'redshift-data:ListStatements',
-                        'redshift-data:ListDatabases',
-                        'redshift-data:DescribeStatement',
-                    ],
-                    resources=['*'],
-                ),
                 # EC2
                 iam.PolicyStatement(
                     sid='EC2SG',
@@ -535,34 +479,6 @@ class PivotRole(NestedStack):
                     actions=['ec2:CreateTags'],
                     resources=[f'arn:aws:ec2:*:{self.account}:security-group/*'],
                     conditions={'StringEquals': {'aws:RequestTag/dataall': 'true'}},
-                ),
-                iam.PolicyStatement(
-                    sid='SGandRedshift',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ec2:DeleteTags',
-                        'ec2:DeleteSecurityGroup',
-                        'redshift:DeleteClusterSubnetGroup'
-                    ],
-                    resources=['*'],
-                    conditions={'ForAnyValue:StringEqualsIfExists': {'aws:ResourceTag/dataall': 'true'}},
-                ),
-                # Redshift
-                iam.PolicyStatement(
-                    sid='RedshiftDataApi',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'redshift-data:ListTables',
-                        'redshift-data:GetStatementResult',
-                        'redshift-data:CancelStatement',
-                        'redshift-data:ListSchemas',
-                        'redshift-data:ExecuteStatement',
-                        'redshift-data:ListStatements',
-                        'redshift-data:ListDatabases',
-                        'redshift-data:DescribeStatement',
-                    ],
-                    resources=['*'],
-                    conditions={'StringEqualsIfExists': {'aws:ResourceTag/dataall': 'true'}},
                 ),
                 # Dev Tools
                 iam.PolicyStatement(

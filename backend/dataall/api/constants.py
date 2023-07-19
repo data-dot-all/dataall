@@ -73,13 +73,6 @@ class GlossaryRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class RedshiftClusterRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class ScheduledQueryRole(GraphQLEnumMapper):
     Creator = '950'
     Admin = '900'

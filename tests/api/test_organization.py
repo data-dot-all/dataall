@@ -1,7 +1,7 @@
 import dataall
 import pytest
 
-from dataall.core.environment.models import EnvironmentParameter
+from dataall.core.environment.db.models import EnvironmentParameter
 
 
 @pytest.fixture(scope='module', autouse=True)

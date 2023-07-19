@@ -33,7 +33,6 @@ import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import EnvironmentOverview from './EnvironmentOverview';
 import EnvironmentDatasets from './EnvironmentDatasets';
-import EnvironmentWarehouses from './EnvironmentWarehouses';
 import Stack from '../Stack/Stack';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -59,7 +58,6 @@ const tabs = [
     icon: <FolderOpen fontSize="small" />
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
-  /*{ label: 'Warehouses', value: 'warehouses', icon: <GoDatabase size={20} /> },*/
   {
     label: 'Subscriptions',
     value: 'subscriptions',
@@ -258,9 +256,6 @@ const EnvironmentView = () => {
             )}
             {currentTab === 'networks' && (
               <EnvironmentNetworks environment={env} />
-            )}
-            {currentTab === 'warehouses' && (
-              <EnvironmentWarehouses environment={env} />
             )}
             {currentTab === 'subscriptions' && (
               <EnvironmentSubscriptions

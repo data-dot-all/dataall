@@ -21,7 +21,6 @@ from . import (
     Organization,
     Stack,
     Test,
-    RedshiftCluster,
     Glossary,
     Feed,
     Notification,

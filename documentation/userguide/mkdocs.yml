@@ -16,7 +16,6 @@ nav:
         - ML Studio: mlstudio.md
         - Pipelines: pipelines.md
         - Dashboards: dashboards.md
-        # - Warehouses: redshift.md
     - Security: security.md
     - Monitoring: monitoring.md
     - Labs:
@@ -26,7 +25,6 @@ nav:
       #- Exploration with Notebooks and Worksheets: lab_template.md
       #- Creating and sharing dashboards: lab_template.md
       #- Using ML Studio: lab_template.md
-      #- Using Redshift clusters: lab_template.md
 
 use_directory_urls: false
 

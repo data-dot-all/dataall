@@ -10,5 +10,4 @@ from .environment import Environment
 from .glossary import Glossary
 from .vote import Vote
 from .notification import Notification
-from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc

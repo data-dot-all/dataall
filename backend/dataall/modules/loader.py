@@ -227,6 +227,8 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
 
     # 4) Checks all references for modules (when ModuleInterfaces don't exist or not supported)
     checked_module_names = {module.name() for module in expected_load}
+    # Modules from the config that doesn't support the current mode weren't added in Step1, adding them here
+    checked_module_names |= in_config
     for module in sys.modules.keys():
         if module.startswith(_MODULE_PREFIX) and module != __name__:  # skip loader
             name = _get_module_name(module)

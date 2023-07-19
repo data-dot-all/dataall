@@ -14,7 +14,7 @@ def list_table_columns(
         tableUri = source.tableUri
     if not filter:
         filter = {}
-    return DatasetColumnService.paginate_active_columns_for_table(tableUri, filter)
+    return DatasetColumnService.paginate_active_columns_for_table(uri=tableUri, filter=filter)
 
 
 def sync_table_columns(context: Context, source, tableUri: str = None):

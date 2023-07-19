@@ -1,7 +1,6 @@
 import logging
 
 from dataall.api.Objects.Stack import stack_helper
-from dataall import db
 from dataall.api.context import Context
 from dataall.db import paginate, models
 from dataall.db.api import Environment
@@ -170,15 +169,6 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
         )
 
     return paginate(terms, page_size=100, page=1).to_dict()
-
-
-def resolve_redshift_copy_enabled(context, source: Dataset, clusterUri: str):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        return db.api.RedshiftCluster.get_cluster_dataset(
-            session, clusterUri, source.datasetUri
-        ).datasetCopyEnabled
 
 
 def list_datasets_created_in_environment(
