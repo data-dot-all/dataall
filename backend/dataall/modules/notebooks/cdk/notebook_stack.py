@@ -13,7 +13,7 @@ from aws_cdk import (
     CfnOutput,
 )
 
-from dataall.cdkproxy.stacks.manager import stack
+from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil

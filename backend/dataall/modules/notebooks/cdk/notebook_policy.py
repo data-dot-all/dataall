@@ -1,6 +1,6 @@
 from aws_cdk import aws_iam as iam
 
-from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.base.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from dataall.modules.notebooks.services.notebook_permissions import CREATE_NOTEBOOK
 
 

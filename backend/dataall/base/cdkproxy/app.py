@@ -6,7 +6,7 @@ import sys
 from aws_cdk import Environment, App
 from tabulate import tabulate
 
-from dataall.cdkproxy.stacks import instanciate_stack
+from dataall.base.cdkproxy.stacks import instanciate_stack
 from dataall.base.loader import load_modules, ImportMode
 
 print(sys.version)

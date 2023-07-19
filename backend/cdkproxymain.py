@@ -7,10 +7,10 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI, BackgroundTasks, status, Response
 
-import dataall.cdkproxy.cdk_cli_wrapper as wrapper
+import dataall.base.cdkproxy.cdk_cli_wrapper as wrapper
 from dataall.base import db
 from dataall.base.loader import load_modules, ImportMode
-from dataall.cdkproxy.stacks import StackManager
+from dataall.base.cdkproxy.stacks import StackManager
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.stacks.db.stack_models import Stack
 

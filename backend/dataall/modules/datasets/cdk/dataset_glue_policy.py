@@ -1,4 +1,4 @@
-from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.base.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
 
 from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET

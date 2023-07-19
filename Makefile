@@ -28,7 +28,7 @@ install-backend:
 	pip install -r backend/requirements.txt
 
 install-cdkproxy:
-	pip install -r backend/dataall/cdkproxy/requirements.txt
+	pip install -r backend/dataall/base/cdkproxy/requirements.txt
 
 install-tests:
 	pip install -r tests/requirements.txt
