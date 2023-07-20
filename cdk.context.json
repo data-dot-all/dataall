@@ -14,5 +14,6 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "ssm:account=033050164246:parameterName=/dataall/sbx/pivotRole/externalId:region=us-east-1": "B3M5QQfP1q0KgAoFUXjVl374JAbsjUmX"
 }
