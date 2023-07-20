@@ -1,47 +1,36 @@
-from dataclasses import dataclass
-
-from dataall.api.context import Context
-from dataall.base.api import gql
-from dataall.base.api.graphql_api import api_mutation, api_query, api_object, Page, PageFilter, api_input
+from dataall.base.api.graphql_api import api_mutation, api_query
+from dataall.base.context import get_context
 from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
-from dataall.db.exceptions import RequiredParameter
+from dataall.modules.dashboards.api.dashboard_schema import UpdateDashboardInput, ImportDashboardInput, DashboardFilter, \
+    DashboardSearchResults, DashboardShareDto, DashboardShareFilter, DashboardShareSearchResults, DashboardDto
 from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
-from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.dashboards.services.dashboard_quicksight_service import DashboardQuicksightService
 from dataall.modules.dashboards.services.dashboard_service import DashboardService
 from dataall.modules.dashboards.services.dashboard_share_service import DashboardShareService
 
 
-def import_dashboard(context: Context, source, input: dict = None):
-    if not input:
-        raise RequiredParameter(input)
-    if not input.get('environmentUri'):
-        raise RequiredParameter('environmentUri')
-    if not input.get('SamlGroupName'):
-        raise RequiredParameter('group')
-    if not input.get('dashboardId'):
-        raise RequiredParameter('dashboardId')
-    if not input.get('label'):
-        raise RequiredParameter('label')
-
+@api_mutation("importDashboard")
+def import_dashboard(input: ImportDashboardInput) -> DashboardDto:
     return DashboardService.import_dashboard(
-        uri=input['environmentUri'],
-        admin_group=input['SamlGroupName'],
+        uri=input.environmentUri,
+        admin_group=input.SamlGroupName,
         data=input
     )
 
 
-def update_dashboard(context, source, input: dict = None):
+@api_mutation("updateDashboard")
+def update_dashboard(input: UpdateDashboardInput) -> DashboardDto:
     return DashboardService.update_dashboard(uri=input['dashboardUri'], data=input)
 
 
-def list_dashboards(context: Context, source, filter: dict = None):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
+@api_query("searchDashboards")
+def list_dashboards(filter: DashboardFilter) -> DashboardSearchResults:
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
         return DashboardRepository.paginated_user_dashboards(
             session=session,
             username=context.username,
@@ -50,46 +39,30 @@ def list_dashboards(context: Context, source, filter: dict = None):
         )
 
 
-def get_dashboard(context: Context, source, dashboardUri: str = None):
-    return DashboardService.get_dashboard(uri=dashboardUri)
+@api_query("getDashboard")
+def get_dashboard(dashboardUri: str) -> DashboardDto:
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
+        dashboard = DashboardService.get_dashboard(uri=dashboardUri)
 
+        role = DashboardRole.Shared.value
+        if context.username and dashboard.owner == context.username:
+             role = DashboardRole.Creator.value
+        elif context.groups and dashboard.SamlGroupName in context.groups:
+            role = DashboardRole.Admin.value
 
-def resolve_user_role(context: Context, source: Dashboard):
-    if context.username and source.owner == context.username:
-        return DashboardRole.Creator.value
-    elif context.groups and source.SamlGroupName in context.groups:
-        return DashboardRole.Admin.value
-    return DashboardRole.Shared.value
-
-
-def get_dashboard_organization(context: Context, source: Dashboard, **kwargs):
-    with context.engine.scoped_session() as session:
-        return Organization.get_organization_by_uri(session, source.organizationUri)
-
-
-@api_object("DashboardShare")
-@dataclass
-class DashboardShareDto(gql.ObjectType):
-    shareUri: str
-    dashboardUri: str
-    name: str
-    label: str
-    SamlGroupName: str
-    status: str
-    owner: str
-    tags: str
-    created: str
-    updated: str
-
-
-@api_object(name="DashboardShareSearchResults")
-class DashboardPage(Page):
-    nodes: [DashboardShareDto]
-
-
-@api_input(name="DashboardShareFilter")
-class DashboardPageFilter(PageFilter):
-    pass
+        return DashboardDto(
+            dashboard=dashboard,
+            upvotes=Vote.count_upvotes(
+                session, dashboard.dashboardUri, target_type='dashboard'
+            ),
+            terms= Glossary.get_glossary_terms_links(
+                session, dashboard.dashboardUri, 'Dashboard'
+            ),
+            organization=Organization.get_organization_by_uri(session, dashboard.organizationUri),
+            environment=EnvironmentService.get_environment_by_uri(session, dashboard.environmentUri),
+            role=role
+        )
 
 
 @api_mutation(name="requestDashboardShare")
@@ -108,9 +81,7 @@ def reject_dashboard_share(shareUri: str) -> DashboardShareDto:
 
 
 @api_query(name="listDashboardShares")
-def list_dashboard_shares(dashboardUri: str, filter: DashboardPageFilter) -> DashboardPage:
-    if not filter:
-        filter = {}
+def list_dashboard_shares(dashboardUri: str, filter: DashboardShareFilter) -> DashboardShareSearchResults:
     return DashboardShareService.list_dashboard_shares(uri=dashboardUri, data=filter)
 
 
@@ -119,49 +90,41 @@ def share_dashboard(principalId: str, dashboardUri: str) -> DashboardShareDto:
     return DashboardShareService.share_dashboard(uri=dashboardUri, principal_id=principalId)
 
 
-def delete_dashboard(context: Context, source, dashboardUri: str = None):
+@api_mutation("deleteDashboard")
+def delete_dashboard(dashboardUri: str) -> bool:
     return DashboardService.delete_dashboard(uri=dashboardUri)
 
 
-def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
-    with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
-            session, source.dashboardUri, 'Dashboard'
-        )
-
-
-def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
-    with context.engine.scoped_session() as session:
-        return Vote.count_upvotes(
-            session, source.dashboardUri, target_type='dashboard'
-        )
-
-
-def get_monitoring_dashboard_id(context, source):
+@api_query("getMonitoringDashboardId")
+def get_monitoring_dashboard_id() -> str:
     return DashboardQuicksightService.get_monitoring_dashboard_id()
 
 
-def get_monitoring_vpc_connection_id(context, source):
+@api_query("getMonitoringVPCConnectionId")
+def get_monitoring_vpc_connection_id() -> str:
     return DashboardQuicksightService.get_monitoring_vpc_connection_id()
 
 
-def create_quicksight_data_source_set(context, source, vpcConnectionId: str = None):
+@api_mutation("vpcConnectionId")
+def create_quicksight_data_source_set(vpcConnectionId: str) -> str:
     return DashboardQuicksightService.create_quicksight_data_source_set(vpcConnectionId)
 
 
-def get_quicksight_author_session(context, source, awsAccount: str = None):
+@api_query("getPlatformAuthorSession")
+def get_quicksight_author_session(awsAccount: str) -> str:
     return DashboardQuicksightService.get_quicksight_author_session(awsAccount)
 
 
-def get_quicksight_reader_session(context, source, dashboardId: str = None):
+@api_query("getPlatformReaderSession")
+def get_quicksight_reader_session(dashboardId: str) -> str:
     return DashboardQuicksightService.get_quicksight_reader_session(dashboardId)
 
 
-def get_quicksight_reader_url(context, source, dashboardUri: str = None):
+@api_query("getReaderSession")
+def get_quicksight_reader_url(dashboardUri: str) -> str:
     return DashboardQuicksightService.get_quicksight_reader_url(uri=dashboardUri)
 
 
-def get_quicksight_designer_url(
-    context, source, environmentUri: str = None, dashboardUri: str = None
-):
+@api_query("getAuthorSession")
+def get_quicksight_designer_url(environmentUri: str) -> str:
     return DashboardQuicksightService.get_quicksight_designer_url(uri=environmentUri)

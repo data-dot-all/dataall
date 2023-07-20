@@ -45,7 +45,7 @@ class Vote:
         return vote
 
     @staticmethod
-    def count_upvotes(session, uri, target_type) -> dict:
+    def count_upvotes(session, uri, target_type) -> int:
         return (
             session.query(models.Vote)
             .filter(

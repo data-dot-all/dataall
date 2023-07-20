@@ -1,9 +1,6 @@
 from dataall.modules.dashboards.api import (
-    input_types,
-    mutations,
-    queries,
-    resolvers,
-    schema,
+    dashboard_schema,
+    resolvers
 )
 
-__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations']
+__all__ = ['resolvers', 'dashboard_schema']

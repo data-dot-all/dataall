@@ -8,6 +8,7 @@ from dataall.core.permissions.permission_checker import has_tenant_permission, h
 from dataall.core.vote.db.vote import Vote
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
+from dataall.modules.dashboards.api.dashboard_schema import ImportDashboardInput, UpdateDashboardInput
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, GET_DASHBOARD, \
@@ -27,10 +28,10 @@ class DashboardService:
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(CREATE_DASHBOARD)
     @has_group_permission(CREATE_DASHBOARD)
-    def import_dashboard(uri: str, admin_group: str, data: dict = None) -> Dashboard:
+    def import_dashboard(uri: str, admin_group: str, data: ImportDashboardInput) -> Dashboard:
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
+            env = EnvironmentService.get_environment_by_uri(session, data.environmentUri)
             enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
 
             if not enabled:
@@ -40,17 +41,13 @@ class DashboardService:
                 )
 
             aws_client = DashboardQuicksightClient(context.username, env.AwsAccountId, env.region)
-            can_import = aws_client.can_import_dashboard(data.get('dashboardId'))
+            can_import = aws_client.can_import_dashboard(data.dashboardId)
 
             if not can_import:
                 raise UnauthorizedOperation(
                     action=CREATE_DASHBOARD,
                     message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
                 )
-
-            env = data.get(
-                'environment', EnvironmentService.get_environment_by_uri(session, uri)
-            )
 
             dashboard = DashboardRepository.create_dashboard(session, env, context.username, data)
 
@@ -65,23 +62,24 @@ class DashboardService:
             session.add(activity)
 
             DashboardService._set_dashboard_resource_policy(
-                session, env, dashboard, data['SamlGroupName']
+                session, env, dashboard, data.SamlGroupName
             )
 
-            DashboardService._update_glossary(session, dashboard, data)
+            DashboardService._update_glossary(session, dashboard, data.terms)
             DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
             return dashboard
 
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(UPDATE_DASHBOARD)
-    def update_dashboard(uri: str, data: dict = None) -> Dashboard:
+    def update_dashboard(uri: str, data: UpdateDashboardInput) -> Dashboard:
         with get_context().db_engine.scoped_session() as session:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-            for k in data.keys():
-                setattr(dashboard, k, data.get(k))
+            dashboard.tags = data.tags
+            dashboard.description = data.description
+            dashboard.label = data.label
 
-            DashboardService._update_glossary(session, dashboard, data)
+            DashboardService._update_glossary(session, dashboard, data.terms)
             environment = EnvironmentService.get_environment_by_uri(session, dashboard.environmentUri)
             DashboardService._set_dashboard_resource_policy(
                 session, environment, dashboard, dashboard.SamlGroupName
@@ -126,13 +124,13 @@ class DashboardService:
         )
 
     @staticmethod
-    def _update_glossary(session, dashboard, data):
+    def _update_glossary(session, dashboard, terms):
         context = get_context()
-        if 'terms' in data:
+        if terms:
             Glossary.set_glossary_terms_links(
                 session,
                 context.username,
                 dashboard.dashboardUri,
                 'Dashboard',
-                data['terms'],
+                terms,
             )

@@ -30,18 +30,19 @@ class DashboardRepository(EnvironmentResource):
         return EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
 
     @staticmethod
-    def create_dashboard(session, env, username: str, data: dict = None) -> Dashboard:
+    def create_dashboard(session, env, username: str, data) -> Dashboard:
         dashboard: Dashboard = Dashboard(
-            label=data.get('label', 'untitled'),
-            environmentUri=data.get('environmentUri'),
+            label=data.label,
+            environmentUri=data.environmentUri,
             organizationUri=env.organizationUri,
             region=env.region,
-            DashboardId=data.get('dashboardId'),
+            DashboardId=data.dashboardId,
             AwsAccountId=env.AwsAccountId,
             owner=username,
             namespace='test',
-            tags=data.get('tags', []),
-            SamlGroupName=data['SamlGroupName'],
+            tags=data.tags,
+            SamlGroupName=data.SamlGroupName,
+            description=data.description
         )
         session.add(dashboard)
         session.commit()
