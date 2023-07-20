@@ -4,7 +4,8 @@ import string
 import boto3
 from aws_cdk import (
     aws_ssm,
-    aws_secretsmanager
+    aws_secretsmanager,
+    RemovalPolicy
 )
 
 from .pyNestedStack import pyNestedClass
@@ -109,6 +110,7 @@ class ParamStoreStack(pyNestedClass):
             secret_name=f'dataall-externalId-{envname}',
             generate_secret_string=aws_secretsmanager.SecretStringGenerator(exclude_punctuation=True),
             description=f'Stores dataall external id for environment {envname}',
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         # try:
