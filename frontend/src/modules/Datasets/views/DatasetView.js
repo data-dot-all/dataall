@@ -40,10 +40,12 @@ import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
 import ShareInboxList from '../../Misc/views/Shares/ShareInboxList';
 import { StackStatus } from '../../Misc/views/Stack';
 import Stack from '../../Misc/views/Stack/Stack';
-import { DatasetAWSActions } from '../components/';
-import { DatasetData } from '../components/DatasetData';
-import { DatasetOverview } from '../components/DatasetOverview';
-import DatasetUpload from '../tmp/DatasetUpload';
+import {
+  DatasetAWSActions,
+  DatasetData,
+  DatasetOverview,
+  DatasetUpload
+} from '../components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();

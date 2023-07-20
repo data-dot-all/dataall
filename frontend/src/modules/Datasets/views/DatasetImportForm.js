@@ -29,15 +29,15 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
-  importDataset,
   listEnvironmentGroups,
   listEnvironments,
   useClient
-} from '../../../../services';
-import { Topics } from '../../../constants';
+} from '../../../services';
+import { importDataset } from '../services';
+import { Topics } from '../../constants';
 
 const DatasetImportForm = (props) => {
   const dispatch = useDispatch();
