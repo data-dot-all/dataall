@@ -4,14 +4,14 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
   generateDatasetAccessToken,
-  getDatasetAssumeRoleUrl,
-  useClient
-} from '../../../../services';
+  getDatasetAssumeRoleUrl
+} from '../services';
+import { useClient } from '../../../services/hooks/useClient';
 
-function DatasetAWSActions({ dataset, isAdmin }) {
+export function DatasetAWSActions({ dataset, isAdmin }) {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -85,5 +85,3 @@ DatasetAWSActions.propTypes = {
   dataset: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default DatasetAWSActions;

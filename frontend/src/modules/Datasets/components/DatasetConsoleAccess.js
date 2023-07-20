@@ -7,7 +7,7 @@ import {
   Typography
 } from '@mui/material';
 
-const DatasetConsoleAccess = (props) => {
+export const DatasetConsoleAccess = (props) => {
   const { dataset } = props;
 
   return (
@@ -64,5 +64,3 @@ const DatasetConsoleAccess = (props) => {
 DatasetConsoleAccess.propTypes = {
   dataset: PropTypes.object.isRequired
 };
-
-export default DatasetConsoleAccess;
