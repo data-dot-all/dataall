@@ -104,33 +104,33 @@ class ParamStoreStack(pyNestedClass):
             description=f"Stores dataall pivot role name for environment {envname}",
         )
 
-        aws_secretsmanager.Secret(
-            self,
-            f'ExternalIdSecret{envname}',
-            secret_name=f'dataall-externalId-{envname}',
-            generate_secret_string=aws_secretsmanager.SecretStringGenerator(exclude_punctuation=True),
-            description=f'Stores dataall external id for environment {envname}',
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
-        # try:
-        #     parameter_path = f"/dataall/{envname}/pivotRole/externalId"
-        #     external_id_value = aws_ssm.StringParameter.value_for_string_parameter(self, parameter_path)
-        # except:
-        #     secret_id = f"dataall-externalId-{envname}"
-        #     try:
-        #         external_id_value = aws_secretsmanager.Secret.from_secret_complete_arn(self, "lookUpSecret", f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:{secret_id}")
-        #     except:
-        #         external_id_value = _generate_external_id()
-
-
-        # aws_ssm.StringParameter(
+        # aws_secretsmanager.Secret(
         #     self,
-        #     f'dataallExternalId{envname}',
-        #     parameter_name=f"/dataall/{envname}/pivotRole/externalId",
-        #     string_value=str(external_id_value),
-        #     description=f"Stores dataall external id for environment {envname}",
+        #     f'ExternalIdSecret{envname}',
+        #     secret_name=f'dataall-externalId-{envname}',
+        #     generate_secret_string=aws_secretsmanager.SecretStringGenerator(exclude_punctuation=True),
+        #     description=f'Stores dataall external id for environment {envname}',
+        #     removal_policy=RemovalPolicy.DESTROY,
         # )
+
+        try:
+            parameter_path = f"/dataall/{envname}/pivotRole/externalId"
+            external_id_value = aws_ssm.StringParameter.value_for_string_parameter(self, parameter_path)
+        except:
+            secret_id = f"dataall-externalId-{envname}"
+            try:
+                external_id_value = aws_secretsmanager.Secret.from_secret_partial_arn(self, "lookUpSecret", f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:{secret_id}").secret_value
+            except:
+                external_id_value = _generate_external_id()
+
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallExternalId{envname}',
+            parameter_name=f"/dataall/{envname}/pivotRole/externalId",
+            string_value=str(external_id_value),
+            description=f"Stores dataall external id for environment {envname}",
+        )
 
 def _generate_external_id():
     allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
