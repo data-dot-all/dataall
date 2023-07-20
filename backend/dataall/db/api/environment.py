@@ -34,8 +34,8 @@ log = logging.getLogger(__name__)
 
 class Environment:
     @staticmethod
-    @has_resource_permission(permissions.MANAGE_ENVIRONMENTS)
-    @has_tenant_permission(permissions.LINK_ENVIRONMENT)
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.LINK_ENVIRONMENT)
     def create_environment(session, uri, data=None):
         context = get_context()
         Environment._validate_creation_params(data, uri)
@@ -385,7 +385,7 @@ class Environment:
     @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
     def list_group_permissions(session, uri, group_uri):
         # the permission checked
-        return Environment.list_group_permissions(session, uri, group_uri)
+        return Environment.list_group_permissions_internal(session, uri, group_uri)
 
     @staticmethod
     def list_group_permissions_internal(session, uri, group_uri):
