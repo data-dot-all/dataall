@@ -87,13 +87,10 @@ class EnvironmentSetup(Stack):
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
         with engine.scoped_session() as session:
-            group_permissions = db.api.Environment.list_group_permissions(
+            group_permissions = db.api.Environment.list_group_permissions_internal(
                 session=session,
-                username='cdk',
-                groups=None,
                 uri=environmentUri,
-                data={'groupUri': group},
-                check_perm=False,
+                group_uri=group
             )
             permission_names = [permission.name for permission in group_permissions]
             return permission_names
@@ -103,11 +100,7 @@ class EnvironmentSetup(Stack):
         with engine.scoped_session() as session:
             return db.api.Environment.list_environment_invited_groups(
                 session,
-                username='cdk',
-                groups=[],
                 uri=environment.environmentUri,
-                data=None,
-                check_perm=False,
             )
 
     @staticmethod

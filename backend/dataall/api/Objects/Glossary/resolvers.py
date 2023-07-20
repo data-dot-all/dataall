@@ -26,14 +26,7 @@ def create_glossary(
     context: Context, source, input: dict = None
 ) -> models.GlossaryNode:
     with context.engine.scoped_session() as session:
-        return db.api.Glossary.create_glossary(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=input,
-            check_perm=True,
-        )
+        return db.api.Glossary.create_glossary(session, input)
 
 
 def tree(context: Context, source: models.GlossaryNode):
@@ -93,11 +86,8 @@ def create_category(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.create_category(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=parentUri,
             data=input,
-            check_perm=True,
         )
 
 
@@ -105,11 +95,8 @@ def create_term(context: Context, source, parentUri: str = None, input: dict = N
     with context.engine.scoped_session() as session:
         return db.api.Glossary.create_term(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=parentUri,
             data=input,
-            check_perm=True,
         )
 
 
@@ -119,11 +106,7 @@ def list_glossaries(context: Context, source, filter: dict = None):
     with context.engine.scoped_session() as session:
         return db.api.Glossary.list_glossaries(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -137,11 +120,8 @@ def resolve_categories(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.list_categories(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.nodeUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -153,11 +133,8 @@ def resolve_terms(context: Context, source: models.GlossaryNode, filter: dict = 
     with context.engine.scoped_session() as session:
         return db.api.Glossary.list_terms(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.nodeUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -167,11 +144,8 @@ def update_node(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.update_node(
             session,
-            username=context.username,
-            groups=context.groups,
             uri=nodeUri,
             data=input,
-            check_perm=True,
         )
 
 
@@ -193,14 +167,7 @@ def resolve_user_role(context: Context, source: models.GlossaryNode, **kwargs):
 
 def delete_node(context: Context, source, nodeUri: str = None) -> bool:
     with context.engine.scoped_session() as session:
-        return db.api.Glossary.delete_node(
-            session,
-            username=context.username,
-            groups=context.groups,
-            uri=nodeUri,
-            data=None,
-            check_perm=True,
-        )
+        return db.api.Glossary.delete_node(session, nodeUri)
 
 
 def hierarchical_search(context: Context, source, filter: dict = None):
@@ -210,11 +177,7 @@ def hierarchical_search(context: Context, source, filter: dict = None):
     with context.engine.scoped_session() as session:
         return db.api.Glossary.hierarchical_search(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -251,11 +214,7 @@ def search_terms(context: Context, source, filter: dict = None):
     with context.engine.scoped_session() as session:
         return db.api.Glossary.search_terms(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 

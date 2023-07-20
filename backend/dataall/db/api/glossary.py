@@ -5,19 +5,19 @@ from sqlalchemy import asc, or_, and_, literal, case
 from sqlalchemy.orm import with_expression, aliased
 
 from .. import models, exceptions, permissions, paginate, Resource
-from .permission_checker import has_tenant_perm
 from ..models.Glossary import GlossaryNodeStatus
 from ..paginator import Page
 from dataall.core.permission_checker import has_tenant_permission
 from dataall.core.context import get_context
+from dataall.core.permission_checker import has_tenant_permission
 
 logger = logging.getLogger(__name__)
 
 
 class Glossary:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def create_glossary(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def create_glossary(session, data=None):
         Glossary.validate_params(data)
         g: models.GlossaryNode = models.GlossaryNode(
             label=data.get('label'),
@@ -25,7 +25,7 @@ class Glossary:
             parentUri='',
             path='/',
             readme=data.get('readme', 'no description available'),
-            owner=username,
+            owner=get_context().username,
             admin=data.get('admin'),
             status=GlossaryNodeStatus.approved.value,
         )
@@ -35,8 +35,8 @@ class Glossary:
         return g
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def create_category(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def create_category(session, uri, data=None):
         Glossary.validate_params(data)
         parent: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not parent:
@@ -47,7 +47,7 @@ class Glossary:
             parentUri=parent.nodeUri,
             nodeType='C',
             label=data.get('label'),
-            owner=username,
+            owner=get_context().username,
             readme=data.get('readme'),
         )
         session.add(cat)
@@ -56,8 +56,8 @@ class Glossary:
         return cat
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def create_term(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def create_term(session, uri, data=None):
         Glossary.validate_params(data)
         parent: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not parent:
@@ -73,7 +73,7 @@ class Glossary:
             nodeType='T',
             label=data.get('label'),
             readme=data.get('readme'),
-            owner=username,
+            owner=get_context().username,
         )
         session.add(term)
         session.commit()
@@ -81,8 +81,8 @@ class Glossary:
         return term
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def delete_node(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def delete_node(session, uri):
         count = 0
         node: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not node:
@@ -102,8 +102,8 @@ class Glossary:
         return count
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def update_node(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def update_node(session, uri, data=None):
         node: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not node:
             raise exceptions.ObjectNotFound('Node', uri)
@@ -143,7 +143,7 @@ class Glossary:
         return link
 
     @staticmethod
-    def list_glossaries(session, username, groups, uri, data=None, check_perm=None):
+    def list_glossaries(session, data=None):
         q = session.query(models.GlossaryNode).filter(
             models.GlossaryNode.nodeType == 'G', models.GlossaryNode.deleted.is_(None)
         )
@@ -160,7 +160,7 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def list_categories(session, username, groups, uri, data=None, check_perm=None):
+    def list_categories(session, uri, data=None):
         q = session.query(models.GlossaryNode).filter(
             and_(
                 models.GlossaryNode.parentUri == uri,
@@ -182,7 +182,7 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def list_terms(session, username, groups, uri, data=None, check_perm=None):
+    def list_terms(session, uri, data=None):
         q = session.query(models.GlossaryNode).filter(
             and_(
                 models.GlossaryNode.parentUri == uri,
@@ -203,7 +203,7 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def hierarchical_search(session, username, groups, uri, data=None, check_perm=None):
+    def hierarchical_search(session, data=None):
         q = session.query(models.GlossaryNode).options(
             with_expression(models.GlossaryNode.isMatch, literal(True))
         )
@@ -281,7 +281,7 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def search_terms(session, username, groups, uri, data=None, check_perm=None):
+    def search_terms(session, data=None):
         q = session.query(models.GlossaryNode).filter(
             models.GlossaryNode.deleted.is_(None)
         )

@@ -132,7 +132,7 @@ def test_group_prefixes_by_accountid(db, mocker):
                 ],
                 'Principal': {'AWS': '675534'},
             },
-        ],
+        ]
     }
     BucketPoliciesUpdater.update_policy(statements, policy)
     assert policy

@@ -3,6 +3,7 @@ import logging
 from . import ResourcePolicy, TargetType
 from .. import exceptions
 from .. import models
+from ...core.context import get_context
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -70,27 +71,23 @@ class Stack:
     @staticmethod
     def update_stack(
         session,
-        username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
+        target_type: str
     ) -> [models.Stack]:
 
         if not uri:
             raise exceptions.RequiredParameter('targetUri')
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('targetType'):
+        if not target_type:
             raise exceptions.RequiredParameter('targetType')
 
+        context = get_context()
         ResourcePolicy.check_user_resource_permission(
             session=session,
-            username=username,
-            groups=groups,
+            username=context.username,
+            groups=context.groups,
             resource_uri=uri,
             permission_name=TargetType.get_resource_update_permission_name(
-                data['targetType']
+                target_type
             ),
         )
         stack = Stack.get_stack_by_target_uri(session, target_uri=uri)

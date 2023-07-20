@@ -5,9 +5,11 @@ from sqlalchemy.orm import Query
 
 from .. import exceptions, permissions, paginate
 from .. import models
-from . import has_tenant_perm, ResourcePolicy, has_resource_perm
+from . import ResourcePolicy
 from ..models import OrganizationGroup
 from ..models.Enums import OrganisationUserRole
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
+from ...core.context import get_context
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +29,8 @@ class Organization:
         return session.query(models.Organization).get(uri)
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    def create_organization(session, username, groups, uri, data=None, check_perm=None) -> models.Organization:
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    def create_organization(session, data=None) -> models.Organization:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('SamlGroupName'):
@@ -36,6 +38,7 @@ class Organization:
         if not data.get('label'):
             raise exceptions.RequiredParameter('label')
 
+        username = get_context().username
         org = models.Organization(
             label=data.get('label'),
             owner=username,
@@ -73,18 +76,19 @@ class Organization:
         return org
 
     @staticmethod
-    @has_resource_perm(permissions.UPDATE_ORGANIZATION)
-    def update_organization(session, username, groups, uri, data=None, check_perm=None):
+    @has_resource_permission(permissions.UPDATE_ORGANIZATION)
+    def update_organization(session, uri, data=None):
         organization = Organization.get_organization_by_uri(session, uri)
         for field in data.keys():
             setattr(organization, field, data.get(field))
         session.commit()
 
+        context = get_context()
         activity = models.Activity(
             action='org:update',
             label='org:create',
-            owner=username,
-            summary=f'{username} updated organization {organization.name} ',
+            owner=context.username,
+            summary=f'{context.username} updated organization {organization.name} ',
             targetUri=organization.organizationUri,
             targetType='org',
         )
@@ -124,9 +128,10 @@ class Organization:
         return query
 
     @staticmethod
-    def paginated_user_organizations(session, username, groups, uri, data=None, check_perm=None) -> dict:
+    def paginated_user_organizations(session, data=None) -> dict:
+        context = get_context()
         return paginate(
-            query=Organization.query_user_organizations(session, username, groups, data),
+            query=Organization.query_user_organizations(session, context.username, context.groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -144,9 +149,9 @@ class Organization:
         return query
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_environments(session, username, groups, uri, data=None, check_perm=None) -> dict:
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.GET_ORGANIZATION)
+    def paginated_organization_environments(session, uri, data=None) -> dict:
         return paginate(
             query=Organization.query_organization_environments(session, uri, data),
             page=data.get('page', 1),
@@ -154,10 +159,9 @@ class Organization:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.DELETE_ORGANIZATION)
-    def archive_organization(session, username, groups, uri, data=None, check_perm=None) -> bool:
-
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.DELETE_ORGANIZATION)
+    def archive_organization(session, uri) -> bool:
         org = Organization.get_organization_by_uri(session, uri)
         environments = session.query(models.Environment).filter(models.Environment.organizationUri == uri).count()
         if environments:
@@ -176,12 +180,9 @@ class Organization:
         return True
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.INVITE_ORGANIZATION_GROUP)
-    def invite_group(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> (models.Organization, models.OrganizationGroup):
-
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
+    def invite_group(session, username, uri, data=None) -> (models.Organization, models.OrganizationGroup):
         Organization.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -233,16 +234,9 @@ class Organization:
             raise exceptions.RequiredParameter('groupUri')
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.REMOVE_ORGANIZATION_GROUP)
-    def remove_group(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter(data)
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
-
-        group: str = data['groupUri']
-
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.REMOVE_ORGANIZATION_GROUP)
+    def remove_group(session, uri, group):
         organization = Organization.get_organization_by_uri(session, uri)
 
         if group == organization.SamlGroupName:
@@ -292,9 +286,9 @@ class Organization:
         return query
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_groups(session, username, groups, uri, data=None, check_perm=None) -> dict:
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.GET_ORGANIZATION)
+    def paginated_organization_groups(session, uri, data=None) -> dict:
         return paginate(
             query=Organization.query_organization_groups(session, uri, data),
             page=data.get('page', 1),
@@ -325,9 +319,9 @@ class Organization:
         return query
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_invited_groups(session, username, groups, uri, data=None, check_perm=False) -> dict:
+    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @has_resource_permission(permissions.GET_ORGANIZATION)
+    def paginated_organization_invited_groups(session, uri, data=None) -> dict:
         organization = Organization.get_organization_by_uri(session, uri)
         return paginate(
             query=Organization.query_organization_invited_groups(session, organization, data),

@@ -113,7 +113,7 @@ def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
 def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
         return Vote.count_upvotes(
-            session, None, None, source.dashboardUri, data={'targetType': 'dashboard'}
+            session, source.dashboardUri, target_type='dashboard'
         )
 
 

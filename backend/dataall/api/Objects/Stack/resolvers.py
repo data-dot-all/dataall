@@ -24,11 +24,8 @@ def get_stack(
         CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
         return db.api.Environment.get_stack(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
-            data={'stackUri': stackUri},
-            check_perm=True,
+            stack_uri=stackUri,
         )
 
 
@@ -75,11 +72,8 @@ def get_stack_logs(
     with context.engine.scoped_session() as session:
         stack = db.api.Environment.get_stack(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
-            data={'stackUri': stackUri},
-            check_perm=True,
+            stack_uri=stackUri
         )
         if not stack.EcsTaskArn:
             raise exceptions.AWSResourceNotFound(
@@ -107,11 +101,8 @@ def update_stack(
     with context.engine.scoped_session() as session:
         stack = db.api.Stack.update_stack(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=targetUri,
-            data={'targetType': targetType},
-            check_perm=True,
+            target_type=targetType
         )
     stack_helper.deploy_stack(stack.targetUri)
     return stack

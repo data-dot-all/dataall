@@ -126,21 +126,15 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
         )
         org_with_perm = Organization.create_organization(
             session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=None,
             data={
                 'label': 'OrgWithPerm',
                 'SamlGroupName': group.name,
                 'description': 'desc',
                 'tags': [],
             },
-            check_perm=True,
         )
         env_with_perm = Environment.create_environment(
             session=session,
-            username=user.userName,
-            groups=[group.name],
             uri=org_with_perm.organizationUri,
             data={
                 'label': 'EnvWithPerm',
@@ -151,7 +145,6 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
                 'region': 'eu-west-1',
                 'cdk_role_name': 'cdkrole',
             },
-            check_perm=True,
         )
 
         data = dict(

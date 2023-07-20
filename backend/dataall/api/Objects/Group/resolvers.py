@@ -14,11 +14,8 @@ def resolve_group_environment_permissions(context, source, environmentUri):
     with context.engine.scoped_session() as session:
         return db.api.Environment.list_group_permissions(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': source.groupUri},
-            check_perm=True,
+            group_uri=source.groupUri
         )
 
 

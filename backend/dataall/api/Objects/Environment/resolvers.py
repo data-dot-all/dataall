@@ -84,11 +84,8 @@ def create_environment(context: Context, source, input=None):
         input['cdk_role_name'] = cdk_role_name
         env = Environment.create_environment(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input.get('organizationUri'),
             data=input,
-            check_perm=True,
         )
         Stack.create_stack(
             session=session,
@@ -123,11 +120,8 @@ def update_environment(
 
         environment = db.api.Environment.update_environment(
             session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=input,
-            check_perm=True,
         )
 
         if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
@@ -140,11 +134,8 @@ def invite_group(context: Context, source, input):
     with context.engine.scoped_session() as session:
         environment, environment_group = db.api.Environment.invite_group(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['environmentUri'],
             data=input,
-            check_perm=True,
         )
 
     stack_helper.deploy_stack(targetUri=environment.environmentUri)
@@ -163,11 +154,8 @@ def add_consumption_role(context: Context, source, input):
             )
         consumption_role = db.api.Environment.add_consumption_role(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['environmentUri'],
             data=input,
-            check_perm=True,
         )
 
     return consumption_role
@@ -177,11 +165,8 @@ def update_group_permissions(context, source, input):
     with context.engine.scoped_session() as session:
         environment = db.api.Environment.update_group_permissions(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['environmentUri'],
             data=input,
-            check_perm=True,
         )
 
     stack_helper.deploy_stack(targetUri=environment.environmentUri)
@@ -193,11 +178,8 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     with context.engine.scoped_session() as session:
         environment = db.api.Environment.remove_group(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': groupUri},
-            check_perm=True,
+            group=groupUri,
         )
 
     stack_helper.deploy_stack(targetUri=environment.environmentUri)
@@ -209,11 +191,8 @@ def remove_consumption_role(context: Context, source, environmentUri=None, consu
     with context.engine.scoped_session() as session:
         status = db.api.Environment.remove_consumption_role(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=consumptionRoleUri,
-            data={'environmentUri': environmentUri},
-            check_perm=True,
+            env_uri=environmentUri,
         )
 
     return status
@@ -227,11 +206,8 @@ def list_environment_invited_groups(
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_environment_invited_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -241,11 +217,8 @@ def list_environment_groups(context: Context, source, environmentUri=None, filte
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_user_environment_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -257,11 +230,8 @@ def list_all_environment_groups(
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_all_environment_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -273,11 +243,8 @@ def list_environment_consumption_roles(
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_user_environment_consumption_roles(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -289,11 +256,8 @@ def list_all_environment_consumption_roles(
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_all_environment_consumption_roles(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -315,14 +279,7 @@ def list_environments(context: Context, source, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_user_environments(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=filter,
-            check_perm=True,
-        )
+        return db.api.Environment.paginated_user_environments(session, filter)
 
 
 def list_environment_networks(
@@ -333,11 +290,8 @@ def list_environment_networks(
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_environment_networks(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -355,15 +309,7 @@ def resolve_vpc_list(context: Context, source, **kwargs):
 
 def get_environment(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.GET_ENVIRONMENT,
-        )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
-        return environment
+        return db.api.Environment.find_environment_by_uri(session, uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: models.Environment):
@@ -394,11 +340,8 @@ def list_environment_group_permissions(
     with context.engine.scoped_session() as session:
         return db.api.Environment.list_group_permissions(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': groupUri},
-            check_perm=True,
+            group_uri=groupUri
         )
 
 
@@ -518,23 +461,13 @@ def delete_environment(
     context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.DELETE_ENVIRONMENT,
-        )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
 
         try:
             db.api.Environment.delete_environment(
                 session,
-                username=context.username,
-                groups=context.groups,
                 uri=environmentUri,
-                data={'environment': environment},
-                check_perm=True,
+                environment=environment
             )
         except exc.IntegrityError:
             raise exceptions.EnvironmentResourcesFound(
