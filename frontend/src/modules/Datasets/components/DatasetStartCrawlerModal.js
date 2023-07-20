@@ -13,10 +13,11 @@ import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { startGlueCrawler, useClient } from '../../../../services';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useClient } from '../../../services';
+import { startGlueCrawler } from '../services';
 
-const DatasetStartCrawlerModal = (props) => {
+export const DatasetStartCrawlerModal = (props) => {
   const { dataset, onApply, onClose, open } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -172,5 +173,3 @@ DatasetStartCrawlerModal.propTypes = {
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default DatasetStartCrawlerModal;

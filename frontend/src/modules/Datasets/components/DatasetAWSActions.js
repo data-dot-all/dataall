@@ -11,7 +11,9 @@ import {
 } from '../services';
 import { useClient } from '../../../services/hooks/useClient';
 
-export function DatasetAWSActions({ dataset, isAdmin }) {
+export const DatasetAWSActions = (props) => {
+  const { dataset, isAdmin } = props;
+
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -79,7 +81,7 @@ export function DatasetAWSActions({ dataset, isAdmin }) {
       )}
     </>
   );
-}
+};
 
 DatasetAWSActions.propTypes = {
   dataset: PropTypes.object.isRequired,

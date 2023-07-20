@@ -13,15 +13,13 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { FileDropzone } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  getDatasetPresignedUrl,
-  startGlueCrawler,
-  useClient
-} from '../../../../services';
+import { FileDropzone } from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useClient } from '../../../services';
 
-const DatasetUpload = (props) => {
+import { getDatasetPresignedUrl, startGlueCrawler } from '../services';
+
+export const DatasetUpload = (props) => {
   const { dataset, isAdmin } = props;
   const client = useClient();
   const dispatch = useDispatch();
@@ -216,5 +214,3 @@ DatasetUpload.propTypes = {
   dataset: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default DatasetUpload;

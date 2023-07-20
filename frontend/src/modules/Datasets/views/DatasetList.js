@@ -22,7 +22,7 @@ import {
 } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
 import { listDatasets, useClient } from '../../../../services';
-import DatasetListItem from './DatasetListItem';
+import DatasetListItem from '../components/DatasetListItem';
 
 function DatasetsPageHeader() {
   return (

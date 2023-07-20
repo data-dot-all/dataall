@@ -1,10 +1,10 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
-import DatasetConsoleAccess from './DatasetConsoleAccess';
-import DatasetGovernance from './DatasetGovernance';
+import { ObjectBrief, ObjectMetadata } from '../../../design';
+import { DatasetConsoleAccess } from './DatasetConsoleAccess';
+import { DatasetGovernance } from './DatasetGovernance';
 
-const DatasetOverview = (props) => {
+export const DatasetOverview = (props) => {
   const { dataset, isAdmin, ...other } = props;
 
   return (
@@ -44,5 +44,3 @@ DatasetOverview.propTypes = {
   dataset: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default DatasetOverview;

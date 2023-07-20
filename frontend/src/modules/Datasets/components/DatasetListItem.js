@@ -22,9 +22,9 @@ import {
   StackStatus,
   UpVotesReadOnly,
   useCardStyle
-} from '../../../../design';
+} from '../../../design';
 
-const DatasetListItem = (props) => {
+export const DatasetListItem = (props) => {
   const { dataset } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -264,4 +264,3 @@ const DatasetListItem = (props) => {
 DatasetListItem.propTypes = {
   dataset: PropTypes.object.isRequired
 };
-export default DatasetListItem;

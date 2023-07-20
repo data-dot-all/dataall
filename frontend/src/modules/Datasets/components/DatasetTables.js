@@ -1,4 +1,4 @@
-import { DeleteOutlined, Warning } from '@mui/icons-material';
+import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -22,7 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { BsFolder } from 'react-icons/bs';
+import { BsTable } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -30,87 +30,91 @@ import {
   Defaults,
   DeleteObjectModal,
   Pager,
-  PlusIcon,
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  deleteDatasetStorageLocation,
-  listDatasetStorageLocations,
-  useClient
-} from '../../../../services';
-import FolderCreateModal from '../Folders/FolderCreateModal';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { deleteDatasetTable, useClient } from '../../../services';
 
-const DatasetFolders = ({ dataset, isAdmin }) => {
+import { listDatasetTables, syncTables } from '../services';
+
+import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
+
+export const DatasetTables = (props) => {
+  const { dataset, isAdmin } = props;
   const client = useClient();
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
-  const [inputValue, setInputValue] = useState('');
+  const [syncingTables, setSyncingTables] = useState(false);
   const [loading, setLoading] = useState(null);
-  const [isFolderCreateOpen, setIsFolderCreateOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const [folderToDelete, setFolderToDelete] = useState(null);
-  const handleDeleteObjectModalOpen = (folder) => {
-    setFolderToDelete(folder);
+  const [isStartCrawlerModalOpen, setIsStartCrawlerModalOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState(null);
+
+  const handleStartCrawlerModalOpen = () => {
+    setIsStartCrawlerModalOpen(true);
+  };
+  const handleStartCrawlerModalClose = () => {
+    setIsStartCrawlerModalOpen(false);
+  };
+  const handleDeleteObjectModalOpen = (table) => {
+    setTableToDelete(table);
     setIsDeleteObjectModalOpen(true);
   };
   const handleDeleteObjectModalClose = () => {
-    setFolderToDelete(null);
+    setTableToDelete(null);
     setIsDeleteObjectModalOpen(false);
   };
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listDatasetStorageLocations(dataset.datasetUri, filter)
+      listDatasetTables({
+        datasetUri: dataset.datasetUri,
+        filter: { ...filter }
+      })
     );
     if (!response.errors) {
-      setItems({ ...response.data.getDataset.locations });
+      setItems({ ...response.data.getDataset.tables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, dispatch, dataset, filter]);
+  }, [dispatch, client, dataset, filter]);
 
-  const handleFolderCreateModalOpen = () => {
-    setIsFolderCreateOpen(true);
-  };
-
-  const handleFolderCreateModalClose = () => {
-    setIsFolderCreateOpen(false);
-  };
-
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-    setFilter({ ...filter, term: event.target.value });
-  };
-
-  const handleInputKeyup = (event) => {
-    if (event.code === 'Enter') {
+  const synchronizeTables = async () => {
+    setSyncingTables(true);
+    const response = await client.mutate(syncTables(dataset.datasetUri));
+    if (!response.errors) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      enqueueSnackbar(`Retrieved ${response.data.syncTables.count} tables`, {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
+    setSyncingTables(false);
+    setFilter(Defaults.filter);
   };
 
-  const handlePageChange = async (event, value) => {
-    if (value <= items.pages && value !== items.page) {
-      await setFilter({ ...filter, page: value });
-    }
-  };
-
-  const deleteFolder = async () => {
+  const deleteTable = async () => {
     const response = await client.mutate(
-      deleteDatasetStorageLocation({ locationUri: folderToDelete.locationUri })
+      deleteDatasetTable({ tableUri: tableToDelete.tableUri })
     );
     if (!response.errors) {
       handleDeleteObjectModalClose();
-      enqueueSnackbar('Folder deleted', {
+      enqueueSnackbar('Table deleted', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -131,7 +135,26 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, dispatch, fetchItems]);
+  }, [client, filter.page, dispatch, fetchItems]);
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+    setFilter({ ...filter, term: event.target.value });
+  };
+
+  const handleInputKeyup = (event) => {
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  };
+
+  const handlePageChange = async (event, value) => {
+    if (value <= items.pages && value !== items.page) {
+      await setFilter({ ...filter, page: value });
+    }
+  };
 
   return (
     <Box>
@@ -140,8 +163,8 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
           action={<RefreshTableMenu refresh={fetchItems} />}
           title={
             <Box>
-              <BsFolder style={{ marginRight: '10px' }} />
-              Folders
+              <BsTable style={{ marginRight: '10px' }} />
+              Tables
             </Box>
           }
         />
@@ -155,7 +178,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
             p: 2
           }}
         >
-          <Grid item md={10} sm={6} xs={12}>
+          <Grid item md={9} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -181,15 +204,26 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
             </Box>
           </Grid>
           {isAdmin && (
-            <Grid item md={2} sm={6} xs={12}>
+            <Grid item md={3} sm={6} xs={12}>
               <LoadingButton
+                loading={syncingTables}
                 color="primary"
-                onClick={handleFolderCreateModalOpen}
-                startIcon={<PlusIcon fontSize="small" />}
+                onClick={synchronizeTables}
+                startIcon={<SyncAlt fontSize="small" />}
                 sx={{ m: 1 }}
                 variant="outlined"
               >
-                Create
+                Synchronize
+              </LoadingButton>
+
+              <LoadingButton
+                color="primary"
+                onClick={handleStartCrawlerModalOpen}
+                startIcon={<SearchIcon fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+              >
+                Start Crawler
               </LoadingButton>
             </Grid>
           )}
@@ -200,9 +234,9 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
-                  <TableCell>S3 Location</TableCell>
-                  <TableCell>Description</TableCell>
-                  {isAdmin && <TableCell>Actions</TableCell>}
+                  <TableCell>Database</TableCell>
+                  <TableCell>Location</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
@@ -210,29 +244,27 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
               ) : (
                 <TableBody>
                   {items.nodes.length > 0 ? (
-                    items.nodes.map((folder) => (
-                      <TableRow hover key={folder.locationUri}>
+                    items.nodes.map((table) => (
+                      <TableRow hover key={table.tableUri}>
                         <TableCell>
                           <Link
                             underline="hover"
                             color="textPrimary"
                             component={RouterLink}
-                            to={`/console/datasets/folder/${folder.locationUri}`}
+                            to={`/console/datasets/table/${table.tableUri}`}
                             variant="subtitle2"
                           >
-                            {folder.name}
+                            {table.GlueTableName}
                           </Link>
                         </TableCell>
-                        <TableCell>
-                          {`s3://${dataset.S3BucketName}/${folder.S3Prefix}`}
-                        </TableCell>
-                        <TableCell>{folder.description}</TableCell>
+                        <TableCell>{table.GlueDatabaseName}</TableCell>
+                        <TableCell>{table.S3Prefix}</TableCell>
                         <TableCell>
                           {isAdmin && (
                             <IconButton
                               onClick={() => {
-                                setFolderToDelete(folder);
-                                handleDeleteObjectModalOpen(folder);
+                                setTableToDelete(table);
+                                handleDeleteObjectModalOpen(table);
                               }}
                             >
                               <DeleteOutlined fontSize="small" />
@@ -241,7 +273,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
                           <IconButton
                             onClick={() => {
                               navigate(
-                                `/console/datasets/folder/${folder.locationUri}`
+                                `/console/datasets/table/${table.tableUri}`
                               );
                             }}
                           >
@@ -252,7 +284,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
                     ))
                   ) : (
                     <TableRow hover>
-                      <TableCell>No folders found</TableCell>
+                      <TableCell>No tables found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -269,28 +301,27 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
           </Box>
         </Scrollbar>
       </Card>
-      {isAdmin && (
-        <FolderCreateModal
+      {isAdmin && isStartCrawlerModalOpen && (
+        <DatasetStartCrawlerModal
           dataset={dataset}
-          onApply={handleFolderCreateModalClose}
-          onClose={handleFolderCreateModalClose}
-          reloadFolders={fetchItems}
-          open={isFolderCreateOpen}
+          onApply={handleStartCrawlerModalClose}
+          onClose={handleStartCrawlerModalClose}
+          open={isStartCrawlerModalOpen}
         />
       )}
-      {isAdmin && folderToDelete && (
+      {isAdmin && tableToDelete && (
         <DeleteObjectModal
-          objectName={folderToDelete.S3Prefix}
+          objectName={tableToDelete.GlueTableName}
           onApply={handleDeleteObjectModalClose}
           onClose={handleDeleteObjectModalClose}
           open={isDeleteObjectModalOpen}
-          deleteFunction={deleteFolder}
+          deleteFunction={deleteTable}
           deleteMessage={
             <Card>
               <CardContent>
                 <Typography gutterBottom variant="body2">
-                  <Warning /> Folder will be deleted from data.all catalog, but
-                  will still be available on Amazon S3 bucket.
+                  <Warning /> Table will be deleted from data.all catalog, but
+                  will still be available on AWS Glue catalog.
                 </Typography>
               </CardContent>
             </Card>
@@ -301,9 +332,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
   );
 };
 
-DatasetFolders.propTypes = {
+DatasetTables.propTypes = {
   dataset: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default DatasetFolders;

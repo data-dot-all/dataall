@@ -8,9 +8,9 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { Label } from '../../../../design';
+import { Label } from '../../../design';
 
-const DatasetGovernance = (props) => {
+export const DatasetGovernance = (props) => {
   const { dataset } = props;
   const terms =
     dataset.terms.nodes.length > 0
@@ -97,5 +97,3 @@ const DatasetGovernance = (props) => {
 DatasetGovernance.propTypes = {
   dataset: PropTypes.object.isRequired
 };
-
-export default DatasetGovernance;

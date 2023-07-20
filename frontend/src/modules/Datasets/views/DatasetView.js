@@ -31,25 +31,19 @@ import {
   PencilAltIcon,
   UpVoteButton,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  countUpVotes,
-  deleteDataset,
-  getDataset,
-  getVote,
-  upVote,
-  useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import ShareInboxList from '../Shares/ShareInboxList';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
-import DatasetAWSActions from './DatasetAWSActions';
-import DatasetData from './DatasetData';
-import DatasetOverview from './DatasetOverview';
-import DatasetUpload from './DatasetUpload';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { countUpVotes, getVote, upVote, useClient } from '../../../services';
+import { deleteDataset, getDataset } from '../services';
+import FeedComments from '../../Misc/views/Feed/FeedComments';
+import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
+import ShareInboxList from '../../Misc/views/Shares/ShareInboxList';
+import { StackStatus } from '../../Misc/views/Stack';
+import Stack from '../../Misc/views/Stack/Stack';
+import { DatasetAWSActions } from '../components/';
+import { DatasetData } from '../components/DatasetData';
+import { DatasetOverview } from '../components/DatasetOverview';
+import DatasetUpload from '../tmp/DatasetUpload';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
