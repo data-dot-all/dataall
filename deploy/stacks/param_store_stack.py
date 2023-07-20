@@ -104,7 +104,7 @@ class ParamStoreStack(pyNestedClass):
         )
         try:
             parameter_path = f"/dataall/{envname}/pivotRole/externalId"
-            external_id_value = aws_ssm.StringParameter.value_for_string_paramete(self, parameter_path)
+            external_id_value = aws_ssm.StringParameter.value_for_string_parameter(self, parameter_path)
         except:
             secret_id = f"dataall-externalId-{envname}"
             try:
