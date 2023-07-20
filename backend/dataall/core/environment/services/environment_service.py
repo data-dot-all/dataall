@@ -386,7 +386,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
     def list_group_permissions(session, uri, group_uri):
         # the permission checked
-        return EnvironmentService.list_group_permissions_internal(session, uri, group_uri)
+        return Environment.list_group_permissions_internal(session, uri, group_uri)
 
     @staticmethod
     def list_group_permissions_internal(session, uri, group_uri):

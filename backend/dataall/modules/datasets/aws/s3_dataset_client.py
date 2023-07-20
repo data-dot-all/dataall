@@ -37,7 +37,7 @@ class S3DatasetClient:
             raise e
 
 
-class S3BucketPolicyClient:
+class S3DatasetBucketPolicyClient:
     def __init__(self, dataset: Dataset):
         session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
         self._client = session.client('s3')

@@ -21,6 +21,7 @@ from dataall.core.stacks.db.stack import Stack
 from dataall.core.vpc.db.vpc import Vpc
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
+from dataall.core.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -349,6 +350,7 @@ def list_environment_group_permissions(
         )
 
 
+@is_feature_enabled('core.features.env_aws_actions')
 def _get_environment_group_aws_session(
     session, username, groups, environment, groupUri=None
 ):
@@ -396,6 +398,7 @@ def _get_environment_group_aws_session(
     return aws_session
 
 
+@is_feature_enabled('core.features.env_aws_actions')
 def get_environment_assume_role_url(
     context: Context,
     source,
@@ -424,6 +427,7 @@ def get_environment_assume_role_url(
     return url
 
 
+@is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(
     context, source, environmentUri: str = None, groupUri: str = None
 ):

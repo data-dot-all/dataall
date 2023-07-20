@@ -1,9 +1,7 @@
-import json
 import logging
 import os
 from contextlib import contextmanager
 
-import boto3
 import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from dataall.base.db import Base
 from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
+from dataall.base.aws.sts import SessionHelper
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -108,11 +107,7 @@ def get_engine(envname=ENVNAME):
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
-        secretsmanager = boto3.client(
-            'secretsmanager', region_name=os.environ.get('AWS_REGION', 'eu-west-1')
-        )
-        db_credentials_string = secretsmanager.get_secret_value(SecretId=credential_arn)
-        creds = json.loads(db_credentials_string['SecretString'])
+        creds = SessionHelper.get_secret(credential_arn)
         user = creds['username']
         pwd = creds['password']
         db_params = {
