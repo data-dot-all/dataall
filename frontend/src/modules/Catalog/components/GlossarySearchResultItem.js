@@ -19,8 +19,8 @@ import * as FiIcons from 'react-icons/fi';
 import { MdShowChart } from 'react-icons/md';
 import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, useCardStyle } from '../../../design';
-import { dayjs } from '../../../utils';
+import { IconAvatar, useCardStyle } from 'design'; /* eslint-disable-line */
+import { dayjs } from 'utils'; /* eslint-disable-line */
 import { RequestAccessModal } from './RequestAccessModal';
 import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
 
@@ -45,7 +45,7 @@ HitICon.propTypes = {
   hit: PropTypes.object.isRequired
 };
 
-export const Hit = ({ hit }) => {
+export const GlossarySearchResultItem = ({ hit }) => {
   const classes = useCardStyle();
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
@@ -335,6 +335,6 @@ export const Hit = ({ hit }) => {
     </Card>
   );
 };
-Hit.propTypes = {
+GlossarySearchResultItem.propTypes = {
   hit: PropTypes.object.isRequired
 };

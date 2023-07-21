@@ -6,10 +6,10 @@ import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
-import { Defaults, Scrollbar } from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { searchGlossary, useClient } from '../../../services';
-import { listToTree } from '../../../utils';
+import { Defaults, Scrollbar } from 'design'; /* eslint-disable-line */
+import { SET_ERROR, useDispatch } from 'globalErrors'; /* eslint-disable-line */
+import { searchGlossary, useClient } from 'services'; /* eslint-disable-line */
+import { listToTree } from 'utils'; /* eslint-disable-line */
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {
@@ -116,7 +116,7 @@ const useStyles = makeStyles({
   }
 });
 
-export const GlossarySearch = ({ matches, setQuery }) => {
+export const GlossarySearchUI = ({ matches, setQuery }) => {
   const client = useClient();
   const classes = useStyles();
   const dispatch = useDispatch();
@@ -315,7 +315,7 @@ export const GlossarySearch = ({ matches, setQuery }) => {
     </Box>
   );
 };
-GlossarySearch.propTypes = {
+GlossarySearchUI.propTypes = {
   setQuery: PropTypes.func.isRequired,
   matches: PropTypes.array.isRequired
 };

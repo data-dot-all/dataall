@@ -1,9 +1,9 @@
 import { ReactiveComponent } from '@appbaseio/reactivesearch';
 import { Box } from '@mui/material';
 import React from 'react';
-import { GlossarySearch } from './GlossarySearch';
+import { GlossarySearchUI } from './GlossarySearchUI';
 
-export const GlossarySearchComponent = (innerClass) => (
+export const GlossarySearchWrapper = (innerClass) => (
   <Box>
     <ReactiveComponent
       componentId="GlossaryPathSensor"
@@ -27,7 +27,7 @@ export const GlossarySearchComponent = (innerClass) => (
         ) {
           matches = aggregations.glossary.buckets;
         }
-        return <GlossarySearch matches={matches} setQuery={setQuery} />;
+        return <GlossarySearchUI matches={matches} setQuery={setQuery} />;
       }}
     />
   </Box>
