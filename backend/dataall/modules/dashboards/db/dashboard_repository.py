@@ -75,23 +75,23 @@ class DashboardRepository(EnvironmentResource):
                 )
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.term:
             query = query.filter(
                 or_(
-                    Dashboard.description.ilike(filter.get('term') + '%%'),
-                    Dashboard.label.ilike(filter.get('term') + '%%'),
+                    Dashboard.description.ilike(filter.term + '%%'),
+                    Dashboard.label.ilike(filter.term + '%%'),
                 )
             )
         return query
 
     @staticmethod
     def paginated_user_dashboards(
-        session, username, groups, data=None
+        session, username, groups, data
     ) -> dict:
         return paginate(
             query=DashboardRepository._query_user_dashboards(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page=data.page,
+            page_size=data.pageSize,
         ).to_dict()
 
     @staticmethod
@@ -112,13 +112,13 @@ class DashboardRepository(EnvironmentResource):
                 )
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.term:
             query = query.filter(
                 or_(
                     DashboardShare.SamlGroupName.ilike(
-                        filter.get('term') + '%%'
+                        filter.term + '%%'
                     ),
-                    Dashboard.label.ilike(filter.get('term') + '%%'),
+                    Dashboard.label.ilike(filter.term + '%%'),
                 )
             )
         return query
@@ -145,8 +145,8 @@ class DashboardRepository(EnvironmentResource):
             query=DashboardRepository._query_dashboard_shares(
                 session, username, groups, uri, data
             ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page=data.page,
+            page_size=data.pageSize,
         ).to_dict()
 
     @staticmethod

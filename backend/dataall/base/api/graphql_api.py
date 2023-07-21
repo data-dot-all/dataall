@@ -11,25 +11,25 @@ from dataall.base.utils.decorator_utls import process_func
 class Page(gql.ObjectType):
     count: int
     page: int
+    pageSize: int
     pages: int
     hasNext: bool
     hasPrevious: bool
+    previousPage: str
+    nextPage: str
 
 
 @dataclass
 class PageFilter(gql.InputType):
     term: str = None
-    page: int = 5
-    pageSize: int = 20
+    page: int = 1
+    pageSize: int = 15
 
 
-class SerializedObject:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+_scalars = (int, float, str, bool)
 
 
-_scalars = {
+_scalar_serialize_mapping = {
     str: gql.String,
     int: gql.Integer,
     float: gql.Number,
@@ -56,7 +56,7 @@ def _resolve_type(arg_type):
         return gql.Enum(name=arg_type.__name__, values=arg_type)
     if issubclass(arg_type, gql.ObjectType) or issubclass(arg_type, gql.InputType):
         return gql.Ref(_objects[arg_type])
-    return _scalars.get(arg_type)
+    return _scalar_serialize_mapping.get(arg_type)
 
 
 def _has_default_value(cls, field_name):
@@ -64,6 +64,11 @@ def _has_default_value(cls, field_name):
         if field_info.name == field_name:
             return field_info.default is not field_info.default_factory
     return False
+
+
+def _create_custom_object(cls, data: dict):
+    # TODO: fix the problem of nested objects in the input
+    return cls(**data)
 
 
 def _process_api_func(name, field):
@@ -78,23 +83,25 @@ def _process_api_func(name, field):
             raise ValueError(f"Function {fn.__name__} doesn't specify the return type")
 
         if len(hints) != num_args + 1:
-            raise ValueError(f"Function {fn.__name__} marked as GraphQL API, "
-                             f"but don't specify types for all parameters")
+            raise ValueError(
+                f"Function {fn.__name__} marked as GraphQL API, "
+                f"but don't specify types for all parameters"
+            )
         gql_args = []
         return_type = None
 
         parameters = signature.parameters
-        for hint, value in hints.items():
-            gql_type = _resolve_type(value)
+        for hint_name, hint_type in hints.items():
+            gql_type = _resolve_type(hint_type)
             if not gql_type:
                 raise ValueError(f"Function {fn.__name__}  takes/returns not a GraphQL type!")
 
-            if hint != 'return':
-                param = parameters[hint]
+            if hint_name != 'return':
+                param = parameters[hint_name]
                 has_default = param.default is not inspect.Parameter.empty
                 gql_args.append(
                     gql.Argument(
-                        name=hint,
+                        name=hint_name,
                         type=gql_type if has_default else gql.NonNullableType(gql_type)
                     )
                 )
@@ -102,7 +109,14 @@ def _process_api_func(name, field):
                 return_type = gql_type
 
         def decorated(*args, **kwargs):
-            return fn(*args, **kwargs)
+            deserialized: dict = {}
+            for param_name, json_data in kwargs.items():
+                param_type = hints[param_name]
+                if param_type not in _scalars:
+                    deserialized[param_name] = _create_custom_object(param_type, json_data)
+                else:
+                    deserialized[param_name] = json_data
+            return fn(*args, **deserialized)
 
         field(
             name=name,

@@ -21,11 +21,11 @@ class DashboardDto(gql.ObjectType):
     updated: str
     owner: str
     SamlGroupName: str
-    organization: gql.Ref('Organization')
-    environment: gql.Ref('Environment')
-    userRoleForDashboard: DashboardRole
-    terms: [str]
-    upvotes: int
+    organization: gql.Ref('Organization') = None
+    environment: gql.Ref('Environment') = None
+    userRoleForDashboard: DashboardRole = None
+    terms: [str] = field(default_factory=list)
+    upvotes: int = 0
 
     def __init__(
         self,

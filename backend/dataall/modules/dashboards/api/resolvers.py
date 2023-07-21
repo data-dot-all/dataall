@@ -24,19 +24,20 @@ def import_dashboard(input: ImportDashboardInput) -> DashboardDto:
 
 @api_mutation("updateDashboard")
 def update_dashboard(input: UpdateDashboardInput) -> DashboardDto:
-    return DashboardService.update_dashboard(uri=input['dashboardUri'], data=input)
+    return DashboardService.update_dashboard(uri=input.dashboardUri, data=input)
 
 
 @api_query("searchDashboards")
 def list_dashboards(filter: DashboardFilter) -> DashboardSearchResults:
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        return DashboardRepository.paginated_user_dashboards(
+        page: dict = DashboardRepository.paginated_user_dashboards(
             session=session,
             username=context.username,
             groups=context.groups,
             data=filter,
         )
+        return DashboardSearchResults(**page)
 
 
 @api_query("getDashboard")
