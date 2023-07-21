@@ -5,8 +5,8 @@
 # GET /stack/{stackid} : returns metadata for the stack
 # DELETE /Stack/{stackid} : deletes the stack
 # To run the server locally, simply run
-# uvicorn dataall.cdkproxy.main:app --host 0.0.0.0 --port 8080
-# To run in docker, build the image and run the container as described in dataall/cdkproxy/README.md
+# uvicorn dataall.base.cdkproxy.main:app --host 0.0.0.0 --port 8080
+# To run in docker, build the image and run the container as described in dataall/base/cdkproxy/README.md
 
 import logging
 import os
@@ -19,9 +19,9 @@ from fastapi import FastAPI, BackgroundTasks, status, Response
 
 import cdk_cli_wrapper as wrapper
 from stacks import StackManager
-from ..core.organizations.db.organization_models import Organization
-from ..core.stacks.db.stack_models import Stack
-from ..db import get_engine
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.stacks.db.stack_models import Stack
+from dataall.base.db import get_engine
 
 print('\n'.join(sys.path))
 

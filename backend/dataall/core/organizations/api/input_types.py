@@ -1,4 +1,4 @@
-from dataall.api.constants import GraphQLEnumMapper, SortDirection
+from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
 from dataall.base.api import gql
 from dataall.core.organizations.api.enums import OrganisationUserRole
 

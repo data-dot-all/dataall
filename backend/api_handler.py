@@ -9,13 +9,13 @@ from ariadne import (
     graphql_sync,
 )
 
-from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
+from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import  get_engine
+from dataall.base.db import  get_engine
 from dataall.core.permissions import permissions
 from dataall.base.loader import load_modules, ImportMode
 

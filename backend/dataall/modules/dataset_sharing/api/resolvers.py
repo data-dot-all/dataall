@@ -1,11 +1,11 @@
 import logging
 
 from dataall.base import utils
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization
-from dataall.db.exceptions import RequiredParameter
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService

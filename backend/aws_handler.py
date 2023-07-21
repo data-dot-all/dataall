@@ -3,7 +3,7 @@ import logging
 import os
 
 from dataall.core.tasks.service_handlers import Worker
-from dataall.db import get_engine
+from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()

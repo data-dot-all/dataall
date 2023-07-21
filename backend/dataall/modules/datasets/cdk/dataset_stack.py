@@ -17,11 +17,11 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from dataall import db
+from dataall.base import db
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.cdkproxy.stacks.manager import stack
+from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient

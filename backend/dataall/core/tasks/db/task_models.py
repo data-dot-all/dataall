@@ -3,8 +3,8 @@ import datetime
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects import postgresql
 
-from dataall.db import Base
-from dataall.db import utils
+from dataall.base.db import Base
+from dataall.base.db import utils
 
 
 class Task(Base):

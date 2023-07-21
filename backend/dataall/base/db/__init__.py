@@ -1,5 +1,4 @@
 from .base import Base, Resource
-from . import models
 from . import exceptions
 from .connection import (
     Engine,

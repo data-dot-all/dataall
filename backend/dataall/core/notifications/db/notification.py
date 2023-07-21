@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func, and_
 
 from dataall.core.notifications.db import notification_models as models
-from dataall.db import paginate
+from dataall.base.db import paginate
 
 
 class Notification:

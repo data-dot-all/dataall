@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, String, DateTime, Enum
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Base
-from dataall.db import utils
+from dataall.base.db import Base
+from dataall.base.db import utils
 
 
 class GlossaryNodeStatus(enum.Enum):

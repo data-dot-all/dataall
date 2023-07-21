@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.cdkproxy.cdk_cli_wrapper import CDKCliWrapperExtension, \
+from dataall.base.cdkproxy.cdk_cli_wrapper import CDKCliWrapperExtension, \
     describe_stack, update_stack_output
 from dataall.modules.datapipelines.cdk.datapipelines_cdk_pipeline import CDKPipelineStack
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository

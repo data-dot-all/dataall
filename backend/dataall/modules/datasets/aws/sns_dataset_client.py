@@ -18,7 +18,7 @@ class SnsDatasetClient:
         )
 
         self._client = aws_session.client('sns', region_name=environment.region)
-        self._topic = f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsProducersTopicName}'
+        self._topic = f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsConsumersTopicName}'
         self._dataset = dataset
 
     def publish_dataset_message(self, message: dict):

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
 
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset

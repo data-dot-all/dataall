@@ -140,7 +140,7 @@ def test_group_prefixes_by_accountid(db, mocker):
 
 def test_handler(org, env, db, sync_dataset, mocker):
     s3_client = MagicMock()
-    mocker.patch('dataall.modules.datasets.tasks.bucket_policy_updater.S3BucketPolicyClient', s3_client)
+    mocker.patch('dataall.modules.datasets.tasks.bucket_policy_updater.S3DatasetBucketPolicyClient', s3_client)
     s3_client().get_bucket_policy.return_value = {'Version': '2012-10-17', 'Statement': []}
     s3_client().put_bucket_policy.return_value = {'status': 'SUCCEEDED'}
 

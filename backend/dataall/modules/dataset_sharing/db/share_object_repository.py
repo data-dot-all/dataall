@@ -7,7 +7,7 @@ from sqlalchemy.orm import Query
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.db import exceptions, paginate
+from dataall.base.db import exceptions, paginate
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject

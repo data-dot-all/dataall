@@ -6,8 +6,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
-from dataall.db import utils
-from dataall.db.exceptions import ObjectNotFound, UnauthorizedOperation
+from dataall.base.db import utils
+from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem

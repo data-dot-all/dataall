@@ -1,11 +1,12 @@
 import logging
 
-from dataall.api.context import Context
+from dataall.core.stacks.api import stack_helper
+from dataall.base.api.context import Context
+from dataall.core.feature_toggle_checker import is_feature_enabled
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.stacks.api import stack_helper
 from dataall.core.organizations.db.organization import Organization
-from dataall.db.exceptions import RequiredParameter, InvalidInput
+from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
@@ -57,6 +58,7 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
     return DatasetRole.NoPermission.value
 
 
+@is_feature_enabled('modules.datasets.features.file_uploads')
 def get_file_upload_presigned_url(
     context, source, datasetUri: str = None, input: dict = None
 ):
@@ -121,6 +123,7 @@ def get_dataset_statistics(context: Context, source: Dataset, **kwargs):
     return DatasetService.get_dataset_statistics(source)
 
 
+@is_feature_enabled('modules.datasets.features.aws_actions')
 def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
@@ -137,6 +140,7 @@ def list_dataset_share_objects(context, source, filter: dict = None):
     return DatasetService.list_dataset_share_objects(source, filter)
 
 
+@is_feature_enabled('modules.datasets.features.aws_actions')
 def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
 

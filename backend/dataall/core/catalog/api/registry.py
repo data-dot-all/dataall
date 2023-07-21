@@ -3,7 +3,7 @@ from typing import Type, Dict, Optional, Protocol, Union
 
 from dataall.base.api import gql
 from dataall.base.api.gql.graphql_union_type import UnionTypeRegistry
-from dataall.db import Resource
+from dataall.base.db import Resource
 from dataall.core.catalog.indexers.base_indexer import BaseIndexer
 
 

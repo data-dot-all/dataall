@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
-from dataall.db import Base, Resource, utils
+from dataall.base.db import Base, Resource, utils
 
 
 class DatasetTableColumn(Resource, Base):

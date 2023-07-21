@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, DateTime, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import utils, Resource
+from dataall.base.db import utils, Resource
 
 # revision identifiers, used by Alembic.
 from dataall.base.utils import (

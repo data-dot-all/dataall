@@ -7,12 +7,12 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from dataall.api import get_executable_schema
+from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.permissions import permissions
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import get_engine, Base
+from dataall.base.db import get_engine, Base
 from dataall.base.searchproxy import connect, run_query
 from dataall.base.loader import load_modules, ImportMode
 from dataall.base.config import config

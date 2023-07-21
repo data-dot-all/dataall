@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import utils, Resource
+from dataall.base.db import utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository

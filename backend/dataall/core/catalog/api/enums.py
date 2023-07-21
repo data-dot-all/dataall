@@ -1,4 +1,4 @@
-from dataall.api.constants import GraphQLEnumMapper
+from dataall.base.api.constants import GraphQLEnumMapper
 
 
 class GlossaryRole(GraphQLEnumMapper):

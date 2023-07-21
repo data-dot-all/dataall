@@ -27,11 +27,11 @@ from aws_cdk import (
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.cdkproxy.stacks.manager import stack
+from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
-from dataall.cdkproxy.stacks.policies.data_policy import S3Policy
-from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
-from dataall import db
+from dataall.base.cdkproxy.stacks.policies.data_policy import S3Policy
+from dataall.base.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.base import db
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
@@ -224,7 +224,7 @@ class EnvironmentSetup(Stack):
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../cdkproxy/assets/lakeformationdefaultsettings').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../../../base/cdkproxy/assets/lakeformationdefaultsettings').resolve()
         )
 
         lakeformation_cr_dlq = self.set_dlq(
@@ -285,7 +285,7 @@ class EnvironmentSetup(Stack):
         )
         # Glue database custom resource - Old, to be deleted in future release
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../cdkproxy/assets/gluedatabasecustomresource_nodelete').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../../../base/cdkproxy/assets/gluedatabasecustomresource_nodelete').resolve()
         )
         gluedb_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedbcr-{self._environment.environmentUri}')
         gluedb_custom_resource = _lambda.Function(
@@ -328,7 +328,7 @@ class EnvironmentSetup(Stack):
         # Glue database custom resource - New
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../cdkproxy/assets/gluedatabasecustomresource').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../../../base/cdkproxy/assets/gluedatabasecustomresource').resolve()
         )
 
         gluedb_lf_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}')
@@ -386,7 +386,7 @@ class EnvironmentSetup(Stack):
         # Data lake location custom resource
         entry_point = str(
             pathlib.PosixPath(
-                os.path.dirname(__file__), "../../../cdkproxy/assets/datalakelocationcustomresource"
+                os.path.dirname(__file__), "../../../base/cdkproxy/assets/datalakelocationcustomresource"
             ).resolve()
         )
 

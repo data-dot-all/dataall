@@ -15,7 +15,7 @@ from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import utils
+from dataall.base.db import utils
 from dataall.core.permissions import permissions
 from datetime import datetime
 

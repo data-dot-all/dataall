@@ -59,7 +59,7 @@ class DatapipelinesCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datapipelines.cdk
-        from dataall.cdkproxy.cdk_cli_wrapper import _CDK_CLI_WRAPPER_EXTENSIONS
+        from dataall.base.cdkproxy.cdk_cli_wrapper import _CDK_CLI_WRAPPER_EXTENSIONS
         from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import \
             DatapipelinesCDKCliWrapperExtension
 

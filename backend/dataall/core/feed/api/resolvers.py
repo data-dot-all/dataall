@@ -1,8 +1,8 @@
 from sqlalchemy import or_
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.feed.db.feed_models import FeedMessage
-from dataall.db import paginate
+from dataall.base.db import paginate
 from dataall.core.feed.api.registry import FeedRegistry
 
 

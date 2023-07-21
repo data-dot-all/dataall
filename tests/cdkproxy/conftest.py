@@ -4,7 +4,6 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.stacks.db.stack_models import KeyValueTag
-from dataall.db import models
 
 
 @pytest.fixture(scope='module', autouse=True)

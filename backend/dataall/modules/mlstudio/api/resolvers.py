@@ -1,8 +1,8 @@
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.stacks.api import stack_helper
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 from dataall.modules.mlstudio.services.mlstudio_service import SagemakerStudioService, SagemakerStudioCreationRequest

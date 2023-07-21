@@ -1,6 +1,6 @@
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.tasks.db.task_models import Task
-from dataall.db import Engine
+from dataall.base.db import Engine
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 
 

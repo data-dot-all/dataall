@@ -1,7 +1,7 @@
 import json
 import logging
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.models import Environment
@@ -9,7 +9,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository

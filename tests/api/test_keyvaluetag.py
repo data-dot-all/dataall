@@ -3,8 +3,7 @@ import pytest
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.stacks.db.target_type import TargetType
-from dataall.db import exceptions
-from dataall.db import models
+from dataall.base.db import exceptions
 
 
 @pytest.fixture(scope='module')

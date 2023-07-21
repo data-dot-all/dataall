@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy import Column, String, Boolean, DateTime
 
-from dataall.db import Base, utils
+from dataall.base.db import Base, utils
 
 
 class Vote(Base):

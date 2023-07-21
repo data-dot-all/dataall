@@ -34,7 +34,7 @@ class ClientWrapper:
 @pytest.fixture(scope='module', autouse=True)
 def app(db):
     app = Flask('tests')
-    schema = dataall.api.get_executable_schema()
+    schema = dataall.base.api.get_executable_schema()
 
     @app.route('/', methods=['OPTIONS'])
     def opt():

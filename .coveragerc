@@ -1,2 +1,2 @@
 [run]
-omit = backend/dataall/cdkproxy/assets/*, backend/dataall/aws/*
+omit = backend/dataall/base/cdkproxy/assets/*, backend/dataall/aws/*

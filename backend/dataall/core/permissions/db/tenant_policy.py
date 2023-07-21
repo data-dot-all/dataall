@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.sql import and_
 
 from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.db import exceptions, paginate
+from dataall.base.db import exceptions, paginate
 from dataall.core.permissions import permissions
 from dataall.core.permissions.db import permission_models as models
 from dataall.core.permissions.db.permission import Permission

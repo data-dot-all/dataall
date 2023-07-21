@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import utils, Resource
+from dataall.base.db import utils, Resource
 
 # revision identifiers, used by Alembic.
 

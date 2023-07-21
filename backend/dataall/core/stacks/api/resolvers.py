@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from dataall.api.context import Context
+from dataall.base.api.context import Context
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
@@ -11,7 +11,7 @@ from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.core.stacks.db import stack_models as StackModel
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
-from dataall.db import exceptions
+from dataall.base.db import exceptions
 from dataall.base.utils import Parameter
 
 log = logging.getLogger(__name__)
