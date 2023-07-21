@@ -4,6 +4,7 @@ import string
 import boto3
 from aws_cdk import (
     aws_ssm,
+    SecretValue
 )
 
 from .pyNestedStack import pyNestedClass
@@ -146,8 +147,7 @@ def _get_external_id_value(envname, account_id, region):
         return parameter_value
     except:
         try:
-            secrets_client = session.client('secretsmanager', region_name=region)
-            secret_value = secrets_client.get_secret_value(SecretId=secret_id)['SecretString']
+            secret_value = SecretValue.secrets_manager(secret_id).unsafe_unwrap()
             return secret_value
         except:
             return False
