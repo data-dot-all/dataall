@@ -27,8 +27,6 @@ class ParamStoreStack(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
 
-        self.env = kwargs.get('env')
-
         self.resource_prefix_param = aws_ssm.StringParameter(
             self,
             f'ResourcePrefixParam{envname}',
