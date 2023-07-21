@@ -47,8 +47,11 @@ def bootstrap():
     return schema
 
 
-def resolver_adapter(resolver):
+def resolver_adapter(resolver, version):
     def adapted(obj, info, **kwargs):
+        if version >= 2:
+            return resolver(**kwargs)
+
         response = resolver(
             context=Namespace(
                 engine=info.context['engine'],
@@ -73,19 +76,19 @@ def get_executable_schema():
             _types.append(query)
             for field in _type.fields:
                 if field.resolver:
-                    query.field(field.name)(resolver_adapter(field.resolver))
+                    query.field(field.name)(resolver_adapter(field.resolver, field.api_version))
         elif _type.name == 'Mutation':
             mutation = MutationType()
             _types.append(mutation)
             for field in _type.fields:
                 if field.resolver:
-                    mutation.field(field.name)(resolver_adapter(field.resolver))
+                    mutation.field(field.name)(resolver_adapter(field.resolver, field.api_version))
         else:
             object_type = ObjectType(name=_type.name)
 
             for field in _type.fields:
                 if field.resolver:
-                    object_type.field(field.name)(resolver_adapter(field.resolver))
+                    object_type.field(field.name)(resolver_adapter(field.resolver, field.api_version))
             _types.append(object_type)
 
     _enums = []
