@@ -19,8 +19,8 @@ import * as FiIcons from 'react-icons/fi';
 import { MdShowChart } from 'react-icons/md';
 import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, useCardStyle } from 'design'; /* eslint-disable-line */
-import { dayjs } from 'utils'; /* eslint-disable-line */
+import { IconAvatar, useCardStyle } from 'design';
+import { dayjs } from 'utils';
 import { RequestAccessModal } from './RequestAccessModal';
 import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
 

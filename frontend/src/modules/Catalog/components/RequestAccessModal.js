@@ -15,8 +15,8 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { Defaults } from 'design'; /* eslint-disable-line */
-import { SET_ERROR, useDispatch } from 'globalErrors'; /* eslint-disable-line */
+import { Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createShareObject,
   listEnvironmentConsumptionRoles,
@@ -24,7 +24,7 @@ import {
   listEnvironments,
   requestDashboardShare,
   useClient
-} from 'services'; /* eslint-disable-line */
+} from 'services';
 
 export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;

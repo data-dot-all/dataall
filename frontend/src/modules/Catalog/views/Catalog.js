@@ -23,14 +23,14 @@ import * as PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { useToken } from 'authentication'; /* eslint-disable-line */
+import { useToken } from 'authentication';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusIcon,
   THEMES,
   useSettings
-} from 'design'; /* eslint-disable-line */
+} from 'design';
 import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
 
 const useStyles = makeStyles((theme) => ({
