@@ -1,5 +1,6 @@
 import random
 import string
+import os
 
 import boto3
 from aws_cdk import (
@@ -105,7 +106,10 @@ class ParamStoreStack(pyNestedClass):
             description=f"Stores dataall pivot role name for environment {envname}",
         )
 
-        existing_external_id = _get_external_id_value(envname=envname, account_id=self.env.get('account'), region=self.env.get('region'))
+        account_id = os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"])
+        region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
+
+        existing_external_id = _get_external_id_value(envname=envname, account_id=account_id, region=region)
         external_id_value = existing_external_id if existing_external_id else _generate_external_id()
 
         aws_ssm.StringParameter(
