@@ -5,7 +5,8 @@ import boto3
 from aws_cdk import (
     aws_ssm,
     aws_secretsmanager,
-    RemovalPolicy
+    RemovalPolicy,
+    SecretValue
 )
 
 from .pyNestedStack import pyNestedClass
@@ -155,7 +156,11 @@ def _get_external_id_value(envname, account_id, region):
         return parameter_value
     except:
         try:
-            secret_value = SecretValue.secrets_manager(secret_id).unsafe_unwrap()
+            secrets_client = session.client('secretsmanager', region_name=region)
+            if secrets_client.describe_secret(SecretId=secret_id):
+                secret_value = SecretValue.secrets_manager(secret_id).unsafe_unwrap()
+            else:
+                raise Exception
             return secret_value
         except:
             return False
