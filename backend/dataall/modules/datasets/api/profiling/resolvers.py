@@ -27,26 +27,22 @@ def start_profiling_run(context: Context, source, input: dict = None):
     )
 
 
-def get_profiling_run_status(context: Context, source: DatasetProfilingRun):
+def resolve_profiling_run_status(context: Context, source: DatasetProfilingRun):
     if not source:
         return None
-    DatasetProfilingService.queue_profiling_run(source.profilingRunUri)
+    DatasetProfilingService.resolve_profiling_run_status(source.profilingRunUri)
     return source.status
 
 
-def get_profiling_results(context: Context, source: DatasetProfilingRun):
+def resolve_profiling_results(context: Context, source: DatasetProfilingRun):
     if not source or source.results == {}:
         return None
     else:
         return json.dumps(source.results)
 
 
-def list_profiling_runs(context: Context, source, datasetUri=None):
-    return DatasetProfilingService.list_profiling_runs(uri=datasetUri)
-
-
-def get_last_table_profiling_run(context: Context, source, tableUri=None):
-    return DatasetProfilingService.get_last_table_profiling_run(uri=tableUri)
+def get_dataset_table_profiling_run(context: Context, source, tableUri=None):
+    return DatasetProfilingService.get_dataset_table_profiling_run(uri=tableUri)
 
 
 def list_table_profiling_runs(context: Context, source, tableUri=None):

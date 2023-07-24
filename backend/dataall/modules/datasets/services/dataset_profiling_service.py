@@ -1,5 +1,6 @@
 import json
 
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.models import Environment
@@ -13,8 +14,9 @@ from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProf
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
-from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE
+from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE, PREVIEW_DATASET_TABLE
 
 
 class DatasetProfilingService:
@@ -53,7 +55,7 @@ class DatasetProfilingService:
         return run
 
     @staticmethod
-    def queue_profiling_run(run_uri):
+    def resolve_profiling_run_status(run_uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             task = Task(
@@ -68,10 +70,11 @@ class DatasetProfilingService:
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, uri)
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(GET_DATASET_TABLE)
-    def get_last_table_profiling_run(uri: str):
+    def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
+            cls._check_preview_permissions_if_needed(session, table_uri=uri)
             run: DatasetProfilingRun = (
                 DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
             )
@@ -95,8 +98,26 @@ class DatasetProfilingService:
 
             return run
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(GET_DATASET_TABLE)
-    def list_table_profiling_runs(uri: str):
+    def list_table_profiling_runs(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
+            cls._check_preview_permissions_if_needed(session=session, table_uri=uri)
             return DatasetProfilingRepository.list_table_profiling_runs(session, uri)
+
+    @staticmethod
+    def _check_preview_permissions_if_needed(session, table_uri):
+        context = get_context()
+        table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
+            session, table_uri
+        )
+        dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+        if dataset.confidentiality != ConfidentialityClassification.Unclassified.value:
+            ResourcePolicy.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=table.tableUri,
+                permission_name=PREVIEW_DATASET_TABLE,
+            )
+        return True

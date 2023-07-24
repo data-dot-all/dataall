@@ -9,6 +9,7 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='requestPurpose', type=gql.String),
     ],
 )
 

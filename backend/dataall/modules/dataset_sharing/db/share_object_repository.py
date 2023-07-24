@@ -318,7 +318,11 @@ class ShareItemSM:
 class ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
-        return 0
+        return ShareObjectRepository.count_principal_shares(session, group_uri, PrincipalType.Group)
+
+    @staticmethod
+    def count_role_resources(session, role_uri):
+        return ShareObjectRepository.count_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
 
     @staticmethod
     def delete_env(session, environment):
@@ -554,6 +558,7 @@ class ShareObjectRepository:
                         f'{{{username}}}'
                     ),
                     Dataset.stewards.in_(groups),
+                    Dataset.SamlAdminGroupName.in_(groups),
                 )
             )
         )
@@ -820,23 +825,36 @@ class ShareObjectRepository:
 
     @staticmethod
     def delete_shares_with_no_shared_items(session, dataset_uri):
-        share_objects = (
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        shares = (
             session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset_uri,
-                    ShareObject.existingSharedItems.is_(False),
+                    ShareObjectItem.status.notin_(share_item_shared_states),
                 )
             )
             .all()
         )
-        for share in share_objects:
-            (
+        for share in shares:
+            share_items = (
                 session.query(ShareObjectItem)
                 .filter(ShareObjectItem.shareUri == share.shareUri)
-                .delete()
+                .all()
             )
-            session.delete(share)
+            for item in share_items:
+                session.delete(item)
+
+            share_obj = (
+                session.query(ShareObject)
+                .filter(ShareObject.shareUri == share.shareUri)
+                .first()
+            )
+            session.delete(share_obj)
 
     @staticmethod
     def _query_user_datasets(session, username, groups, filter) -> Query:
@@ -912,11 +930,19 @@ class ShareObjectRepository:
 
     @staticmethod
     def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
-        query = session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
-                ShareObject.existingSharedItems.is_(True),
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
             )
         )
         return query.all()
@@ -1121,3 +1147,16 @@ class ShareObjectRepository:
                 )
             )
         ).all()
+
+    @staticmethod
+    def count_principal_shares(session, principal_id: str, principal_type: PrincipalType):
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.principalId == principal_id,
+                    ShareObject.principalType == principal_type.value
+                )
+            )
+            .count()
+        )

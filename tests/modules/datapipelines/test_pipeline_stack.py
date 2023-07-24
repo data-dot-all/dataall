@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 from aws_cdk import App, Stack
@@ -73,6 +74,14 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
     mocker.patch(
         'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack.get_pipeline_environments',
         return_value=pip_envs,
+    )
+    mocker.patch(
+        'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack._set_env_vars',
+        return_value=(os.environ, True)
+    )
+    mocker.patch(
+        'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack._check_repository',
+        return_value=False
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db

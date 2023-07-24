@@ -129,15 +129,48 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             'SagemakerDomainKmsKey',
             alias='SagemakerStudioDomain',
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(_environment.CDKRoleArn)
+            ],
             policy=iam.PolicyDocument(
                 assign_sids=True,
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:CreateGrant"
+                        ],
                         effect=iam.Effect.ALLOW,
-                        principals=[iam.AccountPrincipal(account_id=_environment.AwsAccountId),
-                                    sagemaker_domain_role] + sagemaker_principals,
-                        actions=['kms:*'],
+                        principals=[
+                            sagemaker_domain_role,
+                            iam.ArnPrincipal(_environment.CDKRoleArn)
+                        ] + sagemaker_principals,
+                        resources=["*"],
+                        conditions={
+                            "StringEquals": {
+                                "kms:ViaService": [
+                                    f"sagemaker.{_environment.region}.amazonaws.com",
+                                    f"elasticfilesystem.{_environment.region}.amazonaws.com",
+                                    f"ec2.{_environment.region}.amazonaws.com",
+                                    f"s3.{_environment.region}.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ),
+                    iam.PolicyStatement(
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            sagemaker_domain_role,
+                        ] + sagemaker_principals,
+                        resources=["*"],
                     )
                 ],
             ),

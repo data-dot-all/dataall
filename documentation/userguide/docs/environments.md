@@ -11,7 +11,8 @@ users store data and work with data.**
 
 ## :material-hammer-screwdriver: **AWS account Pre-requisites**
 *data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-steps.
+steps. Only the first step, CDK bootstrap, is mandatory; the rest are needed depending on your deployment configuration
+or on the features enabled in the environment.
 
 ### 1. CDK Bootstrap
 
@@ -44,6 +45,12 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````bash
     cdk bootstrap --trust 222222222222  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://333333333333/eu-west-1
     ````
+#### Restricted CDK Execution role
+In the above command we define the `--cloudformation-execution-policies` to use the AdministratorAccess policy `arn:aws:iam::aws:policy/AdministratorAccess`. 
+This is the default policy that CDK uses to deploy resources, nevertheless it is possible to restrict it to any IAM policy created in the account.
+
+In V1.6.0 a more restricted policy is provided and directly downloadable from the UI. This more restrictive policy can be optionally used as
+`--cloudformation-execution-policies` for the CDK Execution role.
 
 
 ### 2. (For manual) Pivot role
@@ -61,7 +68,7 @@ In this case, the AWS CloudFormation stack of the role can be downloaded from <s
 (Navigate to an organization and click on link an environment to see this form). Fill the CloudFormation stack with the parameters
 available in data.all UI to create the role named **dataallPivotRole**. 
 
-!!! note "Upgrading from manual to cdk-created Pivot Role"
+!!! success "Upgrading from manual to cdk-created Pivot Role"
     If you have existing environments that were linked to data.all using a manually created Pivot Role you can
     still benefit from V1.5.0 `enable_pivot_role_auto_create` feature. You just need to update that parameter in
     the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
@@ -292,31 +299,93 @@ creator of the environment or invited to the environment). In the following pict
     of the environment. Same applies for **Tags** and **Subscriptions**. Other limitations come from the permissions that have
     been assigned to the team.
 
-### :material-aws: **AWS access**
-<span style="color:grey">*data.all*</span> makes it easier to manage access to your AWS accounts. How? remember when we assigned granular AWS permissions
-to invited groups and this created an IAM role? (If not, check the "Manage teams" section). From the **Teams** tab of
+### :material-aws: **AWS access - Environment IAM roles**
+For the environment admin team and for each team invited to the environment <span style="color:grey">*data.all*</span> 
+creates an IAM role. From the **Teams** tab of
 the environment we can assume our team's IAM role to get access to the AWS Console or copy the credentials to the
 clipboard. Both options are under the "Actions" column in the Teams table.
 
-## :material-account-plus-outline: **Manage Consumption Roles**
-Data.all creates or imports one IAM role per Cognito/IdP group that we invite to the environment. With these IAM roles data producers and consumers
-can ingest and consume data, but sometimes we want to consume data from an application such as SageMaker pipelines,
-Glue Jobs or any other downstream application. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
 
-Any IAM role that exists in the Environment AWS Account can be added to data.all. In the **Teams** tab click on *Add Consumption Role*
+![](pictures/environments/env_teams_3.png#zoom#shadow)
+
+
+**Usage**
+
+- Assumed by Team members from <span style="color:grey">*data.all*</span> UI to explore and work with data
+- Credentials can be copied in <span style="color:grey">*data.all*</span> UI to explore and work with data
+- Assumed by <span style="color:grey">*data.all*</span> Worksheets to query data using Athena
+- Credentials can be copied in <span style="color:grey">*data.all*</span> Pipelines to develop the pipeline
+
+**IAM Permissions**
+
+Default permissions
+
+- read permissions to profiling/code folder in the Environment S3 Bucket
+- Athena permissions to use the Team's workgroup
+- CloudFormation permissions to resources tagged with Team tag and prefixed with environment `resource_prefix`
+- SSM Parameter Store permissions to resources tagged with team tag and prefixed with environment `resource_prefix`
+- Secrets Manager permissions to resources tagged with team tag and prefixed with environment `resource_prefix`
+- read permissions on Logs and IAM
+- PassRole permissions for itself to Glue, Lambda, SageMaker, StepFunctions and DataBrew
+
+Data permissions
+
+- read and write permissions to the Team-owned Dataset S3 Buckets
+- encrypt/decrypt data with the Team-owned Dataset KMS keys
+- read and write permissions Dataset Glue databases - governed with Lake Formation
+
+Feature permissions
+
+Depending on the features enabled in the environment and granted to the Team, additional AWS permissions
+are given to the role. Permissions for any AWS service need to be defined to allow access onlt to resources tagged 
+with team tag and prefixed with environment `resource_prefix`
+
+!!! warning "Access denied? You need to tag resources when you create them"
+    Since permissions to AWS services are restricted to team-tagged resources, you need to tag any new 
+    resource that you create at creation time. 
+
+Let's say you are using the "Engineers" IAM role in an environment that prefixes all resources with
+the `resource_prefix` = "dataall" as in the following picture.
+
+![](pictures/environments/env_teams_5.png#zoom#shadow)
+
+
+Assuming the IAM role you will be able to create parameters prefixed by "dataall" and tagged
+with a tag Team=Engineers, otherwise you will get AccessDenied errors.
+
+
+![](pictures/environments/env_teams_6.png#zoom#shadow)
+
+All the resources created in the environment stack are tagged with the tag `Team=EnvAdminTeam`, which means that 
+environment admins can access and manage the environment baseline AWS resources.
+
+**Data Governance with Lake Formation** 
+
+We use AWS Lake Formation to govern Glue databases and tables. Using Lake Formation, we grant permissions to the 
+Environment teams IAM roles to read and write the Glue databases and tables that the Team owns.
+In other words, each environment team IAM role can only access the Glue databases and tables of the Datasets
+that the team owns.
+
+
+
+## :material-account-plus-outline: **Manage Consumption Roles**
+<span style="color:grey">*data.all*</span> creates or imports one IAM role per Cognito/IdP group that we invite to the environment. With these IAM roles data producers and consumers
+can ingest and consume data, but sometimes we want to consume data from an application that already has an execution role. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
+
+Any IAM role that exists in the Environment AWS Account can be added to <span style="color:grey">*data.all*</span>. In the **Teams** tab click on *Add Consumption Role*
 
 ![](pictures/environments/env_consumption_roles_1.png#zoom#shadow)
 
 A window like the following will appear for you to introduce the arn of the IAM role and the Team that owns the consumption role.
-Only members of this team and tenants of data.all can remove the consumption role.
+Only members of this team and tenants of <span style="color:grey">*data.all*</span> can remove the consumption role.
 
 ![](pictures/environments/env_consumption_roles_2.png#zoom#shadow)
 
 !!! success "Existing roles only"
-    Data.all checks whether that IAM role exists in the AWS account of the environment before adding it as a consumption role.
+    <span style="color:grey">*data.all*</span> checks whether that IAM role exists in the AWS account of the environment before adding it as a consumption role.
 
 **Data Access**
 
-- By default, a new consumption role does NOT have access to any data in data.all.
+- By default, a new consumption role does NOT have access to any data in <span style="color:grey">*data.all*</span>.
 - The team that owns the consumption role needs to open a share request for the consumption role as shown in the picture below.
 

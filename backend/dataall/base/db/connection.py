@@ -27,19 +27,19 @@ class Engine:
             dbconfig.url,
             echo=False,
             pool_size=1,
-            connect_args={'options': f"-csearch_path={dbconfig.params['schema']}"},
+            connect_args={'options': f"-csearch_path={dbconfig.schema}"},
         )
         try:
             if not self.engine.dialect.has_schema(
-                self.engine, dbconfig.params['schema']
+                self.engine, dbconfig.schema
             ):
                 log.info(
-                    f"Schema not found - init the schema {dbconfig.params['schema']}"
+                    f"Schema not found - init the schema {dbconfig.schema}"
                 )
                 self.engine.execute(
-                    sqlalchemy.schema.CreateSchema(dbconfig.params['schema'])
+                    sqlalchemy.schema.CreateSchema(dbconfig.schema)
                 )
-            log.info('-- Using schema: %s --', dbconfig.params['schema'])
+            log.info('-- Using schema: %s --', dbconfig.schema)
         except Exception as e:
             log.error(f'Could not create schema: {e}')
 
@@ -110,10 +110,12 @@ def get_engine(envname=ENVNAME):
         creds = SessionHelper.get_secret(credential_arn)
         user = creds['username']
         pwd = creds['password']
+        host = param_store.get_parameter(env=envname, path='aurora/hostname')
+        database = param_store.get_parameter(env=envname, path='aurora/db')
+
         db_params = {
-            'host': param_store.get_parameter(env=envname, path='aurora/hostname'),
-            'port': param_store.get_parameter(env=envname, path='aurora/port'),
-            'db': param_store.get_parameter(env=envname, path='aurora/db'),
+            'host': host,
+            'db': database,
             'user': user,
             'pwd': pwd,
             'schema': schema,
@@ -122,7 +124,6 @@ def get_engine(envname=ENVNAME):
         hostname = 'db' if envname == 'dkrcompose' else 'localhost'
         db_params = {
             'host': hostname,
-            'port': '5432',
             'db': 'dataall',
             'user': 'postgres',
             'pwd': 'docker',

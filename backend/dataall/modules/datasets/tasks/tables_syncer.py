@@ -78,7 +78,6 @@ def sync_tables(engine):
                         LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
                                 SessionHelper.get_delegation_role_arn(env.AwsAccountId),
-                                env.EnvironmentDefaultIAMRoleArn,
                                 env_group.environmentIAMRoleArn,
                             ],
                         )

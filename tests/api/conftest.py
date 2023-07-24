@@ -37,6 +37,7 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.base.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.base.searchproxy.search', return_value={})
     module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)

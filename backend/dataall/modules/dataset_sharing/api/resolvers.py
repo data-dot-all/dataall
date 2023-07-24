@@ -40,7 +40,8 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
-        principal_type=input['principalType']
+        principal_type=input['principalType'],
+        requestPurpose=input.get('requestPurpose')
     )
 
 
@@ -52,8 +53,8 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
 
-def reject_share_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.reject_share_object(uri=shareUri)
+def reject_share_object(context: Context, source, shareUri: str = None, rejectPurpose: str = None,):
+    return ShareObjectService.reject_share_object(uri=shareUri, reject_purpose=rejectPurpose)
 
 
 def revoke_items_share_object(context: Context, source, input):
@@ -89,25 +90,19 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
-        if dataset and dataset.stewards in context.groups:
+        if (
+                dataset and (
+                dataset.stewards in context.groups
+                or dataset.SamlAdminGroupName in context.groups
+                or dataset.owner == context.username
+        )
+        ):
             return ShareObjectPermission.Approvers.value
         if (
-            source.owner == context.username
-            or source.principalId in context.groups
-            or dataset.owner == context.username
-            or dataset.SamlAdminGroupName in context.groups
+                source.owner == context.username
+                or source.groupUri in context.groups
         ):
             return ShareObjectPermission.Requesters.value
-        if (
-            dataset and dataset.stewards in context.groups
-            and (
-                source.owner == context.username
-                or source.principalId in context.groups
-                or dataset.owner == context.username
-                or dataset.SamlAdminGroupName in context.groups
-            )
-        ):
-            return ShareObjectPermission.ApproversAndRequesters.value
         else:
             return ShareObjectPermission.NoPermission.value
 
@@ -245,4 +240,17 @@ def list_shared_with_environment_data_items(
             session=session,
             uri=environmentUri,
             data=filter,
+        )
+
+def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
+    return ShareObjectService.update_share_request_purpose(
+        uri=shareUri,
+        request_purpose=requestPurpose,
+    )
+
+
+def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
+    with context.engine.scoped_session() as session:
+        return ShareObjectService.update_share_reject_purpose(
+            uri=shareUri, reject_purpose=rejectPurpose,
         )

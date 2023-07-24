@@ -57,7 +57,10 @@ approveShareObject = gql.MutationField(
 
 rejectShareObject = gql.MutationField(
     name='rejectShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='rejectPurpose', type=gql.String),
+    ],
     type=gql.Ref('ShareObject'),
     resolver=reject_share_object,
 )
@@ -67,4 +70,25 @@ revokeItemsShareObject = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.Ref('RevokeItemsInput'))],
     type=gql.Ref('ShareObject'),
     resolver=revoke_items_share_object,
+)
+
+updateShareRejectReason = gql.MutationField(
+    name='updateShareRejectReason',
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='rejectPurpose', type=gql.String)
+    ],
+    type=gql.Boolean,
+    resolver=update_share_reject_purpose,
+)
+
+
+updateShareRequestReason = gql.MutationField(
+    name='updateShareRequestReason',
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='requestPurpose', type=gql.String)
+    ],
+    type=gql.Boolean,
+    resolver=update_share_request_purpose,
 )

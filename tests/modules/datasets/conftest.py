@@ -4,6 +4,7 @@ import pytest
 from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
+from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from tests.api.conftest import *
@@ -28,6 +29,7 @@ def dataset(client, patch_es):
         name: str,
         owner: str,
         group: str,
+        confidentiality: str = None
     ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -131,6 +133,8 @@ def dataset(client, patch_es):
                 'environmentUri': env.environmentUri,
                 'SamlAdminGroupName': group or random_group(),
                 'organizationUri': org.organizationUri,
+                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value
+
             },
         )
         print('==>', response)
@@ -306,7 +310,7 @@ def share(db):
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
@@ -317,14 +321,6 @@ def share(db):
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            if dataset.SamlAdminGroupName != environment.SamlGroupName:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=SHARE_OBJECT_REQUESTER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
             session.commit()
             return share
 
