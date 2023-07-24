@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 
-const MLStudioListItem = (props) => {
+export const MLStudioListItem = (props) => {
   const { mlstudiouser } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -263,4 +263,3 @@ const MLStudioListItem = (props) => {
 MLStudioListItem.propTypes = {
   mlstudiouser: PropTypes.object.isRequired
 };
-export default MLStudioListItem;

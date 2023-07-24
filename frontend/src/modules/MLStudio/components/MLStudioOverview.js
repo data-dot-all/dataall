@@ -2,7 +2,7 @@ import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
 
-const MLStudioOverview = (props) => {
+export const MLStudioOverview = (props) => {
   const { mlstudiouser, ...other } = props;
 
   return (
@@ -40,5 +40,3 @@ const MLStudioOverview = (props) => {
 MLStudioOverview.propTypes = {
   mlstudiouser: PropTypes.object.isRequired
 };
-
-export default MLStudioOverview;
