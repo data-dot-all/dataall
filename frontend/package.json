@@ -69,6 +69,7 @@
   "devDependencies": {
     "env-cmd": "^10.1.0",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "2.8.7",
@@ -85,6 +86,43 @@
       "plugin:prettier/recommended",
       "plugin:import/recommended"
     ],
+    "settings": {
+      "import/resolver": {
+        "alias": {
+          "map": [
+            [
+              "authentication",
+              "./src/authentication"
+            ],
+            [
+              "design",
+              "./src/design"
+            ],
+            [
+              "globalErrors",
+              "./src/globalErrors"
+            ],
+            [
+              "modules",
+              "./src/modules"
+            ],
+            [
+              "services",
+              "./src/services"
+            ],
+            [
+              "utils",
+              "./src/utils"
+            ]
+          ],
+          "extensions": [
+            ".js",
+            ".jsx",
+            ".json"
+          ]
+        }
+      }
+    },
     "rules": {
       "no-unused-vars": "error",
       "no-const-assign": "error",
