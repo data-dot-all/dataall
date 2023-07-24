@@ -20,7 +20,7 @@ import {
   Label,
   StackStatus,
   useCardStyle
-} from '../../../../design';
+} from '../../design';
 
 const MLStudioListItem = (props) => {
   const { mlstudiouser } = props;
