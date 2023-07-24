@@ -31,11 +31,7 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  searchGlossary,
-  useClient
-} from 'services';
+import { listEnvironmentGroups, searchGlossary, useClient } from 'services';
 import { getDataset, updateDataset } from '../services';
 import { Topics } from '../../constants';
 

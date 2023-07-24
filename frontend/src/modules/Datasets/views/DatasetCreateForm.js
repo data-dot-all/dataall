@@ -32,11 +32,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { createDataset } from '../services';
-import {
-  useClient,
-  listEnvironmentGroups,
-  listEnvironments
-} from 'services';
+import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
 import { Topics } from '../../constants';
 
 const DatasetCreateForm = (props) => {
