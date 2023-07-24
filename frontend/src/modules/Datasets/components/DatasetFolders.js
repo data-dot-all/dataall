@@ -42,7 +42,7 @@ import {
   deleteDatasetStorageLocation,
   listDatasetStorageLocations
 } from '../services';
-import FolderCreateModal from './FolderCreateModal';
+import { FolderCreateModal } from './FolderCreateModal';
 
 export const DatasetFolders = (props) => {
   const { dataset, isAdmin } = props;

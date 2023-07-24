@@ -16,15 +16,15 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { ChipInput, Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { ChipInput, Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   addDatasetStorageLocation,
   searchGlossary,
   useClient
-} from '../../../../services';
+} from 'services';
 
-const FolderCreateModal = (props) => {
+export const FolderCreateModal = (props) => {
   const { dataset, onApply, onClose, open, reloadFolders, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -300,5 +300,3 @@ FolderCreateModal.propTypes = {
   reloadFolders: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default FolderCreateModal;
