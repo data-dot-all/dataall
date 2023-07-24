@@ -2,7 +2,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger(__name__)
 

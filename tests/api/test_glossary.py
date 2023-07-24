@@ -1,19 +1,22 @@
 from datetime import datetime
-from dataall.db import models
+
+from dataall.core.catalog.db.glossary_models import GlossaryNode
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 import pytest
 
 
 @pytest.fixture(scope='module')
-def _org(db, org, tenant, user, group) -> models.Organization:
-    org = org('testorg', user.userName, group.name)
+def _org(db, org, tenant, user, group) -> Organization:
+    org = org('testorg', user.username, group.name)
     yield org
 
 
 @pytest.fixture(scope='module', autouse=True)
 def _env(
-    db, _org: models.Organization, user, group, env
-) -> models.Environment:
-    env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    db, _org: Organization, user, group, env
+) -> Environment:
+    env1 = env(_org, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -414,7 +417,7 @@ def test_delete_category(client, db, c1, group):
         groups=[group.name],
     )
     with db.scoped_session() as session:
-        node = session.query(models.GlossaryNode).get(c1.nodeUri)
+        node = session.query(GlossaryNode).get(c1.nodeUri)
         assert node.deleted >= now
 
 

@@ -17,16 +17,16 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from dataall.cdkproxy.stacks.manager import stack
-from dataall import db
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import models
-from dataall.db.api import Environment
+from dataall.base import db
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
-from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets_base.db.models import Dataset
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +48,16 @@ class DatasetStack(Stack):
         engine = db.get_engine(envname=envname)
         return engine
 
-    def get_env(self, dataset) -> models.Environment:
+    def get_env(self, dataset) -> Environment:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = session.query(models.Environment).get(dataset.environmentUri)
+            env = session.query(Environment).get(dataset.environmentUri)
         return env
 
-    def get_env_group(self, dataset) -> models.EnvironmentGroup:
+    def get_env_group(self, dataset) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = Environment.get_environment_group(
+            env = EnvironmentService.get_environment_group(
                 session, dataset.SamlAdminGroupName, dataset.environmentUri
             )
         return env
@@ -80,7 +80,7 @@ class DatasetStack(Stack):
 
     def has_quicksight_enabled(self, env) -> bool:
         with self.get_engine().scoped_session() as session:
-            return Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
+            return EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(

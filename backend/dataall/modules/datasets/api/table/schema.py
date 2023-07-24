@@ -1,11 +1,11 @@
 from dataall.modules.datasets.api.table_column.resolvers import list_table_columns
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,
     resolve_glossary_terms
 )
-from dataall.api.constants import GraphQLEnumMapper
+from dataall.base.api.constants import GraphQLEnumMapper
 
 TablePermission = gql.ObjectType(
     name='TablePermission',

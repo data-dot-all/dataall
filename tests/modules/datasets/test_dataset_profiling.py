@@ -7,20 +7,20 @@ from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
 def dataset1(env1, org1, dataset, group, user) -> Dataset:
     yield dataset(
-        org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
+        org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
     )
 
 
@@ -60,7 +60,7 @@ def update_runs(db, runs):
 def test_start_profiling(org1, env1, dataset1, client, module_mocker, db, user, group):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.process', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.process', return_value=True
     )
     dataset1.GlueProfilingJobName = ('profile-job',)
     dataset1.GlueProfilingTriggerSchedule = ('cron(* 2 * * ? *)',)
@@ -74,7 +74,7 @@ def test_start_profiling(org1, env1, dataset1, client, module_mocker, db, user, 
                 }
             }
         """,
-        username=user.userName,
+        username=user.username,
         input={'datasetUri': dataset1.datasetUri, 'GlueTableName': 'table1'},
         groups=[group.name],
     )
@@ -116,7 +116,7 @@ def test_get_table_profiling_run(
 ):
     runs = list_profiling_runs(client, dataset1, group)
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     table = table(dataset=dataset1, name='table1', username=dataset1.owner)
@@ -160,7 +160,7 @@ def test_list_table_profiling_runs(
             .first()
         )
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     response = client.query(
@@ -193,7 +193,7 @@ def test_list_table_profiling_runs(
     )
 
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
+        'dataall.core.tasks.service_handlers.Worker.queue',
         return_value=update_runs(db, runs),
     )
     response = client.query(

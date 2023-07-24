@@ -1,4 +1,4 @@
-from dataall.api.constants import GraphQLEnumMapper
+from dataall.base.api.constants import GraphQLEnumMapper
 
 
 class ShareableType(GraphQLEnumMapper):
@@ -56,3 +56,14 @@ class ShareItemActions(GraphQLEnumMapper):
     RemoveItem = 'RemoveItem'
     Failure = 'Failure'
     Success = 'Success'
+
+
+class PrincipalType(GraphQLEnumMapper):
+    Any = 'Any'
+    Organization = 'Organization'
+    Environment = 'Environment'
+    User = 'User'
+    Project = 'Project'
+    Public = 'Public'
+    Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'

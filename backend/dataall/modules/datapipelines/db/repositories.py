@@ -1,8 +1,10 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
+from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.db import models, exceptions, paginate
+from dataall.core.stacks.db.stack_models import Stack
+from dataall.base.db import exceptions, paginate
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 
 
@@ -24,7 +26,7 @@ class DatapipelinesRepository(EnvironmentResource):
 
     @staticmethod
     def get_clone_url_http(session, environmentUri, repo):
-        env: models.Environment = session.query(models.Environment).get(
+        env: Environment = session.query(Environment).get(
             environmentUri
         )
         return f'codecommit::{env.region}://{repo}'
@@ -46,17 +48,17 @@ class DatapipelinesRepository(EnvironmentResource):
     @staticmethod
     def get_pipeline_and_environment_by_uri(session, uri):
         pipeline: DataPipeline = session.query(DataPipeline).get(uri)
-        env: models.Environment = session.query(models.Environment).get(pipeline.environmentUri)
+        env: Environment = session.query(Environment).get(pipeline.environmentUri)
         return (pipeline, env)
 
     @staticmethod
     def get_pipeline_stack_by_uri(session, uri):
         return (
-            session.query(models.Stack)
+            session.query(Stack)
             .filter(
                 and_(
-                    models.Stack.targetUri == uri,
-                    models.Stack.stack == 'PipelineStack',
+                    Stack.targetUri == uri,
+                    Stack.stack == 'PipelineStack',
                 ))
             .first()
         )

@@ -3,8 +3,9 @@ from unittest.mock import MagicMock
 import pytest
 
 import dataall
-from dataall.api.constants import OrganisationUserRole
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
@@ -13,7 +14,7 @@ from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubs
 @pytest.fixture(scope='module')
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -28,7 +29,7 @@ def org(db):
 @pytest.fixture(scope='module')
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -49,7 +50,7 @@ def env(org, db):
 @pytest.fixture(scope='module')
 def otherenv(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='987654321',
             region='eu-west-1',
@@ -94,8 +95,8 @@ def dataset(org, env, db):
 @pytest.fixture(scope='module')
 def share(
     dataset: Dataset,
-    db: dataall.db.Engine,
-    otherenv: dataall.db.models.Environment,
+    db: dataall.base.db.Engine,
+    otherenv: Environment,
 ):
     with db.scoped_session() as session:
 
@@ -120,7 +121,7 @@ def share(
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
-            principalType=dataall.api.constants.PrincipalType.Environment.value,
+            principalType=PrincipalType.Environment.value,
             status=ShareObjectStatus.Approved.value,
         )
         session.add(share)

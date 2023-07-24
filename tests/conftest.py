@@ -1,8 +1,10 @@
+import dataclasses
 import os
 import pytest
 import dataall
-from dataall.core.config import config
-from dataall.modules.loader import load_modules, ImportMode
+from dataclasses import dataclass
+from dataall.base.config import config
+from dataall.base.loader import load_modules, ImportMode
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
@@ -25,9 +27,9 @@ ignore_module_tests_if_not_active()
 
 
 @pytest.fixture(scope='module')
-def db() -> dataall.db.Engine:
-    engine = dataall.db.get_engine(envname=ENVNAME)
-    dataall.db.create_schema_and_tables(engine, envname=ENVNAME)
+def db() -> dataall.base.db.Engine:
+    engine = dataall.base.db.get_engine(envname=ENVNAME)
+    dataall.base.db.create_schema_and_tables(engine, envname=ENVNAME)
     yield engine
     engine.session().close()
     engine.engine.dispose()

@@ -2,12 +2,9 @@
 import logging
 import os
 
-from botocore.exceptions import ClientError
-
-from dataall.aws.handlers.ecs import Ecs
-from dataall.db import models
-from dataall.utils import Parameter
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
+from dataall.core.stacks.aws.ecs import Ecs
+from dataall.core.tasks.db.task_models import Task
 from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 
 log = logging.getLogger(__name__)
@@ -16,16 +13,16 @@ log = logging.getLogger(__name__)
 class EcsShareHandler:
     @staticmethod
     @Worker.handler(path='ecs.share.approve')
-    def approve_share(engine, task: models.Task):
+    def approve_share(engine, task: Task):
         return EcsShareHandler._manage_share(engine, task, DataSharingService.approve_share, 'approve_share')
 
     @staticmethod
     @Worker.handler(path='ecs.share.revoke')
-    def revoke_share(engine, task: models.Task):
+    def revoke_share(engine, task: Task):
         return EcsShareHandler._manage_share(engine, task, DataSharingService.revoke_share, 'revoke_share')
 
     @staticmethod
-    def _manage_share(engine, task: models.Task, local_handler, ecs_handler: str):
+    def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
             return local_handler(engine, task.targetUri)

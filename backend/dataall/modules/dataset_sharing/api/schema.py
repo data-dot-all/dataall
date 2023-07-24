@@ -1,9 +1,9 @@
-from dataall.api import gql
-from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.base.api import gql
+from dataall.modules.dataset_sharing.api.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
     resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
     resolve_group, list_shareable_objects, resolve_user_role
-from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.core.environment.api.resolvers import resolve_environment
 
 ShareableObject = gql.Union(
     name='ShareableObject',
@@ -201,5 +201,38 @@ EnvironmentPublishedItemSearchResults = gql.ObjectType(
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(EnvironmentPublishedItem)),
+    ],
+)
+
+Principal = gql.ObjectType(
+    name='Principal',
+    fields=[
+        gql.Field(name='principalId', type=gql.ID),
+        gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
+        gql.Field(name='principalName', type=gql.String),
+        gql.Field(name='principalIAMRoleName', type=gql.String),
+        gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='environmentName', type=gql.String),
+        gql.Field(name='environmentUri', type=gql.String),
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(name='organizationName', type=gql.String),
+        gql.Field(name='organizationUri', type=gql.String),
+    ],
+)
+
+
+PrincipalSearchResult = gql.ObjectType(
+    name='PrincipalSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='nodes', type=gql.ArrayType(Principal)),
+        gql.Field(name='pageSize', type=gql.Integer),
+        gql.Field(name='nextPage', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='previousPage', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )

@@ -1,5 +1,5 @@
-from dataall.api import gql
-from dataall.api.constants import GraphQLEnumMapper, SortDirection
+from dataall.base.api import gql
+from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
 
 
 class DatasetSortField(GraphQLEnumMapper):

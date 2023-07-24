@@ -1,8 +1,8 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
 
 log = logging.getLogger(__name__)

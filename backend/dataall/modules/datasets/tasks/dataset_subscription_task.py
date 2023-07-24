@@ -1,24 +1,22 @@
-import json
 import logging
 import os
 import sys
 
 from botocore.exceptions import ClientError
 
-from dataall import db
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sqs import SqsQueue
-from dataall.db import get_engine
-from dataall.db import models
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sqs import SqsQueue
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.db import get_engine
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets.aws.sns_dataset_client import SnsDatasetClient
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets.tasks.subscriptions import poll_queues
-from dataall.utils import json_utils
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.tasks.subscriptions import poll_queues
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
@@ -35,10 +33,10 @@ class DatasetSubscriptionService:
     @staticmethod
     def get_environments(engine):
         with engine.scoped_session() as session:
-            return db.api.Environment.list_all_active_environments(session)
+            return EnvironmentService.list_all_active_environments(session)
 
     @staticmethod
-    def get_queues(environments: [models.Environment]):
+    def get_queues(environments: [Environment]):
         queues = []
         for env in environments:
             queues.append(
@@ -118,7 +116,7 @@ class DatasetSubscriptionService:
                     f'Share Item with no share object or no principalId ? {item.shareItemUri}'
                 )
             else:
-                environment = session.query(models.Environment).get(
+                environment = session.query(Environment).get(
                     share_object.principalId
                 )
                 if not environment:

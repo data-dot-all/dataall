@@ -1,11 +1,11 @@
 import logging
 
-from dataall import db
-from dataall import utils
-from dataall.api.Objects.Principal.resolvers import get_principal
-from dataall.api.context import Context
-from dataall.db import models
-from dataall.db.exceptions import RequiredParameter
+from dataall.base import utils
+from dataall.base.api.context import Context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
@@ -118,7 +118,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
-            env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
+            env: Environment = EnvironmentService.get_environment_by_uri(session, ds.environmentUri)
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
@@ -142,9 +142,35 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        return get_principal(
-            session, source.principalId, source.principalType, source.principalIAMRoleName, source.environmentUri, source.groupUri
-        )
+        if source.principalType in ['Group', 'ConsumptionRole']:
+            environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+            organization = Organization.get_organization_by_uri(
+                session, environment.organizationUri
+            )
+            if source.principalType in ['ConsumptionRole']:
+                principal = EnvironmentService.get_environment_consumption_role(
+                    session,
+                    source.principalId,
+                    source.environmentUri
+                )
+                principalName = f"{principal.consumptionRoleName} [{principal.IAMRoleArn}]"
+            else:
+                principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
+                principalName = f"{source.groupUri} [{principal.environmentIAMRoleArn}]"
+
+            return {
+                'principalId': source.principalId,
+                'principalType': source.principalType,
+                'principalName': principalName,
+                'principalIAMRoleName': source.principalIAMRoleName,
+                'SamlGroupName': source.groupUri,
+                'environmentUri': environment.environmentUri,
+                'environmentName': environment.label,
+                'AwsAccountId': environment.AwsAccountId,
+                'region': environment.region,
+                'organizationUri': organization.organizationUri,
+                'organizationName': organization.label,
+            }
 
 
 def resolve_group(context: Context, source: ShareObject, **kwargs):

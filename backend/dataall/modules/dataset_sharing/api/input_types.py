@@ -1,4 +1,5 @@
-from dataall.api.constants import *
+from dataall.base.api.constants import *
+from dataall.core.organizations.api.enums import OrganisationUserRole
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 
 NewShareObjectInput = gql.InputType(
@@ -83,5 +84,15 @@ EnvironmentDataItemFilter = gql.InputType(
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
         gql.Argument('uniqueShares', gql.Boolean)
+    ],
+)
+
+PrincipalFilter = gql.InputType(
+    name='PrincipalFilter',
+    arguments=[
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument(name='principalType', type=gql.Ref('PrincipalType')),
+        gql.Argument(name='term', type=gql.String),
     ],
 )

@@ -1,16 +1,16 @@
 from unittest.mock import MagicMock
 
-from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
 import pytest
-import dataall
 
 
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -25,7 +25,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -140,7 +140,7 @@ def test_group_prefixes_by_accountid(db, mocker):
 
 def test_handler(org, env, db, sync_dataset, mocker):
     s3_client = MagicMock()
-    mocker.patch('dataall.modules.datasets.tasks.bucket_policy_updater.S3BucketPolicyClient', s3_client)
+    mocker.patch('dataall.modules.datasets.tasks.bucket_policy_updater.S3DatasetBucketPolicyClient', s3_client)
     s3_client().get_bucket_policy.return_value = {'Version': '2012-10-17', 'Statement': []}
     s3_client().put_bucket_policy.return_value = {'status': 'SUCCEEDED'}
 

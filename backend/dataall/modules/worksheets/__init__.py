@@ -2,7 +2,7 @@
 import logging
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.modules.loader import ImportMode, ModuleInterface
+from dataall.base.loader import ImportMode, ModuleInterface
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 
@@ -17,7 +17,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
-        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
+        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.worksheets.api
 

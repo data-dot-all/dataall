@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_environment,
@@ -13,7 +13,8 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_glossary_terms,
     get_dataset_stack
 )
-from dataall.api.constants import EnvironmentPermission
+from dataall.core.environment.api.enums import EnvironmentPermission
+
 
 DatasetStatistics = gql.ObjectType(
     name='DatasetStatistics',

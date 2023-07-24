@@ -1,15 +1,14 @@
 import json
 import logging
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, \
-    has_group_permission
-from dataall.db.api import (
-    Environment,
-    ResourcePolicy,
-    KeyValueTag,
-)
-from dataall.db import models, exceptions
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.base.db import exceptions
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
 from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient
@@ -17,11 +16,11 @@ from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEn
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
     CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.utils.slugify import slugify
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +38,8 @@ class DataPipelineService:
         data: dict = None,
     ) -> DataPipeline:
 
-        environment = Environment.get_environment_by_uri(session, uri)
-        enabled = Environment.get_boolean_env_param(session, environment, "pipelinesEnabled")
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
+        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
         if not enabled:
             raise exceptions.UnauthorizedOperation(
@@ -75,7 +74,7 @@ class DataPipelineService:
         pipeline.repo = aws_compliant_name
         pipeline.name = aws_compliant_name
 
-        activity = models.Activity(
+        activity = Activity(
             action='PIPELINE:CREATE',
             label='PIPELINE:CREATE',
             owner=username,
@@ -114,8 +113,8 @@ class DataPipelineService:
         data: dict = None,
     ) -> DataPipelineEnvironment:
 
-        environment = Environment.get_environment_by_uri(session, data['environmentUri'])
-        enabled = Environment.get_boolean_env_param(session, environment, "pipelinesEnabled")
+        environment = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
+        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
         if not enabled:
             raise exceptions.UnauthorizedOperation(
@@ -154,7 +153,7 @@ class DataPipelineService:
                 action=CREATE_PIPELINE,
                 message=f'User: {username} is not a member of the team {pipeline_group}',
             )
-        if pipeline_group not in Environment.list_environment_groups(
+        if pipeline_group not in EnvironmentService.list_environment_groups(
             session=session,
             uri=environment_uri,
         ):
@@ -259,7 +258,7 @@ class DataPipelineService:
     @has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(session, uri):
         pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
-        env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
+        env = EnvironmentService.get_environment_by_uri(session, pipeline.environmentUri)
 
         env_role_arn = env.EnvironmentDefaultIAMRoleArn
 

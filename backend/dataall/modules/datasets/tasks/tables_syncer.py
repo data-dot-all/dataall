@@ -3,10 +3,10 @@ import os
 import sys
 from operator import and_
 
-from dataall import db
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import get_engine
-from dataall.db import models
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.db import get_engine
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
@@ -34,18 +34,18 @@ def sync_tables(engine):
             log.info(
                 f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables'
             )
-            env: models.Environment = (
-                session.query(models.Environment)
+            env: Environment = (
+                session.query(Environment)
                 .filter(
                     and_(
-                        models.Environment.environmentUri == dataset.environmentUri,
-                        models.Environment.deleted.is_(None),
+                        Environment.environmentUri == dataset.environmentUri,
+                        Environment.deleted.is_(None),
                     )
                 )
                 .first()
             )
-            env_group: models.EnvironmentGroup = (
-                db.api.Environment.get_environment_group(
+            env_group: EnvironmentGroup = (
+                EnvironmentService.get_environment_group(
                     session, dataset.SamlAdminGroupName, env.environmentUri
                 )
             )
@@ -96,7 +96,7 @@ def sync_tables(engine):
         return processed_tables
 
 
-def is_assumable_pivot_role(env: models.Environment):
+def is_assumable_pivot_role(env: Environment):
     aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId)
     if not aws_session:
         log.error(

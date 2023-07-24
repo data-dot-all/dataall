@@ -1,9 +1,7 @@
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db.api import Environment, Glossary
-from dataall.db.exceptions import ResourceShared, ResourceAlreadyExists
-from dataall.db.models import Task
+from dataall.base.context import get_context
+from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository

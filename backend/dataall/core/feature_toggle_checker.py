@@ -1,9 +1,8 @@
 """
 Contains decorators that check if a feature has been enabled or not
 """
-
-from dataall.core.config import config
-from dataall.utils.decorator_util import process_func
+from dataall.base.config import config
+from dataall.base.utils.decorator_utls import process_func
 
 
 def is_feature_enabled(config_property: str):

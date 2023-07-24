@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 
 StartDatasetProfilingRunInput = gql.InputType(
     name='StartDatasetProfilingRunInput',

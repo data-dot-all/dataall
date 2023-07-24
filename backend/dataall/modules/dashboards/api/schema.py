@@ -1,7 +1,7 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.dashboards.api.resolvers import *
 
-from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.core.environment.api.resolvers import resolve_environment
 
 Dashboard = gql.ObjectType(
     name='Dashboard',

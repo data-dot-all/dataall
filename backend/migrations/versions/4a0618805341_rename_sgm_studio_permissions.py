@@ -8,13 +8,8 @@ Create Date: 2023-05-17 13:39:00.974409
 from alembic import op
 from sqlalchemy import String, orm, and_
 
-from dataall.db.api.permission import Permission as PermissionService
-from dataall.db.models import (
-    Permission,
-    PermissionType,
-    TenantPolicy,
-    TenantPolicyPermission
-)
+from dataall.core.permissions.db.permission import Permission as PermissionService
+from dataall.core.permissions.db.permission_models import Permission, TenantPolicyPermission, PermissionType
 from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS
 from dataall.modules.mlstudio.services.mlstudio_permissions import (
     MANAGE_SGMSTUDIO_USERS,

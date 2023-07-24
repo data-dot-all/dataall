@@ -4,10 +4,10 @@ from pyathena import connect
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import DatasetTable
-from dataall.utils import json_utils
+from dataall.base.utils import json_utils
 
 
 log = logging.getLogger(__name__)

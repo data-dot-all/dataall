@@ -6,8 +6,8 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify, Response
 from munch import DefaultMunch
 import dataall
-from dataall.core.context import set_context, dispose_context, RequestContext
-from dataall.core.config import config
+from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.base.config import config
 
 config.set_property("cdk_proxy_url", "mock_url")
 
@@ -34,7 +34,7 @@ class ClientWrapper:
 @pytest.fixture(scope='module', autouse=True)
 def app(db):
     app = Flask('tests')
-    schema = dataall.api.get_executable_schema()
+    schema = dataall.base.api.get_executable_schema()
 
     @app.route('/', methods=['OPTIONS'])
     def opt():

@@ -73,7 +73,7 @@ class ContainerStack(pyNestedClass):
                 repository=ecr_repository, tag=self._cdkproxy_image_tag
             ),
             environment=self._create_env('DEBUG'),
-            command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
+            command=['python3.8', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(
@@ -102,7 +102,7 @@ class ContainerStack(pyNestedClass):
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.catalog_indexer_task'],
+            command=['python3.8', '-m', 'dataall.core.catalog.tasks.catalog_indexer_task'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
@@ -122,7 +122,7 @@ class ContainerStack(pyNestedClass):
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.stacks_updater'],
+            command=['python3.8', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),

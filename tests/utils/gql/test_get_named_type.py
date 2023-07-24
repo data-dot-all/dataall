@@ -1,4 +1,4 @@
-import dataall.api.gql as gql
+import dataall.base.api.gql as gql
 
 
 def test_scalar():

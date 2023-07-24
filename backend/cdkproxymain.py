@@ -7,10 +7,12 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI, BackgroundTasks, status, Response
 
-import dataall.cdkproxy.cdk_cli_wrapper as wrapper
-from dataall.cdkproxy.stacks import StackManager
-from dataall import db
-from dataall.modules.loader import load_modules, ImportMode
+import dataall.base.cdkproxy.cdk_cli_wrapper as wrapper
+from dataall.base import db
+from dataall.base.loader import load_modules, ImportMode
+from dataall.base.cdkproxy.stacks import StackManager
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.stacks.db.stack_models import Stack
 
 print('\n'.join(sys.path))
 
@@ -30,7 +32,7 @@ def connect():
     try:
         engine = db.get_engine(envname=ENVNAME)
         with engine.scoped_session() as session:
-            orgs = session.query(db.models.Organization).all()
+            orgs = session.query(Organization).all()
         return engine
     except Exception as e:
         raise Exception('Connection Error')
@@ -147,7 +149,7 @@ async def create_stack(
 
     for stackid in stack_ids:
         with engine.scoped_session() as session:
-            stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+            stack: Stack = session.query(Stack).get(stackid)
             if not stack:
                 logger.warning(f'Could not find stack with stackUri `{stackid}`')
                 response.status_code = status.HTTP_302_FOUND
@@ -190,7 +192,7 @@ async def delete_stack(
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_302_FOUND
@@ -228,7 +230,7 @@ def get_stack(stackid: str, response: Response):
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_404_NOT_FOUND

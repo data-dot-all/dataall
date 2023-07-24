@@ -1,6 +1,7 @@
 import pytest
 
-from dataall.db.models import Organization, Environment
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
@@ -106,7 +107,7 @@ def folder(org, env, db, dataset):
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+    mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
 def test_es_request():

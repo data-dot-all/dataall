@@ -4,6 +4,7 @@ import pytest
 from aws_cdk import App, Stack
 from aws_cdk.assertions import Template
 
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
@@ -12,7 +13,7 @@ from tests.cdkproxy.conftest import *
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline2(db, env: models.Environment) -> DataPipeline:
+def pipeline2(db, env: Environment) -> DataPipeline:
     with db.scoped_session() as session:
         pipeline = DataPipeline(
             label='thistable',
@@ -29,7 +30,7 @@ def pipeline2(db, env: models.Environment) -> DataPipeline:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pip_envs(db, env: models.Environment, pipeline2: DataPipeline) -> DataPipelineEnvironment:
+def pip_envs(db, env: Environment, pipeline2: DataPipeline) -> DataPipelineEnvironment:
     with db.scoped_session() as session:
         pipeline_env2 = DataPipelineEnvironment(
             owner='me',
@@ -58,7 +59,7 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=db,
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
@@ -74,18 +75,18 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=pip_envs,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=pipeline2,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_environment',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
         return_value=env,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_organization',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
         return_value=org,
     )
 

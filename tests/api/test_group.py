@@ -1,24 +1,21 @@
 import pytest
 
-import dataall
-from dataall.db import permissions
-
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 def test_list_cognito_groups_env(client, env1, group, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.cognito.Cognito.list_cognito_groups',
+        'dataall.core.cognito_groups.aws.cognito.Cognito.list_cognito_groups',
         return_value=[{"GroupName": 'cognitos'}, {"GroupName": 'testadmins'}],
     )
     response = client.query(

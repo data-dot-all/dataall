@@ -4,7 +4,7 @@ from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIn
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.tasks.catalog_indexer_task import CatalogIndexer
+from dataall.core.catalog.tasks.catalog_indexer_task import CatalogIndexer
 
 log = logging.getLogger(__name__)
 

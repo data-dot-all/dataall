@@ -4,7 +4,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Base, utils
+from dataall.base.db import Base, utils
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus
 
 

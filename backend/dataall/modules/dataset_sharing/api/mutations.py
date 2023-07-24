@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.dataset_sharing.api.resolvers import *
 
 createShareObject = gql.MutationField(

@@ -1,5 +1,5 @@
 """The module defines GraphQL input types for the SageMaker notebooks"""
-from dataall.api import gql
+from dataall.base.api import gql
 
 NewSagemakerNotebookInput = gql.InputType(
     name="NewSagemakerNotebookInput ",

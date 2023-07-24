@@ -12,9 +12,13 @@ from typing import List
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
-from dataall.db import Resource, models
-from dataall.db.api import ResourcePolicy, Permission
-from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission, TenantPolicyPermission
+
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.base.db import Resource
+from dataall.core.permissions.db.permission_models import PermissionType, ResourcePolicyPermission, \
+    TenantPolicyPermission
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
 # revision identifiers, used by Alembic.
@@ -122,6 +126,8 @@ def upgrade():
         migrate_groups_permissions(session)
         delete_unused_permissions(session)
 
+        op.drop_table("tenant_administrator")
+
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
 
@@ -156,7 +162,7 @@ def downgrade():
                 mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
                 pipelinesEnabled=params["pipelinesEnabled"] == "true",
                 dashboardsEnabled=params["dashboardsEnabled"] == "true",
-                dashboardsEnabled=params["warehousesEnabled"] == "true"
+                warehousesEnabled=params["warehousesEnabled"] == "true",
             ))
 
         save_deleted_permissions(session)
@@ -214,7 +220,7 @@ def migrate_groups_permissions(session):
                 group=group.groupUri,
                 permissions=new_perms,
                 resource_uri=group.environmentUri,
-                resource_type=models.Environment.__name__
+                resource_type=Environment.__name__
             )
 
 
@@ -227,7 +233,7 @@ def delete_unused_permissions(session):
             .delete()
         )
         session.delete(perm)
-    
+
     for name in UNUSED_TENANT_PERMISSIONS:
         perm = Permission.get_permission_by_name(session, name, PermissionType.TENANT.value)
         (

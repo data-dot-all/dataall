@@ -1,18 +1,21 @@
 import pytest
 
-from dataall.db import models, api
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.stacks.db.stack_models import KeyValueTag
 
 
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 @pytest.fixture(scope='module', autouse=True)
-def org(db) -> models.Organization:
+def org(db) -> Organization:
     with db.scoped_session() as session:
-        org = models.Organization(
+        org = Organization(
             name='org', owner='me', label='org', description='test'
         )
         session.add(org)
@@ -20,9 +23,9 @@ def org(db) -> models.Organization:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env(db, org: models.Organization) -> models.Environment:
+def env(db, org: Organization) -> Environment:
     with db.scoped_session() as session:
-        env = models.Environment(
+        env = Environment(
             name='env',
             owner='me',
             organizationUri=org.organizationUri,
@@ -40,7 +43,7 @@ def env(db, org: models.Organization) -> models.Environment:
         )
         session.add(env)
         session.commit()
-        env_group = models.EnvironmentGroup(
+        env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=env.SamlGroupName,
             environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,
@@ -48,7 +51,7 @@ def env(db, org: models.Organization) -> models.Environment:
             environmentAthenaWorkGroup='workgroup',
         )
         session.add(env_group)
-        tags = models.KeyValueTag(
+        tags = KeyValueTag(
             targetType='environment',
             targetUri=env.environmentUri,
             key='CREATOR',

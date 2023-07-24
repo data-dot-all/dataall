@@ -1,14 +1,13 @@
 import logging
-import re
 import os
 import ast
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.secrets_manager import SecretsManager
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.secrets_manager import SecretsManager
+from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -1,12 +1,12 @@
 import logging
 
-from dataall.api.Objects.Stack import stack_helper
-from dataall.api.context import Context
+from dataall.core.stacks.api import stack_helper
+from dataall.base.api.context import Context
 from dataall.core.feature_toggle_checker import is_feature_enabled
-from dataall.db import paginate, models
-from dataall.db.api import Environment
-from dataall.db.api.organization import Organization
-from dataall.db.exceptions import RequiredParameter, InvalidInput
+from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
+from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
@@ -98,7 +98,7 @@ def get_dataset_environment(context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Environment.get_environment_by_uri(session, source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: Dataset, **kwargs):
@@ -164,15 +164,7 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        terms = (
-            session.query(models.GlossaryNode)
-            .join(
-                models.TermLink, models.TermLink.nodeUri == models.GlossaryNode.nodeUri
-            )
-            .filter(models.TermLink.targetUri == source.datasetUri)
-        )
-
-    return paginate(terms, page_size=100, page=1).to_dict()
+        return Glossary.get_glossary_terms_links(session, source.datasetUri, 'Dataset')
 
 
 def list_datasets_created_in_environment(

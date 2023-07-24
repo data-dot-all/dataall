@@ -4,27 +4,24 @@ import shutil
 import subprocess
 from typing import List
 
-
 from aws_cdk import aws_codebuild as codebuild, Stack, RemovalPolicy, CfnOutput
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_codepipeline_actions as codepipeline_actions
-
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
-
 from aws_cdk.aws_s3_assets import Asset
 from botocore.exceptions import ClientError
 
-from dataall.cdkproxy.stacks.manager import stack
-from dataall.aws.handlers.sts import SessionHelper
-from dataall import db
-from dataall.db import models
-from dataall.db.api import Environment
+from dataall.base import db
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
-from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +62,16 @@ class PipelineStack(Stack):
 
     def get_pipeline_cicd_environment(
         self, pipeline: DataPipeline
-    ) -> models.Environment:
+    ) -> Environment:
         envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         with engine.scoped_session() as session:
-            return Environment.get_environment_by_uri(session, pipeline.environmentUri)
+            return EnvironmentService.get_environment_by_uri(session, pipeline.environmentUri)
 
-    def get_env_team(self, pipeline: DataPipeline) -> models.EnvironmentGroup:
+    def get_env_team(self, pipeline: DataPipeline) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = Environment.get_environment_group(
+            env = EnvironmentService.get_environment_group(
                 session, pipeline.SamlGroupName, pipeline.environmentUri
             )
         return env

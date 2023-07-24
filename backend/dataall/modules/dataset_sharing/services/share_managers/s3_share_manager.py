@@ -3,11 +3,12 @@ import logging
 import json
 import time
 
-from dataall.db import models, utils
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.base.db import utils
+from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
-from dataall.aws.handlers.iam import IAM
+from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
@@ -26,10 +27,10 @@ class S3ShareManager:
         dataset: Dataset,
         share: ShareObject,
         target_folder: DatasetStorageLocation,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        source_env_group: models.EnvironmentGroup,
-        env_group: models.EnvironmentGroup,
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
     ):
         self.session = session
         self.source_env_group = source_env_group
@@ -350,7 +351,7 @@ class S3ShareManager:
     def delete_target_role_access_policy(
             share: ShareObject,
             dataset: Dataset,
-            target_environment: models.Environment,
+            target_environment: Environment,
     ):
         logger.info(
             'Deleting target role IAM policy...'
@@ -385,7 +386,7 @@ class S3ShareManager:
     def delete_dataset_bucket_key_policy(
             share: ShareObject,
             dataset: Dataset,
-            target_environment: models.Environment,
+            target_environment: Environment,
     ):
         logger.info(
             'Deleting dataset bucket KMS key policy...'

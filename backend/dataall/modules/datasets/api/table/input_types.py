@@ -1,5 +1,5 @@
-from dataall.api import gql
-from dataall.api.constants import SortDirection, GraphQLEnumMapper
+from dataall.base.api import gql
+from dataall.base.api.constants import SortDirection, GraphQLEnumMapper
 
 ModifyDatasetTableInput = gql.InputType(
     name='ModifyDatasetTableInput',

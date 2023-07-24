@@ -1,20 +1,19 @@
-import pytest
 from typing import List
 
-from dataall.db.models import Environment, Organization
+from dataall.core.catalog.db.glossary_models import TermLink
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 from tests.api.test_glossary import *
 
 
 @pytest.fixture(scope='module')
 def _org(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.userName, group.name)
+    org = org('testorg', user.username, group.name)
     yield org
 
 
 @pytest.fixture(scope='module')
 def _env(db, _org: Organization, user, group, env) -> Environment:
-    env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(_org, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -22,7 +21,7 @@ def _env(db, _org: Organization, user, group, env) -> Environment:
 def _dataset(db, _env, _org, group, user, dataset) -> Dataset:
     with db.scoped_session() as session:
         yield dataset(
-            org=_org, env=_env, name='dataset1', owner=user.userName, group=group.name
+            org=_org, env=_env, name='dataset1', owner=user.username, group=group.name
         )
 
 
@@ -130,9 +129,9 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         input={'terms': [t1.nodeUri]},
     )
     with db.scoped_session() as session:
-        link: models.TermLink = (
-            session.query(models.TermLink)
-            .filter(models.TermLink.nodeUri == t1.nodeUri)
+        link: TermLink = (
+            session.query(TermLink)
+            .filter(TermLink.nodeUri == t1.nodeUri)
             .first()
         )
     r = client.query(
@@ -146,7 +145,7 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         groups=[group.name],
     )
     assert r
-    link: models.TermLink = session.query(models.TermLink).get(link.linkUri)
+    link: TermLink = session.query(TermLink).get(link.linkUri)
     assert link.approvedBySteward
 
     r = client.query(
@@ -160,7 +159,7 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         groups=[group.name],
     )
     assert r
-    link: models.TermLink = session.query(models.TermLink).get(link.linkUri)
+    link: TermLink = session.query(TermLink).get(link.linkUri)
     assert not link.approvedBySteward
 
 

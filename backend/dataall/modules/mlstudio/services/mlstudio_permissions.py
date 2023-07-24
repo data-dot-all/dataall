@@ -17,7 +17,7 @@ RESOURCE_PERMISSION
 
 """
 
-from dataall.db.permissions import (
+from dataall.core.permissions.permissions import (
     ENVIRONMENT_ALL,
     ENVIRONMENT_INVITED,
     RESOURCES_ALL_WITH_DESC,
