@@ -62,17 +62,17 @@ def permissions(db):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user(db):
+def user():
    yield User('alice')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user2(db):
+def user2():
     yield User('bob')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user3(db):
+def user3():
     yield User('david')
 
 
