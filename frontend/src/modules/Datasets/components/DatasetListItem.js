@@ -22,7 +22,7 @@ import {
   StackStatus,
   UpVotesReadOnly,
   useCardStyle
-} from '../../../design';
+} from 'design';
 
 export const DatasetListItem = (props) => {
   const { dataset } = props;

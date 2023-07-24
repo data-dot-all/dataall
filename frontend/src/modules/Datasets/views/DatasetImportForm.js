@@ -29,13 +29,13 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listEnvironmentGroups,
   listEnvironments,
   useClient
-} from '../../../services';
+} from 'services';
 import { importDataset } from '../services';
 import { Topics } from '../../constants';
 

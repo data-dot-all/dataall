@@ -13,8 +13,8 @@ import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { useClient } from '../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import { startGlueCrawler } from '../services';
 
 export const DatasetStartCrawlerModal = (props) => {

@@ -13,9 +13,9 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { FileDropzone } from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { useClient } from '../../../services';
+import { FileDropzone } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 
 import { getDatasetPresignedUrl, startGlueCrawler } from '../services';
 

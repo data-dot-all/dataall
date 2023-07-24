@@ -33,9 +33,9 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { deleteDatasetTable, useClient } from '../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { deleteDatasetTable, useClient } from 'services';
 
 import { listDatasetTables, syncTables } from '../services';
 

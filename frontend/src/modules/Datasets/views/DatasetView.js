@@ -31,9 +31,9 @@ import {
   PencilAltIcon,
   UpVoteButton,
   useSettings
-} from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { countUpVotes, getVote, upVote, useClient } from '../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteDataset, getDataset } from '../services';
 import FeedComments from '../../Misc/views/Feed/FeedComments';
 import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
