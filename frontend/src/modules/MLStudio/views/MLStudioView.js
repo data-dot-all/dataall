@@ -33,7 +33,7 @@ import {
   useClient
 } from 'services';
 import { StackStatus, Stack } from 'modules/Shared';
-import MLStudioOverview from './MLStudioOverview';
+import MLStudioOverview from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

@@ -18,10 +18,10 @@ import {
   PlusIcon,
   SearchInput,
   useSettings
-} from '../../design';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { listSagemakerStudioUsers, useClient } from '../../services';
-import MLStudioListItem from './MLStudioListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listSagemakerStudioUsers, useClient } from 'services';
+import MLStudioListItem from '../components/MLStudioListItem';
 
 function MLStudioPageHeader() {
   return (
