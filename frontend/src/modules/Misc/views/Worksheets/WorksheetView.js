@@ -33,7 +33,6 @@ import {
   getSharedDatasetTables,
   getWorksheet,
   listDatasetTableColumns,
-  listDatasetTables,
   listDatasetsOwnedByEnvGroup,
   listEnvironmentGroups,
   listEnvironments,
@@ -42,6 +41,7 @@ import {
   updateWorksheet,
   useClient
 } from '../../../../services';
+import { listDatasetTables } from '../../../Datasets/services';
 import SQLQueryEditor from './SQLQueryEditor';
 import WorksheetEditFormModal from './WorksheetEditFormModal';
 import WorksheetResult from './WorksheetResult';

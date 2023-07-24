@@ -28,11 +28,12 @@ import {
   useSettings
 } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { useClient } from '../../../../services';
+
 import {
   addDatasetStorageLocation,
-  getDataset,
-  useClient
-} from '../../../../services';
+  getDataset
+} from '../../../Datasets/services';
 
 function FolderCreateHeader(props) {
   const { dataset } = props;

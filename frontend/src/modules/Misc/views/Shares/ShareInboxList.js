@@ -5,11 +5,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, useSettings } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  getShareRequestsToMe,
-  listDatasetShareObjects,
-  useClient
-} from '../../../../services';
+import { getShareRequestsToMe, useClient } from '../../../../services';
+
+import { listDatasetShareObjects } from '../../../Datasets/services';
 import ShareInboxListItem from './ShareInboxListItem';
 
 const ShareInboxList = (props) => {

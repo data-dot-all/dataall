@@ -18,11 +18,8 @@ import { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { ChipInput, Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  addDatasetStorageLocation,
-  searchGlossary,
-  useClient
-} from 'services';
+import { searchGlossary, useClient } from 'services';
+import { addDatasetStorageLocation } from '../../Datasets/services';
 
 export const FolderCreateModal = (props) => {
   const { dataset, onApply, onClose, open, reloadFolders, ...other } = props;

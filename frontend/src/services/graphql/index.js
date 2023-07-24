@@ -4,7 +4,6 @@ export * from './ApiKeys';
 export * from './Catalog';
 export * from './Dashboard';
 export * from './DataPipeline';
-export * from './Dataset';
 export * from './DatasetTable';
 export * from './Environment';
 export * from './Feed';
