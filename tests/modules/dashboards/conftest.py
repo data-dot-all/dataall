@@ -45,8 +45,6 @@ def dashboard(client, env1, org1, group, module_mocker, patch_es):
                     created
                     owner
                     SamlGroupName
-                    upvotes
-                    userRoleForDashboard
                 }
             }
         """,

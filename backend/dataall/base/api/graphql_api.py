@@ -53,6 +53,7 @@ def _resolve_type(arg_type):
     if arg_type == gql.ID or isinstance(arg_type, gql.Ref):
         return arg_type
     if issubclass(arg_type, Enum):
+        # TODO FIX there is an issue with enum mapping. Most likely it is bound by value not by name.
         return gql.Enum(name=arg_type.__name__, values=arg_type)
     if issubclass(arg_type, gql.ObjectType) or issubclass(arg_type, gql.InputType):
         return gql.Ref(_objects[arg_type])

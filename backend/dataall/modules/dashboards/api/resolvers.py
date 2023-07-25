@@ -5,7 +5,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
 from dataall.modules.dashboards.api.dashboard_schema import UpdateDashboardInput, ImportDashboardInput, DashboardFilter, \
-    DashboardSearchResults, DashboardShareDto, DashboardShareFilter, DashboardShareSearchResults, DashboardDto
+    DashboardSearchResults, DashboardShareDto, DashboardShareFilter, DashboardShareSearchResults, DashboardOverview, \
+    DashboardView
 from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.services.dashboard_quicksight_service import DashboardQuicksightService
@@ -14,7 +15,7 @@ from dataall.modules.dashboards.services.dashboard_share_service import Dashboar
 
 
 @api_mutation("importDashboard")
-def import_dashboard(input: ImportDashboardInput) -> DashboardDto:
+def import_dashboard(input: ImportDashboardInput) -> DashboardView:
     return DashboardService.import_dashboard(
         uri=input.environmentUri,
         admin_group=input.SamlGroupName,
@@ -23,7 +24,7 @@ def import_dashboard(input: ImportDashboardInput) -> DashboardDto:
 
 
 @api_mutation("updateDashboard")
-def update_dashboard(input: UpdateDashboardInput) -> DashboardDto:
+def update_dashboard(input: UpdateDashboardInput) -> DashboardView:
     return DashboardService.update_dashboard(uri=input.dashboardUri, data=input)
 
 
@@ -41,18 +42,18 @@ def list_dashboards(filter: DashboardFilter) -> DashboardSearchResults:
 
 
 @api_query("getDashboard")
-def get_dashboard(dashboardUri: str) -> DashboardDto:
+def get_dashboard(dashboardUri: str) -> DashboardOverview:
     context = get_context()
     with context.db_engine.scoped_session() as session:
         dashboard = DashboardService.get_dashboard(uri=dashboardUri)
 
-        role = DashboardRole.Shared.value
+        role = DashboardRole.Shared
         if context.username and dashboard.owner == context.username:
-             role = DashboardRole.Creator.value
+            role = DashboardRole.Creator
         elif context.groups and dashboard.SamlGroupName in context.groups:
-            role = DashboardRole.Admin.value
+            role = DashboardRole.Admin
 
-        return DashboardDto(
+        return DashboardOverview(
             dashboard=dashboard,
             upvotes=Vote.count_upvotes(
                 session, dashboard.dashboardUri, target_type='dashboard'

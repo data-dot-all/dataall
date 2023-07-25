@@ -10,7 +10,7 @@ from dataall.modules.dashboards.api.enums import DashboardRole
 
 @api_object("Dashboard")
 @dataclass
-class DashboardDto(gql.ObjectType):
+class DashboardView(gql.ObjectType):
     dashboardUri: gql.ID
     name: str
     label: str
@@ -21,11 +21,16 @@ class DashboardDto(gql.ObjectType):
     updated: str
     owner: str
     SamlGroupName: str
-    organization: gql.Ref('Organization') = None
-    environment: gql.Ref('Environment') = None
-    userRoleForDashboard: DashboardRole = None
-    terms: [str] = field(default_factory=list)
-    upvotes: int = 0
+
+
+@api_object("DashboardOverview")
+@dataclass
+class DashboardOverview(DashboardView):
+    organization: gql.Ref('Organization')
+    environment: gql.Ref('Environment')
+    terms: [str]
+    upvotes: int
+    userRoleForDashboard: DashboardRole
 
     def __init__(
         self,
@@ -79,7 +84,7 @@ class DashboardFilter(PageFilter):
 @api_object(name="DashboardSearchResults")
 @dataclass
 class DashboardSearchResults(Page):
-    nodes: [DashboardDto]
+    nodes: [DashboardOverview]
 
 
 @api_object("DashboardShare")
