@@ -35,7 +35,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteDataset, getDataset } from '../services';
-import FeedComments from '../../Misc/views/Feed/FeedComments';
+import { FeedComments } from 'modules/Shared';
 import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
 import ShareInboxList from '../../Misc/views/Shares/ShareInboxList';
 import { StackStatus } from '../../Misc/views/Stack';

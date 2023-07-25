@@ -10,13 +10,13 @@ import { useTheme } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Defaults, Label, Scrollbar, TextAvatar } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listFeedMessages, useClient } from '../../../../services';
-import { dayjs } from '../../../../utils';
-import FeedCommentAdd from './FeedCommentAdd';
+import { Defaults, Label, Scrollbar, TextAvatar } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listFeedMessages, useClient } from 'services';
+import { dayjs } from 'utils';
+import { FeedCommentAdd } from './FeedCommentAdd';
 
-const FeedComments = (props) => {
+export const FeedComments = (props) => {
   const { targetUri, targetType, objectOwner, open, onClose } = props;
   const dispatch = useDispatch();
   const client = useClient();
@@ -160,4 +160,3 @@ FeedComments.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired
 };
-export default FeedComments;

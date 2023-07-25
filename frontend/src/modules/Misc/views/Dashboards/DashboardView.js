@@ -29,8 +29,8 @@ import {
   PencilAltIcon,
   UpVoteButton,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   countUpVotes,
   deleteDashboard,
@@ -38,8 +38,8 @@ import {
   getVote,
   upVote,
   useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
+} from 'services';
+import { FeedComments } from 'modules/Shared';
 import DashboardOverview from './DashboardOverview';
 import DashboardShares from './DashboardShares';
 import DashboardViewer from './DashboardViewer';

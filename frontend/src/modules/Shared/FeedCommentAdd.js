@@ -3,10 +3,10 @@ import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { postFeedMessage, useClient } from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { postFeedMessage, useClient } from 'services';
 
-const FeedCommentAdd = (props) => {
+export const FeedCommentAdd = (props) => {
   const dispatch = useDispatch();
   const { targetType, targetUri, reloadMessages } = props;
   const [value, setValue] = useState('');
@@ -95,5 +95,3 @@ FeedCommentAdd.propTypes = {
   targetType: PropTypes.string.isRequired,
   reloadMessages: PropTypes.func.isRequired
 };
-
-export default FeedCommentAdd;

@@ -36,7 +36,7 @@ import {
   getDatasetAssumeRoleUrl,
   getDatasetStorageLocation
 } from '../../../Datasets/services';
-import FeedComments from '../Feed/FeedComments';
+import { FeedComments } from 'modules/Shared';
 import FolderOverview from './FolderOverview';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
