@@ -10,11 +10,11 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { THEMES, useSettings } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getStackLogs, useClient } from '../../../../services';
+import { THEMES, useSettings } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { getStackLogs, useClient } from 'services';
 
-const StackLogs = (props) => {
+export const StackLogs = (props) => {
   const { environmentUri, stack, onClose, open } = props;
   const { settings } = useSettings();
   const client = useClient();
@@ -122,4 +122,3 @@ StackLogs.propTypes = {
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-export default StackLogs;

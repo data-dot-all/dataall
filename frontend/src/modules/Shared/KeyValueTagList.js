@@ -14,12 +14,12 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { PencilAltIcon, Scrollbar } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listKeyValueTags, useClient } from '../../../../services';
-import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
+import { PencilAltIcon, Scrollbar } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listKeyValueTags, useClient } from 'services';
+import { KeyValueTagUpdateForm } from './KeyValueTagUpdateForm';
 
-const KeyValueTagList = ({ targetUri, targetType }) => {
+export const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const [items, setItems] = useState([]);
@@ -140,5 +140,3 @@ KeyValueTagList.propTypes = {
   targetType: PropTypes.string.isRequired,
   targetUri: PropTypes.string.isRequired
 };
-
-export default KeyValueTagList;

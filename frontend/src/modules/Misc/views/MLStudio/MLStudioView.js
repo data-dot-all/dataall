@@ -24,16 +24,15 @@ import {
   ChevronRightIcon,
   DeleteObjectWithFrictionModal,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   deleteSagemakerStudioUser,
   getSagemakerStudioUser,
   getSagemakerStudioUserPresignedUrl,
   useClient
-} from '../../../../services';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
+} from 'services';
+import { StackStatus, Stack } from 'modules/Shared';
 import MLStudioOverview from './MLStudioOverview';
 
 const tabs = [

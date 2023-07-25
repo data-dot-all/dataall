@@ -18,12 +18,12 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Scrollbar, StackStatus } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getStack, updateStack, useClient } from '../../../../services';
-import StackLogs from './StackLogs';
+import { Scrollbar, StackStatus } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { getStack, updateStack, useClient } from 'services';
+import { StackLogs } from './StackLogs';
 
-const Stack = (props) => {
+export const Stack = (props) => {
   const { environmentUri, stackUri, targetUri, targetType } = props;
   const client = useClient();
   const dispatch = useDispatch();
@@ -272,4 +272,3 @@ Stack.propTypes = {
   targetUri: PropTypes.string.isRequired,
   targetType: PropTypes.string.isRequired
 };
-export default Stack;

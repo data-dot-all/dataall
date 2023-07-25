@@ -20,10 +20,10 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { updateKeyValueTags, useClient } from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { updateKeyValueTags, useClient } from 'services';
 
-const KeyValueTagUpdateForm = (props) => {
+export const KeyValueTagUpdateForm = (props) => {
   const { targetType, targetUri, tags, closeUpdate } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -224,4 +224,3 @@ KeyValueTagUpdateForm.propTypes = {
   tags: PropTypes.array.isRequired,
   closeUpdate: PropTypes.func.isRequired
 };
-export default KeyValueTagUpdateForm;

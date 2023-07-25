@@ -27,10 +27,12 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDataPipeline, getDataPipeline, useClient } from 'services';
-import { FeedComments } from 'modules/Shared';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
+import {
+  FeedComments,
+  KeyValueTagList,
+  StackStatus,
+  Stack
+} from 'modules/Shared';
 import PipelineOverview from './PipelineOverview';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {

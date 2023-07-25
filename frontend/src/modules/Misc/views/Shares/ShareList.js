@@ -15,7 +15,7 @@ import { FiSend } from 'react-icons/fi';
 import { RiInboxArchiveLine } from 'react-icons/ri';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from '../../../../design';
-import ShareInboxList from './ShareInboxList';
+import { ShareInboxList } from 'modules/Shared';
 import ShareOutboxList from './ShareOutboxList';
 
 const tabs = [
