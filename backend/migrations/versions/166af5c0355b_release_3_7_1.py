@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.base.db import utils, Resource
 
 # revision identifiers, used by Alembic.
-from dataall.base.utils import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

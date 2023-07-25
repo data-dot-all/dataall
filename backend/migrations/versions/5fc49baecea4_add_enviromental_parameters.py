@@ -1,7 +1,7 @@
 """add_enviromental_parameters
 
 Revision ID: 5fc49baecea4
-Revises: d05f9a5b215e
+Revises: e1cd4927482b
 Create Date: 2023-02-20 14:28:13.331670
 
 """
@@ -23,7 +23,7 @@ from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONME
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"
-down_revision = "509997f0a51e"
+down_revision = "e1cd4927482b"
 branch_labels = None
 depends_on = None
 
