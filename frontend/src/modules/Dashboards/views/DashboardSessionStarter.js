@@ -31,13 +31,13 @@ import {
   Scrollbar,
   SearchIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  getAuthorSession,
   listEnvironments,
   useClient
-} from '../../../../services';
+} from 'services';
+import { getAuthorSession } from '../services';
 
 function DashboardSessionStarterPageHeader() {
   return (

@@ -29,20 +29,22 @@ import {
   PencilAltIcon,
   UpVoteButton,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  countUpVotes,
-  deleteDashboard,
-  getDashboard,
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import {  
+  countUpVotes, 
   getVote,
   upVote,
-  useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
-import DashboardOverview from './DashboardOverview';
-import DashboardShares from './DashboardShares';
-import DashboardViewer from './DashboardViewer';
+  useClient,
+} from 'services';
+import FeedComments from 'modules/Shared/Feed/FeedComments';
+import {
+  deleteDashboard,
+  getDashboard,
+} from '../services';
+import DashboardOverview from '../components/DashboardOverview';
+import DashboardShares from '../components/DashboardShares';
+import DashboardViewer from '../components/DashboardViewer';
 
 const DashboardView = () => {
   const dispatch = useDispatch();

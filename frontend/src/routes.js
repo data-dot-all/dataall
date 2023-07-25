@@ -101,19 +101,19 @@ const MLStudioCreateForm = Loadable(
 );
 
 const DashboardList = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardList'))
+  lazy(() => import('./modules/Dashboards/views/DashboardList'))
 );
 const DashboardImportForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardImportForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardImportForm'))
 );
 const DashboardEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardEditForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardEditForm'))
 );
 const DashboardView = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardView'))
+  lazy(() => import('./modules/Dashboards/views/DashboardView'))
 );
 const DashboardSessionStarter = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardSessionStarter'))
+  lazy(() => import('./modules/Dashboards/views/DashboardSessionStarter'))
 );
 
 const PipelineList = Loadable(

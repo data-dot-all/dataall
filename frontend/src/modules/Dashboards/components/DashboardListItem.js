@@ -19,7 +19,7 @@ import {
   Label,
   UpVotesReadOnly,
   useCardStyle
-} from '../../../../design';
+} from 'design';
 
 const DashboardListItem = (props) => {
   const { dashboard } = props;

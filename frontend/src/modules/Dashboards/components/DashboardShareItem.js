@@ -13,13 +13,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { ShareStatus, TextAvatar } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { ShareStatus, TextAvatar } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   approveDashboardShare,
-  rejectDashboardShare,
-  useClient
-} from '../../../../services';
+  rejectDashboardShare
+} from '../services';
 
 export const DashboardShareItem = (props) => {
   const { share, dashboard, reload } = props;
