@@ -113,6 +113,10 @@
             [
               "utils",
               "./src/utils"
+            ],
+            [
+              "Shared",
+              "./src/modules/Shared"
             ]
           ],
           "extensions": [
