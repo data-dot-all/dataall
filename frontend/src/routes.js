@@ -225,7 +225,7 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      {
+      config.modules.datasets.active && {
         children: [
           {
             path: 'datasets',
