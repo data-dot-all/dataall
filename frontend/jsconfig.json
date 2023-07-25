@@ -8,7 +8,7 @@
       "modules/*": ["src/modules/*"],
       "services/*": ["src/services/*"],
       "utils/*": ["src/utils/*"],
-      "shared/*": ["src/modules/Shared/*"]
+      "Shared/*": ["src/modules/Shared/*"]
     }
   }
 }
