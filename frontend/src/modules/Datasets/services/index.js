@@ -2,7 +2,6 @@ export * from './createDataset';
 export * from './deleteDataset';
 export * from './generateDatasetAccessToken';
 export * from './getDatasetPresignedUrl';
-export * from './getDatasetSchema';
 export * from './importDataset';
 export * from './listDatasetStorageLocations';
 export * from './listDatasets';
