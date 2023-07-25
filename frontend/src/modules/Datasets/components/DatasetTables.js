@@ -35,9 +35,9 @@ import {
   SearchIcon
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { deleteDatasetTable, useClient } from 'services';
+import { listDatasetTables, deleteDatasetTable, useClient } from 'services';
 
-import { listDatasetTables, syncTables } from '../services';
+import { syncTables } from '../services';
 
 import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
 

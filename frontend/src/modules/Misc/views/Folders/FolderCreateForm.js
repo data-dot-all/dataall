@@ -26,14 +26,9 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { useClient } from '../../../../services';
-
-import {
-  addDatasetStorageLocation,
-  getDataset
-} from '../../../Datasets/services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, addDatasetStorageLocation, getDataset } from 'services';
 
 function FolderCreateHeader(props) {
   const { dataset } = props;

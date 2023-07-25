@@ -33,8 +33,8 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { countUpVotes, getVote, upVote, useClient } from 'services';
-import { deleteDataset, getDataset } from '../services';
+import { getDataset, countUpVotes, getVote, upVote, useClient } from 'services';
+import { deleteDataset } from '../services';
 import {
   FeedComments,
   KeyValueTagList,
