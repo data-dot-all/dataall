@@ -24,17 +24,15 @@ import {
   DeleteObjectWithFrictionModal,
   PencilAltIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { deleteDataPipeline, getDataPipeline, useClient } from 'services';
 import {
-  deleteDataPipeline,
-  getDataPipeline,
-  useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
+  FeedComments,
+  KeyValueTagList,
+  StackStatus,
+  Stack
+} from 'modules/Shared';
 import PipelineOverview from './PipelineOverview';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {

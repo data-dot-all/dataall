@@ -26,14 +26,14 @@ import {
   DeleteObjectWithFrictionModal,
   PencilAltIcon,
   Scrollbar
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  listDatasetTables,
   deleteWorksheet,
   getSharedDatasetTables,
   getWorksheet,
   listDatasetTableColumns,
-  listDatasetTables,
   listDatasetsOwnedByEnvGroup,
   listEnvironmentGroups,
   listEnvironments,
@@ -41,7 +41,7 @@ import {
   searchEnvironmentDataItems,
   updateWorksheet,
   useClient
-} from '../../../../services';
+} from 'services';
 import SQLQueryEditor from './SQLQueryEditor';
 import WorksheetEditFormModal from './WorksheetEditFormModal';
 import WorksheetResult from './WorksheetResult';

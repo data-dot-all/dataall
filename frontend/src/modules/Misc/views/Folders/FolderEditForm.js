@@ -29,14 +29,14 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  getDatasetStorageLocation,
   searchGlossary,
-  updateDatasetStorageLocation,
-  useClient
-} from '../../../../services';
+  useClient,
+  getDatasetStorageLocation,
+  updateDatasetStorageLocation
+} from 'services';
 
 function FolderEditHeader(props) {
   const { folder } = props;

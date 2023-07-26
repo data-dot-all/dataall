@@ -26,12 +26,10 @@ import {
   ChevronRightIcon,
   DeleteObjectWithFrictionModal,
   useSettings
-} from '../../../design';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { useClient } from '../../../services';
-import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
-import { StackStatus } from '../../Misc/views/Stack';
-import Stack from '../../Misc/views/Stack/Stack';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { KeyValueTagList, StackStatus, Stack } from 'modules/Shared';
 import { NotebookOverview } from '../components';
 import {
   deleteSagemakerNotebook,
