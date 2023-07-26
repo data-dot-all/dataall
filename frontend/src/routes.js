@@ -273,7 +273,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.mlstudio.active && {
         children: [
           {
             path: 'mlstudio',
