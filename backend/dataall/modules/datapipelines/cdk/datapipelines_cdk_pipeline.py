@@ -271,6 +271,7 @@ app.synth()
             'PYTHONPATH': python_path,
             'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
+            'COOKIECUTTER_CONFIG': "/dataall/modules/datapipelines/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(

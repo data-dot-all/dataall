@@ -14,6 +14,7 @@ const getDataset = (datasetUri) => ({
         name
         region
         created
+        imported
         userRoleForDataset
         SamlAdminGroupName
         AwsAccountId

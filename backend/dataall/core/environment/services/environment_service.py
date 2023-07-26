@@ -458,6 +458,13 @@ class EnvironmentService:
     def remove_consumption_role(session, uri, env_uri):
         consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
 
+        num_resources = EnvironmentResourceManager.count_consumption_role_resources(session, uri)
+        if num_resources > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Consumption Role',
+                message=f'Consumption role: {consumption_role.consumptionRoleName} has created {num_resources} resources on this environment.',
+            )
+
         if consumption_role:
             session.delete(consumption_role)
             session.commit()

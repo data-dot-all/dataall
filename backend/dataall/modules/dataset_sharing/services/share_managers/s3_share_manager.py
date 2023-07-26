@@ -358,7 +358,7 @@ class S3ShareManager:
         )
         access_point_name = S3ShareManager.build_access_point_name(share)
         existing_policy = IAM.get_role_policy(
-            dataset.AwsAccountId,
+            target_environment.AwsAccountId,
             share.principalIAMRoleName,
             "targetDatasetAccessControlPolicy",
         )
@@ -398,7 +398,7 @@ class S3ShareManager:
         target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
         if existing_policy and f'{target_requester_id}:*' in existing_policy:
             policy = json.loads(existing_policy)
-            policy["Statement"] = [item for item in policy["Statement"] if item["Sid"] != f"{target_requester_id}"]
+            policy["Statement"] = [item for item in policy["Statement"] if item.get("Sid", None) != f"{target_requester_id}"]
             kms_client.put_key_policy(kms_key_id, json.dumps(policy))
 
     def handle_share_failure(self, error: Exception) -> None:

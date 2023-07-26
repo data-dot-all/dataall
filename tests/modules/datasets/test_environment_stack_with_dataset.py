@@ -2,7 +2,6 @@ from aws_cdk import App
 from aws_cdk.assertions import Template
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
-from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.modules.datasets_base.db.models import Dataset
 from tests.cdkproxy.conftest import *
 
@@ -129,7 +128,7 @@ def test_resources_created(env, org):
         count=1
     )
     template.resource_count_is("AWS::S3::Bucket", 1)
-    template.resource_count_is("AWS::Lambda::Function", 7)
-    template.resource_count_is("AWS::SSM::Parameter", 10)
-    template.resource_count_is("AWS::IAM::Role", 5)
-    template.resource_count_is("AWS::IAM::Policy", 4)
+    template.resource_count_is("AWS::Lambda::Function", 4)
+    template.resource_count_is("AWS::SSM::Parameter", 5)
+    template.resource_count_is("AWS::IAM::Role", 4)
+    template.resource_count_is("AWS::IAM::Policy", 3)

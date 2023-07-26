@@ -22,7 +22,6 @@ class StackHandlers:
         try:
             data = {
                 'accountid': task.payload['accountid'],
-                'cdk_role_arn': task.payload['cdk_role_arn'],
                 'region': task.payload['region'],
                 'stack_name': task.payload['stack_name'],
             }

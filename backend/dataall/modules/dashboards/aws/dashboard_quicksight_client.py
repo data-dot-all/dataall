@@ -194,7 +194,7 @@ class DashboardQuicksightClient:
                 DataSourceParameters={
                     'AuroraPostgreSqlParameters': {
                         'Host': aurora_params_dict["host"],
-                        'Port': aurora_params_dict["port"],
+                        'Port': "5432",
                         'Database': aurora_params_dict["dbname"]
                     }
                 },

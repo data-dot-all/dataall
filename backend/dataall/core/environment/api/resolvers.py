@@ -10,6 +10,7 @@ from sqlalchemy import and_, exc
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.utils import Parameter
 from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -595,6 +596,50 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
             raise e
 
 
+def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
+    with context.engine.scoped_session() as session:
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            resource_uri=organizationUri,
+            permission_name=permissions.GET_ORGANIZATION,
+        )
+        cdk_exec_policy_bucket = Parameter().get_parameter(
+            env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
+        )
+        cdk_exec_policy_bucket_key = Parameter().get_parameter(
+            env=os.getenv('envname', 'local'), path='s3/cdk_exec_policy_prefix'
+        )
+        if not cdk_exec_policy_bucket or not cdk_exec_policy_bucket_key:
+            raise exceptions.AWSResourceNotFound(
+                action='GET_CDK_EXEC_POLICY_TEMPLATE',
+                message='CDK Exec Yaml template file could not be found on Amazon S3 bucket',
+            )
+        try:
+            s3_client = boto3.client(
+                's3',
+                region_name=os.getenv('AWS_REGION', 'eu-central-1'),
+                config=Config(
+                    signature_version='s3v4', s3={'addressing_style': 'virtual'}
+                ),
+            )
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params=dict(
+                    Bucket=cdk_exec_policy_bucket,
+                    Key=cdk_exec_policy_bucket_key,
+                ),
+                ExpiresIn=15 * 60,
+            )
+            return presigned_url
+        except ClientError as e:
+            log.error(
+                f'Failed to get presigned URL for CDK Exec role template due to: {e}'
+            )
+            raise e
+
+
 def get_external_id(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -626,7 +671,7 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
                 action='GET_PIVOT_ROLE_NAME',
-                message='Pivot role name could not be found on AWS Secretsmanager',
+                message='Pivot role name could not be found on AWS Systems Manager - Parameter Store',
             )
         return pivot_role_name
 

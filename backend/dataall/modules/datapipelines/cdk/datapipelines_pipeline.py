@@ -129,24 +129,37 @@ class PipelineStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             alias=f"{pipeline.name}-codebuild-key",
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(pipeline_environment.CDKRoleArn),
+            ],
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
                         resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.AccountPrincipal(account_id=self.account),
+                            build_project_role
                         ],
-                        actions=["kms:*"],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                        ],
                     ),
                     iam.PolicyStatement(
                         resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(service="codebuild.amazonaws.com"),
+                            iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
+                            build_project_role
                         ],
-                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
-                    ),
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
+                        ],
+                    )
                 ],
             ),
         )
@@ -159,11 +172,10 @@ class PipelineStack(Stack):
                 )
             )
         )
-
+        logger.info(f"code directory path = {code_dir_path}")
+        env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
         try:
-            env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
-            codecommit_client = aws.client('codecommit', region_name=pipeline_environment.region)
-            repository = PipelineStack._check_repository(codecommit_client, pipeline.repo)
+            repository = PipelineStack._check_repository(aws, pipeline_environment.region, pipeline.repo)
             if repository:
                 PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
@@ -185,7 +197,7 @@ class PipelineStack(Stack):
             else:
                 raise Exception
         except Exception as e:
-            PipelineStack.initialize_repo(pipeline, code_dir_path)
+            PipelineStack.initialize_repo(pipeline, code_dir_path, env_vars)
 
             PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
@@ -442,9 +454,6 @@ class PipelineStack(Stack):
             iam.PolicyStatement(
                 actions=[
                     "ec2:DescribeAvailabilityZones",
-                    "kms:Decrypt",
-                    "kms:Encrypt",
-                    "kms:GenerateDataKey",
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:DescribeSecret",
                     "ssm:GetParametersByPath",
@@ -498,7 +507,7 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
-    def initialize_repo(pipeline, code_dir_path):
+    def initialize_repo(pipeline, code_dir_path, env_vars):
 
         venv_name = ".venv"
 
@@ -517,7 +526,8 @@ class PipelineStack(Stack):
             text=True,
             shell=True,  # nosec
             encoding='utf-8',
-            cwd=code_dir_path
+            cwd=code_dir_path,
+            env=env_vars
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
@@ -533,6 +543,7 @@ class PipelineStack(Stack):
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
             'envname': os.environ.get('envname', 'local'),
+            'COOKIECUTTER_CONFIG': "/dataall/modules/datapipelines/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(
@@ -545,7 +556,8 @@ class PipelineStack(Stack):
         return env, aws
 
     @staticmethod
-    def _check_repository(codecommit_client, repo_name):
+    def _check_repository(aws, region, repo_name):
+        codecommit_client = aws.client('codecommit', region_name=region)
         repository = None
         logger.info(f"Checking Repository Exists: {repo_name}")
         try:

@@ -149,6 +149,7 @@ def share1_draft(
         owner=user2.username,
         status=ShareObjectStatus.Draft.value
     )
+
     yield share1
 
     # Cleanup share
@@ -398,6 +399,8 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
           created
           status
           userRoleForShareObject
+          requestPurpose
+          rejectPurpose
         }
       }
     """
@@ -414,6 +417,7 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
             'groupUri': groupUri,
             'principalId': groupUri,
             'principalType': PrincipalType.Group.value,
+            'requestPurpose': 'testShare',
         },
     )
 
@@ -430,6 +434,8 @@ def get_share_object(client, user, group, shareUri, filter):
         created
         owner
         status
+        requestPurpose
+        rejectPurpose
         userRoleForShareObject
         principal {
           principalId
@@ -479,6 +485,44 @@ def get_share_object(client, user, group, shareUri, filter):
     )
     # Print response
     print('Get share request response: ', response)
+    return response
+
+
+def update_share_request_purpose(client, user, group, shareUri, requestPurpose):
+    q = """
+    mutation updateShareRequestReason($shareUri: String!,$requestPurpose: String!) {
+      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose)
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        requestPurpose=requestPurpose,
+    )
+    # Print response
+    print('Update share request purpose response: ', response)
+    return response
+
+
+def update_share_reject_purpose(client, user, group, shareUri, rejectPurpose):
+    q = """
+        mutation updateShareRejectReason($shareUri: String!, $rejectPurpose: String!) {
+          updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose)
+        }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        rejectPurpose=rejectPurpose,
+    )
+    # Print response
+    print('Update share reject purpose response: ', response)
     return response
 
 
@@ -686,10 +730,11 @@ def approve_share_object(client, user, group, shareUri):
 
 def reject_share_object(client, user, group, shareUri):
     q = """
-    mutation RejectShareObject($shareUri: String!) {
-      rejectShareObject(shareUri: $shareUri) {
+    mutation RejectShareObject($shareUri: String!, $rejectPurpose: String!) {
+      rejectShareObject(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
         shareUri
         status
+        rejectPurpose
       }
     }
     """
@@ -699,6 +744,7 @@ def reject_share_object(client, user, group, shareUri):
         username=user.username,
         groups=[group.name],
         shareUri=shareUri,
+        rejectPurpose="testRejectShare"
     )
 
     print('Response from rejectShareObject: ', response)
@@ -814,7 +860,7 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
-
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
     # Given
@@ -834,6 +880,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
     # And item has been added to the share request
     get_share_object_response = get_share_object(
@@ -866,6 +913,47 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
     assert get_share_object_response.data.getShareObject.get('principal').region
+
+
+def test_update_share_request_purpose(client, share1_draft, user2, group2):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the requesters group updates
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then the requestPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.requestPurpose == "NewRequestPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Requesters'
+
+
+def test_update_share_request_purpose_unauthorized(client, share1_draft, user, group):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the approvers group attempts to update the request purpose
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_request_purpose_response.errors[0].message
 
 
 def test_list_dataset_share_objects_approvers(
@@ -1085,6 +1173,47 @@ def test_submit_share_request(
     assert status == ShareItemStatus.PendingApproval.name
 
 
+def test_update_share_reject_purpose(client, share2_submitted, user, group):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the approvers group updates the reject purpose
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        rejectPurpose="NewRejectPurpose"
+    )
+
+    # Then the rejectPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.rejectPurpose == "NewRejectPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Approvers'
+
+
+def test_update_share_reject_purpose_unauthorized(client, share2_submitted, user2, group2):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the requester group attempts to update the reject purpose
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2_submitted.shareUri,
+        rejectPurpose="NewRejectPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_reject_purpose_response.errors[0].message
+
+
 def test_approve_share_request(
         db, client, user, group, share2_submitted, share2_item_pa
 ):
@@ -1180,6 +1309,7 @@ def test_reject_share_request(
 
     # Then share object status is changed to Rejected
     assert reject_share_object_response.data.rejectShareObject.status == ShareObjectStatus.Rejected.name
+    assert reject_share_object_response.data.rejectShareObject.rejectPurpose == "testRejectShare"
 
     # and share item status is changed to Share_Rejected
     get_share_object_response = get_share_object(

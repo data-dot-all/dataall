@@ -22,7 +22,6 @@ def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
-
 @pytest.fixture(scope='module')
 def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
     yield org('org2', user2.username, group2.name)
@@ -41,11 +40,20 @@ def test_init(db):
 
 @pytest.fixture(scope='module')
 def dataset1(
+    module_mocker,
     org1: Organization,
     env1: Environment,
     dataset: typing.Callable,
     group,
 ) -> Dataset:
+    kms_client = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.KmsClient',
+        kms_client
+    )
+
+    kms_client().get_key_id.return_value = {"some_key"}
+
     d = dataset(org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name)
     print(d)
     yield d
@@ -99,7 +107,7 @@ def test_list_datasets(client, dataset1, group):
     assert response.data.listDatasets.nodes[0].datasetUri == dataset1.datasetUri
 
 
-def test_update_dataset(dataset1, client, group, group2):
+def test_update_dataset(dataset1, client, group, group2, module_mocker):
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -118,6 +126,7 @@ def test_update_dataset(dataset1, client, group, group2):
             'label': 'dataset1updated',
             'stewards': group2.name,
             'confidentiality': 'Secret',
+            'KmsAlias': ''
         },
         groups=[group.name],
     )
@@ -163,6 +172,7 @@ def test_update_dataset(dataset1, client, group, group2):
             'label': 'dataset1updated2',
             'stewards': dataset1.SamlAdminGroupName,
             'confidentiality': 'Official',
+            'KmsAlias': ''
         },
         groups=[group.name],
     )
@@ -210,7 +220,10 @@ def test_update_dataset_unauthorized(dataset1, client, group):
         """,
         username='anonymoususer',
         datasetUri=dataset1.datasetUri,
-        input={'label': 'dataset1updated'},
+        input={
+            'label': 'dataset1updated',
+            'KmsAlias': ''
+        },
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
 
@@ -441,7 +454,7 @@ def test_import_dataset(org1, env1, dataset1, client, group):
             'bucketName': 'dhimportedbucket',
             'glueDatabaseName': 'dhimportedGlueDB',
             'adminRoleName': 'dhimportedRole',
-            'KmsKeyId': '1234-YYEY',
+            'KmsKeyAlias': '1234-YYEY',
             'owner': dataset1.owner,
             'SamlAdminGroupName': group.name,
         },

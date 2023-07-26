@@ -71,7 +71,12 @@ def update_stack_output(session, stack):
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
-    sts = boto3.client('sts')
+    region = os.getenv('AWS_REGION', 'eu-west-1')
+    sts = boto3.client(
+        'sts',
+        region_name=region,
+        endpoint_url=f"https://sts.{region}.amazonaws.com"
+    )
     idnty = sts.get_caller_identity()
     this_aws_account = idnty['Account']
     creds = None

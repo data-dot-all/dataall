@@ -53,7 +53,7 @@ class DatasetCrawler:
         try:
             self._client.update_crawler(
                 Name=crawler_name,
-                Role=SessionHelper.get_delegation_role_arn(accountid=dataset.AwsAccountId),
+                Role=self._dataset.IAMDatasetAdminRoleArn,
                 DatabaseName=dataset.GlueDatabaseName,
                 Targets=targets,
             )
