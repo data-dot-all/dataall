@@ -27,15 +27,16 @@ import {
   DeleteObjectModal,
   PencilAltIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   deleteDatasetStorageLocation,
   getDatasetAssumeRoleUrl,
   getDatasetStorageLocation,
   useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
+} from 'services';
+
+import { FeedComments } from 'modules/Shared';
 import FolderOverview from './FolderOverview';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];

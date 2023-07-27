@@ -32,17 +32,11 @@ import {
   DeleteObjectWithFrictionModal,
   PencilAltIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  archiveEnvironment,
-  getEnvironment,
-  useClient
-} from '../../../../services';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { archiveEnvironment, getEnvironment, useClient } from 'services';
+import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import EnvironmentNetworks from '../Networks/NetworkList';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
 import EnvironmentDatasets from './EnvironmentDatasets';
 import EnvironmentOverview from './EnvironmentOverview';
 import EnvironmentSubscriptions from './EnvironmentSubscriptions';

@@ -37,7 +37,7 @@ import {
   upVote,
   useClient,
 } from 'services';
-import FeedComments from 'modules/Shared/Feed/FeedComments';
+import { FeedComments } from 'modules/Shared';
 import {
   deleteDashboard,
   getDashboard,

@@ -25,14 +25,10 @@ import {
   DeleteObjectModal,
   PencilAltIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  deleteDatasetTable,
-  getDatasetTable,
-  useClient
-} from '../../../../services';
-import FeedComments from '../Feed/FeedComments';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { deleteDatasetTable, getDatasetTable, useClient } from 'services';
+import { FeedComments } from 'modules/Shared';
 import TableColumns from './TableColumns';
 import TableMetrics from './TableMetrics';
 import TableOverview from './TableOverview';

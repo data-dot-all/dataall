@@ -49,19 +49,19 @@ const Catalog = Loadable(
 );
 
 const DatasetList = Loadable(
-  lazy(() => import('./modules/Misc/views/Datasets/DatasetList'))
+  lazy(() => import('./modules/Datasets/views/DatasetList'))
 );
 const DatasetView = Loadable(
-  lazy(() => import('./modules/Misc/views/Datasets/DatasetView'))
+  lazy(() => import('./modules/Datasets/views/DatasetView'))
 );
 const DatasetCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Datasets/DatasetCreateForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetCreateForm'))
 );
 const DatasetImportForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Datasets/DatasetImportForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetImportForm'))
 );
 const DatasetEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Datasets/DatasetEditForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
   lazy(() => import('./modules/Misc/views/Tables/TableView'))
@@ -225,7 +225,7 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      {
+      config.modules.datasets.active && {
         children: [
           {
             path: 'datasets',
