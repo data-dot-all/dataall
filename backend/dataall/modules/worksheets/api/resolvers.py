@@ -2,7 +2,7 @@ from dataall.base.db import exceptions
 from dataall.modules.worksheets.api.enums import WorksheetRole
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.worksheets_repository import WorksheetRepository
-from dataall.modules.worksheets.services.worksheet_services import WorksheetService
+from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 from dataall.base.api.context import Context
 
 
