@@ -3,6 +3,7 @@ import AuthGuard from './components/AuthGuard';
 import GuestGuard from './components/GuestGuard';
 import LoadingScreen from './components/LoadingScreen';
 import DefaultLayout from './components/layout/DefaultLayout';
+import config from './generated/config.json';
 
 const Loadable = (Component) => (props) =>
   (
@@ -208,11 +209,11 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datasets.active && {
         path: 'catalog',
         element: <Catalog />
       },
-      {
+      config.modules.datasets.active && {
         children: [
           {
             path: 'datasets',
@@ -260,7 +261,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.mlstudio.active && {
         children: [
           {
             path: 'mlstudio',
@@ -276,7 +277,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.notebooks.active && {
         children: [
           {
             path: 'notebooks',
@@ -292,7 +293,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.dashboards.active && {
         children: [
           {
             path: 'dashboards',
@@ -316,7 +317,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datapipelines.active && {
         children: [
           {
             path: 'pipelines',
@@ -336,7 +337,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datasets.active && {
         children: [
           {
             path: 'shares',
@@ -348,7 +349,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.worksheets.active && {
         children: [
           {
             path: 'worksheets',
@@ -364,7 +365,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datasets.active && {
         children: [
           {
             path: 'glossaries',
@@ -400,7 +401,7 @@ const routes = [
     children: [
       {
         path: '',
-        element: <Catalog />
+        element: config.modules.datasets.active ? <Catalog /> : <OrganizationList />
       },
       {
         path: '*',
