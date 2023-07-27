@@ -20,7 +20,7 @@ import { ChevronLeft, ChevronRight, ShareOutlined } from '@mui/icons-material';
 import NavSection from '../NavSection';
 import Scrollbar from '../Scrollbar';
 import useSettings from '../../hooks/useSettings';
-import config from '../../../generated/config.json';
+import config from '../../generated/config.json';
 
 const DefaultSidebar = (props) => {
   const { openDrawer, onOpenDrawerChange } = props;
