@@ -1,6 +1,7 @@
 from dataall.base.api.constants import *
 from dataall.core.organizations.api.enums import OrganisationUserRole
-from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.modules.dataset_sharing.api.enums import ShareableType, ShareSortField
+
 
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
@@ -32,12 +33,6 @@ RevokeItemsInput = gql.InputType(
         gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
-
-
-class ShareSortField(GraphQLEnumMapper):
-    created = 'created'
-    updated = 'updated'
-    label = 'label'
 
 
 ShareSortCriteria = gql.InputType(
