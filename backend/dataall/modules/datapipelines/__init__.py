@@ -5,7 +5,7 @@ from typing import List, Type
 from dataall.base.loader import ModuleInterface, ImportMode
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.datapipelines.db.models import DataPipeline
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
     GET_PIPELINE, UPDATE_PIPELINE
 

@@ -7,7 +7,7 @@ from dataall.core.permissions.permission_checker import has_tenant_permission, h
 from dataall.base.db import exceptions
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.models import Worksheet
-from dataall.modules.worksheets.db.repositories import WorksheetRepository
+from dataall.modules.worksheets.db.worksheets_repository import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
     WORKSHEET_ALL, GET_WORKSHEET, DELETE_WORKSHEET, RUN_ATHENA_QUERY
 

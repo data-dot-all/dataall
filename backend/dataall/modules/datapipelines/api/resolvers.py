@@ -12,7 +12,7 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 
 log = logging.getLogger(__name__)

@@ -8,7 +8,7 @@ from aws_cdk.assertions import Template
 from dataall.core.environment.db.models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 
 from tests.cdkproxy.conftest import *
 
