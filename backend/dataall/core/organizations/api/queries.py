@@ -1,7 +1,7 @@
 from dataall.base.api import gql
 from .input_types import OrganizationFilter
 from .resolvers import *
-from .schema import (
+from .types import (
     Organization,
     OrganizationSearchResult,
 )
