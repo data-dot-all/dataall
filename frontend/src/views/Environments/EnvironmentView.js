@@ -236,15 +236,17 @@ const EnvironmentView = () => {
               value={currentTab}
               variant="fullWidth"
             >
-              {tabs.filter((tab) => tab.active !== false).map((tab) => (
-                <Tab
-                  key={tab.value}
-                  label={tab.label}
-                  value={tab.value}
-                  icon={settings.tabIcons ? tab.icon : null}
-                  iconPosition="start"
-                />
-              ))}
+              {tabs
+                .filter((tab) => tab.active !== false)
+                .map((tab) => (
+                  <Tab
+                    key={tab.value}
+                    label={tab.label}
+                    value={tab.value}
+                    icon={settings.tabIcons ? tab.icon : null}
+                    iconPosition="start"
+                  />
+                ))}
             </Tabs>
           </Box>
           <Divider />

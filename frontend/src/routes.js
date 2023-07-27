@@ -401,7 +401,11 @@ const routes = [
     children: [
       {
         path: '',
-        element: config.modules.datasets.active ? <Catalog /> : <OrganizationList />
+        element: config.modules.datasets.active ? (
+          <Catalog />
+        ) : (
+          <OrganizationList />
+        )
       },
       {
         path: '*',
