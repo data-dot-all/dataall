@@ -232,8 +232,13 @@ class CloudfrontDistro(pyNestedClass):
 
         frontend_alternate_domain = None
         userguide_alternate_domain = None
-        frontend_alias_configuration = None
-        userguide_alias_configuration = None
+
+        frontend_domain_names = None
+        userguide_domain_names = None
+
+        certificate = None
+        ssl_support_method = None
+        security_policy = None
 
         cloudfront_bucket = s3.Bucket(
             self,
@@ -277,19 +282,18 @@ class CloudfrontDistro(pyNestedClass):
                     validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
                 )
 
-            frontend_alias_configuration = (
-                cloudfront.ViewerCertificate.from_acm_certificate(
-                    aliases=[frontend_alternate_domain],
-                    certificate=certificate,
-                    ssl_method=cloudfront.SSLMethod.SNI,
-                    security_policy=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
-                )
-            )
+            frontend_domain_names = [frontend_alternate_domain]
+            userguide_domain_names = [userguide_alternate_domain]
+            ssl_support_method = cloudfront.SSLMethod.SNI
+            security_policy = cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
 
         cloudfront_distribution = cloudfront.Distribution(
             self,
             'CloudFrontDistribution',
-            certificate=frontend_alias_configuration,
+            certificate=certificate,
+            domain_names=frontend_domain_names,
+            ssl_support_method=ssl_support_method,
+            minimum_protocol_version=security_policy,
             default_behavior=cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(
                     bucket=cloudfront_bucket,
@@ -339,24 +343,16 @@ class CloudfrontDistro(pyNestedClass):
             self.http_header_func_version,
         ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
 
-        
-        if userguide_alternate_domain:
-            userguide_alias_configuration = (
-                cloudfront.ViewerCertificate.from_acm_certificate(
-                    aliases=[userguide_alternate_domain],
-                    certificate=certificate,
-                    ssl_method=cloudfront.SSLMethod.SNI,
-                    security_policy=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
-                )
-            )
-
         userguide_docs_distribution, user_docs_bucket = self.build_static_site(
             f'userguide',
             acl,
             auth_at_edge,
             envname,
             resource_prefix,
-            userguide_alias_configuration,
+            userguide_domain_names,
+            certificate,
+            ssl_support_method,
+            security_policy,
             logging_bucket,
         )
         if frontend_alternate_domain:
@@ -505,7 +501,10 @@ class CloudfrontDistro(pyNestedClass):
         auth_at_edge,
         envname,
         resource_prefix,
-        alias_configuration,
+        domain_names,
+        certificate,
+        ssl_support_method,
+        security_policy,
         logging_bucket,
     ):
 
@@ -543,7 +542,10 @@ class CloudfrontDistro(pyNestedClass):
         cloudfront_distribution = cloudfront.Distribution(
             self,
             f'{construct_id}Distribution',
-            certificate=alias_configuration,
+            certificate=certificate,
+            domain_names=domain_names,
+            ssl_support_method=ssl_support_method,
+            minimum_protocol_version=security_policy,
             default_behavior=cloudfront.BehaviorOptions(
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
