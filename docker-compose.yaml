@@ -55,7 +55,7 @@ services:
 
   db:
     build:
-      context: compose/postgres
+      context: compose/yugabytedb
     environment:
       POSTGRES_DB: 'dataall'
       POSTGRES_USER: 'postgres'
