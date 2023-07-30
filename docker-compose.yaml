@@ -64,6 +64,7 @@ services:
     - 5432
     ports:
       - 5432:5432
+      - 15433:15433
     volumes:
       - type: volume
         target: /usr/share/postgresql/data
