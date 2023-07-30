@@ -1,5 +1,6 @@
+#!/usr/bin/bash
+
 # This Dockefile is compatible with the PostgreSQL docker image environment variables
-set -x
 
 # Start YugabyteDB for the first time, to create the database and user
 # on port 5433 because some applications test the availability of the db by `nc -z 5432'
@@ -12,7 +13,7 @@ create user "${POSTGRES_USER}";
 alter user "${POSTGRES_USER}" password '${POSTGRES_PASSWORD}'
 SQL
 
-yugabyted start \
+yugabyted start $* \
  --ysql_port=5433 \
  --tserver_flags=flagfile=/tmp/config.flags \
  --master_flags=flagfile=/tmp/config.flags \
@@ -33,8 +34,12 @@ PGHOST=$(hostname) PGPORT=5432 ysqlsh \$@
 CAT
 chmod 744 /usr/local/bin/psql
 
-# final start
-yugabyted start \
+echo "
+
+ Restarting on port 5432...
+
+"
+yugabyted start $* \
  --ysql_port=5432 \
  --background=false \
  --base_dir=${PGDATA:-/var/lib/postgresql/data} 
