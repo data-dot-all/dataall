@@ -86,9 +86,9 @@ def create_schema_if_not_exists(engine, envname):
 
 
 def create_schema_and_tables(engine, envname):
+    drop_schema_if_exists(engine.engine, envname)
     create_schema_if_not_exists(engine.engine, envname)
     try:
-        Base.metadata.drop_all(engine.engine)
         Base.metadata.create_all(engine.engine)
     except Exception as e:
         log.error(f'Failed to create all tables due to: {e}')
