@@ -4,6 +4,7 @@ from dataall.core.organizations.api.enums import OrganisationUserRole
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.organizations.db import organization_models as models
 
+
 def create_organization(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         organization = Organization.create_organization(

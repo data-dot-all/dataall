@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
+from dataall.base.aws.secrets_manager import SecretsManager
 from dataall.base.db import Base
 from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
@@ -107,7 +108,7 @@ def get_engine(envname=ENVNAME):
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
-        creds = SessionHelper.get_secret(credential_arn)
+        creds = SecretsManager().get_secret_value(credential_arn)
         user = creds['username']
         pwd = creds['password']
         host = param_store.get_parameter(env=envname, path='aurora/hostname')
