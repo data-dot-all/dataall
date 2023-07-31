@@ -15,3 +15,9 @@ class DatasetRole(Enum):
     Admin = '900'
     Shared = '300'
     NoPermission = '000'
+
+
+class Language(Enum):
+    English = 'English'
+    French = 'French'
+    German = 'German'

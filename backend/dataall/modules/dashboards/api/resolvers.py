@@ -1,7 +1,8 @@
-from dataall.api.context import Context
-from dataall.db import models
-from dataall.db.api import Glossary, Vote, Organization
-from dataall.db.exceptions import RequiredParameter
+from dataall.base.api.context import Context
+from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.organizations.db.organization import Organization
+from dataall.core.vote.db.vote import Vote
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
@@ -113,7 +114,7 @@ def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
 def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
         return Vote.count_upvotes(
-            session, None, None, source.dashboardUri, data={'targetType': 'dashboard'}
+            session, source.dashboardUri, target_type='dashboard'
         )
 
 

@@ -4,8 +4,8 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.db import exceptions, paginate
-from dataall.db.api import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.db import exceptions, paginate
 from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareStatus, Dashboard
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class DashboardRepository(EnvironmentResource):
 
     @staticmethod
     def update_env(session, environment):
-        return Environment.get_boolean_env_param(session, environment, "dashboardsEnabled")
+        return EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
 
     @staticmethod
     def create_dashboard(session, env, username: str, data: dict = None) -> Dashboard:

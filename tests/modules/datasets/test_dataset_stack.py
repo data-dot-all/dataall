@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 import pytest
 from aws_cdk import App
 
-from dataall.db.models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -45,7 +44,7 @@ def patch_methods(mocker, db, dataset, env, org):
         'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
     lf_client = MagicMock()
@@ -55,19 +54,19 @@ def patch_methods(mocker, db, dataset, env, org):
     )
     lf_client.return_value.check_existing_lf_registered_location = False
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=dataset,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine',
         return_value=db,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_environment',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
         return_value=env,
     )
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_organization',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
         return_value=org,
     )
 

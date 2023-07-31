@@ -3,8 +3,8 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets import Dataset
 
 log = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class SnsDatasetClient:
         )
 
         self._client = aws_session.client('sns', region_name=environment.region)
-        self._topic = f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsProducersTopicName}'
+        self._topic = f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsConsumersTopicName}'
         self._dataset = dataset
 
     def publish_dataset_message(self, message: dict):

@@ -1,11 +1,11 @@
 import logging
 
-from dataall import db
-from dataall import utils
-from dataall.api.Objects.Principal.resolvers import get_principal
-from dataall.api.context import Context
-from dataall.db import models
-from dataall.db.exceptions import RequiredParameter
+from dataall.base import utils
+from dataall.base.api.context import Context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
@@ -40,7 +40,8 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
-        principal_type=input['principalType']
+        principal_type=input['principalType'],
+        requestPurpose=input.get('requestPurpose')
     )
 
 
@@ -52,8 +53,8 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
 
-def reject_share_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.reject_share_object(uri=shareUri)
+def reject_share_object(context: Context, source, shareUri: str = None, rejectPurpose: str = None,):
+    return ShareObjectService.reject_share_object(uri=shareUri, reject_purpose=rejectPurpose)
 
 
 def revoke_items_share_object(context: Context, source, input):
@@ -89,25 +90,19 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
-        if dataset and dataset.stewards in context.groups:
+        if (
+                dataset and (
+                dataset.stewards in context.groups
+                or dataset.SamlAdminGroupName in context.groups
+                or dataset.owner == context.username
+        )
+        ):
             return ShareObjectPermission.Approvers.value
         if (
-            source.owner == context.username
-            or source.principalId in context.groups
-            or dataset.owner == context.username
-            or dataset.SamlAdminGroupName in context.groups
+                source.owner == context.username
+                or source.groupUri in context.groups
         ):
             return ShareObjectPermission.Requesters.value
-        if (
-            dataset and dataset.stewards in context.groups
-            and (
-                source.owner == context.username
-                or source.principalId in context.groups
-                or dataset.owner == context.username
-                or dataset.SamlAdminGroupName in context.groups
-            )
-        ):
-            return ShareObjectPermission.ApproversAndRequesters.value
         else:
             return ShareObjectPermission.NoPermission.value
 
@@ -118,7 +113,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
-            env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
+            env: Environment = EnvironmentService.get_environment_by_uri(session, ds.environmentUri)
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
@@ -142,9 +137,35 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        return get_principal(
-            session, source.principalId, source.principalType, source.principalIAMRoleName, source.environmentUri, source.groupUri
-        )
+        if source.principalType in ['Group', 'ConsumptionRole']:
+            environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+            organization = Organization.get_organization_by_uri(
+                session, environment.organizationUri
+            )
+            if source.principalType in ['ConsumptionRole']:
+                principal = EnvironmentService.get_environment_consumption_role(
+                    session,
+                    source.principalId,
+                    source.environmentUri
+                )
+                principalName = f"{principal.consumptionRoleName} [{principal.IAMRoleArn}]"
+            else:
+                principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
+                principalName = f"{source.groupUri} [{principal.environmentIAMRoleArn}]"
+
+            return {
+                'principalId': source.principalId,
+                'principalType': source.principalType,
+                'principalName': principalName,
+                'principalIAMRoleName': source.principalIAMRoleName,
+                'SamlGroupName': source.groupUri,
+                'environmentUri': environment.environmentUri,
+                'environmentName': environment.label,
+                'AwsAccountId': environment.AwsAccountId,
+                'region': environment.region,
+                'organizationUri': organization.organizationUri,
+                'organizationName': organization.label,
+            }
 
 
 def resolve_group(context: Context, source: ShareObject, **kwargs):
@@ -219,4 +240,17 @@ def list_shared_with_environment_data_items(
             session=session,
             uri=environmentUri,
             data=filter,
+        )
+
+def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
+    return ShareObjectService.update_share_request_purpose(
+        uri=shareUri,
+        request_purpose=requestPurpose,
+    )
+
+
+def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
+    with context.engine.scoped_session() as session:
+        return ShareObjectService.update_share_reject_purpose(
+            uri=shareUri, reject_purpose=rejectPurpose,
         )

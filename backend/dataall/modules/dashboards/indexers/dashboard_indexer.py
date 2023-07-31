@@ -1,9 +1,10 @@
 import logging
 
-from dataall import db
-from dataall.db.api import Environment, Organization
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
+from dataall.core.vote.db.vote import Vote
 from dataall.modules.dashboards import DashboardRepository
-from dataall.searchproxy.base_indexer import BaseIndexer
+from dataall.core.catalog.indexers.base_indexer import BaseIndexer
 from dataall.modules.dashboards.db.models import Dashboard
 
 log = logging.getLogger(__name__)
@@ -15,12 +16,12 @@ class DashboardIndexer(BaseIndexer):
         dashboard: Dashboard = DashboardRepository.get_dashboard_by_uri(session, dashboard_uri)
 
         if dashboard:
-            env = Environment.get_environment_by_uri(session, dashboard.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dashboard.environmentUri)
             org = Organization.get_organization_by_uri(session, env.organizationUri)
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dashboard_uri)
-            count_upvotes = db.api.Vote.count_upvotes(
-                session, None, None, dashboard_uri, {'targetType': 'dashboard'}
+            count_upvotes = Vote.count_upvotes(
+                session, dashboard_uri, target_type='dashboard'
             )
             BaseIndexer._index(
                 doc_id=dashboard_uri,

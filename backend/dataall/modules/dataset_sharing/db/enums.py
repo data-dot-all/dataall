@@ -56,3 +56,14 @@ class ShareableType(Enum):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
     View = 'View'
+
+
+class PrincipalType(Enum):
+    Any = 'Any'
+    Organization = 'Organization'
+    Environment = 'Environment'
+    User = 'User'
+    Project = 'Project'
+    Public = 'Public'
+    Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'

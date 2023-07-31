@@ -3,17 +3,16 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from dataall.db.api import (
-    Environment,
-)
-from dataall.db.api import Organization
-from dataall.db import models, paginate
-from dataall.db.exceptions import ObjectNotFound
-from dataall.db.models.Enums import Language
-from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
+from dataall.core.activity.db.activity_models import Activity
+from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
+from dataall.base.db import paginate
+from dataall.base.db.exceptions import ObjectNotFound
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
@@ -50,7 +49,7 @@ class DatasetRepository(EnvironmentResource):
         uri: str,
         data: dict = None,
     ) -> Dataset:
-        environment = Environment.get_environment_by_uri(session, uri)
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
 
         organization = Organization.get_organization_by_uri(
             session, environment.organizationUri
@@ -88,7 +87,7 @@ class DatasetRepository(EnvironmentResource):
         DatasetRepository._set_dataset_aws_resources(dataset, data, environment)
         DatasetRepository._set_import_data(dataset, data)
 
-        activity = models.Activity(
+        activity = Activity(
             action='dataset:create',
             label='dataset:create',
             owner=username,
@@ -118,8 +117,7 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
 
-        kms_alias = bucket_name
-        dataset.KmsAlias = data.get('KmsKeyId') or kms_alias
+        dataset.KmsAlias = bucket_name
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -139,13 +137,20 @@ class DatasetRepository(EnvironmentResource):
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
 
-        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-crawler'
-        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-profiler'
+        glue_etl_basename = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE_ETL,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
+        dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-trigger'
-        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dataquality'
+        dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
+        dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dqtrigger'
+        dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
         return dataset
 
     @staticmethod
@@ -177,7 +182,7 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def update_dataset_activity(session, dataset, username) :
-        activity = models.Activity(
+        activity = Activity(
             action='dataset:update',
             label='dataset:update',
             owner=username,
@@ -192,25 +197,25 @@ class DatasetRepository(EnvironmentResource):
     def update_dataset_glossary_terms(session, username, uri, data):
         if data.get('terms'):
             input_terms = data.get('terms', [])
-            current_links = session.query(models.TermLink).filter(
-                models.TermLink.targetUri == uri
+            current_links = session.query(TermLink).filter(
+                TermLink.targetUri == uri
             )
             for current_link in current_links:
                 if current_link not in input_terms:
                     session.delete(current_link)
             for nodeUri in input_terms:
-                term = session.query(models.GlossaryNode).get(nodeUri)
+                term = session.query(GlossaryNode).get(nodeUri)
                 if term:
                     link = (
-                        session.query(models.TermLink)
+                        session.query(TermLink)
                         .filter(
-                            models.TermLink.targetUri == uri,
-                            models.TermLink.nodeUri == nodeUri,
+                            TermLink.targetUri == uri,
+                            TermLink.nodeUri == nodeUri,
                         )
                         .first()
                     )
                     if not link:
-                        new_link = models.TermLink(
+                        new_link = TermLink(
                             targetUri=uri,
                             nodeUri=nodeUri,
                             targetType='Dataset',
@@ -255,11 +260,11 @@ class DatasetRepository(EnvironmentResource):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
         for tableUri in tables:
             term_links = (
-                session.query(models.TermLink)
+                session.query(TermLink)
                 .filter(
                     and_(
-                        models.TermLink.targetUri == tableUri,
-                        models.TermLink.targetType == 'DatasetTable',
+                        TermLink.targetUri == tableUri,
+                        TermLink.targetType == 'DatasetTable',
                     )
                 )
                 .all()
@@ -268,11 +273,11 @@ class DatasetRepository(EnvironmentResource):
                 session.delete(link)
                 session.commit()
         term_links = (
-            session.query(models.TermLink)
+            session.query(TermLink)
             .filter(
                 and_(
-                    models.TermLink.targetUri == uri,
-                    models.TermLink.targetType == 'Dataset',
+                    TermLink.targetUri == uri,
+                    TermLink.targetType == 'Dataset',
                 )
             )
             .all()
@@ -389,5 +394,6 @@ class DatasetRepository(EnvironmentResource):
         dataset.imported = True if data.get('imported') else False
         dataset.importedS3Bucket = True if data.get('bucketName') else False
         dataset.importedGlueDatabase = True if data.get('glueDatabaseName') else False
-        dataset.importedKmsKey = True if data.get('KmsKeyId') else False
+        dataset.importedKmsKey = True if data.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if data.get('adminRoleName') else False
+        dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else "SSE-S3"

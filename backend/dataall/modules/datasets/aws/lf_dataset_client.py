@@ -1,12 +1,12 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
 
 log = logging.getLogger(__name__)
-PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
+PIVOT_ROLE_NAME_PREFIX = "dataallPivotRole"
 
 
 class LakeFormationDatasetClient:
@@ -29,10 +29,14 @@ class LakeFormationDatasetClient:
             response = self._client.describe_resource(ResourceArn=resource_arn)
             registered_role_name = response['ResourceInfo']['RoleArn'].lstrip(f"arn:aws:iam::{self._env}:role/")
             log.info(f'LF data location already registered: {response}, registered with role {registered_role_name}')
-            if registered_role_name.startswith(PIVOT_ROLE_NAME_PREFIX):
+            if (
+                registered_role_name.startswith(PIVOT_ROLE_NAME_PREFIX)
+                or response['ResourceInfo']['RoleArn'] == self._dataset.IAMDatasetAdminRoleArn
+            ):
                 log.info(
                     'The existing data location was created as part of the dataset stack. '
-                    'There was no pre-existing data location.')
+                    'There was no pre-existing data location.'
+                )
                 return False
             return response['ResourceInfo']
 

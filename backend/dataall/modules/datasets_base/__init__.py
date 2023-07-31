@@ -1,6 +1,6 @@
 from typing import Set
 
-from dataall.modules.loader import ModuleInterface, ImportMode
+from dataall.base.loader import ModuleInterface, ImportMode
 
 
 class DatasetBaseModuleInterface(ModuleInterface):

@@ -1,8 +1,10 @@
 from unittest.mock import MagicMock
 
 import pytest
-import dataall
-from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.api.enums import OrganisationUserRole
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.permissions.db.permission import Permission
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
@@ -10,7 +12,7 @@ from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -25,7 +27,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -66,7 +68,7 @@ def sync_dataset(org, env, db):
         )
         session.add(dataset)
         session.commit()
-        env_group = dataall.db.models.EnvironmentGroup(
+        env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=dataset.SamlAdminGroupName,
             environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,
@@ -99,7 +101,7 @@ def table(org, env, db, sync_dataset):
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield dataall.db.api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 def test_tables_sync(db, org, env, sync_dataset, table, mocker):

@@ -44,7 +44,7 @@ cobertura.xml
 /node_modules/
 *venv*
 *pgdata*
-backend/dataall/cdkproxy/cdk.out/
+backend/dataall/base/cdkproxy/cdk.out/
 **.zip
 #Frontend
 /node_modules

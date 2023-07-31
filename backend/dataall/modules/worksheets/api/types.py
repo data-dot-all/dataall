@@ -1,6 +1,5 @@
-from dataall.api import gql
-from dataall.modules.worksheets.api.resolvers import resolve_user_role, WorksheetRole
-
+from dataall.base.api import gql
+from dataall.modules.worksheets.api.resolvers import resolve_user_role
 
 AthenaResultColumnDescriptor = gql.ObjectType(
     name='AthenaResultColumnDescriptor',

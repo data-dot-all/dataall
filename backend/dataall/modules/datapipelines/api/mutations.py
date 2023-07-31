@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datapipelines.api.resolvers import create_pipeline, update_pipeline, delete_pipeline,\
     create_pipeline_environment, delete_pipeline_environment, update_pipeline_environment
 

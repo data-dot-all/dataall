@@ -138,7 +138,8 @@ const RequestAccessModal = (props) => {
               environmentUri: values.environment.environmentUri,
               groupUri: values.groupUri,
               principalId: principal,
-              principalType: type
+              principalType: type,
+              requestPurpose: values.comment
             }
           })
         );
@@ -153,7 +154,8 @@ const RequestAccessModal = (props) => {
               environmentUri: values.environment.environmentUri,
               groupUri: values.groupUri,
               principalId: principal,
-              principalType: type
+              principalType: type,
+              requestPurpose: values.comment
             }
           })
         );
@@ -168,7 +170,8 @@ const RequestAccessModal = (props) => {
               environmentUri: values.environment.environmentUri,
               groupUri: values.groupUri,
               principalId: principal,
-              principalType: type
+              principalType: type,
+              requestPurpose: values.comment
             }
           })
         );

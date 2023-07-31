@@ -3,11 +3,10 @@ import json
 import pytest
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
-from ariadne.asgi import GraphQL
 from flask import Flask, request, jsonify, Response
 from dotted.collection import DottedCollection
 import dataall
-from dataall.core.context import set_context, RequestContext, dispose_context
+from dataall.base.context import set_context, RequestContext, dispose_context
 
 
 class ClientWrapper:
@@ -33,7 +32,7 @@ class ClientWrapper:
 @pytest.fixture(scope='module', autouse=True)
 def app(db):
     app = Flask('tests')
-    schema = dataall.api.get_executable_schema()
+    schema = dataall.base.api.get_executable_schema()
 
     @app.route('/', methods=['OPTIONS'])
     def opt():

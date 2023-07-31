@@ -2,30 +2,31 @@
 A service layer for sagemaker notebooks
 Central part for working with notebooks
 """
-import contextlib
 import dataclasses
 import logging
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-from dataall.api.Objects.Stack import stack_helper
-from dataall.core.context import get_context as context
-from dataall.db.api import (
-    ResourcePolicy,
-    Environment, KeyValueTag, Stack,
-)
-from dataall.db import models, exceptions
+from dataall.base.context import get_context as context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.stack import Stack
+from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
-from dataall.utils.naming_convention import (
+from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
+    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.utils.slugify import slugify
-from dataall.modules.notebooks.db.models import SagemakerNotebook
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
-    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,8 @@ class NotebookService:
         """
 
         with _session() as session:
-            env = Environment.get_environment_by_uri(session, uri)
-            enabled = Environment.get_boolean_env_param(session, env, "notebooksEnabled")
+            env = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, env, "notebooksEnabled")
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -82,7 +83,7 @@ class NotebookService:
 
             env_group = request.environment
             if not env_group:
-                env_group = Environment.get_environment_group(
+                env_group = EnvironmentService.get_environment_group(
                     session,
                     group_uri=admin_group,
                     environment_uri=env.environmentUri,
@@ -204,7 +205,7 @@ class NotebookService:
                 group=notebook.SamlAdminGroupName,
             )
 
-            env: models.Environment = Environment.get_environment_by_uri(
+            env: Environment = EnvironmentService.get_environment_by_uri(
                 session, notebook.environmentUri
             )
 

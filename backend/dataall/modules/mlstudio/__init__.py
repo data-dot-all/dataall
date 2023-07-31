@@ -1,8 +1,8 @@
 """Contains the code related to SageMaker ML Studio user profiles"""
 import logging
 
-from dataall.db.api import TargetType
-from dataall.modules.loader import ImportMode, ModuleInterface
+from dataall.base.loader import ImportMode, ModuleInterface
+from dataall.core.stacks.db.target_type import TargetType
 from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class MLStudioCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.mlstudio.cdk
-        from dataall.cdkproxy.stacks.environment import EnvironmentSetup
+        from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
         from dataall.modules.mlstudio.cdk.mlstudio_stack import SageMakerDomainExtension
 
         EnvironmentSetup.register(SageMakerDomainExtension)

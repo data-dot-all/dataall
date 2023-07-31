@@ -2,9 +2,9 @@ import json
 import logging
 import os
 
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import get_engine
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.db import get_engine
+from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL'))

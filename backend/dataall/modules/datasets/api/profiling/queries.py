@@ -1,18 +1,7 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.profiling.resolvers import (
-    list_profiling_runs,
     list_table_profiling_runs,
-    get_last_table_profiling_run
-)
-
-listDatasetProfilingRuns = gql.QueryField(
-    name='listDatasetProfilingRuns',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('DatasetProfilingRunFilter')),
-    ],
-    type=gql.Ref('DatasetProfilingRunSearchResults'),
-    resolver=list_profiling_runs,
+    get_dataset_table_profiling_run
 )
 
 listDatasetTableProfilingRuns = gql.QueryField(
@@ -26,5 +15,5 @@ getDatasetTableLastProfilingRun = gql.QueryField(
     name='getDatasetTableProfilingRun',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('DatasetProfilingRun'),
-    resolver=get_last_table_profiling_run,
+    resolver=get_dataset_table_profiling_run,
 )

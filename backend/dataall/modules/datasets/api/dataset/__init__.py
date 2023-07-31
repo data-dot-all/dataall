@@ -3,8 +3,8 @@ from dataall.modules.datasets.api.dataset import (
     mutations,
     queries,
     resolvers,
-    schema,
+    types,
     enums
 )
 
-__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations', 'enums']
+__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations', 'enums']

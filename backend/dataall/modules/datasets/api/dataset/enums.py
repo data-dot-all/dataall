@@ -1,4 +1,4 @@
-from dataall.api.constants import GraphQLEnumMapper
+from dataall.base.api.constants import GraphQLEnumMapper
 
 
 class DatasetRole(GraphQLEnumMapper):
@@ -15,3 +15,9 @@ class ConfidentialityClassification(GraphQLEnumMapper):
     Unclassified = 'Unclassified'
     Official = 'Official'
     Secret = 'Secret'
+
+
+class DatasetSortField(GraphQLEnumMapper):
+    label = 'label'
+    created = 'created'
+    updated = 'updated'

@@ -5,7 +5,7 @@ from typing import Set
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
-from dataall.modules.loader import ImportMode, ModuleInterface
+from dataall.base.loader import ImportMode, ModuleInterface
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +19,9 @@ class DashboardApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.dashboards.api
-        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
-        from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
-        from dataall.api.Objects.Vote.resolvers import add_vote_type
+        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
+        from dataall.core.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.core.vote.api.resolvers import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
         FeedRegistry.register(FeedDefinition("Dashboard", Dashboard))

@@ -13,13 +13,13 @@ class MockSagemakerClient:
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module')
 def env1(env, org1, user, group, tenant, module_mocker):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1',
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1',
                parameters={"notebooksEnabled": "True"})
     yield env1
 
@@ -63,7 +63,7 @@ def test_list_notebooks(client, user, group, sgm_notebook):
     response = client.query(
         query,
         filter=None,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
 
@@ -72,7 +72,7 @@ def test_list_notebooks(client, user, group, sgm_notebook):
     response = client.query(
         query,
         filter={"term": "my best"},
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
 
@@ -99,7 +99,7 @@ def test_nopermissions_list_notebooks(client, user2, group2, sgm_notebook):
         }
         """,
         filter=None,
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert len(response.data.listSagemakerNotebooks['nodes']) == 0
@@ -117,7 +117,7 @@ def test_get_notebook(client, user, group, sgm_notebook):
         }
         """,
         notebookUri=sgm_notebook.notebookUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.getSagemakerNotebook.notebookUri == sgm_notebook.notebookUri
@@ -131,7 +131,7 @@ def test_action_notebook(client, user, group, sgm_notebook):
         }
         """,
         notebookUri=sgm_notebook.notebookUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.stopSagemakerNotebook == 'Stopping'
@@ -143,7 +143,7 @@ def test_action_notebook(client, user, group, sgm_notebook):
         }
         """,
         notebookUri=sgm_notebook.notebookUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.startSagemakerNotebook == 'Starting'
@@ -159,7 +159,7 @@ def test_delete_notebook(client, user, group, sgm_notebook):
         """,
         notebookUri=sgm_notebook.notebookUri,
         deleteFromAWS=True,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.deleteSagemakerNotebook
@@ -182,7 +182,7 @@ def test_delete_notebook(client, user, group, sgm_notebook):
         }
         """,
         filter=None,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert len(response.data.listSagemakerNotebooks['nodes']) == 0

@@ -5,7 +5,7 @@ import dataall
 
 
 def test_update_dashboard(
-    client, env1, org1, group, module_mocker, patch_es, dashboard
+    client, env1, org1, group, patch_es, dashboard
 ):
     response = client.query(
         """
@@ -118,7 +118,7 @@ def test_request_dashboard_share(
     user2,
 ):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """
@@ -131,7 +131,7 @@ def test_request_dashboard_share(
         """,
         dashboardUri=dashboard.dashboardUri,
         principalId=group2.name,
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     share = response.data.requestDashboardShare
@@ -151,7 +151,7 @@ def test_request_dashboard_share(
         }
         """,
         filter={},
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert len(response.data.searchDashboards['nodes']) == 0
@@ -166,7 +166,7 @@ def test_request_dashboard_share(
         }
         """,
         shareUri=share.shareUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.approveDashboardShare.status == 'APPROVED'
@@ -184,7 +184,7 @@ def test_request_dashboard_share(
         }
         """,
         filter={},
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert len(response.data.searchDashboards['nodes']) == 1
@@ -203,7 +203,7 @@ def test_request_dashboard_share(
         """,
         filter={},
         dashboardUri=dashboard.dashboardUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert len(response.data.listDashboardShares['nodes']) == 1
@@ -233,7 +233,7 @@ def test_request_dashboard_share(
             }
         """,
         dashboardUri=dashboard.dashboardUri,
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert response.data.getDashboard.owner == 'alice'
@@ -249,7 +249,7 @@ def test_request_dashboard_share(
         }
         """,
         shareUri=share.shareUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.rejectDashboardShare.status == 'REJECTED'
@@ -267,7 +267,7 @@ def test_request_dashboard_share(
         }
         """,
         filter={},
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert len(response.data.searchDashboards['nodes']) == 0
@@ -283,7 +283,7 @@ def test_request_dashboard_share(
         """,
         dashboardUri=dashboard.dashboardUri,
         principalId=group2.name,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.shareDashboard.shareUri
@@ -301,7 +301,7 @@ def test_request_dashboard_share(
         }
         """,
         filter={},
-        username=user2.userName,
+        username=user2.username,
         groups=[group2.name],
     )
     assert len(response.data.searchDashboards['nodes']) == 1
@@ -311,7 +311,7 @@ def test_delete_dashboard(
     client, env1, db, org1, user, group, module_mocker, dashboard, patch_es
 ):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """
@@ -320,7 +320,7 @@ def test_delete_dashboard(
         }
         """,
         dashboardUri=dashboard.dashboardUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.deleteDashboard

@@ -5,13 +5,13 @@ import time
 
 from botocore.exceptions import ClientError
 
-from dataall.db.api import Environment
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.ram import Ram
-from dataall.db import exceptions, models
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.db import exceptions
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
@@ -27,9 +27,9 @@ class LFShareManager:
         share: ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        env_group: models.EnvironmentGroup,
+        source_environment: Environment,
+        target_environment: Environment,
+        env_group: EnvironmentGroup,
     ):
         self.session = session
         self.env_group = env_group
@@ -62,7 +62,7 @@ class LFShareManager:
         List of principals
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
-        dashboard_enabled = Environment.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
+        dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
 
         if dashboard_enabled:
             group = QuicksightClient.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
@@ -150,7 +150,7 @@ class LFShareManager:
     @classmethod
     def create_shared_database(
         cls,
-        target_environment: models.Environment,
+        target_environment: Environment,
         dataset: Dataset,
         shared_db_name: str,
         principals: [str],
@@ -454,25 +454,6 @@ class LFShareManager:
                 client, self.source_environment.AwsAccountId, revoke_entries
             )
         return revoke_entries
-
-    def delete_ram_resource_shares(self, resource_arn: str) -> [dict]:
-        """
-        Deletes resource share for the resource arn
-        Parameters
-        ----------
-        resource_arn : glue table arn
-
-        Returns
-        -------
-        list of ram associations
-        """
-        logger.info(f'Cleaning RAM resource shares for resource: {resource_arn} ...')
-        return Ram.delete_resource_shares(
-            SessionHelper.remote_session(
-                accountid=self.source_environment.AwsAccountId
-            ).client('ram', region_name=self.source_environment.region),
-            resource_arn,
-        )
 
     def handle_share_failure(
         self,

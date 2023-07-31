@@ -1,7 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.modules.datasets_base.db.models import Dataset
 
 log = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class DatasetCrawler:
         try:
             self._client.update_crawler(
                 Name=crawler_name,
-                Role=SessionHelper.get_delegation_role_arn(accountid=dataset.AwsAccountId),
+                Role=self._dataset.IAMDatasetAdminRoleArn,
                 DatabaseName=dataset.GlueDatabaseName,
                 Targets=targets,
             )

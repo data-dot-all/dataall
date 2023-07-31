@@ -1,5 +1,18 @@
+from dataclasses import dataclass
+
+from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.tenant import Tenant
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from .client import *
-from dataall.db import models
+
+
+@dataclass
+class User:
+    username: str
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -11,33 +24,34 @@ def patch_request(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_env(module_mocker):
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment',
+        'dataall.core.environment.api.resolvers.check_environment',
         return_value='CDKROLENAME',
     )
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_es(module_mocker):
-    module_mocker.patch('dataall.searchproxy.connect', return_value={})
-    module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.base.searchproxy.connect', return_value={})
+    module_mocker.patch('dataall.base.searchproxy.search', return_value={})
+    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_stack_tasks(module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.ecs.Ecs.is_task_running',
+        'dataall.core.stacks.aws.ecs.Ecs.is_task_running',
         return_value=False,
     )
     module_mocker.patch(
-        'dataall.aws.handlers.ecs.Ecs.run_cdkproxy_task',
+        'dataall.core.stacks.aws.ecs.Ecs.run_cdkproxy_task',
         return_value='arn:aws:eu-west-1:xxxxxxxx:ecs:task/1222222222',
     )
     module_mocker.patch(
-        'dataall.aws.handlers.cloudformation.CloudFormation.describe_stack_resources',
+        'dataall.core.stacks.aws.cloudformation.CloudFormation.describe_stack_resources',
         return_value=True,
     )
 
@@ -45,74 +59,47 @@ def patch_stack_tasks(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield dataall.db.api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='alice@test.com', userName='alice')
-        session.add(user)
-        yield user
+def user():
+   yield User('alice')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user2():
+    yield User('bob')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user3():
+    yield User('david')
 
 
 @pytest.fixture(scope='module')
 def group(db, user):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='testadmins', label='testadmins', owner='alice')
+        group = Group(name='testadmins', label='testadmins', owner=user.username)
         session.add(group)
         session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
-        session.commit()
         yield group
-
-
-@pytest.fixture(scope='module', autouse=True)
-def user2(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='bob@test.com', userName='bob')
-        session.add(user)
-        yield user
 
 
 @pytest.fixture(scope='module')
 def group2(db, user2):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner=user2.userName)
+        group = Group(name='dataengineers', label='dataengineers', owner=user2.username)
         session.add(group)
         session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user2.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
-        session.commit()
         yield group
-
-
-@pytest.fixture(scope='module', autouse=True)
-def user3(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='david@test.com', userName='david')
-        session.add(user)
-        yield user
 
 
 @pytest.fixture(scope='module')
 def group3(db, user3):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='datascientists', label='datascientists', owner=user3.userName)
+        group = Group(name='datascientists', label='datascientists', owner=user3.username)
         session.add(group)
-        session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user3.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
         session.commit()
         yield group
 
@@ -120,44 +107,38 @@ def group3(db, user3):
 @pytest.fixture(scope='module')
 def group4(db, user3):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='externals', label='externals', owner=user3.userName)
+        group = Group(name='externals', label='externals', owner=user3.username)
         session.add(group)
-        session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user3.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
         session.commit()
         yield group
 
 
 @pytest.fixture(scope='module')
-def tenant(db, group, group2, permissions, user, user2, user3, group3, group4):
+def tenant(db, group, group2, permissions, group3, group4):
     with db.scoped_session() as session:
-        tenant = dataall.db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        tenant = Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group2.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group3.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group4.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         yield tenant
@@ -216,15 +197,15 @@ def env(client):
 @pytest.fixture(scope="module")
 def environment(db):
     def factory(
-        organization: models.Organization,
+        organization: Organization,
         awsAccountId: str,
         label: str,
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-    ) -> models.Environment:
+    ) -> Environment:
         with db.scoped_session() as session:
-            env = models.Environment(
+            env = Environment(
                 organizationUri=organization.organizationUri,
                 AwsAccountId=awsAccountId,
                 region="eu-central-1",
@@ -247,12 +228,12 @@ def environment(db):
 @pytest.fixture(scope="module")
 def environment_group(db):
     def factory(
-        environment: models.Environment,
-        group: models.Group,
-    ) -> models.EnvironmentGroup:
+        environment: Environment,
+        group: Group,
+    ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 
-            env_group = models.EnvironmentGroup(
+            env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
                 groupUri=group.name,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
@@ -260,12 +241,12 @@ def environment_group(db):
                 environmentAthenaWorkGroup="workgroup",
             )
             session.add(env_group)
-            dataall.db.api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 resource_uri=environment.environmentUri,
                 group=group.name,
-                permissions=dataall.db.permissions.ENVIRONMENT_ALL,
-                resource_type=dataall.db.models.Environment.__name__,
+                permissions=dataall.core.permissions.permissions.ENVIRONMENT_ALL,
+                resource_type=Environment.__name__,
             )
             session.commit()
             return env_group
@@ -309,16 +290,16 @@ def org(client):
 
 @pytest.fixture(scope='module')
 def org_fixture(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', 'alice', group.name)
     yield org1
 
 
 @pytest.fixture(scope='module')
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch('dataall.core.environment.api.resolvers.check_environment', return_value=True)
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
