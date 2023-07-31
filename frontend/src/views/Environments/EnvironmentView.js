@@ -44,7 +44,6 @@ import EnvironmentNetworks from '../Networks/NetworkList';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
 import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import config from '../../generated/config.json';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -56,8 +55,7 @@ const tabs = [
   {
     label: 'Datasets',
     value: 'datasets',
-    icon: <FolderOpen fontSize="small" />,
-    active: config.modules.datasets.active
+    icon: <FolderOpen fontSize="small" />
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
   {
@@ -236,17 +234,15 @@ const EnvironmentView = () => {
               value={currentTab}
               variant="fullWidth"
             >
-              {tabs
-                .filter((tab) => tab.active !== false)
-                .map((tab) => (
-                  <Tab
-                    key={tab.value}
-                    label={tab.label}
-                    value={tab.value}
-                    icon={settings.tabIcons ? tab.icon : null}
-                    iconPosition="start"
-                  />
-                ))}
+              {tabs.map((tab) => (
+                <Tab
+                  key={tab.value}
+                  label={tab.label}
+                  value={tab.value}
+                  icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
+                />
+              ))}
             </Tabs>
           </Box>
           <Divider />

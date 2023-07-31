@@ -28,29 +28,25 @@ const DefaultSidebar = (props) => {
     const catalogSection = {
       title: 'Catalog',
       path: '/console/catalog',
-      icon: <VscBook size={15} />,
-      active: config.modules.datasets.active
+      icon: <VscBook size={15} />
     };
 
     const datasetsSection = {
       title: 'Datasets',
       path: '/console/datasets',
-      icon: <FiPackage size={15} />,
-      active: config.modules.datasets.active
+      icon: <FiPackage size={15} />
     };
 
     const sharesSection = {
       title: 'Shares',
       path: '/console/shares',
-      icon: <ShareOutlined size={15} />,
-      active: config.modules.datasets.active
+      icon: <ShareOutlined size={15} />
     };
 
     const glossariesSection = {
       title: 'Glossaries',
       path: '/console/glossaries',
-      icon: <BsIcons.BsTag size={15} />,
-      active: config.modules.datasets.active
+      icon: <BsIcons.BsTag size={15} />
     };
 
     const worksheetsSection = {

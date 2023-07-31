@@ -209,11 +209,11 @@ const routes = [
           }
         ]
       },
-      config.modules.datasets.active && {
+      {
         path: 'catalog',
         element: <Catalog />
       },
-      config.modules.datasets.active && {
+      {
         children: [
           {
             path: 'datasets',
@@ -337,7 +337,7 @@ const routes = [
           }
         ]
       },
-      config.modules.datasets.active && {
+      {
         children: [
           {
             path: 'shares',
@@ -365,7 +365,7 @@ const routes = [
           }
         ]
       },
-      config.modules.datasets.active && {
+      {
         children: [
           {
             path: 'glossaries',
