@@ -21,14 +21,16 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  inviteGroupToOrganization,
   listCognitoGroups,
   useClient
-} from '../../../../services';
+} from 'services';
+import {
+  inviteGroupToOrganization
+} from '../services';
 
-const OrganizationTeamInviteForm = (props) => {
+export const OrganizationTeamInviteForm = (props) => {
   const { organization, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -281,5 +283,3 @@ OrganizationTeamInviteForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default OrganizationTeamInviteForm;

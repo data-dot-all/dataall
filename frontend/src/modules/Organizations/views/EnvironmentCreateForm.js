@@ -35,19 +35,21 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createEnvironment,
-  getOrganization,
   getPivotRoleExternalId,
   getPivotRoleName,
   getPivotRolePresignedUrl,
   getTrustAccount,
   useClient,
   useGroups
-} from '../../../../services';
-import { AwsRegions } from '../../../../utils';
+} from 'services';
+import {
+  getOrganization,
+} from '../services';
+import { AwsRegions } from 'utils';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();

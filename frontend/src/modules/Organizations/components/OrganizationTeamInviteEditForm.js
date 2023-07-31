@@ -14,7 +14,7 @@ import {
   Typography
 } from '@mui/material';
 
-const OrganizationTeamInviteEditForm = (props) => {
+export const OrganizationTeamInviteEditForm = (props) => {
   const { organization, team, onClose, open, reloadTeams, ...other } = props;
   const [permissions] = useState([
     {
@@ -106,5 +106,3 @@ OrganizationTeamInviteEditForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default OrganizationTeamInviteEditForm;

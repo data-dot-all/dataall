@@ -31,15 +31,19 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import {
+  useClient
+} from 'services';
 import {
   listOrganizationGroups,
-  removeGroupFromOrganization,
-  useClient
-} from '../../../../services';
-import OrganizationTeamInviteEditForm from './OrganizationTeamInviteEditForm';
-import OrganizationTeamInviteForm from './OrganizationTeamInviteForm';
+  removeGroupFromOrganization
+} from '../services';
+import {
+  OrganizationTeamInviteEditForm,
+  OrganizationTeamInviteForm
+} from '../components';
 
 function TeamRow({ team, organization, fetchItems }) {
   const client = useClient();
@@ -145,7 +149,8 @@ TeamRow.propTypes = {
   organization: PropTypes.any,
   fetchItems: PropTypes.any
 };
-const OrganizationTeams = ({ organization }) => {
+
+export const OrganizationTeams = ({ organization }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
@@ -323,5 +328,3 @@ const OrganizationTeams = ({ organization }) => {
 OrganizationTeams.propTypes = {
   organization: PropTypes.object.isRequired
 };
-
-export default OrganizationTeams;

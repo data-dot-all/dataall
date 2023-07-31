@@ -13,7 +13,6 @@ export * from './Groups';
 export * from './KeyValueTags';
 export * from './Metric';
 export * from './Notification';
-export * from './Organization';
 export * from './Principal';
 export * from './SagemakerStudio';
 export * from './SavedQuery';

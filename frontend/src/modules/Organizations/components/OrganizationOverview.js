@@ -1,8 +1,8 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
-const OrganizationOverview = (props) => {
+export const OrganizationOverview = (props) => {
   const { organization, ...other } = props;
 
   return (
@@ -31,5 +31,3 @@ const OrganizationOverview = (props) => {
 OrganizationOverview.propTypes = {
   organization: PropTypes.object.isRequired
 };
-
-export default OrganizationOverview;

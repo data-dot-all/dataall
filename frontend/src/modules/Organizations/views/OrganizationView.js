@@ -29,16 +29,18 @@ import {
   ChevronRightIcon,
   PencilAltIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   archiveOrganization,
-  getOrganization,
-  useClient
-} from '../../../../services';
-import OrganizationEnvironments from './OrganizationEnvironments';
-import OrganizationOverview from './OrganizationOverview';
-import OrganizationTeams from './OrganizationTeams';
+  getOrganization
+} from '../services';
+import {
+  OrganizationEnvironments,
+  OrganizationOverview,
+  OrganizationTeams
+} from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

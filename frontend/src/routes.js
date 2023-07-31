@@ -19,21 +19,21 @@ const Login = Loadable(
 const NotFound = Loadable(lazy(() => import('./modules/Misc/views/NotFound')));
 
 const OrganizationList = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationList'))
+  lazy(() => import('./modules/Organizations/views/OrganizationList'))
 );
 const OrganizationView = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationView'))
+  lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
   lazy(() =>
-    import('./modules/Misc/views/Organizations/OrganizationCreateForm')
+    import('./modules/Organizations/views/OrganizationCreateForm')
   )
 );
 const OrganizationEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationEditForm'))
+  lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Environments/EnvironmentCreateForm'))
+  lazy(() => import('./modules/Organizations/views/EnvironmentCreateForm'))
 );
 const EnvironmentEditForm = Loadable(
   lazy(() => import('./modules/Misc/views/Environments/EnvironmentEditForm'))

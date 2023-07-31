@@ -24,9 +24,11 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { createOrganization, useClient, useGroups } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, useGroups } from 'services';
+import { createOrganization } from '../services';
+
 
 const OrganizationCreateForm = (props) => {
   const navigate = useNavigate();

@@ -20,10 +20,11 @@ import {
   PlusIcon,
   SearchIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listOrganizations, useClient } from '../../../../services';
-import OrganizationListItem from './OrganizationListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listOrganizations } from '../services';
+import { OrganizationListItem } from '../components';
 
 const OrganizationList = () => {
   const [items, setItems] = useState(Defaults.pagedResponse);
