@@ -34,6 +34,7 @@ import FolderOverview from './FolderOverview';
 import PencilAltIcon from '../../icons/PencilAlt';
 import FeedComments from '../Feed/FeedComments';
 import getDatasetAdminConsoleUrl from '../../api/Dataset/getDatasetAdminConsoleUrl';
+import config from '../../generated/config.json';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
 
@@ -119,16 +120,18 @@ function FolderPageHeader(props) {
               Chat
             </Button>
           )}
-          <LoadingButton
-            loading={isLoadingUI}
-            startIcon={<FaExternalLinkAlt size={15} />}
-            variant="outlined"
-            color="primary"
-            sx={{ m: 1 }}
-            onClick={goToS3Console}
-          >
-            S3 Bucket
-          </LoadingButton>
+          {config.modules.datasets.features.aws_actions === true && (
+            <LoadingButton
+              loading={isLoadingUI}
+              startIcon={<FaExternalLinkAlt size={15} />}
+              variant="outlined"
+              color="primary"
+              sx={{ m: 1 }}
+              onClick={goToS3Console}
+            >
+              S3 Bucket
+            </LoadingButton>
+          )}
           {isAdmin && (
             <Button
               color="primary"

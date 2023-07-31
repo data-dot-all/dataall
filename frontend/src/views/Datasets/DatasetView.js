@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import config from '../../generated/config.json';
 import { Helmet } from 'react-helmet-async';
 import {
   Box,
@@ -80,11 +81,13 @@ const DatasetView = () => {
         value: 'shares',
         icon: <ShareOutlined fontSize="small" />
       });
-      tabs.push({
-        label: 'Upload',
-        value: 'upload',
-        icon: <Upload fontSize="small" />
-      });
+      if (config.modules.datasets.features.file_uploads === true) {
+        tabs.push({
+          label: 'Upload',
+          value: 'upload',
+          icon: <Upload fontSize="small" />
+        });
+      }
       if (settings.isAdvancedMode) {
         tabs.push({
           label: 'Tags',
@@ -277,7 +280,9 @@ const DatasetView = () => {
                   >
                     Chat
                   </Button>
-                  <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                  {config.modules.datasets.features.aws_actions === true && (
+                    <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                  )}
                   <Button
                     color="primary"
                     component={RouterLink}
