@@ -109,7 +109,7 @@ def get_engine(envname=ENVNAME):
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
-        creds = json.loads(SecretsManager().get_secret_value(credential_arn))
+        creds = SecretsManager().get_secret_value(credential_arn)
         user = creds['username']
         pwd = creds['password']
         host = param_store.get_parameter(env=envname, path='aurora/hostname')
