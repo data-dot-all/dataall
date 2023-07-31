@@ -24,6 +24,7 @@ description: >- # this means to ignore newlines until "baseurl:"
   An open source development framework to help you build a data marketplace on AWS.
 repository: 'awslabs/aws-dataall'
 baseurl: "/aws-dataall" # the subpath of your site, e.g. /blog
+workshop_url: "https://catalog.us-east-1.prod.workshops.aws/workshops/ab79ad6c-13fd-434a-ba44-9783ef2bd879/en-US"
 url: "https://github.com/awslabs/aws-dataall" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  jekyll
