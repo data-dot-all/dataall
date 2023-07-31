@@ -3,7 +3,7 @@ from dataall.modules.datasets.api.profiling import (
     mutations,
     queries,
     resolvers,
-    schema,
+    types,
 )
 
-__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations']
+__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations']

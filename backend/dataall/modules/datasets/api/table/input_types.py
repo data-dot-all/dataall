@@ -1,5 +1,7 @@
 from dataall.base.api import gql
-from dataall.base.api.constants import SortDirection, GraphQLEnumMapper
+from dataall.base.api.constants import SortDirection
+from dataall.modules.datasets.api.table.enums import DatasetSortField
+
 
 ModifyDatasetTableInput = gql.InputType(
     name='ModifyDatasetTableInput',
@@ -12,13 +14,6 @@ ModifyDatasetTableInput = gql.InputType(
         gql.Argument('topics', gql.ArrayType(gql.String)),
     ],
 )
-
-
-class DatasetSortField(GraphQLEnumMapper):
-    created = 'created'
-    updated = 'updated'
-    label = 'label'
-
 
 DatasetSortCriteria = gql.InputType(
     name='DatasetSortCriteria',

@@ -15,3 +15,9 @@ class ConfidentialityClassification(GraphQLEnumMapper):
     Unclassified = 'Unclassified'
     Official = 'Official'
     Secret = 'Secret'
+
+
+class DatasetSortField(GraphQLEnumMapper):
+    label = 'label'
+    created = 'created'
+    updated = 'updated'

@@ -9,7 +9,7 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     list_datasets_owned_by_env_group,
     list_datasets_created_in_environment,
 )
-from dataall.modules.datasets.api.dataset.schema import DatasetSearchResult
+from dataall.modules.datasets.api.dataset.types import DatasetSearchResult
 
 getDataset = gql.QueryField(
     name='getDataset',

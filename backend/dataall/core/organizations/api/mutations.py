@@ -5,7 +5,7 @@ from .input_types import (
     InviteGroupToOrganizationInput,
 )
 from .resolvers import *
-from .schema import Organization
+from .types import Organization
 
 createOrganization = gql.MutationField(
     name='createOrganization',
