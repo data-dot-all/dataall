@@ -41,17 +41,6 @@ def list_organizations(context: Context, source, filter=None):
         )
 
 
-def list_groups(context, source: Organization, filter=None):
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    with context.engine.scoped_session() as session:
-        return Organization.paginated_organization_groups(
-            session=session,
-            uri=source.organizationUri,
-            data=filter,
-        )
-
-
 def list_organization_environments(context, source, filter=None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
