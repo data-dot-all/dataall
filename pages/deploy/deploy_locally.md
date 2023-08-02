@@ -20,14 +20,13 @@ Depending on your OS, you will need the following:
 - Yarn
 - AWS credentials as environment variables.
 
-## 1. Clone data.all code
-data.all is fully dockerized with docker-compose, and can be started in a minute running the commands below:
+## 1. Clone data.all code and run docker compose
+data.all is fully dockerized with docker-compose, and can be fully run from your local computer. 
+The first step is to clone the repo.
 
 ```bash
 git clone https://github.com/awslabs/aws-dataall.git
 ```
-
-## 2. Run Docker compose
 
 With docker compose we orchestrate the build of 5 containers: frontend, db, graphql, cdkproxy, opensearch.
 You can check the ports assigned to each container in the `docker-compose.yaml` file at the root level of the repo.
@@ -41,9 +40,13 @@ docker-compose up
 
 🎉 **Congratulations** 🎉 Now you can access the UI in [http://localhost:8080](http://localhost:8080)
 
-## 3. Set AWS credentials
-Docker will read the AWS credentials specified as 'default' that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
+## 2. Set AWS credentials
+You can access the UI, but until you set AWS credentials you won't be able to create Environments, Datasets or any
+other data.all stack.
 
+We have configured Docker to read the AWS credentials specified in the 'default' profile that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
+
+You can use credentials for any AWS account, but we recommend you to use an AWS account that you currently use as infrastructure account of data.all.
 This is how your `.aws/credentials` file should look like:
 ```
 [default]
@@ -51,31 +54,45 @@ aws_access_key_id=XXXXXXX
 aws_secret_access_key=XXXXX
 aws_session_token=XXXXXXX
 ```
-In theory, you can choose any AWS account. However, there are some functionalities, e.g. linking an environment,
-where the AWS accounts used need some preparation. As a rule of thumb, if your local development needs to interact with other
-AWS accounts, you should check out the next section.
+
+### 3. Create parameters in credentials AWS account
+Data.all reads some parameters from SSM, thus we need to create them in the selected AWS account to fully work with data.all.
+
+Create a `dkrcompose` externalId for the pivot role parameter in the credentials account with the following command.
+```bash
+aws ssm put-parameter \
+    --name "/dataall/dkrcompose/pivotRole/externalId" \
+    --value "randomvalue1234" \
+    --type String \
+```
+And the `dkrcompose` pivot role name parameter.
+```bash
+aws ssm put-parameter \
+    --name "/dataall/dkrcompose/pivotRole/pivotRoleName" \
+    --value "dataallPivotRole" \
+    --type String \
+```
+Finally, set the value for the enable pivot role auto-creation
+```bash
+aws ssm put-parameter \
+    --name "/dataall/v6/pivotRole/enablePivotRoleAutoCreate" \
+    --value "False" \
+    --type String \
+```
+
+After that, you can go ahead and use the CloudFormation YAML template for the pivotRole and introduce the parameters (externalId and pivotRoleName)
+that you can copy from the UI.
+
 
 ## 4. Linking environments
 
 As it is explained in the architecture section, data.all communicates with the environment accounts through 2 mechanisms:
 1) CDK bootstrap `--trust` to the data.all central account: the AWS account chosen to link the environment needs to be bootstraped trusting the AWS account that 
-you used in step 3.
+you used in step 2 and 3.
 
+2) IAM Pivot Role trusting the data.all account used in 2 and 3. When we create the pivot role stack in the environment account, use
+the account specified in 2 and 3 and the externalId and pivotRole name defined in 3.
 
-2) IAM Pivot Role trusting the data.all central account with an external ID. Whenever we perform an AWS SDK call to the environment account you will be assuming the Pivot Role in that account.
-To be able to assume it, you need to provide an external ID with the call. In a real deployment, the external ID
-is read from AWS Secrets Manager, for a local deployment we will need to create this secret for development purposes.
-
-
-### Create a `dkrcompose` externalId secret in the credentials account
-
-Go to AWS Secrets Manager in the account that you used in step 3 and create a secret called 
-`dataall-externalId-dkrcompose`. You can give it any value.
-
-![dockercompose](../img/docker_compose_secrets.png#zoom#shadow)
-
-After that, you can go ahead and download the CloudFormation YAML template from the UI and introduce the parameters
-that you can copy from the UI.
 
 
 
