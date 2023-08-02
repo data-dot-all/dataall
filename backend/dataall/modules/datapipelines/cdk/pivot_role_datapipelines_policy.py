@@ -2,16 +2,16 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class CodeCommit(PivotRoleStatementSet):
+class PipelinesPivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS CloudFormation.
+    Class including all permissions needed  by the pivot role to work with AWS CodeCommit and STS assume for DDK pipelines
     It allows pivot role to:
     - ....
     """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid='CodeCommit',
+                sid='CodeCommitPipelines',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'codecommit:GetFile',
@@ -31,6 +31,14 @@ class CodeCommit(PivotRoleStatementSet):
                     'codecommit:GetBranch',
                 ],
                 resources=[f'arn:aws:codecommit:*:{self.account}:{self.env_resource_prefix}*'],
+            ),
+            iam.PolicyStatement(
+                sid='STSPipelines',
+                effect=iam.Effect.ALLOW,
+                actions=['sts:AssumeRole'],
+                resources=[
+                    f'arn:aws:iam::{self.account}:role/ddk-*',
+                ],
             ),
         ]
         return statements

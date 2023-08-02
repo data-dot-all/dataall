@@ -2,9 +2,9 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class RAM(PivotRoleStatementSet):
+class RAMPivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS CloudFormation.
+    Class including all permissions needed  by the pivot role to work with AWS RAM.
     It allows pivot role to:
     - ....
     """

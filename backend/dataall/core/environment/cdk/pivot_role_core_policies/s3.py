@@ -2,12 +2,13 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class S3(PivotRoleStatementSet):
+class S3PivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS CloudFormation.
+    Class including all permissions needed  by the pivot role to work with AWS S3.
     It allows pivot role to:
     - ....
     """
+    # TODO: add to corresponding module: data sharing, datasets, leave some here as base
     def get_statements(self):
         statements = [
             # Read Buckets

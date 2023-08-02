@@ -1,16 +1,19 @@
+import logging
 from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 
-
+logger = logging.getLogger(__name__)
 class PivotRoleStatementSet(object):
     def __init__(
             self,
+            stack,
             env_resource_prefix,
             role_name,
             account,
             region
     ):
+        self.stack = stack
         self.env_resource_prefix = env_resource_prefix
         self.role_name = role_name
         self.account = account
@@ -23,9 +26,13 @@ class PivotRoleStatementSet(object):
         policies = []
         statements = []
         services = PivotRoleStatementSet.__subclasses__()
+        logger.info(f'Found {len(services)} subclasses of PivotRoleStatementSet')
+        logger.info(f'PivotroleStatement variables: {self.env_resource_prefix}, {self.role_name}, {self.account}, {self.region}')
 
         for service in services:
             statements.extend(service.get_statements(self))
+            logger.info(f'Adding {service.__name__} statements to policy')
+            logger.info(f'statements: {str(service.get_statements(self))}')
 
         statements_chunks: list = [
             statements[i: i + 10] for i in range(0, len(statements), 10)
@@ -34,7 +41,7 @@ class PivotRoleStatementSet(object):
         for index, chunk in enumerate(statements_chunks):
             policies.append(
                 iam.ManagedPolicy(
-                    self,
+                    self.stack,
                     f'PivotRolePolicy-{index+1}',
                     managed_policy_name=f'{self.env_resource_prefix}-pivotrole-cdk-policy-{index+1}',
                     statements=chunk,
@@ -57,6 +64,8 @@ class PivotRole(NestedStack):
         self.env_resource_prefix = config['resourcePrefix']
         self.role_name = config['roleName']
 
+        from dataall.core.environment.cdk import pivot_role_core_policies
+
         # Create Pivot IAM Role
         self.pivot_role = self.create_pivot_role(
             principal_id=config['accountId'],
@@ -72,19 +81,20 @@ class PivotRole(NestedStack):
         """
         Creates an IAM Role that will enable data.all to interact with this Data Account
 
-        :param str name: Role name
         :param str principal_id: AWS Account ID of central data.all
         :param str external_id: External ID provided by data.all
-        :param str env_resource_prefix: Environment Resource Prefix provided by data.all
         :returns: Created IAM Role
         :rtype: iam.Role
         """
         managed_policies = PivotRoleStatementSet(
+            stack=self,
             env_resource_prefix=self.env_resource_prefix,
             role_name=self.role_name,
             account=self.account,
             region=self.region
         ).generate_policies()
+
+        logger.info(f'Managed Policies: {managed_policies}')
         role = iam.Role(
             self,
             'DataAllPivotRole-cdk',

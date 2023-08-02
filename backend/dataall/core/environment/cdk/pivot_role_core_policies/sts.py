@@ -2,9 +2,9 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class STS(PivotRoleStatementSet):
+class STSPivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS CloudFormation.
+    Class including all permissions needed  by the pivot role to work with AWS STS.
     It allows pivot role to:
     - ....
     """
@@ -15,8 +15,7 @@ class STS(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=['sts:AssumeRole'],
                 resources=[
-                    f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*',
-                    f'arn:aws:iam::{self.account}:role/ddk-*',
+                    f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*'
                 ],
             ),
         ]
