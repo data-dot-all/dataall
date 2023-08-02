@@ -1,0 +1,590 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Custom least privilege IAM policy for bootstrapping tooling and deployment accounts
+Parameters:
+  AwsAccountId:
+    Description: AWS AccountId of the tooling account.
+    Type: String
+  DeploymentAWSAccountId:
+    Description: AWS AccountId of the deployment account.
+    Type: String
+  PolicyNamePrefix:
+    Description: IAM policy name prefix. 
+    Type: String
+    Default: 'cdk-boot-exec-lpp'
+  EnvironmentResourcePrefix:
+    Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
+    Type: String
+Resources:
+  CDKBootStrapPolicy1:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Sub '${PolicyNamePrefix}-1'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - 
+              Sid: VisualEditor10
+              Effect: Allow
+              Action:
+                  - 'cloudformation:DeleteStack'
+                  - 'cloudformation:TagResource'
+                  - 'cloudformation:CreateChangeSet'
+                  - 'cloudformation:UntagResource'
+              Resource:
+                - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
+                - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
+                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
+
+          -
+              Effect: Allow
+              Action:
+                  - 'lambda:ListEventSourceMappings'
+                  - 'lambda:GetEventSourceMapping'
+                  - 'lambda:CreateEventSourceMapping'
+                  - 'lambda:DeleteEventSourceMapping'
+                  - 'lambda:UpdateFunctionCode'
+                  - 'lambda:ListTags'
+              Resource: '*'
+          - 
+              Sid: VisualEditor6
+              Effect: Allow
+              Action:
+                  - 's3:DeleteObjectTagging'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:PutBucketTagging'
+                  - 's3:PutObjectTagging'
+                  - 's3:GetBucketLocation'
+                  - 's3:PutBucketOwnershipControls'
+              Resource: '*'
+          - 
+              Sid: Rules
+              Effect: Allow
+              Action:
+                  - 'events:PutEvents'
+                  - 'events:TagResource'
+                  - 'events:DeleteRule'
+                  - 'events:PutTargets'
+                  - 'events:DescribeRule'
+                  - 'events:EnableRule'
+                  - 'events:PutRule'
+                  - 'events:RemoveTargets'
+                  - 'events:UntagResource'
+                  - 'events:DisableRule'
+              Resource: !Sub 'arn:aws:events:*:${AwsAccountId}:rule/${EnvironmentResourcePrefix}*'
+          -
+              Sid: PassRoleDeploymentAccount
+              Effect: Allow
+              Action: 'iam:PassRole'
+              Resource: !Sub 'arn:aws:iam::${DeploymentAWSAccountId}:role/*'
+          -
+              Effect: Allow
+              Action: 
+                  - 'SNS:GetTopicAttributes'
+                  - 'sns:TagResource'
+                  - 'sns:CreateTopic'
+                  - 'sns:DeleteTopic'
+                  - 'sns:Subscribe'
+                  - 'sns:UnSubscribe'
+                  - 'sns:UntagResource'
+              Resource: !Sub 'arn:aws:sns:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
+          -
+              Effect: Allow
+              Action: 
+                  - 'apigateway:PUT'
+                  - 'apigateway:POST'
+                  - 'apigateway:GET'
+                  - 'apigateway:DELETE'
+                  - 'apigateway:PATCH'
+                  - 'apigateway:SetWebACL'
+              Resource: 'arn:aws:apigateway:*:*:*'
+
+          -
+              Effect: Allow
+              Action: 
+                  - 'wafv2:*'
+                  - 'ecs:DescribeTaskDefinition'
+                  - 'serverlessrepo:CreateCloudFormationTemplate'
+              Resource: '*'
+
+
+  CDKBootStrapPolicy2:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Sub '${PolicyNamePrefix}-2'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - 
+              Sid: VisualEditor0
+              Effect: Allow
+              Action:
+                  - 'rds:AddTagsToResource'
+                  - 'lambda:TagResource'
+                  - 'kms:UntagResource'
+                  - 'lambda:GetLayerVersion'
+                  - 'lambda:PublishLayerVersion'
+                  - 'ssm:GetParameters'
+                  - 'es:ListTags'
+                  - 'lambda:UntagResource'
+                  - 'ssm:PutParameter'
+                  - 'es:AddTags'
+                  - 'ssm:DeleteParameter'
+                  - 'es:RemoveTags'
+                  - 'kms:TagResource'
+                  - 'ssm:RemoveTagsFromResource'
+                  - 'ssm:AddTagsToResource'
+                  - 'rds:CreateDBInstance'
+                  - 'lambda:DeleteLayerVersion'
+                  - 'cloudformation:DeleteStack'
+                  - 'kms:CreateAlias'
+                  - 'es:DescribeDomain'
+                  - 'rds:RemoveTagsFromResource'
+                  - 'rds:DeleteDBInstance'
+              Resource:
+                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:layer:*'
+                  - !Sub 'arn:aws:ssm:*:${AwsAccountId}:parameter/*'
+                  - !Sub 'arn:aws:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
+                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:db:*'
+                  - !Sub 'arn:aws:iam::${AwsAccountId}:role/*'
+                  - !Sub 'arn:aws:es:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+          - 
+              Sid: VisualEditor1
+              Effect: Allow
+              Action:
+                  - 'kms:EnableKeyRotation'
+                  - 'rds:AddTagsToResource'
+                  - 'lambda:TagResource'
+                  - 'kms:Decrypt'
+                  - 'kms:UntagResource'
+                  - 'lambda:GetEventSourceMapping'
+                  - 'kms:PutKeyPolicy'
+                  - 'kms:GetKeyPolicy'
+                  - 'kms:ListResourceTags'
+                  - 'lambda:UntagResource'
+                  - 'kms:TagResource'
+                  - 'kms:Encrypt'
+                  - 'kms:GetKeyRotationStatus'
+                  - 'rds:CreateDBCluster'
+                  - 'kms:ScheduleKeyDeletion'
+                  - 'kms:GenerateDataKey'
+                  - 'kms:CreateAlias'
+                  - 'kms:DescribeKey'
+                  - 'lambda:DeleteEventSourceMapping'
+                  - 'kms:DeleteAlias'
+                  - 'kms:CreateGrant'
+                  - 'rds:RemoveTagsFromResource'
+              Resource:
+                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:key/*'
+                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/*'
+                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:og:*'
+                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:*'
+          - 
+              Sid: VisualEditor2
+              Effect: Allow
+              Action:
+                  - 'rds:AddTagsToResource'
+                  - 'rds:DeleteDBSubnetGroup'
+                  - 'lambda:TagResource'
+                  - 'rds:CreateDBCluster'
+                  - 'rds:DescribeDBSubnetGroups'
+                  - 'rds:CreateDBSubnetGroup'
+                  - 'rds:RemoveTagsFromResource'
+                  - 'lambda:UntagResource'
+              Resource:
+                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:subgrp:${EnvironmentResourcePrefix}-*'
+          - 
+              Effect: Allow
+              Action:
+                  - 'rds:AddTagsToResource'
+                  - 'rds:CreateDBCluster'
+                  - 'rds:RemoveTagsFromResource'
+              Resource: !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster-pg:*'
+          - 
+              Effect: Allow
+              Action:
+                  - 'rds:AddTagsToResource'
+                  - 'rds:CreateDBCluster'
+                  - 'rds:RemoveTagsFromResource'
+                  - 'rds:DeleteDBCluster'
+                  - 'rds:DescribeDBClusters'
+              Resource: !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster:${EnvironmentResourcePrefix}-*'
+          - 
+              Effect: Allow
+              Action:
+                  - 'lambda:CreateFunction'
+                  - 'lambda:TagResource'
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:DeleteResourcePolicy'
+                  - 'secretsmanager:PutSecretValue'
+                  - 'sqs:UntagQueue'
+                  - 'secretsmanager:DeleteSecret'
+                  - 's3:CreateBucket'
+                  - 'iam:CreateRole'
+                  - 'logs:DescribeMetricFilters'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:PutRolePolicy'
+                  - 'logs:CreateLogStream'
+                  - 'logs:TagLogGroup'
+                  - 'iam:DetachRolePolicy'
+                  - 's3:PutBucketAcl'
+                  - 's3:PutObjectTagging'
+                  - 'lambda:DeleteFunction'
+                  - 'ecs:TagResource'
+                  - 'iam:GetRole'
+                  - 'lambda:InvokeFunction'
+                  - 'ecs:DeleteCluster'
+                  - 'iam:DeleteRole'
+                  - 's3:PutBucketCORS'
+                  - 's3:DeleteBucketPolicy'
+                  - 'logs:TagResource'
+                  - 'iam:TagPolicy'
+                  - 'logs:CreateLogGroup'
+                  - 'lambda:GetFunctionCodeSigningConfig'
+                  - 'ecs:DescribeClusters'
+                  - 's3:GetObject*'
+                  - 'logs:PutMetricFilter'
+                  - 's3:PutBucketLogging'
+                  - 'cloudformation:DeleteStack'
+                  - 'sqs:DeleteQueue'
+                  - 'iam:DeleteServiceLinkedRole'
+                  - 'lambda:PublishVersion'
+                  - 'cloudformation:UntagResource'
+                  - 'rds:RemoveTagsFromResource'
+                  - 'kms:DeleteAlias'
+                  - 'iam:GetRolePolicy'
+                  - 'secretsmanager:TagResource'
+                  - 'logs:ListTagsLogGroup'
+                  - 'kms:UntagResource'
+                  - 'secretsmanager:UntagResource'
+                  - 'iam:UntagRole'
+                  - 'lambda:ListVersionsByFunction'
+                  - 'secretsmanager:CreateSecret'
+                  - 'iam:TagRole'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketPolicy'
+                  - 'lambda:UntagResource'
+                  - 's3:PutEncryptionConfiguration'
+                  - 'iam:GetServiceLinkedRoleDeletionStatus'
+                  - 'logs:DeleteMetricFilter'
+                  - 'iam:PassRole'
+                  - 'kms:TagResource'
+                  - 'secretsmanager:GetSecretValue'
+                  - 's3:PutBucketTagging'
+                  - 'iam:DeleteRolePolicy'
+                  - 'lambda:GetRuntimeManagementConfig'
+                  - 'secretsmanager:RotateSecret'
+                  - 'lambda:PutFunctionEventInvokeConfig'
+                  - 'lambda:DeleteFunctionEventInvokeConfig'
+                  - 'lambda:EnableReplication*'
+                  - 's3:DeleteBucket'
+                  - 'ecs:UntagResource'
+                  - 'rds:DeleteDBCluster'
+                  - 's3:PutBucketVersioning'
+                  - 'sqs:SetQueueAttributes'
+                  - 'sqs:GetQueueAttributes'
+                  - 'rds:AddTagsToResource'
+                  - 's3:PutBucketPublicAccessBlock'
+                  - 'logs:UntagLogGroup'
+                  - 'logs:DeleteLogGroup'
+                  - 'lambda:GetFunction'
+                  - 'logs:UntagResource'
+                  - 'secretsmanager:CancelRotateSecret'
+                  - 's3:GetBucketAcl'
+                  - 'sqs:TagQueue'
+                  - 'iam:CreateServiceLinkedRole'
+                  - 'lambda:AddPermission'
+                  - 'secretsmanager:PutResourcePolicy'
+                  - 's3:PutBucketPolicy'
+                  - 'cloudformation:TagResource'
+                  - 'iam:UntagPolicy'
+                  - 'sqs:CreateQueue'
+                  - 'logs:PutRetentionPolicy'
+                  - 'lambda:RemovePermission'
+                  - 'lambda:GetFunction'
+                  - 'codebuild:CreateProject'
+                  - 'codebuild:DeleteProject'
+                  - 'codebuild:BatchGetProjects'
+                  - 'codebuild:UpdateProject'
+                  - 'codepipeline:GetPipeline'
+                  - 'codepipeline:CreatePipeline'
+                  - 'codepipeline:DeletePipeline'
+                  - 'codepipeline:GetPipelineState'
+                  - 'codepipeline:TagResource'
+                  - 'codepipeline:UntagResource'
+              Resource:
+                  - !Sub 'arn:aws:s3:::*'
+                  - !Sub 'arn:aws:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster-snapshot:*${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
+                  - !Sub 'arn:aws:logs:*:${AwsAccountId}:log-group:*'
+                  - !Sub 'arn:aws:secretsmanager:*:${AwsAccountId}:secret:${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:iam::${AwsAccountId}:role/*'
+                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:function:*'
+                  - !Sub 'arn:aws:sqs:*:${AwsAccountId}:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:codebuild:*:${AwsAccountId}:project/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:codepipeline:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
+  CDKBootStrapPolicy3:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Sub '${PolicyNamePrefix}-3'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - 
+              Sid: VisualEditor0
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteTags'
+                  - 'ec2:DeleteVpcEndpoints'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:CreateRoute'
+                  - 'ec2:CreateTags'
+                  - 'ec2:DeleteRoute'
+                  - 'ec2:CreateRouteTable'
+                  - 'ec2:DeleteRouteTable'
+                  - 'ec2:AssociateRouteTable'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:route-table/*'
+          - 
+              Sid: VisualEditor1
+              Effect: Allow
+              Action:
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:DeleteTags'
+                  - 'ec2:DeleteVpcEndpoints'
+                  - 'ec2:CreateSecurityGroup'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:CreateTags'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:DeleteSecurityGroup'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:security-group/*'
+          - 
+              Sid: VisualEditor2
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteSubnet'
+                  - 'ec2:DeleteTags'
+                  - 'ec2:DeleteVpcEndpoints'
+                  - 'ec2:CreateNatGateway'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:CreateTags'
+                  - 'ec2:DisassociateRouteTable'
+                  - 'ec2:CreateSubnet'
+                  - 'ec2:AssociateRouteTable'
+                  - 'ec2:ModifySubnetAttribute'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:subnet/*'
+          - 
+              Sid: VisualEditor3
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteTags'
+                  - 'ec2:DeleteVpcEndpoints'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:CreateTags'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc-endpoint/*'
+          - 
+              Sid: VisualEditor4
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteFlowLogs'
+                  - 'ec2:DeleteTags'
+                  - 'ec2:CreateFlowLogs'
+                  - 'ec2:CreateTags'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc-flow-log/*'
+          - 
+              Sid: VisualEditor5
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteTags'
+                  - 'ec2:CreateTags'
+                  - 'ec2:CreateVpc'
+                  - 'ec2:CreateRouteTable'
+                  - 'ec2:AttachInternetGateway'
+                  - 'ec2:DetachInternetGateway'
+                  - 'ec2:DescribeVpcAttribute'
+                  - 'ec2:CreateFlowLogs'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:CreateSecurityGroup'
+                  - 'ec2:ModifyVpcAttribute'
+                  - 'ec2:DeleteVpc'
+                  - 'ec2:CreateSubnet'
+              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc/*'
+          - 
+              Sid: VisualEditor6
+              Effect: Allow
+              Action:
+                  - 'lambda:TagResource'
+                  - 'es:AddTags'
+                  - 'ec2:DescribeInternetGateways'
+                  - 'secretsmanager:GetRandomPassword'
+                  - 'logs:TagLogGroup'
+                  - 'cognito-idp:UntagResource'
+                  - 'ecs:RegisterTaskDefinition'
+                  - 'ecr:TagResource'
+                  - 'es:CreateDomain'
+                  - 'ec2:DescribeNetworkAcls'
+                  - 'ec2:DescribeRouteTables'
+                  - 'ecs:TagResource'
+                  - 'cognito-idp:TagResource'
+                  - 'codeartifact:CreateDomain'
+                  - 'ecr:CreateRepository'
+                  - 'ec2:CreateTags'
+                  - 'ecs:CreateCluster'
+                  - 'ec2:DisassociateRouteTable'
+                  - 'logs:TagResource'
+                  - 'es:RemoveTags'
+                  - 'ecr:UntagResource'
+                  - 'codeartifact:CreateRepository'
+                  - 'ec2:DescribeVpcEndpoints'
+                  - 'ec2:DescribeSubnets'
+                  - 'rds:RemoveTagsFromResource'
+                  - 'secretsmanager:CreateSecret'
+                  - 'secretsmanager:TagResource'
+                  - 'secretsmanager:UntagResource'
+                  - 'ec2:DescribeAddresses'
+                  - 'kms:UntagResource'
+                  - 'ec2:DeleteTags'
+                  - 'codeartifact:ListTagsForResource'
+                  - 'ec2:DescribeFlowLogs'
+                  - 'cognito-idp:CreateUserPool'
+                  - 'cognito-idp:CreateUserPoolDomain'
+                  - 'cognito-idp:CreateUserPoolClient'
+                  - 'cognito-idp:DeleteUserPool'
+                  - 'cognito-idp:DeleteUserPoolDomain'
+                  - 'cognito-idp:DeleteUserPoolClient'
+                  - 'lambda:CreateEventSourceMapping'
+                  - 'lambda:UntagResource'
+                  - 'ecs:DeregisterTaskDefinition'
+                  - 'codeartifact:TagResource'
+                  - 'kms:TagResource'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DescribeAvailabilityZones'
+                  - 'kms:CreateKey'
+                  - 'ecr:DescribeRepositories'
+                  - 'ecr:DescribeRegistry'
+                  - 'ecr:PutReplicationConfiguration'
+                  - 'ecs:UntagResource'
+                  - 'ec2:ReleaseAddress'
+                  - 'rds:AddTagsToResource'
+                  - 'codeartifact:UntagResource'
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:UntagLogGroup'
+                  - 'logs:UntagResource'
+                  - 'ec2:DescribeNatGateways'
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'rds:ListTagsForResource'
+                  - 'ec2:DescribeVpcs'
+                  - 'route53:AssociateVPCWithHostedZone'
+              Resource: '*'
+  CDKBootStrapPolicy4:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Sub '${PolicyNamePrefix}-4'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - 
+              Sid: VisualEditor8
+              Effect: Allow
+              Action:
+                  - 'ec2:DeleteTags'
+                  - 'ec2:CreateNatGateway'
+                  - 'ec2:DeleteNatGateway'
+                  - 'cloudwatch:DeleteAlarms'
+                  - 'codeartifact:PutRepositoryPermissionsPolicy'
+                  - 'ecr:ListTagsForResource'
+                  - 'ec2:AttachInternetGateway'
+                  - 'cognito-idp:DeleteUserPoolDomain'
+                  - 'ecr:DeleteRepository'
+                  - 'codeartifact:GetDomainPermissionsPolicy'
+                  - 'codeartifact:TagResource'
+                  - 'cognito-idp:CreateUserPoolDomain'
+                  - 'cloudwatch:UntagResource'
+                  - 'cognito-idp:UntagResource'
+                  - 'ec2:CreateInternetGateway'
+                  - 'ecr:TagResource'
+                  - 'ec2:DeleteInternetGateway'
+                  - 'ecr:GetLifecyclePolicy'
+                  - 'cognito-idp:TagResource'
+                  - 'ecr:PutLifecyclePolicy'
+                  - 'codeartifact:UntagResource'
+                  - 'ec2:CreateTags'
+                  - 'cognito-idp:DeleteUserPoolClient'
+                  - 'codeartifact:DescribeDomain'
+                  - 'ec2:DetachInternetGateway'
+                  - 'codeartifact:DeleteDomain'
+                  - 'cloudwatch:PutMetricAlarm'
+                  - 'cloudwatch:TagResource'
+                  - 'ecr:UntagResource'
+                  - 'cognito-idp:CreateUserPoolClient'
+                  - 'ecr:SetRepositoryPolicy'
+                  - 'cloudwatch:DescribeAlarms'
+                  - 'ecr:GetRepositoryPolicy'
+                  - 'codeartifact:PutDomainPermissionsPolicy'
+                  - 'cloudformation:DeleteStack'
+                  - 'cloudformation:CreateChangeSet'
+                  - 'cloudformation:TagResource'
+                  - 'cloudformation:UntagResource'
+                  - 'cloudwatch:PutDashboard'
+                  - 'cloudwatch:GetDashboard'
+                  - 'codeartifact:DescribeRepository'
+                  - 'codeartifact:AssociateExternalConnection'
+                  - 'ec2:AllocateAddress'
+                  - 'cloudwatch:DeleteDashboards'
+                  - 'codeartifact:DeleteRepository'
+                  - 'codeartifact:GetRepositoryPermissionsPolicy'
+                  - 'serverlessrepo:CreateCloudFormationTemplate'
+                  - 'serverlessrepo:GetCloudFormationTemplate'
+                  - 'serverlessrepo:GetApplication'
+              Resource:
+                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
+                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
+                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:aws:cloudformation:*:aws:transform/Serverless*'
+                  - 'arn:aws:serverlessrepo:*:*:applications/*'
+          - 
+              Effect: Allow
+              Action:
+                  - 'cloudfront:CreateCloudFrontOriginAccessIdentity'
+                  - 'cloudfront:DeleteCloudFrontOriginAccessIdentity'
+                  - 'cloudfront:CreateDistribution'
+                  - 'cloudfront:DeleteDistribution'
+                  - 'cloudfront:GetCloudFrontOriginAccessIdentity'
+                  - 'cloudfront:TagResource'
+                  - 'cloudfront:UntagResource'
+                  - 'cloudfront:GetDistribution'
+              Resource:
+                  - !Sub 'arn:aws:cloudfront::${AwsAccountId}:origin-access-identity/*'
+                  - !Sub 'arn:aws:cloudfront::${AwsAccountId}:distribution/*'
