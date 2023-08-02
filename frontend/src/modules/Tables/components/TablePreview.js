@@ -4,8 +4,9 @@ import { DataGrid } from '@mui/x-data-grid';
 import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { previewTable, useClient } from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { previewTable } from '../services';
 
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   '& .MuiDataGrid-columnsContainer': {
@@ -15,7 +16,7 @@ const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
         : 'rgba(255,255,255,0.38)'
   }
 }));
-const TablePreview = (props) => {
+export const TablePreview = (props) => {
   const { table } = props;
   const dispatch = useDispatch();
   const client = useClient();
@@ -83,7 +84,7 @@ const TablePreview = (props) => {
     </ReactIf.If>
   );
 };
+
 TablePreview.propTypes = {
   table: PropTypes.object.isRequired
 };
-export default TablePreview;

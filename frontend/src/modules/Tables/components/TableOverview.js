@@ -1,8 +1,8 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
-const TableOverview = (props) => {
+export const TableOverview = (props) => {
   const { table, ...other } = props;
 
   return (
@@ -41,5 +41,3 @@ const TableOverview = (props) => {
 TableOverview.propTypes = {
   table: PropTypes.object.isRequired
 };
-
-export default TableOverview;

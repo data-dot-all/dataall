@@ -28,14 +28,16 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import {
+  searchGlossary,
+  useClient
+} from 'services';
 import {
   getDatasetTable,
-  searchGlossary,
   updateDatasetTable,
-  useClient
-} from '../../../../services';
+} from '../services';
 
 function TableEditHeader(props) {
   const { table } = props;
