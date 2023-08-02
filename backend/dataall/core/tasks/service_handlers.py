@@ -86,6 +86,7 @@ class WorkerHandler:
         error = {}
         response = {}
         try:
+            print(f'Starting handler task {task}')
             response = handler(engine, task)
             status = 'completed'
         except Exception as e:
@@ -94,6 +95,7 @@ class WorkerHandler:
             )
             error = {'message': str(e)}
             status = 'failed'
+        print(f"response: {response}, status: {status}, error: {error}")
         return error, response, status
 
     @staticmethod
