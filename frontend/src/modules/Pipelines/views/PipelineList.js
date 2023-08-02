@@ -22,11 +22,12 @@ import {
   PlusIcon,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listDataPipelines, useClient } from '../../../../services';
-import { AwsRegions } from '../../../../utils';
-import PipelineListItem from './PipelineListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listDataPipelines } from '../services';
+import { AwsRegions } from 'utils';
+import { PipelineListItem } from '../components';
 
 function PipelinesPageHeader() {
   return (

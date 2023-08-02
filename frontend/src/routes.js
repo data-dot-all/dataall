@@ -117,16 +117,16 @@ const DashboardSessionStarter = Loadable(
 );
 
 const PipelineList = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineList'))
+  lazy(() => import('./modules/Pipelines/views/PipelineList'))
 );
 const PipelineView = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineView'))
+  lazy(() => import('./modules/Pipelines/views/PipelineView'))
 );
 const PipelineCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineCreateForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineCreateForm'))
 );
 const PipelineEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineEditForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineEditForm'))
 );
 
 const ShareList = Loadable(

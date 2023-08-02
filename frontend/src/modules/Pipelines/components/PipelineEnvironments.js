@@ -13,9 +13,9 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { useClient } from '../../../../services';
+import { useClient } from 'services';
 
-const PipelineEnvironments = (props) => {
+export const PipelineEnvironments = (props) => {
   const { pipeline } = props;
   const client = useClient();
   const [environments, setEnvironments] = useState([]);
@@ -87,4 +87,3 @@ const PipelineEnvironments = (props) => {
 PipelineEnvironments.propTypes = {
   pipeline: PropTypes.object.isRequired
 };
-export default PipelineEnvironments;

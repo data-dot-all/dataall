@@ -26,15 +26,17 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import {
+  listEnvironments,
+  useClient
+} from 'services';
 import {
   getDataPipeline,
-  listEnvironments,
-  updateDataPipeline,
-  useClient
-} from '../../../../services';
-import PipelineEnvironmentEditForm from './PipelineEnvironmentEditForm';
+  updateDataPipeline
+} from '../services';
+import { PipelineEnvironmentEditForm } from '../components';
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();

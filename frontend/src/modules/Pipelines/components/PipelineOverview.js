@@ -1,10 +1,9 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
-import PipelineCICD from './PipelineCICD';
-import PipelineEnvironments from './PipelineEnvironments';
+import { ObjectBrief, ObjectMetadata } from 'design';
+import { PipelineCICD, PipelineEnvironments } from '../components';
 
-const PipelineOverview = (props) => {
+export const PipelineOverview = (props) => {
   const { pipeline, ...other } = props;
 
   return (
@@ -55,5 +54,3 @@ const PipelineOverview = (props) => {
 PipelineOverview.propTypes = {
   pipeline: PropTypes.object.isRequired
 };
-
-export default PipelineOverview;
