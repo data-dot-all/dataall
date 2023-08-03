@@ -599,7 +599,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 tooling_account_id=self.account,
                 pipeline_bucket=self.pipeline_bucket_name,
-                ecr_repository=f'arn:aws:ecr:{self.region}:{self.account}:repository/{repository_name}',
+                ecr_repository=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}',
                 commit_id=self.image_tag,
                 vpc_id=target_env.get('vpc_id'),
                 vpc_endpoints_sg=target_env.get('vpc_endpoints_sg'),
