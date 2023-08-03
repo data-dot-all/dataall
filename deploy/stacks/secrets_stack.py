@@ -21,6 +21,14 @@ class SecretsManagerStack(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
 
+        self.secrets_manager_key = kms.Key(
+            self,
+            f'SecretsManagerKey{envname}',
+            alias=f'{resource_prefix}-{envname}-secrets-manager-key',
+            enable_key_rotation=True,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
         self.canary_user = sm.Secret(
             self,
             f'canary-user',
@@ -31,7 +39,7 @@ class SecretsManagerStack(pyNestedClass):
                 include_space=False,
                 password_length=12,
             ),
-            encryption_key=self.external_id_key,
+            encryption_key=self.secrets_manager_key,
             description=f'Stores dataall Cognito canary user',
             removal_policy=RemovalPolicy.DESTROY,
         )
