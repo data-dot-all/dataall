@@ -233,6 +233,14 @@ class PipelineStack(Stack):
             statements= [
                 iam.PolicyStatement(
                     actions=[
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
