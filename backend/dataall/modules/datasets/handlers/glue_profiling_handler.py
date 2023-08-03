@@ -27,4 +27,4 @@ class DatasetProfilingGlueHandler:
 
             profiling.status = status
             session.commit()
-            return profiling.status
+            return {"profiling_status": profiling.status}
