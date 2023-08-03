@@ -4,7 +4,6 @@ import string
 import boto3
 from aws_cdk import (
     aws_ssm,
-    SecretValue
 )
 
 from .pyNestedStack import pyNestedClass
@@ -103,7 +102,7 @@ class ParamStoreStack(pyNestedClass):
             description=f"Stores dataall pivot role name for environment {envname}",
         )
 
-        existing_external_id = _get_external_id_value(envname=envname, account_id=self.account, region=self.region)
+        existing_external_id = _get_external_id_value(envname=envname, region=self.region)
         external_id_value = existing_external_id if existing_external_id else _generate_external_id()
 
         aws_ssm.StringParameter(
@@ -114,28 +113,12 @@ class ParamStoreStack(pyNestedClass):
             description=f"Stores dataall external id for environment {envname}",
         )
 
-def _get_external_id_value(envname, account_id, region):
+def _get_external_id_value(envname, region):
     """For first deployments it returns False,
     for existing deployments it returns the ssm parameter value generated in the first deployment
     for prior to V1.5.1 upgrades it returns the secret from secrets manager
     """
-    cdk_look_up_role = 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(account_id, account_id, region)
-    base_session = boto3.Session()
-    assume_role_dict = dict(
-        RoleArn=cdk_look_up_role,
-        RoleSessionName=cdk_look_up_role.split('/')[1],
-    )
-    sts = base_session.client(
-        'sts',
-        region_name=region,
-        endpoint_url=f"https://sts.{region}.amazonaws.com"
-    )
-    response = sts.assume_role(**assume_role_dict)
-    session = boto3.Session(
-        aws_access_key_id=response['Credentials']['AccessKeyId'],
-        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-        aws_session_token=response['Credentials']['SessionToken'],
-    )
+    session = boto3.Session()
 
     secret_id = f"dataall-externalId-{envname}"
     parameter_path = f"/dataall/{envname}/pivotRole/externalId"
@@ -146,10 +129,7 @@ def _get_external_id_value(envname, account_id, region):
     except:
         try:
             secrets_client = session.client('secretsmanager', region_name=region)
-            if secrets_client.describe_secret(SecretId=secret_id):
-                secret_value = SecretValue.secrets_manager(secret_id).unsafe_unwrap()
-            else:
-                raise Exception
+            secret_value = secrets_client.get_secret_value(SecretId=secret_id)['SecretString']
             return secret_value
         except:
             return False
