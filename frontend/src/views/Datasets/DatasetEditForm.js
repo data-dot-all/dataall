@@ -483,23 +483,24 @@ const DatasetEditForm = (props) => {
                             variant="outlined"
                           />
                         </CardContent>
-                        { dataset.imported && dataset.KmsAlias === 'Undefined' &&
-                          <CardContent>
-                            <TextField
-                              error={Boolean(
-                                touched.KmsAlias && errors.KmsAlias
-                              )}
-                              fullWidth
-                              helperText={touched.KmsAlias && errors.KmsAlias}
-                              label="Amazon KMS key Alias (if SSE-KMS encryption is used). Otherwise leave empty."
-                              name="KmsAlias"
-                              onBlur={handleBlur}
-                              onChange={handleChange}
-                              value={values.KmsAlias}
-                              variant="outlined"
-                            />
-                         </CardContent>
-                        }
+                        {dataset.imported &&
+                          dataset.KmsAlias === 'Undefined' && (
+                            <CardContent>
+                              <TextField
+                                error={Boolean(
+                                  touched.KmsAlias && errors.KmsAlias
+                                )}
+                                fullWidth
+                                helperText={touched.KmsAlias && errors.KmsAlias}
+                                label="Amazon KMS key Alias (if SSE-KMS encryption is used). Otherwise leave empty."
+                                name="KmsAlias"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.KmsAlias}
+                                variant="outlined"
+                              />
+                            </CardContent>
+                          )}
                       </Card>
                       <Card>
                         <CardHeader title="Governance" />

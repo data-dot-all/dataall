@@ -163,7 +163,7 @@ function ShareViewHeader(props) {
     );
 
     if (!response.errors) {
-      handleRejectShareModalClose()
+      handleRejectShareModalClose();
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
           horizontal: 'right',
@@ -181,127 +181,128 @@ function ShareViewHeader(props) {
 
   return (
     <>
-    <Grid container justifyContent="space-between" spacing={3}>
-      <Grid item>
-        <Typography color="textPrimary" variant="h5">
-          Share object for {share.dataset?.datasetName}
-        </Typography>
-        <Breadcrumbs
-          aria-label="breadcrumb"
-          separator={<ChevronRightIcon fontSize="small" />}
-          sx={{ mt: 1 }}
-        >
-          <Link
-            underline="hover"
-            color="textPrimary"
-            component={RouterLink}
-            to="/console/shares"
-            variant="subtitle2"
-          >
-            Shares
-          </Link>
-          <Link
-            underline="hover"
-            color="textPrimary"
-            component={RouterLink}
-            to="/console/shares"
-            variant="subtitle2"
-          >
-            Shares
-          </Link>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-            component={RouterLink}
-            to={`/console/datasets/${share.dataset?.datasetUri}`}
-          >
-            {share.dataset?.datasetName}
+      <Grid container justifyContent="space-between" spacing={3}>
+        <Grid item>
+          <Typography color="textPrimary" variant="h5">
+            Share object for {share.dataset?.datasetName}
           </Typography>
-        </Breadcrumbs>
-      </Grid>
-      <Grid item>
-        {!loading && (
-          <Box sx={{ m: -1 }}>
-            <Button
-              color="primary"
-              startIcon={<RefreshRounded fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={() => {
-                fetchItem();
-                fetchItems();
-              }}
+          <Breadcrumbs
+            aria-label="breadcrumb"
+            separator={<ChevronRightIcon fontSize="small" />}
+            sx={{ mt: 1 }}
+          >
+            <Link
+              underline="hover"
+              color="textPrimary"
+              component={RouterLink}
+              to="/console/shares"
+              variant="subtitle2"
             >
-              Refresh
-            </Button>
-            {share.userRoleForShareObject === 'Approvers' ? (
-              <>
-                {share.status === 'Submitted' && (
-                  <>
+              Shares
+            </Link>
+            <Link
+              underline="hover"
+              color="textPrimary"
+              component={RouterLink}
+              to="/console/shares"
+              variant="subtitle2"
+            >
+              Shares
+            </Link>
+            <Typography
+              color="textSecondary"
+              variant="subtitle2"
+              component={RouterLink}
+              to={`/console/datasets/${share.dataset?.datasetUri}`}
+            >
+              {share.dataset?.datasetName}
+            </Typography>
+          </Breadcrumbs>
+        </Grid>
+        <Grid item>
+          {!loading && (
+            <Box sx={{ m: -1 }}>
+              <Button
+                color="primary"
+                startIcon={<RefreshRounded fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={() => {
+                  fetchItem();
+                  fetchItems();
+                }}
+              >
+                Refresh
+              </Button>
+              {share.userRoleForShareObject === 'Approvers' ? (
+                <>
+                  {share.status === 'Submitted' && (
+                    <>
+                      <LoadingButton
+                        loading={accepting}
+                        color="success"
+                        startIcon={<CheckCircleOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={accept}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Approve
+                      </LoadingButton>
+                      <LoadingButton
+                        loading={rejecting}
+                        color="error"
+                        sx={{ m: 1 }}
+                        startIcon={<BlockOutlined />}
+                        onClick={handleRejectShareModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Reject
+                      </LoadingButton>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {(share.status === 'Draft' ||
+                    share.status === 'Rejected') && (
                     <LoadingButton
-                      loading={accepting}
-                      color="success"
+                      loading={submitting}
+                      color="primary"
                       startIcon={<CheckCircleOutlined />}
                       sx={{ m: 1 }}
-                      onClick={accept}
+                      onClick={submit}
                       type="button"
-                      variant="outlined"
+                      variant="contained"
                     >
-                      Approve
+                      Submit
                     </LoadingButton>
-                    <LoadingButton
-                      loading={rejecting}
-                      color="error"
-                      sx={{ m: 1 }}
-                      startIcon={<BlockOutlined />}
-                      onClick={handleRejectShareModalOpen}
-                      type="button"
-                      variant="outlined"
-                    >
-                      Reject
-                    </LoadingButton>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                {(share.status === 'Draft' || share.status === 'Rejected') && (
-                  <LoadingButton
-                    loading={submitting}
-                    color="primary"
-                    startIcon={<CheckCircleOutlined />}
-                    sx={{ m: 1 }}
-                    onClick={submit}
-                    type="button"
-                    variant="contained"
-                  >
-                    Submit
-                  </LoadingButton>
-                )}
-              </>
-            )}
-            <Button
-              color="primary"
-              startIcon={<DeleteOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={remove}
-            >
-              Delete
-            </Button>
-          </Box>
-        )}
+                  )}
+                </>
+              )}
+              <Button
+                color="primary"
+                startIcon={<DeleteOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={remove}
+              >
+                Delete
+              </Button>
+            </Box>
+          )}
+        </Grid>
       </Grid>
-    </Grid>
-    {isRejectShareModalOpen && (
-      <ShareRejectModal
-        share={share}
-        onApply={handleRejectShareModalClose}
-        onClose={handleRejectShareModalClose}
-        open={isRejectShareModalOpen}
-        rejectFunction={reject}
-      />
-    )}
+      {isRejectShareModalOpen && (
+        <ShareRejectModal
+          share={share}
+          onApply={handleRejectShareModalClose}
+          onClose={handleRejectShareModalClose}
+          open={isRejectShareModalOpen}
+          rejectFunction={reject}
+        />
+      )}
     </>
   );
 }
@@ -726,52 +727,46 @@ const ShareView = () => {
                   </Box>
                   <CardContent>
                     <Box sx={{ mt: 3 }}>
-                      <Typography
-                        color="textSecondary"
-                        variant="subtitle2"
-                      >
+                      <Typography color="textSecondary" variant="subtitle2">
                         Request Purpose
                         {share.userRoleForShareObject === 'Requesters' && (
-                            <UpdateRequestReason
-                              share={share}
-                              client={client}
-                              dispatch={dispatch}
-                              enqueueSnackbar={enqueueSnackbar}
-                              fetchItem={fetchItem}
-                            />
+                          <UpdateRequestReason
+                            share={share}
+                            client={client}
+                            dispatch={dispatch}
+                            enqueueSnackbar={enqueueSnackbar}
+                            fetchItem={fetchItem}
+                          />
                         )}
                       </Typography>
                       <Box sx={{ mt: 1 }}>
                         <Typography
                           color="textPrimary"
                           variant="subtitle2"
-                          sx={{ wordBreak: "break-word" }}
+                          sx={{ wordBreak: 'break-word' }}
                         >
                           {share.requestPurpose || '-'}
                         </Typography>
                       </Box>
                     </Box>
                     <Box sx={{ mt: 3 }}>
-                      <Typography
-                        color="textSecondary"
-                        variant="subtitle2"
-                      >
+                      <Typography color="textSecondary" variant="subtitle2">
                         Reject Purpose
                         {share.userRoleForShareObject === 'Approvers' && (
-                            <UpdateRejectReason
-                              share={share}
-                              client={client}
-                              dispatch={dispatch}
-                              enqueueSnackbar={enqueueSnackbar}
-                              fetchItem={fetchItem}
-                            />
+                          <UpdateRejectReason
+                            share={share}
+                            client={client}
+                            dispatch={dispatch}
+                            enqueueSnackbar={enqueueSnackbar}
+                            fetchItem={fetchItem}
+                          />
                         )}
                       </Typography>
                       <Box sx={{ mt: 1 }}>
                         <Typography
                           color="textPrimary"
                           variant="subtitle2"
-                          sx={{ wordBreak: "break-word" }}
+                          sx={{ wordBreak: 'break-word' }}
                         >
                           {share.rejectPurpose || '-'}
                         </Typography>
