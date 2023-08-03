@@ -354,7 +354,7 @@ class PipelineStack(Stack):
                             'codecommit:GitPush',
                             'codecommit:ListTagsForResource',
                         ],
-                        resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
+                        resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall-testing'],
                     )
                 ],
             )   
