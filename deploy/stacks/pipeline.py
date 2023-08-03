@@ -331,7 +331,6 @@ class PipelineStack(Stack):
                     iam.ServicePrincipal('codebuild.amazonaws.com'),
                     iam.AccountPrincipal(self.account),
                 ),
-                managed_policies=[self.baseline_codebuild_policy, self.git_release_policy, self.expanded_codebuild_policy]
             )
             self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
             self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
