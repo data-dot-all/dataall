@@ -130,16 +130,17 @@ def _get_external_id_value(envname, account_id, region):
         region_name=region,
         endpoint_url=f"https://sts.{region}.amazonaws.com"
     )
-    response = sts.assume_role(**assume_role_dict)
-    session = boto3.Session(
-        aws_access_key_id=response['Credentials']['AccessKeyId'],
-        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-        aws_session_token=response['Credentials']['SessionToken'],
-    )
-
-    secret_id = f"dataall-externalId-{envname}"
-    parameter_path = f"/dataall/{envname}/pivotRole/externalId"
     try:
+        response = sts.assume_role(**assume_role_dict)
+        session = boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
+
+        secret_id = f"dataall-externalId-{envname}"
+        parameter_path = f"/dataall/{envname}/pivotRole/externalId"
+
         ssm_client = session.client('ssm', region_name=region)
         parameter_value = ssm_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return parameter_value
