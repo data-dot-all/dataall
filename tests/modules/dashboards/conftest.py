@@ -12,7 +12,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
+def env1(env, org1, user, group, tenant, module_mocker, patch_stack_tasks):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
         'dataall.core.environment.api.resolvers.check_environment', return_value=True
@@ -26,7 +26,7 @@ def env1(env, org1, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dashboard(client, env1, org1, group, module_mocker, patch_es):
+def dashboard(client, env1, org1, group, module_mocker):
     mock_client = MagicMock()
     module_mocker.patch(
         'dataall.modules.dashboards.services.dashboard_service.DashboardQuicksightClient',

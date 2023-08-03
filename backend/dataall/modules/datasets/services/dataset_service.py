@@ -363,7 +363,6 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
             DatasetRepository.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
@@ -491,7 +490,7 @@ class DatasetService:
 
         dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
-            if dataset.stewards != dataset.SamlGroupName:
+            if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,

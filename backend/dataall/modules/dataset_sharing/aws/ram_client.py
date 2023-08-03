@@ -159,4 +159,3 @@ class RamClient:
         self._client.delete_resource_share(
             resource_share_arn=resource_share_arn
         )
-

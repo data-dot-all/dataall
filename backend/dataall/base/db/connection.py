@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from contextlib import contextmanager
@@ -6,6 +7,7 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
+from dataall.base.aws.secrets_manager import SecretsManager
 from dataall.base.db import Base
 from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
@@ -84,9 +86,9 @@ def create_schema_if_not_exists(engine, envname):
 
 
 def create_schema_and_tables(engine, envname):
+    drop_schema_if_exists(engine.engine, envname)
     create_schema_if_not_exists(engine.engine, envname)
     try:
-        Base.metadata.drop_all(engine.engine)
         Base.metadata.create_all(engine.engine)
     except Exception as e:
         log.error(f'Failed to create all tables due to: {e}')
@@ -107,7 +109,7 @@ def get_engine(envname=ENVNAME):
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
-        creds = SessionHelper.get_secret(credential_arn)
+        creds = json.loads(SecretsManager().get_secret_value(credential_arn))
         user = creds['username']
         pwd = creds['password']
         host = param_store.get_parameter(env=envname, path='aurora/hostname')
