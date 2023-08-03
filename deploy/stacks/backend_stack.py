@@ -36,6 +36,7 @@ class BackendStack(Stack):
         image_tag=None,
         pipeline_bucket=None,
         vpc_id=None,
+        vpc_restricted_nacls=False,
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
@@ -65,6 +66,7 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
+            restricted_nacl=vpc_restricted_nacls,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
