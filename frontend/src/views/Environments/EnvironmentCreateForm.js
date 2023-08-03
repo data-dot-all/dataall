@@ -99,7 +99,9 @@ const EnvironmentCreateForm = (props) => {
   };
 
   const getCDKExecPolicyUrl = async () => {
-    const response = await client.query(getCDKExecPolicyPresignedUrl(params.uri));
+    const response = await client.query(
+      getCDKExecPolicyPresignedUrl(params.uri)
+    );
     if (!response.errors) {
       window.open(response.data.getCDKExecPolicyPresignedUrl, '_blank');
     } else {
@@ -310,20 +312,21 @@ const EnvironmentCreateForm = (props) => {
               </Box>
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                Use the below CloudFormation stack to create the custom IAM policy.
+                  Use the below CloudFormation stack to create the custom IAM
+                  policy.
                 </Typography>
                 <Button
-                            color="primary"
-                            startIcon={<CloudDownloadOutlined fontSize="small" />}
-                            sx={{ mt: 1, mb: 2, ml: 2 }}
-                            variant="outlined"
-                            onClick={() => {
-                              getCDKExecPolicyUrl().catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                            }}
-                          >
-                            CloudFormation stack for CDK custom execution policy
+                  color="primary"
+                  startIcon={<CloudDownloadOutlined fontSize="small" />}
+                  sx={{ mt: 1, mb: 2, ml: 2 }}
+                  variant="outlined"
+                  onClick={() => {
+                    getCDKExecPolicyUrl().catch((e) =>
+                      dispatch({ type: SET_ERROR, error: e.message })
+                    );
+                  }}
+                >
+                  CloudFormation stack for CDK custom execution policy
                 </Button>
                 <Typography color="textPrimary" variant="subtitle2">
                   <CopyToClipboard
