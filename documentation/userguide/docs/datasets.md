@@ -97,13 +97,20 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 
 
 If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
-the fields of a newly created dataset you have to specify the S3 bucket, KMS key Alias and optionally a Glue database:
+the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database and a KMS key Alias. If the Glue database
+is left empty, data.all will create a Glue database pointing at the S3 Bucket. As for the KMS key Alias, data.all assumes that if nothing is specified
+the S3 Bucket is encrypted with SSE-S3 encryption.
 
 | Field                  | Description                                                                                     | Required | Editable |Example
 |------------------------|-------------------------------------------------------------------------------------------------|----------|----------|-------------
 | Amazon S3 bucket name  | Name of the S3 bucket you want to import                                                        | Yes      | No    |DOC-EXAMPLE-BUCKET
 | Amazon KMS key Alias   | Alias of the KMS key used to encrypt the S3 Bucket (do not include alias/<ALIAS>, just <ALIAS>) | Yes      | No    |somealias
 | AWS Glue database name | Name of the Glue database tht you want to import                                                | No       | No      |anyDatabase
+
+!!!success "Update imported Datasets"
+    Imported keys is an addition of V1.6.0 release. Any previously imported bucket will have a KMS Key Alias set to `Undefined`.
+    If that is the case and you want to update the Dataset and import a KMS key Alias, data.all let's you edit the Dataset on the 
+    **Edit** window.
 
 ![import_dataset](pictures/datasets/import_dataset.png#zoom#shadow)
 

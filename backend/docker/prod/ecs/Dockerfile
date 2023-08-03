@@ -56,7 +56,6 @@ VOLUME ["/dataall"]
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
 RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars
-
 ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/cdkproxy/assets/glueprofilingjob/jars/
 
 WORKDIR /

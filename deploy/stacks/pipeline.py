@@ -120,7 +120,7 @@ class PipelineStack(Stack):
 
         else:
             source = CodePipelineSource.code_commit(
-                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall-testing'),
+                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
                 branch=self.git_branch,
             )
 
@@ -231,6 +231,14 @@ class PipelineStack(Stack):
             policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
             statements= [
+                iam.PolicyStatement(
+                    actions=[
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'
+                    ],
+                ),
                 iam.PolicyStatement(
                     actions=[
                         'sts:GetServiceBearerToken',
