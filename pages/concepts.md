@@ -92,7 +92,7 @@ With ML Studio Notebooks we can add users to our SageMaker domain and open Amazo
 ### Pipelines
 In order to distribute data processing, data.all introduces data.all pipelines where:
 - data.all takes care of CI/CD infrastructure
-- data.all offers flexible pipeline blueprints to deploy AWS resources and a Step Function
+- data.all offers flexible pipeline blueprints to deploy AWS resources
 
 ### Dashboards
 In the Dashboard window we can start Quicksight sessions, create visual analysis and dashboards.

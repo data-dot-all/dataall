@@ -73,14 +73,14 @@ from the AWS logic and processing. To achieve this decoupling, the web applicati
 5. Short Running Asynchronous Tasks Processor (AWS Lambda)
 
 data.all infrastructure runs <span style="color:#2074d5">**90% on serverless**</span> services in a private VPC, 
-the remaining 10% are for the OpenSearch cluster that is not serverless... yet!
+the remaining 10% is for the OpenSearch cluster. Since data.all release v1.5.0 you have the ability to deploy an OpenSearch Serverless cluster instead by specifying the `enable_opensearch_serverless` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
 ![archi](img/architecture_infrastructure.drawio.png#zoom#shadow)
 
 ## Frontend Components <a name="frontend"></a>
 
 To fit the requirements of enterprise grade customers, data.all architecture has two variants. Both 
-architectures are part of data.all code base and can be configured with in the deployment with the 
+architectures are part of data.all code base and can be configured in the deployment with the 
 `internet_facing` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
 - Internet facing architecture
@@ -122,14 +122,33 @@ the server hosting the documentation.
 
 ### VPC facing architecture
 In this architecture, data.all static sites are deployed on an AWS internal application load
-balancer (ALB) deployed on the VPC's private subnet. 
-This ALB is reachable only from Amazon VPCs and not from the internet. 
-Also, APIs are private and accessible only through VPC endpoints.
+balancer (ALB) deployed on the VPC's private subnet. Data.all static sites are hosted on Amazon ECS using docker containers through nginx server.
 
 
-Finally, data.all static sites are hosted on Amazon ECS using docker containers through nginx server.
+The ALB is reachable only from Amazon VPCs and not from the internet. Also, APIs are private and accessible only through VPC endpoints. 
+For this kind of architecture, the following resources need to be provisioned as pre-requisite for the deployment:
+- Route 53 private hosted zone
+- ACM certificate
+- For the above you will also need a VPC which needs to be provided as input for the deployment. Check the backend VPC section to review the VPC requirements.
+
+Although it is not a pre-requisite per se, to use this architecture customers need a way to connect with the data.all VPC. Typically,
+this is achieved by connecting the VPN to the VPC in data.all.
+
+With the following commands you can create the ACM certificate and Route 53 private hosted zone:
+1.	`cd` to empty directory
+2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem`
+3.	This command will create a no password file to load in ACM: `openssl rsa -in dataallkey.pem -out dataallkeynopwd.pem `
+4.	`aws route53 create-hosted-zone --name <domain-name> --vpc VPCRegion=<vpc_region>,VPCId=<vpc-id> --caller-reference 07:12:22 --query HostedZone.Id --output text `
+5.	`aws acm import-certificate --region us-east-1 --certificate fileb://<filepath to cert> --private-key fileb://<filepath to no password key> --query CertificateArn --output text`
+
+After it is deployed, How do I connect (or simulate the connection) between my VPN and data.all VPC? The following
+resources might be helpful for testing and connecting the deployment:
+- [Support post](https://aws.amazon.com/premiumsupport/knowledge-center/route53-resolve-with-inbound-endpoint/)
+- [Workshop](https://catalog.workshops.aws/networking/en-US/intermediate/3-hybrid-dns/10-hybrid-dns-overview)
+- [Reference architecture](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/hybrid-dns_route53-resolver-endpoint-ra.pdf)
 
 
+![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
 
 - Third party libraries: data.all static sites libraries are stored on AWS CodeArtifact which
 ensures third party libraries availability, encryption using AWS KMS and
@@ -140,25 +159,37 @@ image, and does not rely on Dockerhub. Docker images are built with AWS
 CodePipeline and stored on Amazon ECR which ensures image availability,
 and vulnerabilities scanning.
 
-
-![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
-
-
 ## Backend Components <a name="backend"></a>
 
 ![Screenshot](img/architecture_backend.drawio.png#zoom#shadow)
 
-### VPC
+### Backend VPC
 
+#### Created by data.all
+If we do not provide a VPC ID for the different infrastructure accounts in the deployment configuration (aka cdk.json), 
 data.all creates its own VPC in the account where it is set up, with usual configuration.
-All compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
+All backend compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
 
 All data.all Lambda functions and ECS tasks are running inside this VPC and in private
 subnets. 
 
-
-
 ![Screenshot](img/architecture_vpc.drawio.png#zoom#shadow)
+
+#### Created outside of data.all
+There are 2 scenarios where we might want to provide our own VPCs:
+1) Organization guidelines. In your organization there are certain policies and mechanisms to create VPCs.
+2) Frontend needs to be hosted in data.all VPC facing architecture
+
+When providing the VPC, your VPC should resemble the image above.
+
+1. Make sure that it is deployed in at least 2 Availability Zones (AZ)
+2. Make sure that it has at least 1 public subnet. Data.all needs to download packages, hence needs public access.
+3. Make sure that the private subnets route to a NAT Gateway
+4. Make sure that the VPC created does not have an S3 VPC endpoint
+
+Here is a screenshot of the creation of the VPC: 
+![Screenshot](img/vpc_setup.png#zoom#shadow)
+
 
 ### Backend AWS API Gateway
 data.all backend main entry point is an AWS API Gateway that exposes a
@@ -249,10 +280,16 @@ through security groups inbound rules.
 data.all uses Amazon OpenSearch to index datasets information
 for optimal search experience on the catalog. 
 
+By default, Amazon OpenSearch Service cluster is created, however users have the ability to use Amazon OpenSearch
+Serverless collection instead by enabling a corresponding feature flag in `cdk.json`.
+
 - Amazon OpenSearch cluster is running inside a VPC and private
 subnets.
+- If using Amazon OpenSearch Serverless collection, it is only accessible through OpenSearch
+Serverless–managed VPC endpoints.
 - It is accessible only by data.all resources like Lambda
-functions and ECS tasks thanks to enforced security groups inbound rules.
+functions and ECS tasks thanks to enforced security groups inbound rules in case of OpenSearch cluster, or access
+policies in case of Amazon OpenSearch Serverless.
 - It is encrypted at rest with AWS KMS customer managed key (CMK).
 
 ### AWS Lambda OpenSearch Handler

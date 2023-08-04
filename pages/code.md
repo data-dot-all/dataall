@@ -46,7 +46,8 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
     - `DBMigrationStack`: tool to migrate between Aurora versions of the database
     - `LambdaApiStack` : Lambda Function stack
     - `MonitoringStack` : CloudWatch alarms and monitoring resources
-    - `OpenSearchStack`: OpenSearch cluster - data.all central catalog
+    - `OpenSearchStack`: OpenSearch cluster - data.all central catalog (default)
+    - `OpenSearchServerlessStack`: OpenSearch Serverless collection - data.all central catalog (if enabled)
     - `ParamStoreStack` : AWS SSM parameters
     - `S3ResourcesStack` : S3 resources
     - `SecretsManagerStack` : AWS SSM Secrets
@@ -375,7 +376,7 @@ definition  of AWS resources associated with data.all high level abstractions. C
 1. environment:  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
 2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
 3. notebook: SageMaker Notebook resources
-4. pipeline: CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
+4. pipeline: CI/CD pipeline resources
 5. redshift_cluster: Redshift stack
 6. sagemakerstudio: SageMaker Studio user profile
 
