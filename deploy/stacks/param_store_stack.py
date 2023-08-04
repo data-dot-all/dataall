@@ -115,9 +115,9 @@ class ParamStoreStack(pyNestedClass):
         )
 
 def _get_external_id_value(envname, account_id, region):
-    """For first deployments it returns False,
-    for existing deployments it returns the ssm parameter value generated in the first deployment
-    for prior to V1.5.1 upgrades it returns the secret from secrets manager
+    """
+    For first deployments and upgrades from <=V1.5.6 to >=v1.6 - returns False and a new ssm parameter created,
+    For existing >=v1.6 deployments - returns the ssm parameter value generated in the first deployment
     """
     cdk_look_up_role = 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(account_id, account_id, region)
     base_session = boto3.Session()
