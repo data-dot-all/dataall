@@ -88,6 +88,7 @@ of our repository. Open it, you should be seen something like:
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
     "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
+    "tooling_vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",
     "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
     "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
@@ -100,6 +101,7 @@ of our repository. Open it, you should be seen something like:
         "with_approval": "boolean_ADD_CODEPIPELINE_APPROVAL_STEP|DEFAULT=false",
         "vpc_id": "string_DEPLOY_WITHIN_AN_EXISTING_VPC|DEFAULT=None",
         "vpc_endpoints_sg": "string_DEPLOY_WITHIN_EXISTING_VPC_SG|DEFAULT=None",
+        "vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",
         "internet_facing": "boolean_CLOUDFRONT_IF_TRUE_ELSE_ECS_BEHIND_INTERNAL_ALB|DEFAULT=true",
         "custom_domain": {
           "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
@@ -130,6 +132,7 @@ and find 2 examples of cdk.json files.
 |-----------------------------------------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tooling_vpc_id                                | Optional              | The VPC ID for the tooling account. If not provided, **a new VPC** will be created.                                                                                                                                                                                   |
 | tooling_region                                | Optional              | The AWS region for the tooling account where the AWS CodePipeline pipeline will be created. (default: eu-west-1)                                                                                                                                                      |
+| tooling_vpc_restricted_nacl                   | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned tooling VPC (default: false)
 | git_branch                                    | Optional              | The git branch name can be leveraged to deploy multiple AWS CodePipeline pipelines to the same tooling account. (default: main)                                                                                                                                       |
 | git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                |
 | quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                     |
@@ -142,6 +145,7 @@ and find 2 examples of cdk.json files.
 | with_approval                                 | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                                           |
 | vpc_id                                        | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                                                |
 | vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                  |
+| vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)
 | internet_facing                               | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                                                         |
 | custom_domain                                 | Optional*             | Custom domain configuration: hosted_zone_name, hosted_zone_id, and certificate_arn. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                 |
 | ip_ranges                                     | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                                             |
@@ -191,6 +195,7 @@ deploy to 2 deployments accounts.
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_vpc_id": "vpc-1234567890EXAMPLE",
     "tooling_region": "eu-west-2",
+    "tooling_vpc_restricted_nacl": true,
     "git_branch": "master",
     "git_release": true,
     "quality_gate": false,
@@ -215,6 +220,7 @@ deploy to 2 deployments accounts.
             "internet_facing": false,
             "vpc_id": "vpc-0987654321EXAMPLE",
             "vpc_endpoints_sg": "sg-xxxxxxxxxxxxxx",
+            "vpc_restricted_nacl": true,
             "custom_domain": {
               "hosted_zone_name":"example.com",
               "hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID",
