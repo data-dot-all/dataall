@@ -51,7 +51,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const worksheetsSection = {
       title: 'Worksheets',
       path: '/console/worksheets',
-      icon: <AiOutlineExperiment size={15} />
+      icon: <AiOutlineExperiment size={15} />,
+      active: config.modules.worksheets.active
     };
 
     const mlStudioSection = {

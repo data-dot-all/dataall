@@ -15,9 +15,9 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { FaBars } from 'react-icons/fa';
 import * as ReactIf from 'react-if';
-import { Scrollbar } from '../../../../design';
+import { Scrollbar } from 'design';
 
-const WorksheetResult = ({ results, loading }) => {
+export const WorksheetResult = ({ results, loading }) => {
   if (loading) {
     return <CircularProgress />;
   }
@@ -72,4 +72,3 @@ WorksheetResult.propTypes = {
   results: PropTypes.object.isRequired,
   loading: PropTypes.bool.isRequired
 };
-export default WorksheetResult;

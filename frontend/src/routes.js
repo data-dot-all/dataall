@@ -137,13 +137,13 @@ const ShareView = Loadable(
 );
 
 const WorksheetList = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetList'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetList'))
 );
 const WorksheetView = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetView'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetView'))
 );
 const WorksheetCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetCreateForm'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))
 );
 
 const GlossaryList = Loadable(
@@ -361,7 +361,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.worksheets.active && {
         children: [
           {
             path: 'worksheets',

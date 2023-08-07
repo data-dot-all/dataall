@@ -13,11 +13,12 @@ import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { ChipInput } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { updateWorksheet, useClient } from '../../../../services';
+import { ChipInput } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { updateWorksheet } from '../services';
 
-const WorksheetEditFormModal = (props) => {
+export const WorksheetEditFormModal = (props) => {
   const { worksheet, onApply, onClose, open, reload, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -209,4 +210,3 @@ WorksheetEditFormModal.propTypes = {
   open: PropTypes.bool.isRequired
 };
 
-export default WorksheetEditFormModal;

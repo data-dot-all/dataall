@@ -24,9 +24,10 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { createWorksheet, useClient, useGroups } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, useGroups } from 'services';
+import { createWorksheet } from '../services';
 
 const WorksheetCreateForm = (props) => {
   const navigate = useNavigate();
