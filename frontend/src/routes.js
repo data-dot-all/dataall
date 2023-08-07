@@ -305,7 +305,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.dashboards.active && {
         children: [
           {
             path: 'dashboards',
