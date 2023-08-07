@@ -181,7 +181,7 @@ const routes = [
       </AuthGuard>
     ),
     children: [
-      {
+      config.modules.organizations.active && {
         children: [
           {
             path: 'organizations',
