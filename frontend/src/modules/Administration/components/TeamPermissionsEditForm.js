@@ -18,14 +18,14 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   listTenantPermissions,
-  updateTenantGroupPermissions,
-  useClient
-} from '../../../../services';
+  updateTenantGroupPermissions
+} from '../services';
 
-const TeamPermissionsEditForm = (props) => {
+export const TeamPermissionsEditForm = (props) => {
   const { team, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -220,4 +220,3 @@ TeamPermissionsEditForm.propTypes = {
   open: PropTypes.bool.isRequired
 };
 
-export default TeamPermissionsEditForm;

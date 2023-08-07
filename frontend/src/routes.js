@@ -157,7 +157,7 @@ const GlossaryCreateForm = Loadable(
 );
 
 const AdministrationView = Loadable(
-  lazy(() => import('./modules/Misc/views/Administration/AdministrationView'))
+  lazy(() => import('./modules/Administration/views/AdministrationView'))
 );
 
 const routes = [
