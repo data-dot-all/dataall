@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.models import Environment, EnvironmentGroup, EnvironmentParameter
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.stacks.db.stack_models import KeyValueTag
@@ -43,6 +43,10 @@ def env(db, org: Organization) -> Environment:
         )
         session.add(env)
         session.commit()
+        session.add(
+            EnvironmentParameter(env.environmentUri, "mlStudiosEnabled", "true")
+        )
+
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=env.SamlGroupName,
