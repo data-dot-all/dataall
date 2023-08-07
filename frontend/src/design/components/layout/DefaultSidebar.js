@@ -76,7 +76,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const pipelinesSection = {
       title: 'Pipelines',
       path: '/console/pipelines',
-      icon: <BsIcons.BsGear size={15} />
+      icon: <BsIcons.BsGear size={15} />,
+      active: config.modules.datapipelines.active
     };
 
     const organizationsSection = {

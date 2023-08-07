@@ -329,7 +329,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datapipelines.active && {
         children: [
           {
             path: 'pipelines',
