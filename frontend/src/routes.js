@@ -71,13 +71,13 @@ const TableEditForm = Loadable(
 );
 
 const FolderCreateForm = Loadable(
-  lazy(() => import('./modules/Folders/FolderCreateForm'))
+  lazy(() => import('./modules/Folders/views/FolderCreateForm'))
 );
 const FolderView = Loadable(
   lazy(() => import('./modules/Folders/views/FolderView'))
 );
 const FolderEditForm = Loadable(
-  lazy(() => import('./modules/Folders/FolderEditForm'))
+  lazy(() => import('./modules/Folders/views/FolderEditForm'))
 );
 
 const NotebookList = Loadable(
