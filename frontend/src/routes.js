@@ -33,7 +33,7 @@ const OrganizationEditForm = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
-  lazy(() => import('./modules/Organizations/views/EnvironmentCreateForm'))
+  lazy(() => import('./modules/Misc/views/Environments/EnvironmentCreateForm'))
 );
 const EnvironmentEditForm = Loadable(
   lazy(() => import('./modules/Misc/views/Environments/EnvironmentEditForm'))
@@ -181,7 +181,7 @@ const routes = [
       </AuthGuard>
     ),
     children: [
-      config.modules.organizations.active && {
+      {
         children: [
           {
             path: 'organizations',

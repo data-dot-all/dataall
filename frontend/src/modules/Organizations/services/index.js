@@ -1,6 +1,5 @@
 export * from './archiveOrganization';
 export * from './createOrganization';
-export * from './getOrganization';
 export * from './inviteGroup';
 export * from './listOrganizationEnvironments';
 export * from './listOrganizationGroups';

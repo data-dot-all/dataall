@@ -39,6 +39,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createEnvironment,
+  getOrganization,
   getPivotRoleExternalId,
   getPivotRoleName,
   getPivotRolePresignedUrl,
@@ -46,9 +47,6 @@ import {
   useClient,
   useGroups
 } from 'services';
-import {
-  getOrganization,
-} from '../services';
 import { AwsRegions } from 'utils';
 
 const EnvironmentCreateForm = (props) => {

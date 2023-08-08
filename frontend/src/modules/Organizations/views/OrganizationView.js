@@ -31,10 +31,12 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
 import {
-  archiveOrganization,
-  getOrganization
+  getOrganization,
+  useClient
+} from 'services';
+import {
+  archiveOrganization
 } from '../services';
 import {
   OrganizationEnvironments,

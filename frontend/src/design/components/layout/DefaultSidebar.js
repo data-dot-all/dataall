@@ -84,8 +84,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const organizationsSection = {
       title: 'Organizations',
       path: '/console/organizations',
-      icon: <BiIcons.BiBuildings size={15} />,
-      active: config.modules.organizations.active
+      icon: <BiIcons.BiBuildings size={15} />
     };
 
     const environmentsSection = {
