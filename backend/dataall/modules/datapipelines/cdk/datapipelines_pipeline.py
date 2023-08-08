@@ -20,7 +20,7 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)

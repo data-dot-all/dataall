@@ -67,3 +67,9 @@ class PrincipalType(GraphQLEnumMapper):
     Public = 'Public'
     Group = 'Group'
     ConsumptionRole = 'ConsumptionRole'
+
+
+class ShareSortField(GraphQLEnumMapper):
+    created = 'created'
+    updated = 'updated'
+    label = 'label'

@@ -31,6 +31,7 @@ class GraphQLEnumMapper(Enum):
                 return c.name
         return None
 
+
 class SortDirection(GraphQLEnumMapper):
     asc = 'asc'
     desc = 'desc'

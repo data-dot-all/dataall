@@ -91,11 +91,11 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if (
-                dataset and (
+            dataset and (
                 dataset.stewards in context.groups
                 or dataset.SamlAdminGroupName in context.groups
                 or dataset.owner == context.username
-        )
+            )
         ):
             return ShareObjectPermission.Approvers.value
         if (
@@ -241,6 +241,7 @@ def list_shared_with_environment_data_items(
             uri=environmentUri,
             data=filter,
         )
+
 
 def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
     return ShareObjectService.update_share_request_purpose(

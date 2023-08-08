@@ -41,7 +41,7 @@ class DatasetColumnService:
             DatasetTableRepository.sync_table_columns(
                 session, table, glue_table['Table']
             )
-        return cls.paginate_active_columns_for_table(table_uri, {})
+        return cls.paginate_active_columns_for_table(uri=table_uri, filter={})
 
     @staticmethod
     @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri_for_column, param_name="column_uri")

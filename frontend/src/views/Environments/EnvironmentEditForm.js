@@ -208,7 +208,6 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                dashboardsEnabled: env.dashboardsEnabled,
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',

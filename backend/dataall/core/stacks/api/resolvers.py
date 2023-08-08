@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
-from dataall.core.stacks.db import stack_models as StackModel
+from dataall.core.stacks.db.stack_models import Stack as StackModel
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
 from dataall.base.db import exceptions

@@ -12,6 +12,7 @@ from sqlalchemy import orm
 
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.permissions import TENANT_ALL
 
 revision = 'e177eb044b31'
 down_revision = '033c3d6c1849'
@@ -30,7 +31,7 @@ def upgrade():
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group='DHAdmins',
-            permissions=dataall.core.permissions.permissions.TENANT_ALL,
+            permissions=TENANT_ALL,
             tenant_name='dataall',
         )
         print('Attaching superusers groups DHAdmins')

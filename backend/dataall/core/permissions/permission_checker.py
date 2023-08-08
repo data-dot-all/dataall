@@ -38,7 +38,6 @@ def _check_resource_permission(session, uri, permission):
     )
 
 
-
 def has_resource_permission(
         permission: str,
         param_name: str = None,

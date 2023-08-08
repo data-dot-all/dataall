@@ -4,7 +4,7 @@ import logging
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
 from dataall.modules.worksheets.db.models import Worksheet
-from dataall.modules.worksheets.db.repositories import WorksheetRepository
+from dataall.modules.worksheets.db.worksheets_repository import WorksheetRepository
 
 log = logging.getLogger(__name__)
 

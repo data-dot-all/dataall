@@ -5,7 +5,7 @@ from dataall.modules.datasets.api.table.resolvers import (
     list_shared_tables_by_env_dataset,
     preview
 )
-from dataall.modules.datasets.api.table.schema import (
+from dataall.modules.datasets.api.table.types import (
     DatasetTable,
     DatasetTableSearchResult,
 )

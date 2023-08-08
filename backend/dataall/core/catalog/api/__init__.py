@@ -3,8 +3,8 @@ from . import (
     queries,
     mutations,
     resolvers,
-    schema,
     registry,
+    types,
 )
 
-__all__ = ['registry', 'resolvers', 'schema', 'input_types', 'queries', 'mutations']
+__all__ = ['registry', 'resolvers', 'types', 'input_types', 'queries', 'mutations']

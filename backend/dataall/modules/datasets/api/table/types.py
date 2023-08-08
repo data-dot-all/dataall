@@ -5,7 +5,8 @@ from dataall.modules.datasets.api.table.resolvers import (
     get_glue_table_properties,
     resolve_glossary_terms
 )
-from dataall.base.api.constants import GraphQLEnumMapper
+from dataall.modules.datasets.api.table.enums import DatasetTablePreviewStatus
+
 
 TablePermission = gql.ObjectType(
     name='TablePermission',
@@ -90,14 +91,6 @@ DatasetTableMetadataItem = gql.ObjectType(
         gql.Field(name='Type', type=gql.String),
     ],
 )
-
-
-class DatasetTablePreviewStatus(GraphQLEnumMapper):
-    QUEUED = 'QUEUED'
-    RUNNING = 'RUNNING'
-    SUCCEEDED = 'SUCCEEDED'
-    FAILED = 'FAILED'
-    CANCELLED = 'CANCELLED'
 
 
 DatasetTablePreviewResult = gql.ObjectType(

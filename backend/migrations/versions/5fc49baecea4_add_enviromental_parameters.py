@@ -13,7 +13,7 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.base.db import Resource
@@ -246,7 +246,7 @@ def delete_unused_permissions(session):
 
 def save_deleted_permissions(session):
     for name in UNUSED_RESOURCE_PERMISSIONS:
-            Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
+        Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
 
     for name in UNUSED_TENANT_PERMISSIONS:
-            Permission.save_permission(session, name, name, PermissionType.TENANT.value)
+        Permission.save_permission(session, name, name, PermissionType.TENANT.value)

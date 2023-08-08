@@ -296,7 +296,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
         )
-        self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
         self.ecs_task_definitions_families.append(subscriptions_task.task_definition.family)
 
     @run_if("modules.datasets.active")
@@ -319,10 +318,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
         )
-        self.ecs_security_groups.extend(
-            update_bucket_policies_task.task.security_groups
-        )
-
         self.ecs_task_definitions_families.append(update_bucket_policies_task.task_definition.family)
 
     @run_if("modules.datasets.active")
@@ -344,14 +339,6 @@ class ContainerStack(pyNestedClass):
             vpc=self._vpc,
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
-        )
-        self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
-
-        ssm.StringParameter(
-            self,
-            f'SecurityGroup{self._envname}',
-            parameter_name=f'/dataall/{self._envname}/ecs/security_groups',
-            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
         )
         self.ecs_task_definitions_families.append(sync_tables_task.task_definition.family)
 

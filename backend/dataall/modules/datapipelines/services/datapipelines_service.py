@@ -13,7 +13,7 @@ from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import Dat
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
 from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
     CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
 from dataall.base.utils.naming_convention import (

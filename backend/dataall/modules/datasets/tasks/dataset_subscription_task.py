@@ -159,6 +159,7 @@ class DatasetSubscriptionService:
                             f'Failed to deliver message {message} due to: {e}'
                         )
 
+
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
