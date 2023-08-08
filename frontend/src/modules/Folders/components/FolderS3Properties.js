@@ -7,7 +7,7 @@ import {
   Typography
 } from '@mui/material';
 
-const FolderS3Properties = (props) => {
+export const FolderS3Properties = (props) => {
   const { folder } = props;
 
   return (
@@ -54,5 +54,3 @@ FolderS3Properties.propTypes = {
   folder: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default FolderS3Properties;

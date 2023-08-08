@@ -30,11 +30,11 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  useClient,
   deleteDatasetStorageLocation,
-  getDatasetAssumeRoleUrl,
-  getDatasetStorageLocation,
-  useClient
+  getDatasetAssumeRoleUrl
 } from 'services';
+import { getDatasetStorageLocation } from '../services';
 
 import { FeedComments } from 'modules/Shared';
 import FolderOverview from '../components/FolderOverview';

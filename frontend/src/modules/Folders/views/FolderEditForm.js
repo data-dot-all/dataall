@@ -32,11 +32,10 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  searchGlossary,
   useClient,
-  getDatasetStorageLocation,
-  updateDatasetStorageLocation
+  searchGlossary  
 } from 'services';
+import { getDatasetStorageLocation, updateDatasetStorageLocation } from '../services';
 
 function FolderEditHeader(props) {
   const { folder } = props;
