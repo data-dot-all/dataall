@@ -48,9 +48,9 @@ import {
   removeGroupFromEnvironment,
   useClient
 } from '../../services';
-import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
-import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
-import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';
+import EnvironmentRoleAddForm from '../tmp/EnvironmentRoleAddForm';
+import EnvironmentTeamInviteEditForm from '../tmp/EnvironmentTeamInviteEditForm';
+import EnvironmentTeamInviteForm from '../tmp/EnvironmentTeamInviteForm';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
