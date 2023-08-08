@@ -55,7 +55,7 @@ aws_secret_access_key=XXXXX
 aws_session_token=XXXXXXX
 ```
 
-### 3. Create parameters in credentials AWS account
+## 3. Create parameters in credentials AWS account
 Data.all reads some parameters from SSM, thus we need to create them in the selected AWS account to fully work with data.all.
 
 Create a `dkrcompose` externalId for the pivot role parameter in the credentials account with the following command.
@@ -75,7 +75,7 @@ aws ssm put-parameter \
 Finally, set the value for the enable pivot role auto-creation
 ```bash
 aws ssm put-parameter \
-    --name "/dataall/v6/pivotRole/enablePivotRoleAutoCreate" \
+    --name "/dataall/dkrcompose/pivotRole/enablePivotRoleAutoCreate" \
     --value "False" \
     --type String \
 ```
