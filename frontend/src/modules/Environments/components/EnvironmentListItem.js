@@ -20,7 +20,7 @@ import {
   Label,
   StackStatus,
   useCardStyle
-} from '../../design';
+} from 'design';
 
 const EnvironmentListItem = (props) => {
   const { environment } = props;

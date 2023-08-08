@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { Box } from '@mui/material';
-import EnvironmentSharedDatasets from '../tmp/EnvironmentSharedDatasets';
-import EnvironmentOwnedDatasets from '../tmp/EnvironmentOwnedDatasets';
+import EnvironmentSharedDatasets from './EnvironmentSharedDatasets';
+import EnvironmentOwnedDatasets from './EnvironmentOwnedDatasets';
 
 const EnvironmentDatasets = ({ environment }) => (
   <Box>
