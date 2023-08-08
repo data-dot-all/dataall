@@ -18,10 +18,11 @@ import {
   PlusIcon,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listGlossaries, useClient } from '../../../../services';
-import GlossaryListItem from './GlossaryListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listGlossaries } from '../services';
+import { GlossaryListItem } from '../components';
 
 function GlossariesPageHeader() {
   return (

@@ -24,9 +24,10 @@ import {
   ArrowLeftIcon,
   ChevronRightIcon,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { createGlossary, useClient, useGroups } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, useGroups } from 'services';
+import { createGlossary } from '../services';
 
 const GlossaryCreateForm = (props) => {
   const navigate = useNavigate();

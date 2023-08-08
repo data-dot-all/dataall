@@ -1,65 +1,42 @@
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
-  Card,
   CardContent,
   CircularProgress,
+  Dialog,
   FormHelperText,
-  TextField
+  TextField,
+  Typography
 } from '@mui/material';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  deleteCategory,
-  deleteTerm,
-  updateCategory,
-  updateGlossary,
-  updateTerm
-} from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { createTerm } from '../services';
 
-const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
+export const GlossaryCreateTermForm = ({
+  client,
+  data,
+  refresh,
+  isAdmin,
+  onApply,
+  onClose,
+  open
+}) => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState(data);
-  const [deleting, setDeleting] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   useEffect(() => {
     setFormData(data);
   }, [data]);
 
-  const deleteGlossaryNode = async () => {
-    setDeleting(true);
-    let mutation;
-    if (data.__typename === 'Term') {
-      mutation = deleteTerm;
-    } else if (data.__typename === 'Category') {
-      mutation = deleteCategory;
-    }
-    const response = await client.mutate(mutation(data.nodeUri));
-    if (!response.errors) {
-      refresh();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setDeleting(false);
-  };
-
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      let mutation;
-      if (data.__typename === 'Term') {
-        mutation = updateTerm;
-      } else if (data.__typename === 'Category') {
-        mutation = updateCategory;
-      } else {
-        mutation = updateGlossary;
-      }
       const response = await client.mutate(
-        mutation({
-          nodeUri: data.nodeUri,
+        createTerm({
+          parentUri: data.nodeUri,
           input: {
             label: values.label,
             readme: values.readme
@@ -67,7 +44,7 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
         })
       );
       if (!response.errors) {
-        enqueueSnackbar('Glossary updated', {
+        enqueueSnackbar('Category created', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -78,6 +55,9 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
       refresh();
+      if (onApply) {
+        onApply();
+      }
     } catch (err) {
       console.error(err);
       setStatus({ success: false });
@@ -90,33 +70,55 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
     return <CircularProgress />;
   }
   return (
-    <>
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open}>
       <Box sx={{ p: 3 }}>
-        <Formik
-          enableReinitialize
-          initialValues={{
-            label: formData.label,
-            readme: formData.readme
-          }}
-          validationSchema={Yup.object().shape({
-            label: Yup.string().max(255).required('*Name is required'),
-            readme: Yup.string().max(5000).required('*Description is required')
-          })}
-          onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
-            await submit(values, setStatus, setSubmitting, setErrors);
-          }}
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h4"
         >
-          {({
-            errors,
-            handleBlur,
-            handleChange,
-            handleSubmit,
-            isSubmitting,
-            touched,
-            values
-          }) => (
-            <form onSubmit={handleSubmit}>
-              <Card>
+          Add a new term
+        </Typography>
+        <Box sx={{ p: 3 }}>
+          <Formik
+            enableReinitialize
+            initialValues={{
+              label: '',
+              readme: ''
+            }}
+            validationSchema={Yup.object().shape({
+              label: Yup.string().max(255).required('*Name is required'),
+              readme: Yup.string()
+                .max(5000)
+                .required('*Description is required')
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
+              await submit(values, setStatus, setSubmitting, setErrors);
+            }}
+          >
+            {({
+              errors,
+              handleBlur,
+              handleChange,
+              handleSubmit,
+              isSubmitting,
+              touched,
+              values
+            }) => (
+              <form onSubmit={handleSubmit}>
+                <CardContent>
+                  <TextField
+                    disabled
+                    label="Parent"
+                    fullWidth
+                    value={data.label}
+                    variant="outlined"
+                  />
+                </CardContent>
                 <CardContent>
                   <TextField
                     disabled={!isAdmin}
@@ -160,51 +162,41 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
                     </Box>
                   )}
                 </CardContent>
-                {isAdmin && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      mt: 3,
-                      mr: 3,
-                      mb: 2
-                    }}
-                  >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    mt: 3,
+                    mr: 3,
+                    mb: 2
+                  }}
+                >
+                  {isAdmin && (
                     <LoadingButton
                       color="primary"
-                      sx={{ m: 1 }}
                       loading={isSubmitting}
                       type="submit"
                       variant="contained"
                     >
                       Save
                     </LoadingButton>
-                    {/* eslint-disable-next-line react/prop-types */}
-                    {data.__typename !== 'Glossary' && (
-                      <LoadingButton
-                        sx={{ m: 1 }}
-                        color="primary"
-                        loading={deleting}
-                        onClick={deleteGlossaryNode}
-                        variant="contained"
-                      >
-                        Delete
-                      </LoadingButton>
-                    )}
-                  </Box>
-                )}
-              </Card>
-            </form>
-          )}
-        </Formik>
+                  )}
+                </Box>
+              </form>
+            )}
+          </Formik>
+        </Box>
       </Box>
-    </>
+    </Dialog>
   );
 };
-GlossaryNodeForm.propTypes = {
+GlossaryCreateTermForm.propTypes = {
   data: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired,
   client: PropTypes.func.isRequired,
-  refresh: PropTypes.func.isRequired
+  refresh: PropTypes.func.isRequired,
+  onApply: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired
 };
-export default GlossaryNodeForm;
+

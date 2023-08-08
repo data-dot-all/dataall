@@ -6,13 +6,15 @@ import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
-import { Defaults, ObjectBrief, PlusIcon } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getGlossaryTree } from '../../../../services';
-import { listToTree } from '../../../../utils';
-import GlossaryCreateCategoryForm from './GlossaryCreateCategoryForm';
-import GlossaryCreateTermForm from './GlossaryCreateTermForm';
-import GlossaryNodeForm from './GlossaryNodeForm';
+import { Defaults, ObjectBrief, PlusIcon } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listToTree } from 'utils';
+import { getGlossaryTree } from '../services';
+import {
+  GlossaryCreateCategoryForm,
+  GlossaryCreateTermForm,
+  GlossaryNodeForm
+} from '../components';
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {
@@ -117,7 +119,8 @@ const useStyles = makeStyles({
     maxWidth: 400
   }
 });
-const GlossaryManagement = (props) => {
+
+export const GlossaryManagement = (props) => {
   const { glossary, isAdmin, client } = props;
   const dispatch = useDispatch();
   const [fetchingItems, setFetchingItems] = useState(true);
@@ -414,4 +417,3 @@ GlossaryManagement.propTypes = {
   client: PropTypes.func.isRequired
 };
 
-export default GlossaryManagement;

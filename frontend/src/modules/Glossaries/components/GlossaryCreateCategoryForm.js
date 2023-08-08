@@ -13,10 +13,10 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { createCategory } from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { createCategory } from '../services';
 
-const GlossaryCreateCategoryForm = ({
+export const GlossaryCreateCategoryForm = ({
   client,
   data,
   refresh,
@@ -199,4 +199,3 @@ GlossaryCreateCategoryForm.propTypes = {
   onClose: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired
 };
-export default GlossaryCreateCategoryForm;

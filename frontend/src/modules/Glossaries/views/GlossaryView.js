@@ -19,16 +19,16 @@ import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { useAuth } from '../../../../authentication';
+import { useAuth } from 'authentication';
 import {
   ChevronRightIcon,
   DeleteObjectWithFrictionModal,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { deleteGlossary, getGlossary, useClient } from '../../../../services';
-import GlossaryAssociations from './GlossaryAssociations';
-import GlossaryManagement from './GlossaryManagement';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { deleteGlossary, getGlossary } from '../services';
+import { GlossaryAssociations, GlossaryManagement } from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -96,6 +96,7 @@ GlossaryViewPageHeader.propTypes = {
   deleteFunction: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
+
 const GlossaryView = () => {
   const dispatch = useDispatch();
   const { settings } = useSettings();
