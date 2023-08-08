@@ -8,11 +8,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   getShareObject,
-  revokeItemsShareObject,
-  useClient
-} from 'services';
+  revokeItemsShareObject
+} from '../services';
 
 export const RevokeShareItemsModal = (props) => {
   const client = useClient();

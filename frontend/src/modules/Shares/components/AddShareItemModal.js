@@ -18,7 +18,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Defaults, Pager, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { addSharedItem, getShareObject, useClient } from 'services';
+import { useClient } from 'services';
+import { addSharedItem, getShareObject } from '../services';
 
 export const AddShareItemModal = (props) => {
   const client = useClient();

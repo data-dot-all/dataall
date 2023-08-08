@@ -49,16 +49,19 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   approveShareObject,
   deleteShareObject,
   getShareObject,
   rejectShareObject,
   removeSharedItem,
-  submitApproval,
-  useClient
-} from 'services';
-import { AddShareItemModal, RevokeShareItemsModal } from '../components';
+  submitApproval
+} from '../services';
+import {
+  AddShareItemModal,
+  RevokeShareItemsModal
+} from '../components';
 
 function ShareViewHeader(props) {
   const {
