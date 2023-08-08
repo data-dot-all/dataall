@@ -91,13 +91,13 @@ const NotebookCreateForm = Loadable(
 );
 
 const MLStudioList = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioList'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioList'))
 );
 const MLStudioView = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioView'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioView'))
 );
 const MLStudioCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/MLStudio/MLStudioCreateForm'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioCreateForm'))
 );
 
 const DashboardList = Loadable(
@@ -273,7 +273,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.mlstudio.active && {
         children: [
           {
             path: 'mlstudio',

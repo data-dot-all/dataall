@@ -29,11 +29,11 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   deleteSagemakerStudioUser,
   getSagemakerStudioUser,
-  getSagemakerStudioUserPresignedUrl,
-  useClient
-} from 'services';
+  getSagemakerStudioUserPresignedUrl
+} from '../services';
+import { useClient } from 'services';
 import { StackStatus, Stack } from 'modules/Shared';
-import MLStudioOverview from './MLStudioOverview';
+import { MLStudioOverview } from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

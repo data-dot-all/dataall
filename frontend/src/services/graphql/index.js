@@ -15,7 +15,6 @@ export * from './Metric';
 export * from './Notification';
 export * from './Organization';
 export * from './Principal';
-export * from './SagemakerStudio';
 export * from './SavedQuery';
 export * from './Search';
 export * from './ShareObject';
