@@ -2,9 +2,9 @@ import { Box, Container, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager, useSettings } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getShareRequestsFromMe, useClient } from '../../../../services';
+import { Defaults, Pager, useSettings } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { getShareRequestsFromMe, useClient } from 'services';
 import ShareOutboxListItem from './ShareOutboxListItem';
 
 const ShareOutboxList = () => {

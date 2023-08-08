@@ -16,11 +16,11 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Defaults, Pager, Scrollbar } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { addSharedItem, getShareObject, useClient } from '../../../../services';
+import { Defaults, Pager, Scrollbar } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { addSharedItem, getShareObject, useClient } from 'services';
 
-const AddShareItemModal = (props) => {
+export const AddShareItemModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -180,4 +180,3 @@ AddShareItemModal.propTypes = {
   open: PropTypes.bool.isRequired
 };
 
-export default AddShareItemModal;

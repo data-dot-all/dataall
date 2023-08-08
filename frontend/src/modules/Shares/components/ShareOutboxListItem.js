@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
-import { ShareStatus, TextAvatar } from '../../../../design';
+import { ShareStatus, TextAvatar } from 'design';
 
 const ShareOutboxListItem = ({ share }) => {
   return (
