@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Set, List, Type
 
 from dataall.base.loader import ModuleInterface, ImportMode
 

@@ -1,8 +1,10 @@
 """Contains the code related to worksheets"""
 import logging
+from typing import List, Type
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
+from dataall.modules.feed import FeedApiModuleInterface
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.worksheets_repository import WorksheetRepository
 
@@ -16,8 +18,12 @@ class WorksheetApiModuleInterface(ModuleInterface):
     def is_supported(modes):
         return ImportMode.API in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [FeedApiModuleInterface]
+
     def __init__(self):
-        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
+        from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.worksheets.api
 

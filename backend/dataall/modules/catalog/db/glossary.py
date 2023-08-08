@@ -6,7 +6,7 @@ from sqlalchemy.orm import with_expression, aliased
 
 from dataall.base.db import exceptions, paginate, Resource
 from dataall.core.permissions import permissions
-from dataall.core.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
+from dataall.modules.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
 from dataall.base.db.paginator import Page
 from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_tenant_permission

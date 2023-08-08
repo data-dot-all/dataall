@@ -2,11 +2,11 @@ from datetime import datetime
 
 from sqlalchemy import and_, or_, asc
 
-from dataall.core.catalog.api.enums import GlossaryRole
-from dataall.core.catalog.api.registry import GlossaryRegistry
+from dataall.modules.catalog.api.enums import GlossaryRole
+from dataall.modules.catalog.api.registry import GlossaryRegistry
 from dataall.base.api.context import Context
-from dataall.core.catalog.db.glossary import Glossary
-from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
+from dataall.modules.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.base.db import paginate, exceptions
 
 

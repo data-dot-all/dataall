@@ -14,7 +14,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.core.vote.db.vote import Vote
+from dataall.modules.vote.db.vote import Vote
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.models import ShareObject
