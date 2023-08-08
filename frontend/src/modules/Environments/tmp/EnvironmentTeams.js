@@ -37,8 +37,8 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from '../../design';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
@@ -47,7 +47,7 @@ import {
   removeConsumptionRoleFromEnvironment,
   removeGroupFromEnvironment,
   useClient
-} from '../../../../services';
+} from '../../services';
 import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
 import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
 import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';

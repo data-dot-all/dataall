@@ -25,12 +25,12 @@ import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   disableDataSubscriptions,
   enableDataSubscriptions,
   useClient
-} from '../../../../services';
+} from '../../services';
 
 const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
   const dispatch = useDispatch();

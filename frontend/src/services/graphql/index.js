@@ -6,7 +6,7 @@ export * from './Dashboard';
 export * from './DataPipeline';
 export * from './Datasets';
 export * from './DatasetTable';
-export * from './Environment';
+export * from '../../modules/Environments/services';
 export * from './Feed';
 export * from './Glossary';
 export * from './Groups';

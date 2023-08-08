@@ -17,9 +17,9 @@ import {
   Pager,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listEnvironments, useClient } from '../../../../services';
+} from '../../design';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { listEnvironments, useClient } from '../../services';
 import EnvironmentListItem from './EnvironmentListItem';
 
 function EnvironmentsPageHeader() {

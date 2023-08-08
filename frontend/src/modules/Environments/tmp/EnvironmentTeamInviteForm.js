@@ -22,13 +22,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   inviteGroupOnEnvironment,
   listCognitoGroups,
   listEnvironmentGroupInvitationPermissions,
   useClient
-} from '../../../../services';
+} from '../../services';
 
 const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;
