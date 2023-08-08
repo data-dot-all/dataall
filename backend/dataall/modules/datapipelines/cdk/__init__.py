@@ -7,7 +7,7 @@ __all__ = [
     'datapipelines_cdk_pipeline',
     'env_role_datapipelines_stepfunctions_policy',
     'env_role_datapipelines_lambda_policy',
-    'env_role_datapipelines_policy',
+    'env_role_datapipelines_cicd_policy',
     'datapipelines_pipeline',
     'pivot_role_datapipelines_policy'
 ]

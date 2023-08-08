@@ -1,15 +1,10 @@
 """Contains the code for creating pivot role policies"""
 
-from dataall.core.environment.cdk.pivot_role_core_policies import(
-    athena,
+from dataall.core.environment.cdk.pivot_role_core_policies import (
     cloudformation,
-    ec2,
-    glue,
     iam,
     kms,
-    lakeformation,
     logging,
-    ram,
     s3,
     sns,
     sqs,
@@ -18,19 +13,13 @@ from dataall.core.environment.cdk.pivot_role_core_policies import(
 )
 
 __all__ = [
-    "athena",
     "cloudformation",
-    "ec2",
-    "glue",
     "iam",
     "kms",
-    "lakeformation",
     "logging",
-    "ram",
     "s3",
     "sns",
     "sqs",
     "ssm",
     "sts"
 ]
-

@@ -4,6 +4,8 @@ from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 
 logger = logging.getLogger(__name__)
+
+
 class PivotRoleStatementSet(object):
     def __init__(
             self,
@@ -57,6 +59,7 @@ class PivotRoleStatementSet(object):
         raise NotImplementedError(
             'PivotRoleStatementSet subclasses need to implement the get_statements class method'
         )
+
 
 class PivotRole(NestedStack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:

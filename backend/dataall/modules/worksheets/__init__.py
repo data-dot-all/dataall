@@ -27,6 +27,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
 
         log.info("API of worksheets has been imported")
 
+
 class WorksheetCdkModuleInterface(ModuleInterface):
     """Implements ModuleInterface for worksheet"""
 
@@ -37,4 +38,4 @@ class WorksheetCdkModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.worksheets.cdk
 
-        log.info("API of worksheets has been imported")
+        log.info("CDK module of worksheets has been imported")

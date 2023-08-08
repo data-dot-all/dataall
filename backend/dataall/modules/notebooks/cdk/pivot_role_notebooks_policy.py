@@ -2,13 +2,12 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class NotebboksPivotRole(PivotRoleStatementSet):
+class NotebooksPivotRole(PivotRoleStatementSet):
     """
     Class including all permissions needed  by the pivot role to work with AWS SageMaker.
     It allows pivot role to:
     - ....
     """
-    ## TODO: remove ML studio permissions`
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

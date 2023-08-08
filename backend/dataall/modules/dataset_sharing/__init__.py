@@ -41,6 +41,7 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
         import dataall.modules.dataset_sharing.handlers
         log.info("Sharing handlers have been imported")
 
+
 class DataSharingCdkModuleInterface(ModuleInterface):
     """Implements ModuleInterface for data sharing"""
 
