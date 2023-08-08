@@ -18,7 +18,6 @@ class SSMPivotRole(PivotRoleStatementSet):
                 resources=[
                     f'arn:aws:ssm:*:{self.account}:parameter/{self.env_resource_prefix}/*',
                     f'arn:aws:ssm:*:{self.account}:parameter/dataall/*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/ddk/*',
                 ],
             ),
         ]

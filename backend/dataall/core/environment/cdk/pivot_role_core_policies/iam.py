@@ -20,15 +20,6 @@ class IAMPivotRole(PivotRoleStatementSet):
                 ], resources=['*']
             ),
             iam.PolicyStatement(
-                sid='IAMRolePolicy',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'iam:PutRolePolicy',
-                    'iam:DeleteRolePolicy'
-                ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
                 sid="PassRole",
                 actions=[
                     'iam:PassRole',
@@ -36,22 +27,6 @@ class IAMPivotRole(PivotRoleStatementSet):
                 resources=[
                     f'arn:aws:iam::{self.account}:role/{self.role_name}',
                 ],
-            ),
-            iam.PolicyStatement(
-                sid="PassRoleGlue",
-                actions=[
-                    'iam:PassRole',
-                ],
-                resources=[
-                    f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*',
-                ],
-                conditions={
-                    "StringEquals": {
-                        "iam:PassedToService": [
-                            "glue.amazonaws.com",
-                        ]
-                    }
-                }
             ),
         ]
         return statements

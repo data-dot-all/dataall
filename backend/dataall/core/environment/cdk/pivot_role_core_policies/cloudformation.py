@@ -24,18 +24,5 @@ class CloudformationPivotRole(PivotRoleStatementSet):
                     f'arn:aws:cloudformation:*:{self.account}:stack/CDKToolkit/*',
                 ],
             ),
-            iam.PolicyStatement(
-                sid='CloudFormationDataPipeliens',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "cloudformation:DeleteStack",
-                    "cloudformation:DescribeStacks",
-                    "cloudformation:DescribeStackEvents",
-                    "cloudformation:DescribeStackResources"
-                ],
-                resources=[
-                    f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
-                ],
-            )
         ]
         return statements

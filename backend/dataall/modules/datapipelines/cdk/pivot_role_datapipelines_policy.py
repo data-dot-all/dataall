@@ -40,5 +40,26 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                     f'arn:aws:iam::{self.account}:role/ddk-*',
                 ],
             ),
+            iam.PolicyStatement(
+                sid='CloudFormationDataPipelines',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "cloudformation:DeleteStack",
+                    "cloudformation:DescribeStacks",
+                    "cloudformation:DescribeStackEvents",
+                    "cloudformation:DescribeStackResources"
+                ],
+                resources=[
+                    f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                sid='ParameterStoreDDK',
+                effect=iam.Effect.ALLOW,
+                actions=['ssm:GetParameter'],
+                resources=[
+                    f'arn:aws:ssm:*:{self.account}:parameter/ddk/*',
+                ],
+            ),
         ]
         return statements

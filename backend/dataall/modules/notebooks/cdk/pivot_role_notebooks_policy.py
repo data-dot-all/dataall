@@ -16,19 +16,14 @@ class NotebboksPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListTags',
-                    'sagemaker:DescribeUserProfile',
                     'sagemaker:StopNotebookInstance',
                     'sagemaker:CreatePresignedNotebookInstanceUrl',
                     'sagemaker:DescribeNotebookInstance',
                     'sagemaker:StartNotebookInstance',
                     'sagemaker:AddTags',
-                    'sagemaker:DescribeDomain',
-                    'sagemaker:CreatePresignedDomainUrl',
                 ],
                 resources=[
                     f'arn:aws:sagemaker:*:{self.account}:notebook-instance/{self.env_resource_prefix}*',
-                    f'arn:aws:sagemaker:*:{self.account}:domain/*',
-                    f'arn:aws:sagemaker:*:{self.account}:user-profile/*/*',
                 ],
             ),
             iam.PolicyStatement(
@@ -36,9 +31,18 @@ class NotebboksPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListNotebookInstances',
-                    'sagemaker:ListDomains',
-                    'sagemaker:ListApps',
-                    'sagemaker:DeleteApp',
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                sid='EC2SGNotebooks',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'ec2:DescribeSubnets',
+                    'ec2:DescribeSecurityGroups',
+                    'ec2:DescribeVpcs',
+                    'ec2:DescribeInstances',
+                    'ec2:DescribeNetworkInterfaces',
                 ],
                 resources=['*'],
             ),

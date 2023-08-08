@@ -2,14 +2,40 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class RAMPivotRole(PivotRoleStatementSet):
+class DataSharingPivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS RAM.
+    Class including all permissions needed  by the pivot role to work with Athena
     It allows pivot role to:
     - ....
     """
     def get_statements(self):
         statements = [
+            # For access point sharing and S3 bucket sharing
+            iam.PolicyStatement(
+                sid='IAMRolePolicy',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'iam:PutRolePolicy',
+                    'iam:DeleteRolePolicy'
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                sid='ManagedAccessPoints',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:GetAccessPoint',
+                    's3:GetAccessPointPolicy',
+                    's3:ListAccessPoints',
+                    's3:CreateAccessPoint',
+                    's3:DeleteAccessPoint',
+                    's3:GetAccessPointPolicyStatus',
+                    's3:DeleteAccessPointPolicy',
+                    's3:PutAccessPointPolicy',
+                ],
+                resources=[f'arn:aws:s3:*:{self.account}:accesspoint/*'],
+            ),
+            # For LakeFormation named-resource sharing
             iam.PolicyStatement(
                 sid='RamTag',
                 effect=iam.Effect.ALLOW,

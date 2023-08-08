@@ -8,7 +8,6 @@ class S3PivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
-    # TODO: add to corresponding module: data sharing, datasets, leave some here as base
     def get_statements(self):
         statements = [
             # Read Buckets
@@ -33,39 +32,6 @@ class S3PivotRole(PivotRoleStatementSet):
                     's3:Put*'
                 ],
                 resources=[f'arn:aws:s3:::{self.env_resource_prefix}*'],
-            ),
-            # S3 Imported Buckets - restrict resources via bucket policies
-            iam.PolicyStatement(
-                sid='ImportedBuckets',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:List*',
-                    's3:GetBucket*',
-                    's3:GetLifecycleConfiguration',
-                    's3:GetObject',
-                    's3:PutBucketPolicy',
-                    's3:PutBucketTagging',
-                    's3:PutObject',
-                    's3:PutObjectAcl',
-                    's3:PutBucketOwnershipControls',
-                ],
-                resources=['arn:aws:s3:::*'],
-            ),
-            # S3 Access points - needed for access points sharing
-            iam.PolicyStatement(
-                sid='ManagedAccessPoints',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:GetAccessPoint',
-                    's3:GetAccessPointPolicy',
-                    's3:ListAccessPoints',
-                    's3:CreateAccessPoint',
-                    's3:DeleteAccessPoint',
-                    's3:GetAccessPointPolicyStatus',
-                    's3:DeleteAccessPointPolicy',
-                    's3:PutAccessPointPolicy',
-                ],
-                resources=[f'arn:aws:s3:*:{self.account}:accesspoint/*'],
             ),
             # AWS Logging Buckets
             iam.PolicyStatement(

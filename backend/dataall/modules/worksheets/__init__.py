@@ -26,3 +26,15 @@ class WorksheetApiModuleInterface(ModuleInterface):
         EnvironmentResourceManager.register(WorksheetRepository())
 
         log.info("API of worksheets has been imported")
+
+class WorksheetCdkModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for worksheet"""
+
+    @staticmethod
+    def is_supported(modes):
+        return ImportMode.CDK in modes
+
+    def __init__(self):
+        import dataall.modules.worksheets.cdk
+
+        log.info("API of worksheets has been imported")
