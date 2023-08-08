@@ -29,14 +29,16 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { 
+  searchGlossary, 
+  useClient 
+} from 'services';
 import {
   getDashboard,
-  searchGlossary,
-  updateDashboard,
-  useClient
-} from '../../../../services';
+  updateDashboard
+} from '../services';
 
 function DashboardEditHeader(props) {
   const { dashboard } = props;

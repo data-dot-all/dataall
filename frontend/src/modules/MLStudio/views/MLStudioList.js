@@ -1,4 +1,3 @@
-import { CloudDownloadOutlined } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -11,20 +10,21 @@ import {
 import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { MdShowChart } from 'react-icons/md';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   ChevronRightIcon,
   Defaults,
   Pager,
+  PlusIcon,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { searchDashboards, useClient } from '../../../../services';
-import DashboardListItem from './DashboardListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listSagemakerStudioUsers } from '../services';
+import { MLStudioListItem } from '../components/';
 
-function DashboardPageHeader() {
+function MLStudioPageHeader() {
   return (
     <Grid
       alignItems="center"
@@ -34,24 +34,24 @@ function DashboardPageHeader() {
     >
       <Grid item>
         <Typography color="textPrimary" variant="h5">
-          Dashboards
+          ML Studio
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography color="textPrimary" variant="subtitle2">
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Play
-          </Typography>
+          </Link>
           <Link
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to="/console/dashboards"
+            to="/console/mlstudio"
             variant="subtitle2"
           >
-            Dashboards
+            ML Studio
           </Link>
         </Breadcrumbs>
       </Grid>
@@ -60,22 +60,12 @@ function DashboardPageHeader() {
           <Button
             color="primary"
             component={RouterLink}
-            startIcon={<CloudDownloadOutlined fontSize="small" />}
+            startIcon={<PlusIcon fontSize="small" />}
             sx={{ m: 1 }}
-            to="/console/dashboards/import"
-            variant="outlined"
-          >
-            Import
-          </Button>
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<MdShowChart size={20} />}
-            sx={{ m: 1 }}
-            to="/console/dashboards/session"
+            to="/console/mlstudio/new"
             variant="contained"
           >
-            QuickSight
+            Create
           </Button>
         </Box>
       </Grid>
@@ -83,7 +73,7 @@ function DashboardPageHeader() {
   );
 }
 
-const DashboardList = () => {
+const MLStudioList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
@@ -94,9 +84,9 @@ const DashboardList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(searchDashboards(filter));
+    const response = await client.query(listSagemakerStudioUsers(filter));
     if (!response.errors) {
-      setItems(response.data.searchDashboards);
+      setItems(response.data.listSagemakerStudioUsers);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -129,12 +119,12 @@ const DashboardList = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, fetchItems, dispatch]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   return (
     <>
       <Helmet>
-        <title>Dashboards | data.all</title>
+        <title>ML Studio | data.all</title>
       </Helmet>
       <Box
         sx={{
@@ -144,7 +134,7 @@ const DashboardList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <DashboardPageHeader />
+          <MLStudioPageHeader />
           <Box sx={{ mt: 3 }}>
             <SearchInput
               onChange={handleInputChange}
@@ -165,7 +155,7 @@ const DashboardList = () => {
               <Box>
                 <Grid container spacing={3}>
                   {items.nodes.map((node) => (
-                    <DashboardListItem dashboard={node} />
+                    <MLStudioListItem mlstudiouser={node} />
                   ))}
                 </Grid>
 
@@ -179,4 +169,4 @@ const DashboardList = () => {
   );
 };
 
-export default DashboardList;
+export default MLStudioList;

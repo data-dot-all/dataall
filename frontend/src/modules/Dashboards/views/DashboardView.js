@@ -31,18 +31,20 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  countUpVotes,
-  deleteDashboard,
-  getDashboard,
+import {  
+  countUpVotes, 
   getVote,
   upVote,
-  useClient
+  useClient,
 } from 'services';
 import { FeedComments } from 'modules/Shared';
-import DashboardOverview from './DashboardOverview';
-import DashboardShares from './DashboardShares';
-import DashboardViewer from './DashboardViewer';
+import {
+  deleteDashboard,
+  getDashboard,
+} from '../services';
+import DashboardOverview from '../components/DashboardOverview';
+import DashboardShares from '../components/DashboardShares';
+import DashboardViewer from '../components/DashboardViewer';
 
 const DashboardView = () => {
   const dispatch = useDispatch();

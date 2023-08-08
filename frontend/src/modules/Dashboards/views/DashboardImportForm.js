@@ -29,15 +29,15 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  importDashboard,
   listEnvironmentGroups,
   listEnvironments,
   searchGlossary,
   useClient
-} from '../../../../services';
+} from 'services';
+import { importDashboard } from '../services';
 
 const DashboardImportForm = (props) => {
   const navigate = useNavigate();

@@ -11,23 +11,29 @@ import {
 import PropTypes from 'prop-types';
 import React from 'react';
 import * as FaIcons from 'react-icons/fa';
-import { MdShowChart } from 'react-icons/md';
+import * as FiIcons from 'react-icons/fi';
+import { FiCodesandbox } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  IconAvatar,
-  Label,
-  UpVotesReadOnly,
-  useCardStyle
-} from '../../../../design';
+import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 
-const DashboardListItem = (props) => {
-  const { dashboard } = props;
+export const MLStudioListItem = (props) => {
+  const { mlstudiouser } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid item key={dashboard.dashboardUri} md={3} xs={12} {...props}>
-      <Card key={dashboard.dashboardUri} className={classes.card} raised>
+    <Grid
+      item
+      key={mlstudiouser.sagemakerStudioUserUri}
+      md={3}
+      xs={12}
+      {...props}
+    >
+      <Card
+        key={mlstudiouser.sagemakerStudioUserUri}
+        className={classes.card}
+        raised
+      >
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -35,7 +41,7 @@ const DashboardListItem = (props) => {
               display: 'flex'
             }}
           >
-            <IconAvatar icon={<MdShowChart size={20} />} />
+            <IconAvatar icon={<FiCodesandbox size={18} />} />
             <Box sx={{ ml: 2 }}>
               <Link
                 underline="hover"
@@ -43,7 +49,9 @@ const DashboardListItem = (props) => {
                 color="textPrimary"
                 variant="h6"
                 onClick={() => {
-                  navigate(`/console/dashboards/${dashboard.dashboardUri}`);
+                  navigate(
+                    `/console/mlstudio/${mlstudiouser.sagemakerStudioUserUri}`
+                  );
                 }}
                 sx={{
                   width: '99%',
@@ -55,14 +63,14 @@ const DashboardListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={dashboard.label}>
-                  <span>{dashboard.label}</span>
+                <Tooltip title={mlstudiouser.label}>
+                  <span>{mlstudiouser.label}</span>
                 </Tooltip>
               </Link>
               <Typography color="textSecondary" variant="body2">
                 by{' '}
                 <Link underline="hover" color="textPrimary" variant="subtitle2">
-                  {dashboard.owner}
+                  {mlstudiouser.owner}
                 </Link>
               </Typography>
             </Box>
@@ -86,8 +94,12 @@ const DashboardListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={dashboard.description || 'No description provided'}>
-              <span>{dashboard.description || 'No description provided'}</span>
+            <Tooltip
+              title={mlstudiouser.description || 'No description provided'}
+            >
+              <span>
+                {mlstudiouser.description || 'No description provided'}
+              </span>
             </Tooltip>
           </Typography>
         </Box>
@@ -104,17 +116,15 @@ const DashboardListItem = (props) => {
               </Typography>
             </Grid>
             <Grid item md={8} xs={12}>
-              <Typography color="textPrimary" variant="body2">
-                <Label
-                  color={
-                    dashboard.userRoleForDashboard === 'Creator'
-                      ? 'primary'
-                      : 'info'
-                  }
-                >
-                  {dashboard.userRoleForDashboard || '-'}
-                </Label>
-              </Typography>
+              <Label
+                color={
+                  mlstudiouser.userRoleForSagemakerStudioUser === 'Creator'
+                    ? 'primary'
+                    : 'info'
+                }
+              >
+                {mlstudiouser.userRoleForSagemakerStudioUser || '-'}
+              </Label>
             </Grid>
           </Grid>
         </Box>
@@ -143,8 +153,8 @@ const DashboardListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={dashboard.SamlGroupName || '-'}>
-                  <span>{dashboard.SamlGroupName || '-'}</span>
+                <Tooltip title={mlstudiouser.environment?.SamlGroupName || '-'}>
+                  <span>{mlstudiouser.environment?.SamlGroupName || '-'}</span>
                 </Tooltip>
               </Typography>
             </Grid>
@@ -164,7 +174,7 @@ const DashboardListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={6}>
               <Typography color="textPrimary" variant="body2">
-                {dashboard.environment.AwsAccountId}
+                {mlstudiouser.environment.AwsAccountId}
               </Typography>
             </Grid>
           </Grid>
@@ -183,7 +193,7 @@ const DashboardListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                {dashboard.environment.region}
+                {mlstudiouser.environment.region}
               </Typography>
             </Grid>
           </Grid>
@@ -193,7 +203,20 @@ const DashboardListItem = (props) => {
             px: 3,
             py: 0.5
           }}
-        />
+        >
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FiIcons.FiActivity /> Status
+              </Typography>
+            </Grid>
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
+                <StackStatus status={mlstudiouser.stack?.status} />
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
         <Box
           sx={{
             px: 3,
@@ -203,7 +226,7 @@ const DashboardListItem = (props) => {
           <Grid
             alignItems="center"
             container
-            key={dashboard.dashboardUri}
+            key={mlstudiouser.sagemakerStudioUserUri}
             justifyContent="space-between"
             spacing={3}
           />
@@ -227,19 +250,16 @@ const DashboardListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={`/console/dashboards/${dashboard.dashboardUri}`}
+              to={`/console/mlstudio/${mlstudiouser.sagemakerStudioUserUri}`}
             >
               Learn More
             </Button>
           </Box>
-          <Box sx={{ flexGrow: 1 }} />
-          <UpVotesReadOnly upvotes={dashboard.upvotes} />
         </Box>
       </Card>
     </Grid>
   );
 };
-DashboardListItem.propTypes = {
-  dashboard: PropTypes.object.isRequired
+MLStudioListItem.propTypes = {
+  mlstudiouser: PropTypes.object.isRequired
 };
-export default DashboardListItem;

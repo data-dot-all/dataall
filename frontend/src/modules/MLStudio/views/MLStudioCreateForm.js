@@ -27,14 +27,11 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  createSagemakerStudioUser,
-  listEnvironmentGroups,
-  listEnvironments,
-  useClient
-} from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listEnvironmentGroups, listEnvironments, useClient } from 'services';
+
+import { createSagemakerStudioUser } from '../services';
 
 const MLStudioCreateForm = (props) => {
   const navigate = useNavigate();

@@ -57,13 +57,15 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const mlStudioSection = {
       title: 'ML Studio',
       path: '/console/mlstudio',
-      icon: <FiCodesandbox size={15} />
+      icon: <FiCodesandbox size={15} />,
+      active: config.modules.mlstudio.active
     };
 
     const dashboardsSection = {
       title: 'Dashboards',
       path: '/console/dashboards',
-      icon: <MdShowChart size={15} />
+      icon: <MdShowChart size={15} />,
+      active: config.modules.dashboards.active
     };
 
     const notebooksSection = {
