@@ -3,9 +3,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager, useSettings } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listDashboardShares, useClient } from '../../../../services';
+import { Defaults, Pager, useSettings } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listDashboardShares } from '../services';
 import { DashboardShareItem } from './DashboardShareItem';
 
 const DashboardShares = (props) => {

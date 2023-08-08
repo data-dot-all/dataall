@@ -1,6 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
 const DashboardOverview = (props) => {
   const { dashboard, ...other } = props;

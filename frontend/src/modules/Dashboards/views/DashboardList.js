@@ -19,10 +19,12 @@ import {
   Pager,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { searchDashboards, useClient } from '../../../../services';
-import DashboardListItem from './DashboardListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { searchDashboards } from '../services';
+
+import DashboardListItem from '../components/DashboardListItem';
 
 function DashboardPageHeader() {
   return (
