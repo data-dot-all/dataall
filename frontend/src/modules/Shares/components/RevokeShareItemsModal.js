@@ -14,7 +14,7 @@ import {
   useClient
 } from 'services';
 
-const RevokeShareItemsModal = (props) => {
+export const RevokeShareItemsModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -169,4 +169,3 @@ RevokeShareItemsModal.propTypes = {
   open: PropTypes.bool.isRequired
 };
 
-export default RevokeShareItemsModal;

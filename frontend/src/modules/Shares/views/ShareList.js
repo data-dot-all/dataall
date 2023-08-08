@@ -14,9 +14,9 @@ import { Helmet } from 'react-helmet-async';
 import { FiSend } from 'react-icons/fi';
 import { RiInboxArchiveLine } from 'react-icons/ri';
 import { Link as RouterLink } from 'react-router-dom';
-import { ChevronRightIcon, useSettings } from '../../../../design';
+import { ChevronRightIcon, useSettings } from 'design';
 import { ShareInboxList } from 'modules/Shared';
-import ShareOutboxList from './ShareOutboxList';
+import { ShareOutboxList } from '../components';
 
 const tabs = [
   { label: 'Received', value: 'inbox', icon: <RiInboxArchiveLine size={20} /> },
