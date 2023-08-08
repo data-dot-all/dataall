@@ -37,7 +37,7 @@ import {
 } from 'services';
 
 import { FeedComments } from 'modules/Shared';
-import FolderOverview from './FolderOverview';
+import FolderOverview from '../components/FolderOverview';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
 
