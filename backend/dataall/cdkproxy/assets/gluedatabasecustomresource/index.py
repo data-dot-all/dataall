@@ -52,7 +52,7 @@ def on_create(event):
     default_db_exists = False
     try:
         glue_client.get_database(Name="default")
-        exists = True
+        default_db_exists = True
     except ClientError as e:
         pass
 
