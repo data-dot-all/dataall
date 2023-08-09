@@ -11,13 +11,13 @@ class DatasetRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class ConfidentialityClassification(GraphQLEnumMapper):
-    Unclassified = 'Unclassified'
-    Official = 'Official'
-    Secret = 'Secret'
-
-
 class DatasetSortField(GraphQLEnumMapper):
     label = 'label'
     created = 'created'
     updated = 'updated'
+
+
+class ConfidentialityClassification(GraphQLEnumMapper):
+    Unclassified = 'Unclassified'
+    Official = 'Official'
+    Secret = 'Secret'
