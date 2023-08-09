@@ -1,8 +1,8 @@
 from typing import List
 
-from dataall.core.catalog.db.glossary_models import TermLink
+from dataall.modules.catalog.db.glossary_models import TermLink
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
-from tests.api.test_glossary import *
+from tests.modules.catalog.test_glossary import *
 
 
 @pytest.fixture(scope='module')

@@ -1,10 +1,9 @@
-import dataclasses
 import os
 import pytest
 import dataall
-from dataclasses import dataclass
 from dataall.base.config import config
-from dataall.base.loader import load_modules, ImportMode
+from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
+from glob import glob
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
@@ -17,10 +16,15 @@ def ignore_module_tests_if_not_active():
     Ignores tests of the modules that are turned off.
     It uses the collect_ignore_glob hook
     """
-    modules = config.get_property('modules', {})
-    for name, props in modules.items():
-        if not props["active"]:
-            collect_ignore_glob.append(os.path.join('modules', f'{name}', '*'))
+    modules = list_loaded_modules()
+
+    all_module_files = set(glob(os.path.join('modules', '*'), recursive=True))
+    active_module_tests = set()
+    for module in modules:
+        active_module_tests.update(glob(os.path.join('modules', module), recursive=True))
+
+    exclude_tests = all_module_files - active_module_tests
+    collect_ignore_glob.extend(exclude_tests)
 
 
 ignore_module_tests_if_not_active()

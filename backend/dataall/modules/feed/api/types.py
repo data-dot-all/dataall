@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.feed.api.resolvers import resolve_feed_target_type, resolve_messages, resolve_target
 from dataall.modules.feed.api.registry import FeedRegistry
 
 

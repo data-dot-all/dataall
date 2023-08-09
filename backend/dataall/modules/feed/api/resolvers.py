@@ -3,7 +3,7 @@ from sqlalchemy import or_
 from dataall.base.api.context import Context
 from dataall.base.db import paginate
 from dataall.modules.feed.api.registry import FeedRegistry
-from dataall.modules.feed.api.types import FeedMessage
+from dataall.modules.feed.db.feed_models import FeedMessage
 
 
 class Feed:
