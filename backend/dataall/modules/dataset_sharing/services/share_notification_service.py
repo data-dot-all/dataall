@@ -55,7 +55,7 @@ class ShareNotificationService:
                     username=user,
                     notification_type=NotificationType.SHARE_OBJECT_REJECTED,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=f'User {username} approved share request for dataset {dataset.label}',
+                    message=f'User {username} rejected share request for dataset {dataset.label}',
                 )
             )
             session.add_all(notifications)
