@@ -331,7 +331,6 @@ class PipelineStack(Stack):
                     iam.ServicePrincipal('codebuild.amazonaws.com'),
                     iam.AccountPrincipal(self.account),
                 ),
-                managed_policies=[self.baseline_codebuild_policy, self.git_release_policy, self.expanded_codebuild_policy]
             )
             self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
             self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
@@ -597,7 +596,6 @@ class PipelineStack(Stack):
                 },
                 envname=target_env['envname'],
                 resource_prefix=self.resource_prefix,
-                tooling_region=self.region,
                 tooling_account_id=self.account,
                 pipeline_bucket=self.pipeline_bucket_name,
                 ecr_repository=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}',
