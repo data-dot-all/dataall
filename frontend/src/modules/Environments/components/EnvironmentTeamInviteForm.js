@@ -30,7 +30,7 @@ import {
   useClient
 } from 'services';
 
-const EnvironmentTeamInviteForm = (props) => {
+export const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -338,5 +338,3 @@ EnvironmentTeamInviteForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default EnvironmentTeamInviteForm;

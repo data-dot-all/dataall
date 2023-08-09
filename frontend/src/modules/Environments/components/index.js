@@ -2,7 +2,7 @@ export * from './EnvironmentConsoleAccess';
 export * from './EnvironmentDatasets';
 export * from './EnvironmentFeatures';
 export * from './EnvironmentListItem';
-export * from './EnvironmentNetworking';
+export * from './EnvironmentNetworks';
 export * from './EnvironmentOverview';
 export * from './EnvironmentOwnedDatasets';
 export * from './EnvironmentRoleAddForm';

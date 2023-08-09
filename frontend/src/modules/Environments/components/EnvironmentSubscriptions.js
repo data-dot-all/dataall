@@ -32,7 +32,7 @@ import {
   useClient
 } from 'services';
 
-const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
+export const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
@@ -327,5 +327,3 @@ EnvironmentSubscriptions.propTypes = {
   environment: PropTypes.object.isRequired,
   fetchItem: PropTypes.func.isRequired
 };
-
-export default EnvironmentSubscriptions;

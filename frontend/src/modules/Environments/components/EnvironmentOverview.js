@@ -1,10 +1,10 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
-import EnvironmentConsoleAccess from './EnvironmentConsoleAccess';
-import EnvironmentFeatures from './EnvironmentFeatures';
+import { EnvironmentConsoleAccess } from './EnvironmentConsoleAccess';
+import { EnvironmentFeatures } from './EnvironmentFeatures';
 
-const EnvironmentOverview = (props) => {
+export const EnvironmentOverview = (props) => {
   const { environment, ...other } = props;
 
   return (
@@ -43,5 +43,3 @@ const EnvironmentOverview = (props) => {
 EnvironmentOverview.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentOverview;

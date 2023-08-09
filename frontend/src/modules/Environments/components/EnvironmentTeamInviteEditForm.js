@@ -25,7 +25,7 @@ import {
   useClient
 } from 'services';
 
-const EnvironmentTeamInviteEditForm = (props) => {
+export const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -235,5 +235,3 @@ EnvironmentTeamInviteEditForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default EnvironmentTeamInviteEditForm;

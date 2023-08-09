@@ -21,7 +21,7 @@ import {
   listEnvironmentGroups,
   useClient
 } from 'services';
-const EnvironmentRoleAddForm = (props) => {
+export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -234,5 +234,3 @@ EnvironmentRoleAddForm.propTypes = {
   open: PropTypes.bool.isRequired,
   reloadRoles: PropTypes.func
 };
-
-export default EnvironmentRoleAddForm;

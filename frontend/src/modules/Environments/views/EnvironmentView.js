@@ -36,8 +36,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { archiveEnvironment, getEnvironment, useClient } from 'services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
-import EnvironmentNetworks from '../../Misc/views/Networks/NetworkList';
-import { EnvironmentDatasets, EnvironmentOverview, EnvironmentSubscriptions, EnvironmentTeams } from '../components';
+import { EnvironmentDatasets, EnvironmentOverview, EnvironmentSubscriptions, EnvironmentTeams, EnvironmentNetworks } from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

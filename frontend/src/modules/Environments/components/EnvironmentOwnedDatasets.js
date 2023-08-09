@@ -31,7 +31,7 @@ import {
   useClient
 } from 'services';
 
-const EnvironmentOwnedDatasets = ({ environment }) => {
+export const EnvironmentOwnedDatasets = ({ environment }) => {
   const client = useClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -184,5 +184,3 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
 EnvironmentOwnedDatasets.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentOwnedDatasets;

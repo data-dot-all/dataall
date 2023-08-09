@@ -20,7 +20,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listEnvironments, useClient } from 'services';
-import EnvironmentListItem from '../components';
+import { EnvironmentListItem } from '../components';
 
 function EnvironmentsPageHeader() {
   return (

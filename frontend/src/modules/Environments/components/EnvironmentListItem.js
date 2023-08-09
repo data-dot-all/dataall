@@ -22,7 +22,7 @@ import {
   useCardStyle
 } from 'design';
 
-const EnvironmentListItem = (props) => {
+export const EnvironmentListItem = (props) => {
   const { environment } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -266,4 +266,3 @@ const EnvironmentListItem = (props) => {
 EnvironmentListItem.propTypes = {
   environment: PropTypes.object.isRequired
 };
-export default EnvironmentListItem;
