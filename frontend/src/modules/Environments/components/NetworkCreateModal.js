@@ -15,15 +15,15 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { ChipInput, Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { ChipInput, Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createNetwork,
   listEnvironmentGroups,
   useClient
-} from '../../../../services';
+} from 'services';
 
-const NetworkCreateModal = (props) => {
+export const NetworkCreateModal = (props) => {
   const { environment, onApply, onClose, open, reloadNetworks, ...other } =
     props;
   const { enqueueSnackbar } = useSnackbar();
@@ -301,5 +301,3 @@ NetworkCreateModal.propTypes = {
   reloadNetworks: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default NetworkCreateModal;
