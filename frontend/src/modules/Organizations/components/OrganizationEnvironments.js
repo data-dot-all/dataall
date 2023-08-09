@@ -29,11 +29,12 @@ import {
   Scrollbar,
   SearchIcon,
   StackStatus
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listOrganizationEnvironments, useClient } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listOrganizationEnvironments } from '../services';
 
-const OrganizationEnvironments = (props) => {
+export const OrganizationEnvironments = (props) => {
   const { organization, ...other } = props;
   const client = useClient();
   const navigate = useNavigate();
@@ -202,4 +203,3 @@ const OrganizationEnvironments = (props) => {
 OrganizationEnvironments.propTypes = {
   organization: PropTypes.object.isRequired
 };
-export default OrganizationEnvironments;

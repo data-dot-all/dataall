@@ -25,13 +25,15 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   getOrganization,
-  updateOrganization,
   useClient
-} from '../../../../services';
+} from 'services';
+import {
+  updateOrganization
+} from '../services';
 
 const OrganizationEditForm = (props) => {
   const navigate = useNavigate();
