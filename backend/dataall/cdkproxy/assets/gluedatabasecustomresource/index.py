@@ -48,7 +48,7 @@ def on_create(event):
         exists = True
     except ClientError as e:
         pass
-    
+
     default_db_exists = False
     try:
         glue_client.get_database(Name="default")
@@ -123,7 +123,6 @@ def on_create(event):
                     'Permissions': ['Describe'.upper()],
                 }
             )
-
 
     lf_client.batch_grant_permissions(CatalogId=props['CatalogId'], Entries=Entries)
     physical_id = props['DatabaseInput']['Imported'] + props['DatabaseInput']['Name']
