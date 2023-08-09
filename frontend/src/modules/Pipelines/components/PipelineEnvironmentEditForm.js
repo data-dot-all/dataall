@@ -18,17 +18,19 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import {
+  listEnvironmentGroups,
+  useClient
+} from 'services';
 import {
   createDataPipelineEnvironment,
   deleteDataPipelineEnvironment,
-  listEnvironmentGroups,
-  updateDataPipelineEnvironment,
-  useClient
-} from '../../../../services';
+  updateDataPipelineEnvironment
+} from '../services';
 
-const PipelineEnvironmentEditForm = (props) => {
+export const PipelineEnvironmentEditForm = (props) => {
   const {
     environmentOptions,
     triggerEnvSubmit,
@@ -481,4 +483,3 @@ PipelineEnvironmentEditForm.propTypes = {
   pipeline: PropTypes.object.isRequired,
   handleCountEnvironmentValid: PropTypes.func.isRequired
 };
-export default PipelineEnvironmentEditForm;

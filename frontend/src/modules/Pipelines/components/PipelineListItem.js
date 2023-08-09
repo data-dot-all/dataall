@@ -20,9 +20,9 @@ import {
   Label,
   StackStatus,
   useCardStyle
-} from '../../../../design';
+} from 'design';
 
-const PipelineListItem = (props) => {
+export const PipelineListItem = (props) => {
   const { pipeline } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -252,4 +252,3 @@ const PipelineListItem = (props) => {
 PipelineListItem.propTypes = {
   pipeline: PropTypes.object.isRequired
 };
-export default PipelineListItem;

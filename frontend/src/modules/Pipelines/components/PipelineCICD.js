@@ -16,10 +16,11 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getDataPipelineCredsLinux, useClient } from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { getDataPipelineCredsLinux } from '../services';
 
-const PipelineCICD = (props) => {
+export const PipelineCICD = (props) => {
   const { pipeline } = props;
   const client = useClient();
   const theme = useTheme();
@@ -204,4 +205,3 @@ PipelineCICD.propTypes = {
   pipeline: PropTypes.object.isRequired
 };
 
-export default PipelineCICD;

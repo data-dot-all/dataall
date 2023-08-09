@@ -27,17 +27,17 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  createDataPipeline,
   listEnvironmentGroups,
   listEnvironments,
   useClient
-} from '../../../../services';
-import PipelineEnvironmentCreateForm from './PipelineEnvironmentCreateForm';
+} from 'services';
+import { createDataPipeline } from '../services'
+import { PipelineEnvironmentCreateForm } from '../components';
 
-const PipelineCrateForm = (props) => {
+const PipelineCreateForm = (props) => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -489,4 +489,4 @@ const PipelineCrateForm = (props) => {
   );
 };
 
-export default PipelineCrateForm;
+export default PipelineCreateForm;

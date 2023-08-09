@@ -26,14 +26,15 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { deleteDataPipeline, getDataPipeline, useClient } from 'services';
+import { useClient } from 'services';
+import { deleteDataPipeline, getDataPipeline } from '../services';
 import {
   FeedComments,
   KeyValueTagList,
   StackStatus,
   Stack
 } from 'modules/Shared';
-import PipelineOverview from './PipelineOverview';
+import { PipelineOverview } from '../components';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
