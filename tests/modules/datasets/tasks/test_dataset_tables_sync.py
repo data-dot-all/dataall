@@ -107,6 +107,11 @@ def permissions(db):
 def test_tables_sync(db, org, env, sync_dataset, table, mocker):
     mock_crawler = MagicMock()
     mocker.patch('dataall.modules.datasets.tasks.tables_syncer.DatasetCrawler', mock_crawler)
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
+        return_value="arn:role",
+    )
+
     mock_crawler().list_glue_database_tables.return_value = [
             {
                 'Name': 'new_table',
