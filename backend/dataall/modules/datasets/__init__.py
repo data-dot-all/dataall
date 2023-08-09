@@ -106,8 +106,10 @@ class DatasetCdkModuleInterface(ModuleInterface):
         import dataall.modules.datasets.cdk
         from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
         from dataall.modules.datasets.cdk.dataset_glue_profiler_extension import DatasetGlueProfilerExtension
+        from dataall.modules.datasets.cdk.dataset_custom_resources_extension import DatasetCustomResourcesExtension
 
         EnvironmentSetup.register(DatasetGlueProfilerExtension)
+        EnvironmentSetup.register(DatasetCustomResourcesExtension)
 
         log.info("Dataset stacks have been imported")
 

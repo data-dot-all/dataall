@@ -8,9 +8,6 @@ from aws_cdk import (
     custom_resources as cr,
     aws_s3 as s3,
     aws_iam as iam,
-    aws_lambda as _lambda,
-    aws_lambda_destinations as lambda_destination,
-    aws_ssm as ssm,
     aws_sns as sns,
     aws_sqs as sqs,
     aws_sns_subscriptions as sns_subs,
@@ -20,7 +17,6 @@ from aws_cdk import (
     CfnOutput,
     Stack,
     Duration,
-    CustomResource,
     Tags,
 )
 
@@ -225,133 +221,6 @@ class EnvironmentSetup(Stack):
             self._environment.EnvironmentDefaultAthenaWorkGroup,
         )
         self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
-
-        kms_key = self.set_cr_kms_key(self.group_roles, self.default_role)
-
-        # Lakeformation default settings custom resource
-        # Set PivotRole as Lake Formation data lake admin
-        entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../core/environment/cdk/assets/lakeformationdefaultsettings').resolve()
-        )
-
-        lakeformation_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-lfcr-{self._environment.environmentUri}',
-            kms_key
-        )
-        lf_default_settings_custom_resource = _lambda.Function(
-            self,
-            'LakeformationDefaultSettingsHandler',
-            function_name=f'{self._environment.resourcePrefix}-lf-settings-handler-{self._environment.environmentUri}',
-            role=self.pivot_role,
-            handler='index.on_event',
-            code=_lambda.Code.from_asset(entry_point),
-            memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Lakeformation default settings',
-            timeout=Duration.seconds(5 * 60),
-            environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
-            },
-            dead_letter_queue_enabled=True,
-            dead_letter_queue=lakeformation_cr_dlq,
-            on_failure=lambda_destination.SqsDestination(lakeformation_cr_dlq),
-            runtime=_lambda.Runtime.PYTHON_3_9,
-        )
-        LakeformationDefaultSettingsProvider = cr.Provider(
-            self,
-            f'{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider',
-            on_event_handler=lf_default_settings_custom_resource,
-        )
-
-        default_lf_settings = CustomResource(
-            self,
-            f'{self._environment.resourcePrefix}DefaultLakeFormationSettings',
-            service_token=LakeformationDefaultSettingsProvider.service_token,
-            resource_type='Custom::LakeformationDefaultSettings',
-            properties={
-                'DataLakeAdmins': [
-                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
-                ]
-            },
-        )
-
-        ssm.StringParameter(
-            self,
-            'LakeformationDefaultSettingsCustomeResourceFunctionArn',
-            string_value=lf_default_settings_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/arn',
-        )
-
-        ssm.StringParameter(
-            self,
-            'LakeformationDefaultSettingsCustomeResourceFunctionName',
-            string_value=lf_default_settings_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/name',
-        )
-
-        # Glue database custom resource - New
-        # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
-        entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../core/environment/cdk/assets/gluedatabasecustomresource').resolve()
-        )
-
-        gluedb_lf_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}',
-            kms_key
-        )
-        gluedb_lf_custom_resource = _lambda.Function(
-            self,
-            'GlueDatabaseLFCustomResourceHandler',
-            function_name=f'{self._environment.resourcePrefix}-gluedb-lf-handler-{self._environment.environmentUri}',
-            role=self.pivot_role,
-            handler='index.on_event',
-            code=_lambda.Code.from_asset(entry_point),
-            memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Glue database '
-            'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
-            timeout=Duration.seconds(5 * 60),
-            environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
-            },
-            dead_letter_queue_enabled=True,
-            dead_letter_queue=gluedb_lf_cr_dlq,
-            on_failure=lambda_destination.SqsDestination(gluedb_lf_cr_dlq),
-            tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
-        )
-
-        glue_db_provider = cr.Provider(
-            self,
-            f'{self._environment.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=gluedb_lf_custom_resource
-        )
-        ssm.StringParameter(
-            self,
-            'GlueLFCustomResourceFunctionArn',
-            string_value=gluedb_lf_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
-        )
-
-        ssm.StringParameter(
-            self,
-            'GlueLFCustomResourceFunctionName',
-            string_value=gluedb_lf_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
-        )
-
-        ssm.StringParameter(
-            self,
-            'GlueLFCustomResourceProviderServiceToken',
-            string_value=glue_db_provider.service_token,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
-        )
 
         # Create SNS topics for subscriptions
         if self._environment.subscriptionsEnabled:
@@ -671,81 +540,3 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
-
-    def set_cr_kms_key(self, group_roles, default_role) -> kms.Key:
-        key_policy = iam.PolicyDocument(
-            assign_sids=True,
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "kms:Encrypt",
-                        "kms:Decrypt",
-                        "kms:ReEncrypt*",
-                        "kms:GenerateDataKey*",
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    principals=[
-                        default_role,
-                    ] + group_roles,
-                    resources=["*"],
-                    conditions={
-                        "StringEquals": {"kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com"}
-                    }
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "kms:DescribeKey",
-                        "kms:List*",
-                        "kms:GetKeyPolicy",
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    principals=[
-                        default_role,
-                    ] + group_roles,
-                    resources=["*"],
-                )
-            ]
-        )
-
-        kms_key = kms.Key(
-            self,
-            f'dataall-environment-{self._environment.environmentUri}-cr-key',
-            removal_policy=RemovalPolicy.DESTROY,
-            alias=f'dataall-environment-{self._environment.environmentUri}-cr-key',
-            enable_key_rotation=True,
-            admins=[
-                iam.ArnPrincipal(self._environment.CDKRoleArn),
-            ],
-            policy=key_policy
-        )
-        return kms_key
-
-    def set_dlq(self, queue_name, kms_key) -> sqs.Queue:
-        dlq = sqs.Queue(
-            self,
-            f'{queue_name}-queue',
-            queue_name=f'{queue_name}',
-            retention_period=Duration.days(14),
-            encryption=sqs.QueueEncryption.KMS,
-            encryption_master_key=kms_key,
-            data_key_reuse=Duration.days(1),
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
-        enforce_tls_statement = iam.PolicyStatement(
-            sid='Enforce TLS for all principals',
-            effect=iam.Effect.DENY,
-            principals=[
-                iam.AnyPrincipal(),
-            ],
-            actions=[
-                'sqs:*',
-            ],
-            resources=[dlq.queue_arn],
-            conditions={
-                'Bool': {'aws:SecureTransport': 'false'},
-            },
-        )
-
-        dlq.add_to_resource_policy(enforce_tls_statement)
-        return dlq
