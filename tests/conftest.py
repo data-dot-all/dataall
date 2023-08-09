@@ -1,6 +1,7 @@
 import os
 import pytest
 import dataall
+from dataall.base.db import get_engine, create_schema_and_tables
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
 
@@ -37,8 +38,8 @@ ignore_module_tests_if_not_active()
 
 @pytest.fixture(scope='module')
 def db() -> dataall.base.db.Engine:
-    engine = dataall.base.db.get_engine(envname=ENVNAME)
-    dataall.base.db.create_schema_and_tables(engine, envname=ENVNAME)
+    engine = get_engine(envname=ENVNAME)
+    create_schema_and_tables(engine, envname=ENVNAME)
     yield engine
     engine.session().close()
     engine.engine.dispose()
