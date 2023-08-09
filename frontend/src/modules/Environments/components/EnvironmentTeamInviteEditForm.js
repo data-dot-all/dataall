@@ -20,10 +20,12 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  listEnvironmentGroupInvitationPermissions,
-  updateGroupEnvironmentPermissions,
   useClient
 } from 'services';
+import {
+  listEnvironmentGroupInvitationPermissions,
+  updateGroupEnvironmentPermissions
+} from '../services';
 
 export const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;

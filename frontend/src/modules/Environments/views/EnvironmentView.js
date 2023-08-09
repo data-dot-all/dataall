@@ -34,7 +34,8 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { archiveEnvironment, getEnvironment, useClient } from 'services';
+import { useClient } from 'services';
+import { archiveEnvironment, getEnvironment, useClient } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import { EnvironmentDatasets, EnvironmentOverview, EnvironmentSubscriptions, EnvironmentTeams, EnvironmentNetworks } from '../components';
 

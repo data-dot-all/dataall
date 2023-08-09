@@ -27,10 +27,12 @@ import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  disableDataSubscriptions,
-  enableDataSubscriptions,
   useClient
 } from 'services';
+import {
+  disableDataSubscriptions,
+  enableDataSubscriptions
+} from '../services';
 
 export const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
   const dispatch = useDispatch();

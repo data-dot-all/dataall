@@ -24,11 +24,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  inviteGroupOnEnvironment,
-  listCognitoGroups,
-  listEnvironmentGroupInvitationPermissions,
-  useClient
+  useClient,
+  listCognitoGroups
 } from 'services';
+import {
+  inviteGroupOnEnvironment,
+  listEnvironmentGroupInvitationPermissions
+} from '../services';
 
 export const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;

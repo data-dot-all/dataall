@@ -40,14 +40,16 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  useClient
+} from 'services';
+import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
   listAllEnvironmentConsumptionRoles,
   listAllEnvironmentGroups,
   removeConsumptionRoleFromEnvironment,
-  removeGroupFromEnvironment,
-  useClient
-} from 'services';
+  removeGroupFromEnvironment
+} from '../services';
 import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';

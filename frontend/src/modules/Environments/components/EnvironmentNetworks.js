@@ -32,10 +32,12 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  deleteNetwork,
-  listEnvironmentNetworks,
   useClient
 } from 'services';
+import {
+  deleteNetwork,
+  listEnvironmentNetworks
+} from '../services';
 import { NetworkCreateModal } from './NetworkCreateModal';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {

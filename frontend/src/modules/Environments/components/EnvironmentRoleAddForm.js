@@ -17,10 +17,12 @@ import * as Yup from 'yup';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  addConsumptionRoleToEnvironment,
   listEnvironmentGroups,
   useClient
 } from 'services';
+import {
+  addConsumptionRoleToEnvironment,
+} from '../services';
 export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
