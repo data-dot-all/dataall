@@ -17,13 +17,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { ChipInput, Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  useClient
-} from 'services';
-import {
-  createNetwork
-} from '../services';
+import { listEnvironmentGroups, useClient } from 'services';
+import { createNetwork } from '../services';
 
 export const NetworkCreateModal = (props) => {
   const { environment, onApply, onClose, open, reloadNetworks, ...other } =

@@ -31,13 +31,8 @@ import {
   SearchIcon
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  useClient
-} from 'services';
-import {
-  deleteNetwork,
-  listEnvironmentNetworks
-} from '../services';
+import { useClient } from 'services';
+import { deleteNetwork, listEnvironmentNetworks } from '../services';
 import { NetworkCreateModal } from './NetworkCreateModal';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {
@@ -104,7 +99,7 @@ VpcRow.propTypes = {
   vpc: PropTypes.any,
   deleteVpcNetwork: PropTypes.func
 };
-const EnvironmentNetworks = ({ environment }) => {
+export const EnvironmentNetworks = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -304,5 +299,3 @@ const EnvironmentNetworks = ({ environment }) => {
 EnvironmentNetworks.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentNetworks;

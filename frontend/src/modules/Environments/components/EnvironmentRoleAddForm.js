@@ -16,13 +16,8 @@ import React, { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  useClient
-} from 'services';
-import {
-  addConsumptionRoleToEnvironment,
-} from '../services';
+import { listEnvironmentGroups, useClient } from 'services';
+import { addConsumptionRoleToEnvironment } from '../services';
 export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();

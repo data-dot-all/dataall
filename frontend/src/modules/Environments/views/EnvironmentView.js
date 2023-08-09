@@ -35,9 +35,15 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { archiveEnvironment, getEnvironment, useClient } from '../services';
+import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
-import { EnvironmentDatasets, EnvironmentOverview, EnvironmentSubscriptions, EnvironmentTeams, EnvironmentNetworks } from '../components';
+import {
+  EnvironmentDatasets,
+  EnvironmentOverview,
+  EnvironmentSubscriptions,
+  EnvironmentTeams,
+  EnvironmentNetworks
+} from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

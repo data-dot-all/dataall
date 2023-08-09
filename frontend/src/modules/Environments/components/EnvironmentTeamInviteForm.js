@@ -23,10 +23,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  useClient,
-  listCognitoGroups
-} from 'services';
+import { useClient, listCognitoGroups } from 'services';
 import {
   inviteGroupOnEnvironment,
   listEnvironmentGroupInvitationPermissions

@@ -19,9 +19,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  useClient
-} from 'services';
+import { useClient } from 'services';
 import {
   listEnvironmentGroupInvitationPermissions,
   updateGroupEnvironmentPermissions
