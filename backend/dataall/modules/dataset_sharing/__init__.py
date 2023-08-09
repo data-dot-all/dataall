@@ -40,3 +40,16 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.dataset_sharing.handlers
         log.info("Sharing handlers have been imported")
+
+
+class DataSharingCdkModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for data sharing"""
+
+    @staticmethod
+    def is_supported(modes):
+        return ImportMode.CDK in modes
+
+    def __init__(self):
+        import dataall.modules.dataset_sharing.cdk
+
+        log.info("CDK module data_sharing has been imported")
