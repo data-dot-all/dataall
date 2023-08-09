@@ -445,7 +445,8 @@ class Dataset(Stack):
                     'CreateTableDefaultPermissions': [],
                     'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-'
                 },
-                'DatabaseAdministrators': dataset_admins
+                'DatabaseAdministrators': dataset_admins,
+                'TriggerUpdate': True
             },
         )
 
