@@ -29,8 +29,8 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
-from dataall.base.cdkproxy.stacks.policies.data_policy import S3Policy
-from dataall.base.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
+from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 from dataall.base import db
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
