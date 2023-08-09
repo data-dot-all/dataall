@@ -26,7 +26,7 @@ class NotebooksPivotRole(PivotRoleStatementSet):
                 ],
             ),
             iam.PolicyStatement(
-                sid='SageMakerNotebookInstances',
+                sid='SageMakerNotebookList',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListNotebookInstances',

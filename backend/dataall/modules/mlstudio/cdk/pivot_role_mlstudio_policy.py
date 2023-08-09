@@ -8,11 +8,10 @@ class MLStudioPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
-    # TODO: remove notebooks permissions
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid='SageMakerNotebookActions',
+                sid='SageMakerDomainActions',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListTags',
@@ -27,7 +26,7 @@ class MLStudioPivotRole(PivotRoleStatementSet):
                 ],
             ),
             iam.PolicyStatement(
-                sid='SageMakerNotebookInstances',
+                sid='SageMakerDomainsAppsList',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListDomains',
