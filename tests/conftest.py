@@ -18,7 +18,7 @@ def ignore_module_tests_if_not_active():
     """
     modules = list_loaded_modules()
 
-    all_module_files = set(glob(os.path.join('modules', '*'), recursive=True))
+    all_module_files = set(glob(os.path.join('modules', '[!_]*'), recursive=True))
     active_module_tests = set()
     for module in modules:
         active_module_tests.update(glob(os.path.join('modules', module), recursive=True))
