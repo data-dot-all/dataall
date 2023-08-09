@@ -1,7 +1,6 @@
 import os
 import pytest
 import dataall
-from dataall.base.config import config
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
 
@@ -18,12 +17,18 @@ def ignore_module_tests_if_not_active():
     """
     modules = list_loaded_modules()
 
-    all_module_files = set(glob(os.path.join('modules', '[!_]*'), recursive=True))
+    all_module_files = set(glob(os.path.join("tests", "modules", "[!_]*"), recursive=True))
     active_module_tests = set()
     for module in modules:
-        active_module_tests.update(glob(os.path.join('modules', module), recursive=True))
+        active_module_tests.update(glob(os.path.join("tests", "modules", module), recursive=True))
 
     exclude_tests = all_module_files - active_module_tests
+
+    # here is a small hack to satisfy both glob and pytest. glob is using os.getcwd() which is root of the project
+    # while using "make test". pytest is using test directory. Here is why we add "tests" prefix for glob and
+    # remove it for pytest
+    prefix_to_remove = f"tests{os.sep}"
+    exclude_tests = [excluded.removeprefix(prefix_to_remove) for excluded in exclude_tests]
     collect_ignore_glob.extend(exclude_tests)
 
 
