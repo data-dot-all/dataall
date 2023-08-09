@@ -209,4 +209,3 @@ WorksheetEditFormModal.propTypes = {
   reload: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-

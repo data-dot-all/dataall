@@ -44,7 +44,7 @@ import {
   runAthenaSqlQuery,
   updateWorksheet
 } from '../services';
-import { 
+import {
   SQLQueryEditor,
   WorksheetEditFormModal,
   WorksheetResult
