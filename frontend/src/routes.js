@@ -33,16 +33,16 @@ const OrganizationEditForm = Loadable(
   lazy(() => import('./modules/Misc/views/Organizations/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Environments/EnvironmentCreateForm'))
+  lazy(() => import('./modules/Environments/views/EnvironmentCreateForm'))
 );
 const EnvironmentEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Environments/EnvironmentEditForm'))
+  lazy(() => import('./modules/Environments/views/EnvironmentEditForm'))
 );
 const EnvironmentView = Loadable(
-  lazy(() => import('./modules/Misc/views/Environments/EnvironmentView'))
+  lazy(() => import('./modules/Environments/views/EnvironmentView'))
 );
 const EnvironmentList = Loadable(
-  lazy(() => import('./modules/Misc/views/Environments/EnvironmentList'))
+  lazy(() => import('./modules/Environments/views/EnvironmentList'))
 );
 const Catalog = Loadable(
   lazy(() => import('./modules/Misc/views/Catalog/Catalog'))
