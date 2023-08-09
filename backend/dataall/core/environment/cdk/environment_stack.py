@@ -231,7 +231,7 @@ class EnvironmentSetup(Stack):
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../base/cdkproxy/assets/lakeformationdefaultsettings').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../../../core/environment/cdk/assets/lakeformationdefaultsettings').resolve()
         )
 
         lakeformation_cr_dlq = self.set_dlq(
@@ -295,7 +295,7 @@ class EnvironmentSetup(Stack):
         # Glue database custom resource - New
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../../../base/cdkproxy/assets/gluedatabasecustomresource').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../../../core/environment/cdk/assets/gluedatabasecustomresource').resolve()
         )
 
         gluedb_lf_cr_dlq = self.set_dlq(
