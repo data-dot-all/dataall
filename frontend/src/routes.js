@@ -11,9 +11,7 @@ const Loadable = (Component) => (props) =>
   );
 
 // Authentication pages
-const Login = Loadable(
-  lazy(() => import('./authentication/views/Login'))
-);
+const Login = Loadable(lazy(() => import('./authentication/views/Login')));
 
 // Error pages
 const NotFound = Loadable(lazy(() => import('./modules/Misc/views/NotFound')));
