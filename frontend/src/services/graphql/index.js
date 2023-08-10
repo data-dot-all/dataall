@@ -23,4 +23,3 @@ export * from './Test';
 export * from './User';
 export * from './Vote';
 export * from './Vpc';
-export * from './Worksheet';

@@ -19,10 +19,11 @@ import {
   PlusIcon,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listWorksheets, useClient } from '../../../../services';
-import { WorksheetListItem } from './WorksheetListItem';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listWorksheets } from '../services';
+import { WorksheetListItem } from '../components';
 
 function WorksheetsPageHeader({ navigate }) {
   const startWorksheetSession = () => {
