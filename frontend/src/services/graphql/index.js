@@ -3,7 +3,6 @@ export * from './AirflowCluster';
 export * from './ApiKeys';
 export * from './Catalog';
 export * from './Dashboard';
-export * from './DataPipeline';
 export * from './Datasets';
 export * from './DatasetTable';
 export * from './Environment';

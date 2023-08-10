@@ -19,18 +19,18 @@ const Login = Loadable(
 const NotFound = Loadable(lazy(() => import('./modules/Misc/views/NotFound')));
 
 const OrganizationList = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationList'))
+  lazy(() => import('./modules/Organizations/views/OrganizationList'))
 );
 const OrganizationView = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationView'))
+  lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
   lazy(() =>
-    import('./modules/Misc/views/Organizations/OrganizationCreateForm')
+    import('./modules/Organizations/views/OrganizationCreateForm')
   )
 );
 const OrganizationEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationEditForm'))
+  lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
   lazy(() => import('./modules/Environments/views/EnvironmentCreateForm'))
@@ -71,13 +71,13 @@ const TableEditForm = Loadable(
 );
 
 const FolderCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderCreateForm'))
+  lazy(() => import('./modules/Folders/views/FolderCreateForm'))
 );
 const FolderView = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderView'))
+  lazy(() => import('./modules/Folders/views/FolderView'))
 );
 const FolderEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderEditForm'))
+  lazy(() => import('./modules/Folders/views/FolderEditForm'))
 );
 
 const NotebookList = Loadable(
@@ -101,32 +101,32 @@ const MLStudioCreateForm = Loadable(
 );
 
 const DashboardList = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardList'))
+  lazy(() => import('./modules/Dashboards/views/DashboardList'))
 );
 const DashboardImportForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardImportForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardImportForm'))
 );
 const DashboardEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardEditForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardEditForm'))
 );
 const DashboardView = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardView'))
+  lazy(() => import('./modules/Dashboards/views/DashboardView'))
 );
 const DashboardSessionStarter = Loadable(
-  lazy(() => import('./modules/Misc/views/Dashboards/DashboardSessionStarter'))
+  lazy(() => import('./modules/Dashboards/views/DashboardSessionStarter'))
 );
 
 const PipelineList = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineList'))
+  lazy(() => import('./modules/Pipelines/views/PipelineList'))
 );
 const PipelineView = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineView'))
+  lazy(() => import('./modules/Pipelines/views/PipelineView'))
 );
 const PipelineCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineCreateForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineCreateForm'))
 );
 const PipelineEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineEditForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineEditForm'))
 );
 
 const ShareList = Loadable(
@@ -305,7 +305,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.dashboards.active && {
         children: [
           {
             path: 'dashboards',
@@ -329,7 +329,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datapipelines.active && {
         children: [
           {
             path: 'pipelines',

@@ -64,7 +64,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const dashboardsSection = {
       title: 'Dashboards',
       path: '/console/dashboards',
-      icon: <MdShowChart size={15} />
+      icon: <MdShowChart size={15} />,
+      active: config.modules.dashboards.active
     };
 
     const notebooksSection = {
@@ -77,7 +78,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const pipelinesSection = {
       title: 'Pipelines',
       path: '/console/pipelines',
-      icon: <BsIcons.BsGear size={15} />
+      icon: <BsIcons.BsGear size={15} />,
+      active: config.modules.datapipelines.active
     };
 
     const organizationsSection = {

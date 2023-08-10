@@ -4,4 +4,8 @@ export * from './listEnvironmentConsumptionRoles';
 export * from './listEnvironmentGroups';
 export * from './listEnvironments';
 export * from './listOrganizationEnvironments';
+export * from './listInvitedGroups';
+export * from './removeConsumptionRole';
+export * from './removeGroup';
+export * from './removeMember';
 export * from './searchEnvironmentDataItems';
