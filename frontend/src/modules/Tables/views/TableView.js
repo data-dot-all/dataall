@@ -27,12 +27,15 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { deleteDatasetTable, getDatasetTable, useClient } from 'services';
+import { deleteDatasetTable, useClient } from 'services';
 import { FeedComments } from 'modules/Shared';
-import TableColumns from './TableColumns';
-import TableMetrics from './TableMetrics';
-import TableOverview from './TableOverview';
-import TablePreview from './TablePreview';
+import { getDatasetTable } from '../services';
+import {
+  TableColumns,
+  TableMetrics,
+  TableOverview,
+  TablePreview
+} from '../components';
 
 const tabs = [
   { label: 'Preview', value: 'preview' },

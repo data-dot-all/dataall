@@ -23,16 +23,16 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import { CgHashtag } from 'react-icons/cg';
 import { VscSymbolString } from 'react-icons/vsc';
-import { Label, Scrollbar } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { Label, Scrollbar } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   getDatasetTableProfilingRun,
   listDatasetTableProfilingRuns,
-  startDatasetProfilingRun,
-  useClient
-} from '../../../../services';
+  startDatasetProfilingRun
+} from '../services';
 
-const TableMetrics = ({ table, isAdmin }) => {
+export const TableMetrics = ({ table, isAdmin }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -569,8 +569,8 @@ const TableMetrics = ({ table, isAdmin }) => {
     </Box>
   );
 };
+
 TableMetrics.propTypes = {
   table: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-export default TableMetrics;

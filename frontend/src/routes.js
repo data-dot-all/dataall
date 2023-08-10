@@ -62,10 +62,10 @@ const DatasetEditForm = Loadable(
   lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
-  lazy(() => import('./modules/Misc/views/Tables/TableView'))
+  lazy(() => import('./modules/Tables/views/TableView'))
 );
 const TableEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Tables/TableEditForm'))
+  lazy(() => import('./modules/Tables/views/TableEditForm'))
 );
 
 const FolderCreateForm = Loadable(
