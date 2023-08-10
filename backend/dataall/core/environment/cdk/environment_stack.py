@@ -46,8 +46,6 @@ class EnvironmentStackExtension:
 class EnvironmentSetup(Stack):
     """Deploy common environment resources:
         - default environment S3 Bucket
-        - Lambda + Provider for dataset Glue Databases custom resource
-        - Lambda + Provider for dataset Data Lake location custom resource
         - SSM parameters for the Lambdas and Providers
         - pivotRole (if configured)
         - SNS topic (if subscriptions are enabled)

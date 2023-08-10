@@ -25,6 +25,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
     @staticmethod
     def extent(setup: EnvironmentSetup):
         kms_key = DatasetCustomResourcesExtension.set_cr_kms_key(
+            setup=setup,
             environment=setup.environment(),
             group_roles=setup.group_roles,
             default_role=setup.default_role
@@ -34,7 +35,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__),
-                              '../assets/lakeformationdefaultsettings').resolve()
+                              './assets/lakeformationdefaultsettings').resolve()
         )
 
         lakeformation_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
@@ -95,22 +96,22 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             string_value=lf_default_settings_custom_resource.function_name,
             parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/name',
         )
-        
-        # Glue database custom resource - New
+        # Glue database custom resource
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), './assets/gluedatabasecustomresource').resolve()
         )
 
-        gluedb_lf_cr_dlq = setup.set_dlq(
-            f'{setup.environment().resourcePrefix}-gluedb-lf-cr-{setup.environment().environmentUri}',
-            kms_key
+        gluedb_lf_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
+            setup=setup,
+            queue_name=f'{setup.environment().resourcePrefix}-gluedb-lf-cr-{setup.environment().environmentUri}',
+            kms_key=kms_key
         )
         gluedb_lf_custom_resource = _lambda.Function(
             setup,
             'GlueDatabaseLFCustomResourceHandler',
             function_name=f'{setup.environment().resourcePrefix}-gluedb-lf-handler-{setup.environment().environmentUri}',
-            role=self.pivot_role,
+            role=setup.pivot_role,
             handler='index.on_event',
             code=_lambda.Code.from_asset(entry_point),
             memory_size=1664,
