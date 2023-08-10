@@ -29,12 +29,8 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  listEnvironments,
-  useClient
-} from 'services';
-import { createDataPipeline } from '../services'
+import { listEnvironmentGroups, listEnvironments, useClient } from 'services';
+import { createDataPipeline } from '../services';
 import { PipelineEnvironmentCreateForm } from '../components';
 
 const PipelineCreateForm = (props) => {

@@ -25,9 +25,7 @@ const OrganizationView = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
-  lazy(() =>
-    import('./modules/Organizations/views/OrganizationCreateForm')
-  )
+  lazy(() => import('./modules/Organizations/views/OrganizationCreateForm'))
 );
 const OrganizationEditForm = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
