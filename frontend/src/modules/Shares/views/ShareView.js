@@ -58,10 +58,7 @@ import {
   removeSharedItem,
   submitApproval
 } from '../services';
-import {
-  AddShareItemModal,
-  RevokeShareItemsModal
-} from '../components';
+import { AddShareItemModal, RevokeShareItemsModal } from '../components';
 
 function ShareViewHeader(props) {
   const {

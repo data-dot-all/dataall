@@ -180,4 +180,3 @@ AddShareItemModal.propTypes = {
   reloadSharedItems: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
