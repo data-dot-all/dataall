@@ -31,17 +31,9 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {  
-  countUpVotes, 
-  getVote,
-  upVote,
-  useClient,
-} from 'services';
+import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { FeedComments } from 'modules/Shared';
-import {
-  deleteDashboard,
-  getDashboard,
-} from '../services';
+import { deleteDashboard, getDashboard } from '../services';
 import DashboardOverview from '../components/DashboardOverview';
 import DashboardShares from '../components/DashboardShares';
 import DashboardViewer from '../components/DashboardViewer';
