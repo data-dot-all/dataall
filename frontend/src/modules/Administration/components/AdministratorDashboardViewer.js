@@ -17,10 +17,7 @@ import * as ReactIf from 'react-if';
 import * as Yup from 'yup';
 import { useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  getTrustAccount,
-  useClient
-} from 'services';
+import { getTrustAccount, useClient } from 'services';
 import {
   createQuicksightDataSourceSet,
   getMonitoringDashboardId,
@@ -450,4 +447,3 @@ export const DashboardViewer = () => {
     </Container>
   );
 };
-

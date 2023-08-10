@@ -219,4 +219,3 @@ TeamPermissionsEditForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
