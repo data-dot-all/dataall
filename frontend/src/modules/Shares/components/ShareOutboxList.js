@@ -2,12 +2,13 @@ import { Box, Container, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager, useSettings } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { getShareRequestsFromMe, useClient } from '../../../../services';
-import ShareOutboxListItem from './ShareOutboxListItem';
+import { Defaults, Pager, useSettings } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { getShareRequestsFromMe } from '../services';
+import { ShareOutboxListItem } from '../components';
 
-const ShareOutboxList = () => {
+export const ShareOutboxList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
@@ -87,5 +88,3 @@ const ShareOutboxList = () => {
     </>
   );
 };
-
-export default ShareOutboxList;

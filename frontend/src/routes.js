@@ -25,9 +25,7 @@ const OrganizationView = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
-  lazy(() =>
-    import('./modules/Organizations/views/OrganizationCreateForm')
-  )
+  lazy(() => import('./modules/Organizations/views/OrganizationCreateForm'))
 );
 const OrganizationEditForm = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
@@ -130,20 +128,20 @@ const PipelineEditForm = Loadable(
 );
 
 const ShareList = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareList'))
+  lazy(() => import('./modules/Shares/views/ShareList'))
 );
 const ShareView = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareView'))
+  lazy(() => import('./modules/Shares/views/ShareView'))
 );
 
 const WorksheetList = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetList'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetList'))
 );
 const WorksheetView = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetView'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetView'))
 );
 const WorksheetCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetCreateForm'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))
 );
 
 const GlossaryList = Loadable(
@@ -361,7 +359,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.worksheets.active && {
         children: [
           {
             path: 'worksheets',

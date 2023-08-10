@@ -30,21 +30,25 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listDatasetTables,
-  deleteWorksheet,
   getSharedDatasetTables,
-  getWorksheet,
   listDatasetTableColumns,
   listDatasetsOwnedByEnvGroup,
   listEnvironmentGroups,
   listEnvironments,
-  runAthenaSqlQuery,
   searchEnvironmentDataItems,
-  updateWorksheet,
   useClient
 } from 'services';
-import SQLQueryEditor from './SQLQueryEditor';
-import WorksheetEditFormModal from './WorksheetEditFormModal';
-import WorksheetResult from './WorksheetResult';
+import {
+  deleteWorksheet,
+  getWorksheet,
+  runAthenaSqlQuery,
+  updateWorksheet
+} from '../services';
+import {
+  SQLQueryEditor,
+  WorksheetEditFormModal,
+  WorksheetResult
+} from '../components';
 
 export const WorksheetView = () => {
   const navigate = useNavigate();

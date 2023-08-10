@@ -47,19 +47,18 @@ import {
   ShareStatus,
   TextAvatar,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   approveShareObject,
   deleteShareObject,
   getShareObject,
   rejectShareObject,
   removeSharedItem,
-  submitApproval,
-  useClient
-} from '../../../../services';
-import AddShareItemModal from './AddShareItemModal';
-import RevokeShareItemsModal from './RevokeShareItemsModal';
+  submitApproval
+} from '../services';
+import { AddShareItemModal, RevokeShareItemsModal } from '../components';
 
 function ShareViewHeader(props) {
   const {

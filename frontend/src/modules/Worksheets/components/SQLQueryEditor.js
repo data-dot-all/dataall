@@ -1,9 +1,9 @@
 import Editor from '@monaco-editor/react';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
-import { THEMES, useSettings } from '../../../../design';
+import { THEMES, useSettings } from 'design';
 
-const SQLQueryEditor = ({ sql, setSqlBody }) => {
+export const SQLQueryEditor = ({ sql, setSqlBody }) => {
   const { settings } = useSettings();
   const valueGetter = useRef();
   function handleEditorDidMount(_valueGetter) {
@@ -46,4 +46,3 @@ SQLQueryEditor.propTypes = {
   sql: PropTypes.any.isRequired,
   setSqlBody: PropTypes.func.isRequired
 };
-export default SQLQueryEditor;

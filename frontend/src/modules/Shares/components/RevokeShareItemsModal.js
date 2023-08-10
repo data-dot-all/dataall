@@ -6,15 +6,12 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  getShareObject,
-  revokeItemsShareObject,
-  useClient
-} from '../../../../services';
+import { Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { getShareObject, revokeItemsShareObject } from '../services';
 
-const RevokeShareItemsModal = (props) => {
+export const RevokeShareItemsModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -168,5 +165,3 @@ RevokeShareItemsModal.propTypes = {
   reloadSharedItems: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default RevokeShareItemsModal;
