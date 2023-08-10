@@ -24,7 +24,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { searchDashboards } from '../services';
 
-import DashboardListItem from '../components/DashboardListItem';
+import { DashboardListItem } from '../components';
 
 function DashboardPageHeader() {
   return (

@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, Label, UpVotesReadOnly, useCardStyle } from 'design';
 
-const DashboardListItem = (props) => {
+export const DashboardListItem = (props) => {
   const { dashboard } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -237,4 +237,3 @@ const DashboardListItem = (props) => {
 DashboardListItem.propTypes = {
   dashboard: PropTypes.object.isRequired
 };
-export default DashboardListItem;
