@@ -15,8 +15,8 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createShareObject,
   listEnvironmentConsumptionRoles,
@@ -24,9 +24,9 @@ import {
   listEnvironments,
   requestDashboardShare,
   useClient
-} from '../../../../services';
+} from 'services';
 
-const RequestAccessModal = (props) => {
+export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -500,5 +500,3 @@ RequestAccessModal.propTypes = {
   open: PropTypes.bool.isRequired,
   stopLoader: PropTypes.func
 };
-
-export default RequestAccessModal;

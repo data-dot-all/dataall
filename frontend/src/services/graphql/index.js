@@ -1,7 +1,6 @@
 export * from './Activity';
 export * from './AirflowCluster';
 export * from './ApiKeys';
-export * from './Catalog';
 export * from './Dashboard';
 export * from './Datasets';
 export * from './DatasetTable';

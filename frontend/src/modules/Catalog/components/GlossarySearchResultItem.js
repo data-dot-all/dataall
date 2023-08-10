@@ -19,10 +19,10 @@ import * as FiIcons from 'react-icons/fi';
 import { MdShowChart } from 'react-icons/md';
 import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, useCardStyle } from '../../../../design';
-import { dayjs } from '../../../../utils';
-import RequestAccessModal from './RequestAccessModal';
-import RequestDashboardAccessModal from './RequestDashboardAccessModal';
+import { IconAvatar, useCardStyle } from 'design';
+import { dayjs } from 'utils';
+import { RequestAccessModal } from './RequestAccessModal';
+import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>
@@ -45,7 +45,7 @@ HitICon.propTypes = {
   hit: PropTypes.object.isRequired
 };
 
-const Hit = ({ hit }) => {
+export const GlossarySearchResultItem = ({ hit }) => {
   const classes = useCardStyle();
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
@@ -335,7 +335,6 @@ const Hit = ({ hit }) => {
     </Card>
   );
 };
-Hit.propTypes = {
+GlossarySearchResultItem.propTypes = {
   hit: PropTypes.object.isRequired
 };
-export default Hit;

@@ -23,16 +23,15 @@ import * as PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { useToken } from '../../../../authentication';
+import { useToken } from 'authentication';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusIcon,
   THEMES,
   useSettings
-} from '../../../../design';
-import { GlossarySearchComponent } from './GlossarySearchComponent';
-import Hit from './Hit';
+} from 'design';
+import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -150,7 +149,7 @@ function GlossaryFilter(props) {
       >
         <Box sx={{ p: 3 }}>
           <Typography color="textSecondary" variant="subtitle2">
-            <GlossarySearchComponent
+            <GlossarySearchWrapper
               innerClass={{ input: 'mini', list: 'items' }}
             />
           </Typography>
@@ -164,6 +163,7 @@ GlossaryFilter.propTypes = {
   item: PropTypes.any,
   setFilter: PropTypes.func
 };
+
 const Catalog = () => {
   const token = useToken();
   const { settings } = useSettings();
@@ -424,7 +424,7 @@ const Catalog = () => {
                       <Grid container spacing={3}>
                         {data.map((hit) => (
                           <Grid item key={hit._id} md={3} xs={12}>
-                            <Hit hit={hit} />
+                            <GlossarySearchResultItem hit={hit} />
                           </Grid>
                         ))}
                       </Grid>
