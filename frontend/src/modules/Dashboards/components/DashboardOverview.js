@@ -2,7 +2,7 @@ import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
 
-const DashboardOverview = (props) => {
+export const DashboardOverview = (props) => {
   const { dashboard, ...other } = props;
 
   return (
@@ -44,5 +44,3 @@ const DashboardOverview = (props) => {
 DashboardOverview.propTypes = {
   dashboard: PropTypes.object.isRequired
 };
-
-export default DashboardOverview;

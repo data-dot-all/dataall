@@ -9,7 +9,7 @@ import { useClient } from 'services';
 import { listDashboardShares } from '../services';
 import { DashboardShareItem } from './DashboardShareItem';
 
-const DashboardShares = (props) => {
+export const DashboardShares = (props) => {
   const { dashboard } = props;
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
@@ -93,5 +93,3 @@ const DashboardShares = (props) => {
 DashboardShares.propTypes = {
   dashboard: PropTypes.object
 };
-
-export default DashboardShares;
