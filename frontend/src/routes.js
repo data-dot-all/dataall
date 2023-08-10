@@ -130,10 +130,10 @@ const PipelineEditForm = Loadable(
 );
 
 const ShareList = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareList'))
+  lazy(() => import('./modules/Shares/views/ShareList'))
 );
 const ShareView = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareView'))
+  lazy(() => import('./modules/Shares/views/ShareView'))
 );
 
 const WorksheetList = Loadable(

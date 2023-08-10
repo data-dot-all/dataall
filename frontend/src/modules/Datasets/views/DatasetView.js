@@ -35,10 +35,10 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getDataset, countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteDataset } from '../services';
+import { ShareInboxList } from 'modules/Shares';
 import {
   FeedComments,
   KeyValueTagList,
-  ShareInboxList,
   StackStatus,
   Stack
 } from 'modules/Shared';

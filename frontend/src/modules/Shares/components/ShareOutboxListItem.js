@@ -10,9 +10,9 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
-import { ShareStatus, TextAvatar } from '../../../../design';
+import { ShareStatus, TextAvatar } from 'design';
 
-const ShareOutboxListItem = ({ share }) => {
+export const ShareOutboxListItem = ({ share }) => {
   return (
     <Card
       key={share.shareUri}
@@ -157,4 +157,3 @@ ShareOutboxListItem.propTypes = {
   share: PropTypes.object.isRequired,
   reload: PropTypes.func.isRequired
 };
-export default ShareOutboxListItem;
