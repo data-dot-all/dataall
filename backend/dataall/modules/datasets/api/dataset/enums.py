@@ -42,4 +42,3 @@ class Topic(GraphQLEnumMapper):
     Energy = 'Energy'
     Customers = 'Customers'
     Misc = 'Misc'
-

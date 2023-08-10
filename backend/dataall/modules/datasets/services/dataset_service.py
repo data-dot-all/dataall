@@ -72,7 +72,8 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            DatasetService.check_imported_resources(environment=environment, data=data)
+            if data.get('imported', False):
+                DatasetService.check_imported_resources(environment=environment, data=data)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
@@ -173,7 +174,8 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            DatasetService.check_imported_resources(environment=environment, data=data)
+            if data.get('imported', False):
+                DatasetService.check_imported_resources(environment=environment, data=data)
 
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
