@@ -28,14 +28,8 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironments,
-  useClient
-} from 'services';
-import {
-  getDataPipeline,
-  updateDataPipeline
-} from '../services';
+import { listEnvironments, useClient } from 'services';
+import { getDataPipeline, updateDataPipeline } from '../services';
 import { PipelineEnvironmentEditForm } from '../components';
 
 const PipelineEditForm = (props) => {

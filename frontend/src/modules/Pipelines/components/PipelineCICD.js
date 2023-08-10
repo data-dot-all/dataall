@@ -204,4 +204,3 @@ PipelineCICD.propTypes = {
   // @ts-ignore
   pipeline: PropTypes.object.isRequired
 };
-
