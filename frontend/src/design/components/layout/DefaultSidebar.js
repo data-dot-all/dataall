@@ -27,7 +27,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const catalogSection = {
       title: 'Catalog',
       path: '/console/catalog',
-      icon: <VscBook size={15} />
+      icon: <VscBook size={15} />,
+      active: config.modules.datasets.active && config.modules.dashboards.active
     };
 
     const datasetsSection = {
