@@ -1,9 +1,9 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
-import FolderS3Properties from './FolderS3Properties';
+import { ObjectBrief, ObjectMetadata } from 'design';
+import { FolderS3Properties } from './FolderS3Properties';
 
-const FolderOverview = (props) => {
+export const FolderOverview = (props) => {
   const { folder, isAdmin, ...other } = props;
 
   return (
@@ -43,5 +43,3 @@ FolderOverview.propTypes = {
   folder: PropTypes.object.isRequired,
   isAdmin: PropTypes.bool.isRequired
 };
-
-export default FolderOverview;

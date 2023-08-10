@@ -30,14 +30,14 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  useClient,
   deleteDatasetStorageLocation,
-  getDatasetAssumeRoleUrl,
-  getDatasetStorageLocation,
-  useClient
+  getDatasetAssumeRoleUrl
 } from 'services';
+import { getDatasetStorageLocation } from '../services';
 
 import { FeedComments } from 'modules/Shared';
-import FolderOverview from './FolderOverview';
+import { FolderOverview } from '../components';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
 

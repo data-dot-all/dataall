@@ -31,12 +31,11 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, searchGlossary } from 'services';
 import {
-  searchGlossary,
-  useClient,
   getDatasetStorageLocation,
   updateDatasetStorageLocation
-} from 'services';
+} from '../services';
 
 function FolderEditHeader(props) {
   const { folder } = props;
