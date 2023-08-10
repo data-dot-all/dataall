@@ -207,9 +207,10 @@ class EnvironmentService:
             return
 
         env_uri = env.environmentUri
-        new_params = [EnvironmentParameter(
-            env_uri, param.get("key"), param.get("value")
-        ) for param in params]
+        new_params = [
+            EnvironmentParameter(env_uri, param.get("key"), param.get("value"))
+            for param in params
+        ]
         EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod

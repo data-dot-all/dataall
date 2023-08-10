@@ -38,6 +38,11 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
     @staticmethod
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
+        with setup.get_engine().scoped_session() as session:
+            enabled = EnvironmentService.get_boolean_env_param(session, _environment, "mlStudiosEnabled")
+            if not enabled:
+                return
+
         sagemaker_principals = [setup.default_role] + setup.group_roles
         logger.info(f'Creating SageMaker base resources for sagemaker_principals = {sagemaker_principals}..')
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(

@@ -127,7 +127,12 @@ class LFShareManager:
         -------
         exceptions.AWSResourceNotFound
         """
-        if not self.glue_client().table_exists(table.GlueTableName):
+        glue_client = GlueClient(
+            account_id=self.source_environment.AwsAccountId,
+            region=self.source_environment.region,
+            database=table.GlueDatabaseName,
+        )
+        if not glue_client.table_exists(table.GlueTableName):
             raise exceptions.AWSResourceNotFound(
                 action='ProcessShare',
                 message=(

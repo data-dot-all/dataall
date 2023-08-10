@@ -9,7 +9,10 @@ class MockEnvironmentSageMakerExtension(Stack):
     def environment(self):
         return self._environment
 
-    def __init__(self, scope, id, env, **kwargs):
+    def get_engine(self):
+        return self._db
+
+    def __init__(self, scope, id, env, db, **kwargs):
         super().__init__(
             scope,
             id,
@@ -21,6 +24,7 @@ class MockEnvironmentSageMakerExtension(Stack):
             **kwargs,
         )
         self._environment = env
+        self._db = db
         self.default_role = aws_iam.Role(self, "DefaultRole",
             assumed_by=aws_iam.ServicePrincipal("lambda.amazonaws.com"),
             description="Example role..."
@@ -88,12 +92,12 @@ def test_resources_sgmstudio_stack_created(sgm_studio):
     template.resource_count_is("AWS::SageMaker::UserProfile", 1)
 
 
-def test_resources_sgmstudio_extension_stack_created(env):
+def test_resources_sgmstudio_extension_stack_created(db, env):
     app = App()
 
     # Create the Stack
     stack = MockEnvironmentSageMakerExtension(
-        app, 'SagemakerExtension', env=env
+        app, 'SagemakerExtension', env=env, db=db,
     )
 
     # Prepare the stack for assertions.
