@@ -217,11 +217,10 @@ const routes = [
           }
         ]
       },
-      config.modules.datasets.active &&
-        config.modules.dashboards.active && {
-          path: 'catalog',
-          element: <Catalog />
-        },
+      (config.modules.datasets.active || config.modules.dashboards.active) && {
+        path: 'catalog',
+        element: <Catalog />
+      },
       config.modules.datasets.active && {
         children: [
           {
