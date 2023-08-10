@@ -30,7 +30,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDatasetTable, useClient } from 'services';
 import { FeedComments } from 'modules/Shared';
 import { getDatasetTable } from '../services';
-import { 
+import {
   TableColumns,
   TableMetrics,
   TableOverview,

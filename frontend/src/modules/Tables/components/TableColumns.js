@@ -7,11 +7,8 @@ import * as PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listDatasetTableColumns,
-  useClient
-} from 'services';
-import { updateColumnDescription, syncDatasetTableColumns} from '../services'
+import { listDatasetTableColumns, useClient } from 'services';
+import { updateColumnDescription, syncDatasetTableColumns } from '../services';
 
 export const TableColumns = (props) => {
   const { table, isAdmin } = props;
