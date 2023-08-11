@@ -278,7 +278,7 @@ the different configuration options.
         "datasets": {
             "active": true,
             "features": {
-                "file_uploads": true,
+                "file_uploads": false,
                 "file_actions": true,
                 "aws_actions": true
             }
@@ -319,44 +319,59 @@ The following table contains a list of the available modules and their dependenc
 functionality. If you want to know more about each module, 
 check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
 
-| **Module**      | **depends on**                 | **Description**                                                          |   
-|-----------------|--------------------------------|--------------------------------------------------------------------------|
-| datasets        | datasets_base, dataset_sharing | S3 Bucket and Glue database construct to store data in data.all          |
-| dataset_sharing | None                           | Sub-module that allows sharing of Datasets through Lake Formation and S3 |
-| datasets_base   | None                           | Shared code related to Datasets.                                         |
-| worksheets      | None                           | Athena query editor integrated in data.all UI                            |
-| datapipelines   | None                           | CICD pipelines that deploy DDK data pipelines                            |
-| mlstudio        | None                           | SageMaker Studio users that can open a session directly from data.all UI |
-| notebooks       | None                           | SageMaker Notebooks created and accessible from data.all UI              |
-| dashboards      | None                           | Start a Quicksight session or import and share a Quicksight Dashboard.   |
+| **Module**      | **depends on**                 | **Description**                                                                       |   
+|-----------------|--------------------------------|---------------------------------------------------------------------------------------|
+| datasets        | datasets_base, dataset_sharing | S3 Bucket and Glue database construct to store data in data.all                       |
+| dataset_sharing | None                           | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
+| datasets_base   | None                           | Shared code related to Datasets.                                                      |
+| worksheets      | None                           | Athena query editor integrated in data.all UI                                         |
+| datapipelines   | None                           | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
+| mlstudio        | None                           | SageMaker Studio users that can open a session directly from data.all UI              |
+| notebooks       | None                           | SageMaker Notebooks created and accessible from data.all UI                           |
+| dashboards      | None                           | Start a Quicksight session or import and share a Quicksight Dashboard.                |
 
 
 ### Configure module features
 As you probably noticed, the `dataset` module contains an additional field called `features` in the `config.json`. 
+If there is a particular functionality that you want to enable or disable or parametrize you can do so in this section. 
+In the example config.json, the feature that enables file upload from data.all UI has been disabled.
 
 ```json
-...
     "datasets": {
         "active": true,
         "features": {
-            "file_uploads": true,
+            "file_uploads": false,
             "file_actions": true,
             "aws_actions": true
         }
     },
-...
 ```
 
-This table collects the currently available features. What happens when you need a feature that is not in this list?
-Developing new features is relatively easy, check the [Developing modules] (../developing-modules/)section to see how to add new features.
+This table collects the currently available features. But, what happens when you need a feature that is not in this list?
+Developing new features is relatively easy, check the [Developing modules](../developing-modules/) section to see how to add new features.
 
-| **Feature**   | **Module** | **Description** |   
-|---------------|------------|-----------------|
-| file_uploads      | datasets   |                 |
-| file_actions    | datasets   |                 |
-| aws_actions    | datasets   |                 |
+| **Feature**   | **Module** | **Description**                             |   
+|---------------|------------|---------------------------------------------|
+| file_uploads      | datasets   | Upload files in a Dataset in the Upload tab |
+| file_actions    | datasets   |                                             |
+| aws_actions    | datasets   |                                             |
 
 ### Disable core features
+In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
+a particular feature in the core is to add it to the core section of the `config.json` and enable/disable it. 
+
+```json
+    "core": {
+        "features": {
+            "env_aws_actions": true
+        }
+    }
+```
+This is the list of core features that can be switched on/off at the moment.
+
+| **Feature**   |  **Description**                             |   
+|---------------|---------------------------------------------|
+| env_aws_actions |  |
 
 
 

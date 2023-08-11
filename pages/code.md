@@ -10,15 +10,19 @@ The data.all package is a mono-repo comprising several modules:
 
 - [deploy/](#deploy)
 - [backend/](#backend)
+  - [base/](#base)
+  - [core/](#core)
+  - [modules/](#core)
 - [frontend/](#frontend)
 - [tests/](#tests)
+- [compose/](#compose)
 - [documentation/](#userguide)
 
 ## deploy/ <a name="deploy"></a>
 We deploy the data.all tooling, backend and frontend using AWS Cloud Development Kit, which offers
 high level abstractions to create AWS resources.
 
-The `deploy` package is a CDK application, with an `app.py` deploying a CICD stack. In the final deploy step of the
+The `deploy` package is a CDK application, with an `app.py` deploying a CICD stack. In the final deployment step of the
 [Deploy to AWS](./deploy-aws/) guide, we are deploying the CICD pipeline stack defined in this section.
 
 
@@ -31,7 +35,7 @@ From this stack, we deploy a CodePipeline pipeline and other stacks as standalon
 In addition, we define some CodePipeline deployment stages such as the stage that deploys 
 the backend code `BackendStage` from `stacks/backend_stage`.
 
-In the pipeline stack `PipelineStack` we deploy the following, which deploy the sub-stacks:
+In the pipeline stack `PipelineStack` we deploy the following stacks and sub-stacks:
 - `AlbFrontStage`
   - `AlbFrontStack`: Application Load Balancer for the UI applications
 - `CloudfrontStage`
@@ -43,7 +47,7 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
     - `ContainerStack`: ECS stack
     - `CloudWatchCanariesStack` if enable_cw_canaries=true
     - `CloudWatchRumStack` if enable_cw_run=true
-    - `DBMigrationStack`: tool to migrate between Aurora versions of the database
+    - `DBMigrationStack`: tool to migrate between Aurora versions of the database table schemas
     - `LambdaApiStack` : Lambda Function stack
     - `MonitoringStack` : CloudWatch alarms and monitoring resources
     - `OpenSearchStack`: OpenSearch cluster - data.all central catalog (default)
@@ -64,15 +68,53 @@ There are other elements in the `deploy` folder:
 ```
 deploy/
 ├── pivot_role/  : with the template for the data.all IAM Pivot Role 
+├── cdk_exec_role/  : with the template for an optional role that can be used to bootstrap environments in cdk bootstrap 
 ├── configs/ : scripts that create configuration files for Cognito, CloudFront and CloudWatch RUM
 ├── custom_resources/ : resources or actions not included in CloudFormation
 └── canaries/: scripts for canary used in Canary stack if CloudWatch canary is enabled
 ```
 
 ## backend/ <a name="backend"></a>
-In this section we will touch upon the main components of the backend code. We will start with how do we communicate
-with the Aurora database, then we will focus on the code run by each of the compute components:
-API Handler Lambda, the Worker Lambda, the ECS Fargate Cluster and the OpenSearch Lambda. 
+In this section we will touch upon the main components of the backend code. Here is a short description of all the components
+and in the subsections we detail the structure of the `dataall` package.
+```
+backend/
+├── dataall/  : application package (explained in detail below) 
+├── docker/  :  Dockerfiles deployed in ECR (/prod) and used in docker compose locally (/dev)
+├── migrations/ : scripts used by alembic to update the Aurora RDS database tables. README explaining details.
+├── alembic.ini : used in migrations
+├── api_handler.py : GraphQL Lambda handler
+├── aws_handler.py : Worket Lambda handler
+├── search_handler.py :  ESProxy Lambda handler
+├── cdkproxymain.py : ECS CDK task
+├── local_cdkapi_server.py : CDKProxy local server used in docker (replacing the cdkproxymain)
+├── local_graphql_server.py : Graphql local server used in docker (replacing the api_handler)
+├── requirements.txt : requirements file used in Docker images for Lambdas and local containers of the backend
+```
+Inside `dataall/` we have 3 main sub-packages:
+- base - base code 
+- core - components that are needed to operate data.all
+- modules - components that can be configured or disabled
+### base/ <a name="base"></a>
+
+### core/ <a name="core"></a>
+
+Core features:
+``
+activity
+catalog
+cognito_groups
+environment
+feed
+notifications
+organizations
+permissions
+stacks
+tasks
+vote
+vpc
+``
+### modules/ <a name="modules"></a>
 
 ### dataall.db
 
@@ -525,7 +567,7 @@ Auxiliary UI resources used in views:
 
 ## tests/ <a name="tests"></a>
 `pytest` is the testing framework used by data.all.
-Developers can actually test the GraphQL API directly, as data.all can run as a local Flask app. 
+Developers can test the GraphQL API directly, as data.all can run as a local Flask app. 
 API tests are found in the tests/api package.
 
 The pytest fixtures found in conftest.py starts a local development Flask server that exposes the 
@@ -555,8 +597,15 @@ def test_get_dataset_as_owner(dataset, graphql_client):
 ```
 
 ## compose/ <a name="compose"></a>
-It contains the elements used by docker compose to deploy data.all locally. 
-Check [Deploy to AWS](./deploy-aws/) for more details.
+It contains the elements used by docker compose to deploy data.all locally. The application is containerized in
+5 containers that are orchestrated with docker-compose. 
+- frontend
+- graphql
+- db
+- cdkproxy
+- esproxy
+
+Check [Deploy locally](./deploy-locally/) if you want to use this feature and run data.all locally.
 
 ## documentation/ <a name="userguide"></a>
 This folder contains information for developers to add content to the user guide documentation accessible from the UI.
