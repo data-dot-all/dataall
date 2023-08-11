@@ -17,7 +17,6 @@ export * from './SavedQuery';
 export * from './Search';
 export * from './ShareObject';
 export * from './Stack';
-export * from './Tenant';
 export * from './Test';
 export * from './User';
 export * from './Vote';

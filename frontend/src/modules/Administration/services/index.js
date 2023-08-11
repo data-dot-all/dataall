@@ -3,7 +3,6 @@ export * from './getMonitoringDashboardId';
 export * from './getMonitoringVPCConnectionId';
 export * from './getPlatformAuthorSession';
 export * from './getPlatformReaderSession';
-export * from './getUserRoleInTenant';
 export * from './listTenantGroups';
 export * from './listTenantPermissions';
 export * from './updateSSMParameter';

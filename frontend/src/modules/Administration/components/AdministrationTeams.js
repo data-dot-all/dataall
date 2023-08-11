@@ -25,10 +25,11 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listTenantGroups, useClient } from '../../../../services';
-import TeamPermissionsEditForm from './TeamPermissionsEditForm';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { listTenantGroups } from '../services';
+import { TeamPermissionsEditForm } from './TeamPermissionsEditForm';
 
 function TeamRow({ team, fetchItems }) {
   const theme = useTheme();
@@ -71,7 +72,8 @@ TeamRow.propTypes = {
   team: PropTypes.any,
   fetchItems: PropTypes.any
 };
-const AdministrationTeams = () => {
+
+export const AdministrationTeams = () => {
   const client = useClient();
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
@@ -209,5 +211,3 @@ const AdministrationTeams = () => {
 };
 
 AdministrationTeams.propTypes = {};
-
-export default AdministrationTeams;

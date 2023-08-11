@@ -15,22 +15,21 @@ import { Formik } from 'formik';
 import { createRef, useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import * as Yup from 'yup';
-import { useSettings } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { useSettings } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { getTrustAccount, useClient } from 'services';
 import {
   createQuicksightDataSourceSet,
   getMonitoringDashboardId,
   getMonitoringVPCConnectionId,
   getPlatformAuthorSession,
   getPlatformReaderSession,
-  getTrustAccount,
-  updateSSMParameter,
-  useClient
-} from '../../../../services';
+  updateSSMParameter
+} from '../services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 
-const DashboardViewer = () => {
+export const DashboardViewer = () => {
   const dispatch = useDispatch();
   const client = useClient();
   const { settings } = useSettings();
@@ -448,5 +447,3 @@ const DashboardViewer = () => {
     </Container>
   );
 };
-
-export default DashboardViewer;
