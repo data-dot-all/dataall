@@ -31,16 +31,16 @@ Resources:
                   - 'cloudformation:CreateChangeSet'
                   - 'cloudformation:UntagResource'
               Resource:
-                - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
-                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
-                - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
-                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
-                - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
+                - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:elastic-ip/*'
+                - !Sub 'arn:${AWS::Partition}:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:internet-gateway/*'
+                - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:natgateway/*'
 
           -
               Effect: Allow
@@ -77,12 +77,12 @@ Resources:
                   - 'events:RemoveTargets'
                   - 'events:UntagResource'
                   - 'events:DisableRule'
-              Resource: !Sub 'arn:aws:events:*:${AwsAccountId}:rule/${EnvironmentResourcePrefix}*'
+              Resource: !Sub 'arn:${AWS::Partition}:events:*:${AwsAccountId}:rule/${EnvironmentResourcePrefix}*'
           -
               Sid: PassRoleDeploymentAccount
               Effect: Allow
               Action: 'iam:PassRole'
-              Resource: !Sub 'arn:aws:iam::${DeploymentAWSAccountId}:role/*'
+              Resource: !Sub 'arn:${AWS::Partition}:iam::${DeploymentAWSAccountId}:role/*'
           -
               Effect: Allow
               Action: 
@@ -93,7 +93,7 @@ Resources:
                   - 'sns:Subscribe'
                   - 'sns:UnSubscribe'
                   - 'sns:UntagResource'
-              Resource: !Sub 'arn:aws:sns:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
+              Resource: !Sub 'arn:${AWS::Partition}:sns:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
           -
               Effect: Allow
               Action: 
@@ -103,7 +103,7 @@ Resources:
                   - 'apigateway:DELETE'
                   - 'apigateway:PATCH'
                   - 'apigateway:SetWebACL'
-              Resource: 'arn:aws:apigateway:*:*:*'
+              Resource: 'arn:${AWS::Partition}:apigateway:*:*:*'
 
           -
               Effect: Allow
@@ -148,20 +148,20 @@ Resources:
                   - 'rds:RemoveTagsFromResource'
                   - 'rds:DeleteDBInstance'
               Resource:
-                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:layer:*'
-                  - !Sub 'arn:aws:ssm:*:${AwsAccountId}:parameter/*'
-                  - !Sub 'arn:aws:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
-                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
-                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:db:*'
-                  - !Sub 'arn:aws:iam::${AwsAccountId}:role/*'
-                  - !Sub 'arn:aws:es:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:lambda:*:${AwsAccountId}:layer:*'
+                  - !Sub 'arn:${AWS::Partition}:ssm:*:${AwsAccountId}:parameter/*'
+                  - !Sub 'arn:${AWS::Partition}:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:${AWS::Partition}:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:natgateway/*'
+                  - !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:db:*'
+                  - !Sub 'arn:${AWS::Partition}:iam::${AwsAccountId}:role/*'
+                  - !Sub 'arn:${AWS::Partition}:es:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
           - 
               Sid: VisualEditor1
               Effect: Allow
@@ -189,10 +189,10 @@ Resources:
                   - 'kms:CreateGrant'
                   - 'rds:RemoveTagsFromResource'
               Resource:
-                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:key/*'
-                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/*'
-                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:og:*'
-                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:*'
+                  - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:key/*'
+                  - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:alias/*'
+                  - !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:og:*'
+                  - !Sub 'arn:${AWS::Partition}:lambda:*:${AwsAccountId}:*'
           - 
               Sid: VisualEditor2
               Effect: Allow
@@ -204,14 +204,14 @@ Resources:
                   - 'rds:CreateDBSubnetGroup'
                   - 'rds:RemoveTagsFromResource'
               Resource:
-                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:subgrp:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:subgrp:${EnvironmentResourcePrefix}-*'
           - 
               Effect: Allow
               Action:
                   - 'rds:AddTagsToResource'
                   - 'rds:CreateDBCluster'
                   - 'rds:RemoveTagsFromResource'
-              Resource: !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster-pg:*'
+              Resource: !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:cluster-pg:*'
           - 
               Effect: Allow
               Action:
@@ -220,7 +220,7 @@ Resources:
                   - 'rds:RemoveTagsFromResource'
                   - 'rds:DeleteDBCluster'
                   - 'rds:DescribeDBClusters'
-              Resource: !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster:${EnvironmentResourcePrefix}-*'
+              Resource: !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:cluster:${EnvironmentResourcePrefix}-*'
           - 
               Effect: Allow
               Action:
@@ -325,26 +325,26 @@ Resources:
                   - 'codepipeline:TagResource'
                   - 'codepipeline:UntagResource'
               Resource:
-                  - !Sub 'arn:aws:s3:::*'
-                  - !Sub 'arn:aws:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:rds:*:${AwsAccountId}:cluster-snapshot:*${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
-                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
-                  - !Sub 'arn:aws:logs:*:${AwsAccountId}:log-group:*'
-                  - !Sub 'arn:aws:secretsmanager:*:${AwsAccountId}:secret:${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:iam::${AwsAccountId}:role/*'
-                  - !Sub 'arn:aws:lambda:*:${AwsAccountId}:function:*'
-                  - !Sub 'arn:aws:sqs:*:${AwsAccountId}:${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:codebuild:*:${AwsAccountId}:project/${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:codepipeline:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::*'
+                  - !Sub 'arn:${AWS::Partition}:ecs:*:${AwsAccountId}:cluster/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:cluster-snapshot:*${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:${AWS::Partition}:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:internet-gateway/*'
+                  - !Sub 'arn:${AWS::Partition}:logs:*:${AwsAccountId}:log-group:*'
+                  - !Sub 'arn:${AWS::Partition}:secretsmanager:*:${AwsAccountId}:secret:${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:iam::${AwsAccountId}:role/*'
+                  - !Sub 'arn:${AWS::Partition}:lambda:*:${AwsAccountId}:function:*'
+                  - !Sub 'arn:${AWS::Partition}:sqs:*:${AwsAccountId}:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:codebuild:*:${AwsAccountId}:project/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:codepipeline:*:${AwsAccountId}:${EnvironmentResourcePrefix}*'
   CDKBootStrapPolicy3:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
@@ -365,7 +365,7 @@ Resources:
                   - 'ec2:CreateRouteTable'
                   - 'ec2:DeleteRouteTable'
                   - 'ec2:AssociateRouteTable'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:route-table/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:route-table/*'
           - 
               Sid: VisualEditor1
               Effect: Allow
@@ -380,7 +380,7 @@ Resources:
                   - 'ec2:CreateTags'
                   - 'ec2:RevokeSecurityGroupEgress'
                   - 'ec2:DeleteSecurityGroup'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:security-group/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:security-group/*'
           - 
               Sid: VisualEditor2
               Effect: Allow
@@ -395,7 +395,7 @@ Resources:
                   - 'ec2:CreateSubnet'
                   - 'ec2:AssociateRouteTable'
                   - 'ec2:ModifySubnetAttribute'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:subnet/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:subnet/*'
           - 
               Sid: VisualEditor3
               Effect: Allow
@@ -404,7 +404,7 @@ Resources:
                   - 'ec2:DeleteVpcEndpoints'
                   - 'ec2:CreateVpcEndpoint'
                   - 'ec2:CreateTags'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc-endpoint/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:vpc-endpoint/*'
           - 
               Sid: VisualEditor4
               Effect: Allow
@@ -413,7 +413,7 @@ Resources:
                   - 'ec2:DeleteTags'
                   - 'ec2:CreateFlowLogs'
                   - 'ec2:CreateTags'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc-flow-log/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:vpc-flow-log/*'
           - 
               Sid: VisualEditor5
               Effect: Allow
@@ -431,7 +431,7 @@ Resources:
                   - 'ec2:ModifyVpcAttribute'
                   - 'ec2:DeleteVpc'
                   - 'ec2:CreateSubnet'
-              Resource: !Sub 'arn:aws:ec2:*:${AwsAccountId}:vpc/*'
+              Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:vpc/*'
           - 
               Sid: VisualEditor6
               Effect: Allow
@@ -568,18 +568,18 @@ Resources:
                   - 'serverlessrepo:GetCloudFormationTemplate'
                   - 'serverlessrepo:GetApplication'
               Resource:
-                  - !Sub 'arn:aws:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:elastic-ip/*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:natgateway/*'
-                  - !Sub 'arn:aws:ec2:*:${AwsAccountId}:internet-gateway/*'
-                  - !Sub 'arn:aws:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
-                  - !Sub 'arn:aws:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
-                  - !Sub 'arn:aws:cloudformation:*:aws:transform/Serverless*'
-                  - 'arn:aws:serverlessrepo:*:*:applications/*'
+                  - !Sub 'arn:${AWS::Partition}:cloudwatch:*:${AwsAccountId}:alarm:${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudwatch::${AwsAccountId}:dashboard/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ecr:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:domain/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:codeartifact:*:${AwsAccountId}:repository/${EnvironmentResourcePrefix}-*/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:elastic-ip/*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:natgateway/*'
+                  - !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:internet-gateway/*'
+                  - !Sub 'arn:${AWS::Partition}:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
+                  - !Sub 'arn:${AWS::Partition}:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
+                  - !Sub 'arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless*'
+                  - 'arn:${AWS::Partition}:serverlessrepo:*:*:applications/*'
           - 
               Effect: Allow
               Action:
@@ -593,5 +593,5 @@ Resources:
                   - 'cloudfront:UntagResource'
                   - 'cloudfront:GetDistribution'
               Resource:
-                  - !Sub 'arn:aws:cloudfront::${AwsAccountId}:origin-access-identity/*'
-                  - !Sub 'arn:aws:cloudfront::${AwsAccountId}:distribution/*'
+                  - !Sub 'arn:${AWS::Partition}:cloudfront::${AwsAccountId}:origin-access-identity/*'
+                  - !Sub 'arn:${AWS::Partition}:cloudfront::${AwsAccountId}:distribution/*'
