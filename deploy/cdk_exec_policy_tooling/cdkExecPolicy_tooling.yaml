@@ -47,7 +47,6 @@ Resources:
               Action:
                   - 'lambda:ListEventSourceMappings'
                   - 'lambda:GetEventSourceMapping'
-                  - 'lambda:CreateEventSourceMapping'
                   - 'lambda:DeleteEventSourceMapping'
                   - 'lambda:UpdateFunctionCode'
                   - 'lambda:ListTags'
@@ -103,7 +102,7 @@ Resources:
                   - 'apigateway:DELETE'
                   - 'apigateway:PATCH'
                   - 'apigateway:SetWebACL'
-              Resource: 'arn:${AWS::Partition}:apigateway:*:*:*'
+              Resource: !Sub 'arn:${AWS::Partition}:apigateway:*:*:*'
 
           -
               Effect: Allow
@@ -125,19 +124,13 @@ Resources:
               Sid: VisualEditor0
               Effect: Allow
               Action:
-                  - 'rds:AddTagsToResource'
-                  - 'lambda:TagResource'
-                  - 'kms:UntagResource'
                   - 'lambda:GetLayerVersion'
                   - 'lambda:PublishLayerVersion'
                   - 'ssm:GetParameters'
                   - 'es:ListTags'
                   - 'lambda:UntagResource'
                   - 'ssm:PutParameter'
-                  - 'es:AddTags'
                   - 'ssm:DeleteParameter'
-                  - 'es:RemoveTags'
-                  - 'kms:TagResource'
                   - 'ssm:RemoveTagsFromResource'
                   - 'ssm:AddTagsToResource'
                   - 'rds:CreateDBInstance'
@@ -145,7 +138,6 @@ Resources:
                   - 'cloudformation:DeleteStack'
                   - 'kms:CreateAlias'
                   - 'es:DescribeDomain'
-                  - 'rds:RemoveTagsFromResource'
                   - 'rds:DeleteDBInstance'
               Resource:
                   - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:alias/${EnvironmentResourcePrefix}-*'
@@ -167,16 +159,12 @@ Resources:
               Effect: Allow
               Action:
                   - 'kms:EnableKeyRotation'
-                  - 'rds:AddTagsToResource'
-                  - 'lambda:TagResource'
                   - 'kms:Decrypt'
-                  - 'kms:UntagResource'
                   - 'lambda:GetEventSourceMapping'
                   - 'kms:PutKeyPolicy'
                   - 'kms:GetKeyPolicy'
                   - 'kms:ListResourceTags'
                   - 'lambda:UntagResource'
-                  - 'kms:TagResource'
                   - 'kms:Encrypt'
                   - 'kms:GetKeyRotationStatus'
                   - 'rds:CreateDBCluster'
@@ -187,7 +175,6 @@ Resources:
                   - 'lambda:DeleteEventSourceMapping'
                   - 'kms:DeleteAlias'
                   - 'kms:CreateGrant'
-                  - 'rds:RemoveTagsFromResource'
               Resource:
                   - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:key/*'
                   - !Sub 'arn:${AWS::Partition}:kms:*:${AwsAccountId}:alias/*'
@@ -197,27 +184,21 @@ Resources:
               Sid: VisualEditor2
               Effect: Allow
               Action:
-                  - 'rds:AddTagsToResource'
                   - 'rds:DeleteDBSubnetGroup'
                   - 'rds:CreateDBCluster'
                   - 'rds:DescribeDBSubnetGroups'
                   - 'rds:CreateDBSubnetGroup'
-                  - 'rds:RemoveTagsFromResource'
               Resource:
                   - !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:subgrp:${EnvironmentResourcePrefix}-*'
           - 
               Effect: Allow
               Action:
-                  - 'rds:AddTagsToResource'
                   - 'rds:CreateDBCluster'
-                  - 'rds:RemoveTagsFromResource'
               Resource: !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:cluster-pg:*'
           - 
               Effect: Allow
               Action:
-                  - 'rds:AddTagsToResource'
                   - 'rds:CreateDBCluster'
-                  - 'rds:RemoveTagsFromResource'
                   - 'rds:DeleteDBCluster'
                   - 'rds:DescribeDBClusters'
               Resource: !Sub 'arn:${AWS::Partition}:rds:*:${AwsAccountId}:cluster:${EnvironmentResourcePrefix}-*'
@@ -225,7 +206,6 @@ Resources:
               Effect: Allow
               Action:
                   - 'lambda:CreateFunction'
-                  - 'lambda:TagResource'
                   - 'secretsmanager:DescribeSecret'
                   - 'secretsmanager:DeleteResourcePolicy'
                   - 'secretsmanager:PutSecretValue'
@@ -237,19 +217,16 @@ Resources:
                   - 'iam:AttachRolePolicy'
                   - 'iam:PutRolePolicy'
                   - 'logs:CreateLogStream'
-                  - 'logs:TagLogGroup'
                   - 'iam:DetachRolePolicy'
                   - 's3:PutBucketAcl'
                   - 's3:PutObjectTagging'
                   - 'lambda:DeleteFunction'
-                  - 'ecs:TagResource'
                   - 'iam:GetRole'
                   - 'lambda:InvokeFunction'
                   - 'ecs:DeleteCluster'
                   - 'iam:DeleteRole'
                   - 's3:PutBucketCORS'
                   - 's3:DeleteBucketPolicy'
-                  - 'logs:TagResource'
                   - 'iam:TagPolicy'
                   - 'logs:CreateLogGroup'
                   - 'lambda:GetFunctionCodeSigningConfig'
@@ -262,13 +239,9 @@ Resources:
                   - 'iam:DeleteServiceLinkedRole'
                   - 'lambda:PublishVersion'
                   - 'cloudformation:UntagResource'
-                  - 'rds:RemoveTagsFromResource'
                   - 'kms:DeleteAlias'
                   - 'iam:GetRolePolicy'
-                  - 'secretsmanager:TagResource'
                   - 'logs:ListTagsLogGroup'
-                  - 'kms:UntagResource'
-                  - 'secretsmanager:UntagResource'
                   - 'iam:UntagRole'
                   - 'lambda:ListVersionsByFunction'
                   - 'secretsmanager:CreateSecret'
@@ -280,7 +253,6 @@ Resources:
                   - 'iam:GetServiceLinkedRoleDeletionStatus'
                   - 'logs:DeleteMetricFilter'
                   - 'iam:PassRole'
-                  - 'kms:TagResource'
                   - 'secretsmanager:GetSecretValue'
                   - 's3:PutBucketTagging'
                   - 'iam:DeleteRolePolicy'
@@ -290,17 +262,14 @@ Resources:
                   - 'lambda:DeleteFunctionEventInvokeConfig'
                   - 'lambda:EnableReplication*'
                   - 's3:DeleteBucket'
-                  - 'ecs:UntagResource'
                   - 'rds:DeleteDBCluster'
                   - 's3:PutBucketVersioning'
                   - 'sqs:SetQueueAttributes'
                   - 'sqs:GetQueueAttributes'
-                  - 'rds:AddTagsToResource'
                   - 's3:PutBucketPublicAccessBlock'
                   - 'logs:UntagLogGroup'
                   - 'logs:DeleteLogGroup'
                   - 'lambda:GetFunction'
-                  - 'logs:UntagResource'
                   - 'secretsmanager:CancelRotateSecret'
                   - 's3:GetBucketAcl'
                   - 'sqs:TagQueue'
@@ -356,11 +325,9 @@ Resources:
               Sid: VisualEditor0
               Effect: Allow
               Action:
-                  - 'ec2:DeleteTags'
                   - 'ec2:DeleteVpcEndpoints'
                   - 'ec2:CreateVpcEndpoint'
                   - 'ec2:CreateRoute'
-                  - 'ec2:CreateTags'
                   - 'ec2:DeleteRoute'
                   - 'ec2:CreateRouteTable'
                   - 'ec2:DeleteRouteTable'
@@ -373,11 +340,9 @@ Resources:
                   - 'ec2:RevokeSecurityGroupIngress'
                   - 'ec2:AuthorizeSecurityGroupEgress'
                   - 'ec2:AuthorizeSecurityGroupIngress'
-                  - 'ec2:DeleteTags'
                   - 'ec2:DeleteVpcEndpoints'
                   - 'ec2:CreateSecurityGroup'
                   - 'ec2:CreateVpcEndpoint'
-                  - 'ec2:CreateTags'
                   - 'ec2:RevokeSecurityGroupEgress'
                   - 'ec2:DeleteSecurityGroup'
               Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:security-group/*'
@@ -386,12 +351,9 @@ Resources:
               Effect: Allow
               Action:
                   - 'ec2:DeleteSubnet'
-                  - 'ec2:DeleteTags'
                   - 'ec2:DeleteVpcEndpoints'
                   - 'ec2:CreateNatGateway'
                   - 'ec2:CreateVpcEndpoint'
-                  - 'ec2:CreateTags'
-                  - 'ec2:DisassociateRouteTable'
                   - 'ec2:CreateSubnet'
                   - 'ec2:AssociateRouteTable'
                   - 'ec2:ModifySubnetAttribute'
@@ -400,26 +362,20 @@ Resources:
               Sid: VisualEditor3
               Effect: Allow
               Action:
-                  - 'ec2:DeleteTags'
                   - 'ec2:DeleteVpcEndpoints'
                   - 'ec2:CreateVpcEndpoint'
-                  - 'ec2:CreateTags'
               Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:vpc-endpoint/*'
           - 
               Sid: VisualEditor4
               Effect: Allow
               Action:
                   - 'ec2:DeleteFlowLogs'
-                  - 'ec2:DeleteTags'
                   - 'ec2:CreateFlowLogs'
-                  - 'ec2:CreateTags'
               Resource: !Sub 'arn:${AWS::Partition}:ec2:*:${AwsAccountId}:vpc-flow-log/*'
           - 
               Sid: VisualEditor5
               Effect: Allow
               Action:
-                  - 'ec2:DeleteTags'
-                  - 'ec2:CreateTags'
                   - 'ec2:CreateVpc'
                   - 'ec2:CreateRouteTable'
                   - 'ec2:AttachInternetGateway'
@@ -470,11 +426,8 @@ Resources:
                   - 'codeartifact:ListTagsForResource'
                   - 'ec2:DescribeFlowLogs'
                   - 'cognito-idp:CreateUserPool'
-                  - 'cognito-idp:CreateUserPoolDomain'
                   - 'cognito-idp:CreateUserPoolClient'
                   - 'cognito-idp:DeleteUserPool'
-                  - 'cognito-idp:DeleteUserPoolDomain'
-                  - 'cognito-idp:DeleteUserPoolClient'
                   - 'lambda:CreateEventSourceMapping'
                   - 'lambda:UntagResource'
                   - 'ecs:DeregisterTaskDefinition'
@@ -510,7 +463,6 @@ Resources:
               Sid: VisualEditor8
               Effect: Allow
               Action:
-                  - 'ec2:DeleteTags'
                   - 'ec2:CreateNatGateway'
                   - 'ec2:DeleteNatGateway'
                   - 'cloudwatch:DeleteAlarms'
@@ -520,26 +472,19 @@ Resources:
                   - 'cognito-idp:DeleteUserPoolDomain'
                   - 'ecr:DeleteRepository'
                   - 'codeartifact:GetDomainPermissionsPolicy'
-                  - 'codeartifact:TagResource'
                   - 'cognito-idp:CreateUserPoolDomain'
                   - 'cloudwatch:UntagResource'
-                  - 'cognito-idp:UntagResource'
                   - 'ec2:CreateInternetGateway'
                   - 'ecr:TagResource'
                   - 'ec2:DeleteInternetGateway'
                   - 'ecr:GetLifecyclePolicy'
-                  - 'cognito-idp:TagResource'
                   - 'ecr:PutLifecyclePolicy'
-                  - 'codeartifact:UntagResource'
-                  - 'ec2:CreateTags'
                   - 'cognito-idp:DeleteUserPoolClient'
                   - 'codeartifact:DescribeDomain'
                   - 'ec2:DetachInternetGateway'
                   - 'codeartifact:DeleteDomain'
                   - 'cloudwatch:PutMetricAlarm'
                   - 'cloudwatch:TagResource'
-                  - 'ecr:UntagResource'
-                  - 'cognito-idp:CreateUserPoolClient'
                   - 'ecr:SetRepositoryPolicy'
                   - 'ecr:BatchGetImage'
                   - 'ecr:GetDownloadUrlForLayer'
@@ -579,7 +524,7 @@ Resources:
                   - !Sub 'arn:${AWS::Partition}:cloudformation:*:${AwsAccountId}:stack/${EnvironmentResourcePrefix}*'
                   - !Sub 'arn:${AWS::Partition}:cognito-idp:*:${AwsAccountId}:userpool/${EnvironmentResourcePrefix}-*'
                   - !Sub 'arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless*'
-                  - 'arn:${AWS::Partition}:serverlessrepo:*:*:applications/*'
+                  - !Sub 'arn:${AWS::Partition}:serverlessrepo:*:*:applications/*'
           - 
               Effect: Allow
               Action:
