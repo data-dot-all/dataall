@@ -9,7 +9,7 @@ import { getReaderSession } from '../services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 
-const DashboardViewer = ({ dashboard }) => {
+export const DashboardViewer = ({ dashboard }) => {
   const dispatch = useDispatch();
   const client = useClient();
   const [dashboardRef] = useState(createRef());
@@ -80,4 +80,3 @@ const DashboardViewer = ({ dashboard }) => {
 DashboardViewer.propTypes = {
   dashboard: PropTypes.object.isRequired
 };
-export default DashboardViewer;
