@@ -1,15 +1,10 @@
-from tests.core.conftest import *
+import pytest
 
 from dataall.modules.datapipelines.db.models import DataPipeline
 
 
 @pytest.fixture(scope='module')
 def pipeline_env(env, org_fixture, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.core.environment.api.resolvers.check_environment', return_value=True)
-    module_mocker.patch(
-        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
     env1 = env(
         org_fixture,'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1', parameters={'pipelinesEnabled': 'True'}
     )

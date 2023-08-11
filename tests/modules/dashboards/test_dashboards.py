@@ -117,9 +117,6 @@ def test_request_dashboard_share(
     group2,
     user2,
 ):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation requestDashboardShare($dashboardUri:String!, $principalId:String!){
@@ -310,9 +307,6 @@ def test_request_dashboard_share(
 def test_delete_dashboard(
     client, env1, db, org1, user, group, module_mocker, dashboard, patch_es
 ):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation deleteDashboard($dashboardUri:String!){

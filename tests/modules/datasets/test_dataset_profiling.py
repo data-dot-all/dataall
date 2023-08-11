@@ -71,10 +71,6 @@ def table1(db, dataset1, table, group, user):
 
 
 def test_start_profiling_run_authorized(org1, env1, dataset1, table1, client, module_mocker, db, user, group):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.process', return_value=True
-    )
     dataset1.GlueProfilingJobName = ('profile-job',)
     dataset1.GlueProfilingTriggerSchedule = ('cron(* 2 * * ? *)',)
     dataset1.GlueProfilingTriggerName = ('profile-job',)
@@ -102,10 +98,6 @@ def test_start_profiling_run_authorized(org1, env1, dataset1, table1, client, mo
 
 
 def test_start_profiling_run_unauthorized(org2, env2, dataset1, table1, client, module_mocker, db, user2, group2):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.process', return_value=True
-    )
     dataset1.GlueProfilingJobName = ('profile-job',)
     dataset1.GlueProfilingTriggerSchedule = ('cron(* 2 * * ? *)',)
     dataset1.GlueProfilingTriggerName = ('profile-job',)
@@ -170,8 +162,6 @@ def test_get_table_profiling_run_unauthorized(
 def test_list_table_profiling_runs_authorized(
     client, dataset1, module_mocker, table1, db, user, group
 ):
-    module_mocker.patch('requests.post', return_value=True)
-
     response = client.query(
         """
         query listDatasetTableProfilingRuns($tableUri:String!){
@@ -204,8 +194,6 @@ def test_list_table_profiling_runs_authorized(
 def test_list_table_profiling_runs_unauthorized(
     client, dataset1, module_mocker, table1, db, user2, group2
 ):
-    module_mocker.patch('requests.post', return_value=True)
-
     response = client.query(
         """
         query listDatasetTableProfilingRuns($tableUri:String!){

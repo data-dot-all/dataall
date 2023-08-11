@@ -1,5 +1,6 @@
+import pytest
+
 from tests.modules.feed.testhelper import FeedTestHelper
-from tests.core.conftest import *
 from dataall.modules.worksheets.db.models import Worksheet
 
 

@@ -1,4 +1,4 @@
-from tests.core.conftest import *
+import pytest
 
 
 @pytest.fixture(scope='module')
@@ -173,10 +173,6 @@ def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
 
 def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mocker):
     module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.process',
-        return_value=[{'response': 'return value'}],
-    )
-    module_mocker.patch(
         'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_creds_from_aws',
         return_value=True,
     )
@@ -223,9 +219,6 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
 
 
 def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pipeline):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation deleteDataPipeline($DataPipelineUri:String!,$deleteFromAWS:Boolean){

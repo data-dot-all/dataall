@@ -21,15 +21,6 @@ def patch_methods(module_mocker):
     )
 
 
-@pytest.fixture(scope='module')
-def tenant(db):
-    with db.scoped_session() as session:
-        tenant = Tenant.save_tenant(
-            session, name='dataall', description='Tenant dataall'
-        )
-        yield tenant
-
-
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:

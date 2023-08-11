@@ -98,12 +98,6 @@ def table(org, env, db, sync_dataset):
     yield table
 
 
-@pytest.fixture(scope='module', autouse=True)
-def permissions(db):
-    with db.scoped_session() as session:
-        yield Permission.init_permissions(session)
-
-
 def test_tables_sync(db, org, env, sync_dataset, table, mocker):
     mock_crawler = MagicMock()
     mocker.patch('dataall.modules.datasets.tasks.tables_syncer.DatasetCrawler', mock_crawler)

@@ -116,9 +116,6 @@ def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
 
 
 def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation deleteNetwork($vpcUri:String!){

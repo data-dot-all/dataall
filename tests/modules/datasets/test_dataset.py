@@ -21,6 +21,7 @@ def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
+
 @pytest.fixture(scope='module')
 def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
     yield org('org2', user2.username, group2.name)
@@ -372,9 +373,6 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
         session.commit()
     deleted_dataset = dataset(
         org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
-    )
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """

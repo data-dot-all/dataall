@@ -1,9 +1,17 @@
 import os
+from dataclasses import dataclass
+
 import pytest
 import dataall
 from dataall.base.db import get_engine, create_schema_and_tables
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
+
+from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.permissions.db import Tenant, Permission
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.permissions import TENANT_ALL
+from tests.client import create_app, ClientWrapper
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
@@ -38,6 +46,11 @@ def ignore_module_tests_if_not_active():
 ignore_module_tests_if_not_active()
 
 
+@dataclass
+class User:
+    username: str
+
+
 @pytest.fixture(scope='module')
 def db() -> dataall.base.db.Engine:
     engine = get_engine(envname=ENVNAME)
@@ -50,3 +63,117 @@ def db() -> dataall.base.db.Engine:
 @pytest.fixture(scope='module')
 def es():
     yield True
+
+
+@pytest.fixture(scope='module', autouse=True)
+def app(db):
+    yield create_app(db)
+
+
+@pytest.fixture(scope='module')
+def client(app) -> ClientWrapper:
+    with app.test_client() as client:
+        yield ClientWrapper(client)
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user():
+    yield User('alice')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user2():
+    yield User('bob')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def user3():
+    yield User('david')
+
+
+def _create_group(db, tenant, name, user):
+    with db.scoped_session() as session:
+        group = Group(name=name, label=name, owner=user.username)
+        session.add(group)
+        session.commit()
+
+        TenantPolicy.attach_group_tenant_policy(
+            session=session,
+            group=name,
+            permissions=TENANT_ALL,
+            tenant_name=tenant.name,
+        )
+        return group
+
+
+@pytest.fixture(scope='module')
+def group(db, tenant, user):
+    yield _create_group(db, tenant, "testadmins", user)
+
+
+@pytest.fixture(scope='module')
+def group2(db, tenant, user2):
+    yield _create_group(db, tenant, "dataengineers", user2)
+
+
+@pytest.fixture(scope='module')
+def group3(db, tenant, user3):
+    yield _create_group(db, tenant, "datascientists", user3)
+
+
+@pytest.fixture(scope='module')
+def group4(db, user3):
+    yield _create_group(db, tenant, "externals", user3)
+
+
+@pytest.fixture(scope='module', autouse=True)
+def tenant(db, permissions):
+    with db.scoped_session() as session:
+        tenant = Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        yield tenant
+
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_request(module_mocker):
+    """we will mock requests.post so no call to cdk proxy will be made"""
+    module_mocker.patch('requests.post', return_value=True)
+
+
+@pytest.fixture(scope='module', autouse=True)
+def permissions(db):
+    with db.scoped_session() as session:
+        yield Permission.init_permissions(session)
+
+
+@pytest.fixture(scope='function', autouse=True)
+def patch_ssm(mocker):
+    mocker.patch(
+        'dataall.utils.parameter.Parameter.get_parameter', return_value='param'
+    )
+
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_stack_tasks(module_mocker):
+    module_mocker.patch(
+        'dataall.core.stacks.aws.ecs.Ecs.is_task_running',
+        return_value=False,
+    )
+    module_mocker.patch(
+        'dataall.core.stacks.aws.ecs.Ecs.run_cdkproxy_task',
+        return_value='arn:aws:eu-west-1:xxxxxxxx:ecs:task/1222222222',
+    )
+    module_mocker.patch(
+        'dataall.core.stacks.aws.cloudformation.CloudFormation.describe_stack_resources',
+        return_value=True,
+    )
+
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_check_env(module_mocker):
+    module_mocker.patch(
+        'dataall.core.environment.api.resolvers.check_environment',
+        return_value='CDKROLENAME',
+    )
+    module_mocker.patch(
+        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )

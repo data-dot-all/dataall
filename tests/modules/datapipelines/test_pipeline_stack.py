@@ -10,8 +10,6 @@ from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineSta
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 
-from tests.cdkproxy.conftest import *
-
 
 @pytest.fixture(scope='module', autouse=True)
 def pipeline2(db, env: Environment) -> DataPipeline:

@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from tests.core.conftest import *
+import pytest
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -11,15 +11,7 @@ def org1(org, user, group, tenant):
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker, patch_stack_tasks):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.core.environment.api.resolvers.check_environment', return_value=True
-    )
-    module_mocker.patch(
-        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
-    env1 = env(org1, 'dev', user.username
-               , group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 

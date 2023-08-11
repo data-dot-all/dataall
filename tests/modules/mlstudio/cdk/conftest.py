@@ -3,7 +3,6 @@ import pytest
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from tests.cdkproxy.conftest import org, env
 
 
 @pytest.fixture(scope='module', autouse=True)

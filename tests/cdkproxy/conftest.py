@@ -7,12 +7,6 @@ from dataall.core.stacks.db.stack_models import KeyValueTag
 
 
 @pytest.fixture(scope='module', autouse=True)
-def permissions(db):
-    with db.scoped_session() as session:
-        yield Permission.init_permissions(session)
-
-
-@pytest.fixture(scope='module', autouse=True)
 def org(db) -> Organization:
     with db.scoped_session() as session:
         org = Organization(
@@ -63,10 +57,3 @@ def env(db, org: Organization) -> Environment:
         )
         session.add(tags)
     yield env
-
-
-@pytest.fixture(scope='function', autouse=True)
-def patch_ssm(mocker):
-    mocker.patch(
-        'dataall.utils.parameter.Parameter.get_parameter', return_value='param'
-    )

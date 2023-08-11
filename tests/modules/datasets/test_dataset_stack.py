@@ -4,10 +4,9 @@ from unittest.mock import MagicMock
 import pytest
 from aws_cdk import App
 
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
 from dataall.modules.datasets_base.db.models import Dataset
-
-from tests.cdkproxy.conftest import *
 
 
 @pytest.fixture(scope='module', autouse=True)
