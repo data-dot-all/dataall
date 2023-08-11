@@ -9,7 +9,7 @@ from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
-from tests.db.test_permission import *
+from tests.core.permissions.test_permission import *
 from dataall.core.organizations.db.organization import Organization
 
 
