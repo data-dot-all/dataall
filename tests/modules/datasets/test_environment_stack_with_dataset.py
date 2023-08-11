@@ -3,6 +3,7 @@ from aws_cdk import App
 from aws_cdk.assertions import Template
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
+from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.modules.datasets_base.db.models import Dataset
 
 
@@ -16,10 +17,10 @@ def patch_extensions(mocker):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def another_group(db, env):
+def another_group(db, env_fixture):
     with db.scoped_session() as session:
         env_group: EnvironmentGroup = EnvironmentGroup(
-            environmentUri=env.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri='anothergroup',
             environmentIAMRoleArn='aontherGroupArn',
             environmentIAMRoleName='anotherGroupRole',
@@ -28,12 +29,12 @@ def another_group(db, env):
         session.add(env_group)
         dataset = Dataset(
             label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
+            environmentUri=env_fixture.environmentUri,
+            organizationUri=env_fixture.organizationUri,
             name='anotherdataset',
             description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             S3BucketName='bucket',
             GlueDatabaseName='db',
             IAMDatasetAdminRoleArn='role',
@@ -51,7 +52,7 @@ def another_group(db, env):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, env, another_group, permissions):
+def patch_methods(mocker, db, env_fixture, another_group, permissions):
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_engine',
         return_value=db,
@@ -66,7 +67,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_target',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_groups',
@@ -79,7 +80,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
     mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_group_permissions',

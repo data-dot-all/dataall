@@ -1,22 +1,8 @@
-import pytest
-
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
-@pytest.fixture(scope='module', autouse=True)
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
-def get_env(client, env1, group):
+def get_env(client, env_fixture, group):
     return client.query(
         """
         query GetEnv($environmentUri:String!){
@@ -42,12 +28,12 @@ def get_env(client, env1, group):
         }
         """,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         groups=[group.name],
     )
 
 
-def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, group, dataset):
+def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, user, group3, group, dataset):
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
@@ -78,7 +64,7 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
         """,
         username='alice',
         input=dict(
-            environmentUri=env1.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
             environmentIAMRoleName='myteamrole',
@@ -101,13 +87,13 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
         username=user.username,
         groups=[group2.name],
         groupUri=group2.name,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
     assert CREATE_DATASET in env_permissions
 
     dataset = dataset(
-        org=org1, env=env1, name='dataset1', owner='bob', group=group2.name
+        org=org_fixture, env=env_fixture, name='dataset1', owner='bob', group=group2.name
     )
     assert dataset.datasetUri
 
@@ -120,7 +106,7 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
         }
         """,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         groupUri=group2.name,
         groups=[group.name, group2.name],
     )
@@ -141,7 +127,7 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
         }
         """,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         groupUri=group2.name,
         groups=[group.name, group2.name],
     )

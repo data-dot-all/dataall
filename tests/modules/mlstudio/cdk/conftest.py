@@ -6,29 +6,19 @@ from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 
 
 @pytest.fixture(scope='module', autouse=True)
-def stack_org(db) -> Organization:
-    yield org
-
-
-@pytest.fixture(scope='module', autouse=True)
-def stack_env(db, stack_org: Organization) -> Environment:
-    yield env
-
-
-@pytest.fixture(scope='module', autouse=True)
-def sgm_studio(db, env: Environment) -> SagemakerStudioUser:
+def sgm_studio(db, env_fixture: Environment) -> SagemakerStudioUser:
     with db.scoped_session() as session:
         sm_user = SagemakerStudioUser(
             label='thistable',
             owner='me',
-            AWSAccountId=env.AwsAccountId,
-            region=env.region,
+            AWSAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             sagemakerStudioUserStatus='UP',
             sagemakerStudioUserName='ProfileName',
             sagemakerStudioUserNameSlugify='ProfileName',
             sagemakerStudioDomainID='domain',
-            environmentUri=env.environmentUri,
-            RoleArn=env.EnvironmentDefaultIAMRoleArn,
+            environmentUri=env_fixture.environmentUri,
+            RoleArn=env_fixture.EnvironmentDefaultIAMRoleArn,
             SamlAdminGroupName='admins',
         )
         session.add(sm_user)

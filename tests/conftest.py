@@ -122,7 +122,7 @@ def group3(db, tenant, user3):
 
 
 @pytest.fixture(scope='module')
-def group4(db, user3):
+def group4(db, tenant, user3):
     yield _create_group(db, tenant, "externals", user3)
 
 

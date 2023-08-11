@@ -90,35 +90,6 @@ def environment(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
-def environment_group(db):
-    def factory(
-        environment: Environment,
-        group: Group,
-    ) -> EnvironmentGroup:
-        with db.scoped_session() as session:
-
-            env_group = EnvironmentGroup(
-                environmentUri=environment.environmentUri,
-                groupUri=group.name,
-                environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
-                environmentIAMRoleName=environment.EnvironmentDefaultIAMRoleName,
-                environmentAthenaWorkGroup="workgroup",
-            )
-            session.add(env_group)
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                resource_uri=environment.environmentUri,
-                group=group.name,
-                permissions=ENVIRONMENT_ALL,
-                resource_type=Environment.__name__,
-            )
-            session.commit()
-            return env_group
-
-    yield factory
-
-
 @pytest.fixture(scope='module', autouse=True)
 def org(client):
     cache = {}

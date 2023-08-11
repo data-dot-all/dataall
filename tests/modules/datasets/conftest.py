@@ -1,4 +1,5 @@
 import random
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -14,14 +15,28 @@ from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocati
 
 
 @pytest.fixture(scope='module', autouse=True)
-def patch_check_dataset(module_mocker):
+def patch_dataset_methods(module_mocker):
     module_mocker.patch(
         'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
     )
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack',
+        return_value=True
+    )
+    s3_mock_client = MagicMock()
+    glue_mock_client = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
+    )
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
+    )
+    s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
+    glue_mock_client().run_job.return_value = True
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset(client, patch_es):
+def dataset(client, patch_es, patch_dataset_methods):
     cache = {}
 
     def factory(
@@ -144,13 +159,6 @@ def dataset(client, patch_es):
     yield factory
 
 
-@pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
-    )
-
-
 @pytest.fixture(scope='module', autouse=True)
 def table(db):
     cache = {}
@@ -196,6 +204,38 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
         owner=env_fixture.owner,
         group=group.name,
     )
+
+
+@pytest.fixture(scope='module')
+def table_fixture(db, dataset_fixture, table, group, user):
+    table1 = table(dataset=dataset_fixture, name="table1", username=user.username)
+
+    with db.scoped_session() as session:
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=group.groupUri,
+            permissions=DATASET_TABLE_READ,
+            resource_uri=table1.tableUri,
+            resource_type=DatasetTable.__name__,
+        )
+    yield table1
+
+
+@pytest.fixture(scope='module', autouse=True)
+def folder_fixture(db, dataset_fixture):
+    with db.scoped_session() as session:
+        location = DatasetStorageLocation(
+            datasetUri=dataset_fixture.datasetUri,
+            AWSAccountId='12345678901',
+            S3Prefix='S3prefix',
+            label='label',
+            owner='foo',
+            name='name',
+            S3BucketName='S3BucketName',
+            region='eu-west-1',
+        )
+        session.add(location)
+    yield location
 
 
 @pytest.fixture(scope="module")

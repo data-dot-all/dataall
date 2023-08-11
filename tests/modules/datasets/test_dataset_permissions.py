@@ -13,46 +13,14 @@ from tests.core.permissions.test_permission import *
 from dataall.core.organizations.db.organization import Organization
 
 
-@pytest.fixture(scope='module', autouse=True)
-def patch_methods(module_mocker):
-    module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack',
-        return_value=True
-    )
-
-
-@pytest.fixture(scope='module', autouse=True)
-def dataset(org, env, db, group):
-    with db.scoped_session() as session:
-        dataset = Dataset(
-            organizationUri=org.organizationUri,
-            environmentUri=env.environmentUri,
-            label='label',
-            owner='foo',
-            SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
-        )
-        session.add(dataset)
-    yield dataset
-
-
-def test_attach_resource_policy(db, user, group, dataset):
+def test_attach_resource_policy(db, user, group, dataset_fixture):
     permissions(db, ENVIRONMENT_ALL + ORGANIZATION_ALL + DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ)
     with db.scoped_session() as session:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=group.name,
             permissions=DATASET_WRITE,
-            resource_uri=dataset.datasetUri,
+            resource_uri=dataset_fixture.datasetUri,
             resource_type=Dataset.__name__,
         )
         assert ResourcePolicy.check_user_resource_permission(
@@ -60,12 +28,12 @@ def test_attach_resource_policy(db, user, group, dataset):
             username=user.username,
             groups=[group.name],
             permission_name=UPDATE_DATASET,
-            resource_uri=dataset.datasetUri,
+            resource_uri=dataset_fixture.datasetUri,
         )
 
 
 def test_attach_tenant_policy(
-    db, user, group, dataset, permissions, tenant
+    db, user, group, dataset_fixture, permissions, tenant
 ):
     with db.scoped_session() as session:
         TenantPolicy.attach_group_tenant_policy(
@@ -85,7 +53,7 @@ def test_attach_tenant_policy(
 
 
 def test_unauthorized_resource_policy(
-    db, user, group, dataset, permissions
+    db, user, group, dataset_fixture, permissions
 ):
     with pytest.raises(ResourceUnauthorized):
         with db.scoped_session() as session:
@@ -94,11 +62,11 @@ def test_unauthorized_resource_policy(
                 username=user.username,
                 groups=[group.name],
                 permission_name='UNKNOWN_PERMISSION',
-                resource_uri=dataset.datasetUri,
+                resource_uri=dataset_fixture.datasetUri,
             )
 
 
-def test_create_dataset(db, env, user, group, dataset, permissions, tenant):
+def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
         set_context(RequestContext(db, user.username, [group.name]))
 
