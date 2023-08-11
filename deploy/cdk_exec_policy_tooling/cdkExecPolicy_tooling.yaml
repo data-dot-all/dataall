@@ -86,7 +86,7 @@ Resources:
           -
               Effect: Allow
               Action: 
-                  - 'SNS:GetTopicAttributes'
+                  - 'sns:GetTopicAttributes'
                   - 'sns:TagResource'
                   - 'sns:CreateTopic'
                   - 'sns:DeleteTopic'
@@ -199,12 +199,10 @@ Resources:
               Action:
                   - 'rds:AddTagsToResource'
                   - 'rds:DeleteDBSubnetGroup'
-                  - 'lambda:TagResource'
                   - 'rds:CreateDBCluster'
                   - 'rds:DescribeDBSubnetGroups'
                   - 'rds:CreateDBSubnetGroup'
                   - 'rds:RemoveTagsFromResource'
-                  - 'lambda:UntagResource'
               Resource:
                   - !Sub 'arn:aws:rds:*:${AwsAccountId}:subgrp:${EnvironmentResourcePrefix}-*'
           - 
@@ -543,6 +541,8 @@ Resources:
                   - 'ecr:UntagResource'
                   - 'cognito-idp:CreateUserPoolClient'
                   - 'ecr:SetRepositoryPolicy'
+                  - 'ecr:BatchGetImage'
+                  - 'ecr:GetDownloadUrlForLayer'
                   - 'cloudwatch:DescribeAlarms'
                   - 'ecr:GetRepositoryPolicy'
                   - 'codeartifact:PutDomainPermissionsPolicy'
@@ -555,6 +555,12 @@ Resources:
                   - 'codeartifact:DescribeRepository'
                   - 'codeartifact:AssociateExternalConnection'
                   - 'ec2:AllocateAddress'
+                  - 'ec2:DeleteNetworkAclEntry'
+                  - 'ec2:DeleteNetworkAcl'
+                  - 'ec2:ReplaceNetworkAclAssociation'
+                  - 'ec2:CreateNetworkAcl'
+                  - 'ec2:CreateNetworkAclEntry'
+                  - 'ec2:ReplaceNetworkAclEntry'
                   - 'cloudwatch:DeleteDashboards'
                   - 'codeartifact:DeleteRepository'
                   - 'codeartifact:GetRepositoryPermissionsPolicy'
@@ -580,6 +586,7 @@ Resources:
                   - 'cloudfront:CreateCloudFrontOriginAccessIdentity'
                   - 'cloudfront:DeleteCloudFrontOriginAccessIdentity'
                   - 'cloudfront:CreateDistribution'
+                  - 'cloudfront:UpdateDistribution'
                   - 'cloudfront:DeleteDistribution'
                   - 'cloudfront:GetCloudFrontOriginAccessIdentity'
                   - 'cloudfront:TagResource'
