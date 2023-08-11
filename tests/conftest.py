@@ -29,7 +29,9 @@ def ignore_module_tests_if_not_active():
     # while using "make test". pytest is using test directory. Here is why we add "tests" prefix for glob and
     # remove it for pytest
     prefix_to_remove = f"tests{os.sep}"
-    exclude_tests = [excluded.removeprefix(prefix_to_remove) for excluded in exclude_tests]
+
+    # migrate to remove prefix when runtime > 3.8
+    exclude_tests = [excluded[len(prefix_to_remove):] for excluded in exclude_tests]
     collect_ignore_glob.extend(exclude_tests)
 
 
