@@ -1,7 +1,5 @@
-import pytest
-
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from tests.api.client import client, app
+from tests.client import client
 from tests.api.conftest import *
 
 

@@ -7,7 +7,7 @@ from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from .client import *
+from tests.client import *
 
 
 @dataclass

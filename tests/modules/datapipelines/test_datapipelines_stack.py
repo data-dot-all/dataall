@@ -1,6 +1,3 @@
-import pytest
-
-from tests.api.client import *
 from tests.api.conftest import *
 
 from dataall.modules.datapipelines.db.models import DataPipeline

@@ -1,6 +1,3 @@
-from tests.api.conftest import *
-from tests.api.client import *
-
 class FeedTestHelper:
 
     def __init__(self, test_object_fixture, client_fixture):

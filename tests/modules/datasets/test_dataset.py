@@ -3,12 +3,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import dataall
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
-from tests.api.test_stack import update_stack_query
+from tests.core.stacks.test_stack import update_stack_query
 
 
 @pytest.fixture(scope='module', autouse=True)
