@@ -1,6 +1,6 @@
 import logging
 
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary import Glossary
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService

@@ -1,7 +1,7 @@
 from typing import Dict, Type
 
-from dataall.core.vote.db.vote import Vote
-from dataall.core.catalog.indexers.base_indexer import BaseIndexer
+from dataall.modules.vote.db.vote import Vote
+from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
 

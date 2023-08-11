@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.core.stacks.api.resolvers import update_stack, update_key_value_tags
 
 
 updateStack = gql.MutationField(

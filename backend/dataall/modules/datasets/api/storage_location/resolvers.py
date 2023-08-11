@@ -1,5 +1,5 @@
 from dataall.base.api.context import Context
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary import Glossary
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.feature_toggle_checker import is_feature_enabled
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService

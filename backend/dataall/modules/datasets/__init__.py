@@ -3,11 +3,14 @@ import logging
 from typing import List, Type, Set
 
 from dataall.base.loader import ModuleInterface, ImportMode
+from dataall.modules.catalog import CatalogApiModuleInterface
 from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
 from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.feed import FeedApiModuleInterface
+from dataall.modules.vote import VoteApiModuleInterface
 
 log = logging.getLogger(__name__)
 
@@ -23,14 +26,17 @@ class DatasetApiModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.dataset_sharing import SharingApiModuleInterface
 
-        return [SharingApiModuleInterface, DatasetBaseModuleInterface]
+        return [
+            SharingApiModuleInterface, DatasetBaseModuleInterface, CatalogApiModuleInterface,
+            FeedApiModuleInterface, VoteApiModuleInterface
+        ]
 
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.core.stacks.db.target_type import TargetType
-        from dataall.core.vote.api.resolvers import add_vote_type
-        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
-        from dataall.core.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.modules.vote.api.resolvers import add_vote_type
+        from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
+        from dataall.modules.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -138,7 +144,7 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        return [DatasetBaseModuleInterface]
+        return [DatasetBaseModuleInterface, CatalogApiModuleInterface]
 
     def __init__(self):
         from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer

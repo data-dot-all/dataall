@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-from dataall.core.catalog.indexers.catalog_indexer import CatalogIndexer
+from dataall.modules.catalog.indexers.catalog_indexer import CatalogIndexer
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 from dataall.base.utils.alarm_service import AlarmService

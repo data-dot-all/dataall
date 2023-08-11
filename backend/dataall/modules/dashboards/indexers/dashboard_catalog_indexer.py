@@ -1,6 +1,6 @@
 import logging
 
-from dataall.core.catalog.indexers.catalog_indexer import CatalogIndexer
+from dataall.modules.catalog.indexers.catalog_indexer import CatalogIndexer
 from dataall.modules.dashboards import Dashboard
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
