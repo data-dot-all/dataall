@@ -4,6 +4,7 @@ from typing import List, Type, Set
 
 from dataall.base.loader import ModuleInterface, ImportMode
 from dataall.modules.catalog import CatalogApiModuleInterface
+from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
 from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
@@ -106,7 +107,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        return [DatasetBaseModuleInterface]
+        return [DatasetBaseModuleInterface, DataSharingCdkModuleInterface]
 
     def __init__(self):
         import dataall.modules.datasets.cdk

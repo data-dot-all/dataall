@@ -58,7 +58,7 @@ ADD backend/cdkproxymain.py /cdkproxymain.py
 ENV config_location="/config.json"
 COPY config.json /config.json
 
-RUN mkdir -p dataall/base/cdkproxy/assets/glueprofilingjob/jars
+RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 
 WORKDIR /

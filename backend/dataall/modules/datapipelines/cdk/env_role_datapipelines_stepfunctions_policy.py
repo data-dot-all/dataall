@@ -1,6 +1,6 @@
 from aws_cdk import aws_iam as aws_iam
 
-from dataall.base.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 from dataall.modules.datapipelines.services.datapipelines_permissions import CREATE_PIPELINE
 
 

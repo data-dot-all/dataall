@@ -146,7 +146,8 @@ def _load_module(name: str):
     try:
         importlib.import_module(f"{_MODULE_PREFIX}.{name}")
         return True
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
+        log.error(f"Couldn't load module due to: {e}")
         return False
 
 
