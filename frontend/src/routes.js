@@ -19,18 +19,16 @@ const Login = Loadable(
 const NotFound = Loadable(lazy(() => import('./modules/Misc/views/NotFound')));
 
 const OrganizationList = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationList'))
+  lazy(() => import('./modules/Organizations/views/OrganizationList'))
 );
 const OrganizationView = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationView'))
+  lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
-  lazy(() =>
-    import('./modules/Misc/views/Organizations/OrganizationCreateForm')
-  )
+  lazy(() => import('./modules/Organizations/views/OrganizationCreateForm'))
 );
 const OrganizationEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Organizations/OrganizationEditForm'))
+  lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
   lazy(() => import('./modules/Misc/views/Environments/EnvironmentCreateForm'))
@@ -44,9 +42,7 @@ const EnvironmentView = Loadable(
 const EnvironmentList = Loadable(
   lazy(() => import('./modules/Misc/views/Environments/EnvironmentList'))
 );
-const Catalog = Loadable(
-  lazy(() => import('./modules/Misc/views/Catalog/Catalog'))
-);
+const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
   lazy(() => import('./modules/Datasets/views/DatasetList'))
@@ -64,20 +60,20 @@ const DatasetEditForm = Loadable(
   lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
-  lazy(() => import('./modules/Misc/views/Tables/TableView'))
+  lazy(() => import('./modules/Tables/views/TableView'))
 );
 const TableEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Tables/TableEditForm'))
+  lazy(() => import('./modules/Tables/views/TableEditForm'))
 );
 
 const FolderCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderCreateForm'))
+  lazy(() => import('./modules/Folders/views/FolderCreateForm'))
 );
 const FolderView = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderView'))
+  lazy(() => import('./modules/Folders/views/FolderView'))
 );
 const FolderEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Folders/FolderEditForm'))
+  lazy(() => import('./modules/Folders/views/FolderEditForm'))
 );
 
 const NotebookList = Loadable(
@@ -117,33 +113,33 @@ const DashboardSessionStarter = Loadable(
 );
 
 const PipelineList = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineList'))
+  lazy(() => import('./modules/Pipelines/views/PipelineList'))
 );
 const PipelineView = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineView'))
+  lazy(() => import('./modules/Pipelines/views/PipelineView'))
 );
 const PipelineCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineCreateForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineCreateForm'))
 );
 const PipelineEditForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Pipelines/PipelineEditForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineEditForm'))
 );
 
 const ShareList = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareList'))
+  lazy(() => import('./modules/Shares/views/ShareList'))
 );
 const ShareView = Loadable(
-  lazy(() => import('./modules/Misc/views/Shares/ShareView'))
+  lazy(() => import('./modules/Shares/views/ShareView'))
 );
 
 const WorksheetList = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetList'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetList'))
 );
 const WorksheetView = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetView'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetView'))
 );
 const WorksheetCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Worksheets/WorksheetCreateForm'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))
 );
 
 const GlossaryList = Loadable(
@@ -157,7 +153,7 @@ const GlossaryCreateForm = Loadable(
 );
 
 const AdministrationView = Loadable(
-  lazy(() => import('./modules/Misc/views/Administration/AdministrationView'))
+  lazy(() => import('./modules/Administration/views/AdministrationView'))
 );
 
 const routes = [
@@ -221,7 +217,7 @@ const routes = [
           }
         ]
       },
-      {
+      (config.modules.datasets.active || config.modules.dashboards.active) && {
         path: 'catalog',
         element: <Catalog />
       },
@@ -329,7 +325,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.datapipelines.active && {
         children: [
           {
             path: 'pipelines',
@@ -361,7 +357,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.worksheets.active && {
         children: [
           {
             path: 'worksheets',
