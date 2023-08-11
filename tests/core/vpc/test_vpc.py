@@ -3,20 +3,8 @@ import pytest
 from dataall.core.vpc.db.vpc_models import Vpc
 
 
-@pytest.fixture(scope='module')
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module')
-def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
 @pytest.fixture(scope='module', autouse=True)
-def vpc(env1, group, client) -> Vpc:
+def vpc(env_fixture, group, client) -> Vpc:
     response = client.query(
         """
         mutation createNetwork($input:NewVpcInput){
@@ -39,7 +27,7 @@ def vpc(env1, group, client) -> Vpc:
             'vpcId': 'vpc-12345678',
             'privateSubnetIds': ['sub1', 'sub2'],
             'publicSubnetIds': ['sub1', 'sub2'],
-            'environmentUri': env1.environmentUri,
+            'environmentUri': env_fixture.environmentUri,
         },
         username='alice',
         groups=[group.name],
@@ -49,7 +37,7 @@ def vpc(env1, group, client) -> Vpc:
     yield response.data.createNetwork
 
 
-def test_list_networks(client, env1, db, org1, user, group, vpc):
+def test_list_networks(client, env_fixture, db, user, group, vpc):
     response = client.query(
         """
         query ListEnvironmentNetworks($environmentUri: String!,$filter:VpcFilter){
@@ -65,7 +53,7 @@ def test_list_networks(client, env1, db, org1, user, group, vpc):
             }
         }
         """,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter=None,
         username='alice',
         groups=[group.name],
@@ -75,7 +63,7 @@ def test_list_networks(client, env1, db, org1, user, group, vpc):
     assert response.data.listEnvironmentNetworks.count == 2
 
 
-def test_list_networks_nopermissions(client, env1, db, org1, user, group2, vpc):
+def test_list_networks_nopermissions(client, env_fixture, db, user, group2, vpc):
     response = client.query(
         """
         query ListEnvironmentNetworks($environmentUri: String!,$filter:VpcFilter){
@@ -91,7 +79,7 @@ def test_list_networks_nopermissions(client, env1, db, org1, user, group2, vpc):
             }
         }
         """,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter=None,
         username='bob',
         groups=[group2.name],
@@ -99,7 +87,7 @@ def test_list_networks_nopermissions(client, env1, db, org1, user, group2, vpc):
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
+def test_get_network(client, env_fixture, db, user, group, vpc, module_mocker):
     response = client.query(
         """
         query getNetwork($vpcUri:String!){
@@ -115,7 +103,7 @@ def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
     assert response.data.getNetwork.vpcUri == vpc.vpcUri
 
 
-def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc):
+def test_delete_network(client, env_fixture, db, user, group, module_mocker, vpc):
     response = client.query(
         """
         mutation deleteNetwork($vpcUri:String!){
@@ -142,7 +130,7 @@ def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc)
             }
         }
         """,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter=None,
         username='alice',
         groups=[group.name],

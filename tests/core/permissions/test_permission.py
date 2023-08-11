@@ -36,61 +36,6 @@ def permissions(db, all_perms):
         session.commit()
 
 
-@pytest.fixture(scope='module')
-def tenant(db):
-    with db.scoped_session() as session:
-        tenant = Tenant.save_tenant(
-            session, name='dataall', description='Tenant dataall'
-        )
-        yield tenant
-
-
-@pytest.fixture(scope='module')
-def group(db):
-    with db.scoped_session() as session:
-        group = Group(
-            name='testadmins', label='testadmins', owner='alice'
-        )
-        session.add(group)
-        yield group
-
-
-@pytest.fixture(scope='module', autouse=True)
-def org(db, group):
-    with db.scoped_session() as session:
-        org = Organization(
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName=group.name,
-            userRoleInOrganization=OrganisationUserRole.Owner.value,
-        )
-        session.add(org)
-    yield org
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env(org, db, group):
-    with db.scoped_session() as session:
-        env = Environment(
-            organizationUri=org.organizationUri,
-            AwsAccountId='12345678901',
-            region='eu-west-1',
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName=group.name,
-            EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
-            CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
-        )
-        session.add(env)
-    yield env
-
-
 def test_attach_tenant_policy(db, group, tenant):
     permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
