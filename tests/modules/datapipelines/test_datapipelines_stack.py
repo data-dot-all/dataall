@@ -1,4 +1,4 @@
-from tests.api.conftest import *
+from tests.core.conftest import *
 
 from dataall.modules.datapipelines.db.models import DataPipeline
 

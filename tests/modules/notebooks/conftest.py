@@ -1,6 +1,6 @@
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from tests.client import client
-from tests.api.conftest import *
+from tests.core.conftest import *
 
 
 @pytest.fixture(scope='module')

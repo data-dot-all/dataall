@@ -3,7 +3,7 @@ import pytest
 
 from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
-from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
+from tests.core.stacks.test_keyvaluetag import update_key_value_tags, list_tags_query
 
 
 @pytest.fixture(scope='module')

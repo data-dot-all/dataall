@@ -1,5 +1,5 @@
 from tests.modules.feed.testhelper import FeedTestHelper
-from tests.api.conftest import *
+from tests.core.conftest import *
 from dataall.modules.worksheets.db.models import Worksheet
 
 

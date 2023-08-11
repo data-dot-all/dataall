@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock
 
-import pytest
-
-from tests.api.conftest import *
+from tests.core.conftest import *
 
 
 @pytest.fixture(scope='module', autouse=True)

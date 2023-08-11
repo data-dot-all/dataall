@@ -1,4 +1,4 @@
-from tests.api.conftest import *
+from tests.core.conftest import *
 
 
 @pytest.fixture(scope='module')

@@ -1,13 +1,11 @@
 import random
-import pytest
 
 from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from tests.api.conftest import *
+from tests.core.conftest import *
 
 from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocation
 

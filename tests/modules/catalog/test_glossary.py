@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from dataall.modules.catalog.db.glossary_models import GlossaryNode
-from tests.api.conftest import *
+from tests.core.conftest import *
 import pytest
 
 
