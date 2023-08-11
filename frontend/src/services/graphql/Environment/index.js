@@ -23,7 +23,6 @@ export * from './listEnvironmentNotMembers';
 export * from './listEnvironmentPermissions';
 export * from './listEnvironments';
 export * from './listInvitedGroups';
-export * from './listOrganizationEnvironments';
 export * from './removeConsumptionRole';
 export * from './removeGroup';
 export * from './removeMember';

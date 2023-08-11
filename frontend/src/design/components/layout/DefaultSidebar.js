@@ -27,7 +27,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const catalogSection = {
       title: 'Catalog',
       path: '/console/catalog',
-      icon: <VscBook size={15} />
+      icon: <VscBook size={15} />,
+      active: config.modules.datasets.active || config.modules.dashboards.active
     };
 
     const datasetsSection = {
@@ -51,7 +52,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const worksheetsSection = {
       title: 'Worksheets',
       path: '/console/worksheets',
-      icon: <AiOutlineExperiment size={15} />
+      icon: <AiOutlineExperiment size={15} />,
+      active: config.modules.worksheets.active
     };
 
     const mlStudioSection = {
@@ -78,7 +80,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const pipelinesSection = {
       title: 'Pipelines',
       path: '/console/pipelines',
-      icon: <BsIcons.BsGear size={15} />
+      icon: <BsIcons.BsGear size={15} />,
+      active: config.modules.datapipelines.active
     };
 
     const organizationsSection = {
