@@ -4,6 +4,8 @@ from dataall.core.environment.db.models import Environment, EnvironmentGroup, En
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permissions import ENVIRONMENT_ALL
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_models import KeyValueTag
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -52,6 +54,24 @@ def _create_env_params(session, env: Environment, params: dict[str, str]):
         session.commit()
 
 
+def _create_env_stack(session, env):
+    tags = KeyValueTag(
+        targetType='environment',
+        targetUri=env.environmentUri,
+        key='CREATOR',
+        value='customtagowner',
+    )
+    session.add(tags)
+
+    Stack.create_stack(
+        session=session,
+        environment_uri=env.environmentUri,
+        target_type='environment',
+        target_uri=env.environmentUri,
+        target_label=env.label,
+    )
+
+
 @pytest.fixture(scope='module', autouse=True)
 def env(db, environment_group):
     def factory(org, envname, owner, group, account, region='eu-west-1', desc='test', role='iam_role', parameters=None):
@@ -69,10 +89,12 @@ def env(db, environment_group):
                 EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{account}:role/{role}",
                 EnvironmentDefaultBucketName="defaultbucketname1234567789",
                 CDKRoleArn=f"arn:aws::{account}:role/EnvRole",
+                EnvironmentDefaultAthenaWorkGroup="DefaultWorkGroup"
             )
             session.add(env)
             session.commit()
             _create_env_params(session, env, parameters)
+            _create_env_stack(session, env)
 
         return env
 

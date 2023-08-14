@@ -19,7 +19,7 @@ def sgm_studio(db, env_fixture: Environment) -> SagemakerStudioUser:
             sagemakerStudioDomainID='domain',
             environmentUri=env_fixture.environmentUri,
             RoleArn=env_fixture.EnvironmentDefaultIAMRoleArn,
-            SamlAdminGroupName='admins',
+            SamlAdminGroupName=env_fixture.SamlGroupName,
         )
         session.add(sm_user)
     yield sm_user
