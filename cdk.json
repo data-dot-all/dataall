@@ -2,7 +2,7 @@
   "app": "python ./deploy/app.py",
   "context": {
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
-    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "us-east-1",
@@ -15,7 +15,6 @@
         "prod_sizing": false,
         "vpc_restricted_nacl": true,
         "enable_pivot_role_auto_create": true
-
       }
     ]
   }
