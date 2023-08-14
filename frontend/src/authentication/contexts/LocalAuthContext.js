@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useReducer } from 'react';
-import { SET_ERROR } from '../../globalErrors/errorReducer';
+import { SET_ERROR } from 'globalErrors';
 
 const anonymousUser = {
   id: 'someone@amazon.com',
