@@ -14,9 +14,9 @@ import { BsBookmark, BsTag } from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, useCardStyle } from '../../../../design';
+import { IconAvatar, useCardStyle } from 'design';
 
-const GlossaryListItem = (props) => {
+export const GlossaryListItem = (props) => {
   const { glossary } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -179,4 +179,3 @@ const GlossaryListItem = (props) => {
 GlossaryListItem.propTypes = {
   glossary: PropTypes.object.isRequired
 };
-export default GlossaryListItem;

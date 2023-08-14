@@ -143,13 +143,13 @@ const WorksheetCreateForm = Loadable(
 );
 
 const GlossaryList = Loadable(
-  lazy(() => import('./modules/Misc/views/Glossaries/GlossaryList'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryList'))
 );
 const GlossaryView = Loadable(
-  lazy(() => import('./modules/Misc/views/Glossaries/GlossaryView'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryView'))
 );
 const GlossaryCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Glossaries/GlossaryCreateForm'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryCreateForm'))
 );
 
 const AdministrationView = Loadable(

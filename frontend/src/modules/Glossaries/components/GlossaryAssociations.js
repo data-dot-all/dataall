@@ -22,16 +22,16 @@ import {
   Pager,
   RefreshTableMenu,
   Scrollbar
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   approveTermAssociation,
   dismissTermAssociation,
-  listGlossaryAssociations,
-  useClient
-} from '../../../../services';
+  listGlossaryAssociations
+} from '../services';
 
-const GlossaryAssociations = ({ glossary }) => {
+export const GlossaryAssociations = ({ glossary }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -277,4 +277,3 @@ GlossaryAssociations.propTypes = {
   glossary: PropTypes.object.isRequired
 };
 
-export default GlossaryAssociations;
