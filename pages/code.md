@@ -92,26 +92,39 @@ backend/
 ├── requirements.txt : requirements file used in Docker images for Lambdas and local containers of the backend
 ```
 Inside `dataall/` we have 3 main sub-packages:
-- base - base code 
+- base - base code
 - core - components that are needed to operate data.all
 - modules - components that can be configured or disabled
+
 ### base/ <a name="base"></a>
+
+```
+base/
+├── api/  : gql wrapper package. Contants and context definition.
+├── aws/  :  Classes that centralize AWS boto3 calls used across several modules (e.g. IAM).
+├── cdkproxy/ : CDK application that deploys stacks in environment accounts exposing a REST API.
+├── db/ : configuration, connection parameters and base utilities for the RDS Aurora database
+├── searchproxy/ : connection and search utils for the OpenSearch cluster
+├── utils/ : generic utilities
+├── __init__.py
+├── config.py : E
+├── context.py : C
+├── loader.py : G
+```
+
 
 ### core/ <a name="core"></a>
 
 Core features:
 ``
 activity
-catalog
 cognito_groups
 environment
-feed
 notifications
 organizations
 permissions
 stacks
 tasks
-vote
 vpc
 ``
 ### modules/ <a name="modules"></a>

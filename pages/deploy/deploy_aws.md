@@ -319,16 +319,19 @@ The following table contains a list of the available modules and their dependenc
 functionality. If you want to know more about each module, 
 check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
 
-| **Module**      | **depends on**                 | **Description**                                                                       |   
-|-----------------|--------------------------------|---------------------------------------------------------------------------------------|
-| datasets        | datasets_base, dataset_sharing | S3 Bucket and Glue database construct to store data in data.all                       |
-| dataset_sharing | None                           | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
-| datasets_base   | None                           | Shared code related to Datasets.                                                      |
-| worksheets      | None                           | Athena query editor integrated in data.all UI                                         |
-| datapipelines   | None                           | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
-| mlstudio        | None                           | SageMaker Studio users that can open a session directly from data.all UI              |
-| notebooks       | None                           | SageMaker Notebooks created and accessible from data.all UI                           |
-| dashboards      | None                           | Start a Quicksight session or import and share a Quicksight Dashboard.                |
+| **Module**      | **depends on**                                      | **Description**                                                                       |   
+|-----------------|-----------------------------------------------------|---------------------------------------------------------------------------------------|
+| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.         |
+| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
+| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
+| datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
+| dataset_sharing | datasets_base                                       | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
+| datasets_base   | None                                                | Shared code related to Datasets.                                                      |
+| worksheets      | None                                                | Athena query editor integrated in data.all UI                                         |
+| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
+| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
+| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
+| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
 
 
 ### Configure module features
@@ -352,9 +355,9 @@ Developing new features is relatively easy, check the [Developing modules](../de
 
 | **Feature**   | **Module** | **Description**                             |   
 |---------------|------------|---------------------------------------------|
-| file_uploads      | datasets   | Upload files in a Dataset in the Upload tab |
-| file_actions    | datasets   |                                             |
-| aws_actions    | datasets   |                                             |
+| file_uploads  | datasets   | Upload files in a Dataset in the Upload tab |
+| file_actions  | datasets   |                                             |
+| aws_actions   | datasets   |                                             |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
