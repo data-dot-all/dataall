@@ -8,7 +8,7 @@ from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
 
 @pytest.fixture(scope='module', autouse=True)
 def org2(org, user2, group2, tenant):
-    org2 = org('testorg2', user2.username, group2.name)
+    org2 = org('testorg2', group2, user2)
     yield org2
 
 

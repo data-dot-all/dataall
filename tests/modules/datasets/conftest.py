@@ -221,7 +221,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
     yield table1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='module')
 def folder_fixture(db, dataset_fixture):
     with db.scoped_session() as session:
         location = DatasetStorageLocation(

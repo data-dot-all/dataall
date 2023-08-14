@@ -2,22 +2,13 @@ import pytest
 
 
 @pytest.fixture(scope='module')
-def pipeline_env(env, org_fixture, user, group, tenant):
-    env1 = env(
-        org_fixture,
-        'cicd',
-        user.username,
-        group.name,
-        '111111111111',
-        'eu-west-1',
-        parameters={'pipelinesEnabled': 'True'}
-    )
-
-    yield env1
+def env_params(env, org_fixture, user, group, tenant):
+    # Overrides the env_fixture environment parameters
+    yield {'pipelinesEnabled': 'True'}
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline(client, tenant, group, pipeline_env):
+def pipeline(client, tenant, group, env_fixture):
     response = client.query(
         """
         mutation createDataPipeline ($input:NewDataPipelineInput){
@@ -36,7 +27,7 @@ def pipeline(client, tenant, group, pipeline_env):
             'label': 'my pipeline',
             'SamlGroupName': group.name,
             'tags': [group.name],
-            'environmentUri': pipeline_env.environmentUri,
+            'environmentUri': env_fixture.environmentUri,
             'devStrategy': 'trunk',
         },
         username='alice',

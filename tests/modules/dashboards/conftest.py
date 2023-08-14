@@ -3,6 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 
 
+@pytest.fixture(scope='module', autouse=True)
+def env_params():
+    # Overrides environment parameters for env_fixture
+    yield {"dashboardsEnabled": "true"}
+
+
 @pytest.fixture(scope='module')
 def dashboard(client, env_fixture, group, module_mocker):
     mock_client = MagicMock()

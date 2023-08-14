@@ -75,7 +75,7 @@ def test_update_pipeline(client, tenant, group, pipeline):
     assert response.data.updateDataPipeline.label == 'changed pipeline'
 
 
-def test_list_pipelines(client, pipeline_env, db, user, group, pipeline):
+def test_list_pipelines(client, env_fixture, db, user, group, pipeline):
     response = client.query(
         """
         query ListDataPipelines($filter:DataPipelineFilter){
@@ -101,7 +101,7 @@ def test_list_pipelines(client, pipeline_env, db, user, group, pipeline):
     assert len(response.data.listDataPipelines['nodes']) == 1
 
 
-def test_nopermissions_pipelines(client, pipeline_env, db, user, group, pipeline):
+def test_nopermissions_pipelines(client, env_fixture, db, user, group, pipeline):
     response = client.query(
         """
         query listDataPipelines($filter:DataPipelineFilter){
@@ -119,7 +119,7 @@ def test_nopermissions_pipelines(client, pipeline_env, db, user, group, pipeline
     assert len(response.data.listDataPipelines['nodes']) == 0
 
 
-def test_get_pipeline(client, pipeline_env, db, user, group, pipeline, module_mocker):
+def test_get_pipeline(client, env_fixture, db, user, group, pipeline, module_mocker):
     module_mocker.patch(
         'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_creds_from_aws',
         return_value=True,
@@ -166,7 +166,7 @@ def test_get_pipeline(client, pipeline_env, db, user, group, pipeline, module_mo
     assert response.data.browseDataPipelineRepository
 
 
-def test_delete_pipelines(client, pipeline_env, db, user, group, module_mocker, pipeline):
+def test_delete_pipelines(client, env_fixture, db, user, group, pipeline):
     response = client.query(
         """
         mutation deleteDataPipeline($DataPipelineUri:String!,$deleteFromAWS:Boolean){

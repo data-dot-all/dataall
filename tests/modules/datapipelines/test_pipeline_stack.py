@@ -11,14 +11,14 @@ from dataall.modules.datapipelines.db.datapipelines_repository import Datapipeli
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline_db(db, pipeline_env: Environment, group) -> DataPipeline:
+def pipeline_db(db, env_fixture: Environment, group) -> DataPipeline:
     with db.scoped_session() as session:
         pipeline = DataPipeline(
             label='thistable',
             owner='me',
-            AwsAccountId=pipeline_env.AwsAccountId,
-            region=pipeline_env.region,
-            environmentUri=pipeline_env.environmentUri,
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
+            environmentUri=env_fixture.environmentUri,
             repo='pipeline',
             SamlGroupName=group.name,
             devStrategy='trunk'
@@ -28,18 +28,18 @@ def pipeline_db(db, pipeline_env: Environment, group) -> DataPipeline:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pip_envs(db, pipeline_env: Environment, pipeline_db: DataPipeline) -> DataPipelineEnvironment:
+def pip_envs(db, env_fixture: Environment, pipeline_db: DataPipeline) -> DataPipelineEnvironment:
     with db.scoped_session() as session:
         pipeline_env2 = DataPipelineEnvironment(
             owner='me',
-            label=f"{pipeline_db.label}-{pipeline_env.label}",
-            environmentUri=pipeline_env.environmentUri,
-            environmentLabel=pipeline_env.label,
+            label=f"{pipeline_db.label}-{env_fixture.label}",
+            environmentUri=env_fixture.environmentUri,
+            environmentLabel=env_fixture.label,
             pipelineUri=pipeline_db.DataPipelineUri,
             pipelineLabel=pipeline_db.label,
-            envPipelineUri=f"{pipeline_db.DataPipelineUri}{pipeline_env.environmentUri}",
-            AwsAccountId=pipeline_env.AwsAccountId,
-            region=pipeline_env.region,
+            envPipelineUri=f"{pipeline_db.DataPipelineUri}{env_fixture.environmentUri}",
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             stage='dev',
             order=1,
             samlGroupName='admins'
@@ -51,7 +51,7 @@ def pip_envs(db, pipeline_env: Environment, pipeline_db: DataPipeline) -> DataPi
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, pipeline_db, pipeline_env, pip_envs, org_fixture):
+def patch_methods(mocker, db, pipeline_db, env_fixture, pip_envs, org_fixture):
     mocker.patch(
         'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack.get_engine',
         return_value=db,
@@ -66,7 +66,7 @@ def patch_methods(mocker, db, pipeline_db, pipeline_env, pip_envs, org_fixture):
     )
     mocker.patch(
         'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack.get_pipeline_cicd_environment',
-        return_value=pipeline_env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.modules.datapipelines.cdk.datapipelines_pipeline.PipelineStack.get_pipeline_environments',
@@ -89,7 +89,7 @@ def patch_methods(mocker, db, pipeline_db, pipeline_env, pip_envs, org_fixture):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
-        return_value=pipeline_env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',

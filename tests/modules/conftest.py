@@ -1,5 +1,9 @@
 import pytest
-from  tests.core.conftest import *
+
+from dataall.core.environment.db.models import Environment, EnvironmentGroup, EnvironmentParameter
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permissions import ENVIRONMENT_ALL
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -13,13 +17,12 @@ def patch_es(module_mocker):
 @pytest.fixture(scope="module")
 def environment_group(db):
     def factory(
-        environment: Environment,
-        group: Group,
+        environment: Environment, group: str
     ) -> EnvironmentGroup:
         with db.scoped_session() as session:
             env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
-                groupUri=group.name,
+                groupUri=group,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
                 environmentIAMRoleName=environment.EnvironmentDefaultIAMRoleName,
                 environmentAthenaWorkGroup="workgroup",
@@ -29,7 +32,7 @@ def environment_group(db):
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 resource_uri=environment.environmentUri,
-                group=group.name,
+                group=group,
                 permissions=ENVIRONMENT_ALL,
                 resource_type=Environment.__name__,
             )
@@ -39,11 +42,72 @@ def environment_group(db):
     yield factory
 
 
-@pytest.fixture(scope='module', autouse=True)
-def org_fixture(org, user, group, tenant):
-    yield org('testorg', user.username, group.name)
+def _create_env_params(session, env: Environment, params: dict[str, str]):
+    if params:
+        for key, value in params.items():
+            param = EnvironmentParameter(
+                env_uri=env.environmentUri, key=key, value=value,
+            )
+            session.add(param)
+        session.commit()
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env_fixture(env, org_fixture, user, group, tenant, module_mocker, patch_stack_tasks):
-    yield env(org_fixture, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
+def env(db, environment_group):
+    def factory(org, envname, owner, group, account, region='eu-west-1', desc='test', role='iam_role', parameters=None):
+        with db.scoped_session() as session:
+            env = Environment(
+                organizationUri=org.organizationUri,
+                AwsAccountId=account,
+                region=region,
+                label=envname,
+                owner=owner,
+                tags=[],
+                description=desc,
+                SamlGroupName=group,
+                EnvironmentDefaultIAMRoleName=role,
+                EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{account}:role/{role}",
+                CDKRoleArn=f"arn:aws::{account}:role/EnvRole",
+            )
+            session.add(env)
+            session.commit()
+            _create_env_params(session, env, parameters)
+
+        return env
+
+    yield factory
+
+
+@pytest.fixture(scope='module', autouse=True)
+def org(db):
+    def factory(name, group, user):
+        with db.scoped_session() as session:
+            org = Organization(
+                label=name,
+                name=name,
+                description=name,
+                owner=user.username,
+                SamlGroupName=group.name,
+            )
+            session.add(org)
+            session.commit()
+            return org
+    yield factory
+
+
+@pytest.fixture(scope='module')
+def org_fixture(org, group, user):
+    return org('testorg', group, user)
+
+
+@pytest.fixture(scope='module')
+def env_params():
+    # Can be overridden in the submodules
+    return {}
+
+
+@pytest.fixture(scope='module')
+def env_fixture(env, environment_group, org_fixture, user, group, tenant, env_params):
+    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', parameters=env_params)
+    environment_group(env1, group.name)
+    yield env1

@@ -22,11 +22,9 @@ def patch_aws(module_mocker):
     )
 
 
-@pytest.fixture(scope='module')
-def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
-    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1',
-               parameters={'notebooksEnabled': 'True'})
-    yield env1
+@pytest.fixture(scope='module', autouse=True)
+def env_params():
+    yield {'notebooksEnabled': 'True'}
 
 
 @pytest.fixture(scope='module')
