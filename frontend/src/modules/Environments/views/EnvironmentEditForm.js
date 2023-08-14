@@ -28,13 +28,10 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  getEnvironment,
-  updateEnvironment,
-  useClient
-} from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { getEnvironment, updateEnvironment } from '../services';
 
 const EnvironmentEditForm = (props) => {
   const dispatch = useDispatch();

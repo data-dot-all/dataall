@@ -9,9 +9,9 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Label } from '../../../../design';
+import { Label } from 'design';
 
-const EnvironmentFeatures = (props) => {
+export const EnvironmentFeatures = (props) => {
   const { environment, ...other } = props;
 
   return (
@@ -121,5 +121,3 @@ const EnvironmentFeatures = (props) => {
 EnvironmentFeatures.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentFeatures;

@@ -37,20 +37,20 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
   listAllEnvironmentConsumptionRoles,
   listAllEnvironmentGroups,
   removeConsumptionRoleFromEnvironment,
-  removeGroupFromEnvironment,
-  useClient
-} from '../../../../services';
-import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
-import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
-import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';
+  removeGroupFromEnvironment
+} from '../services';
+import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
+import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
+import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
@@ -228,7 +228,7 @@ TeamRow.propTypes = {
   fetchItems: PropTypes.any
 };
 
-const EnvironmentTeams = ({ environment }) => {
+export const EnvironmentTeams = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -605,5 +605,3 @@ const EnvironmentTeams = ({ environment }) => {
 EnvironmentTeams.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentTeams;

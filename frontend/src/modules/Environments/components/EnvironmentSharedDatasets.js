@@ -23,11 +23,11 @@ import {
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { searchEnvironmentDataItems, useClient } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { searchEnvironmentDataItems, useClient } from 'services';
 
-const EnvironmentOwnedDatasets = ({ environment }) => {
+export const EnvironmentSharedDatasets = ({ environment }) => {
   const client = useClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -176,8 +176,6 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
   );
 };
 
-EnvironmentOwnedDatasets.propTypes = {
+EnvironmentSharedDatasets.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentOwnedDatasets;

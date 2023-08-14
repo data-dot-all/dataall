@@ -25,14 +25,11 @@ import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  disableDataSubscriptions,
-  enableDataSubscriptions,
-  useClient
-} from '../../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { disableDataSubscriptions, enableDataSubscriptions } from '../services';
 
-const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
+export const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
@@ -327,5 +324,3 @@ EnvironmentSubscriptions.propTypes = {
   environment: PropTypes.object.isRequired,
   fetchItem: PropTypes.func.isRequired
 };
-
-export default EnvironmentSubscriptions;

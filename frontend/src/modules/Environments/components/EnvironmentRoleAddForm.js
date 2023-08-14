@@ -14,14 +14,11 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { Defaults } from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  addConsumptionRoleToEnvironment,
-  listEnvironmentGroups,
-  useClient
-} from '../../../../services';
-const EnvironmentRoleAddForm = (props) => {
+import { Defaults } from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listEnvironmentGroups, useClient } from 'services';
+import { addConsumptionRoleToEnvironment } from '../services';
+export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -234,5 +231,3 @@ EnvironmentRoleAddForm.propTypes = {
   open: PropTypes.bool.isRequired,
   reloadRoles: PropTypes.func
 };
-
-export default EnvironmentRoleAddForm;

@@ -18,14 +18,14 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import {
   listEnvironmentGroupInvitationPermissions,
-  updateGroupEnvironmentPermissions,
-  useClient
-} from '../../../../services';
+  updateGroupEnvironmentPermissions
+} from '../services';
 
-const EnvironmentTeamInviteEditForm = (props) => {
+export const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -235,5 +235,3 @@ EnvironmentTeamInviteEditForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default EnvironmentTeamInviteEditForm;

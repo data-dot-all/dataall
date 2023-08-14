@@ -22,15 +22,14 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, listCognitoGroups } from 'services';
 import {
   inviteGroupOnEnvironment,
-  listCognitoGroups,
-  listEnvironmentGroupInvitationPermissions,
-  useClient
-} from '../../../../services';
+  listEnvironmentGroupInvitationPermissions
+} from '../services';
 
-const EnvironmentTeamInviteForm = (props) => {
+export const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -338,5 +337,3 @@ EnvironmentTeamInviteForm.propTypes = {
   reloadTeams: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
-
-export default EnvironmentTeamInviteForm;

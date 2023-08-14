@@ -1,3 +1,5 @@
+import { DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -5,6 +7,7 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   InputAdornment,
   Table,
   TableBody,
@@ -14,6 +17,7 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaNetworkWired } from 'react-icons/fa';
@@ -21,14 +25,17 @@ import {
   Defaults,
   Label,
   Pager,
+  PlusIcon,
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listEnvironmentNetworks, useClient } from '../../../../services';
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { deleteNetwork, listEnvironmentNetworks } from '../services';
+import { NetworkCreateModal } from './NetworkCreateModal';
 
-function VpcRow({ vpc }) {
+function VpcRow({ vpc, deleteVpcNetwork }) {
   return (
     <TableRow hover>
       <TableCell>
@@ -47,7 +54,6 @@ function VpcRow({ vpc }) {
               <Chip
                 size="small"
                 sx={{ mr: 0.5 }}
-                color="primary"
                 key={subnet}
                 label={subnet}
                 variant="outlined"
@@ -68,7 +74,6 @@ function VpcRow({ vpc }) {
               <Chip
                 size="small"
                 sx={{ mr: 0.5 }}
-                color="primary"
                 key={subnet}
                 label={subnet}
                 variant="outlined"
@@ -77,20 +82,39 @@ function VpcRow({ vpc }) {
           </Box>
         )}
       </TableCell>
+      <TableCell>
+        <IconButton
+          onClick={() => {
+            deleteVpcNetwork(vpc.vpcUri);
+          }}
+        >
+          <DeleteOutlined fontSize="small" />
+        </IconButton>
+      </TableCell>
     </TableRow>
   );
 }
 
 VpcRow.propTypes = {
-  vpc: PropTypes.any
+  vpc: PropTypes.any,
+  deleteVpcNetwork: PropTypes.func
 };
-const EnvironmentNetworks = ({ environment }) => {
+export const EnvironmentNetworks = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
+  const [isNetworkCreateOpen, setIsNetworkCreateOpen] = useState(false);
+  const handleNetworkCreateModalOpen = () => {
+    setIsNetworkCreateOpen(true);
+  };
+
+  const handleNetworkCreateModalClose = () => {
+    setIsNetworkCreateOpen(false);
+  };
 
   const fetchItems = useCallback(async () => {
     try {
@@ -110,7 +134,25 @@ const EnvironmentNetworks = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  }, [client, dispatch, environment, filter]);
+  }, [client, dispatch, filter, environment.environmentUri]);
+
+  const deleteVpcNetwork = async (vpcUri) => {
+    const response = await client.mutate(deleteNetwork({ vpcUri }));
+    if (!response.errors) {
+      enqueueSnackbar('Network deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   useEffect(() => {
     if (client) {
@@ -118,7 +160,7 @@ const EnvironmentNetworks = ({ environment }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, dispatch, fetchItems]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -185,7 +227,17 @@ const EnvironmentNetworks = ({ environment }) => {
               />
             </Box>
           </Grid>
-          <Grid item md={2} sm={6} xs={12} />
+          <Grid item md={2} sm={6} xs={12}>
+            <LoadingButton
+              color="primary"
+              onClick={handleNetworkCreateModalOpen}
+              startIcon={<PlusIcon fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+            >
+              Add
+            </LoadingButton>
+          </Grid>
         </Box>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>
@@ -193,9 +245,10 @@ const EnvironmentNetworks = ({ environment }) => {
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
-                  <TableCell>Vpc ID</TableCell>
+                  <TableCell>VPC</TableCell>
                   <TableCell>Private Subnets</TableCell>
                   <TableCell>Public Subnets</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
@@ -208,6 +261,7 @@ const EnvironmentNetworks = ({ environment }) => {
                         vpc={vpc}
                         environment={environment}
                         fetchItems={fetchItems}
+                        deleteVpcNetwork={deleteVpcNetwork}
                       />
                     ))
                   ) : (
@@ -229,6 +283,15 @@ const EnvironmentNetworks = ({ environment }) => {
           </Box>
         </Scrollbar>
       </Card>
+      {isNetworkCreateOpen && (
+        <NetworkCreateModal
+          environment={environment}
+          onApply={handleNetworkCreateModalClose}
+          onClose={handleNetworkCreateModalClose}
+          reloadNetworks={fetchItems}
+          open={isNetworkCreateOpen}
+        />
+      )}
     </Box>
   );
 };
@@ -236,5 +299,3 @@ const EnvironmentNetworks = ({ environment }) => {
 EnvironmentNetworks.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentNetworks;

@@ -34,13 +34,16 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { archiveEnvironment, getEnvironment, useClient } from 'services';
+import { useClient } from 'services';
+import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
-import EnvironmentNetworks from '../Networks/NetworkList';
-import EnvironmentDatasets from './EnvironmentDatasets';
-import EnvironmentOverview from './EnvironmentOverview';
-import EnvironmentSubscriptions from './EnvironmentSubscriptions';
-import EnvironmentTeams from './EnvironmentTeams';
+import {
+  EnvironmentDatasets,
+  EnvironmentOverview,
+  EnvironmentSubscriptions,
+  EnvironmentTeams,
+  EnvironmentNetworks
+} from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

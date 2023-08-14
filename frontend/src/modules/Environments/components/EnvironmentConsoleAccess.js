@@ -7,7 +7,7 @@ import {
   Typography
 } from '@mui/material';
 
-const EnvironmentConsoleAccess = ({ environment }) => {
+export const EnvironmentConsoleAccess = ({ environment }) => {
   return (
     <Card>
       <CardHeader title="AWS Information" />
@@ -43,5 +43,3 @@ const EnvironmentConsoleAccess = ({ environment }) => {
 EnvironmentConsoleAccess.propTypes = {
   environment: PropTypes.object.isRequired
 };
-
-export default EnvironmentConsoleAccess;

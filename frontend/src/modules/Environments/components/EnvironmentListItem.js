@@ -15,14 +15,9 @@ import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  IconAvatar,
-  Label,
-  StackStatus,
-  useCardStyle
-} from '../../../../design';
+import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 
-const EnvironmentListItem = (props) => {
+export const EnvironmentListItem = (props) => {
   const { environment } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -266,4 +261,3 @@ const EnvironmentListItem = (props) => {
 EnvironmentListItem.propTypes = {
   environment: PropTypes.object.isRequired
 };
-export default EnvironmentListItem;

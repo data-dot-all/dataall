@@ -117,19 +117,6 @@ class Vpc:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.GET_NETWORK)
-    def get_network(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> models.Vpc:
-        return Vpc.get_vpc_by_uri(session, uri)
-
-    @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_perm(permissions.DELETE_NETWORK)
     def delete(session, username, groups, uri, data=None, check_perm=None) -> bool:
         vpc = Vpc.get_vpc_by_uri(session, uri)
