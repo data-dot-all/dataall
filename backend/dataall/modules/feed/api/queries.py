@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.feed.api.resolvers import get_feed
 
 
 getFeed = gql.QueryField(

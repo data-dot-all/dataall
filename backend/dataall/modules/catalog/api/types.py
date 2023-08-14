@@ -1,5 +1,11 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.catalog.api.enums import GlossaryRole
+from dataall.modules.catalog.api.resolvers import (
+    resolve_glossary_node, resolve_user_role, resolve_link, resolve_term_glossary, resolve_stats,
+    node_tree, list_node_children, resolve_categories, resolve_term_associations, resolve_terms, target_union_resolver,
+    resolve_link_node, resolve_link_target,
+
+)
 from dataall.modules.catalog.api.registry import GlossaryRegistry
 
 GlossaryNode = gql.Union(
