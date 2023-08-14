@@ -29,7 +29,7 @@ def dataset(db, env_fixture: Environment) -> Dataset:
             confidentiality='C1',
             businessOwnerEmail='jeff',
             businessOwnerDelegationEmails=['andy'],
-            SamlAdminGroupName='admins',
+            SamlAdminGroupName=env_fixture.SamlGroupName,
             GlueCrawlerName='dhCrawler',
         )
         session.add(dataset)
@@ -37,7 +37,7 @@ def dataset(db, env_fixture: Environment) -> Dataset:
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, dataset, env_fixture, org):
+def patch_methods(mocker, db, dataset, env_fixture, org_fixture):
     mocker.patch('dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_engine', return_value=db)
     mocker.patch(
         'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
@@ -66,7 +66,7 @@ def patch_methods(mocker, db, dataset, env_fixture, org):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
-        return_value=org,
+        return_value=org_fixture,
     )
 
 

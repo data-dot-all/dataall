@@ -1,22 +1,7 @@
 import pytest
 
 
-@pytest.fixture(scope='module')
-def other_env(env, org_fixture, user, group):
-    env2 = env(
-        org_fixture,
-        'dev',
-        user.username,
-        group.name,
-        '222222222222',
-        'eu-west-1',
-        parameters={'pipelinesEnabled': 'True'}
-    )
-
-    yield env2
-
-
-def test_create_pipeline_environment(client, tenant, group, other_env, pipeline):
+def test_create_pipeline_environment(client, tenant, group, env_fixture, pipeline):
     response = client.query(
         """
         mutation createDataPipelineEnvironment($input: NewDataPipelineEnvironmentInput) {
@@ -37,8 +22,8 @@ def test_create_pipeline_environment(client, tenant, group, other_env, pipeline)
             'stage': 'dev',
             'order': 1,
             'pipelineUri': pipeline.DataPipelineUri,
-            'environmentUri': other_env.environmentUri,
-            'environmentLabel': other_env.label,
+            'environmentUri': env_fixture.environmentUri,
+            'environmentLabel': env_fixture.label,
             'samlGroupName': group.name
         },
         username='alice',
@@ -46,7 +31,7 @@ def test_create_pipeline_environment(client, tenant, group, other_env, pipeline)
     )
     assert response.data.createDataPipelineEnvironment.envPipelineUri
     assert response.data.createDataPipelineEnvironment.stage == 'dev'
-    assert response.data.createDataPipelineEnvironment.AwsAccountId == other_env.AwsAccountId
+    assert response.data.createDataPipelineEnvironment.AwsAccountId == env_fixture.AwsAccountId
 
 
 def test_update_pipeline(client, tenant, group, pipeline):

@@ -67,6 +67,7 @@ def env(db, environment_group):
                 SamlGroupName=group,
                 EnvironmentDefaultIAMRoleName=role,
                 EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{account}:role/{role}",
+                EnvironmentDefaultBucketName="defaultbucketname1234567789",
                 CDKRoleArn=f"arn:aws::{account}:role/EnvRole",
             )
             session.add(env)

@@ -92,11 +92,11 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     )
 
 
-def test_resources_created(env, org):
+def test_resources_created(env_fixture, org_fixture):
     app = App()
 
     # Create the Stack
-    stack = EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)
 
     # Prepare the stack for assertions.
     template = Template.from_stack(stack)
@@ -106,7 +106,7 @@ def test_resources_created(env, org):
     template.resource_properties_count_is(
         type="AWS::S3::Bucket",
         props={
-            'BucketName': env.EnvironmentDefaultBucketName,
+            'BucketName': env_fixture.EnvironmentDefaultBucketName,
             'BucketEncryption': {
                 'ServerSideEncryptionConfiguration': [{
                     'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}
@@ -121,10 +121,10 @@ def test_resources_created(env, org):
             'Tags': [
                 {'Key': 'CREATOR', 'Value': 'customtagowner'},
                 {'Key': 'dataall', 'Value': 'true'},
-                {'Key': 'Environment', 'Value': f'env_{env.environmentUri}'},
-                {'Key': 'Organization', 'Value': f'org_{org.organizationUri}'},
-                {'Key': 'Target', 'Value': f'Environment_{env.environmentUri}'},
-                {'Key': 'Team', 'Value': env.SamlGroupName}],
+                {'Key': 'Environment', 'Value': f'env_{env_fixture.environmentUri}'},
+                {'Key': 'Organization', 'Value': f'org_{org_fixture.organizationUri}'},
+                {'Key': 'Target', 'Value': f'Environment_{env_fixture.environmentUri}'},
+                {'Key': 'Team', 'Value': env_fixture.SamlGroupName}],
         },
         count=1
     )
