@@ -83,7 +83,7 @@ of our repository. Open it, you should be seen something like:
   "app": "python ./deploy/app.py",
   "context": {
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
-    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
@@ -166,7 +166,7 @@ and find 2 examples of cdk.json files.
   "app": "python ./deploy/app.py",
   "context": {
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
-    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "DeploymentEnvironments": [
@@ -190,7 +190,7 @@ deploy to 2 deployments accounts.
   "app": "python ./deploy/app.py",
   "context": {
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
-    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_vpc_id": "vpc-1234567890EXAMPLE",
