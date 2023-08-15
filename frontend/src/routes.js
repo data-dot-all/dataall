@@ -14,7 +14,9 @@ const Loadable = (Component) => (props) =>
 const Login = Loadable(lazy(() => import('./authentication/views/Login')));
 
 // Error pages
-const NotFound = Loadable(lazy(() => import('./modules/Misc/views/NotFound')));
+const NotFound = Loadable(
+  lazy(() => import('./modules/NotFound/views/NotFound'))
+);
 
 const OrganizationList = Loadable(
   lazy(() => import('./modules/Organizations/views/OrganizationList'))
