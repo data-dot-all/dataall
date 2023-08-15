@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-properties */
-import config from '../generated/config.json';
+import config from '../../generated/config.json';
 
 const ModuleNames = {
   CATALOG: 'catalog',
@@ -10,20 +10,26 @@ const ModuleNames = {
   NOTEBOOKS: 'notebooks',
   MLSTUDIO: 'mlstudio',
   PIPELINES: 'datapipelines',
-  DASHBOARDS: 'dashboards',
+  DASHBOARDS: 'dashboards'
 };
 
 function isModuleEnabled(module) {
-
   if (module === ModuleNames.CATALOG) {
-    return (getModuleActiveStatus(ModuleNames.DATASETS) || getModuleActiveStatus(ModuleNames.DASHBOARDS));
+    return (
+      getModuleActiveStatus(ModuleNames.DATASETS) ||
+      getModuleActiveStatus(ModuleNames.DASHBOARDS)
+    );
   }
 
   return getModuleActiveStatus(module);
 }
 
 function getModuleActiveStatus(moduleKey) {
-  if (config.modules && config.modules[moduleKey] && config.modules[moduleKey].active !== undefined) {
+  if (
+    config.modules &&
+    config.modules[moduleKey] &&
+    config.modules[moduleKey].active !== undefined
+  ) {
     return config.modules[moduleKey].active;
   }
   return false;
