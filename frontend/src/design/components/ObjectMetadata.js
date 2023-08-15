@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { StackStatus } from '.';
-import { dayjs } from '../../utils';
+import { dayjs } from 'utils';
 import { Label } from './Label';
 import { TextAvatar } from './TextAvatar';
 

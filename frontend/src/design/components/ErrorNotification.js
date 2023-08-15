@@ -2,7 +2,7 @@ import { CancelRounded } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useEffect } from 'react';
-import { HIDE_ERROR, useDispatch, useSelector } from '../../globalErrors';
+import { HIDE_ERROR, useDispatch, useSelector } from 'globalErrors';
 
 export const ErrorNotification = () => {
   const dispatch = useDispatch();

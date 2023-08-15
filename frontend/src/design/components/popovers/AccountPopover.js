@@ -12,8 +12,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../authentication';
-import { useGroups } from '../../../services';
+import { useAuth } from 'authentication';
+import { useGroups } from 'services';
 import { CogIcon } from '../../icons';
 import { TextAvatar } from '../TextAvatar';
 

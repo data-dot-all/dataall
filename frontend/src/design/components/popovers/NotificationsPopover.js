@@ -20,7 +20,7 @@ import {
   listNotifications,
   markNotificationAsRead,
   useClient
-} from '../../../services';
+} from 'services';
 import { BellIcon } from '../../icons';
 import { Defaults } from '../defaults';
 
