@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { AuthGuard, GuestGuard } from './authentication';
-import { DefaultLayout, LoadingScreen } from './design';
-import config from './generated/config.json';
+import { AuthGuard, GuestGuard } from 'authentication';
+import { DefaultLayout, LoadingScreen } from 'design';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const Loadable = (Component) => (props) =>
   (
@@ -217,11 +217,11 @@ const routes = [
           }
         ]
       },
-      (config.modules.datasets.active || config.modules.dashboards.active) && {
+      isModuleEnabled(ModuleNames.CATALOG) && {
         path: 'catalog',
         element: <Catalog />
       },
-      config.modules.datasets.active && {
+      isModuleEnabled(ModuleNames.DATASETS) && {
         children: [
           {
             path: 'datasets',
@@ -269,7 +269,7 @@ const routes = [
           }
         ]
       },
-      config.modules.mlstudio.active && {
+      isModuleEnabled(ModuleNames.MLSTUDIO) && {
         children: [
           {
             path: 'mlstudio',
@@ -285,7 +285,7 @@ const routes = [
           }
         ]
       },
-      config.modules.notebooks.active && {
+      isModuleEnabled(ModuleNames.NOTEBOOKS) && {
         children: [
           {
             path: 'notebooks',
@@ -301,7 +301,7 @@ const routes = [
           }
         ]
       },
-      config.modules.dashboards.active && {
+      isModuleEnabled(ModuleNames.DASHBOARDS) && {
         children: [
           {
             path: 'dashboards',
@@ -325,7 +325,7 @@ const routes = [
           }
         ]
       },
-      config.modules.datapipelines.active && {
+      isModuleEnabled(ModuleNames.PIPELINES) && {
         children: [
           {
             path: 'pipelines',
@@ -357,7 +357,7 @@ const routes = [
           }
         ]
       },
-      config.modules.worksheets.active && {
+      isModuleEnabled(ModuleNames.WORKSHEETS) && {
         children: [
           {
             path: 'worksheets',
