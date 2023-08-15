@@ -416,4 +416,3 @@ GlossaryManagement.propTypes = {
   isAdmin: PropTypes.bool.isRequired,
   client: PropTypes.func.isRequired
 };
-

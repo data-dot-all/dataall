@@ -199,4 +199,3 @@ GlossaryCreateTermForm.propTypes = {
   onClose: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired
 };
-

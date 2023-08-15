@@ -17,12 +17,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  Defaults,
-  Pager,
-  RefreshTableMenu,
-  Scrollbar
-} from 'design';
+import { Defaults, Pager, RefreshTableMenu, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import {
@@ -276,4 +271,3 @@ export const GlossaryAssociations = ({ glossary }) => {
 GlossaryAssociations.propTypes = {
   glossary: PropTypes.object.isRequired
 };
-
