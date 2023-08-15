@@ -17,7 +17,7 @@ import { MdShowChart } from 'react-icons/md';
 import { SiJupyter } from 'react-icons/si';
 import { VscBook } from 'react-icons/vsc';
 import { useLocation } from 'react-router-dom';
-import config from '../../../generated/config.json';
+import { ModuleNames, isModuleEnabled } from 'utils';
 import { useSettings } from '../../hooks';
 import { NavSection } from '../NavSection';
 import { Scrollbar } from '../Scrollbar';
@@ -28,7 +28,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       title: 'Catalog',
       path: '/console/catalog',
       icon: <VscBook size={15} />,
-      active: config.modules.datasets.active || config.modules.dashboards.active
+      active: isModuleEnabled(ModuleNames.CATALOG)
     };
 
     const datasetsSection = {
@@ -53,35 +53,35 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       title: 'Worksheets',
       path: '/console/worksheets',
       icon: <AiOutlineExperiment size={15} />,
-      active: config.modules.worksheets.active
+      active: isModuleEnabled(ModuleNames.WORKSHEETS)
     };
 
     const mlStudioSection = {
       title: 'ML Studio',
       path: '/console/mlstudio',
       icon: <FiCodesandbox size={15} />,
-      active: config.modules.mlstudio.active
+      active: isModuleEnabled(ModuleNames.MLSTUDIO)
     };
 
     const dashboardsSection = {
       title: 'Dashboards',
       path: '/console/dashboards',
       icon: <MdShowChart size={15} />,
-      active: config.modules.dashboards.active
+      active: isModuleEnabled(ModuleNames.DASHBOARDS)
     };
 
     const notebooksSection = {
       title: 'Notebooks',
       path: '/console/notebooks',
       icon: <SiJupyter size={15} />,
-      active: config.modules.notebooks.active
+      active: isModuleEnabled(ModuleNames.NOTEBOOKS)
     };
 
     const pipelinesSection = {
       title: 'Pipelines',
       path: '/console/pipelines',
       icon: <BsIcons.BsGear size={15} />,
-      active: config.modules.datapipelines.active
+      active: isModuleEnabled(ModuleNames.PIPELINES)
     };
 
     const organizationsSection = {
