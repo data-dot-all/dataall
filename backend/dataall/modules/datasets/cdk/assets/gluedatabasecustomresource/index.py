@@ -49,6 +49,13 @@ def on_create(event):
     except ClientError as e:
         pass
 
+    default_db_exists = False
+    try:
+        glue_client.get_database(Name="default")
+        default_db_exists = True
+    except ClientError as e:
+        pass
+
     if not exists:
         try:
             db_input = props.get('DatabaseInput').copy()
@@ -63,7 +70,7 @@ def on_create(event):
             raise Exception(f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}")
 
     Entries = []
-    for i, role_arn in enumerate(props.get('DatabaseAdministrators')):
+    for i, role_arn in enumerate(props.get('DatabaseAdministrators', [])):
         Entries.append(
             {
                 'Id': str(uuid.uuid4()),
@@ -103,6 +110,20 @@ def on_create(event):
                 'PermissionsWithGrantOption': ['SELECT', 'ALTER', 'DESCRIBE'],
             }
         )
+        if default_db_exists:
+            Entries.append(
+                {
+                    'Id': str(uuid.uuid4()),
+                    'Principal': {'DataLakePrincipalIdentifier': role_arn},
+                    'Resource': {
+                        'Database': {
+                            'Name': 'default'
+                        }
+                    },
+                    'Permissions': ['Describe'.upper()],
+                }
+            )
+
     lf_client.batch_grant_permissions(CatalogId=props['CatalogId'], Entries=Entries)
     physical_id = props['DatabaseInput']['Imported'] + props['DatabaseInput']['Name']
 
