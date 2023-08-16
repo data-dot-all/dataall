@@ -115,9 +115,9 @@ class ParamStoreStack(pyNestedClass):
         )
 
 def _get_external_id_value(envname, account_id, region):
-    """For first deployments it returns False,
-    for existing deployments it returns the ssm parameter value generated in the first deployment
-    for prior to V1.5.1 upgrades it returns the secret from secrets manager
+    """
+    For first deployments and upgrades from <=V1.5.6 to >=v1.6 - returns False and a new ssm parameter created,
+    For existing >=v1.6 deployments - returns the ssm parameter value generated in the first deployment
     """
     cdk_look_up_role = 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(account_id, account_id, region)
     base_session = boto3.Session()
@@ -130,29 +130,21 @@ def _get_external_id_value(envname, account_id, region):
         region_name=region,
         endpoint_url=f"https://sts.{region}.amazonaws.com"
     )
-    response = sts.assume_role(**assume_role_dict)
-    session = boto3.Session(
-        aws_access_key_id=response['Credentials']['AccessKeyId'],
-        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-        aws_session_token=response['Credentials']['SessionToken'],
-    )
-
-    secret_id = f"dataall-externalId-{envname}"
     parameter_path = f"/dataall/{envname}/pivotRole/externalId"
+
     try:
+        response = sts.assume_role(**assume_role_dict)
+        session = boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
         ssm_client = session.client('ssm', region_name=region)
         parameter_value = ssm_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return parameter_value
     except:
-        try:
-            secrets_client = session.client('secretsmanager', region_name=region)
-            if secrets_client.describe_secret(SecretId=secret_id):
-                secret_value = SecretValue.secrets_manager(secret_id).unsafe_unwrap()
-            else:
-                raise Exception
-            return secret_value
-        except:
-            return False
+        return False
+
 
 def _generate_external_id():
     allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits

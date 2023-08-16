@@ -1,9 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Custom least privilege IAM policy for linking environments to dataall
 Parameters:
-  AwsAccountId:
-    Description: AWS AccountId of the account that we wish to link.
-    Type: String
   PolicyName:
     Description: IAM policy name (The same name must be used during CDK bootstrapping. Default is DataAllCustomCDKPolicy.)
     Type: String
@@ -48,14 +45,14 @@ Resources:
             Effect: Allow
             Action: 'athena:CreateWorkGroup'
             Resource:
-              - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/*'
+              - !Sub 'arn:${AWS::Partition}:athena:*:${AWS::AccountId}:workgroup/*'
           - Sid: IAM
             Action:
               - 'iam:CreatePolicy'
               - 'iam:GetPolicy'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
           - Sid: IAMRole
             Action:
               - 'iam:AttachRolePolicy'
@@ -82,7 +79,7 @@ Resources:
               - 'iam:CreatePolicyVersion'
               - 'iam:DeletePolicyVersion'
             Resource:
-               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/service-role/AWSQuickSight*'
+               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/service-role/AWSQuickSight*'
           - Sid: QuickSight
             Effect: Allow
             Action:
@@ -114,14 +111,14 @@ Resources:
               - 'kms:CreateAlias'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:kms:*:${AWS::AccountId}:alias/*'
+              - !Sub 'arn:${AWS::Partition}:kms:*:${AWS::AccountId}:alias/*'
           - Sid: KMSKey
             Action:
               - 's3:PutBucketAcl'
               - 's3:PutBucketNotification'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
+              - !Sub 'arn:${AWS::Partition}:s3:::${EnvironmentResourcePrefix}-logging-*'
           - Sid: ReadBuckets
             Action:
               - 'kms:CreateAlias'
@@ -136,7 +133,7 @@ Resources:
               - 'kms:PutKeyPolicy'
               - 'kms:TagResource'
             Effect: Allow
-            Resource: !Sub 'arn:aws:kms:*:${AWS::AccountId}:key/*'
+            Resource: !Sub 'arn:${AWS::Partition}:kms:*:${AWS::AccountId}:key/*'
           - Sid: Lambda
             Action:
               - 'lambda:AddPermission'
@@ -154,7 +151,7 @@ Resources:
             Action:
               - 'lambda:PublishLayerVersion'
             Resource:
-              - !Sub 'arn:aws:lambda:*:${AWS::AccountId}:layer:*'
+              - !Sub 'arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:layer:*'
           - Sid: S3
             Action:
               - 's3:CreateBucket'
@@ -170,13 +167,13 @@ Resources:
               - 's3:DeleteBucketPolicy'
               - 's3:DeleteBucket'
             Effect: Allow
-            Resource: 'arn:aws:s3:::*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::*'
           - Sid: SQS
             Effect: Allow
             Action:
               - 'sqs:CreateQueue'
               - 'sqs:SetQueueAttributes'
-            Resource: !Sub 'arn:aws:sqs:*:${AWS::AccountId}:*'
+            Resource: !Sub 'arn:${AWS::Partition}:sqs:*:${AWS::AccountId}:*'
           - Sid: SSM
             Effect: Allow
             Action:
@@ -190,18 +187,18 @@ Resources:
               - 'logs:CreateLogStream'
               - 'logs:PutLogEvents'
               - 'logs:DescribeLogStreams'
-            Resource: 'arn:aws:logs:*:*:*'
+            Resource: !Sub 'arn:${AWS::Partition}:logs:*:*:*'
           - Sid: STS
             Effect: Allow
             Action:
               - 'sts:AssumeRole'
               - 'iam:*Role*'
-            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
+            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
           - Sid: CloudFormation
             Effect: Allow
             Action:
               - 'cloudformation:*'
-            Resource: !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
           - Sid: ECR
             Effect: Allow
             Action:
@@ -211,14 +208,14 @@ Resources:
               - 'ecr:DescribeRepositories'
               - 'ecr:CreateRepository'
               - 'ecr:DeleteRepository'
-            Resource: !Sub 'arn:aws:ecr:*:${AWS::AccountId}:repository/cdk-*'
+            Resource: !Sub 'arn:${AWS::Partition}:ecr:*:${AWS::AccountId}:repository/cdk-*'
           - Sid: SSMTwo
             Effect: Allow
             Action:
               - 'ssm:GetParameter'
               - 'ssm:PutParameter'
               - 'ssm:DeleteParameter'
-            Resource: !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/cdk-bootstrap/*'
+            Resource: !Sub 'arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:parameter/cdk-bootstrap/*'
           - Sid: CloudformationTwo
             Effect: Allow
             Action:
@@ -232,7 +229,7 @@ Resources:
             Action:
               - 's3:*'
             Resource:
-              - !Sub 'arn:aws:s3:::cdktoolkit-stagingbucket-*'
+              - !Sub 'arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}*'
           - Sid: Pipelines
             Effect: Allow
             Action:
@@ -261,7 +258,7 @@ Resources:
               - 's3:ListBucket'
               - 's3:GetBucketPolicy'
             Resource:
-              - 'arn:aws:s3::*:codepipeline-*'
+              - !Sub 'arn:${AWS::Partition}:s3::*:codepipeline-*'
           - Sid: CodeStarNotificationsReadOnly
             Effect: Allow
             Action:
@@ -269,7 +266,7 @@ Resources:
             Resource: '*'
             Condition:
               'StringLike':
-                'codestar-notifications:NotificationsForResource': 'arn:aws:codepipeline:*'
+                'codestar-notifications:NotificationsForResource': !Sub 'arn:${AWS::Partition}:codepipeline:*'
           - Sid: Eventrules
             Effect: Allow
             Action:
