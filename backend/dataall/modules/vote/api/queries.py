@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.vote.api.resolvers import count_upvotes, get_vote
 
 
 countUpVotes = gql.QueryField(

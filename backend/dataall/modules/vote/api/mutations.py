@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.vote.api.resolvers import upvote
 
 
 upVote = gql.MutationField(

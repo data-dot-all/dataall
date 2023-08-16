@@ -4,7 +4,7 @@ from dataall.base.loader import ModuleInterface, ImportMode
 
 
 class FeedApiModuleInterface(ModuleInterface):
-    """Implements ModuleInterface for dashboard GraphQl lambda"""
+    """Implements ModuleInterface for feeds code in GraphQL Lambda"""
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:

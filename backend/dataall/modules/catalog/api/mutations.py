@@ -1,5 +1,9 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.modules.catalog.api.resolvers import (
+    create_glossary, update_node, delete_node, create_category, create_term, link_term,
+    request_link, approve_term_association, dismiss_term_association
+)
+
 
 createGlossary = gql.MutationField(
     name='createGlossary',
