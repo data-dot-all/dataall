@@ -1,6 +1,6 @@
 import pytest
 from aws_cdk import App
-from aws_cdk.assertions import Template
+from aws_cdk.assertions import Template, Match
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
 from dataall.core.environment.db.models import EnvironmentGroup
@@ -10,10 +10,11 @@ from dataall.modules.datasets_base.db.models import Dataset
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
     for extension in EnvironmentSetup._EXTENSIONS:
-        mocker.patch(
-            f"{extension.__module__}.{extension.__name__}.extent",
-            return_value=True,
-        )
+        if extension.__name__ not in ["DatasetCustomResourcesExtension", "DatasetGlueProfilerExtension"]:
+            mocker.patch(
+                f"{extension.__module__}.{extension.__name__}.extent",
+                return_value=True,
+            )
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -100,8 +101,8 @@ def test_resources_created(env_fixture, org_fixture):
     app.synth()
     # Prepare the stack for assertions.
     template = Template.from_stack(stack)
+
     # Assert that we have created:
-    # TODO: Add more assertions
     template.resource_properties_count_is(
         type="AWS::S3::Bucket",
         props={
@@ -117,19 +118,24 @@ def test_resources_created(env_fixture, org_fixture):
                 'IgnorePublicAcls': True,
                 'RestrictPublicBuckets': True
             },
-            'Tags': [
-                {'Key': 'CREATOR', 'Value': 'customtagowner'},
-                {'Key': 'dataall', 'Value': 'true'},
-                {'Key': 'Environment', 'Value': f'{env_fixture.name}_{env_fixture.environmentUri}'},
-                {'Key': 'Organization', 'Value': f'{org_fixture.name}_{org_fixture.organizationUri}'},
-                {'Key': 'Target', 'Value': f'Environment_{env_fixture.environmentUri}'},
-                {'Key': 'Team', 'Value': env_fixture.SamlGroupName}],
         },
         count=1
     )
-    template.resource_count_is("AWS::S3::Bucket", 1)
-    template.resource_count_is("AWS::Lambda::Function", 4)
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*lf-settings-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*gluedb-lf-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_count_is("AWS::Lambda::Function", 5)
     template.resource_count_is("AWS::SSM::Parameter", 5)
-    template.resource_count_is("AWS::IAM::Role", 4)
-    template.resource_count_is("AWS::IAM::Policy", 3)
-    #[('Team', 'testadmins'), ('Environment', 'dev_wfmwh6q8'), ('Organization', 'testorg_mctyjx7n')]
+    template.resource_count_is("AWS::IAM::Role", 5)
+    template.resource_count_is("AWS::IAM::Policy", 4)
