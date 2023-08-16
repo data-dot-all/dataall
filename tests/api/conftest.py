@@ -7,6 +7,7 @@ from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.permissions import ENVIRONMENT_ALL, TENANT_ALL
 from .client import *
 
 
@@ -36,8 +37,8 @@ def patch_check_env(module_mocker):
 def patch_es(module_mocker):
     module_mocker.patch('dataall.base.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.base.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value={})
-    module_mocker.patch('dataall.core.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
+    module_mocker.patch('dataall.modules.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.modules.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -120,25 +121,25 @@ def tenant(db, group, group2, permissions, group3, group4):
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=dataall.core.permissions.permissions.TENANT_ALL,
+            permissions=TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group2.name,
-            permissions=dataall.core.permissions.permissions.TENANT_ALL,
+            permissions=TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group3.name,
-            permissions=dataall.core.permissions.permissions.TENANT_ALL,
+            permissions=TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group4.name,
-            permissions=dataall.core.permissions.permissions.TENANT_ALL,
+            permissions=TENANT_ALL,
             tenant_name='dataall',
         )
         yield tenant
@@ -245,7 +246,7 @@ def environment_group(db):
                 session=session,
                 resource_uri=environment.environmentUri,
                 group=group.name,
-                permissions=dataall.core.permissions.permissions.ENVIRONMENT_ALL,
+                permissions=ENVIRONMENT_ALL,
                 resource_type=Environment.__name__,
             )
             session.commit()

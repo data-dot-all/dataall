@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
+from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization
 from dataall.base.db import paginate

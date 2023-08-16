@@ -3,7 +3,7 @@ import logging
 from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
 from dataall.core.feature_toggle_checker import is_feature_enabled
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput

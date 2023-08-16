@@ -15,6 +15,8 @@ _MODULE_PREFIX = "dataall.modules"
 
 # This needed not to load the same module twice. Should happen only in tests
 _ACTIVE_MODES = set()
+# Contains all loaded moduels
+_LOADED_MODULES: Set[str] = set()
 
 
 class ImportMode(Enum):
@@ -83,6 +85,10 @@ def load_modules(modes: Set[ImportMode]) -> None:
     _describe_loading(in_config, inactive)
 
     log.info("All modules have been imported")
+
+
+def list_loaded_modules() -> List[str]:
+    return list(_LOADED_MODULES)
 
 
 def _new_modules(modes: Set[ImportMode]):
@@ -185,8 +191,13 @@ def _initialize_modules(modes: Set[ImportMode]):
         raise ImportError("Not all modules have been initialized. Check if your import modes are correct")
 
 
-def _initialize_module(module):
+def _get_module_name(module):
+    return module[len(_MODULE_PREFIX) + 1:].split(".")[0]  # gets only top level module name
+
+
+def _initialize_module(module: Type[ModuleInterface]):
     module()  # call a constructor for initialization
+    _LOADED_MODULES.add(module.name())
 
 
 def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
@@ -254,10 +265,6 @@ def _remove_module_prefix(module: str):
     if module.startswith(_MODULE_PREFIX):
         return module[len(_MODULE_PREFIX) + 1:]
     raise ValueError(f"Module  {module} should always starts with {_MODULE_PREFIX}")
-
-
-def _get_module_name(module):
-    return module[len(_MODULE_PREFIX) + 1:].split(".")[0]  # gets only top level module name
 
 
 def _all_modules():

@@ -32,6 +32,9 @@ def bootstrap():
         enumclass.toGraphQLEnum()
 
     for cls in classes.keys():
+        if not cls.class_instances:  # if there are no instances of cls registered in the app
+            continue
+
         for name in cls.class_instances['default'].keys():
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))

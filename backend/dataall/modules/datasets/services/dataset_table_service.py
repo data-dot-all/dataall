@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
