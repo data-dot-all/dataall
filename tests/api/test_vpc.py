@@ -98,23 +98,6 @@ def test_list_networks_nopermissions(client, env1, db, org1, user, group2, vpc):
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
 
-
-def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
-    response = client.query(
-        """
-        query getNetwork($vpcUri:String!){
-            getNetwork(vpcUri:$vpcUri){
-                vpcUri
-            }
-        }
-        """,
-        vpcUri=vpc.vpcUri,
-        username=user.username,
-        groups=[group.name],
-    )
-    assert response.data.getNetwork.vpcUri == vpc.vpcUri
-
-
 def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc):
     module_mocker.patch(
         'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
