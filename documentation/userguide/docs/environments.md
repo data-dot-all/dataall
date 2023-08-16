@@ -124,6 +124,27 @@ Data.all will create a SageMaker VPC:
   - if there is not a pre-existing SageMaker Studio domain
   - if the default VPC has been deleted in the account
 
+### 5. (For ML Studio) Delete or adapt the default VPC
+If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
+it will use it to create ML Studio profiles. If no pre-existing domain is found, data.all will create a new one.
+
+Prior to V1.5.0 data.all always used the default VPC to create a new SageMaker domain. The default VPC had then to be
+customized to fulfill the networking requirements specified in the Sagemaker
+[documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html) for VPCOnly 
+domains.
+
+In V1.5.0 we introduce the creation of a suitable VPC for SageMaker as part of the environment stack. However, it is not possible to edit the VPC used by a SageMaker domain, it requires deletion and re-creation. To allow backwards
+compatibility and not delete the pre-existing domains, in V1.5.0 the default behavior is still to use the default VPC.
+
+Data.all will create a SageMaker VPC:
+- For new environments: (link environment)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if there is not a default VPC in the account
+- For pre-existing environments: (update environment)
+  - if all ML Studio profiles have been deleted (from CloudFormation as well)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if the default VPC has been deleted in the account
+
 ## :material-new-box: **Link an environment**
 ### Necessary permissions
 !!! note "Environment permissions"
