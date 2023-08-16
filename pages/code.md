@@ -30,7 +30,6 @@ The `deploy` package is a CDK application, with an `app.py` deploying a CICD sta
 As explained above, here is the code that defines the CICD pipeline in the tooling account. More specifically,
 the `PipelineStack` is defined in `stacks/pipeline.py` 
 
-
 From this stack, we deploy a CodePipeline pipeline and other stacks as standalone resources (e.g. `VpcStack` from `stacks/vpc.py`).
 In addition, we define some CodePipeline deployment stages such as the stage that deploys 
 the backend code `BackendStage` from `stacks/backend_stage`.
@@ -44,7 +43,7 @@ In the pipeline stack `PipelineStack` we deploy the following stacks and sub-sta
   - `BackendStack`: 
     - `AuroraServerlessStack`: Aurora RDS Database and associated resources - data.all objects metadata
     - `IdpStack`: Cognito and IdP stack
-    - `ContainerStack`: ECS stack
+    - `ContainerStack`: ECS stack ----> contains the ECS task definitions which are defined in backend.core and backend.modules
     - `CloudWatchCanariesStack` if enable_cw_canaries=true
     - `CloudWatchRumStack` if enable_cw_run=true
     - `DBMigrationStack`: tool to migrate between Aurora versions of the database table schemas
@@ -61,8 +60,6 @@ In the pipeline stack `PipelineStack` we deploy the following stacks and sub-sta
 - `CodeArtifactStack`: for our Docker Images
 - `ECRStage`: for our Docker Images
 - `VpcStack`
-
-
 
 There are other elements in the `deploy` folder:
 ```
@@ -84,7 +81,7 @@ backend/
 ├── migrations/ : scripts used by alembic to update the Aurora RDS database tables. README explaining details.
 ├── alembic.ini : used in migrations
 ├── api_handler.py : GraphQL Lambda handler
-├── aws_handler.py : Worket Lambda handler
+├── aws_handler.py : Worker Lambda handler
 ├── search_handler.py :  ESProxy Lambda handler
 ├── cdkproxymain.py : ECS CDK task
 ├── local_cdkapi_server.py : CDKProxy local server used in docker (replacing the cdkproxymain)
@@ -92,42 +89,208 @@ backend/
 ├── requirements.txt : requirements file used in Docker images for Lambdas and local containers of the backend
 ```
 Inside `dataall/` we have 3 main sub-packages:
-- base - base code
-- core - components that are needed to operate data.all
-- modules - components that can be configured or disabled
+- base - common code used in core and modules
+- core - components that are needed to operate data.all correctly
+- modules - additional plug-in components that can be configured or disabled
 
 ### base/ <a name="base"></a>
-
+The base package is structured as you can see in the diagram. 
+In the diagram there is a small definition of each subpackages. For `api` and `cdkproxy`
+we have included some additional details.
 ```
 base/
 ├── api/  : gql wrapper package. Contants and context definition.
-├── aws/  :  Classes that centralize AWS boto3 calls used across several modules (e.g. IAM).
+├── aws/  :  wrapper client upon boto3 calls used across several modules (e.g. IAM class).
 ├── cdkproxy/ : CDK application that deploys stacks in environment accounts exposing a REST API.
 ├── db/ : configuration, connection parameters and base utilities for the RDS Aurora database
 ├── searchproxy/ : connection and search utils for the OpenSearch cluster
 ├── utils/ : generic utilities
 ├── __init__.py
-├── config.py : E
-├── context.py : C
-├── loader.py : G
+├── config.py : Config class to manage the config.json file
+├── context.py : Class to manage the API calls context
+├── loader.py : Classes and methos that manage the loading of modules
 ```
+#### api
+The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
+The overall flow of GraphQL resolution is  found in the `app.py` module using
+the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
 
+The data.all `base.api` package contains the `gql` sub-package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
+
+
+#### cdkproxy
+
+This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
+`cdkproxy` is a package that exposes a REST API to run registered cloudformation stacks using AWS CDK.
+
+**It is deployed as a docker container running on AWS ECS.**
+
+When a data.all resource is created, the API sends an HTTP request 
+to the docker service and the code runs the appropriate stack using `cdk` cli.
+
+These stacks are deployed with the `cdk` cli wrapper
+The API itself consists of 4 actions/paths:
+
+- GET / : checks if the server is running
+- POST /stack/{stackid} : creates or updates the stack
+- DELETE /stack/{stackid} : deletes the stack
+- GET /stack/{stackid] : returns stack status
+
+The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
+web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
 ### core/ <a name="core"></a>
 
-Core features:
-``
-activity
-cognito_groups
-environment
-notifications
-organizations
-permissions
-stacks
-tasks
-vpc
-``
+Core contains those functionalities that are needed to run data.all:
+- activity
+- cognito_groups
+- environment
+- notifications
+- organizations
+- permissions
+- stacks
+- tasks
+- vpc
+
+These "core-modules" follow the same structure. Although not all the sub-components are present in all core-modules.
+```
+core-module/
+├── api/  : api definition and validation (in resolvers)
+├── aws/  :  wrapper client upon boto3 calls
+├── cdk/  :  CDK stacks to be deployed
+├── db/ : models (database table models) and repositories (database operations)
+├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
+├── services/ : business logic
+├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
+├── __init__.py
+├── any additional functionality
+```
+The sub-packages `api`, `db` and `cdk` are better explained in the modules/ section. Here, we will focus
+on those core additional functionalities that are used by all modules: core-feature-toogle, permissions, WorkerHandler and stack_helper.
+
+#### Core feature toogle
+In `core/feature_toogle_checker` you will find a decorator that allows users to enable or disable certain
+API calls form the core functionalities. This is useful whenever a customer wants to disable a particular feature in core
+on the server side. For example, in the following case the `config.json` file has disabled a feature called `env_aws_actions`.
+
+```json
+    "core": {
+        "features": {
+            "env_aws_actions": true
+        }
+    }
+```
+
+If we go to the `core.environment.api` package we will see that some resolvers have been decorated depending on this flag.
+```
+@is_feature_enabled('core.features.env_aws_actions')
+def _get_environment_group_aws_session(
+    session, username, groups, environment, groupUri=None
+):
+.....
+```
+
+#### Permissions
+The `core.permissions` package implements the permission logic for the application and adds the permissions for the core modules.
+In particular, `permission_checker.py` contains the decorators that validate the user permissions with respect to a resource, 
+`db` the RDS tables and operations with RDS, `api` the calls related to permissions and `permissions.py` the core module permission definitions.
+
+#### WorkerHandler
+In `core/tasks/service_handlers.py` we defined the `WorkerHandler`  Python class.
+Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
+asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
+asynchronously by the Worker Lambda function.
+The `WorkerHandler`  is in charge of routing tasks to the Worker AWS Lambda. 
+
+This class has a singleton instance called `Worker` that has two apis:
+
+1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
+2.  `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
+
+
+The `Worker` singleton exposes a decorator function to register handler functions that can 
+be run by the Worker. For example, for the Dataset handlers (in `modules.dataset.handlers.glue_dataset_handler.py`), we want to define that the function 
+`start_crawler` is run by the Worker Lambda. Therefore, we use the decorator and define its path:
+
+```
+    @staticmethod
+    @Worker.handler(path='glue.crawler.start')
+    def start_crawler(engine, task: Task):
+        with engine.scoped_session() as session:
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(
+                session, task.targetUri
+            )
+            location = task.payload.get('location')
+            targets = {'S3Targets': [{'Path': location}]}
+            crawler = DatasetCrawler(dataset)
+            if location:
+                crawler.update_crawler(targets)
+            return crawler.start_crawler()
+```
+
+
+The code in `modules.datasets.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
+defined first in the Aurora database and then, we pass their unique identifier to the queue. In the example
+below, taken from the same dataset resolver, we are queueing a `glue.crawler.start` action.
+
+```
+def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
+    [...]
+
+        task = models.Task(
+            targetUri=datasetUri,
+            action='glue.crawler.start',
+            payload={'location': location},
+        )
+        session.add(task)
+        session.commit()
+
+        Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+    [...]
+```
+
+
+The Worker AWS Lambda receives JSON objects with the task fields. Below is the code of the Worker Lambda defined in
+`backend/aws_handler.py`.
+
+```
+def handler(event, context=None):
+    """Processes  messages received from sqs"""
+    log.info(f'Received Event: {event}')
+    for record in event['Records']:
+        log.info('Consumed record from queue: %s' % record)
+        message = json.loads(record['body'])
+        log.info(f'Extracted Message: {message}')
+        Worker.process(engine=engine, task_ids=message)
+```
+
+
+Finally, the `WorkerHandler` will `process` the tasks: it reads task data from the Database, routes to 
+the decorated handler function 
+and assumes a role in the AWS Account where the action needs to be performed.
+
+#### Stack helper
+The `core.stacks` package implements handlers, database logic and apis to manage CloudFormation (CDK) stacks that belong to a data.all module
+(core module or plugable module). Some of the activities that it implements are:
+- trigger the deployment of stacks
+- describe status of stacks
+- deletion of stacks
+- record/look-up metadata about stacks in RDS
+
 ### modules/ <a name="modules"></a>
+
+```
+module/
+├── api/  : api definition and validation (in resolvers)
+├── aws/  :  wrapper client upon boto3 calls
+├── cdk/  :  CDK stacks to be deployed
+├── db/ : models (database table models) and repositories (database operations)
+├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
+├── services/ : business logic
+├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
+├── __init__.py
+├── any additional functionality
+```
 
 ### dataall.db
 
@@ -167,14 +330,7 @@ apis to dig deeper into the logic.
 
 ### dataall/api
 
-The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
-The overall flow of GraphQL resolution is  found in the `app.py` module using
-the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
 
-The data.all `api` package is where the GraphQL API is defined. This is the Lambda that processes all API calls
-made from the frontend. This folder contains 2 packages: 
-- `gql`: package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
-- `Objects`: containing the business logic of our application.
 
 
 Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
@@ -403,27 +559,7 @@ In this package we define the long-running tasks executed by the ECS Fargate clu
 - `stacks_updater`: updates CDK stacks (support of cdkproxy)
 - `tables_syncer`: syncs the tables between the Glue Catalog and the Aurora RDS database for our datasets.
 
-### dataall/cdkproxy
 
-This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
-`cdkproxy` is a package that exposes a REST API to run pre-defined
-cloudformation stacks using AWS CDK.
-
-**It is deployed as a docker container running on AWS ECS.**
-
-When a data.all resource is created, the API sends an HTTP request 
-to the docker service and the code runs the appropriate stack using `cdk` cli.
-
-These stacks are deployed with the `cdk` cli wrapper
-The API itself consists of 4 actions/paths :
-
-- GET / : checks if the server is running
-- POST /stack/{stackid} : creates or updates the stack
-- DELETE /stack/{stackid} : deletes the stack
-- GET /stack/{stackid] : returns stack status
-
-The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
-web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
 The sub-package  `stacks` holds the
 definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
@@ -487,10 +623,6 @@ We are passing the task definition and the docker container to ECS which will us
 deployed in a docker container. The docker image is stored in ECR in the tooling account.
 
 
-### dataall/searchproxy
-The `dataall/searchproxy` package manages all operations with the OpenSearch cluster. Similarly to `dataall/db`, this
-package implements the connection with the OpenSearch cluster for all compute components: API handler Lambda, Worker Lambda
-and ECS tasks.
 
 ## frontend/ <a name="frontend"></a>
 The frontend code is a React App. In this section we will focus on the components specific to data.all, particularly
