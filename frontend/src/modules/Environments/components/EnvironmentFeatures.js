@@ -107,8 +107,16 @@ export const EnvironmentFeatures = (props) => {
               Pipelines
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.pipelinesEnabled ? 'success' : 'error'}>
-                {environment.pipelinesEnabled ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['pipelinesEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['pipelinesEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

@@ -1,12 +1,13 @@
 import { gql } from 'apollo-boost';
 
-export const rejectShareObject = ({ shareUri }) => ({
+export const rejectShareObject = ({ shareUri, rejectPurpose }) => ({
   variables: {
-    shareUri
+    shareUri,
+    rejectPurpose
   },
   mutation: gql`
-    mutation RejectShareObject($shareUri: String!) {
-      rejectShareObject(shareUri: $shareUri) {
+    mutation RejectShareObject($shareUri: String!, $rejectPurpose: String!) {
+      rejectShareObject(shareUri: $shareUri,rejectPurpose: $rejectPurpose) {
         shareUri
         status
       }

@@ -12,6 +12,8 @@ export const getShareObject = ({ shareUri, filter }) => ({
         created
         owner
         status
+        requestPurpose
+        rejectPurpose
         userRoleForShareObject
         consumptionData {
           s3AccessPointName
