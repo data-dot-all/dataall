@@ -1,6 +1,10 @@
 import { gql } from 'apollo-boost';
 
+<<<<<<<< HEAD:frontend/src/modules/MLStudio/services/listSagemakerStudioUsers.js
 export const listSagemakerStudioUsers = (filter) => ({
+========
+const listSagemakerStudioUsers = (filter) => ({
+>>>>>>>> modularization-main:frontend/src/api/MLStudio/listSagemakerStudioUsers.js
   variables: {
     filter
   },
@@ -44,3 +48,8 @@ export const listSagemakerStudioUsers = (filter) => ({
     }
   `
 });
+<<<<<<<< HEAD:frontend/src/modules/MLStudio/services/listSagemakerStudioUsers.js
+========
+
+export default listSagemakerStudioUsers;
+>>>>>>>> modularization-main:frontend/src/api/MLStudio/listSagemakerStudioUsers.js

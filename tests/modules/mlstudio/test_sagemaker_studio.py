@@ -1,5 +1,3 @@
-import pytest
-
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 
 

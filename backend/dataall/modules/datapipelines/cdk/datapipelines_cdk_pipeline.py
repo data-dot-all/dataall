@@ -2,14 +2,13 @@ import logging
 import os
 import sys
 import subprocess
-import boto3
 
 from botocore.exceptions import ClientError
 
-from dataall import db
-from dataall.db.api import Environment
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.base import db
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ class CDKPipelineStack:
         with engine.scoped_session() as session:
 
             self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, target_uri)
-            self.pipeline_environment = Environment.get_environment_by_uri(session, self.pipeline.environmentUri)
+            self.pipeline_environment = EnvironmentService.get_environment_by_uri(session, self.pipeline.environmentUri)
             # Development environments
             self.development_environments = DatapipelinesRepository.query_pipeline_environments(session, target_uri)
 
@@ -50,7 +49,7 @@ class CDKPipelineStack:
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
 
         try:
-            codecommit_client = aws.client('codecommit', region_name=self.pipeline_environment.region)
+            codecommit_client = aws.client('codecommit', region_name=self.pipeline_EnvironmentService.region)
             repository = CDKPipelineStack._check_repository(codecommit_client, self.pipeline.repo)
             if repository:
                 self.venv_name = None
@@ -272,6 +271,7 @@ app.synth()
             'PYTHONPATH': python_path,
             'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
+            'COOKIECUTTER_CONFIG': "/dataall/modules/datapipelines/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(

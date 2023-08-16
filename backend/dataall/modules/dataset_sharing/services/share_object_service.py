@@ -1,12 +1,15 @@
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
-from dataall.db import utils
-from dataall.db.api import ResourcePolicy, Environment
-from dataall.db.exceptions import UnauthorizedOperation
-from dataall.db.models import Activity, PrincipalType, EnvironmentGroup, ConsumptionRole, Task
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.context import get_context
+from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.db.models import EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.tasks.db.task_models import Task
+from dataall.base.db import utils
+from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
-    ShareObjectStatus
+    ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
@@ -36,12 +39,13 @@ class ShareObjectService:
             item_type: str,
             group_uri,
             principal_id,
-            principal_type
+            principal_type,
+            requestPurpose,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
-            environment = Environment.get_environment_by_uri(session, uri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
@@ -51,14 +55,14 @@ class ShareObjectService:
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
-                consumption_role: ConsumptionRole = Environment.get_environment_consumption_role(
+                consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
                     session,
                     principal_id,
                     environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
             else:
-                env_group: EnvironmentGroup = Environment.get_environment_group(
+                env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session,
                     group_uri,
                     environment.environmentUri
@@ -86,6 +90,7 @@ class ShareObjectService:
                     principalType=principal_type,
                     principalIAMRoleName=principal_iam_role_name,
                     status=ShareObjectStatus.Draft.value,
+                    requestPurpose=requestPurpose
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -130,22 +135,32 @@ class ShareObjectService:
 
             # Attaching REQUESTER permissions to:
             # requester group (groupUri)
-            # dataset.SamlAdminGroupName
-            # environment.SamlGroupName
-            cls._attach_share_resource_policy(session, share, group_uri)
-            cls._attach_share_resource_policy(session, share, dataset.SamlAdminGroupName)
-            if dataset.SamlAdminGroupName != environment.SamlGroupName:
-                cls._attach_share_resource_policy(session, share, environment.SamlGroupName)
+            # environment.SamlGroupName (if not dataset admins)
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=group_uri,
+                permissions=SHARE_OBJECT_REQUESTER,
+                resource_uri=share.shareUri,
+                resource_type=ShareObject.__name__,
+            )
 
-            # Attaching REQUESTER permissions to:
+            # Attaching APPROVER permissions to:
             # dataset.stewards (includes the dataset Admins)
             ResourcePolicy.attach_resource_policy(
                 session=session,
-                group=dataset.stewards,
+                group=dataset.SamlAdminGroupName,
                 permissions=SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
+            if dataset.stewards != dataset.SamlAdminGroupName:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
             return share
 
     @classmethod
@@ -189,6 +204,9 @@ class ShareObjectService:
                     resource_type=DatasetTable.__name__,
                 )
 
+            share.rejectPurpose = ""
+            session.commit()
+
             ShareNotificationService.notify_share_object_approval(session, context.username, dataset, share)
 
             approve_share_task: Task = Task(
@@ -202,9 +220,27 @@ class ShareObjectService:
 
         return share
 
+    @staticmethod
+    @has_resource_permission(SUBMIT_SHARE_OBJECT)
+    def update_share_request_purpose(uri: str, request_purpose) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share.requestPurpose = request_purpose
+            session.commit()
+            return True
+
+    @staticmethod
+    @has_resource_permission(REJECT_SHARE_OBJECT)
+    def update_share_reject_purpose(uri: str, reject_purpose) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share.rejectPurpose = reject_purpose
+            session.commit()
+            return True
+
     @classmethod
     @has_resource_permission(REJECT_SHARE_OBJECT)
-    def reject_share_object(cls, uri: str):
+    def reject_share_object(cls, uri: str, reject_purpose: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
@@ -214,6 +250,10 @@ class ShareObjectService:
                 group=share.groupUri,
                 resource_uri=dataset.datasetUri,
             )
+
+            # Update Reject Purpose
+            share.rejectPurpose = reject_purpose
+            session.commit()
 
             ShareNotificationService.notify_share_object_rejection(session, context.username, dataset, share)
             return share
@@ -305,16 +345,6 @@ class ShareObjectService:
         return share, dataset, share_items_states
 
     @staticmethod
-    def _attach_share_resource_policy(session, share, group):
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=group,
-            permissions=SHARE_OBJECT_REQUESTER,
-            resource_uri=share.shareUri,
-            resource_type=ShareObject.__name__,
-        )
-
-    @staticmethod
     def _validate_group_membership(
         session, share_object_group, environment_uri
     ):
@@ -324,13 +354,9 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
-        if share_object_group not in Environment.list_environment_groups(
+        if share_object_group not in EnvironmentService.list_environment_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environment_uri,
-            data=None,
-            check_perm=True,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,

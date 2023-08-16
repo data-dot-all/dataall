@@ -1,15 +1,16 @@
 import logging
 
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
-from dataall.db import utils
-from dataall.db.api import Environment, ResourcePolicy
-from dataall.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.db.models import Task
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.context import get_context
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.tasks.db.task_models import Task
+from dataall.base.db import utils
+from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
@@ -17,7 +18,6 @@ from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
-
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class ShareItemService:
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            target_environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            target_environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)

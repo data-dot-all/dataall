@@ -29,6 +29,8 @@ class BackendStage(Stage):
         shared_dashboard_sessions='anonymous',
         enable_opensearch_serverless=False,
         enable_pivot_role_auto_create=False,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -55,6 +57,8 @@ class BackendStage(Stage):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_opensearch_serverless=enable_opensearch_serverless,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
+            codeartifact_domain_name=codeartifact_domain_name,
+            codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             **kwargs,
         )
 

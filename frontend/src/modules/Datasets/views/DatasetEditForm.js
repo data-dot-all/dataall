@@ -154,7 +154,8 @@ const DatasetEditForm = (props) => {
             terms: values.terms.nodes
               ? values.terms.nodes.map((t) => t.nodeUri)
               : values.terms.map((t) => t.nodeUri),
-            confidentiality: values.confidentiality
+            confidentiality: values.confidentiality,
+            KmsAlias: values.KmsAlias
           }
         })
       );
@@ -259,13 +260,15 @@ const DatasetEditForm = (props) => {
                 tags: dataset.tags,
                 terms: dataset.terms || [],
                 stewards: dataset.stewards,
-                confidentiality: dataset.confidentiality
+                confidentiality: dataset.confidentiality,
+                KmsAlias: dataset.KmsAlias
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
                   .max(255)
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
+                KmsAlias: Yup.string().max(255),
                 topics: Yup.array().min(1).required('*Topics are required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 confidentiality: Yup.string().required(
@@ -485,6 +488,23 @@ const DatasetEditForm = (props) => {
                             variant="outlined"
                           />
                         </CardContent>
+                        { dataset.imported && dataset.KmsAlias === 'Undefined' &&
+                          <CardContent>
+                            <TextField
+                              error={Boolean(
+                                touched.KmsAlias && errors.KmsAlias
+                              )}
+                              fullWidth
+                              helperText={touched.KmsAlias && errors.KmsAlias}
+                              label="Amazon KMS key Alias (if SSE-KMS encryption is used). Otherwise leave empty."
+                              name="KmsAlias"
+                              onBlur={handleBlur}
+                              onChange={handleChange}
+                              value={values.KmsAlias}
+                              variant="outlined"
+                            />
+                         </CardContent>
+                        }
                       </Card>
                       <Card>
                         <CardHeader title="Governance" />

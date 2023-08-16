@@ -1,15 +1,22 @@
 import json
 import logging
 
-from dataall.api.Objects.Stack import stack_helper
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
-from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack, Environment
-from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
-from dataall.db.models import Task
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.db import exceptions
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.context import get_context
+from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.tasks.db.task_models import Task
+from dataall.modules.vote.db.vote import Vote
+from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
+from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
@@ -20,7 +27,7 @@ from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRep
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, CRAWL_DATASET, \
     DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
-    CREATE_DATASET, DATASET_ALL, DATASET_READ
+    CREATE_DATASET, DATASET_ALL, DATASET_READ, IMPORT_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.enums import DatasetRole
 from dataall.modules.datasets_base.db.models import Dataset, DatasetTable
@@ -33,7 +40,7 @@ class DatasetService:
 
     @staticmethod
     def check_dataset_account(session, environment):
-        dashboards_enabled = Environment.get_boolean_env_param(session, environment, "dashboardsEnabled")
+        dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
                 AwsAccountId=environment.AwsAccountId)
@@ -43,14 +50,30 @@ class DatasetService:
         return True
 
     @staticmethod
+    def check_imported_resources(environment, data):
+        kms_alias = data.get('KmsKeyAlias')
+        if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
+            key_id = KmsClient(environment.AwsAccountId, environment.region).get_key_id(
+                key_alias=f"alias/{kms_alias}"
+            )
+            if not key_id:
+                raise exceptions.AWSResourceNotFound(
+                    action=IMPORT_DATASET,
+                    message=f'KMS key with alias={kms_alias} cannot be found',
+                )
+        return True
+
+    @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
     @has_resource_permission(CREATE_DATASET)
     @has_group_permission(CREATE_DATASET)
     def create_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            environment = Environment.get_environment_by_uri(session, uri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
+            if data.get('imported', False):
+                DatasetService.check_imported_resources(environment=environment, data=data)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
@@ -149,8 +172,10 @@ class DatasetService:
     def update_dataset(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
+            if data.get('imported', False):
+                DatasetService.check_imported_resources(environment=environment, data=data)
 
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -158,6 +183,9 @@ class DatasetService:
                 for k in data.keys():
                     if k != 'stewards':
                         setattr(dataset, k, data.get(k))
+                if data.get('KmsAlias') not in ["Undefined"]:
+                    dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
+                    dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
                         DatasetService._transfer_stewardship_to_new_stewards(
@@ -192,7 +220,7 @@ class DatasetService:
                 session, dataset.datasetUri
             )
             count_upvotes = Vote.count_upvotes(
-                session, None, None, dataset.datasetUri, {'targetType': 'dataset'}
+                session, dataset.datasetUri, target_type='dataset'
             )
         return {
             'tables': count_tables or 0,
@@ -212,11 +240,11 @@ class DatasetService:
                     dataset_uri=uri,
                     dataset_owner=context.username
                 )
-                shared_environment = Environment.get_environment_by_uri(
+                shared_environment = EnvironmentService.get_environment_by_uri(
                     session=session,
                     uri=share.environmentUri
                 )
-                env_group = Environment.get_environment_group(
+                env_group = EnvironmentService.get_environment_group(
                     session=session,
                     group_uri=share.principalId,
                     environment_uri=share.environmentUri
@@ -316,7 +344,7 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            env = Environment.get_environment_by_uri(
+            env = EnvironmentService.get_environment_by_uri(
                 session, dataset.environmentUri
             )
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
@@ -337,7 +365,6 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
             DatasetRepository.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
@@ -348,7 +375,7 @@ class DatasetService:
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
             )
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             if dataset.SamlAdminGroupName != env.SamlGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session, resource_uri=uri, group=env.SamlGroupName
@@ -417,22 +444,39 @@ class DatasetService:
 
     @staticmethod
     def _transfer_stewardship_to_owners(session, dataset):
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+
+        # Remove Steward Resource Policy on Dataset Tables
+        dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if dataset.stewards != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+
+        # Remove Steward Resource Policy on Dataset Share Objects
         dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=SHARE_OBJECT_APPROVER,
+                    group=dataset.stewards,
                     resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
                 )
         return dataset
 
     @staticmethod
     def _transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
-        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        if dataset.stewards != env.SamlGroupName:
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != dataset.SamlAdminGroupName:
             ResourcePolicy.delete_resource_policy(
                 session=session,
                 group=dataset.stewards,
@@ -448,7 +492,7 @@ class DatasetService:
 
         dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
-            if dataset.stewards != env.SamlGroupName:
+            if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
@@ -472,9 +516,10 @@ class DatasetService:
                     resource_uri=share.shareUri,
                     resource_type=ShareObject.__name__,
                 )
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
         return dataset

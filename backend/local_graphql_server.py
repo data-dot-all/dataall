@@ -7,14 +7,16 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from dataall import db
-from dataall.api import get_executable_schema
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
-from dataall.searchproxy import connect, run_query
-from dataall.modules.loader import load_modules, ImportMode
-from dataall.core.config import config
-from dataall.core.context import set_context, dispose_context, RequestContext
+from dataall.base.api import get_executable_schema
+from dataall.core.tasks.service_handlers import Worker
+from dataall.core.permissions import permissions
+from dataall.core.permissions.db import save_permissions_with_tenant
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.base.db import get_engine, Base
+from dataall.base.searchproxy import connect, run_query
+from dataall.base.loader import load_modules, ImportMode
+from dataall.base.config import config
+from dataall.base.context import set_context, dispose_context, RequestContext
 
 import logging
 
@@ -37,7 +39,7 @@ CDKPROXY_URL = (
 )
 config.set_property("cdk_proxy_url", CDKPROXY_URL)
 
-init_permissions(engine)
+save_permissions_with_tenant(engine)
 
 
 class Context:
@@ -79,10 +81,10 @@ def request_context(headers, mock=False):
 
     for group in groups:
         with engine.scoped_session() as session:
-            api.TenantPolicy.attach_group_tenant_policy(
+            TenantPolicy.attach_group_tenant_policy(
                 session=session,
                 group=group,
-                permissions=db.permissions.TENANT_ALL,
+                permissions=permissions.TENANT_ALL,
                 tenant_name='dataall',
             )
 

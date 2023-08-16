@@ -1,6 +1,10 @@
 import { gql } from 'apollo-boost';
 
+<<<<<<<< HEAD:frontend/src/modules/MLStudio/services/getSagemakerStudioUser.js
 export const getSagemakerStudioUser = (sagemakerStudioUserUri) => ({
+========
+const getSagemakerStudioUser = (sagemakerStudioUserUri) => ({
+>>>>>>>> modularization-main:frontend/src/api/MLStudio/getSagemakerStudioUser.js
   variables: {
     sagemakerStudioUserUri
   },
@@ -53,3 +57,8 @@ export const getSagemakerStudioUser = (sagemakerStudioUserUri) => ({
     }
   `
 });
+<<<<<<<< HEAD:frontend/src/modules/MLStudio/services/getSagemakerStudioUser.js
+========
+
+export default getSagemakerStudioUser;
+>>>>>>>> modularization-main:frontend/src/api/MLStudio/getSagemakerStudioUser.js

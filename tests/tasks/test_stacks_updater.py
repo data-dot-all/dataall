@@ -1,13 +1,13 @@
 import pytest
-import dataall
-from dataall.api.constants import OrganisationUserRole
-from dataall.tasks.stacks_updater import update_stacks
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
+from dataall.core.environment.tasks.env_stacks_updater import update_stacks
 
 
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -22,7 +22,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -42,7 +42,7 @@ def env(org, db):
 
 def test_stacks_update(db, org, env, mocker):
     mocker.patch(
-        'dataall.tasks.stacks_updater.update_stack',
+        'dataall.core.environment.tasks.env_stacks_updater.update_stack',
         return_value=True,
     )
     envs, others = update_stacks(engine=db, envname='local')

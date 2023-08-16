@@ -7,17 +7,16 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-from dataall.api.Objects.Stack import stack_helper
-from dataall.core.context import get_context
-from dataall.db.api import (
-    ResourcePolicy,
-    Environment, KeyValueTag, Stack,
-)
-from dataall.db import models, exceptions
+from dataall.base.context import get_context
+from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.stack import Stack
+from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
-
-from dataall.utils.slugify import slugify
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 from dataall.modules.mlstudio.services.mlstudio_permissions import (
     MANAGE_SGMSTUDIO_USERS,
@@ -27,7 +26,7 @@ from dataall.modules.mlstudio.services.mlstudio_permissions import (
     SGMSTUDIO_USER_URL,
     DELETE_SGMSTUDIO_USER,
 )
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.base.utils import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +69,8 @@ class SagemakerStudioService:
         Throws an exception if a SageMaker domain is not found
         """
         with _session() as session:
-            env = Environment.get_environment_by_uri(session, uri)
-            enabled = Environment.get_boolean_env_param(session, env, "mlStudiosEnabled")
+            env = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, env, "mlStudiosEnabled")
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -178,7 +177,7 @@ class SagemakerStudioService:
         """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
-            env = Environment.get_environment_by_uri(session, user.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, user.environmentUri)
             session.delete(user)
 
             ResourcePolicy.delete_resource_policy(

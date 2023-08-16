@@ -1,12 +1,11 @@
 import logging
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import models
-from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ class DatasetColumnGlueHandler:
 
     @staticmethod
     @Worker.handler('glue.table.update_column')
-    def update_table_columns(engine, task: models.Task):
+    def update_table_columns(engine, task: Task):
         with engine.scoped_session() as session:
             column: DatasetTableColumn = session.query(DatasetTableColumn).get(task.targetUri)
             table: DatasetTable = session.query(DatasetTable).get(column.tableUri)

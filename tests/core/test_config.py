@@ -1,4 +1,4 @@
-from dataall.core.config import config
+from dataall.base.config import config
 
 
 def test_config():
@@ -17,16 +17,3 @@ def test_config():
     config.set_property("a.b.e", "f")
     assert config.get_property("a.b.c") == "d"
     assert config.get_property("a.b.e") == "f"
-
-
-def test_default_config():
-    """Checks that properties are read correctly"""
-    modules = config.get_property("modules")
-    assert "notebooks" in modules
-    assert "active" in modules["notebooks"]
-
-    assert "datasets" in modules
-    assert "active" in modules["datasets"]
-
-    assert config.get_property("modules.notebooks.active")
-    assert config.get_property("modules.datasets.active")

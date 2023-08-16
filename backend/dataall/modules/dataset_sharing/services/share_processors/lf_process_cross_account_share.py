@@ -1,9 +1,9 @@
 import logging
 
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
-from dataall.aws.handlers.ram import Ram
-from dataall.db import models
+from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM
@@ -19,9 +19,9 @@ class ProcessLFCrossAccountShare(LFShareManager):
         share: ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        env_group: models.EnvironmentGroup,
+        source_environment: Environment,
+        target_environment: Environment,
+        env_group: EnvironmentGroup,
     ):
         super().__init__(
             session,
@@ -99,11 +99,11 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     (
                         retry_share_table,
                         failed_invitations,
-                    ) = Ram.accept_ram_invitation(**data)
+                    ) = RamClient.accept_ram_invitation(**data)
 
                     if retry_share_table:
                         self.share_table_with_target_account(**data)
-                        Ram.accept_ram_invitation(**data)
+                        RamClient.accept_ram_invitation(**data)
 
                     self.create_resource_link(**data)
 

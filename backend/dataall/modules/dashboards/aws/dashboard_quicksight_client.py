@@ -1,14 +1,13 @@
 import logging
-import re
 import os
 import ast
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.quicksight import QuicksightClient
-from dataall.aws.handlers.secrets_manager import SecretsManager
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.secrets_manager import SecretsManager
+from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -183,8 +182,8 @@ class DashboardQuicksightClient:
                 parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn'
             )
 
-            aurora_params = SecretsManager.get_secret_value(
-                AwsAccountId=aws_account_id, region=region, secretId=aurora_secret_arn
+            aurora_params = SecretsManager(aws_account_id, region).get_secret_value(
+                secret_id=aurora_secret_arn
             )
             aurora_params_dict = ast.literal_eval(aurora_params)
             client.create_data_source(
@@ -195,7 +194,7 @@ class DashboardQuicksightClient:
                 DataSourceParameters={
                     'AuroraPostgreSqlParameters': {
                         'Host': aurora_params_dict["host"],
-                        'Port': aurora_params_dict["port"],
+                        'Port': "5432",
                         'Database': aurora_params_dict["dbname"]
                     }
                 },

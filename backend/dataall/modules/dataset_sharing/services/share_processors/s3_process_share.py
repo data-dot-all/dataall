@@ -1,6 +1,6 @@
 import logging
 
-from dataall.db import models
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from ..share_managers import S3ShareManager
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
@@ -17,10 +17,10 @@ class ProcessS3Share(S3ShareManager):
         dataset: Dataset,
         share: ShareObject,
         share_folder: DatasetStorageLocation,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        source_env_group: models.EnvironmentGroup,
-        env_group: models.EnvironmentGroup,
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
     ):
 
         super().__init__(
@@ -41,10 +41,10 @@ class ProcessS3Share(S3ShareManager):
         dataset: Dataset,
         share: ShareObject,
         share_folders: [DatasetStorageLocation],
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        source_env_group: models.EnvironmentGroup,
-        env_group: models.EnvironmentGroup
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -108,10 +108,10 @@ class ProcessS3Share(S3ShareManager):
             dataset: Dataset,
             share: ShareObject,
             revoke_folders: [DatasetStorageLocation],
-            source_environment: models.Environment,
-            target_environment: models.Environment,
-            source_env_group: models.EnvironmentGroup,
-            env_group: models.EnvironmentGroup
+            source_environment: Environment,
+            target_environment: Environment,
+            source_env_group: EnvironmentGroup,
+            env_group: EnvironmentGroup
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -168,7 +168,7 @@ class ProcessS3Share(S3ShareManager):
     def clean_up_share(
             dataset: Dataset,
             share: ShareObject,
-            target_environment: models.Environment
+            target_environment: Environment
     ):
         """
         1) deletes S3 access point for this share in this Dataset S3 Bucket

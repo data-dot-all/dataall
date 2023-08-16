@@ -11,7 +11,6 @@ from aws_cdk import (
 
 from .pyNestedStack import pyNestedClass
 
-
 class VpcStack(pyNestedClass):
     def __init__(
         self,
@@ -38,11 +37,12 @@ class VpcStack(pyNestedClass):
             )
         else:
             self.vpce_security_group = ec2.SecurityGroup(
-                self, 'vpc-sg', vpc=cast(ec2.IVpc, self.vpc), allow_all_outbound=False
-            )
-            self.vpce_security_group.add_ingress_rule(
-                peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
-                connection=ec2.Port.all_tcp(),
+                self, 
+                'vpc-sg', 
+                security_group_name=f'{resource_prefix}-{envname}-vpce-sg',
+                vpc=cast(ec2.IVpc, self.vpc), 
+                allow_all_outbound=False, 
+                disable_inline_rules=True
             )
             self._create_vpc_endpoints()
 
@@ -126,6 +126,7 @@ class VpcStack(pyNestedClass):
             ],
             nat_gateways=1,
         )
+
         if restricted_nacl:
             nacl = ec2.NetworkAcl(
                 self, "RestrictedNACL",
@@ -240,6 +241,12 @@ class VpcStack(pyNestedClass):
             'cloudwatch_logs_endpoint': ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             'rds_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS,
             'rds_data_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS_DATA,
+            'sagemaker_api': ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
+            'glue': ec2.InterfaceVpcEndpointAwsService.GLUE,
+            'lakeformation': ec2.InterfaceVpcEndpointAwsService.LAKE_FORMATION,
+            'athena': ec2.InterfaceVpcEndpointAwsService.ATHENA,
+            'codecommit': ec2.InterfaceVpcEndpointAwsService.CODECOMMIT,
+            'git-codecommit': ec2.InterfaceVpcEndpointAwsService.CODECOMMIT_GIT,
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
