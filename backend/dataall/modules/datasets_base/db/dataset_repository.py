@@ -396,4 +396,5 @@ class DatasetRepository(EnvironmentResource):
         dataset.importedGlueDatabase = True if data.get('glueDatabaseName') else False
         dataset.importedKmsKey = True if data.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if data.get('adminRoleName') else False
-        dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else "SSE-S3"
+        if data.get('imported'):
+            dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else "SSE-S3"
