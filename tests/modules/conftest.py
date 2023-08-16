@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pytest
 
 from dataall.core.environment.db.models import Environment, EnvironmentGroup, EnvironmentParameter
@@ -44,7 +46,7 @@ def environment_group(db):
     yield factory
 
 
-def _create_env_params(session, env: Environment, params: dict[str, str]):
+def _create_env_params(session, env: Environment, params: Dict[str, str]):
     if params:
         for key, value in params.items():
             param = EnvironmentParameter(
