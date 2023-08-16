@@ -7,8 +7,8 @@ from dataall.modules.catalog import CatalogApiModuleInterface
 from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
 from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.feed import FeedApiModuleInterface
 from dataall.modules.vote import VoteApiModuleInterface
 
@@ -33,7 +33,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
-        from dataall.core.stacks.db.target_type import TargetType
+        from dataall.core.stacks.db.target_type_repositories import TargetType
         from dataall.modules.vote.api.resolvers import add_vote_type
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.modules.catalog.api.registry import GlossaryRegistry, GlossaryDefinition

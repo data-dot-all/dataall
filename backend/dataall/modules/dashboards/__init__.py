@@ -4,8 +4,8 @@ from typing import Set, List, Type
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.catalog import CatalogApiModuleInterface
-from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
-from dataall.modules.dashboards.db.models import Dashboard
+from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
+from dataall.modules.dashboards.db.dashboard_models import Dashboard
 from dataall.base.loader import ImportMode, ModuleInterface
 from dataall.modules.feed import FeedApiModuleInterface
 from dataall.modules.vote import VoteApiModuleInterface

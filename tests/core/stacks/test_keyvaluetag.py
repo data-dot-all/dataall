@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.core.stacks.db.target_type import TargetType
+from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.base.db import exceptions
 
 

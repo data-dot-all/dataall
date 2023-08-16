@@ -10,7 +10,7 @@ from dataall.core.vpc.db import vpc_models as models
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 
 log = logging.getLogger(__name__)
 

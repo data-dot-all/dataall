@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 
-from dataall.core.environment.db.models import Environment
-from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.core.environment.db.environment_models import Environment
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
 from dataall.base.utils.alarm_service import AlarmService
 
 log = logging.getLogger(__name__)

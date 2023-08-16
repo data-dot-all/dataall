@@ -5,9 +5,9 @@ import requests
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.stacks.aws.ecs import Ecs
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.stacks.db.stack_models import Stack as StackModel
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter

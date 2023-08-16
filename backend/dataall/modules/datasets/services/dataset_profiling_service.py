@@ -1,21 +1,21 @@
 import json
 
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
-from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_profiling_repositories import DatasetProfilingRepository
+from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, DatasetTable
 from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE, PREVIEW_DATASET_TABLE
 
 

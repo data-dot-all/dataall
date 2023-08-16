@@ -4,15 +4,15 @@ from typing import List
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 logger = logging.getLogger(__name__)
 

@@ -2,12 +2,12 @@ import pytest
 
 import dataall
 from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
-from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.permissions.db.tenant import Tenant
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.tenant_repositories import Tenant
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.base.db import exceptions
 from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 

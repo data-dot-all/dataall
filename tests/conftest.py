@@ -9,7 +9,7 @@ from glob import glob
 
 from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.permissions.db import Tenant, Permission
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.core.permissions.permissions import TENANT_ALL
 from tests.client import create_app, ClientWrapper
 

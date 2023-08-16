@@ -1,7 +1,7 @@
 import pytest
 
 import dataall
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 
 

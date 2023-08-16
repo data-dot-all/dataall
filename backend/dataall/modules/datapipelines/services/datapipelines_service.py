@@ -5,15 +5,15 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
 from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient
-from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
     CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
 from dataall.base.utils.naming_convention import (

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Query
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import paginate
-from dataall.modules.worksheets.db.models import Worksheet, WorksheetQueryResult
+from dataall.modules.worksheets.db.worksheet_models import Worksheet, WorksheetQueryResult
 
 
 class WorksheetRepository(EnvironmentResource):

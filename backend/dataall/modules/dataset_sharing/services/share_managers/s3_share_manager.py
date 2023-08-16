@@ -3,17 +3,17 @@ import logging
 import json
 import time
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.aws.iam import IAM
-from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30

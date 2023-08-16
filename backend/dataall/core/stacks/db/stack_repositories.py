@@ -1,10 +1,10 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.core.environment.db.models import Environment
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.environment.db.environment_models import Environment
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.stacks.db import stack_models as models
-from dataall.core.stacks.db.target_type import TargetType
+from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import (
     NamingConventionService,

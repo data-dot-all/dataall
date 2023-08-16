@@ -1,6 +1,6 @@
 from typing import Dict, Type
 
-from dataall.modules.vote.db.vote import Vote
+from dataall.modules.vote.db.vote_repositories import Vote
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}

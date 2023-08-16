@@ -1,4 +1,4 @@
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 
 
 def test_create_sagemaker_studio_user(sagemaker_studio_user, group, env_fixture):

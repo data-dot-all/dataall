@@ -3,9 +3,9 @@ from dataclasses import dataclass
 import pytest
 
 from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permissions import ENVIRONMENT_ALL
 
 

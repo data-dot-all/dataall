@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 
 
 @pytest.fixture(scope='module', autouse=True)

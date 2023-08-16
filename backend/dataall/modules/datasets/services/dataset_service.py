@@ -8,29 +8,29 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.vote.db.vote import Vote
+from dataall.modules.vote.db.vote_repositories import Vote
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
-from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
-from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, CRAWL_DATASET, \
     DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ, IMPORT_DATASET
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.enums import DatasetRole
-from dataall.modules.datasets_base.db.models import Dataset, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)

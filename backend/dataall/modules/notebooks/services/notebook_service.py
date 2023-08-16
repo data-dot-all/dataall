@@ -8,17 +8,17 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.context import get_context as context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
-from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
 from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
     GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK

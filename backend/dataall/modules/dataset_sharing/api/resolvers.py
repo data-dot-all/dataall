@@ -2,16 +2,16 @@ import logging
 
 from dataall.base import utils
 from dataall.base.api.context import Context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
 

@@ -21,7 +21,7 @@ from aws_cdk import (
 )
 
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole

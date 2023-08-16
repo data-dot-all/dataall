@@ -16,11 +16,11 @@ from botocore.exceptions import ClientError
 from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.cdkproxy.stacks.manager import stack
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
