@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.storage_location.input_types import (
     ModifyDatasetFolderInput,
     NewDatasetStorageLocationInput,
@@ -8,7 +8,7 @@ from dataall.modules.datasets.api.storage_location.resolvers import (
     update_storage_location,
     remove_storage_location,
 )
-from dataall.modules.datasets.api.storage_location.schema import DatasetStorageLocation
+from dataall.modules.datasets.api.storage_location.types import DatasetStorageLocation
 
 createDatasetStorageLocation = gql.MutationField(
     name='createDatasetStorageLocation',

@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.profiling.resolvers import start_profiling_run
 
 startDatasetProfilingRun = gql.MutationField(

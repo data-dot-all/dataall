@@ -1,12 +1,15 @@
 import pytest
+
 import dataall
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -21,7 +24,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -90,7 +93,7 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
-    indexed_objects_counter = dataall.tasks.catalog_indexer_task.index_objects(
+    indexed_objects_counter = dataall.modules.catalog.tasks.catalog_indexer_task.index_objects(
         engine=db
     )
     assert indexed_objects_counter == 2

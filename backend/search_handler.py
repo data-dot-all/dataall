@@ -1,7 +1,7 @@
 import json
 import os
 
-from dataall.searchproxy import connect, run_query
+from dataall.base.searchproxy import connect, run_query
 
 ENVNAME = os.getenv('envname', 'local')
 es = connect(envname=ENVNAME)

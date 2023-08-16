@@ -1,5 +1,5 @@
-from dataall.db import models
-from dataall.db.api import Notification
+from dataall.core.notifications.db.notification import Notification
+from dataall.core.notifications.db.notification_models import NotificationType
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -12,7 +12,7 @@ class ShareNotificationService:
         notifications = [Notification.create(
             session=session,
             username=dataset.owner,
-            notification_type=models.NotificationType.SHARE_OBJECT_SUBMITTED,
+            notification_type=NotificationType.SHARE_OBJECT_SUBMITTED,
             target_uri=f'{share.shareUri}|{dataset.datasetUri}',
             message=f'User {username} submitted share request for dataset {dataset.label}',
         )]
@@ -32,7 +32,7 @@ class ShareNotificationService:
                 Notification.create(
                     session=session,
                     username=user,
-                    notification_type=models.NotificationType.SHARE_OBJECT_APPROVED,
+                    notification_type=NotificationType.SHARE_OBJECT_APPROVED,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'User {username} approved share request for dataset {dataset.label}',
                 )
@@ -53,9 +53,9 @@ class ShareNotificationService:
                 Notification.create(
                     session=session,
                     username=user,
-                    notification_type=models.NotificationType.SHARE_OBJECT_REJECTED,
+                    notification_type=NotificationType.SHARE_OBJECT_REJECTED,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=f'User {username} approved share request for dataset {dataset.label}',
+                    message=f'User {username} rejected share request for dataset {dataset.label}',
                 )
             )
             session.add_all(notifications)
@@ -74,7 +74,7 @@ class ShareNotificationService:
                 Notification.create(
                     session=session,
                     username=user,
-                    notification_type=models.NotificationType.DATASET_VERSION,
+                    notification_type=NotificationType.DATASET_VERSION,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'New data (at {s3_prefix}) is available from dataset {dataset.datasetUri} '
                             f'shared by owner {dataset.owner}',

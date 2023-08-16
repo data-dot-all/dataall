@@ -4,7 +4,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Base, utils
+from dataall.base.db import Base, utils
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus
 
 
@@ -33,6 +33,8 @@ class ShareObject(Base):
     updated = Column(DateTime, onupdate=datetime.now)
     deleted = Column(DateTime)
     confirmed = Column(Boolean, default=False)
+    requestPurpose = Column(String, nullable=True)
+    rejectPurpose = Column(String, nullable=True)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
 

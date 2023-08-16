@@ -2,9 +2,9 @@ import random
 import typing
 import pytest
 
-import dataall
-from dataall.api.constants import PrincipalType
-from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.modules.dataset_sharing.api.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
@@ -26,18 +26,18 @@ def random_table_name():
 @pytest.fixture(scope='module')
 def org1(org: typing.Callable, user, group, tenant):
     # user, group and tenant are fixtures defined in conftest
-    yield org('testorg', user.userName, group.name)
+    yield org('testorg', user.username, group.name)
 
 
 @pytest.fixture(scope='module')
-def env1(environment: typing.Callable, org1: dataall.db.models.Organization, user, group
-         ) -> dataall.db.models.Environment:
+def env1(environment: typing.Callable, org1: Organization, user, group
+         ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
         organization=org1,
         awsAccountId="1" * 12,
         label="source_environment",
-        owner=user.userName,
+        owner=user.username,
         samlGroupName=group.name,
         environmentDefaultIAMRoleName=f"source-{group.name}",
     )
@@ -45,7 +45,7 @@ def env1(environment: typing.Callable, org1: dataall.db.models.Organization, use
 
 @pytest.fixture(scope='module')
 def env1group(environment_group: typing.Callable, env1, user, group
-              ) -> dataall.db.models.EnvironmentGroup:
+              ) -> EnvironmentGroup:
     yield environment_group(
         environment=env1,
         group=group,
@@ -53,7 +53,7 @@ def env1group(environment_group: typing.Callable, env1, user, group
 
 
 @pytest.fixture(scope='module')
-def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: dataall.db.models.Environment
+def dataset1(dataset_model: typing.Callable, org1: Organization, env1: Environment
              ) -> Dataset:
     yield dataset_model(
         organization=org1,
@@ -69,30 +69,29 @@ def tables1(table: typing.Callable, dataset1: Dataset):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table1(table: typing.Callable, dataset1: Dataset,
-           user: dataall.db.models.User) -> DatasetTable:
+def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
-        username=user.userName
+        username='alice'
     )
 
 
 @pytest.fixture(scope='module')
-def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
-    yield org('org2', user2.userName, group2.name)
+def org2(org: typing.Callable, group2, tenant) -> Organization:
+    yield org('org2', 'bob', group2.name)
 
 
 @pytest.fixture(scope='module')
 def env2(
-        environment: typing.Callable, org2: dataall.db.models.Organization, user2, group2
-) -> dataall.db.models.Environment:
+        environment: typing.Callable, org2: Organization, user2, group2
+) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
         organization=org2,
         awsAccountId="2" * 12,
         label="target_environment",
-        owner=user2.userName,
+        owner=user2.username,
         samlGroupName=group2.name,
         environmentDefaultIAMRoleName=f"source-{group2.name}",
     )
@@ -100,7 +99,7 @@ def env2(
 
 @pytest.fixture(scope='module')
 def dataset2(
-        dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: dataall.db.models.Environment
+        dataset_model: typing.Callable, org2: Organization, env2: Environment
 ) -> Dataset:
     yield dataset_model(
         organization=org2,
@@ -116,17 +115,16 @@ def tables2(table, dataset2):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table2(table: typing.Callable, dataset2: Dataset,
-           user2: dataall.db.models.User) -> DatasetTable:
+def table2(table: typing.Callable, dataset2: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset2,
         name="table2",
-        username=user2.userName
+        username='bob'
     )
 
 
 @pytest.fixture(scope='module')
-def env2group(environment_group: typing.Callable, env2, user2, group2) -> dataall.db.models.EnvironmentGroup:
+def env2group(environment_group: typing.Callable, env2, user2, group2) -> EnvironmentGroup:
     yield environment_group(
         environment=env2,
         group=group2,
@@ -141,16 +139,17 @@ def share1_draft(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share1 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Draft.value
     )
+
     yield share1
 
     # Cleanup share
@@ -218,14 +217,14 @@ def share2_submitted(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share2 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Submitted.value
     )
     yield share2
@@ -293,14 +292,14 @@ def share3_processed(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share3 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Processed.value
     )
     yield share3
@@ -365,14 +364,14 @@ def share4_draft(
         user2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
-        owner=user2.userName,
+        owner=user2.username,
         status=ShareObjectStatus.Draft.value
     )
 
@@ -382,7 +381,7 @@ def test_init(tables1, tables2):
 
 
 # Queries & mutations
-def create_share_object(client, userName, group, groupUri, environmentUri, datasetUri, itemUri=None):
+def create_share_object(client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -400,13 +399,15 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
           created
           status
           userRoleForShareObject
+          requestPurpose
+          rejectPurpose
         }
       }
     """
 
     response = client.query(
         q,
-        username=userName,
+        username=username,
         groups=[group.name],
         datasetUri=datasetUri,
         itemType=ShareableType.Table.value if itemUri else None,
@@ -416,6 +417,7 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
             'groupUri': groupUri,
             'principalId': groupUri,
             'principalType': PrincipalType.Group.value,
+            'requestPurpose': 'testShare',
         },
     )
 
@@ -432,6 +434,8 @@ def get_share_object(client, user, group, shareUri, filter):
         created
         owner
         status
+        requestPurpose
+        rejectPurpose
         userRoleForShareObject
         principal {
           principalId
@@ -474,13 +478,51 @@ def get_share_object(client, user, group, shareUri, filter):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
         filter=filter,
     )
     # Print response
     print('Get share request response: ', response)
+    return response
+
+
+def update_share_request_purpose(client, user, group, shareUri, requestPurpose):
+    q = """
+    mutation updateShareRequestReason($shareUri: String!,$requestPurpose: String!) {
+      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose)
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        requestPurpose=requestPurpose,
+    )
+    # Print response
+    print('Update share request purpose response: ', response)
+    return response
+
+
+def update_share_reject_purpose(client, user, group, shareUri, rejectPurpose):
+    q = """
+        mutation updateShareRejectReason($shareUri: String!, $rejectPurpose: String!) {
+          updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose)
+        }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        rejectPurpose=rejectPurpose,
+    )
+    # Print response
+    print('Update share reject purpose response: ', response)
     return response
 
 
@@ -530,7 +572,7 @@ def list_dataset_share_objects(client, user, group, datasetUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         datasetUri=datasetUri,
     )
@@ -552,7 +594,7 @@ def get_share_requests_to_me(client, user, group):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name]
     )
     # Print response
@@ -573,7 +615,7 @@ def get_share_requests_from_me(client, user, group):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name]
     )
     # Print response
@@ -596,7 +638,7 @@ def add_share_item(client, user, group, shareUri, itemUri, itemType):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
         input={
@@ -618,7 +660,7 @@ def remove_share_item(client, user, group, shareItemUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareItemUri=shareItemUri
     )
@@ -655,7 +697,7 @@ def submit_share_object(client, user, group, shareUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
     )
@@ -677,7 +719,7 @@ def approve_share_object(client, user, group, shareUri):
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
     )
@@ -688,19 +730,21 @@ def approve_share_object(client, user, group, shareUri):
 
 def reject_share_object(client, user, group, shareUri):
     q = """
-    mutation RejectShareObject($shareUri: String!) {
-      rejectShareObject(shareUri: $shareUri) {
+    mutation RejectShareObject($shareUri: String!, $rejectPurpose: String!) {
+      rejectShareObject(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
         shareUri
         status
+        rejectPurpose
       }
     }
     """
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         shareUri=shareUri,
+        rejectPurpose="testRejectShare"
     )
 
     print('Response from rejectShareObject: ', response)
@@ -719,7 +763,7 @@ def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris)
 
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         input={
             'shareUri': shareUri,
@@ -774,7 +818,7 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
     """
     response = client.query(
         q,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=environmentUri,
         filter={},
@@ -790,7 +834,7 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     # When a user that does not belong to environment and group creates request
     create_share_object_response = create_share_object(
         client=client,
-        userName='anonymous',
+        username='anonymous',
         group=group3,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,
@@ -806,7 +850,7 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     # When a user that belongs to environment and group creates request
     create_share_object_response = create_share_object(
         client=client,
-        userName=user2.userName,
+        username=user2.username,
         group=group2,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,
@@ -816,7 +860,7 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
-
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
     # Given
@@ -824,7 +868,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     # When a user that belongs to environment and group creates request with table in the request
     create_share_object_response = create_share_object(
         client=client,
-        userName=user2.userName,
+        username=user2.username,
         group=group2,
         groupUri=env2group.groupUri,
         environmentUri=env2.environmentUri,
@@ -836,6 +880,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
     # And item has been added to the share request
     get_share_object_response = get_share_object(
@@ -868,6 +913,47 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
     assert get_share_object_response.data.getShareObject.get('principal').region
+
+
+def test_update_share_request_purpose(client, share1_draft, user2, group2):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the requesters group updates
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then the requestPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.requestPurpose == "NewRequestPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Requesters'
+
+
+def test_update_share_request_purpose_unauthorized(client, share1_draft, user, group):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the approvers group attempts to update the request purpose
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_request_purpose_response.errors[0].message
 
 
 def test_list_dataset_share_objects_approvers(
@@ -1087,6 +1173,47 @@ def test_submit_share_request(
     assert status == ShareItemStatus.PendingApproval.name
 
 
+def test_update_share_reject_purpose(client, share2_submitted, user, group):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the approvers group updates the reject purpose
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        rejectPurpose="NewRejectPurpose"
+    )
+
+    # Then the rejectPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.rejectPurpose == "NewRejectPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Approvers'
+
+
+def test_update_share_reject_purpose_unauthorized(client, share2_submitted, user2, group2):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the requester group attempts to update the reject purpose
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2_submitted.shareUri,
+        rejectPurpose="NewRejectPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_reject_purpose_response.errors[0].message
+
+
 def test_approve_share_request(
         db, client, user, group, share2_submitted, share2_item_pa
 ):
@@ -1182,6 +1309,7 @@ def test_reject_share_request(
 
     # Then share object status is changed to Rejected
     assert reject_share_object_response.data.rejectShareObject.status == ShareObjectStatus.Rejected.name
+    assert reject_share_object_response.data.rejectShareObject.rejectPurpose == "testRejectShare"
 
     # and share item status is changed to Share_Rejected
     get_share_object_response = get_share_object(

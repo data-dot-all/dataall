@@ -15,6 +15,10 @@ class EnvironmentResource(ABC):
     def update_env(session, environment):
         return False
 
+    @staticmethod
+    def count_role_resources(session, role_uri):
+        return 0
+
 
 class EnvironmentResourceManager:
     """
@@ -46,3 +50,10 @@ class EnvironmentResourceManager:
     def delete_env(cls, session, environment):
         for resource in cls._resources:
             resource.delete_env(session, environment)
+
+    @classmethod
+    def count_consumption_role_resources(cls, session, role_uri):
+        counter = 0
+        for resource in cls._resources:
+            counter += resource.count_role_resources(session, role_uri)
+        return counter

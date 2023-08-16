@@ -1,5 +1,5 @@
 import pytest
-from dataall.api import gql
+from dataall.base.api import gql
 
 
 @pytest.fixture(scope='module', autouse=True)

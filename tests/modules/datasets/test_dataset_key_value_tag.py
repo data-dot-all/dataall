@@ -1,25 +1,26 @@
-from dataall.db import models
+from dataall.core.organizations.db.organization_models import Organization
 import pytest
 
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
 from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
 
 
 @pytest.fixture(scope='module')
-def org1(db, org, tenant, user, group) -> models.Organization:
-    org = org('testorg', user.userName, group.name)
+def org1(db, org, tenant, user, group) -> Organization:
+    org = org('testorg', user.username, group.name)
     yield org
 
 
 @pytest.fixture(scope='module')
 def env1(
-        db, org1: models.Organization, user, group, module_mocker, env
-) -> models.Environment:
+        db, org1: Organization, user, group, module_mocker, env
+) -> Environment:
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
+        'dataall.core.environment.api.resolvers.check_environment', return_value=True
     )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -27,7 +28,7 @@ def env1(
 def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
     with db.scoped_session():
         yield dataset(
-            org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
+            org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
         )
 
 

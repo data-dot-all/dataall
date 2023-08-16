@@ -1,23 +1,24 @@
 import logging
 
-
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db.api import ResourcePolicy, Environment, Glossary
-from dataall.db.exceptions import ResourceShared
+from dataall.base.context import get_context
+from dataall.modules.catalog.db.glossary import Glossary
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.base.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, SYNC_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ, \
     GET_DATASET_TABLE
-from dataall.utils import json_utils
+from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class DatasetTableService:
                     resource_uri=table.tableUri,
                     permission_name=PREVIEW_DATASET_TABLE,
                 )
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
 
     @staticmethod
@@ -170,7 +171,7 @@ class DatasetTableService:
     @staticmethod
     def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
         # ADD DATASET TABLE PERMISSIONS
-        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
         permission_group = {dataset.SamlAdminGroupName, env.SamlGroupName,
                             dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName}
         for group in permission_group:

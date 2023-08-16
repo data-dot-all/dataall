@@ -3,7 +3,7 @@ from enum import Enum
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Base, Resource, utils
+from dataall.base.db import Base, Resource, utils
 
 
 class DashboardShareStatus(Enum):

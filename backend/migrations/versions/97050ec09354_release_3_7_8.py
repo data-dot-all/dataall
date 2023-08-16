@@ -5,20 +5,15 @@ Revises: 166af5c0355b
 Create Date: 2021-12-08 12:54:33.828838
 
 """
-import datetime
 
 from alembic import op
-from sqlalchemy import Boolean, Column, String, DateTime, orm
+from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import utils, Resource
+from dataall.base.db import utils, Resource
 
 # revision identifiers, used by Alembic.
-from dataall.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
 
 # revision identifiers, used by Alembic.
 revision = '97050ec09354'

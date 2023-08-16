@@ -1,8 +1,9 @@
 import pytest
 
-from dataall.db import models
-from dataall.api import constants
-from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus
+from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
@@ -10,7 +11,7 @@ from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Data
 @pytest.fixture(scope="module")
 def group(db):
     with db.scoped_session() as session:
-        group = models.Group(name="bobteam", label="bobteam", owner="alice")
+        group = Group(name="bobteam", label="bobteam", owner="alice")
         session.add(group)
     yield group
 
@@ -18,16 +19,16 @@ def group(db):
 @pytest.fixture(scope="module")
 def group2(db):
     with db.scoped_session() as session:
-        group = models.Group(name="bobteam2", label="bobteam2", owner="alice2")
+        group = Group(name="bobteam2", label="bobteam2", owner="alice2")
         session.add(group)
     yield group
 
 
 @pytest.fixture(scope="module")
 def org(db):
-    def factory(label: str, owner: str, SamlGroupName: str) -> models.Organization:
+    def factory(label: str, owner: str, SamlGroupName: str) -> Organization:
         with db.scoped_session() as session:
-            org = models.Organization(
+            org = Organization(
                 label=label,
                 owner=owner,
                 tags=[],
@@ -44,15 +45,15 @@ def org(db):
 @pytest.fixture(scope="module")
 def environment(db):
     def factory(
-        organization: models.Organization,
+        organization: Organization,
         awsAccountId: str,
         label: str,
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-    ) -> models.Environment:
+    ) -> Environment:
         with db.scoped_session() as session:
-            env = models.Environment(
+            env = Environment(
                 organizationUri=organization.organizationUri,
                 AwsAccountId=awsAccountId,
                 region="eu-central-1",
@@ -75,12 +76,12 @@ def environment(db):
 @pytest.fixture(scope="module")
 def environment_group(db):
     def factory(
-        environment: models.Environment,
-        group: models.Group,
-    ) -> models.EnvironmentGroup:
+        environment: Environment,
+        group: Group,
+    ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 
-            env_group = models.EnvironmentGroup(
+            env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
                 groupUri=group.groupUri,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
@@ -97,8 +98,8 @@ def environment_group(db):
 @pytest.fixture(scope="module")
 def dataset(db):
     def factory(
-        organization: models.Organization,
-        environment: models.Environment,
+        organization: Organization,
+        environment: Environment,
         label: str,
     ) -> Dataset:
         with db.scoped_session() as session:
@@ -173,8 +174,8 @@ def table(db):
 def share(db):
     def factory(
         dataset: Dataset,
-        environment: models.Environment,
-        env_group: models.EnvironmentGroup
+        environment: Environment,
+        env_group: EnvironmentGroup
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
@@ -182,7 +183,7 @@ def share(db):
                 environmentUri=environment.environmentUri,
                 owner="bob",
                 principalId=environment.SamlGroupName,
-                principalType=constants.PrincipalType.Group.value,
+                principalType=PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
                 status=ShareObjectStatus.Approved.value,
             )

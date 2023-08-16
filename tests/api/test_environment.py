@@ -1,17 +1,19 @@
 import pytest
 
 import dataall
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -296,9 +298,9 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
-        filter={'roles': [dataall.api.constants.EnvironmentPermission.Invited.name]},
+        filter={'roles': [dataall.core.environment.api.enums.EnvironmentPermission.Invited.name]},
     )
 
     assert response.data.listEnvironments.count == 1
@@ -307,12 +309,12 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
 def test_paging(db, client, org1, env1, user, group):
     for i in range(1, 30):
         with db.scoped_session() as session:
-            env = dataall.db.models.Environment(
+            env = Environment(
                 organizationUri=org1.organizationUri,
                 AwsAccountId=f'12345678901+{i}',
                 region='eu-west-1',
                 label='org',
-                owner=user.userName,
+                owner=user.username,
                 tags=[],
                 description='desc',
                 SamlGroupName=group.name,
@@ -345,7 +347,7 @@ def test_paging(db, client, org1, env1, user, group):
                 }
             }
             """,
-            username=user.userName,
+            username=user.username,
             filter={'page': page, 'pageSize': 5},
             groups=[group.name],
         )
@@ -361,26 +363,6 @@ def test_paging(db, client, org1, env1, user, group):
 def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
     response = client.query(
         """
-        query listResourcePermissions($filter:ResourcePermissionFilter){
-            listResourcePermissions(filter:$filter){
-                count
-                nodes{
-                    permissionUri
-                    name
-                    type
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name],
-        filter={},
-    )
-
-    assert response.data.listResourcePermissions.count > 1
-
-    response = client.query(
-        """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
             listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
                     permissionUri
@@ -389,7 +371,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         filter={},
     )
@@ -428,7 +410,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group2.name],
         groupUri=group2.name,
         environmentUri=env1.environmentUri,
@@ -465,7 +447,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -486,7 +468,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -509,7 +491,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -529,7 +511,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -565,7 +547,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -585,7 +567,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -625,7 +607,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name, group3.name],
         environmentUri=env1.environmentUri,
         filter={},
@@ -677,7 +659,7 @@ def test_create_environment(db, client, org1, env1, user, group):
                 }
             }
         }""",
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
         input={
             'label': f'dev',
@@ -707,7 +689,7 @@ def test_create_environment(db, client, org1, env1, user, group):
         assert vpc.default
 
     with db.scoped_session() as session:
-        env = dataall.db.api.Environment.get_environment_by_uri(
+        env = EnvironmentService.get_environment_by_uri(
             session, response.data.createEnvironment.environmentUri
         )
         session.delete(env)

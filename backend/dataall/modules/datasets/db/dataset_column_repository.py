@@ -1,7 +1,7 @@
 from operator import or_
 
-from dataall.db import paginate
-from dataall.db.exceptions import ObjectNotFound
+from dataall.base.db import paginate
+from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.db.models import DatasetTableColumn
 
 

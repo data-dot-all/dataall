@@ -1,4 +1,4 @@
-from dataall.api.gql import String, Number, Boolean, Date
+from dataall.base.api.gql import String, Number, Boolean, Date
 
 
 def test_basic():

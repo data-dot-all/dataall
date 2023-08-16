@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy import and_, or_
 
-from dataall.db import paginate, exceptions
+from dataall.base.db import paginate, exceptions
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)

@@ -12,7 +12,7 @@ from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
-from dataall.db import Resource, utils
+from dataall.base.db import Resource, utils
 
 revision = 'b6e0ac8f6d3f'
 down_revision = '967fa9c0a147'

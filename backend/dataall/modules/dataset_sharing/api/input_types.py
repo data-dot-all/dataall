@@ -1,5 +1,7 @@
-from dataall.api.constants import *
-from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.base.api.constants import *
+from dataall.core.organizations.api.enums import OrganisationUserRole
+from dataall.modules.dataset_sharing.api.enums import ShareableType, ShareSortField
+
 
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
@@ -8,6 +10,7 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='requestPurpose', type=gql.String),
     ],
 )
 
@@ -30,12 +33,6 @@ RevokeItemsInput = gql.InputType(
         gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
-
-
-class ShareSortField(GraphQLEnumMapper):
-    created = 'created'
-    updated = 'updated'
-    label = 'label'
 
 
 ShareSortCriteria = gql.InputType(
@@ -83,5 +80,15 @@ EnvironmentDataItemFilter = gql.InputType(
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
         gql.Argument('uniqueShares', gql.Boolean)
+    ],
+)
+
+PrincipalFilter = gql.InputType(
+    name='PrincipalFilter',
+    arguments=[
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument(name='principalType', type=gql.Ref('PrincipalType')),
+        gql.Argument(name='term', type=gql.String),
     ],
 )

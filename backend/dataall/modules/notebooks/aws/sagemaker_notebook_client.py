@@ -1,6 +1,6 @@
 import logging
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from botocore.exceptions import ClientError
 

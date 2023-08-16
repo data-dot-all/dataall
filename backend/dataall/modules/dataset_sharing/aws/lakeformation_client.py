@@ -3,7 +3,7 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
+from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
 
@@ -29,7 +29,6 @@ class LakeFormationClient:
         principals,
         database_name,
         permissions,
-        permissions_with_grant_options=None,
     ):
         for principal in principals:
             log.info(

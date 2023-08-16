@@ -1,5 +1,5 @@
 """Defines the object types of the SageMaker ML Studio"""
-from dataall.api import gql
+from dataall.base.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     resolve_user_role,
     resolve_sagemaker_studio_user_status,
@@ -9,8 +9,8 @@ from dataall.modules.mlstudio.api.resolvers import (
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 
 
-from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
-from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.core.organizations.api.resolvers import resolve_organization_by_env
+from dataall.core.environment.api.resolvers import resolve_environment
 
 
 SagemakerStudioUserApps = gql.ArrayType(

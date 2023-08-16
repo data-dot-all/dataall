@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
 
-from dataall.db import models
+from dataall.core.environment.db.models import Environment
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset, DatasetStorageLocation
-from dataall.utils.alarm_service import AlarmService
+from dataall.base.utils.alarm_service import AlarmService
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class DatasetAlarmService(AlarmService):
             self,
             table: DatasetTable,
             share: ShareObject,
-            target_environment: models.Environment,
+            target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = (
@@ -48,7 +48,7 @@ class DatasetAlarmService(AlarmService):
             self,
             table: DatasetTable,
             share: ShareObject,
-            target_environment: models.Environment,
+            target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = f'ALARM: DATAALL Table {table.GlueTableName} Revoking LF permissions Failure Notification'
@@ -98,7 +98,7 @@ Alarm Details:
         self,
         folder: DatasetStorageLocation,
         share: ShareObject,
-        target_environment: models.Environment,
+        target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = (
@@ -126,7 +126,7 @@ Alarm Details:
         self,
         folder: DatasetStorageLocation,
         share: ShareObject,
-        target_environment: models.Environment,
+        target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = (
