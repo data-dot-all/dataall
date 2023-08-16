@@ -292,46 +292,8 @@ module/
 ├── any additional functionality
 ```
 
-### dataall.db
 
-The `dataall.db` package implements the database connection with our persistence layer.
-It can work with a local postgresql instance or with an Aurora database instance.
-
-The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
-or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
-
-
-The package has two modules:
-- `models`: it defines the tables and their schemas in our Aurora RDS database.
-- `api`: api calls against the RDS Aurora database.
-
-API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to count the tables
-of an specific data.all dataset.
-```
-    @staticmethod
-    def count_dataset_tables(session, dataset_uri):
-        return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
-```
-
-The exports from this package are:
-
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
-
-**Note**: Granular permissions specified from the UI are stored in the permission table. Check the permission model and
-apis to dig deeper into the logic.
-
-
-### dataall/api
-
-
-
+### api
 
 Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
 and each defines the following modules:
@@ -424,6 +386,37 @@ The parameters are defined as follows:
 **Note**: If you are adding a new Object/GraphQL type, 
 don't forget to add it in`backend/dataall/api/Objects/__init__.py`
 
+
+#### db
+
+The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
+or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
+
+The package contains 2 types of classes
+- `models`: it defines the tables and their schemas in our Aurora RDS database.
+- `repositories`: api calls against the RDS Aurora database.
+
+API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to count the tables
+of an specific data.all dataset.
+```
+    @staticmethod
+    def count_dataset_tables(session, dataset_uri):
+        return (
+            session.query(models.DatasetTable)
+            .filter(models.DatasetTable.datasetUri == dataset_uri)
+            .count()
+        )
+```
+
+The exports from this package are:
+
+1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `aws.db.Base` : a SQL alchemy Base metadata class
+3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+
+
+
 ### dataall/aws
 
 The `dataall.aws` package is where all the AWS logic is implemented. It serves 
@@ -465,84 +458,6 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
         )
     [.....]
 ```
-#### WorkerHandler
-In `service_handlers.py` we defined the `WorkerHandler`  Python class.
-Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
-asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
-asynchronously by the Worker Lambda function.
-The `WorkerHandler`  is in charge of
-routing tasks to the Worker AWS Lambda. 
-
-This class has a singleton instance called `Worker` that has two apis:
-
-1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
-2.  `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
-
-
-The `Worker` singleton exposes a decorator function to register handler functions that can 
-be run by the worker. For example, for the Glue handlers (in `handlers/glue.py`), we want to define that the function 
-`start_crawler` is run by the Worker Lambda. Therefore we use the decorator and define its path:
-
-```
-    @staticmethod
-    @Worker.handler(path='glue.crawler.start')
-    def start_crawler(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
-            return Glue.start_glue_crawler(
-                {
-                    'crawler_name': dataset.GlueCrawlerName,
-                    'region': dataset.region,
-                    'accountid': dataset.AwsAccountId,
-                    'database': dataset.GlueDatabaseName,
-                    'location': location,
-                }
-            )
-```
-
-
-The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
-defined first in the Aurora database and then we pass their unique identifier to the queue. In the example
-below, taken from the same dataset resolver, we are queueing a `glue.crawler.start` action.
-
-```
-def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
-    [...]
-
-        task = models.Task(
-            targetUri=datasetUri,
-            action='glue.crawler.start',
-            payload={'location': location},
-        )
-        session.add(task)
-        session.commit()
-
-        Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-    [...]
-```
-
-
-The Worker AWS Lambda receives JSON objects with the task fields. Below is the code of the Worker Lambda defined in
-`backend/aws_handler.py`.
-
-```
-def handler(event, context=None):
-    """Processes  messages received from sqs"""
-    log.info(f'Received Event: {event}')
-    for record in event['Records']:
-        log.info('Consumed record from queue: %s' % record)
-        message = json.loads(record['body'])
-        log.info(f'Extracted Message: {message}')
-        Worker.process(engine=engine, task_ids=message)
-```
-
-
-The `WorkerHandler` in `dataall.aws` will then `process` the tasks: it reads task data from the Database, routes to 
-the decorated handler function 
-and assumes a role in the AWS Account where the action needs to be performed.
 
 #### ECS
 You might have overlooked the ECS interface. In the `dataall.aws` package we also define the connection to the
