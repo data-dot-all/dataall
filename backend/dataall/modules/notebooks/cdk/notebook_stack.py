@@ -19,7 +19,6 @@ from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.base.db import Engine, get_engine
-from dataall.modules.notebooks.db import notebook_models
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
@@ -165,6 +164,6 @@ class NotebookStack(Stack):
             value=notebook.NotebookInstanceName,
         )
 
-        TagsUtil.add_tags(stack=self, model=models.SagemakerNotebook, target_type="notebook")
+        TagsUtil.add_tags(stack=self, model=SagemakerNotebook, target_type="notebook")
 
         CDKNagUtil.check_rules(self)
