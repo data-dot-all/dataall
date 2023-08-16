@@ -1,4 +1,4 @@
-from tests.api.test_vote import upvote_mutation, count_votes_query, get_vote_query
+from tests.modules.vote.test_vote import upvote_mutation, count_votes_query, get_vote_query
 
 
 def test_dashboard_count_votes(client, dashboard, env1):

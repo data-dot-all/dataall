@@ -4,7 +4,7 @@ from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
 
-from dataall.db import Engine
+from dataall.base.db import Engine
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectSM, ShareObjectRepository, ShareItemSM
 

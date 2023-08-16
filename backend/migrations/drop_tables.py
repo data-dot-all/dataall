@@ -1,6 +1,6 @@
 import os
 
-from dataall.db.connection import (
+from dataall.base.db.connection import (
     ENVNAME,
     get_engine,
     drop_schema_if_exists,

@@ -1,11 +1,15 @@
 import pytest
 
 import dataall
-from dataall.api.constants import OrganisationUserRole
-from dataall.db import exceptions
-from dataall.db.api import TenantPolicy, Tenant
-from dataall.db.models.Permission import PermissionType
-from dataall.db.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
+from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.db.tenant import Tenant
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.base.db import exceptions
+from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
 
 def permissions(db, all_perms):
@@ -13,16 +17,16 @@ def permissions(db, all_perms):
         permissions = []
         for p in all_perms:
             permissions.append(
-                dataall.db.api.Permission.save_permission(
+                Permission.save_permission(
                     session,
                     name=p,
                     description=p,
                     permission_type=PermissionType.RESOURCE.name,
                 )
             )
-        for p in dataall.db.permissions.TENANT_ALL:
+        for p in dataall.core.permissions.permissions.TENANT_ALL:
             permissions.append(
-                dataall.db.api.Permission.save_permission(
+                Permission.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -42,17 +46,9 @@ def tenant(db):
 
 
 @pytest.fixture(scope='module')
-def user(db):
+def group(db):
     with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='alice@test.com', userName='alice')
-        session.add(user)
-        yield user
-
-
-@pytest.fixture(scope='module')
-def group(db, user):
-    with db.scoped_session() as session:
-        group = dataall.db.models.Group(
+        group = Group(
             name='testadmins', label='testadmins', owner='alice'
         )
         session.add(group)
@@ -62,7 +58,7 @@ def group(db, user):
 @pytest.fixture(scope='module', autouse=True)
 def org(db, group):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -77,7 +73,7 @@ def org(db, group):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db, group):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -95,7 +91,7 @@ def env(org, db, group):
     yield env
 
 
-def test_attach_tenant_policy(db, user, group, tenant):
+def test_attach_tenant_policy(db, group, tenant):
     permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
         TenantPolicy.attach_group_tenant_policy(
@@ -107,19 +103,19 @@ def test_attach_tenant_policy(db, user, group, tenant):
 
         assert TenantPolicy.check_user_tenant_permission(
             session=session,
-            username=user.userName,
+            username='alice',
             groups=[group.name],
             permission_name=MANAGE_GROUPS,
             tenant_name='dataall',
         )
 
 
-def test_unauthorized_tenant_policy(db, user, group):
+def test_unauthorized_tenant_policy(db, group):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
             assert TenantPolicy.check_user_tenant_permission(
                 session=session,
-                username=user.userName,
+                username='alice',
                 groups=[group.name],
                 permission_name='UNKNOW_PERMISSION',
                 tenant_name='dataall',

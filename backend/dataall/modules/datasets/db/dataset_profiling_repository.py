@@ -1,8 +1,7 @@
 from sqlalchemy import and_
 
-from dataall.db import paginate, models
-from dataall.db.exceptions import ObjectNotFound
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable, Dataset
+from dataall.base.db import paginate
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
 
 
 class DatasetProfilingRepository:

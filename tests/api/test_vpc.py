@@ -1,22 +1,22 @@
 import pytest
 
-import dataall
+from dataall.core.vpc.db.vpc_models import Vpc
 
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module')
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module', autouse=True)
-def vpc(env1, group, client) -> dataall.db.models.Vpc:
+def vpc(env1, group, client) -> Vpc:
     response = client.query(
         """
         mutation createNetwork($input:NewVpcInput){
@@ -99,9 +99,25 @@ def test_list_networks_nopermissions(client, env1, db, org1, user, group2, vpc):
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
+def test_get_network(client, env1, db, org1, user, group, vpc, module_mocker):
+    response = client.query(
+        """
+        query getNetwork($vpcUri:String!){
+            getNetwork(vpcUri:$vpcUri){
+                vpcUri
+            }
+        }
+        """,
+        vpcUri=vpc.vpcUri,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.getNetwork.vpcUri == vpc.vpcUri
+
+
 def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
+        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
     )
     response = client.query(
         """
@@ -110,7 +126,7 @@ def test_delete_network(client, env1, db, org1, user, group, module_mocker, vpc)
         }
         """,
         vpcUri=vpc.vpcUri,
-        username=user.userName,
+        username=user.username,
         groups=[group.name],
     )
     assert response.data.deleteNetwork

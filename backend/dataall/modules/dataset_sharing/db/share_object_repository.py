@@ -4,11 +4,12 @@ from typing import List
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.db import models, exceptions, paginate
-from dataall.db.models.Enums import PrincipalType
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.base.db import exceptions, paginate
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
-    ShareItemStatus, ShareableType
+    ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
@@ -317,7 +318,11 @@ class ShareItemSM:
 class ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
-        return 0
+        return ShareObjectRepository.count_principal_shares(session, group_uri, PrincipalType.Group)
+
+    @staticmethod
+    def count_role_resources(session, role_uri):
+        return ShareObjectRepository.count_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
 
     @staticmethod
     def delete_env(session, environment):
@@ -553,6 +558,7 @@ class ShareObjectRepository:
                         f'{{{username}}}'
                     ),
                     Dataset.stewards.in_(groups),
+                    Dataset.SamlAdminGroupName.in_(groups),
                 )
             )
         )
@@ -563,8 +569,8 @@ class ShareObjectRepository:
         query = (
             session.query(ShareObject)
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 or_(
@@ -580,8 +586,8 @@ class ShareObjectRepository:
 
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
-        environment_groups = session.query(models.EnvironmentGroup).filter(
-            models.EnvironmentGroup.environmentUri == environment_uri
+        environment_groups = session.query(EnvironmentGroup).filter(
+            EnvironmentGroup.environmentUri == environment_uri
         )
         groups = [g.groupUri for g in environment_groups]
         share = session.query(ShareObject).filter(
@@ -661,24 +667,24 @@ class ShareObjectRepository:
 
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
-        source_environment: models.Environment = session.query(models.Environment).get(
+        source_environment: Environment = session.query(Environment).get(
             dataset.environmentUri
         )
         if not source_environment:
             raise exceptions.ObjectNotFound('SourceEnvironment', dataset.environmentUri)
 
-        target_environment: models.Environment = session.query(models.Environment).get(
+        target_environment: Environment = session.query(Environment).get(
             share.environmentUri
         )
         if not target_environment:
             raise exceptions.ObjectNotFound('TargetEnvironment', share.environmentUri)
 
-        env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
+        env_group: EnvironmentGroup = (
+            session.query(EnvironmentGroup)
             .filter(
                 and_(
-                    models.EnvironmentGroup.environmentUri == share.environmentUri,
-                    models.EnvironmentGroup.groupUri == share.groupUri,
+                    EnvironmentGroup.environmentUri == share.environmentUri,
+                    EnvironmentGroup.groupUri == share.groupUri,
                 )
             )
             .first()
@@ -689,12 +695,12 @@ class ShareObjectRepository:
                 f'environment {target_environment.name}/{target_environment.AwsAccountId}'
             )
 
-        source_env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
+        source_env_group: EnvironmentGroup = (
+            session.query(EnvironmentGroup)
             .filter(
                 and_(
-                    models.EnvironmentGroup.environmentUri == dataset.environmentUri,
-                    models.EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
+                    EnvironmentGroup.environmentUri == dataset.environmentUri,
+                    EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
                 )
             )
             .first()
@@ -773,7 +779,7 @@ class ShareObjectRepository:
             session.query(ShareObject)
             .filter(
                 and_(
-                    models.Environment.environmentUri == environment_uri,
+                    Environment.environmentUri == environment_uri,
                     ShareObject.status == ShareObjectStatus.Approved.value,
                     ShareObject.datasetUri == dataset_uri,
                 )
@@ -819,23 +825,36 @@ class ShareObjectRepository:
 
     @staticmethod
     def delete_shares_with_no_shared_items(session, dataset_uri):
-        share_objects = (
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        shares = (
             session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset_uri,
-                    ShareObject.existingSharedItems.is_(False),
+                    ShareObjectItem.status.notin_(share_item_shared_states),
                 )
             )
             .all()
         )
-        for share in share_objects:
-            (
+        for share in shares:
+            share_items = (
                 session.query(ShareObjectItem)
                 .filter(ShareObjectItem.shareUri == share.shareUri)
-                .delete()
+                .all()
             )
-            session.delete(share)
+            for item in share_items:
+                session.delete(item)
+
+            share_obj = (
+                session.query(ShareObject)
+                .filter(ShareObject.shareUri == share.shareUri)
+                .first()
+            )
+            session.delete(share_obj)
 
     @staticmethod
     def _query_user_datasets(session, username, groups, filter) -> Query:
@@ -911,11 +930,19 @@ class ShareObjectRepository:
 
     @staticmethod
     def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
-        query = session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
-                ShareObject.existingSharedItems.is_(True),
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
             )
         )
         return query.all()
@@ -944,8 +971,8 @@ class ShareObjectRepository:
                 Dataset.datasetUri.label('datasetUri'),
                 Dataset.name.label('datasetName'),
                 Dataset.description.label('datasetDescription'),
-                models.Environment.environmentUri.label('environmentUri'),
-                models.Environment.name.label('environmentName'),
+                Environment.environmentUri.label('environmentUri'),
+                Environment.name.label('environmentName'),
                 ShareObject.created.label('created'),
                 ShareObject.principalId.label('principalId'),
                 ShareObject.principalType.label('principalType'),
@@ -953,8 +980,8 @@ class ShareObjectRepository:
                 ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 ShareObjectItem.GlueTableName.label('GlueTableName'),
                 ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
-                models.Organization.organizationUri.label('organizationUri'),
-                models.Organization.name.label('organizationName'),
+                Organization.organizationUri.label('organizationUri'),
+                Organization.name.label('organizationName'),
                 case(
                     [
                         (
@@ -984,13 +1011,13 @@ class ShareObjectRepository:
                 ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == Dataset.environmentUri,
+                Environment,
+                Environment.environmentUri == Dataset.environmentUri,
             )
             .join(
-                models.Organization,
-                models.Organization.organizationUri
-                == models.Environment.organizationUri,
+                Organization,
+                Organization.organizationUri
+                == Environment.organizationUri,
             )
             .outerjoin(
                 DatasetTable,
@@ -1062,8 +1089,8 @@ class ShareObjectRepository:
                 DatasetTable.S3Prefix.label('S3Prefix'),
                 DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
                 DatasetTable.region.label('SourceRegion'),
-                models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                models.Environment.region.label('TargetRegion'),
+                Environment.AwsAccountId.label('TargetAwsAccountId'),
+                Environment.region.label('TargetRegion'),
             )
             .join(
                 ShareObjectItem,
@@ -1076,8 +1103,8 @@ class ShareObjectRepository:
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 and_(
@@ -1095,8 +1122,8 @@ class ShareObjectRepository:
                 DatasetStorageLocation.locationUri.label('locationUri'),
                 DatasetStorageLocation.S3BucketName.label('S3BucketName'),
                 DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                models.Environment.AwsAccountId.label('AwsAccountId'),
-                models.Environment.region.label('region'),
+                Environment.AwsAccountId.label('AwsAccountId'),
+                Environment.region.label('region'),
             )
             .join(
                 ShareObjectItem,
@@ -1109,8 +1136,8 @@ class ShareObjectRepository:
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 and_(
@@ -1120,3 +1147,16 @@ class ShareObjectRepository:
                 )
             )
         ).all()
+
+    @staticmethod
+    def count_principal_shares(session, principal_id: str, principal_type: PrincipalType):
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.principalId == principal_id,
+                    ShareObject.principalType == principal_type.value
+                )
+            )
+            .count()
+        )

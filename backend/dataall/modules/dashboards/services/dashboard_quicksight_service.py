@@ -1,16 +1,17 @@
 import os
 
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
-from dataall.db.api import Environment, TenantPolicy
-from dataall.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
-from dataall.db.permissions import TENANT_ALL
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.context import get_context
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
+from dataall.core.permissions.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
-from dataall.utils import Parameter
+from dataall.base.utils import Parameter
 
 
 class DashboardQuicksightService:
@@ -23,7 +24,7 @@ class DashboardQuicksightService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dash: Dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-            env = Environment.get_environment_by_uri(session, dash.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dash.environmentUri)
             cls._check_dashboards_enabled(session, env, GET_DASHBOARD)
             client = cls._client(env.AwsAccountId, env.region)
 
@@ -62,7 +63,7 @@ class DashboardQuicksightService:
     def get_quicksight_designer_url(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env = Environment.get_environment_by_uri(session, uri)
+            env = EnvironmentService.get_environment_by_uri(session, uri)
             cls._check_dashboards_enabled(session, env, CREATE_DASHBOARD)
 
             return cls._client(env.AwsAccountId, env.region).get_author_session()
@@ -152,7 +153,7 @@ class DashboardQuicksightService:
 
     @staticmethod
     def _check_dashboards_enabled(session, env, action):
-        enabled = Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
+        enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
         if not enabled:
             raise UnauthorizedOperation(
                 action=action,

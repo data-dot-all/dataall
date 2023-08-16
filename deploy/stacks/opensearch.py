@@ -33,26 +33,8 @@ class OpenSearchStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-elasticsearch-sg',
             vpc=vpc,
             allow_all_outbound=False,
+            disable_inline_rules=True,
         )
-
-        if lambdas:
-            l: _lambda.Function
-            for l in lambdas:
-                sgs = l.connections.security_groups
-                for i, sg in enumerate(sgs):
-                    db_security_group.add_ingress_rule(
-                        peer=sg,
-                        connection=ec2.Port.tcp(443),
-                        description=f'Allow dataall lambda {l.function_name}',
-                    )
-
-        if ecs_security_groups:
-            for sg in ecs_security_groups:
-                db_security_group.add_ingress_rule(
-                    peer=sg,
-                    connection=ec2.Port.tcp(443),
-                    description=f'Allow dataall ECS cluster tasks',
-                )
 
         key = aws_kms.Key(
             self,
@@ -114,6 +96,24 @@ class OpenSearchStack(pyNestedClass):
                 )
             ],
         )
+
+        if lambdas:
+            l: _lambda.Function
+            for l in lambdas:
+                self.domain.connections.allow_from(
+                    l.connections,
+                    ec2.Port.tcp(443),
+                    f'Allow dataall opensearch to lambda {l.function_name}',
+                )
+
+        if ecs_security_groups:
+            for sg in ecs_security_groups:
+                sg_connection = ec2.Connections(security_groups=[sg])
+                self.domain.connections.allow_from(
+                    sg_connection,
+                    ec2.Port.tcp(443),
+                    f'Allow dataall opensearch to ecs sg',
+                )
 
         ssm.StringParameter(
             self,

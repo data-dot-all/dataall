@@ -4,11 +4,10 @@ from pyathena import connect
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import DatasetTable
-from dataall.utils import json_utils
-
+from dataall.base.utils import json_utils, sql_utils
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +45,9 @@ class AthenaTableClient:
         )
         cursor = connection.cursor()
 
-        sql = f'select * from "{table.GlueDatabaseName}"."{table.GlueTableName}" limit 50'  # nosec
+        sql = 'select * from {table_identifier} limit 50'.format(
+            table_identifier=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
+        )
         cursor.execute(sql)
         fields = []
         for f in cursor.description:

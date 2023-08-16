@@ -1,9 +1,14 @@
+from unittest.mock import MagicMock
+
 import pytest
 import json
 
 from typing import Callable
 
-from dataall.db import models
+from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 
 from dataall.modules.dataset_sharing.services.share_managers import S3ShareManager
@@ -18,13 +23,13 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
 @pytest.fixture(scope="module")
-def org1(org: Callable) -> models.Organization:
+def org1(org: Callable) -> Organization:
     org1 = org(label="org", owner="alice", SamlGroupName="admins")
     yield org1
 
 
 @pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: models.Organization, group: models.Group):
+def source_environment(environment: Callable, org1: Organization, group: Group):
     source_environment = environment(
         organization=org1,
         awsAccountId=SOURCE_ENV_ACCOUNT,
@@ -37,13 +42,13 @@ def source_environment(environment: Callable, org1: models.Organization, group: 
 
 
 @pytest.fixture(scope="module")
-def source_environment_group(environment_group: Callable, source_environment: models.Environment, group: models.Group):
+def source_environment_group(environment_group: Callable, source_environment: Environment, group: Group):
     source_environment_group = environment_group(source_environment, group)
     yield source_environment_group
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: models.Organization, group2: models.Group):
+def target_environment(environment: Callable, org1: Organization, group2: Group):
     target_environment = environment(
         organization=org1,
         awsAccountId=TARGET_ACCOUNT_ENV,
@@ -56,13 +61,13 @@ def target_environment(environment: Callable, org1: models.Organization, group2:
 
 
 @pytest.fixture(scope="module")
-def target_environment_group(environment_group: Callable, target_environment: models.Environment, group2: models.Group):
+def target_environment_group(environment_group: Callable, target_environment: Environment, group2: Group):
     target_environment_group = environment_group(target_environment, group2)
     yield target_environment_group
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: models.Organization, source_environment: models.Environment):
+def dataset1(dataset: Callable, org1: Organization, source_environment: Environment):
     dataset1 = dataset(org1, source_environment, "dataset1")
     yield dataset1
 
@@ -74,8 +79,8 @@ def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
 
 @pytest.fixture(scope="module")
 def share1(share: Callable, dataset1: Dataset,
-           target_environment: models.Environment,
-           target_environment_group: models.EnvironmentGroup) -> ShareObject:
+           target_environment: Environment,
+           target_environment_group: EnvironmentGroup) -> ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
     yield share1
 
@@ -141,6 +146,43 @@ def admin_ap_delegation_bucket_policy():
     return bucket_policy
 
 
+def mock_s3_client(mocker):
+    mock_client = MagicMock()
+    mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_managers.s3_share_manager.S3Client',
+        mock_client
+    )
+    mock_client.create_bucket_policy.return_value = None
+    return mock_client
+
+
+def mock_s3_control_client(mocker):
+    mock_client = MagicMock()
+    mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_managers.s3_share_manager.S3ControlClient',
+        mock_client
+    )
+
+    mock_client.delete_bucket_access_point.return_value = None
+    mock_client.attach_access_point_policy.return_value = None
+
+    # original call
+    mock_client.generate_access_point_policy_template.side_effect = \
+        S3ControlClient.generate_access_point_policy_template
+
+    return mock_client
+
+
+def mock_kms_client(mocker):
+    mock_client = MagicMock()
+    mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_managers.s3_share_manager.KmsClient',
+        mock_client
+    )
+    mock_client.put_key_policy.return_value = None
+    return mock_client
+
+
 @pytest.fixture(scope="module")
 def target_dataset_access_control_policy(request):
 
@@ -172,32 +214,24 @@ def test_manage_bucket_policy_no_policy(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     base_bucket_policy,
 ):
 
     # Given
     bucket_policy = base_bucket_policy
+    s3_client = mock_s3_client(mocker)
+    s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_policy",
-        return_value=json.dumps(bucket_policy),
-    )
-
-    mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_delegation_role_arn",
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_ids",
+        "dataall.base.aws.sts.SessionHelper.get_role_ids",
         return_value=[1, 2, 3],
-    )
-
-    s3_create_bucket_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.create_bucket_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -215,7 +249,9 @@ def test_manage_bucket_policy_no_policy(
         # When
         manager.manage_bucket_policy()
 
-        created_bucket_policy = json.loads(s3_create_bucket_mock.call_args.args[3])
+        created_bucket_policy = json.loads(
+            s3_client().create_bucket_policy.call_args.args[1]
+        )
 
         # Then
         print(f"Bucket policy generated {created_bucket_policy}")
@@ -236,23 +272,16 @@ def test_manage_bucket_policy_existing_policy(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     admin_ap_delegation_bucket_policy,
 ):
 
     # Given
     bucket_policy = admin_ap_delegation_bucket_policy
+    s3_client = mock_s3_client(mocker)
 
-    mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_policy",
-        return_value=json.dumps(bucket_policy),
-    )
-
-    s3_create_bucket_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.create_bucket_policy",
-        return_value=None,
-    )
+    s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
 
     with db.scoped_session() as session:
         manager = S3ShareManager(
@@ -270,7 +299,7 @@ def test_manage_bucket_policy_existing_policy(
         manager.manage_bucket_policy()
 
         # Then
-        s3_create_bucket_mock.assert_not_called()
+        s3_client.create_bucket_policy.assert_not_called()
 
 
 @pytest.mark.parametrize("target_dataset_access_control_policy", 
@@ -285,8 +314,8 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     target_dataset_access_control_policy,
 ):
 
@@ -294,12 +323,12 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=iam_policy,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -338,8 +367,8 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     target_dataset_access_control_policy,
 ):
 
@@ -347,12 +376,12 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=iam_policy,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -377,25 +406,25 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
 def test_grant_target_role_access_policy_test_no_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
 
     # Given
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -439,21 +468,19 @@ def test_grant_target_role_access_policy_test_no_policy(
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_id",
-        return_value=None,
-    )
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = None
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -469,19 +496,11 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
         ],
     }
 
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_policy",
-        return_value=json.dumps(existing_key_policy),
-    )
+    kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    kms_put_key_policy_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.put_key_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -500,7 +519,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
         manager.update_dataset_bucket_key_policy()
 
         # Then
-        kms_put_key_policy_mock.assert_not_called()
+        kms_client().put_key_policy.assert_not_called()
 
 
 def _generate_ap_policy_object(
@@ -556,21 +575,19 @@ def _generate_ap_policy_object(
 
 def test_update_dataset_bucket_key_policy_without_env_admin(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_id",
-        return_value="kms-key",
-    )
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "kms-key"
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -586,13 +603,10 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         ],
     }
 
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_policy",
-        return_value=json.dumps(existing_key_policy),
-    )
+    kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
@@ -604,11 +618,6 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         "Resource": "*",
         "Condition": {"StringLike": {"aws:userId": f"{target_environment.SamlGroupName}:*"}},
     }
-
-    kms_put_key_policy_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.put_key_policy",
-        return_value=None,
-    )
 
     with db.scoped_session() as session:
         manager = S3ShareManager(
@@ -630,60 +639,41 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         expected_complete_key_policy = existing_key_policy
 
         # Then
-        kms_put_key_policy_mock.assert_called_with(source_environment.AwsAccountId, "eu-central-1", "kms-key", "default", json.dumps(expected_complete_key_policy))
+        kms_client().put_key_policy.assert_called_with("kms-key", json.dumps(expected_complete_key_policy))
 
 
 # NO existing Access point and ap policy
 def test_manage_access_point_and_policy_1(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
-    mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value=None,
-    )
-
-    s3_create_bucket_access_point_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.create_bucket_access_point",
-        return_value="new-access-point-arn",
-    )
+    access_point_arn = "new-access-point-arn"
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().create_bucket_access_point.return_value = access_point_arn
+    s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
+    s3_control_client().get_access_point_policy.return_value = None
 
     mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value="new-access-point-arn"
-    )
-
-    mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=None,
-    )
-
-    mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_ids",
+        "dataall.base.aws.sts.SessionHelper.get_role_ids",
         return_value=["dataset_admin_role_id:*", "source_env_admin_role_id:*" "source_account_pivot_role_id:*"],
     )
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_delegation_role_arn",
-        return_value=None,
-    )
-
-    s3_attach_access_point_policy_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.attach_access_point_policy",
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value=None,
     )
 
@@ -703,18 +693,18 @@ def test_manage_access_point_and_policy_1(
         manager.manage_access_point_and_policy()
 
         # Then
-        s3_attach_access_point_policy_mock.assert_called()
-        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
+        s3_control_client().attach_access_point_policy.assert_called()
+        policy = s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy')
         new_ap_policy = json.loads(policy)
 
         # Asser that access point is in resource
-        assert new_ap_policy["Statement"][0]["Resource"] == s3_create_bucket_access_point_mock.return_value
+        assert new_ap_policy["Statement"][0]["Resource"] == access_point_arn
 
         # Assert that listbucket and getobject permissions were added for target environment admin
-        assert "s3:ListBucket" in [
+        assert "s3:GetObject" in [
             statement["Action"] for statement in new_ap_policy["Statement"] if statement["Sid"].startswith(target_environment.SamlGroupName)
         ]
-        assert "s3:GetObject" in [
+        assert "s3:ListBucket" in [
             statement["Action"] for statement in new_ap_policy["Statement"] if statement["Sid"].startswith(target_environment.SamlGroupName)
         ]
 
@@ -727,41 +717,32 @@ def test_manage_access_point_and_policy_1(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_2(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
     # Existing access point
-    s3_get_bucket_access_point_arn_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value="existing-access-point-arn",
-    )
+    access_point_arn = "existing-access-point-arn"
+    s3_client = mock_s3_control_client(mocker)
+    s3_client().get_bucket_access_point_arn.return_value = access_point_arn
 
     # target_env_admin is already in policy but current folder is NOT yet in prefix_list
-    existing_ap_policy = _generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [[target_environment.SamlGroupName, ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object(access_point_arn, [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
     # Existing access point policy
-    mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
+    s3_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    s3_attach_access_point_policy_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.attach_access_point_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -780,8 +761,8 @@ def test_manage_access_point_and_policy_2(
         manager.manage_access_point_and_policy()
 
         # Then
-        s3_attach_access_point_policy_mock.assert_called()
-        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
+        s3_client().attach_access_point_policy.assert_called()
+        policy = s3_client().attach_access_point_policy.call_args.kwargs.get('policy')
 
         # Assert S3 Prefix of share folder in prefix_list
         new_ap_policy = json.loads(policy)
@@ -793,7 +774,7 @@ def test_manage_access_point_and_policy_2(
         # Assert s3 prefix is in resource_list
         resource_list = statements[f"{target_environment.SamlGroupName}1"]["Resource"]
 
-        assert f"{s3_get_bucket_access_point_arn_mock.return_value}/object/{location1.S3Prefix}/*" in resource_list
+        assert f"{access_point_arn}/object/{location1.S3Prefix}/*" in resource_list
 
 
 # Existing Access point and ap policy
@@ -801,41 +782,32 @@ def test_manage_access_point_and_policy_2(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_3(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
     # Existing access point
-    s3_get_bucket_access_point_arn_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value="existing-access-point-arn",
-    )
+    access_point_arn = "existing-access-point-arn"
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
 
     # New target env admin and prefix are not in existing ap policy
-    existing_ap_policy = _generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [["another-env-admin", ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object(access_point_arn, [["another-env-admin", ["existing-prefix"]]])
 
     # Existing access point policy
-    mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
+    s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    s3_attach_access_point_policy_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.attach_access_point_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -854,10 +826,10 @@ def test_manage_access_point_and_policy_3(
         manager.manage_access_point_and_policy()
 
         # Then
-        s3_attach_access_point_policy_mock.assert_called()
+        s3_control_client().attach_access_point_policy.assert_called()
 
         # Assert S3 Prefix of share folder in prefix_list
-        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
+        policy = s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy')
         new_ap_policy = json.loads(policy)
         statements = {item["Sid"]: item for item in new_ap_policy["Statement"]}
         prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"]["s3:prefix"]
@@ -867,49 +839,39 @@ def test_manage_access_point_and_policy_3(
         # Assert s3 prefix is in resource_list
         resource_list = statements[f"{target_environment.SamlGroupName}1"]["Resource"]
 
-        assert f"{s3_get_bucket_access_point_arn_mock.return_value}/object/{location1.S3Prefix}/*" in resource_list
+        assert f"{access_point_arn}/object/{location1.S3Prefix}/*" in resource_list
 
 
 def test_delete_access_point_policy_with_env_admin_one_prefix(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
     # Existing access point
-    s3_get_bucket_access_point_arn_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value="existing-access-point-arn",
-    )
+    access_point_arn = "existing-access-point-arn"
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
 
     # New target env admin and prefix are already in existing ap policy
     # Another admin is part of this policy
     existing_ap_policy = _generate_ap_policy_object(
-        s3_get_bucket_access_point_arn_mock.return_value,
+        access_point_arn,
         [[target_environment.SamlGroupName, [location1.S3Prefix]], ["another-env-admin", [location1.S3Prefix]]],
     )
 
+    s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
-
-    mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    s3_attach_access_point_policy_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.attach_access_point_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -928,10 +890,10 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
         manager.delete_access_point_policy()
 
         # Then
-        s3_attach_access_point_policy_mock.assert_called()
+        s3_control_client().attach_access_point_policy.assert_called()
 
         # Assert statements for share have been removed
-        new_ap_policy = json.loads(s3_attach_access_point_policy_mock.call_args.args[3])
+        new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
         deleted_statements = {item["Sid"]: item for item in new_ap_policy["Statement"] if item["Sid"].startswith(f"{target_environment.SamlGroupName}")}
 
         assert len(deleted_statements) == 0
@@ -944,41 +906,31 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
 def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
-    s3_get_bucket_access_point_arn_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
-        return_value="existing-access-point-arn",
-    )
+    access_point_arn = "existing-access-point-arn"
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
 
     existing_ap_policy = _generate_ap_policy_object(
-        s3_get_bucket_access_point_arn_mock.return_value,
+        access_point_arn,
         [[target_environment.SamlGroupName, [location1.S3Prefix, "another-prefix"]], ["another-env-admin", [location1.S3Prefix]]],
     )
 
+    s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
-
-    mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    s3_attach_access_point_policy_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.attach_access_point_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -997,10 +949,10 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
         manager.delete_access_point_policy()
 
         # Then
-        s3_attach_access_point_policy_mock.assert_called()
+        s3_control_client().attach_access_point_policy.assert_called()
 
         # Assert statements for share have been removed
-        new_ap_policy = json.loads(s3_attach_access_point_policy_mock.call_args.args[3])
+        new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
         statements = {item["Sid"]: item for item in new_ap_policy["Statement"]}
 
         remaining_prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"]["s3:prefix"]
@@ -1011,29 +963,21 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
 def test_dont_delete_access_point_with_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
-    s3_delete_bucket_access_point_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
-
-    s3_delete_bucket_access_point_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.delete_bucket_access_point",
-        return_value=None,
-    )
-
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     # When
     with db.scoped_session() as session:
         manager = S3ShareManager(
@@ -1052,33 +996,27 @@ def test_dont_delete_access_point_with_policy(
 
         # Then
         assert not is_deleted
-        assert not s3_delete_bucket_access_point_mock.called
+        assert not s3_control_client().delete_bucket_access_point.called
 
 
 def test_delete_access_point_without_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [])
 
-    s3_delete_bucket_access_point_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.get_access_point_policy",
-        return_value=json.dumps(existing_ap_policy),
-    )
-
-    s3_delete_bucket_access_point_mock = mocker.patch(
-        "dataall.aws.handlers.s3.S3.delete_bucket_access_point",
-        return_value=None,
-    )
+    s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
+    s3_control_client().delete_bucket_access_point.return_value = None
 
     # When
     with db.scoped_session() as session:
@@ -1098,20 +1036,20 @@ def test_delete_access_point_without_policy(
 
         # Then
         assert is_deleted
-        assert s3_delete_bucket_access_point_mock.called
+        assert s3_control_client().delete_bucket_access_point.called
 
 
 def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_target_role_policy = {
@@ -1131,17 +1069,17 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     }
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=existing_target_role_policy,
     )
 
     iam_delete_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.delete_role_policy",
+        "dataall.base.aws.iam.IAM.delete_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -1168,15 +1106,15 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
 def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     # target role policy that has a bucket unrelated to the current bucket to be deleted
@@ -1209,17 +1147,17 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     }
 
     mocker.patch(
-        "dataall.aws.handlers.iam.IAM.get_role_policy",
+        "dataall.base.aws.iam.IAM.get_role_policy",
         return_value=existing_target_role_policy,
     )
 
     iam_delete_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.delete_role_policy",
+        "dataall.base.aws.iam.IAM.delete_role_policy",
         return_value=None,
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.aws.handlers.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_role_policy",
         return_value=None,
     )
 
@@ -1254,21 +1192,19 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 # admin, that should remain
 def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target_env(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
-    kms_get_key_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_id",
-        return_value="1",
-    )
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "1"
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1307,19 +1243,11 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
         ],
     }
 
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_policy",
-        return_value=json.dumps(existing_key_policy),
-    )
+    kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    kms_put_key_policy_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.put_key_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -1338,28 +1266,29 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
         manager.delete_dataset_bucket_key_policy(share1, dataset1, target_environment)
 
         # Then
-        kms_put_key_policy_mock.assert_called()
-        kms_put_key_policy_mock.assert_called_with(source_environment.AwsAccountId, 'eu-central-1', kms_get_key_mock.return_value, "default", json.dumps(remaining_policy))
+        kms_client().put_key_policy.assert_called()
+        kms_client().put_key_policy.assert_called_with(
+            kms_client().get_key_id.return_value,
+            json.dumps(remaining_policy)
+        )
 
 
 # The kms key policy only includes the target env admin
 def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_target_env(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
-    kms_get_key_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_id",
-        return_value="1",
-    )
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "1"
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1381,19 +1310,11 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
         "Statement": [],
     }
 
-    mocker.patch(
-        "dataall.aws.handlers.kms.KMS.get_key_policy",
-        return_value=json.dumps(existing_key_policy),
-    )
+    kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
 
     mocker.patch(
-        "dataall.aws.handlers.sts.SessionHelper.get_role_id",
+        "dataall.base.aws.sts.SessionHelper.get_role_id",
         return_value=target_environment.SamlGroupName,
-    )
-
-    kms_put_key_policy_mock = mocker.patch(
-        "dataall.aws.handlers.kms.KMS.put_key_policy",
-        return_value=None,
     )
 
     with db.scoped_session() as session:
@@ -1412,5 +1333,8 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
         manager.delete_dataset_bucket_key_policy(share1, dataset1, target_environment)
 
         # Then
-        kms_put_key_policy_mock.assert_called()
-        kms_put_key_policy_mock.assert_called_with(source_environment.AwsAccountId, 'eu-central-1', kms_get_key_mock.return_value, "default", json.dumps(remaining_policy))
+        kms_client().put_key_policy.assert_called()
+        kms_client().put_key_policy.assert_called_with(
+            kms_client().get_key_id.return_value,
+            json.dumps(remaining_policy)
+        )

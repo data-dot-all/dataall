@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall.base.api import gql
 
 NewDataPipelineInput = gql.InputType(
     name='NewDataPipelineInput',

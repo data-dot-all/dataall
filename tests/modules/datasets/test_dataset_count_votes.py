@@ -1,6 +1,4 @@
-import pytest
-
-from tests.api.test_vote import *
+from tests.modules.vote.test_vote import *
 
 
 def test_count_votes(client, dataset_fixture):

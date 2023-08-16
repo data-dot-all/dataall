@@ -1,59 +1,98 @@
 from aws_cdk import App
-from aws_cdk.assertions import Template
+from aws_cdk.assertions import Template, Match
 
-from dataall.cdkproxy.stacks import EnvironmentSetup
+from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
+from dataall.modules.datasets_base.db.models import Dataset
 from tests.cdkproxy.conftest import *
+
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
     for extension in EnvironmentSetup._EXTENSIONS:
-        mocker.patch(
-            f"{extension.__module__}.{extension.__name__}.extent",
-            return_value=True,
+        if extension.__name__ not in ["DatasetCustomResourcesExtension", "DatasetGlueProfilerExtension"]:
+            mocker.patch(
+                f"{extension.__module__}.{extension.__name__}.extent",
+                return_value=True,
+            )
+
+
+@pytest.fixture(scope='function', autouse=True)
+def another_group(db, env):
+    with db.scoped_session() as session:
+        env_group: EnvironmentGroup = EnvironmentGroup(
+            environmentUri=env.environmentUri,
+            groupUri='anothergroup',
+            environmentIAMRoleArn='aontherGroupArn',
+            environmentIAMRoleName='anotherGroupRole',
+            environmentAthenaWorkGroup='workgroup',
         )
+        session.add(env_group)
+        dataset = Dataset(
+            label='thisdataset',
+            environmentUri=env.environmentUri,
+            organizationUri=env.organizationUri,
+            name='anotherdataset',
+            description='test',
+            AwsAccountId=env.AwsAccountId,
+            region=env.region,
+            S3BucketName='bucket',
+            GlueDatabaseName='db',
+            IAMDatasetAdminRoleArn='role',
+            IAMDatasetAdminUserArn='xxx',
+            KmsAlias='xxx',
+            owner='me',
+            confidentiality='C1',
+            businessOwnerEmail='jeff',
+            businessOwnerDelegationEmails=['andy'],
+            SamlAdminGroupName=env_group.groupUri,
+            GlueCrawlerName='dhCrawler',
+        )
+        session.add(dataset)
+        yield env_group
+
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, env, another_group, permissions):
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_engine',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_engine',
         return_value=db,
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
         return_value='dataall-pivot-role-name-pytest',
     )
     mocker.patch(
-        'dataall.aws.handlers.parameter_store.ParameterStoreManager.get_parameter_value',
+        'dataall.base.aws.parameter_store.ParameterStoreManager.get_parameter_value',
         return_value='False',
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_target',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_target',
         return_value=env,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_groups',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_groups',
         return_value=[another_group],
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_account',
+        'dataall.base.aws.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
-    mocker.patch('dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
+    mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
+        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=env,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_group_permissions',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_group_permissions',
         return_value=[permission.name for permission in permissions],
     )
     mocker.patch(
-        'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
+        'dataall.base.aws.sts.SessionHelper.get_external_id_secret',
         return_value='secretIdvalue',
     )
 
 
-def test_resources_created(env, org):
+def test_resources_created(env, org, dataset):
     app = App()
 
     # Create the Stack
@@ -63,7 +102,6 @@ def test_resources_created(env, org):
     template = Template.from_stack(stack)
 
     # Assert that we have created:
-    # TODO: Add more assertions
     template.resource_properties_count_is(
         type="AWS::S3::Bucket",
         props={
@@ -79,18 +117,24 @@ def test_resources_created(env, org):
                 'IgnorePublicAcls': True,
                 'RestrictPublicBuckets': True
             },
-            'Tags': [
-                {'Key': 'CREATOR', 'Value': 'customtagowner'},
-                {'Key': 'dataall', 'Value': 'true'},
-                {'Key': 'Environment', 'Value': f'env_{env.environmentUri}'},
-                {'Key': 'Organization', 'Value': f'org_{org.organizationUri}'},
-                {'Key': 'Target', 'Value': f'Environment_{env.environmentUri}'},
-                {'Key': 'Team', 'Value': env.SamlGroupName}],
         },
         count=1
     )
-    template.resource_count_is("AWS::S3::Bucket", 1)
-    template.resource_count_is("AWS::Lambda::Function", 7)
-    template.resource_count_is("AWS::SSM::Parameter", 10)
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*lf-settings-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*gluedb-lf-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_count_is("AWS::Lambda::Function", 5)
+    template.resource_count_is("AWS::SSM::Parameter", 5)
     template.resource_count_is("AWS::IAM::Role", 5)
     template.resource_count_is("AWS::IAM::Policy", 4)

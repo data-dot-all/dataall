@@ -3,8 +3,7 @@ import logging
 import shutil
 from aws_cdk import aws_s3_deployment
 
-from dataall.cdkproxy.stacks import EnvironmentSetup
-from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
+from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 
 log = logging.getLogger(__name__)
 

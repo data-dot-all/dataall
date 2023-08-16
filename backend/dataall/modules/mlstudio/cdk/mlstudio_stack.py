@@ -15,26 +15,20 @@ from aws_cdk import (
     RemovalPolicy,
     Stack
 )
-
 from botocore.exceptions import ClientError
 
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.db.models import EnvironmentGroup
-
-
-from dataall.cdkproxy.stacks.manager import stack
-from dataall.db import Engine, get_engine
-from dataall.db.api import Environment as EnvironmentRepository
-from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
-
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
+from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
+from dataall.base.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
+from dataall.base.db import Engine, get_engine
 from dataall.modules.mlstudio.aws.ec2_client import EC2
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
-
-from dataall.cdkproxy.stacks import EnvironmentSetup
-from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
+from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +38,11 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
     @staticmethod
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
+        with setup.get_engine().scoped_session() as session:
+            enabled = EnvironmentService.get_boolean_env_param(session, _environment, "mlStudiosEnabled")
+            if not enabled:
+                return
+
         sagemaker_principals = [setup.default_role] + setup.group_roles
         logger.info(f'Creating SageMaker base resources for sagemaker_principals = {sagemaker_principals}..')
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
@@ -135,15 +134,48 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             'SagemakerDomainKmsKey',
             alias='SagemakerStudioDomain',
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(_environment.CDKRoleArn)
+            ],
             policy=iam.PolicyDocument(
                 assign_sids=True,
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:CreateGrant"
+                        ],
                         effect=iam.Effect.ALLOW,
-                        principals=[iam.AccountPrincipal(account_id=_environment.AwsAccountId),
-                                    sagemaker_domain_role] + sagemaker_principals,
-                        actions=['kms:*'],
+                        principals=[
+                            sagemaker_domain_role,
+                            iam.ArnPrincipal(_environment.CDKRoleArn)
+                        ] + sagemaker_principals,
+                        resources=["*"],
+                        conditions={
+                            "StringEquals": {
+                                "kms:ViaService": [
+                                    f"sagemaker.{_environment.region}.amazonaws.com",
+                                    f"elasticfilesystem.{_environment.region}.amazonaws.com",
+                                    f"ec2.{_environment.region}.amazonaws.com",
+                                    f"s3.{_environment.region}.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ),
+                    iam.PolicyStatement(
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            sagemaker_domain_role,
+                        ] + sagemaker_principals,
+                        resources=["*"],
                     )
                 ],
             ),
@@ -224,7 +256,7 @@ class SagemakerStudioUserProfile(Stack):
     ) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env_group = EnvironmentRepository.get_environment_group(
+            env_group = EnvironmentService.get_environment_group(
                 session, sm_user.SamlAdminGroupName, sm_user.environmentUri,
             )
         return env_group

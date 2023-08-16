@@ -27,7 +27,7 @@ class MonitoringStack(pyNestedClass):
         lambdas: [_lambda.Function] = None,
         database='dataalldevdb',
         ecs_cluster: ecs.Cluster = None,
-        ecs_task_definitions: [ecs.FargateTaskDefinition] = None,
+        ecs_task_definitions_families = None,
         backend_api=None,
         queue_name: str = None,
         **kwargs,
@@ -51,7 +51,7 @@ class MonitoringStack(pyNestedClass):
             backend_api,
             database,
             ecs_cluster,
-            ecs_task_definitions,
+            ecs_task_definitions_families,
             envname,
             lambdas,
             resource_prefix,
@@ -136,7 +136,7 @@ class MonitoringStack(pyNestedClass):
         backend_api,
         database,
         ecs_cluster,
-        ecs_task_definitions,
+        ecs_task_definitions_families,
         envname,
         lambdas,
         resource_prefix,
@@ -173,19 +173,18 @@ class MonitoringStack(pyNestedClass):
                 cf_ecs.build_ecs_cluster_task_count_widget(cluster_name),
             )
 
-            if ecs_task_definitions:
+            if ecs_task_definitions_families:
                 dashboard.add_widgets(cw.TextWidget(width=24, markdown='# ECS Tasks'))
-                task: ecs.FargateTaskDefinition
-                for task in ecs_task_definitions:
+                for task_family in ecs_task_definitions_families:
                     dashboard.add_widgets(
                         cf_ecs.build_ecs_task_container_insight_cpu_widget(
-                            cluster_name, task.family
+                            cluster_name, task_family
                         ),
                         cf_ecs.build_ecs_task_container_insight_memory_widget(
-                            cluster_name, task.family
+                            cluster_name, task_family
                         ),
                         cf_ecs.build_ecs_task_container_insight_storage_widget(
-                            cluster_name, task.family
+                            cluster_name, task_family
                         ),
                     )
         if database:

@@ -6,13 +6,13 @@ from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -58,7 +58,7 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group.name, group2.name],
         filter={},
     )
@@ -98,7 +98,7 @@ def test_dataset_resource_found(db, client, env1, org1, group2, user, group3, gr
             }
         }
         """,
-        username=user.userName,
+        username=user.username,
         groups=[group2.name],
         groupUri=group2.name,
         environmentUri=env1.environmentUri,

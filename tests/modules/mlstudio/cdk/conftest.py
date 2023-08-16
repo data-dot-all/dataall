@@ -1,22 +1,23 @@
 import pytest
 
+from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.db import models
 from tests.cdkproxy.conftest import org, env
 
 
 @pytest.fixture(scope='module', autouse=True)
-def stack_org(db) -> models.Organization:
+def stack_org(db) -> Organization:
     yield org
 
 
 @pytest.fixture(scope='module', autouse=True)
-def stack_env(db, stack_org: models.Organization) -> models.Environment:
+def stack_env(db, stack_org: Organization) -> Environment:
     yield env
 
 
 @pytest.fixture(scope='module', autouse=True)
-def sgm_studio(db, env: models.Environment) -> SagemakerStudioUser:
+def sgm_studio(db, env: Environment) -> SagemakerStudioUser:
     with db.scoped_session() as session:
         sm_user = SagemakerStudioUser(
             label='thistable',
