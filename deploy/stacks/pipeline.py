@@ -605,6 +605,7 @@ class PipelineStack(Stack):
                 commit_id=self.image_tag,
                 vpc_id=target_env.get('vpc_id'),
                 vpc_endpoints_sg=target_env.get('vpc_endpoints_sg'),
+                vpc_restricted_nacls=target_env.get('vpc_restricted_nacl', False),
                 internet_facing=target_env.get('internet_facing', True),
                 custom_domain=target_env.get('custom_domain'),
                 ip_ranges=target_env.get('ip_ranges'),

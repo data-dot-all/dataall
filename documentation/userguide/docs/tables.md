@@ -70,6 +70,9 @@ By selecting the **Metrics** tab of your data table you can run a profiling job 
 
 ![](pictures/tables/table_metrics.png#zoom#shadow)
 
+!!! warning "Profiling Job Prerequisite"
+    Before running the profiling job you will need to ensure that the **default** Glue Database exists in the AWS Account where the data exists (by default this database exists for new accounts). This is required to enable the Glue profiling job to use the metadata stored in the Glue Catalog. 
+
 ### :material-trash-can-outline: **Delete a table**
 Deleting a table means deleting it from the data.all Catalog, but it will be still available on the AWS Glue Catalog.
 Moreover, when data owners
