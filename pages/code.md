@@ -110,20 +110,24 @@ base/
 ├── context.py : Class to manage the API calls context
 ├── loader.py : Classes and methos that manage the loading of modules
 ```
+
+#### db
+The exports from this package are:
+
+1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `aws.db.Base` : a SQL alchemy Base metadata class
+3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+
 #### api
 The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
-The overall flow of GraphQL resolution is  found in the `app.py` module using
-the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
+The overall flow of GraphQL resolution is  found in the `app.py` module using the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
 
 The data.all `base.api` package contains the `gql` sub-package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
 
-
 #### cdkproxy
-
 This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
-`cdkproxy` is a package that exposes a REST API to run registered cloudformation stacks using AWS CDK.
-
-**It is deployed as a docker container running on AWS ECS.**
+`cdkproxy` is a package that exposes a REST API to run registered cloudformation stacks using AWS CDK. It is deployed as a docker container running on AWS ECS.
 
 When a data.all resource is created, the API sends an HTTP request 
 to the docker service and the code runs the appropriate stack using `cdk` cli.
@@ -140,8 +144,9 @@ The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.ti
 web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
 ### core/ <a name="core"></a>
+Core contains those functionalities that are indispensable to run data.all. Customization of the core should be limited
+as it affects downstream functionalities.
 
-Core contains those functionalities that are needed to run data.all:
 - activity
 - cognito_groups
 - environment
@@ -152,7 +157,8 @@ Core contains those functionalities that are needed to run data.all:
 - tasks
 - vpc
 
-These "core-modules" follow the same structure. Although not all the sub-components are present in all core-modules.
+These "core-modules" follow a similar structure composed of the listed sub-components. 
+Note that not all the sub-components are present in all core-modules.
 ```
 core-module/
 ├── api/  : api definition and validation (in resolvers)
@@ -166,11 +172,11 @@ core-module/
 ├── any additional functionality
 ```
 The sub-packages `api`, `db` and `cdk` are better explained in the modules/ section. Here, we will focus
-on those core additional functionalities that are used by all modules: core-feature-toogle, permissions, WorkerHandler and stack_helper.
+on those core additional functionalities that are used by all modules: Feature toogle, Permissions, WorkerHandler and Stack helper.
 
-#### Core feature toogle
+#### Feature toogle
 In `core/feature_toogle_checker` you will find a decorator that allows users to enable or disable certain
-API calls form the core functionalities. This is useful whenever a customer wants to disable a particular feature in core
+API calls from the core functionalities or the modules functionalities. This is useful whenever a customer wants to disable a particular feature
 on the server side. For example, in the following case the `config.json` file has disabled a feature called `env_aws_actions`.
 
 ```json
@@ -182,12 +188,13 @@ on the server side. For example, in the following case the `config.json` file ha
 ```
 
 If we go to the `core.environment.api` package we will see that some resolvers have been decorated depending on this flag.
+Any resolver, any api call, can be enabled or disabled by introducing more core-toogle features.
 ```
 @is_feature_enabled('core.features.env_aws_actions')
 def _get_environment_group_aws_session(
     session, username, groups, environment, groupUri=None
 ):
-.....
+...
 ```
 
 #### Permissions
@@ -196,61 +203,37 @@ In particular, `permission_checker.py` contains the decorators that validate the
 `db` the RDS tables and operations with RDS, `api` the calls related to permissions and `permissions.py` the core module permission definitions.
 
 #### WorkerHandler
-In `core/tasks/service_handlers.py` we defined the `WorkerHandler`  Python class.
-Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
-asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
-asynchronously by the Worker Lambda function.
-The `WorkerHandler`  is in charge of routing tasks to the Worker AWS Lambda. 
+In `core/tasks/service_handlers.py` we defined the `WorkerHandler` Python class, responsible of routing tasks 
+to the Worker AWS Lambda (for tasks that are processed asynchronously).
 
-This class has a singleton instance called `Worker` that has two apis:
-
-1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
-2.  `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
-
-
-The `Worker` singleton exposes a decorator function to register handler functions that can 
-be run by the Worker. For example, for the Dataset handlers (in `modules.dataset.handlers.glue_dataset_handler.py`), we want to define that the function 
-`start_crawler` is run by the Worker Lambda. Therefore, we use the decorator and define its path:
+This class has a singleton instance called `Worker`. It exposes a decorator function to register handler 
+functions that can be run by the Worker. 
 
 ```
     @staticmethod
-    @Worker.handler(path='glue.crawler.start')
-    def start_crawler(engine, task: Task):
-        with engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
-            targets = {'S3Targets': [{'Path': location}]}
-            crawler = DatasetCrawler(dataset)
-            if location:
-                crawler.update_crawler(targets)
-            return crawler.start_crawler()
+    @Worker.handler(path='SOMEPATH')
+    def FUNCTION_NAME(engine, task: Task):
 ```
 
+We will use the 2 apis of the `Worker` class to send tasks to the Lambda and use the corresponding registered handler.
 
-The code in `modules.datasets.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
-defined first in the Aurora database and then, we pass their unique identifier to the queue. In the example
-below, taken from the same dataset resolver, we are queueing a `glue.crawler.start` action.
+1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
+2. `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
 
+In the corresponding API call where you want to trigger the Worker Lambda, create a Task in RDS and queue it as in the following example.
 ```
-def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
-    [...]
-
         task = models.Task(
-            targetUri=datasetUri,
-            action='glue.crawler.start',
-            payload={'location': location},
+            targetUri=OBJECTURI,
+            action='SOMEPATH',
+            payload={.....},
         )
         session.add(task)
         session.commit()
 
         Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-    [...]
 ```
 
-
-The Worker AWS Lambda receives JSON objects with the task fields. Below is the code of the Worker Lambda defined in
+Then, the Worker AWS Lambda receives JSON objects with the Task fields. Below is the code of the Worker Lambda defined in
 `backend/aws_handler.py`.
 
 ```
@@ -265,9 +248,11 @@ def handler(event, context=None):
 ```
 
 
-Finally, the `WorkerHandler` will `process` the tasks: it reads task data from the Database, routes to 
+Finally, the `WorkerHandler` will `process` the tasks: it reads task data from the RDS Database, routes to 
 the decorated handler function 
 and assumes a role in the AWS Account where the action needs to be performed.
+
+If you want to see an example check the `core.stacks` or "Stack helper" package which contains a number of CloudFormation handlers.
 
 #### Stack helper
 The `core.stacks` package implements handlers, database logic and apis to manage CloudFormation (CDK) stacks that belong to a data.all module
@@ -277,7 +262,14 @@ The `core.stacks` package implements handlers, database logic and apis to manage
 - deletion of stacks
 - record/look-up metadata about stacks in RDS
 
+
 ### modules/ <a name="modules"></a>
+
+Modules are components that can be plugged in (or out) of your data.all deployment. Their features are configured in
+the `config.json` file. In contrast to the `core` package, `modules` are meant to be customized and enriched with new
+features. You can even go ahead and customize or create new modules, see the developing modules section for more details.
+
+Each module can contain all or a subset of the listed sub-packages:
 
 ```
 module/
@@ -286,96 +278,177 @@ module/
 ├── cdk/  :  CDK stacks to be deployed
 ├── db/ : models (database table models) and repositories (database operations)
 ├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
+├── indexers/ : eh eh he he
 ├── services/ : business logic
 ├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
 ├── __init__.py
-├── any additional functionality
 ```
 
-
-### api
-
-Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
-and each defines the following modules:
-
-1. `schema.py` :  the definition of the schema
-2. `mutations.py` : the definition of mutations for the GraphQL type
-3. `queries.py` : the definition of queries for the GraphQL type
-3. `input_types.py` : the definition on input types for the GraphQL type
-4. `resolvers.py` : the actual code that *resolves* the fields
-
-**Let's take an example** 
-
-We perform one type (GraphQL type) of API calls referent to data.all environments. Hence,
-we created an Object called "Environment" by adding a GraphQL Type with the above listed modules. 
-In `schema.py` we defined the schema of the Environment. The schema can define fields from subqueries.
-
-Now let's see how to add an API call for the creation of Environments. Since 
-creating an environment is a mutation (it modifies the object), we added a MutationField in the `mutations.py` script with the 
-`createEnvironment` API call and its expected input and output type. Here, we also referenced the "resolver" that we 
-defined in the `resolvers.py` as the function `create_environment`.
+#### ModuleInterfaces in __init__.py
 
 
-You can directly check any of the Objects in the code, they follow this structure:
 
-- `dataall.api.Objects.Foo.schema.py`
+#### db
 
-```python
+The idea is that this package processes all requests to the RDS database for the module metadata, 
+it can be from the Lambda API Handler, Lambda Worker or the ECS tasks.
 
-from dataall.api import gql
-from dataall.api.Objects.foo.resolvers import resolve_bar
+The package contains 2 types of classes:
+- Suffixed with `_models`: it defines tables and their schemas in our Aurora RDS database.
+- Suffixed with `_repositories`: api calls against the RDS Aurora database.
 
-Foo = gql.ObjectType(
-    name="Foo",
-    fields=[
-        gql.Field(
-            name="fooId",
-            type=gql.NonNullableType(gql.ID)
-        ),
-        gql.Field(
-            name="bar",
-            type=gql.String,
-            args=[
-                gql.Argument(name="upper", type=gql.Boolean)
-            ],
-            resolver=resolve_bar
+API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to find all deleted tables
+of a specific data.all dataset.
+```
+    @staticmethod
+    def find_all_deleted_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
         )
-    ]
-)
-
-```
-- `dataall.api.Objects.Foo.queries.py`
-
-```python
-
-from dataall.api import gql
-from dataall.api.Objects.foo.resolvers import get_foo
-
-getFoo = gql.Field(
-    name="getFooById",
-    type=gql.Ref("Foo"),
-    resolver=get_foo
-)
-
 ```
 
-- `dataall.api.Objects.Foo.resolvers.py`
+#### aws
+
+The `aws` package is where all the AWS logic is implemented. It serves 
+as an interface that performs API calls to AWS services. In other words, if a module performs calls 
+to a particular AWS service, the corresponding boto3 client should be declared in the module `aws` package.
+We recommend to leverage the `SessionHelper` class defined in `dataall.base.aws.sts` to start a session with 
+the dataallPivotRole or any other role in the environment account.
 
 
+#### handlers
 
-```python
-def resolve_bar(context, source,upper:bool=False):
-    tmp = f"hello {context.username}"
-    if upper:
-        return tmp.upper()
-    return tmp
+Please review the section dedicated to `WorkerHandler` in /core. As explained, AWS Worker Lambda handlers are
+registered by decorating them. The handlers package of each module contains the different handlers for the module.
+They often use the `db` repositories and `aws` clients as it happens in the `DatasetProfilingGlueHandler` that uses
+`DatasetRepository` and `GlueDatasetProfilerClient`.
 
-def get_foo(context, source, fooId:str=None):
-    return {"fooId" : fooId}
+
+```
+    @staticmethod
+    @Worker.handler('glue.job.profiling_run_status')
+    def get_profiling_run(engine, task: Task):
+        with engine.scoped_session() as session:
+            profiling: DatasetProfilingRun = (
+                DatasetProfilingRepository.get_profiling_run(
+                    session, profiling_run_uri=task.targetUri
+                )
+            )
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, profiling.datasetUri)
+            status = GlueDatasetProfilerClient(dataset).get_job_status(profiling)
+
+            profiling.status = status
+            session.commit()
+            return {"profiling_status": profiling.status}
+
+```
+#### cdk
+Under this directory you will find 4 different types of classes:
+- resource stacks
+- environment extensions
+- environment team role policies (usually called `env_role_XXX_policy`)
+- pivot role policies (usually called `pivot_role_XXX_policy`)
+
+**Resource stacks**
+
+Resource stacks, are CDK stacks deployed when a resource is created. For example, when we create a Dataset we deploy
+the stack defined in `dataset_stack.py` and decorated as follows. The decorator and the stack manager are implemented
+in `base.cdkproxy`. We will see how stacks are deployed in the services subsection.
+
+```
+@stack(stack='dataset')
+class DatasetStack(Stack):
+    ...
+```
+
+**Environment extensions**
+
+For some modules, the environment stack includes base resources that are used for all users in the 
+environment account. Taking the example of the `mltudio` module, we see that in `cdk/mlstudio_stack.py`
+we define a class that uses the base class `EnvironmentStackExtension`. This class requires the definition of
+a function called `extent`, that "extends" the resources created by the environment stack with the module particular
+resources. In this case we add the SageMaker domain to the environment stack.
+
+```
+class SageMakerDomainExtension(EnvironmentStackExtension):
+
+    @staticmethod
+    def extent(setup: EnvironmentSetup):
+        _environment = setup.environment()
 
 ```
 
-The parameters are defined as follows:
+**Environment team role policies**
+
+If a team is invited to an environment and the module is enabled for that particular team, data.all creates
+an IAM role as part of the environment cdk stack. That IAM role has different permissions depending on the 
+features that it has access to. Those features often correspond to modules. In the Environment team role policies files
+is where we define these policies that need to be added to a team IAM role if the feature is enabled for its team.
+
+The IAM policy statements need to be defined creating a class that inherits the `ServicePolicy` class. Here is an example:
+
+```
+class DatasetDatabrewServicePolicy(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS DataBrew.
+    """
+    def get_statements(self, group_permissions, **kwargs):
+        if CREATE_DATASET not in group_permissions:
+            return []
+
+        statements = [
+              ....
+
+```
+
+**Pivot role policies** 
+
+We want the dataallPivotRole to follow least-privilege permissions and have only those IAM statements that are needed
+to operate a certain configuration of data.all. Imagine that you disable the `Dashboards` module, in that case, the 
+pivotRole should not have any Quicksight related permissions needed by Dashboards. We achieve this modular definition
+of pivotRole policies by using the `PivotRoleStatementSet` class to define the policies needed by the pivotRole for a module.
+If the module is enabled, then the auto-created pivotRole is deployed with the additional PivotRoleStatementSet and viceversa.
+
+
+```
+class DatasetsPivotRole(PivotRoleStatementSet):
+    """
+    Class including all permissions needed  by the pivot role to work with Datasets based in S3 and Glue databases
+    It allows pivot role to:
+    - ....
+    """
+    def get_statements(self):
+        statements = [
+```
+
+
+#### api
+
+The `api` package depends on `base.api` and defines the API calls executed by the GraphQL Lambda handler.
+You might have one single group of API calls or split them in multiple packages. Independently if you have a single package (e.g. `dashboards.api`) or multiple packages (e.g. `datasets.api`), 
+each package should always follow the same structure:
+
+1. `types.py` :  definition of GraphQL ObjectTypes
+2. `mutations.py` : definition of GraphQL MutationFields --> API calls that modify an ObjectType
+3. `queries.py` : definition of GraphQL QueryFields for the --> API calls that query information about an ObjectType
+3. `input_types.py` : definition of GraphQL InputTypes used as input for MutationFields and QueryFields
+4. `resolvers.py` : code that is executed in the MutationFields and QueryFields API calls. Input validation, no business logic.
+5. (optional) `enums.py`: enums used in ObjectTypes and InputTypes
+
+**Note:** all these classes need to be imported in the `module.api.__init__.py`
+
+As briefly explained above, the `resolvers` define the code that is executed by the Lambda whenever an API call
+is made. In the resolvers we verify the input of the API call and we call the corresponding Service where the business logic 
+is defined. Resolvers should NOT include any business logic.
+
+Each resolver receives the following parameters:
 
 1. The `context` is provided by the GraphQL engine as an object with two properties
     - `context.engine` : a db.Engine instance (the database connection)
@@ -383,81 +456,65 @@ The parameters are defined as follows:
 2. The `source` parameter is optional. If  provided, it holds the result of the parent field
 3. `**kwargs` are the named field parameters
 
-**Note**: If you are adding a new Object/GraphQL type, 
-don't forget to add it in`backend/dataall/api/Objects/__init__.py`
-
-
-#### db
-
-The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
-or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
-
-The package contains 2 types of classes
-- `models`: it defines the tables and their schemas in our Aurora RDS database.
-- `repositories`: api calls against the RDS Aurora database.
-
-API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to count the tables
-of an specific data.all dataset.
+For example, let's see the dataset creation resolver (`modules.dataset.api.resolvers.py`):
 ```
-    @staticmethod
-    def count_dataset_tables(session, dataset_uri):
-        return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
+def create_dataset(context: Context, source, input=None):
+    RequestValidator.validate_creation_request(input)
+
+    admin_group = input['SamlAdminGroupName']
+    uri = input['environmentUri']
+    return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=input)
 ```
 
-The exports from this package are:
+As you can verify, in the resolvers we do not include any business logic, we only verify the input and call the corresponding
+module service.
 
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+#### services
+Here is where the business logic of the module API calls is defined. There are 2 types of files in this directory:
+- One `<MODULE_NAME>_permissions.py` file that defines the application permissions that apply to the module.
+- One or more `<MODULE_NAME>_<SUBCOMPONENT>_service.py` files that define the 
+
+**Services**
+
+##TODO
 
 
+**Permissions** 
 
-### dataall/aws
-
-The `dataall.aws` package is where all the AWS logic is implemented. It serves 
-as an interface that performs API calls to AWS services. It has a unique folder containing:
+With the permissions checkers implemented in `core.permissions` and in `core.environment.env_permission_checker.py`, 
+if a service function is decorated, data.all checks the permission
+of the user before executing the action. For example, in the `create_dataset` function of the `DatasetService`, 
+we take the user and check whether it has tenant permissions to MANAGE_DATASETS, has resource permissions on the 
+environment resource to CREATE_DATASET or if the user groups have permissions to CREATE_DATASET in that environment.
 
 ```
-handlers/:
-├── cloudformation.py
-├── cloudwatch.py
-├── codecommit.py 
-├── codepipeline.py
-├── ecs.py ---------------------> Interface with ECS Fargate cluster
-├── glue.py
-├── parameter_store.py
-├── quicksight.py
-├── redshift.py
-├── s3.py
-├── sagemaker.py
-├── sagemaker_studio.py
-├── service_handlers.py ---------> Interface with Worker Lambda
-├── sns.py
-├── sqs.py
-├── stepfunction.py
-└── sts.py ---> used to assume roles on different AWS accounts
+@staticmethod
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
+    @has_group_permission(CREATE_DATASET)
+    def create_dataset(uri, admin_group, data: dict):
+      .....
+```
+Each of these decorators refer to a different type of permission:
+- `TENANT_PERMISSIONS` - Granted to the Tenant group. For each resource we should define a corresponding MANAGE_<RESOURCE> permission
+- `ENVIRONMENT_PERMISSIONS` - Granted to any group in an environment. For each resource we should define a list of actions regarding that resource that are executed on the environment (e.g. List resources X in an environment)
+- `RESOURCE_PERMISSION` - Granted to any group. For each resource we should define a list of all actions that can be done on the resource. We also need to add the permissions for the Environment resource (ENVIRONMENT_PERMISSIONS)
+
+When creating a new resource that has associated permissions, the corresponding RESOURCE_PERMISSIONS should be attached.
+You can take the example for dataset creation as a reference.
+
+```
+    ResourcePolicy.attach_resource_policy(
+        session=session,
+        group=environment.SamlGroupName,
+        permissions=DATASET_ALL,
+        resource_uri=dataset.datasetUri,
+        resource_type=Dataset.__name__,
+    )
 ```
 
-These scripts define Python classes that can imported (e.g. by the API resolvers in `dataall.api`). Here is an example of
-the Dataset resolvers `backend/dataall/api/Objects/Dataset/resolvers.py` where we import
-and use the class `Glue` to interact with AWS Glue:
-```
-def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
-    [.....]
-        crawler = Glue.get_glue_crawler(
-            {
-                'crawler_name': dataset.GlueCrawlerName,
-                'region': dataset.region,
-                'accountid': dataset.AwsAccountId,
-            }
-        )
-    [.....]
-```
+
+
 
 #### ECS
 You might have overlooked the ECS interface. In the `dataall.aws` package we also define the connection to the
