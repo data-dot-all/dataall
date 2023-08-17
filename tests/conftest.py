@@ -2,8 +2,7 @@ import os
 from dataclasses import dataclass
 
 import pytest
-import dataall
-from dataall.base.db import get_engine, create_schema_and_tables
+from dataall.base.db import get_engine, create_schema_and_tables, Engine
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
 
@@ -52,7 +51,7 @@ class User:
 
 
 @pytest.fixture(scope='module')
-def db() -> dataall.base.db.Engine:
+def db() -> Engine:
     engine = get_engine(envname=ENVNAME)
     create_schema_and_tables(engine, envname=ENVNAME)
     yield engine

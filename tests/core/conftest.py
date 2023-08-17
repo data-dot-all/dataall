@@ -1,12 +1,7 @@
-from dataclasses import dataclass
-
 import pytest
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.permissions import ENVIRONMENT_ALL
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -125,8 +120,8 @@ def org(client):
 
 
 @pytest.fixture(scope='module')
-def org_fixture(org, user, group, tenant):
-    org1 = org('testorg', 'alice', group.name)
+def org_fixture(org, user, group):
+    org1 = org('testorg', user.username, group.name)
     yield org1
 
 
