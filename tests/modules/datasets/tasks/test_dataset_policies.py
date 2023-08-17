@@ -1,54 +1,16 @@
 from unittest.mock import MagicMock
 
-from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
 import pytest
 
 
 @pytest.fixture(scope='module', autouse=True)
-def org(db):
-    with db.scoped_session() as session:
-        org = Organization(
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            userRoleInOrganization=OrganisationUserRole.Owner.value,
-        )
-        session.add(org)
-    yield org
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env(org, db):
-    with db.scoped_session() as session:
-        env = Environment(
-            organizationUri=org.organizationUri,
-            AwsAccountId='12345678901',
-            region='eu-west-1',
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
-            CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
-        )
-        session.add(env)
-    yield env
-
-
-@pytest.fixture(scope='module', autouse=True)
-def sync_dataset(org, env, db):
+def sync_dataset(org_fixture, env_fixture, db):
     with db.scoped_session() as session:
         dataset = Dataset(
-            organizationUri=org.organizationUri,
-            environmentUri=env.environmentUri,
+            organizationUri=org_fixture.organizationUri,
+            environmentUri=env_fixture.environmentUri,
             label='label',
             owner='foo',
             SamlAdminGroupName='foo',

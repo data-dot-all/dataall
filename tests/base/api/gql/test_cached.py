@@ -1,12 +1,4 @@
-import pytest
 from dataall.base.api import gql
-
-
-@pytest.fixture(scope='module', autouse=True)
-def reset():
-    gql.ObjectType.class_instances = {}
-    gql.QueryField.class_instances = {}
-    gql.MutationField.class_instances = {}
 
 
 def test_cached_types():

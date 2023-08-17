@@ -7,7 +7,7 @@ from dataall.modules.notebooks.cdk.notebook_stack import NotebookStack
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, notebook, env, org):
+def patch_methods(mocker, db, notebook, env_fixture, org_fixture):
     mocker.patch(
         'dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_engine',
         return_value=db
@@ -29,11 +29,11 @@ def patch_methods(mocker, db, notebook, env, org):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
-        return_value=org,
+        return_value=org_fixture,
     )
 
 

@@ -26,20 +26,20 @@ def random_table_name():
 @pytest.fixture(scope='module')
 def org1(org: typing.Callable, user, group, tenant):
     # user, group and tenant are fixtures defined in conftest
-    yield org('testorg', user.username, group.name)
+    yield org('testorg', group, user)
 
 
 @pytest.fixture(scope='module')
-def env1(environment: typing.Callable, org1: Organization, user, group
+def env1(env: typing.Callable, org1: Organization, user, group
          ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
-    yield environment(
-        organization=org1,
-        awsAccountId="1" * 12,
-        label="source_environment",
+    yield env(
+        org=org1,
+        account="1" * 12,
+        envname="source_environment",
         owner=user.username,
-        samlGroupName=group.name,
-        environmentDefaultIAMRoleName=f"source-{group.name}",
+        group=group.name,
+        role=f"source-{group.name}",
     )
 
 
@@ -48,7 +48,7 @@ def env1group(environment_group: typing.Callable, env1, user, group
               ) -> EnvironmentGroup:
     yield environment_group(
         environment=env1,
-        group=group,
+        group=group.name,
     )
 
 
@@ -78,22 +78,22 @@ def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope='module')
-def org2(org: typing.Callable, group2, tenant) -> Organization:
-    yield org('org2', 'bob', group2.name)
+def org2(org: typing.Callable, group2, user2) -> Organization:
+    yield org('org2', group2, user2)
 
 
 @pytest.fixture(scope='module')
 def env2(
-        environment: typing.Callable, org2: Organization, user2, group2
+        env: typing.Callable, org2: Organization, user2, group2
 ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
-    yield environment(
-        organization=org2,
-        awsAccountId="2" * 12,
-        label="target_environment",
+    yield env(
+        org=org2,
+        account="2" * 12,
+        envname="target_environment",
         owner=user2.username,
-        samlGroupName=group2.name,
-        environmentDefaultIAMRoleName=f"source-{group2.name}",
+        group=group2.name,
+        role=f"source-{group2.name}",
     )
 
 
@@ -127,7 +127,7 @@ def table2(table: typing.Callable, dataset2: Dataset) -> DatasetTable:
 def env2group(environment_group: typing.Callable, env2, user2, group2) -> EnvironmentGroup:
     yield environment_group(
         environment=env2,
-        group=group2,
+        group=group2.name,
     )
 
 

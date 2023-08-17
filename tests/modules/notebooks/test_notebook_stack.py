@@ -1,4 +1,4 @@
-from tests.api.test_stack import update_stack_query
+from tests.core.stacks.test_stack import update_stack_query
 
 
 def test_notebook_stack(client, sgm_notebook, group):

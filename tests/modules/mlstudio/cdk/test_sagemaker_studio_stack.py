@@ -34,7 +34,7 @@ class MockEnvironmentSageMakerExtension(Stack):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
+def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env_fixture, org_fixture):
     mocker.patch(
         'dataall.modules.mlstudio.cdk.mlstudio_stack.SagemakerStudioUserProfile.get_engine',
         return_value=db,
@@ -56,11 +56,11 @@ def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
-        return_value=org,
+        return_value=org_fixture,
     )
 
 
@@ -92,12 +92,12 @@ def test_resources_sgmstudio_stack_created(sgm_studio):
     template.resource_count_is("AWS::SageMaker::UserProfile", 1)
 
 
-def test_resources_sgmstudio_extension_stack_created(db, env):
+def test_resources_sgmstudio_extension_stack_created(db, env_fixture):
     app = App()
 
     # Create the Stack
     stack = MockEnvironmentSageMakerExtension(
-        app, 'SagemakerExtension', env=env, db=db,
+        app, 'SagemakerExtension', env=env_fixture, db=db,
     )
 
     # Prepare the stack for assertions.

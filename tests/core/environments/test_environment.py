@@ -1,23 +1,9 @@
-import pytest
-
-import dataall
+from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 
 
-@pytest.fixture(scope='module', autouse=True)
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
-def get_env(client, env1, group):
+def get_env(client, env_fixture, group):
     return client.query(
         """
         query GetEnv($environmentUri:String!){
@@ -43,26 +29,26 @@ def get_env(client, env1, group):
         }
         """,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         groups=[group.name],
     )
 
 
-def test_get_environment(client, org1, env1, group):
-    response = get_env(client, env1, group)
+def test_get_environment(client, org_fixture, env_fixture, group):
+    response = get_env(client, env_fixture, group)
     assert (
         response.data.getEnvironment.organization.organizationUri
-        == org1.organizationUri
+        == org_fixture.organizationUri
     )
     body = response.data.getEnvironment
     assert body.owner == 'alice'
-    assert body.AwsAccountId == env1.AwsAccountId
+    assert body.AwsAccountId == env_fixture.AwsAccountId
 
     params = {p.key: p.value for p in body.parameters}
     assert params["dashboardsEnabled"] == "true"
 
 
-def test_get_environment_object_not_found(client, org1, env1, group):
+def test_get_environment_object_not_found(client, org_fixture, env_fixture, group):
     response = client.query(
         """
         query GetEnv($environmentUri:String!){
@@ -86,7 +72,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_update_env(client, org1, env1, group):
+def test_update_env(client, org_fixture, env_fixture, group):
     query = """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
@@ -110,7 +96,7 @@ def test_update_env(client, org1, env1, group):
 
     response = client.query(query,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
@@ -128,7 +114,7 @@ def test_update_env(client, org1, env1, group):
 
     response = client.query(query,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
@@ -145,10 +131,10 @@ def test_update_env(client, org1, env1, group):
     print(response)
     assert (
         response.data.updateEnvironment.organization.organizationUri
-        == org1.organizationUri
+        == org_fixture.organizationUri
     )
     assert response.data.updateEnvironment.owner == 'alice'
-    assert response.data.updateEnvironment.AwsAccountId == env1.AwsAccountId
+    assert response.data.updateEnvironment.AwsAccountId == env_fixture.AwsAccountId
     assert response.data.updateEnvironment.label == 'DEV'
     assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
     assert not response.data.updateEnvironment.dashboardsEnabled
@@ -158,12 +144,12 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
 
-def test_update_params(client, org1, env1, group):
+def test_update_params(client, org_fixture, env_fixture, group):
     def update_params(parameters):
         return client.query(
             query,
             username='alice',
-            environmentUri=env1.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             input=parameters,
             groups=[group.name],
         )
@@ -186,7 +172,7 @@ def test_update_params(client, org1, env1, group):
     assert environment.parameters[0]["value"] == "True"
 
 
-def test_unauthorized_update(client, org1, env1):
+def test_unauthorized_update(client, org_fixture, env_fixture):
     response = client.query(
         """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
@@ -204,13 +190,13 @@ def test_unauthorized_update(client, org1, env1):
         }
         """,
         username='bob',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         input={'label': 'DEV', 'tags': ['test', 'env']},
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_list_environments_no_filter(org1, env1, client, group):
+def test_list_environments_no_filter(org_fixture, env_fixture, client, group):
     response = client.query(
         """
     query ListEnvironments($filter:EnvironmentFilter){
@@ -247,7 +233,7 @@ def test_list_environments_no_filter(org1, env1, client, group):
             }
         }
         """,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         username='alice',
         groups=[group.name],
     )
@@ -256,7 +242,7 @@ def test_list_environments_no_filter(org1, env1, client, group):
     assert response.data.listEnvironmentNetworks.count == 1
 
 
-def test_list_environment_role_filter_as_creator(org1, env1, client, group):
+def test_list_environment_role_filter_as_creator(org_fixture, env_fixture, client, group):
     response = client.query(
         """
     query ListEnvironments($filter:EnvironmentFilter){
@@ -281,7 +267,7 @@ def test_list_environment_role_filter_as_creator(org1, env1, client, group):
     assert response.data.listEnvironments.count == 1
 
 
-def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, group):
+def test_list_environment_role_filter_as_admin(db, client, org_fixture, env_fixture, user, group):
     response = client.query(
         """
         query ListEnvironments($filter:EnvironmentFilter){
@@ -300,17 +286,17 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
         """,
         username=user.username,
         groups=[group.name],
-        filter={'roles': [dataall.core.environment.api.enums.EnvironmentPermission.Invited.name]},
+        filter={'roles': [EnvironmentPermission.Invited.name]},
     )
 
     assert response.data.listEnvironments.count == 1
 
 
-def test_paging(db, client, org1, env1, user, group):
+def test_paging(db, client, org_fixture, env_fixture, user, group):
     for i in range(1, 30):
         with db.scoped_session() as session:
             env = Environment(
-                organizationUri=org1.organizationUri,
+                organizationUri=org_fixture.organizationUri,
                 AwsAccountId=f'12345678901+{i}',
                 region='eu-west-1',
                 label='org',
@@ -360,7 +346,7 @@ def test_paging(db, client, org1, env1, user, group):
         first_id = response.data.listEnvironments.nodes[0].environmentUri
 
 
-def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
+def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, group3, group):
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
@@ -390,7 +376,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username='alice',
         input=dict(
-            environmentUri=env1.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
             environmentIAMRoleName='myteamrole',
@@ -413,7 +399,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         username=user.username,
         groups=[group2.name],
         groupUri=group2.name,
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
 
@@ -427,7 +413,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username='alice',
         input=dict(
-            environmentUri=env1.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
         ),
@@ -449,7 +435,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name, group2.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -470,7 +456,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name, group2.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -493,7 +479,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -513,7 +499,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -528,7 +514,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         }
         """,
         username='alice',
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         groupUri=group2.name,
         groups=[group.name, group2.name],
     )
@@ -549,7 +535,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name, group2.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -569,7 +555,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name, group2.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
 
@@ -585,7 +571,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username='alice',
         input=dict(
-            environmentUri=env1.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri=group3.name,
             permissions=env_permissions,
         ),
@@ -609,7 +595,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
         """,
         username=user.username,
         groups=[group.name, group2.name, group3.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         filter={},
     )
     assert 'myteamrole' not in [
@@ -617,7 +603,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
     ]
 
 
-def test_archive_env(client, org1, env1, group, group2):
+def test_archive_env(client, org_fixture, env_fixture, group, group2):
     response = client.query(
         """
         mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean!){
@@ -626,14 +612,14 @@ def test_archive_env(client, org1, env1, group, group2):
         """,
         username='alice',
         groups=[group.name, group2.name],
-        environmentUri=env1.environmentUri,
+        environmentUri=env_fixture.environmentUri,
         deleteFromAWS=True,
     )
     print(response)
     assert response.data.deleteEnvironment
 
 
-def test_create_environment(db, client, org1, env1, user, group):
+def test_create_environment(db, client, org_fixture, env_fixture, user, group):
     response = client.query(
         """mutation CreateEnv($input:NewEnvironmentInput){
             createEnvironment(input:$input){
@@ -665,10 +651,10 @@ def test_create_environment(db, client, org1, env1, user, group):
             'label': f'dev',
             'description': f'test',
             'EnvironmentDefaultIAMRoleName': 'myOwnIamRole',
-            'organizationUri': org1.organizationUri,
-            'AwsAccountId': env1.AwsAccountId,
+            'organizationUri': org_fixture.organizationUri,
+            'AwsAccountId': env_fixture.AwsAccountId,
             'tags': ['a', 'b', 'c'],
-            'region': f'{env1.region}',
+            'region': f'{env_fixture.region}',
             'SamlGroupName': group.name,
             'vpcId': 'vpc-1234567',
             'privateSubnetIds': 'subnet-1',

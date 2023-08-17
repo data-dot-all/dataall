@@ -67,6 +67,7 @@ class EnvironmentParameter(Base):
     value = Column('paramValue', String, nullable=True)
 
     def __init__(self, env_uri, key, value):
+        super().__init__()
         self.environmentUri = env_uri
         self.key = key
         self.value = value

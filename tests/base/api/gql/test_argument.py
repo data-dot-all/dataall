@@ -5,8 +5,8 @@ def test_base():
     arg = gql.Argument(name='foo', type=gql.String)
     assert arg.gql() == 'foo : String'
 
-    arg = gql.Argument(name='foo', type=gql.Number)
-    assert arg.gql() == 'foo : Number'
+    arg = gql.Argument(name='foo', type=gql.Integer)
+    assert arg.gql() == 'foo : Int'
 
     arg = gql.Argument(name='foo', type=gql.NonNullableType(gql.String))
     assert arg.gql() == 'foo : String!'
@@ -60,8 +60,8 @@ def test_arg_from_input_type():
     point_input = gql.InputType(
         name='PointInput',
         arguments=[
-            gql.Argument(name='x', type=gql.Number),
-            gql.Argument(name='y', type=gql.Number),
+            gql.Argument(name='x', type=gql.Integer),
+            gql.Argument(name='y', type=gql.Integer),
         ],
     )
     point_arg = gql.Argument(name='point', type=point_input)
@@ -78,19 +78,19 @@ def test_input_type_with_arg():
     input_type = gql.InputType(
         name='NewPointInputType',
         arguments=[
-            gql.Argument(name='x', type=gql.Number),
-            gql.Argument(name='y', type=gql.Number),
+            gql.Argument(name='x', type=gql.Integer),
+            gql.Argument(name='y', type=gql.Integer),
         ],
     )
-    assert input_type.gql() == 'input NewPointInputType{  x : Number, y : Number }'
+    assert input_type.gql() == 'input NewPointInputType{  x : Int, y : Int }'
 
 
 def test_nested_input():
     point_input_type = gql.InputType(
         name='NewPointInputType',
         arguments=[
-            gql.Argument(name='x', type=gql.Number),
-            gql.Argument(name='y', type=gql.Number),
+            gql.Argument(name='x', type=gql.Integer),
+            gql.Argument(name='y', type=gql.Integer),
         ],
     )
 

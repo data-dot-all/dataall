@@ -33,23 +33,14 @@ LF_CLIENT = "dataall.modules.dataset_sharing.aws.lakeformation_client.LakeFormat
 
 
 @pytest.fixture(scope="module")
-def org1(org: Callable) -> Organization:
-    yield org(
-        label="org",
-        owner="alice",
-        SamlGroupName="admins"
-    )
-
-
-@pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: Organization, group: Group) -> Environment:
-    yield environment(
-        organization=org1,
-        awsAccountId=SOURCE_ENV_ACCOUNT,
-        label="source_environment",
+def source_environment(env: Callable, org_fixture: Organization, group: Group) -> Environment:
+    yield env(
+        org=org_fixture,
+        account=SOURCE_ENV_ACCOUNT,
+        envname="source_environment",
         owner=group.owner,
-        samlGroupName=group.name,
-        environmentDefaultIAMRoleName=SOURCE_ENV_ROLE_NAME,
+        group=group.name,
+        role=SOURCE_ENV_ROLE_NAME,
     )
 
 
@@ -58,7 +49,7 @@ def source_environment_group(environment_group: Callable, source_environment: En
                              group: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
-        group=group
+        group=group.name
     )
 
 
@@ -67,19 +58,19 @@ def source_environment_group_requesters(environment_group: Callable, source_envi
                                         group2: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
-        group=group2
+        group=group2.name
     )
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: Organization, group2: Group) -> Environment:
-    yield environment(
-        organization=org1,
-        awsAccountId=TARGET_ACCOUNT_ENV,
-        label="target_environment",
+def target_environment(env: Callable, org_fixture: Organization, group2: Group) -> Environment:
+    yield env(
+        org=org_fixture,
+        account=TARGET_ACCOUNT_ENV,
+        envname="target_environment",
         owner=group2.owner,
-        samlGroupName=group2.name,
-        environmentDefaultIAMRoleName=TARGET_ACCOUNT_ENV_ROLE_NAME,
+        group=group2.name,
+        role=TARGET_ACCOUNT_ENV_ROLE_NAME,
     )
 
 
@@ -88,14 +79,14 @@ def target_environment_group(environment_group: Callable, target_environment: En
                              group2: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=target_environment,
-        group=group2
+        group=group2.name
     )
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: Organization, source_environment: Environment) -> Dataset:
-    yield dataset(
-        organization=org1,
+def dataset1(create_dataset: Callable, org_fixture: Organization, source_environment: Environment) -> Dataset:
+    yield create_dataset(
+        organization=org_fixture,
         environment=source_environment,
         label="dataset1"
     )
