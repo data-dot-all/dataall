@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
-import React, { useState } from 'react';
+import React from 'react';
 
 export const ShareRejectModal = (props) => {
   const { share, onApply, onClose, open, rejectFunction, ...other } = props;
@@ -36,14 +36,12 @@ export const ShareRejectModal = (props) => {
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
-              comment: share.rejectPurpose ? share.rejectPurpose: ''
+              comment: share.rejectPurpose ? share.rejectPurpose : ''
             }}
             validationSchema={Yup.object().shape({
               comment: Yup.string().max(200)
             })}
-            onSubmit={async (
-              values
-            ) => {
+            onSubmit={async (values) => {
               await rejectFunction(values.comment);
             }}
           >
@@ -113,5 +111,5 @@ ShareRejectModal.propTypes = {
   onApply: PropTypes.func,
   onClose: PropTypes.func,
   rejectFunction: PropTypes.func.isRequired,
-  open: PropTypes.bool.isRequired,
+  open: PropTypes.bool.isRequired
 };

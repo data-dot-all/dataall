@@ -15,26 +15,29 @@ import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 import { updateShareRequestReason } from '../services';
 
-
 export const UpdateRequestReason = (props) => {
-  const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } = props;
-  const [isUpdateRequestModalOpen, setIsUpdateRequestModalOpen] = useState(false);
+  const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =
+    props;
+  const [isUpdateRequestModalOpen, setIsUpdateRequestModalOpen] =
+    useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const handleUpdateRequestModalOpen = () => {setIsUpdateRequestModalOpen(true);};
-  const handleUpdateRequestModalClose = () => {setIsUpdateRequestModalOpen(false);};
+  const handleUpdateRequestModalOpen = () => {
+    setIsUpdateRequestModalOpen(true);
+  };
+  const handleUpdateRequestModalClose = () => {
+    setIsUpdateRequestModalOpen(false);
+  };
   const update = async (comment) => {
     setUpdating(true);
     const response = await client.mutate(
-      updateShareRequestReason(
-        { 
-          shareUri: share.shareUri,
-          requestPurpose: comment 
-        }
-      )
+      updateShareRequestReason({
+        shareUri: share.shareUri,
+        requestPurpose: comment
+      })
     );
     if (!response.errors) {
-      handleUpdateRequestModalClose()
+      handleUpdateRequestModalClose();
       enqueueSnackbar('Share request reason updated', {
         anchorOrigin: {
           horizontal: 'right',
@@ -62,7 +65,13 @@ export const UpdateRequestReason = (props) => {
       >
         Edit
       </LoadingButton>
-      <Dialog maxWidth="sm" fullWidth onClose={handleUpdateRequestModalClose} open={isUpdateRequestModalOpen} {...other}>
+      <Dialog
+        maxWidth="sm"
+        fullWidth
+        onClose={handleUpdateRequestModalClose}
+        open={isUpdateRequestModalOpen}
+        {...other}
+      >
         <Box sx={{ p: 3 }}>
           <Typography
             align="center"
@@ -73,7 +82,11 @@ export const UpdateRequestReason = (props) => {
             Update Share Request
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography align="center" variant="subtitle2" color="textSecondary">
+            <Typography
+              align="center"
+              variant="subtitle2"
+              color="textSecondary"
+            >
               Update a reason for your share request:
             </Typography>
           </Box>
@@ -85,9 +98,7 @@ export const UpdateRequestReason = (props) => {
               validationSchema={Yup.object().shape({
                 comment: Yup.string().max(200)
               })}
-              onSubmit={async (
-                values
-              ) => {
+              onSubmit={async (values) => {
                 await update(values.comment);
               }}
             >
@@ -126,7 +137,9 @@ export const UpdateRequestReason = (props) => {
                       />
                       {touched.comment && errors.comment && (
                         <Box sx={{ mt: 2 }}>
-                          <FormHelperText error>{errors.comment}</FormHelperText>
+                          <FormHelperText error>
+                            {errors.comment}
+                          </FormHelperText>
                         </Box>
                       )}
                     </CardContent>
@@ -158,5 +171,5 @@ UpdateRequestReason.propTypes = {
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
-  fetchItem: PropTypes.func,
+  fetchItem: PropTypes.func
 };

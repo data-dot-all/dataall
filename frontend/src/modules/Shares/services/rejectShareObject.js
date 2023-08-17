@@ -7,7 +7,7 @@ export const rejectShareObject = ({ shareUri, rejectPurpose }) => ({
   },
   mutation: gql`
     mutation RejectShareObject($shareUri: String!, $rejectPurpose: String!) {
-      rejectShareObject(shareUri: $shareUri,rejectPurpose: $rejectPurpose) {
+      rejectShareObject(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
         shareUri
         status
       }

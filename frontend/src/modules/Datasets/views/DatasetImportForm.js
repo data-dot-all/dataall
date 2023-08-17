@@ -114,7 +114,7 @@ const DatasetImportForm = (props) => {
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
-          bucketName: values.bucketName, 
+          bucketName: values.bucketName,
           KmsKeyAlias: values.KmsKeyAlias,
           glueDatabaseName: values.glueDatabaseName,
           stewards: values.stewards,
@@ -464,7 +464,9 @@ const DatasetImportForm = (props) => {
                               touched.KmsKeyAlias && errors.KmsKeyAlias
                             )}
                             fullWidth
-                            helperText={touched.KmsKeyAlias && errors.KmsKeyAlias}
+                            helperText={
+                              touched.KmsKeyAlias && errors.KmsKeyAlias
+                            }
                             label="Amazon KMS key Alias (if SSE-KMS encryption is used)"
                             name="KmsKeyAlias"
                             onBlur={handleBlur}

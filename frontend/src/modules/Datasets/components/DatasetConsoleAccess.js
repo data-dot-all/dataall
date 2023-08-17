@@ -1,11 +1,10 @@
 import PropTypes from 'prop-types';
 import {
-    Box,
-    Card,
-    CardContent,
-    CardHeader,
-    Divider,
-    Typography
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Typography
 } from '@mui/material';
 
 export const DatasetConsoleAccess = (props) => {
@@ -48,7 +47,7 @@ export const DatasetConsoleAccess = (props) => {
           {dataset.IAMDatasetAdminRoleArn}
         </Typography>
       </CardContent>
-      { dataset.KmsAlias === "SSE-S3" || dataset.KmsAlias === "Undefined" ?
+      {dataset.KmsAlias === 'SSE-S3' || dataset.KmsAlias === 'Undefined' ? (
         <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
             S3 Encryption
@@ -57,17 +56,16 @@ export const DatasetConsoleAccess = (props) => {
             {`${dataset.KmsAlias}`}
           </Typography>
         </CardContent>
-          :
-          <CardContent>
+      ) : (
+        <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
             S3 Encryption SSE-KMS
           </Typography>
           <Typography color="textPrimary" variant="body2">
             {`arn:aws:kms:${dataset.region}:${dataset.AwsAccountId}/alias:${dataset.KmsAlias}`}
           </Typography>
-      </CardContent>
-
-        }
+        </CardContent>
+      )}
     </Card>
   );
 };

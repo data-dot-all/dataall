@@ -16,24 +16,27 @@ import React, { useState } from 'react';
 import { updateShareRejectReason } from '../services';
 
 export const UpdateRejectReason = (props) => {
-  const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other  } = props;
+  const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =
+    props;
   const [isUpdateRejectModalOpen, setIsUpdateRejectModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const handleUpdateRejectModalOpen = () => {setIsUpdateRejectModalOpen(true);};
-  const handleUpdateRejectModalClose = () => {setIsUpdateRejectModalOpen(false);};
+  const handleUpdateRejectModalOpen = () => {
+    setIsUpdateRejectModalOpen(true);
+  };
+  const handleUpdateRejectModalClose = () => {
+    setIsUpdateRejectModalOpen(false);
+  };
   const update = async (comment) => {
     setUpdating(true);
     const response = await client.mutate(
-      updateShareRejectReason(
-        { 
-          shareUri: share.shareUri,
-          rejectPurpose: comment 
-        }
-      )
+      updateShareRejectReason({
+        shareUri: share.shareUri,
+        rejectPurpose: comment
+      })
     );
     if (!response.errors) {
-      handleUpdateRejectModalClose()
+      handleUpdateRejectModalClose();
       enqueueSnackbar('Share reject reason updated', {
         anchorOrigin: {
           horizontal: 'right',
@@ -61,7 +64,13 @@ export const UpdateRejectReason = (props) => {
       >
         Edit
       </LoadingButton>
-      <Dialog maxWidth="sm" fullWidth onClose={handleUpdateRejectModalClose} open={isUpdateRejectModalOpen} {...other}>
+      <Dialog
+        maxWidth="sm"
+        fullWidth
+        onClose={handleUpdateRejectModalClose}
+        open={isUpdateRejectModalOpen}
+        {...other}
+      >
         <Box sx={{ p: 3 }}>
           <Typography
             align="center"
@@ -72,21 +81,23 @@ export const UpdateRejectReason = (props) => {
             Update Share Reject Reason
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography align="center" variant="subtitle2" color="textSecondary">
+            <Typography
+              align="center"
+              variant="subtitle2"
+              color="textSecondary"
+            >
               Update a reason to reject the share request:
             </Typography>
           </Box>
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                comment: share.rejectPurpose ? share.rejectPurpose: ''
+                comment: share.rejectPurpose ? share.rejectPurpose : ''
               }}
               validationSchema={Yup.object().shape({
                 comment: Yup.string().max(200)
               })}
-              onSubmit={async (
-                values
-              ) => {
+              onSubmit={async (values) => {
                 await update(values.comment);
               }}
             >
@@ -125,7 +136,9 @@ export const UpdateRejectReason = (props) => {
                       />
                       {touched.comment && errors.comment && (
                         <Box sx={{ mt: 2 }}>
-                          <FormHelperText error>{errors.comment}</FormHelperText>
+                          <FormHelperText error>
+                            {errors.comment}
+                          </FormHelperText>
                         </Box>
                       )}
                     </CardContent>
@@ -157,5 +170,5 @@ UpdateRejectReason.propTypes = {
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
-  fetchItem: PropTypes.func,
+  fetchItem: PropTypes.func
 };
