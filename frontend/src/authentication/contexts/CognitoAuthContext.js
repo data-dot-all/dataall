@@ -1,4 +1,4 @@
-import Amplify, { Auth } from 'aws-amplify';
+import { Auth, Amplify } from 'aws-amplify';
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useReducer } from 'react';
 import { SET_ERROR } from 'globalErrors';
