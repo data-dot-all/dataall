@@ -5,7 +5,6 @@ from dataall.core.vpc.db.vpc import Vpc
 
 log = logging.getLogger(__name__)
 
-
 def create_network(context: Context, source, input):
     with context.engine.scoped_session() as session:
         vpc = Vpc.create_network(
