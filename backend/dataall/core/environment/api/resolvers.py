@@ -475,7 +475,7 @@ def delete_environment(
                 uri=environmentUri,
                 environment=environment
             )
-        except exc.IntegrityError:
+        except Exception as e:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message='Delete all environment related objects before proceeding',
