@@ -93,8 +93,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: docker/dev/Dockerfile
+      context: .
+      dockerfile: frontend/docker/dev/Dockerfile
     deploy:
       resources:
         limits:
