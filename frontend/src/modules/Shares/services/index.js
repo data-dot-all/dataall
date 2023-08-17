@@ -7,3 +7,5 @@ export * from './rejectShareObject';
 export * from './removeSharedItem';
 export * from './revokeItemsShareObject';
 export * from './submitApproval';
+export * from './updateShareRejectReason';
+export * from './updateShareRequestReason';

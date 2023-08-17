@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateShareRejectReason = ({ shareUri, rejectPurpose }) => ({
+export const updateShareRejectReason = ({ shareUri, rejectPurpose }) => ({
   variables: {
     shareUri,
     rejectPurpose
@@ -11,5 +11,3 @@ const updateShareRejectReason = ({ shareUri, rejectPurpose }) => ({
     }
   `
 });
-
-export default updateShareRejectReason;

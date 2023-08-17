@@ -13,7 +13,7 @@ import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 
-const ShareRejectModal = (props) => {
+export const ShareRejectModal = (props) => {
   const { share, onApply, onClose, open, rejectFunction, ...other } = props;
 
   return (
@@ -115,5 +115,3 @@ ShareRejectModal.propTypes = {
   rejectFunction: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
 };
-
-export default ShareRejectModal;

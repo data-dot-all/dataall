@@ -58,12 +58,7 @@ import {
   removeSharedItem,
   submitApproval
 } from '../services';
-import { AddShareItemModal, RevokeShareItemsModal } from '../components';
-
-// TODOs: merge conflict: update imports here
-import ShareRejectModal from './ShareRejectModal';
-import UpdateRejectReason from './ShareUpdateReject';
-import UpdateRequestReason from './ShareUpdateRequest';
+import { AddShareItemModal, RevokeShareItemsModal, ShareRejectModal, UpdateRejectReason, UpdateRequestReason } from '../components';
 
 function ShareViewHeader(props) {
   const {

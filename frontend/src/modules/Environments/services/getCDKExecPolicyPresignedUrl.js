@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getCDKExecPolicyPresignedUrl = (organizationUri) => ({
+export const getCDKExecPolicyPresignedUrl = (organizationUri) => ({
   variables: {
     organizationUri
   },
@@ -10,5 +10,3 @@ const getCDKExecPolicyPresignedUrl = (organizationUri) => ({
     }
   `
 });
-
-export default getCDKExecPolicyPresignedUrl;

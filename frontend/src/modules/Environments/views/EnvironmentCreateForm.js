@@ -48,12 +48,10 @@ import {
   createEnvironment,
   getPivotRoleExternalId,
   getPivotRoleName,
-  getPivotRolePresignedUrl
+  getPivotRolePresignedUrl,
+  getCDKExecPolicyPresignedUrl
 } from '../services';
 import { AwsRegions } from 'utils';
-
-// TODO: merge conflict: update imports
-import getCDKExecPolicyPresignedUrl from '../../api/Environment/getCDKExecPolicyPresignedUrl';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();

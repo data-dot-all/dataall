@@ -10,12 +10,12 @@ import {
   Typography
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { SET_ERROR } from '../../store/errorReducer';
+import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
-import updateShareRejectReason from '../../api/ShareObject/updateShareRejectReason';
+import updateShareRejectReason from '../services';
 
-const UpdateRejectReason = (props) => {
+export const UpdateRejectReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other  } = props;
   const [isUpdateRejectModalOpen, setIsUpdateRejectModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -159,5 +159,3 @@ UpdateRejectReason.propTypes = {
   enqueueSnackbar: PropTypes.any,
   fetchItem: PropTypes.func,
 };
-
-export default UpdateRejectReason;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateShareRequestReason = ({ shareUri, requestPurpose }) => ({
+export const updateShareRequestReason = ({ shareUri, requestPurpose }) => ({
   variables: {
     shareUri,
     requestPurpose
@@ -11,5 +11,3 @@ const updateShareRequestReason = ({ shareUri, requestPurpose }) => ({
     }
   `
 });
-
-export default updateShareRequestReason;

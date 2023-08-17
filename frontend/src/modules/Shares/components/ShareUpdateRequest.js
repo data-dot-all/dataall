@@ -10,13 +10,13 @@ import {
   Typography
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { SET_ERROR } from '../../store/errorReducer';
+import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
-import updateShareRequestReason from '../../api/ShareObject/updateShareRequestReason';
+import updateShareRequestReason from '../services';
 
 
-const UpdateRequestReason = (props) => {
+export const UpdateRequestReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } = props;
   const [isUpdateRequestModalOpen, setIsUpdateRequestModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -160,5 +160,3 @@ UpdateRequestReason.propTypes = {
   enqueueSnackbar: PropTypes.any,
   fetchItem: PropTypes.func,
 };
-
-export default UpdateRequestReason;
