@@ -333,7 +333,7 @@ const EnvironmentCreateForm = (props) => {
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true aws://ACCOUNT_ID/REGION`}
+                            text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -346,7 +346,7 @@ const EnvironmentCreateForm = (props) => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true aws://ACCOUNT_ID/REGION`}
+                          {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                         </Typography>
                       </CardContent>
                     </Card>
