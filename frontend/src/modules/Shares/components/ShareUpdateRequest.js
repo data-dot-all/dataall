@@ -13,7 +13,7 @@ import { LoadingButton } from '@mui/lab';
 import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
-import updateShareRequestReason from '../services';
+import { updateShareRequestReason } from '../services';
 
 
 export const UpdateRequestReason = (props) => {
