@@ -3,7 +3,7 @@ from typing import List
 
 from aws_cdk import aws_iam
 
-from dataall.core.environment.db.models import EnvironmentGroup, Environment
+from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
 
 logger = logging.getLogger()
 

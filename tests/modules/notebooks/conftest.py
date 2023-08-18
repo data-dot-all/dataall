@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 
 
 class MockSagemakerClient:

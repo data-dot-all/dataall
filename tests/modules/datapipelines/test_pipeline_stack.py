@@ -4,11 +4,10 @@ import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Template
 
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
-from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
-
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 
 @pytest.fixture(scope='module', autouse=True)
 def pipeline_db(db, env_fixture: Environment, group) -> DataPipeline:

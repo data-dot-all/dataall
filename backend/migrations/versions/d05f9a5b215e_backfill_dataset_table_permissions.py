@@ -12,13 +12,13 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission import Permission
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.

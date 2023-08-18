@@ -3,7 +3,7 @@ import os
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 
 log = logging.getLogger(__name__)
 

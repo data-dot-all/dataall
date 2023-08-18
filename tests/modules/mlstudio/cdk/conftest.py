@@ -1,8 +1,8 @@
 import pytest
 
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 
 
 @pytest.fixture(scope='module', autouse=True)

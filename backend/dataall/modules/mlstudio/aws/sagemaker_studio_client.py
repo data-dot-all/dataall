@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)

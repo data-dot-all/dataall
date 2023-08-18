@@ -11,10 +11,10 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission import Permission
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import utils
 from dataall.core.permissions import permissions
 from datetime import datetime

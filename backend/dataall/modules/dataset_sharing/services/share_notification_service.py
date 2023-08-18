@@ -1,7 +1,7 @@
-from dataall.core.notifications.db.notification import Notification
+from dataall.core.notifications.db.notification_repositories import Notification
 from dataall.core.notifications.db.notification_models import NotificationType
-from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 
 class ShareNotificationService:

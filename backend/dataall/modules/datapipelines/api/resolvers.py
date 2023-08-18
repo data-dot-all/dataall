@@ -4,15 +4,15 @@ import logging
 from dataall.base.api.context import Context
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
-from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 
 log = logging.getLogger(__name__)

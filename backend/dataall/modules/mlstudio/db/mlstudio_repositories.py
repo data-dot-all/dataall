@@ -7,7 +7,7 @@ from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import paginate
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 
 

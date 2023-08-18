@@ -7,10 +7,10 @@ from dataall.core.permissions import permissions
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_models import OrganizationGroup, OrganisationUserRole
 from dataall.core.organizations.db import organization_models as models
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.activity.db.activity_models import Activity
 
 logger = logging.getLogger(__name__)

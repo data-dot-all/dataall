@@ -10,10 +10,10 @@ from sqlalchemy import orm, Column, String, and_
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'

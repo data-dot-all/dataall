@@ -1,5 +1,5 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 
 

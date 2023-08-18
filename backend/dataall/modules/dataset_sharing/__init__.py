@@ -2,7 +2,7 @@ import logging
 from typing import List, Type, Set
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareEnvironmentResource
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareEnvironmentResource
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.base.loader import ModuleInterface, ImportMode
 

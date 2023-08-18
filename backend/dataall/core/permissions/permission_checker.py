@@ -5,8 +5,8 @@ and interact with resources or do some actions in the app
 from typing import Protocol, Callable
 
 from dataall.base.context import RequestContext, get_context
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.base.utils.decorator_utls import process_func
 
 
