@@ -4,11 +4,10 @@ from typing import List, Type
 
 from dataall.base.loader import ModuleInterface, ImportMode
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.modules.datapipelines.db.models import DataPipeline
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
     GET_PIPELINE, UPDATE_PIPELINE
-from dataall.modules.feed import FeedApiModuleInterface
 
 log = logging.getLogger(__name__)
 
@@ -22,11 +21,13 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.feed import FeedApiModuleInterface
+
         return [FeedApiModuleInterface]
 
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
-        from dataall.core.stacks.db.target_type import TargetType
+        from dataall.core.stacks.db.target_type_repositories import TargetType
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.datapipelines.api

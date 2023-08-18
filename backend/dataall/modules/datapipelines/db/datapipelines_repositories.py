@@ -1,11 +1,11 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.base.db import exceptions, paginate
-from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 
 
 class DatapipelinesRepository(EnvironmentResource):

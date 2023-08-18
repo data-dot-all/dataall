@@ -3,8 +3,8 @@ import logging
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 log = logging.getLogger(__name__)
 

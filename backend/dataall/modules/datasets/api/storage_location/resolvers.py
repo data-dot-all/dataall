@@ -1,9 +1,9 @@
 from dataall.base.api.context import Context
-from dataall.modules.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary_repositories import Glossary
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.feature_toggle_checker import is_feature_enabled
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 
 @is_feature_enabled('modules.datasets.features.file_actions')

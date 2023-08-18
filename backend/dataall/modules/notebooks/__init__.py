@@ -2,7 +2,7 @@
 import logging
 
 from dataall.base.loader import ImportMode, ModuleInterface
-from dataall.core.stacks.db.target_type import TargetType
+from dataall.core.stacks.db.target_type_repositories import TargetType
 
 log = logging.getLogger(__name__)
 

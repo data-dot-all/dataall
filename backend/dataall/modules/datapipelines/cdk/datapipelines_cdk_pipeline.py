@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 
 
 logger = logging.getLogger(__name__)

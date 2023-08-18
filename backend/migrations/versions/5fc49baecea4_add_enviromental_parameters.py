@@ -13,9 +13,9 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.models import EnvironmentGroup
-from dataall.core.permissions.db.permission import Permission
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.environment.db.environment_models import EnvironmentGroup
+from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import Resource
 from dataall.core.permissions.db.permission_models import PermissionType, ResourcePolicyPermission, \
     TenantPolicyPermission

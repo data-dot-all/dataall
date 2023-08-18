@@ -6,8 +6,8 @@ from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.base.db import exceptions, paginate
 from dataall.core.permissions import permissions
 from dataall.core.permissions.db import permission_models as models
-from dataall.core.permissions.db.permission import Permission
-from dataall.core.permissions.db.tenant import Tenant as TenantService
+from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.tenant_repositories import Tenant as TenantService
 
 logger = logging.getLogger(__name__)
 
