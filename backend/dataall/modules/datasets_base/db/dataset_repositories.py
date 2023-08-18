@@ -4,7 +4,6 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.core.activity.db.activity_models import Activity
-from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db import paginate
@@ -194,37 +193,6 @@ class DatasetRepository(EnvironmentResource):
         session.commit()
 
     @staticmethod
-    def update_dataset_glossary_terms(session, username, uri, data):
-        if data.get('terms'):
-            input_terms = data.get('terms', [])
-            current_links = session.query(TermLink).filter(
-                TermLink.targetUri == uri
-            )
-            for current_link in current_links:
-                if current_link not in input_terms:
-                    session.delete(current_link)
-            for nodeUri in input_terms:
-                term = session.query(GlossaryNode).get(nodeUri)
-                if term:
-                    link = (
-                        session.query(TermLink)
-                        .filter(
-                            TermLink.targetUri == uri,
-                            TermLink.nodeUri == nodeUri,
-                        )
-                        .first()
-                    )
-                    if not link:
-                        new_link = TermLink(
-                            targetUri=uri,
-                            nodeUri=nodeUri,
-                            targetType='Dataset',
-                            owner=username,
-                            approvedByOwner=True,
-                        )
-                        session.add(new_link)
-
-    @staticmethod
     def update_bucket_status(session, dataset_uri):
         """
         helper method to update the dataset bucket status
@@ -254,36 +222,6 @@ class DatasetRepository(EnvironmentResource):
     def delete_dataset(session, dataset) -> bool:
         session.delete(dataset)
         return True
-
-    @staticmethod
-    def delete_dataset_term_links(session, uri):
-        tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
-        for tableUri in tables:
-            term_links = (
-                session.query(TermLink)
-                .filter(
-                    and_(
-                        TermLink.targetUri == tableUri,
-                        TermLink.targetType == 'DatasetTable',
-                    )
-                )
-                .all()
-            )
-            for link in term_links:
-                session.delete(link)
-                session.commit()
-        term_links = (
-            session.query(TermLink)
-            .filter(
-                and_(
-                    TermLink.targetUri == uri,
-                    TermLink.targetType == 'Dataset',
-                )
-            )
-            .all()
-        )
-        for link in term_links:
-            session.delete(link)
 
     @staticmethod
     def list_all_datasets(session) -> [Dataset]:

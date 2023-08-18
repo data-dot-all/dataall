@@ -3,12 +3,10 @@ import logging
 from typing import Set, List, Type
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.modules.catalog import CatalogApiModuleInterface
-from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
+from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import Dashboard
 from dataall.base.loader import ImportMode, ModuleInterface
-from dataall.modules.feed import FeedApiModuleInterface
-from dataall.modules.vote import VoteApiModuleInterface
+
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +20,10 @@ class DashboardApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.feed import FeedApiModuleInterface
+        from dataall.modules.vote import VoteApiModuleInterface
+        from dataall.modules.catalog import CatalogApiModuleInterface
+
         return [FeedApiModuleInterface, CatalogApiModuleInterface, VoteApiModuleInterface]
 
     def __init__(self):
@@ -65,7 +67,8 @@ class DashboardCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        return [CatalogApiModuleInterface]
+        from dataall.modules.catalog import CatalogIndexerModuleInterface
+        return [CatalogIndexerModuleInterface]
 
     def __init__(self):
         from dataall.modules.dashboards.indexers.dashboard_catalog_indexer import DashboardCatalogIndexer
