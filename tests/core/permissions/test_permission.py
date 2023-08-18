@@ -1,15 +1,10 @@
 import pytest
 
-import dataall
-from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.environment_models import Environment
-from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.permissions.db.tenant_repositories import Tenant
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.base.db import exceptions
-from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
+from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL, TENANT_ALL
 
 
 def permissions(db, all_perms):
@@ -24,7 +19,7 @@ def permissions(db, all_perms):
                     permission_type=PermissionType.RESOURCE.name,
                 )
             )
-        for p in dataall.core.permissions.permissions.TENANT_ALL:
+        for p in TENANT_ALL:
             permissions.append(
                 Permission.save_permission(
                     session,

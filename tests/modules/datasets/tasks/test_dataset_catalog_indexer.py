@@ -1,6 +1,6 @@
 import pytest
 
-import dataall
+from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
 
@@ -55,7 +55,7 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
-    indexed_objects_counter = dataall.modules.catalog.tasks.catalog_indexer_task.index_objects(
+    indexed_objects_counter = index_objects(
         engine=db
     )
     assert indexed_objects_counter == 2

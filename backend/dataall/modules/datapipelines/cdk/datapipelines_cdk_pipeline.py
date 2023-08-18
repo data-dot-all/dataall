@@ -49,7 +49,7 @@ class CDKPipelineStack:
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
 
         try:
-            codecommit_client = aws.client('codecommit', region_name=self.pipeline_EnvironmentService.region)
+            codecommit_client = aws.client('codecommit', region_name=self.pipeline.region)
             repository = CDKPipelineStack._check_repository(codecommit_client, self.pipeline.repo)
             if repository:
                 self.venv_name = None

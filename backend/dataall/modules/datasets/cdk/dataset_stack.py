@@ -300,7 +300,7 @@ class DatasetStack(Stack):
                     ]
                 ),
                 iam.PolicyStatement(
-                    sid="CreateLoggingGlueCrawler",
+                    sid="CreateLoggingGlue",
                     actions=[
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
@@ -308,16 +308,18 @@ class DatasetStack(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers*',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
                 ),
                 iam.PolicyStatement(
-                    sid="LoggingGlueCrawler",
+                    sid="LoggingGlue",
                     actions=[
                         'logs:PutLogEvents',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
                 ),
                 iam.PolicyStatement(
@@ -443,7 +445,8 @@ class DatasetStack(Stack):
                     'CreateTableDefaultPermissions': [],
                     'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-'
                 },
-                'DatabaseAdministrators': dataset_admins
+                'DatabaseAdministrators': dataset_admins,
+                'TriggerUpdate': True
             },
         )
 
@@ -484,6 +487,7 @@ class DatasetStack(Stack):
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
             '--enable-glue-datacatalog': 'true',
+            '--SPARK_VERSION': '3.1',
         }
 
         job = glue.CfnJob(

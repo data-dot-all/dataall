@@ -8,7 +8,6 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
-
 @pytest.fixture(scope='module', autouse=True)
 def dataset(db, env_fixture: Environment) -> Dataset:
     with db.scoped_session() as session:

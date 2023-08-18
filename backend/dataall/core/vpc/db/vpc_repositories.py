@@ -102,12 +102,6 @@ class Vpc:
 
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_permission(permissions.GET_NETWORK)
-    def get_network(session, uri: str) -> models.Vpc:
-        return Vpc.get_vpc_by_uri(session, uri)
-
-    @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.DELETE_NETWORK)
     def delete(session, uri) -> bool:
         vpc = Vpc.get_vpc_by_uri(session, uri)

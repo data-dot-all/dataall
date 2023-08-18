@@ -1,4 +1,3 @@
-import dataall
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentParameter

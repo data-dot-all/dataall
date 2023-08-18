@@ -1,6 +1,4 @@
-import pytest
-
-import dataall
+from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 
@@ -288,7 +286,7 @@ def test_list_environment_role_filter_as_admin(db, client, org_fixture, env_fixt
         """,
         username=user.username,
         groups=[group.name],
-        filter={'roles': [dataall.core.environment.api.enums.EnvironmentPermission.Invited.name]},
+        filter={'roles': [EnvironmentPermission.Invited.name]},
     )
 
     assert response.data.listEnvironments.count == 1

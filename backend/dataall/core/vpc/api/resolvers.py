@@ -17,11 +17,6 @@ def create_network(context: Context, source, input):
     return vpc
 
 
-def get_network(context: Context, source, vpcUri: str = None):
-    with context.engine.scoped_session() as session:
-        return Vpc.get_network(session=session, uri=vpcUri)
-
-
 def delete_network(context: Context, source, vpcUri=None):
     with context.engine.scoped_session() as session:
         return Vpc.delete(session=session, uri=vpcUri)

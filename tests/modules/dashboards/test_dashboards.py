@@ -1,9 +1,3 @@
-import typing
-import pytest
-
-import dataall
-
-
 def test_update_dashboard(
     client, env_fixture, group, patch_es, dashboard
 ):

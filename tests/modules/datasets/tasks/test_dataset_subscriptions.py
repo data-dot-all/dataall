@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import dataall
+from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
@@ -39,7 +39,7 @@ def dataset(create_dataset, org_fixture, env_fixture):
 @pytest.fixture(scope='module')
 def share(
     dataset: Dataset,
-    db: dataall.base.db.Engine,
+    db: Engine,
     otherenv: Environment,
 ):
     with db.scoped_session() as session:

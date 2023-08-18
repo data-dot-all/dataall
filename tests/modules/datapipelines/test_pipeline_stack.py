@@ -9,7 +9,6 @@ from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineSta
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 
-
 @pytest.fixture(scope='module', autouse=True)
 def pipeline_db(db, env_fixture: Environment, group) -> DataPipeline:
     with db.scoped_session() as session:
