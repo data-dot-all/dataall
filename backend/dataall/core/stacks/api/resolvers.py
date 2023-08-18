@@ -3,14 +3,14 @@ import logging
 import os
 
 from dataall.base.api.context import Context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.core.stacks.db.stack_models import Stack as StackModel
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.base.utils import Parameter
 

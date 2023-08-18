@@ -1,7 +1,7 @@
 from dataall.base.api.context import Context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.api.enums import OrganisationUserRole
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.organizations.db import organization_models as models
 
 

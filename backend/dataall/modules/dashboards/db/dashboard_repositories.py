@@ -6,7 +6,7 @@ from sqlalchemy.orm import Query
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import exceptions, paginate
-from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareStatus, Dashboard
+from dataall.modules.dashboards.db.dashboard_models import DashboardShare, DashboardShareStatus, Dashboard
 
 logger = logging.getLogger(__name__)
 

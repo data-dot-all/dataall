@@ -1,16 +1,16 @@
 from dataall.base.context import set_context, RequestContext
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db.exceptions import ResourceUnauthorized
 from dataall.core.permissions.permissions import TENANT_ALL
 from dataall.modules.datasets.services.dataset_permissions import DATASET_WRITE, UPDATE_DATASET, MANAGE_DATASETS, \
     DATASET_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 from tests.core.permissions.test_permission import *
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 
 
 def test_attach_resource_policy(db, user, group, dataset_fixture):

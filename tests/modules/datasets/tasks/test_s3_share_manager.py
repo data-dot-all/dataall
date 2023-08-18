@@ -6,13 +6,13 @@ import json
 from typing import Callable
 
 from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
-from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 
 from dataall.modules.dataset_sharing.services.share_managers import S3ShareManager
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"

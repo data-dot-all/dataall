@@ -5,12 +5,12 @@ from sqlalchemy.orm import Query
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

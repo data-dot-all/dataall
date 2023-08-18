@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
 import pytest
 

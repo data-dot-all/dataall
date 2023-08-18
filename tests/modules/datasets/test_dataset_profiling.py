@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, Dataset, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)

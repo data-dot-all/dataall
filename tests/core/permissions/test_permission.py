@@ -1,8 +1,8 @@
 import pytest
 
-from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.base.db import exceptions
 from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL, TENANT_ALL
 

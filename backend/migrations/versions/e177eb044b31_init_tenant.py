@@ -10,8 +10,8 @@ from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy import orm
 
-from dataall.core.permissions.db.tenant import Tenant
-from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.db.tenant_repositories import Tenant
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.core.permissions.permissions import TENANT_ALL
 
 revision = 'e177eb044b31'

@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 
 

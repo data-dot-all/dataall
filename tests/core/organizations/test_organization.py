@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.core.environment.db.models import Environment, EnvironmentParameter
+from dataall.core.environment.db.environment_models import Environment, EnvironmentParameter
 from dataall.core.organizations.api.enums import OrganisationUserRole
 
 

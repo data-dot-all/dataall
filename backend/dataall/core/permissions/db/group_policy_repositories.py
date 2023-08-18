@@ -1,5 +1,5 @@
-from dataall.core.environment.db.models import EnvironmentGroup
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.environment.db.environment_models import EnvironmentGroup
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db.exceptions import UnauthorizedOperation
 
 

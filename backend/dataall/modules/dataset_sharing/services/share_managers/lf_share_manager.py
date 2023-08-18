@@ -5,16 +5,16 @@ import time
 
 from botocore.exceptions import ClientError
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 
 logger = logging.getLogger(__name__)
 

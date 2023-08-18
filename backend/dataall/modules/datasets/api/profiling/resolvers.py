@@ -5,7 +5,7 @@ from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun
+from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
 

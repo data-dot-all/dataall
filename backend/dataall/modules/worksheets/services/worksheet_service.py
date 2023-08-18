@@ -2,12 +2,12 @@ import logging
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db import exceptions
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
-from dataall.modules.worksheets.db.models import Worksheet
-from dataall.modules.worksheets.db.worksheets_repository import WorksheetRepository
+from dataall.modules.worksheets.db.worksheet_models import Worksheet
+from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
     WORKSHEET_ALL, GET_WORKSHEET, DELETE_WORKSHEET, RUN_ATHENA_QUERY
 

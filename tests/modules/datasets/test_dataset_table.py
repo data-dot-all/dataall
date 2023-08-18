@@ -1,5 +1,5 @@
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 
 
 def test_add_tables(table, dataset_fixture, db):

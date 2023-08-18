@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ

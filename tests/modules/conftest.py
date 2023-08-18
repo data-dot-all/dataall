@@ -2,11 +2,11 @@ from typing import Dict
 
 import pytest
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup, EnvironmentParameter
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, EnvironmentParameter
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permissions import ENVIRONMENT_ALL
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.stacks.db.stack_models import KeyValueTag
 
 

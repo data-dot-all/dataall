@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.core.notifications.db.notification import Notification
+from dataall.core.notifications.db.notification_repositories import Notification
 
 log = logging.getLogger(__name__)
 

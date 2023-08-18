@@ -4,10 +4,10 @@ from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
-from dataall.modules.datasets.db.dataset_column_repository import DatasetColumnRepository
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_column_repositories import DatasetColumnRepository
+from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
-from dataall.modules.datasets_base.db.models import DatasetTable, DatasetTableColumn
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, DatasetTableColumn
 from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE
 
 

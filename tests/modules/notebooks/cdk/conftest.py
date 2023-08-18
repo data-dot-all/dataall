@@ -1,7 +1,7 @@
 import pytest
 
-from dataall.core.environment.db.models import Environment
-from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.core.environment.db.environment_models import Environment
+from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 
 
 @pytest.fixture(scope='module', autouse=True)
