@@ -12,7 +12,8 @@
 - <URL or Ticket>
 
 ### Security
-Please answer the questions below briefly where applicable, or write `N/A`.
+Please answer the questions below briefly where applicable, or write `N/A`. Based on
+[OWASP 10](https://owasp.org/Top10/en/).
 
 - Does this PR introduce or modify any input fields or queries - this includes
 fetching data from storage outside the application (e.g. a database, an S3 bucket)?
