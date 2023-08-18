@@ -1,7 +1,6 @@
 from typing import Set, List, Type
 
 from dataall.base.loader import ModuleInterface, ImportMode
-from dataall.modules.catalog import CatalogApiModuleInterface
 from dataall.modules.vote import api
 
 
@@ -13,6 +12,8 @@ class VoteApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.catalog import CatalogApiModuleInterface
+
         return [CatalogApiModuleInterface]
 
     def __init__(self):

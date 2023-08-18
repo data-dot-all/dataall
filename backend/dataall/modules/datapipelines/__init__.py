@@ -8,7 +8,6 @@ from dataall.modules.datapipelines.db.models import DataPipeline
 from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
     GET_PIPELINE, UPDATE_PIPELINE
-from dataall.modules.feed import FeedApiModuleInterface
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +21,8 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.feed import FeedApiModuleInterface
+
         return [FeedApiModuleInterface]
 
     def __init__(self):
