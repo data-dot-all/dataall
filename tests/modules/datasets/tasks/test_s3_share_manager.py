@@ -6,13 +6,13 @@ import json
 from typing import Callable
 
 from dataall.core.cognito_groups.db.cognito_group_models import Group
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
-from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 
 from dataall.modules.dataset_sharing.services.share_managers import S3ShareManager
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
@@ -23,52 +23,46 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
 @pytest.fixture(scope="module")
-def org1(org: Callable) -> Organization:
-    org1 = org(label="org", owner="alice", SamlGroupName="admins")
-    yield org1
-
-
-@pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: Organization, group: Group):
-    source_environment = environment(
-        organization=org1,
-        awsAccountId=SOURCE_ENV_ACCOUNT,
-        label="source_environment",
+def source_environment(env: Callable, org_fixture: Organization, group: Group):
+    source_environment = env(
+        org=org_fixture,
+        account=SOURCE_ENV_ACCOUNT,
+        envname="source_environment",
         owner=group.owner,
-        samlGroupName=group.name,
-        environmentDefaultIAMRoleName=SOURCE_ENV_ROLE_NAME,
+        group=group.name,
+        role=SOURCE_ENV_ROLE_NAME,
     )
     yield source_environment
 
 
 @pytest.fixture(scope="module")
 def source_environment_group(environment_group: Callable, source_environment: Environment, group: Group):
-    source_environment_group = environment_group(source_environment, group)
+    source_environment_group = environment_group(source_environment, group.name)
     yield source_environment_group
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: Organization, group2: Group):
-    target_environment = environment(
-        organization=org1,
-        awsAccountId=TARGET_ACCOUNT_ENV,
-        label="target_environment",
+def target_environment(env: Callable, org_fixture: Organization, group2: Group):
+    target_environment = env(
+        org=org_fixture,
+        account=TARGET_ACCOUNT_ENV,
+        envname="target_environment",
         owner=group2.owner,
-        samlGroupName=group2.name,
-        environmentDefaultIAMRoleName=TARGET_ACCOUNT_ENV_ROLE_NAME,
+        group=group2.name,
+        role=TARGET_ACCOUNT_ENV_ROLE_NAME,
     )
     yield target_environment
 
 
 @pytest.fixture(scope="module")
 def target_environment_group(environment_group: Callable, target_environment: Environment, group2: Group):
-    target_environment_group = environment_group(target_environment, group2)
+    target_environment_group = environment_group(target_environment, group2.name)
     yield target_environment_group
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: Organization, source_environment: Environment):
-    dataset1 = dataset(org1, source_environment, "dataset1")
+def dataset1(create_dataset: Callable, org_fixture: Organization, source_environment: Environment):
+    dataset1 = create_dataset(org_fixture, source_environment, "dataset1")
     yield dataset1
 
 

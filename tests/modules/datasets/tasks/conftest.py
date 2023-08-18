@@ -2,101 +2,14 @@ import pytest
 
 from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope="module")
-def group(db):
-    with db.scoped_session() as session:
-        group = Group(name="bobteam", label="bobteam", owner="alice")
-        session.add(group)
-    yield group
-
-
-@pytest.fixture(scope="module")
-def group2(db):
-    with db.scoped_session() as session:
-        group = Group(name="bobteam2", label="bobteam2", owner="alice2")
-        session.add(group)
-    yield group
-
-
-@pytest.fixture(scope="module")
-def org(db):
-    def factory(label: str, owner: str, SamlGroupName: str) -> Organization:
-        with db.scoped_session() as session:
-            org = Organization(
-                label=label,
-                owner=owner,
-                tags=[],
-                description="desc",
-                SamlGroupName=SamlGroupName,
-            )
-            session.add(org)
-            session.commit()
-            return org
-
-    yield factory
-
-
-@pytest.fixture(scope="module")
-def environment(db):
-    def factory(
-        organization: Organization,
-        awsAccountId: str,
-        label: str,
-        owner: str,
-        samlGroupName: str,
-        environmentDefaultIAMRoleName: str,
-    ) -> Environment:
-        with db.scoped_session() as session:
-            env = Environment(
-                organizationUri=organization.organizationUri,
-                AwsAccountId=awsAccountId,
-                region="eu-central-1",
-                label=label,
-                owner=owner,
-                tags=[],
-                description="desc",
-                SamlGroupName=samlGroupName,
-                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleName,
-                EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{awsAccountId}:role/{environmentDefaultIAMRoleName}",
-                CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
-            )
-            session.add(env)
-            session.commit()
-        return env
-
-    yield factory
-
-
-@pytest.fixture(scope="module")
-def environment_group(db):
-    def factory(
-        environment: Environment,
-        group: Group,
-    ) -> EnvironmentGroup:
-        with db.scoped_session() as session:
-
-            env_group = EnvironmentGroup(
-                environmentUri=environment.environmentUri,
-                groupUri=group.groupUri,
-                environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
-                environmentIAMRoleName=environment.EnvironmentDefaultIAMRoleName,
-                environmentAthenaWorkGroup="workgroup",
-            )
-            session.add(env_group)
-            session.commit()
-            return env_group
-
-    yield factory
-
-
-@pytest.fixture(scope="module")
-def dataset(db):
+def create_dataset(db):
     def factory(
         organization: Organization,
         environment: Environment,

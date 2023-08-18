@@ -233,6 +233,14 @@ class PipelineStack(Stack):
             statements= [
                 iam.PolicyStatement(
                     actions=[
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
@@ -323,7 +331,6 @@ class PipelineStack(Stack):
                     iam.ServicePrincipal('codebuild.amazonaws.com'),
                     iam.AccountPrincipal(self.account),
                 ),
-                managed_policies=[self.baseline_codebuild_policy, self.git_release_policy, self.expanded_codebuild_policy]
             )
             self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
             self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
@@ -442,7 +449,8 @@ class PipelineStack(Stack):
                         'cd frontend',
                         f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
-                        'npm run lint',
+                        'npm run copy-config',
+                        'npm run lint -- --quiet',
                     ],
                     role=self.baseline_codebuild_role,
                     vpc=self.vpc,
@@ -591,13 +599,13 @@ class PipelineStack(Stack):
                 },
                 envname=target_env['envname'],
                 resource_prefix=self.resource_prefix,
-                tooling_region=self.region,
                 tooling_account_id=self.account,
                 pipeline_bucket=self.pipeline_bucket_name,
                 ecr_repository=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}',
                 commit_id=self.image_tag,
                 vpc_id=target_env.get('vpc_id'),
                 vpc_endpoints_sg=target_env.get('vpc_endpoints_sg'),
+                vpc_restricted_nacls=target_env.get('vpc_restricted_nacl', False),
                 internet_facing=target_env.get('internet_facing', True),
                 custom_domain=target_env.get('custom_domain'),
                 ip_ranges=target_env.get('ip_ranges'),
@@ -868,7 +876,6 @@ class PipelineStack(Stack):
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',
-                        'cd frontend',
                         f'docker build -f docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',

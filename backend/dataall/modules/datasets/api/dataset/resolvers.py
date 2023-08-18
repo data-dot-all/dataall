@@ -3,11 +3,11 @@ import logging
 from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
 from dataall.core.feature_toggle_checker import is_feature_enabled
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary_repositories import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
-from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetService

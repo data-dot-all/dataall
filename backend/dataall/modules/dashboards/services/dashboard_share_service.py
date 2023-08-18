@@ -1,9 +1,9 @@
 from dataall.base.context import get_context
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db.exceptions import InvalidInput, UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository
-from dataall.modules.dashboards.db.models import DashboardShareStatus, Dashboard
+from dataall.modules.dashboards.db.dashboard_models import DashboardShareStatus, Dashboard
 from dataall.modules.dashboards.services.dashboard_permissions import SHARE_DASHBOARD, MANAGE_DASHBOARDS, GET_DASHBOARD, \
     CREATE_DASHBOARD
 

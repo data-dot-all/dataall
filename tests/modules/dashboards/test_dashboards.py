@@ -1,11 +1,5 @@
-import typing
-import pytest
-
-import dataall
-
-
 def test_update_dashboard(
-    client, env1, org1, group, patch_es, dashboard
+    client, env_fixture, group, patch_es, dashboard
 ):
     response = client.query(
         """
@@ -35,7 +29,7 @@ def test_update_dashboard(
     assert response.data.updateDashboard.SamlGroupName == group.name
 
 
-def test_list_dashboards(client, env1, db, org1, dashboard):
+def test_list_dashboards(client, env_fixture, db, dashboard):
     response = client.query(
         """
         query searchDashboards($filter:DashboardFilter!){
@@ -53,7 +47,7 @@ def test_list_dashboards(client, env1, db, org1, dashboard):
     assert len(response.data.searchDashboards['nodes']) == 1
 
 
-def test_nopermissions_list_dashboards(client, env1, db, org1, dashboard):
+def test_nopermissions_list_dashboards(client, env_fixture, db, dashboard):
     response = client.query(
         """
         query searchDashboards($filter:DashboardFilter!){
@@ -71,7 +65,7 @@ def test_nopermissions_list_dashboards(client, env1, db, org1, dashboard):
     assert len(response.data.searchDashboards['nodes']) == 0
 
 
-def test_get_dashboard(client, env1, db, org1, dashboard, group):
+def test_get_dashboard(client, env_fixture, db, dashboard, group):
     response = client.query(
         """
         query GetDashboard($dashboardUri:String!){
@@ -106,9 +100,8 @@ def test_get_dashboard(client, env1, db, org1, dashboard, group):
 
 def test_request_dashboard_share(
     client,
-    env1,
+    env_fixture,
     db,
-    org1,
     user,
     group,
     module_mocker,
@@ -117,9 +110,6 @@ def test_request_dashboard_share(
     group2,
     user2,
 ):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation requestDashboardShare($dashboardUri:String!, $principalId:String!){
@@ -308,11 +298,8 @@ def test_request_dashboard_share(
 
 
 def test_delete_dashboard(
-    client, env1, db, org1, user, group, module_mocker, dashboard, patch_es
+    client, env_fixture, db, user, group, module_mocker, dashboard, patch_es
 ):
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
-    )
     response = client.query(
         """
         mutation deleteDashboard($dashboardUri:String!){

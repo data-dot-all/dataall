@@ -6,18 +6,18 @@ from botocore.exceptions import ClientError
 
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import get_engine
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets.aws.sns_dataset_client import SnsDatasetClient
-from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.tasks.subscriptions import poll_queues
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -158,6 +158,7 @@ class DatasetSubscriptionService:
                         log.error(
                             f'Failed to deliver message {message} due to: {e}'
                         )
+
 
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')

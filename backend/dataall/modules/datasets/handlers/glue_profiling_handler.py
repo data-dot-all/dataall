@@ -3,9 +3,9 @@ import logging
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
-from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
+from dataall.modules.datasets.db.dataset_profiling_repositories import DatasetProfilingRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, Dataset
 
 log = logging.getLogger(__name__)
 
@@ -27,4 +27,4 @@ class DatasetProfilingGlueHandler:
 
             profiling.status = status
             session.commit()
-            return profiling.status
+            return {"profiling_status": profiling.status}

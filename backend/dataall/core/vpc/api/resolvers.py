@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.core.vpc.db.vpc import Vpc
+from dataall.core.vpc.db.vpc_repositories import Vpc
 
 log = logging.getLogger(__name__)
 
@@ -15,11 +15,6 @@ def create_network(context: Context, source, input):
             data=input,
         )
     return vpc
-
-
-def get_network(context: Context, source, vpcUri: str = None):
-    with context.engine.scoped_session() as session:
-        return Vpc.get_network(session=session, uri=vpcUri)
 
 
 def delete_network(context: Context, source, vpcUri=None):

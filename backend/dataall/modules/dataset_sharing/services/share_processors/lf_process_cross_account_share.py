@@ -1,12 +1,12 @@
 import logging
 
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
 log = logging.getLogger(__name__)
 

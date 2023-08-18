@@ -1,24 +1,24 @@
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.models import EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus, PrincipalType
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareObjectSM, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
     GET_SHARE_OBJECT
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 

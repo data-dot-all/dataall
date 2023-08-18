@@ -30,12 +30,12 @@ class BackendStack(Stack):
         id,
         envname: str = 'dev',
         resource_prefix='dataall',
-        tooling_region=None,
         tooling_account_id=None,
         ecr_repository=None,
         image_tag=None,
         pipeline_bucket=None,
         vpc_id=None,
+        vpc_restricted_nacls=False,
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
@@ -65,12 +65,13 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
+            restricted_nacl=vpc_restricted_nacls,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
         vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
-        self.s3_prefix_list = self.get_s3_prefix_list(tooling_region)
+        self.s3_prefix_list = self.get_s3_prefix_list()
 
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
 
@@ -360,13 +361,13 @@ class BackendStack(Stack):
             collection_name=aoss_stack.collection_name,
         )
 
-    def get_s3_prefix_list(self, tooling_region):
-        ec2_client = boto3.client("ec2", region_name=tooling_region)
+    def get_s3_prefix_list(self):
+        ec2_client = boto3.client("ec2", region_name=self.region)
         response = ec2_client.describe_prefix_lists(
             Filters=[
                 {
                     'Name': 'prefix-list-name',
-                    'Values': [f'com.amazonaws.{tooling_region}.s3']
+                    'Values': [f'com.amazonaws.{self.region}.s3']
                 },
             ]
         )

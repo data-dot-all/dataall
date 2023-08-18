@@ -1,53 +1,15 @@
 import pytest
 
-import dataall
-from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
-def org(db):
-    with db.scoped_session() as session:
-        org = Organization(
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            userRoleInOrganization='Owner',
-        )
-        session.add(org)
-    yield org
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env(org, db):
-    with db.scoped_session() as session:
-        env = Environment(
-            organizationUri=org.organizationUri,
-            AwsAccountId='12345678901',
-            region='eu-west-1',
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
-            CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
-        )
-        session.add(env)
-    yield env
-
-
-@pytest.fixture(scope='module', autouse=True)
-def sync_dataset(org, env, db):
+def sync_dataset(org_fixture, env_fixture, db):
     with db.scoped_session() as session:
         dataset = Dataset(
-            organizationUri=org.organizationUri,
-            environmentUri=env.environmentUri,
+            organizationUri=org_fixture.organizationUri,
+            environmentUri=env_fixture.environmentUri,
             label='label',
             owner='foo',
             SamlAdminGroupName='foo',
@@ -93,7 +55,7 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
-    indexed_objects_counter = dataall.core.catalog.tasks.catalog_indexer_task.index_objects(
+    indexed_objects_counter = index_objects(
         engine=db
     )
     assert indexed_objects_counter == 2

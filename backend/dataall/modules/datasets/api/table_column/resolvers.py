@@ -1,8 +1,8 @@
 from dataall.base.api.context import Context
-from dataall.core.catalog.db.glossary_models import TermLink
+from dataall.modules.catalog.db.glossary_models import TermLink
 from dataall.base.db import paginate
 from dataall.modules.datasets.services.dataset_column_service import DatasetColumnService
-from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable
 
 
 def list_table_columns(

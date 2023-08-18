@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.datapipelines.db.datapipelines_repository import DatapipelinesRepository
+from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class CDKPipelineStack:
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
 
         try:
-            codecommit_client = aws.client('codecommit', region_name=self.pipeline_EnvironmentService.region)
+            codecommit_client = aws.client('codecommit', region_name=self.pipeline.region)
             repository = CDKPipelineStack._check_repository(codecommit_client, self.pipeline.repo)
             if repository:
                 self.venv_name = None

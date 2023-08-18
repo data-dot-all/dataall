@@ -1,7 +1,7 @@
-from dataall.core.notifications.db.notification import Notification
+from dataall.core.notifications.db.notification_repositories import Notification
 from dataall.core.notifications.db.notification_models import NotificationType
-from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 
 class ShareNotificationService:
@@ -55,7 +55,7 @@ class ShareNotificationService:
                     username=user,
                     notification_type=NotificationType.SHARE_OBJECT_REJECTED,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=f'User {username} approved share request for dataset {dataset.label}',
+                    message=f'User {username} rejected share request for dataset {dataset.label}',
                 )
             )
             session.add_all(notifications)

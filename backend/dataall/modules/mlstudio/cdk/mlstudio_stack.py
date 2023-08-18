@@ -21,13 +21,13 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 from dataall.base.cdkproxy.stacks.manager import stack
-from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.base.db import Engine, get_engine
 from dataall.modules.mlstudio.aws.ec2_client import EC2
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,11 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
     @staticmethod
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
+        with setup.get_engine().scoped_session() as session:
+            enabled = EnvironmentService.get_boolean_env_param(session, _environment, "mlStudiosEnabled")
+            if not enabled:
+                return
+
         sagemaker_principals = [setup.default_role] + setup.group_roles
         logger.info(f'Creating SageMaker base resources for sagemaker_principals = {sagemaker_principals}..')
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(

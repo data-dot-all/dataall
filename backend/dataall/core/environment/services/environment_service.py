@@ -7,12 +7,12 @@ from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.models import EnvironmentParameter, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.vpc.db.vpc_models import Vpc
 from dataall.base.db.paginator import paginate
@@ -22,11 +22,11 @@ from dataall.base.utils.naming_convention import (
 )
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
-from dataall.core.organizations.db.organization import Organization
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 
 log = logging.getLogger(__name__)
@@ -207,9 +207,10 @@ class EnvironmentService:
             return
 
         env_uri = env.environmentUri
-        new_params = [EnvironmentParameter(
-            env_uri, param.get("key"), param.get("value")
-        ) for param in params]
+        new_params = [
+            EnvironmentParameter(env_uri, param.get("key"), param.get("value"))
+            for param in params
+        ]
         EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod

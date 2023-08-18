@@ -6,4 +6,4 @@ from dataall.modules.datapipelines.handlers import (
     codecommit_datapipeline_handler,
 )
 
-__all__ = ["codecommit_datapipeline_handler",]
+__all__ = ["codecommit_datapipeline_handler"]

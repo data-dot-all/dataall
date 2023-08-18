@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from dataall.core.stacks.api.resolvers import get_stack, get_stack_logs, list_key_value_tags
 
 getStack = gql.QueryField(
     name='getStack',

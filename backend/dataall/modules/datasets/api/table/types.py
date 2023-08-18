@@ -93,9 +93,6 @@ DatasetTableMetadataItem = gql.ObjectType(
 )
 
 
-
-
-
 DatasetTablePreviewResult = gql.ObjectType(
     name='DatasetTablePreviewResult',
     fields=[

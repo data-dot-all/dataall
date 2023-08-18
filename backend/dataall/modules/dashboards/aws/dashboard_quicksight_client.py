@@ -182,8 +182,8 @@ class DashboardQuicksightClient:
                 parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn'
             )
 
-            aurora_params = SecretsManager.get_secret_value(
-                AwsAccountId=aws_account_id, region=region, secretId=aurora_secret_arn
+            aurora_params = SecretsManager(aws_account_id, region).get_secret_value(
+                secret_id=aurora_secret_arn
             )
             aurora_params_dict = ast.literal_eval(aurora_params)
             client.create_data_source(

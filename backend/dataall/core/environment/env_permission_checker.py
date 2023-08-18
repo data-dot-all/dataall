@@ -1,5 +1,5 @@
 from dataall.base.context import get_context, RequestContext
-from dataall.core.permissions.db.group_policy import GroupPolicy
+from dataall.core.permissions.db.group_policy_repositories import GroupPolicy
 from dataall.base.utils.decorator_utls import process_func
 
 

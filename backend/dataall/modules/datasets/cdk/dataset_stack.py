@@ -20,10 +20,10 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.cdkproxy.stacks.manager import stack
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
@@ -100,7 +100,7 @@ class DatasetStack(Stack):
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
-            quicksight_default_group_arn = f"arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{Quicksight._DEFAULT_GROUP_NAME}"
+            quicksight_default_group_arn = f"arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{QuicksightClient.DEFAULT_GROUP_NAME}"
 
         # Dataset S3 Bucket and KMS key
         dataset_key = False
@@ -300,7 +300,7 @@ class DatasetStack(Stack):
                     ]
                 ),
                 iam.PolicyStatement(
-                    sid="CreateLoggingGlueCrawler",
+                    sid="CreateLoggingGlue",
                     actions=[
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
@@ -308,16 +308,18 @@ class DatasetStack(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers*',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
                 ),
                 iam.PolicyStatement(
-                    sid="LoggingGlueCrawler",
+                    sid="LoggingGlue",
                     actions=[
                         'logs:PutLogEvents',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
                 ),
                 iam.PolicyStatement(
@@ -443,7 +445,8 @@ class DatasetStack(Stack):
                     'CreateTableDefaultPermissions': [],
                     'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-'
                 },
-                'DatabaseAdministrators': dataset_admins
+                'DatabaseAdministrators': dataset_admins,
+                'TriggerUpdate': True
             },
         )
 
@@ -484,6 +487,7 @@ class DatasetStack(Stack):
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
             '--enable-glue-datacatalog': 'true',
+            '--SPARK_VERSION': '3.1',
         }
 
         job = glue.CfnJob(

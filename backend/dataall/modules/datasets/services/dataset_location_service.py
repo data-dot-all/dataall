@@ -1,14 +1,14 @@
 from dataall.base.context import get_context
-from dataall.core.catalog.db.glossary import Glossary
+from dataall.modules.catalog.db.glossary_repositories import Glossary
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
-from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER, MANAGE_DATASETS, \
     CREATE_DATASET_FOLDER, LIST_DATASET_FOLDERS, DELETE_DATASET_FOLDER
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 
 
 class DatasetLocationService:

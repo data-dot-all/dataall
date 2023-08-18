@@ -4,11 +4,11 @@ import sys
 import time
 
 from dataall.base.loader import ImportMode, load_modules
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.env_stack_finder import StackFinder
 from dataall.core.stacks.aws.ecs import Ecs
-from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import get_engine
 from dataall.base.utils import Parameter
 

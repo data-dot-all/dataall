@@ -5,10 +5,10 @@ from enum import Enum
 from aws_cdk import Stack, Tags
 
 from dataall.base import db
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization import Organization
-from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import KeyValueTag as KeyValueTagModel
 
 

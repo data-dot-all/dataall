@@ -1,8 +1,9 @@
 from dataall.base.api.context import Context
-from dataall.core.environment.db.models import Environment
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.api.enums import OrganisationUserRole
-from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.organizations.db import organization_models as models
+
 
 def create_organization(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
@@ -36,17 +37,6 @@ def list_organizations(context: Context, source, filter=None):
     with context.engine.scoped_session() as session:
         return Organization.paginated_user_organizations(
             session=session,
-            data=filter,
-        )
-
-
-def list_groups(context, source: Organization, filter=None):
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    with context.engine.scoped_session() as session:
-        return Organization.paginated_organization_groups(
-            session=session,
-            uri=source.organizationUri,
             data=filter,
         )
 

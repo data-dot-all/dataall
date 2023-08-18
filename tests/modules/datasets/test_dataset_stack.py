@@ -4,23 +4,21 @@ from unittest.mock import MagicMock
 import pytest
 from aws_cdk import App
 
+from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
-from dataall.modules.datasets_base.db.models import Dataset
-
-from tests.cdkproxy.conftest import *
-
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset(db, env: Environment) -> Dataset:
+def dataset(db, env_fixture: Environment) -> Dataset:
     with db.scoped_session() as session:
         dataset = Dataset(
             label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
+            environmentUri=env_fixture.environmentUri,
+            organizationUri=env_fixture.organizationUri,
             name='thisdataset',
             description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             S3BucketName='bucket',
             GlueDatabaseName='db',
             IAMDatasetAdminRoleArn='role',
@@ -30,7 +28,7 @@ def dataset(db, env: Environment) -> Dataset:
             confidentiality='C1',
             businessOwnerEmail='jeff',
             businessOwnerDelegationEmails=['andy'],
-            SamlAdminGroupName='admins',
+            SamlAdminGroupName=env_fixture.SamlGroupName,
             GlueCrawlerName='dhCrawler',
         )
         session.add(dataset)
@@ -38,7 +36,7 @@ def dataset(db, env: Environment) -> Dataset:
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, dataset, env, org):
+def patch_methods(mocker, db, dataset, env_fixture, org_fixture):
     mocker.patch('dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_engine', return_value=db)
     mocker.patch(
         'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
@@ -63,11 +61,11 @@ def patch_methods(mocker, db, dataset, env, org):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
-        return_value=org,
+        return_value=org_fixture,
     )
 
 

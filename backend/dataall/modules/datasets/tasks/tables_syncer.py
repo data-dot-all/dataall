@@ -4,14 +4,14 @@ import sys
 from operator import and_
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import get_engine
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 

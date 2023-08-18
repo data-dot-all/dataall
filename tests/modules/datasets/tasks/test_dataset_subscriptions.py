@@ -2,56 +2,19 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import dataall
-from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
+from dataall.base.db import Engine
+from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
 
 
 @pytest.fixture(scope='module')
-def org(db):
-    with db.scoped_session() as session:
-        org = Organization(
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            userRoleInOrganization=OrganisationUserRole.Owner.value,
-        )
-        session.add(org)
-    yield org
-
-
-@pytest.fixture(scope='module')
-def env(org, db):
+def otherenv(org_fixture, db):
     with db.scoped_session() as session:
         env = Environment(
-            organizationUri=org.organizationUri,
-            AwsAccountId='12345678901',
-            region='eu-west-1',
-            label='org',
-            owner='alice',
-            tags=[],
-            description='desc',
-            SamlGroupName='admins',
-            EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
-            CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
-        )
-        session.add(env)
-    yield env
-
-
-@pytest.fixture(scope='module')
-def otherenv(org, db):
-    with db.scoped_session() as session:
-        env = Environment(
-            organizationUri=org.organizationUri,
+            organizationUri=org_fixture.organizationUri,
             AwsAccountId='987654321',
             region='eu-west-1',
             label='org',
@@ -69,33 +32,14 @@ def otherenv(org, db):
 
 
 @pytest.fixture(scope='module')
-def dataset(org, env, db):
-    with db.scoped_session() as session:
-        dataset = Dataset(
-            organizationUri=org.organizationUri,
-            environmentUri=env.environmentUri,
-            label='label',
-            owner='alice',
-            SamlAdminGroupName='foo',
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
-        )
-        session.add(dataset)
-    yield dataset
+def dataset(create_dataset, org_fixture, env_fixture):
+    yield create_dataset(org_fixture, env_fixture, 'dataset')
 
 
 @pytest.fixture(scope='module')
 def share(
     dataset: Dataset,
-    db: dataall.base.db.Engine,
+    db: Engine,
     otherenv: Environment,
 ):
     with db.scoped_session() as session:

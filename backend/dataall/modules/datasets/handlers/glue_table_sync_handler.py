@@ -5,7 +5,7 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
-from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable
 
 log = logging.getLogger(__name__)
 

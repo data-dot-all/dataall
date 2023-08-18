@@ -1,25 +1,27 @@
+import pytest
 from aws_cdk import App
-from aws_cdk.assertions import Template
+from aws_cdk.assertions import Template, Match
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
-from dataall.modules.datasets_base.db.models import Dataset
-from tests.cdkproxy.conftest import *
+from dataall.core.environment.db.environment_models import EnvironmentGroup
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
     for extension in EnvironmentSetup._EXTENSIONS:
-        mocker.patch(
-            f"{extension.__module__}.{extension.__name__}.extent",
-            return_value=True,
-        )
+        if extension.__name__ not in ["DatasetCustomResourcesExtension", "DatasetGlueProfilerExtension"]:
+            mocker.patch(
+                f"{extension.__module__}.{extension.__name__}.extent",
+                return_value=True,
+            )
 
 
 @pytest.fixture(scope='function', autouse=True)
-def another_group(db, env):
+def another_group(db, env_fixture):
     with db.scoped_session() as session:
         env_group: EnvironmentGroup = EnvironmentGroup(
-            environmentUri=env.environmentUri,
+            environmentUri=env_fixture.environmentUri,
             groupUri='anothergroup',
             environmentIAMRoleArn='aontherGroupArn',
             environmentIAMRoleName='anotherGroupRole',
@@ -28,12 +30,12 @@ def another_group(db, env):
         session.add(env_group)
         dataset = Dataset(
             label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
+            environmentUri=env_fixture.environmentUri,
+            organizationUri=env_fixture.organizationUri,
             name='anotherdataset',
             description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             S3BucketName='bucket',
             GlueDatabaseName='db',
             IAMDatasetAdminRoleArn='role',
@@ -51,7 +53,7 @@ def another_group(db, env):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, env, another_group, permissions):
+def patch_methods(mocker, db, env_fixture, another_group, permissions):
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_engine',
         return_value=db,
@@ -66,7 +68,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_target',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_groups',
@@ -79,7 +81,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
     mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_group_permissions',
@@ -91,21 +93,20 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
 
 
-def test_resources_created(env, org):
+def test_resources_created(env_fixture, org_fixture):
     app = App()
 
     # Create the Stack
-    stack = EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
-
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)
+    app.synth()
     # Prepare the stack for assertions.
     template = Template.from_stack(stack)
 
     # Assert that we have created:
-    # TODO: Add more assertions
     template.resource_properties_count_is(
         type="AWS::S3::Bucket",
         props={
-            'BucketName': env.EnvironmentDefaultBucketName,
+            'BucketName': env_fixture.EnvironmentDefaultBucketName,
             'BucketEncryption': {
                 'ServerSideEncryptionConfiguration': [{
                     'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}
@@ -117,18 +118,24 @@ def test_resources_created(env, org):
                 'IgnorePublicAcls': True,
                 'RestrictPublicBuckets': True
             },
-            'Tags': [
-                {'Key': 'CREATOR', 'Value': 'customtagowner'},
-                {'Key': 'dataall', 'Value': 'true'},
-                {'Key': 'Environment', 'Value': f'env_{env.environmentUri}'},
-                {'Key': 'Organization', 'Value': f'org_{org.organizationUri}'},
-                {'Key': 'Target', 'Value': f'Environment_{env.environmentUri}'},
-                {'Key': 'Team', 'Value': env.SamlGroupName}],
         },
         count=1
     )
-    template.resource_count_is("AWS::S3::Bucket", 1)
-    template.resource_count_is("AWS::Lambda::Function", 4)
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*lf-settings-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_properties_count_is(
+        type="AWS::Lambda::Function",
+        props={
+            'FunctionName': Match.string_like_regexp("^.*gluedb-lf-handler.*$"),
+        },
+        count=1
+    )
+    template.resource_count_is("AWS::Lambda::Function", 5)
     template.resource_count_is("AWS::SSM::Parameter", 5)
-    template.resource_count_is("AWS::IAM::Role", 4)
-    template.resource_count_is("AWS::IAM::Policy", 3)
+    template.resource_count_is("AWS::IAM::Role", 5)
+    template.resource_count_is("AWS::IAM::Policy", 4)

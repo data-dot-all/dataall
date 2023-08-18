@@ -9,7 +9,10 @@ class MockEnvironmentSageMakerExtension(Stack):
     def environment(self):
         return self._environment
 
-    def __init__(self, scope, id, env, **kwargs):
+    def get_engine(self):
+        return self._db
+
+    def __init__(self, scope, id, env, db, **kwargs):
         super().__init__(
             scope,
             id,
@@ -21,6 +24,7 @@ class MockEnvironmentSageMakerExtension(Stack):
             **kwargs,
         )
         self._environment = env
+        self._db = db
         self.default_role = aws_iam.Role(self, "DefaultRole",
             assumed_by=aws_iam.ServicePrincipal("lambda.amazonaws.com"),
             description="Example role..."
@@ -30,7 +34,7 @@ class MockEnvironmentSageMakerExtension(Stack):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
+def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env_fixture, org_fixture):
     mocker.patch(
         'dataall.modules.mlstudio.cdk.mlstudio_stack.SagemakerStudioUserProfile.get_engine',
         return_value=db,
@@ -52,11 +56,11 @@ def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_environment',
-        return_value=env,
+        return_value=env_fixture,
     )
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_organization',
-        return_value=org,
+        return_value=org_fixture,
     )
 
 
@@ -88,12 +92,12 @@ def test_resources_sgmstudio_stack_created(sgm_studio):
     template.resource_count_is("AWS::SageMaker::UserProfile", 1)
 
 
-def test_resources_sgmstudio_extension_stack_created(env):
+def test_resources_sgmstudio_extension_stack_created(db, env_fixture):
     app = App()
 
     # Create the Stack
     stack = MockEnvironmentSageMakerExtension(
-        app, 'SagemakerExtension', env=env
+        app, 'SagemakerExtension', env=env_fixture, db=db,
     )
 
     # Prepare the stack for assertions.

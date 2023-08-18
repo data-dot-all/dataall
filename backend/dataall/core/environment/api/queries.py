@@ -12,14 +12,6 @@ getTrustAccount = gql.QueryField(
     test_scope='Environment',
 )
 
-checkEnvironment = gql.QueryField(
-    name='checkEnvironment',
-    args=[gql.Argument(name='input', type=gql.Ref('AwsEnvironmentInput'))],
-    type=gql.String,
-    resolver=check_environment,
-    test_scope='Environment',
-)
-
 getEnvironment = gql.QueryField(
     name='getEnvironment',
     args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
