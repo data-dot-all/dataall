@@ -835,7 +835,10 @@ class EnvironmentService:
             )
 
         if env_resources > 0:
-            raise Exception
+            raise exceptions.EnvironmentResourcesFound(
+                action='Delete Environment',
+                message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment related objects before proceeding',
+            )
         else:
             EnvironmentResourceManager.delete_env(session, environment)
             EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
