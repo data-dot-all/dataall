@@ -1,7 +1,6 @@
 from typing import Set, List, Type
 
 from dataall.base.loader import ModuleInterface, ImportMode
-from dataall.modules.vote import api
 
 
 class VoteApiModuleInterface(ModuleInterface):
