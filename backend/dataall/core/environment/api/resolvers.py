@@ -468,18 +468,11 @@ def delete_environment(
 ):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-
-        try:
-            EnvironmentService.delete_environment(
-                session,
-                uri=environmentUri,
-                environment=environment
-            )
-        except exc.IntegrityError:
-            raise exceptions.EnvironmentResourcesFound(
-                action='Delete Environment',
-                message='Delete all environment related objects before proceeding',
-            )
+        EnvironmentService.delete_environment(
+            session,
+            uri=environmentUri,
+            environment=environment
+        )
 
     if deleteFromAWS:
         stack_helper.delete_stack(

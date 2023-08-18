@@ -814,32 +814,52 @@ class EnvironmentService:
             .filter(EnvironmentGroup.environmentUri == uri)
             .all()
         )
-        for group in env_groups:
-
-            session.delete(group)
-
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                resource_uri=uri,
-                group=group.groupUri,
-            )
-
         env_roles = (
             session.query(ConsumptionRole)
             .filter(ConsumptionRole.environmentUri == uri)
             .all()
         )
+
+        env_resources = 0
+        for group in env_groups:
+            env_resources += EnvironmentResourceManager.count_group_resources(
+                session,
+                environment,
+                group.groupUri
+            )
         for role in env_roles:
-            session.delete(role)
+            env_resources += EnvironmentResourceManager.count_consumption_role_resources(
+                session,
+                environment,
+                role.consumptionRoleUri
+            )
 
-        KeyValueTag.delete_key_value_tags(
-            session, environment.environmentUri, 'environment'
-        )
+        if env_resources > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Delete Environment',
+                message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment related objects before proceeding',
+            )
+        else:
+            EnvironmentResourceManager.delete_env(session, environment)
+            EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
-        EnvironmentResourceManager.delete_env(session, environment)
-        EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
+            for group in env_groups:
+                session.delete(group)
 
-        return session.delete(environment)
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    resource_uri=uri,
+                    group=group.groupUri,
+                )
+
+            for role in env_roles:
+                session.delete(role)
+
+            KeyValueTag.delete_key_value_tags(
+                session, environment.environmentUri, 'environment'
+            )
+
+            return session.delete(environment)
 
     @staticmethod
     def get_environment_parameters(session, env_uri):
