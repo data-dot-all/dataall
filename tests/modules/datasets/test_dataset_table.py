@@ -1,85 +1,19 @@
-import typing
-
-import pytest
-
-from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 
-@pytest.fixture(scope='module', autouse=True)
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group):
-    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
-@pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
-    )
-
-
-@pytest.fixture(scope='module')
-def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
-    yield org('org2', user2.username, group2.name)
-
-
-@pytest.fixture(scope='module')
-def env2(
-    env: typing.Callable, org2: Organization, user2, group2, tenant
-) -> Environment:
-    yield env(org2, 'dev', user2.username, group2.name, '2' * 12, 'eu-west-2')
-
-
-def test_init(db):
-    assert True
-
-
-def test_get_dataset(client, dataset1, env1, user):
-    response = client.query(
-        """
-        query GetDataset($datasetUri:String!){
-            getDataset(datasetUri:$datasetUri){
-                label
-                AwsAccountId
-                description
-                region
-                imported
-                importedS3Bucket
-            }
-        }
-        """,
-        datasetUri=dataset1.datasetUri,
-        username=user.username,
-        groups=[dataset1.SamlAdminGroupName],
-    )
-    assert response.data.getDataset.AwsAccountId == env1.AwsAccountId
-    assert response.data.getDataset.region == env1.region
-    assert response.data.getDataset.label == 'dataset1'
-    assert response.data.getDataset.imported is False
-    assert response.data.getDataset.importedS3Bucket is False
-
-
-def test_add_tables(table, dataset1, db):
+def test_add_tables(table, dataset_fixture, db):
     for i in range(0, 10):
-        table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
+        table(dataset=dataset_fixture, name=f'table{i+1}', username=dataset_fixture.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetTable).count()
     assert nb == 10
 
 
-def test_update_table(client, env1, table, dataset1, db, user, group):
+def test_update_table(client, table, dataset_fixture, db, user, group):
     table_to_update = table(
-        dataset=dataset1, name=f'table_to_update', username=dataset1.owner
+        dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner
     )
     response = client.query(
         """
@@ -103,7 +37,7 @@ def test_update_table(client, env1, table, dataset1, db, user, group):
     assert 't1' in response.data.updateDatasetTable.tags
 
 
-def test_add_columns(table, dataset1, db):
+def test_add_columns(table, dataset_fixture, db):
     with db.scoped_session() as session:
         table = (
             session.query(DatasetTable)
@@ -126,7 +60,7 @@ def test_add_columns(table, dataset1, db):
         session.add(table_col)
 
 
-def test_list_dataset_tables(client, dataset1):
+def test_list_dataset_tables(client, dataset_fixture):
     q = """
         query GetDataset($datasetUri:String!,$tableFilter:DatasetTableFilter){
             getDataset(datasetUri:$datasetUri){
@@ -147,36 +81,36 @@ def test_list_dataset_tables(client, dataset1):
     """
     response = client.query(
         q,
-        username=dataset1.owner,
-        datasetUri=dataset1.datasetUri,
+        username=dataset_fixture.owner,
+        datasetUri=dataset_fixture.datasetUri,
         tableFilter={'pageSize': 100},
-        groups=[dataset1.SamlAdminGroupName],
+        groups=[dataset_fixture.SamlAdminGroupName],
     )
     assert response.data.getDataset.tables.count >= 10
     assert len(response.data.getDataset.tables.nodes) >= 10
 
     response = client.query(
         q,
-        username=dataset1.owner,
-        datasetUri=dataset1.datasetUri,
+        username=dataset_fixture.owner,
+        datasetUri=dataset_fixture.datasetUri,
         tableFilter={'pageSize': 3},
-        groups=[dataset1.SamlAdminGroupName],
+        groups=[dataset_fixture.SamlAdminGroupName],
     )
     assert response.data.getDataset.tables.count >= 10
     assert len(response.data.getDataset.tables.nodes) == 3
 
     response = client.query(
         q,
-        username=dataset1.owner,
-        datasetUri=dataset1.datasetUri,
+        username=dataset_fixture.owner,
+        datasetUri=dataset_fixture.datasetUri,
         tableFilter={'pageSize': 100, 'term': 'table1'},
-        groups=[dataset1.SamlAdminGroupName],
+        groups=[dataset_fixture.SamlAdminGroupName],
     )
     assert response.data.getDataset.tables.count == 2
     assert len(response.data.getDataset.tables.nodes) == 2
 
 
-def test_update_dataset_table_column(client, table, dataset1, db):
+def test_update_dataset_table_column(client, table, dataset_fixture, db):
     with db.scoped_session() as session:
         table = (
             session.query(DatasetTable)
@@ -196,10 +130,10 @@ def test_update_dataset_table_column(client, table, dataset1, db):
                 }
             }
             """,
-            username=dataset1.owner,
+            username=dataset_fixture.owner,
             columnUri=column.columnUri,
             input={'description': 'My new description'},
-            groups=[dataset1.SamlAdminGroupName],
+            groups=[dataset_fixture.SamlAdminGroupName],
         )
         print('response', response)
         assert (
@@ -225,7 +159,7 @@ def test_update_dataset_table_column(client, table, dataset1, db):
         assert 'Unauthorized' in response.errors[0].message
 
 
-def test_sync_tables_and_columns(client, table, dataset1, db):
+def test_sync_tables_and_columns(client, table, dataset_fixture, db):
     with db.scoped_session() as session:
         table = (
             session.query(DatasetTable)
@@ -240,7 +174,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         glue_tables = [
             {
                 'Name': 'new_table',
-                'DatabaseName': dataset1.GlueDatabaseName,
+                'DatabaseName': dataset_fixture.GlueDatabaseName,
                 'StorageDescriptor': {
                     'Columns': [
                         {
@@ -250,7 +184,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
                             'Parameters': {'colp1': 'p1'},
                         },
                     ],
-                    'Location': f's3://{dataset1.S3BucketName}/table1',
+                    'Location': f's3://{dataset_fixture.S3BucketName}/table1',
                     'Parameters': {'p1': 'p1'},
                 },
                 'PartitionKeys': [
@@ -264,7 +198,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             },
             {
                 'Name': 'table1',
-                'DatabaseName': dataset1.GlueDatabaseName,
+                'DatabaseName': dataset_fixture.GlueDatabaseName,
                 'StorageDescriptor': {
                     'Columns': [
                         {
@@ -274,7 +208,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
                             'Parameters': {'colp1': 'p1'},
                         },
                     ],
-                    'Location': f's3://{dataset1.S3BucketName}/table1',
+                    'Location': f's3://{dataset_fixture.S3BucketName}/table1',
                     'Parameters': {'p1': 'p1'},
                 },
                 'PartitionKeys': [
@@ -288,7 +222,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             },
         ]
 
-        assert DatasetTableService.sync_existing_tables(session, dataset1.datasetUri, glue_tables)
+        assert DatasetTableService.sync_existing_tables(session, dataset_fixture.datasetUri, glue_tables)
         new_table: DatasetTable = (
             session.query(DatasetTable)
             .filter(DatasetTable.name == 'new_table')
@@ -331,9 +265,9 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         assert deleted_table.LastGlueTableStatus == 'Deleted'
 
 
-def test_delete_table(client, table, dataset1, db, group):
+def test_delete_table(client, table, dataset_fixture, db, group):
     table_to_delete = table(
-        dataset=dataset1, name=f'table_to_update', username=dataset1.owner
+        dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner
     )
     response = client.query(
         """

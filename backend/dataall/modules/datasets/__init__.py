@@ -3,14 +3,11 @@ import logging
 from typing import List, Type, Set
 
 from dataall.base.loader import ModuleInterface, ImportMode
-from dataall.modules.catalog import CatalogApiModuleInterface
-from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
 from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
-from dataall.modules.feed import FeedApiModuleInterface
-from dataall.modules.vote import VoteApiModuleInterface
+
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +22,9 @@ class DatasetApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.dataset_sharing import SharingApiModuleInterface
+        from dataall.modules.catalog import CatalogApiModuleInterface
+        from dataall.modules.feed import FeedApiModuleInterface
+        from dataall.modules.vote import VoteApiModuleInterface
 
         return [
             SharingApiModuleInterface, DatasetBaseModuleInterface, CatalogApiModuleInterface,
@@ -107,6 +107,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
         return [DatasetBaseModuleInterface, DataSharingCdkModuleInterface]
 
     def __init__(self):
@@ -146,7 +147,9 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        return [DatasetBaseModuleInterface, CatalogApiModuleInterface]
+        from dataall.modules.catalog import CatalogIndexerModuleInterface
+
+        return [DatasetBaseModuleInterface, CatalogIndexerModuleInterface]
 
     def __init__(self):
         from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer

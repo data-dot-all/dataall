@@ -1,22 +1,7 @@
 from datetime import datetime
 
 from dataall.modules.catalog.db.glossary_models import GlossaryNode
-from tests.api.conftest import *
 import pytest
-
-
-@pytest.fixture(scope='module')
-def _org(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.username, group.name)
-    yield org
-
-
-@pytest.fixture(scope='module', autouse=True)
-def _env(
-    db, _org: Organization, user, group, env
-) -> Environment:
-    env1 = env(_org, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
 
 
 @pytest.fixture(scope='module', autouse=True)

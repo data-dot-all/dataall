@@ -1,63 +1,25 @@
 from typing import List
 
 from dataall.modules.catalog.db.glossary_models import TermLink
-from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTableColumn
 from tests.modules.catalog.test_glossary import *
 
 
-@pytest.fixture(scope='module')
-def _org(db, org, tenant, user, group) -> Organization:
-    org = org('testorg', user.username, group.name)
-    yield org
-
-
-@pytest.fixture(scope='module')
-def _env(db, _org: Organization, user, group, env) -> Environment:
-    env1 = env(_org, 'dev', user.username, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
 @pytest.fixture(scope='module', autouse=True)
-def _dataset(db, _env, _org, group, user, dataset) -> Dataset:
-    with db.scoped_session() as session:
-        yield dataset(
-            org=_org, env=_env, name='dataset1', owner=user.username, group=group.name
-        )
-
-
-@pytest.fixture(scope='module', autouse=True)
-def _table(db, _dataset) -> DatasetTable:
-    with db.scoped_session() as session:
-        t = DatasetTable(
-            datasetUri=_dataset.datasetUri,
-            label='table',
-            AWSAccountId=_dataset.AwsAccountId,
-            region=_dataset.region,
-            S3BucketName=_dataset.S3BucketName,
-            S3Prefix='/raw',
-            GlueTableName='table',
-            owner='alice',
-            GlueDatabaseName=_dataset.GlueDatabaseName,
-        )
-        session.add(t)
-    yield t
-
-
-@pytest.fixture(scope='module', autouse=True)
-def _columns(db, _dataset, _table) -> List[DatasetTableColumn]:
+def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
     with db.scoped_session() as session:
         cols = []
         for i in range(0, 10):
             c = DatasetTableColumn(
-                datasetUri=_dataset.datasetUri,
-                tableUri=_table.tableUri,
+                datasetUri=dataset_fixture.datasetUri,
+                tableUri=table_fixture.tableUri,
                 label=f'c{i+1}',
-                AWSAccountId=_dataset.AwsAccountId,
-                region=_dataset.region,
+                AWSAccountId=dataset_fixture.AwsAccountId,
+                region=dataset_fixture.region,
                 GlueTableName='table',
                 typeName='String',
                 owner='user',
-                GlueDatabaseName=_dataset.GlueDatabaseName,
+                GlueDatabaseName=dataset_fixture.GlueDatabaseName,
             )
             session.add(c)
             cols.append(c)
@@ -112,7 +74,7 @@ def test_dataset_link_term(client, t1, _columns, group):
     print(r)
 
 
-def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
+def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group):
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -125,7 +87,7 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         """,
         username='alice',
         groups=[group.name],
-        datasetUri=_dataset.datasetUri,
+        datasetUri=dataset_fixture.datasetUri,
         input={
             'terms': [t1.nodeUri],
             'KmsAlias': ''

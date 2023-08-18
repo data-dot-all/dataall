@@ -3,46 +3,18 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import dataall
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
-from tests.api.test_stack import update_stack_query
-
-
-@pytest.fixture(scope='module', autouse=True)
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
-    yield env1
-
-@pytest.fixture(scope='module')
-def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
-    yield org('org2', user2.username, group2.name)
-
-
-@pytest.fixture(scope='module')
-def env2(
-    env: typing.Callable, org2: Organization, user2, group2, tenant
-) -> Environment:
-    yield env(org2, 'dev', user2.username, group2.name, '2' * 12, 'eu-west-2')
-
-
-def test_init(db):
-    assert True
+from tests.core.stacks.test_stack import update_stack_query
 
 
 @pytest.fixture(scope='module')
 def dataset1(
     module_mocker,
-    org1: Organization,
-    env1: Environment,
+    org_fixture: Organization,
+    env_fixture: Environment,
     dataset: typing.Callable,
     group,
 ) -> Dataset:
@@ -54,12 +26,12 @@ def dataset1(
 
     kms_client().get_key_id.return_value = {"some_key"}
 
-    d = dataset(org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name)
+    d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
     print(d)
     yield d
 
 
-def test_get_dataset(client, dataset1, env1, group):
+def test_get_dataset(client, dataset1, env_fixture, group):
     response = client.query(
         """
         query GetDataset($datasetUri:String!){
@@ -79,8 +51,8 @@ def test_get_dataset(client, dataset1, env1, group):
         username='alice',
         groups=[group.name],
     )
-    assert response.data.getDataset.AwsAccountId == env1.AwsAccountId
-    assert response.data.getDataset.region == env1.region
+    assert response.data.getDataset.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.getDataset.region == env_fixture.region
     assert response.data.getDataset.label == 'dataset1'
     assert response.data.getDataset.imported is False
     assert response.data.getDataset.importedS3Bucket is False
@@ -181,7 +153,7 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
     assert response.data.updateDataset.confidentiality == 'Official'
 
 
-def test_start_crawler(org1, env1, dataset1, client, group, module_mocker):
+def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):
     module_mocker.patch(
         'dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock()
     )
@@ -346,7 +318,7 @@ def test_list_dataset_tables(client, dataset1, group):
     assert len(response.data.getDataset.tables.nodes) == 2
 
 
-def test_dataset_in_environment(client, env1, dataset1, group):
+def test_dataset_in_environment(client, env_fixture, dataset1, group):
     q = """
     query ListDatasetsCreatedInEnvironment($environmentUri:String!){
         listDatasetsCreatedInEnvironment(environmentUri:$environmentUri){
@@ -358,7 +330,7 @@ def test_dataset_in_environment(client, env1, dataset1, group):
     }
     """
     response = client.query(
-        q, username=env1.owner, groups=[group.name], environmentUri=env1.environmentUri
+        q, username=env_fixture.owner, groups=[group.name], environmentUri=env_fixture.environmentUri
     )
     assert response.data.listDatasetsCreatedInEnvironment.count == 1
     assert (
@@ -367,15 +339,12 @@ def test_dataset_in_environment(client, env1, dataset1, group):
     )
 
 
-def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, user):
+def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mocker, group, user):
     with db.scoped_session() as session:
         session.query(Dataset).delete()
         session.commit()
     deleted_dataset = dataset(
-        org=org1, env=env1, name='dataset1', owner=user.username, group=group.name
-    )
-    module_mocker.patch(
-        'dataall.core.tasks.service_handlers.Worker.queue', return_value=True
+        org=org_fixture, env=env_fixture, name='dataset1', owner=user.username, group=group.name
     )
     response = client.query(
         """
@@ -425,7 +394,7 @@ def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, u
     assert response.data.listDatasets.count == 0
 
 
-def test_import_dataset(org1, env1, dataset1, client, group):
+def test_import_dataset(org_fixture, env_fixture, dataset1, client, group):
     response = client.query(
         """
         mutation importDataset($input:ImportDatasetInput){
@@ -448,8 +417,8 @@ def test_import_dataset(org1, env1, dataset1, client, group):
         username=dataset1.owner,
         groups=[group.name],
         input={
-            'organizationUri': org1.organizationUri,
-            'environmentUri': env1.environmentUri,
+            'organizationUri': org_fixture.organizationUri,
+            'environmentUri': env_fixture.environmentUri,
             'label': 'datasetImported',
             'bucketName': 'dhimportedbucket',
             'glueDatabaseName': 'dhimportedGlueDB',
@@ -460,8 +429,8 @@ def test_import_dataset(org1, env1, dataset1, client, group):
         },
     )
     assert response.data.importDataset.label == 'datasetImported'
-    assert response.data.importDataset.AwsAccountId == env1.AwsAccountId
-    assert response.data.importDataset.region == env1.region
+    assert response.data.importDataset.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.importDataset.region == env_fixture.region
     assert response.data.importDataset.imported is True
     assert response.data.importDataset.importedS3Bucket is True
     assert response.data.importDataset.importedGlueDatabase is True
@@ -473,16 +442,16 @@ def test_import_dataset(org1, env1, dataset1, client, group):
     assert 'dhimportedRole' in response.data.importDataset.IAMDatasetAdminRoleArn
 
 
-def test_get_dataset_by_prefix(db, env1, org1):
+def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
     with db.scoped_session() as session:
         dataset = Dataset(
             label='thisdataset',
-            environmentUri=env1.environmentUri,
-            organizationUri=org1.organizationUri,
+            environmentUri=env_fixture.environmentUri,
+            organizationUri=org_fixture.organizationUri,
             name='thisdataset',
             description='test',
-            AwsAccountId=env1.AwsAccountId,
-            region=env1.region,
+            AwsAccountId=env_fixture.AwsAccountId,
+            region=env_fixture.region,
             S3BucketName='insite-data-lake-raw-alpha-eu-west-1',
             GlueDatabaseName='db',
             IAMDatasetAdminRoleArn='role',
@@ -511,7 +480,7 @@ def test_get_dataset_by_prefix(db, env1, org1):
         assert dataset_found.S3BucketName == 'insite-data-lake-raw-alpha-eu-west-1'
 
 
-def test_stewardship(client, dataset, env1, org1, db, group2, group, user, patch_es):
+def test_stewardship(client, dataset, env_fixture, org_fixture, db, group2, group, user, patch_es):
     response = client.query(
         """
         mutation CreateDataset($input:NewDatasetInput){
@@ -542,10 +511,10 @@ def test_stewardship(client, dataset, env1, org1, db, group2, group, user, patch
             'description': 'test dataset {name}',
             'businessOwnerEmail': 'jeff@amazon.com',
             'tags': ['t1', 't2'],
-            'environmentUri': env1.environmentUri,
+            'environmentUri': env_fixture.environmentUri,
             'SamlAdminGroupName': group.name,
             'stewards': group2.name,
-            'organizationUri': org1.organizationUri,
+            'organizationUri': org_fixture.organizationUri,
         },
     )
     assert response.data.createDataset.stewards == group2.name

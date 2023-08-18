@@ -1,29 +1,6 @@
 import pytest
 
 
-class MockSagemakerClient:
-    def start_instance(self):
-        return "Starting"
-
-    def stop_instance(self):
-        return True
-
-    def get_notebook_instance_status(self):
-        return "INSERVICE"
-
-@pytest.fixture(scope='module')
-def org1(org, user, group, tenant):
-    org1 = org('testorg', user.username, group.name)
-    yield org1
-
-
-@pytest.fixture(scope='module')
-def env1(env, org1, user, group, tenant, module_mocker):
-    env1 = env(org1, 'dev', user.username, group.name, '111111111111', 'eu-west-1',
-               parameters={"notebooksEnabled": "True"})
-    yield env1
-
-
 def test_sgm_notebook(sgm_notebook, group):
     assert sgm_notebook.notebookUri
     assert sgm_notebook.SamlAdminGroupName == group.name
@@ -31,14 +8,6 @@ def test_sgm_notebook(sgm_notebook, group):
     assert sgm_notebook.SubnetId == 'subnet-123567'
     assert sgm_notebook.InstanceType == 'ml.m5.xlarge'
     assert sgm_notebook.VolumeSizeInGB == 32
-
-
-@pytest.fixture(scope='module', autouse=True)
-def patch_aws(module_mocker):
-    module_mocker.patch(
-        "dataall.modules.notebooks.services.notebook_service.client",
-        return_value=MockSagemakerClient(),
-    )
 
 
 def test_list_notebooks(client, user, group, sgm_notebook):
