@@ -11,9 +11,13 @@ class AwsCICD(ServicePolicy):
     - Create an S3 Bucket for codepipeline prefixed by "codepipeline-"
     - Read/Write to and from S3 Buckets prefixed by "codepipeline-"
     """
+<<<<<<<< HEAD:backend/dataall/modules/datapipelines/cdk/env_role_datapipelines_cicd_policy.py
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_PIPELINE not in group_permissions:
             return []
+========
+    def get_statements(self):
+>>>>>>>> upstream/main:backend/dataall/cdkproxy/stacks/policies/aws_cicd.py
         statements = [
             iam.PolicyStatement(
                 # sid="GenericCodeCommit",
