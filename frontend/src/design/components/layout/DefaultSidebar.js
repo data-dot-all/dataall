@@ -34,19 +34,22 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     const datasetsSection = {
       title: 'Datasets',
       path: '/console/datasets',
-      icon: <FiPackage size={15} />
+      icon: <FiPackage size={15} />,
+      active: isModuleEnabled(ModuleNames.DATASETS)
     };
 
     const sharesSection = {
       title: 'Shares',
       path: '/console/shares',
-      icon: <ShareOutlined size={15} />
+      icon: <ShareOutlined size={15} />,
+      active: isModuleEnabled(ModuleNames.SHARES)
     };
 
     const glossariesSection = {
       title: 'Glossaries',
       path: '/console/glossaries',
-      icon: <BsIcons.BsTag size={15} />
+      icon: <BsIcons.BsTag size={15} />,
+      active: isModuleEnabled(ModuleNames.GLOSSARIES)
     };
 
     const worksheetsSection = {
