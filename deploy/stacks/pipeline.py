@@ -842,6 +842,7 @@ class PipelineStack(Stack):
                 image_tag=self.image_tag,
                 custom_domain=target_env['custom_domain'],
                 ip_ranges=target_env.get('ip_ranges'),
+                resource_prefix=self.resource_prefix,
             ),
             pre=[
                 pipelines.CodeBuildStep(
