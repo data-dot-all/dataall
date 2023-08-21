@@ -102,15 +102,27 @@ Enterprise option as show below:
 
 ![quicksight](pictures/environments/boot_qs_2.png#zoom#shadow)
 
-After you've successfully subscribed to QuickSight, we need to trust <span style="color:grey">*data.all*</span> domain on QuickSight
-to enable Dashboard Embedding on <span style="color:grey">*data.all*</span> UI. To do that go to:
 
-1. Manage QuickSight
-2. Domains and Embedding
-3. Put <span style="color:grey">*data.all*</span> domain and check include subdomains
-4. Save
+### 5. (For ML Studio) Delete or adapt the default VPC
+If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
+it will use it to create ML Studio profiles. If no pre-existing domain is found, data.all will create a new one.
 
-![quicksight_domain](pictures/environments/boot_qs_3.png#zoom#shadow)
+Prior to V1.5.0 data.all always used the default VPC to create a new SageMaker domain. The default VPC had then to be
+customized to fulfill the networking requirements specified in the Sagemaker
+[documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html) for VPCOnly 
+domains.
+
+In V1.5.0 we introduce the creation of a suitable VPC for SageMaker as part of the environment stack. However, it is not possible to edit the VPC used by a SageMaker domain, it requires deletion and re-creation. To allow backwards
+compatibility and not delete the pre-existing domains, in V1.5.0 the default behavior is still to use the default VPC.
+
+Data.all will create a SageMaker VPC:
+- For new environments: (link environment)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if there is not a default VPC in the account
+- For pre-existing environments: (update environment)
+  - if all ML Studio profiles have been deleted (from CloudFormation as well)
+  - if there is not a pre-existing SageMaker Studio domain
+  - if the default VPC has been deleted in the account
 
 ### 5. (For ML Studio) Delete or adapt the default VPC
 If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
@@ -202,7 +214,6 @@ the environment organization. There are several tabs just below the environment 
 - Teams: list of all teams onboarded to this environment.
 - Datasets: list of all datasets owned and shared with for this environment
 - Networks: VPCs created and owned by the environment
-- Warehouses: Redshift clusters imported or created in this environment
 - Subscriptions: SNS topic subscriptions enabled or disabled in the environment
 - Tags: editable key-value tags
 - Stack: CloudFormation stack details and logs
@@ -282,9 +293,9 @@ disabled as appears in the following picture.
 ![](pictures/environments/env_teams_2.png#zoom#shadow)
 
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
-new IAM role for the new team. The IAM role policies mapped to the permissions granted to the invited team
-(e.g., a team  invited without "Create Redshift clusters" permission will not have
-redshift permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
+new IAM role for the new team. The IAM role policies are mapped to the permissions and are granted to the invited team
+(e.g., a team  invited without "Create ML Studio" permission will not have
+Sagemaker permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
 
 
 !!! warning "Automated permission assignment"

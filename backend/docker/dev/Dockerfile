@@ -50,7 +50,7 @@ $PATH" >> ~/.bashrc && \
 RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
 COPY ./requirements.txt dh.requirements.txt
-COPY ./dataall/cdkproxy/requirements.txt cdk.requirements.txt
+COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
 
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"

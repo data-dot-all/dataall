@@ -449,7 +449,8 @@ class PipelineStack(Stack):
                         'cd frontend',
                         f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
-                        'npm run lint',
+                        'npm run copy-config',
+                        'npm run lint -- --quiet',
                     ],
                     role=self.baseline_codebuild_role,
                     vpc=self.vpc,
@@ -498,6 +499,7 @@ class PipelineStack(Stack):
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
+                        'mv config.json ./source_build/',
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
@@ -517,6 +519,7 @@ class PipelineStack(Stack):
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
+                        'mv config.json ./source_build/',
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
@@ -839,6 +842,7 @@ class PipelineStack(Stack):
                 image_tag=self.image_tag,
                 custom_domain=target_env['custom_domain'],
                 ip_ranges=target_env.get('ip_ranges'),
+                resource_prefix=self.resource_prefix,
             ),
             pre=[
                 pipelines.CodeBuildStep(
@@ -873,7 +877,6 @@ class PipelineStack(Stack):
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',
-                        'cd frontend',
                         f'docker build -f docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
