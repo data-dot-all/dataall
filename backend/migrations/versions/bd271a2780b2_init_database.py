@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-from dataall.db import get_engine, has_table, create_schema_if_not_exists
+from dataall.base.db import get_engine, has_table, create_schema_if_not_exists
 
 revision = 'bd271a2780b2'
 down_revision = None

@@ -1,8 +1,7 @@
 import { lazy, Suspense } from 'react';
-import AuthGuard from './components/AuthGuard';
-import GuestGuard from './components/GuestGuard';
-import LoadingScreen from './components/LoadingScreen';
-import DefaultLayout from './components/layout/DefaultLayout';
+import { AuthGuard, GuestGuard } from 'authentication';
+import { DefaultLayout, LoadingScreen } from 'design';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const Loadable = (Component) => (props) =>
   (
@@ -12,152 +11,149 @@ const Loadable = (Component) => (props) =>
   );
 
 // Authentication pages
-const Login = Loadable(lazy(() => import('./views/authentication/Login')));
+const Login = Loadable(lazy(() => import('./authentication/views/Login')));
 
 // Error pages
-const NotFound = Loadable(lazy(() => import('./views/NotFound')));
+const NotFound = Loadable(
+  lazy(() => import('./modules/NotFound/views/NotFound'))
+);
 
 const OrganizationList = Loadable(
-  lazy(() => import('./views/Organizations/OrganizationList'))
+  lazy(() => import('./modules/Organizations/views/OrganizationList'))
 );
 const OrganizationView = Loadable(
-  lazy(() => import('./views/Organizations/OrganizationView'))
+  lazy(() => import('./modules/Organizations/views/OrganizationView'))
 );
 const OrganizationCreateForm = Loadable(
-  lazy(() => import('./views/Organizations/OrganizationCreateForm'))
+  lazy(() => import('./modules/Organizations/views/OrganizationCreateForm'))
 );
 const OrganizationEditForm = Loadable(
-  lazy(() => import('./views/Organizations/OrganizationEditForm'))
+  lazy(() => import('./modules/Organizations/views/OrganizationEditForm'))
 );
 const EnvironmentCreateForm = Loadable(
-  lazy(() => import('./views/Environments/EnvironmentCreateForm'))
+  lazy(() => import('./modules/Environments/views/EnvironmentCreateForm'))
 );
 const EnvironmentEditForm = Loadable(
-  lazy(() => import('./views/Environments/EnvironmentEditForm'))
+  lazy(() => import('./modules/Environments/views/EnvironmentEditForm'))
 );
 const EnvironmentView = Loadable(
-  lazy(() => import('./views/Environments/EnvironmentView'))
+  lazy(() => import('./modules/Environments/views/EnvironmentView'))
 );
 const EnvironmentList = Loadable(
-  lazy(() => import('./views/Environments/EnvironmentList'))
+  lazy(() => import('./modules/Environments/views/EnvironmentList'))
 );
-const Catalog = Loadable(lazy(() => import('./views/Catalog/Catalog')));
+const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
-  lazy(() => import('./views/Datasets/DatasetList'))
+  lazy(() => import('./modules/Datasets/views/DatasetList'))
 );
 const DatasetView = Loadable(
-  lazy(() => import('./views/Datasets/DatasetView'))
+  lazy(() => import('./modules/Datasets/views/DatasetView'))
 );
 const DatasetCreateForm = Loadable(
-  lazy(() => import('./views/Datasets/DatasetCreateForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetCreateForm'))
 );
 const DatasetImportForm = Loadable(
-  lazy(() => import('./views/Datasets/DatasetImportForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetImportForm'))
 );
 const DatasetEditForm = Loadable(
-  lazy(() => import('./views/Datasets/DatasetEditForm'))
+  lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
 );
-const TableView = Loadable(lazy(() => import('./views/Tables/TableView')));
+const TableView = Loadable(
+  lazy(() => import('./modules/Tables/views/TableView'))
+);
 const TableEditForm = Loadable(
-  lazy(() => import('./views/Tables/TableEditForm'))
+  lazy(() => import('./modules/Tables/views/TableEditForm'))
 );
 
 const FolderCreateForm = Loadable(
-  lazy(() => import('./views/Folders/FolderCreateForm'))
+  lazy(() => import('./modules/Folders/views/FolderCreateForm'))
 );
-const FolderView = Loadable(lazy(() => import('./views/Folders/FolderView')));
+const FolderView = Loadable(
+  lazy(() => import('./modules/Folders/views/FolderView'))
+);
 const FolderEditForm = Loadable(
-  lazy(() => import('./views/Folders/FolderEditForm'))
+  lazy(() => import('./modules/Folders/views/FolderEditForm'))
 );
 
 const NotebookList = Loadable(
-  lazy(() => import('./views/Notebooks/NotebookList'))
+  lazy(() => import('./modules/Notebooks/views/NotebookList'))
 );
 const NotebookView = Loadable(
-  lazy(() => import('./views/Notebooks/NotebookView'))
+  lazy(() => import('./modules/Notebooks/views/NotebookView'))
 );
 const NotebookCreateForm = Loadable(
-  lazy(() => import('./views/Notebooks/NotebookCreateForm'))
+  lazy(() => import('./modules/Notebooks/views/NotebookCreateForm'))
 );
 
 const MLStudioList = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookList'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioList'))
 );
 const MLStudioView = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookView'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioView'))
 );
 const MLStudioCreateForm = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookCreateForm'))
+  lazy(() => import('./modules/MLStudio/views/MLStudioCreateForm'))
 );
 
 const DashboardList = Loadable(
-  lazy(() => import('./views/Dashboards/DashboardList'))
+  lazy(() => import('./modules/Dashboards/views/DashboardList'))
 );
 const DashboardImportForm = Loadable(
-  lazy(() => import('./views/Dashboards/DashboardImportForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardImportForm'))
 );
 const DashboardEditForm = Loadable(
-  lazy(() => import('./views/Dashboards/DashboardEditForm'))
+  lazy(() => import('./modules/Dashboards/views/DashboardEditForm'))
 );
 const DashboardView = Loadable(
-  lazy(() => import('./views/Dashboards/DashboardView'))
+  lazy(() => import('./modules/Dashboards/views/DashboardView'))
 );
 const DashboardSessionStarter = Loadable(
-  lazy(() => import('./views/Dashboards/DashboardSessionStarter'))
+  lazy(() => import('./modules/Dashboards/views/DashboardSessionStarter'))
 );
 
 const PipelineList = Loadable(
-  lazy(() => import('./views/Pipelines/PipelineList'))
+  lazy(() => import('./modules/Pipelines/views/PipelineList'))
 );
 const PipelineView = Loadable(
-  lazy(() => import('./views/Pipelines/PipelineView'))
+  lazy(() => import('./modules/Pipelines/views/PipelineView'))
 );
 const PipelineCreateForm = Loadable(
-  lazy(() => import('./views/Pipelines/PipelineCreateForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineCreateForm'))
 );
 const PipelineEditForm = Loadable(
-  lazy(() => import('./views/Pipelines/PipelineEditForm'))
+  lazy(() => import('./modules/Pipelines/views/PipelineEditForm'))
 );
 
-const WarehouseCreateForm = Loadable(
-  lazy(() => import('./views/Warehouses/WarehouseCreateForm'))
+const ShareList = Loadable(
+  lazy(() => import('./modules/Shares/views/ShareList'))
 );
-const WarehouseView = Loadable(
-  lazy(() => import('./views/Warehouses/WarehouseView'))
+const ShareView = Loadable(
+  lazy(() => import('./modules/Shares/views/ShareView'))
 );
-const WarehouseEditForm = Loadable(
-  lazy(() => import('./views/Warehouses/WarehouseEditForm'))
-);
-const WarehouseImportForm = Loadable(
-  lazy(() => import('./views/Warehouses/WarehouseImportForm'))
-);
-
-const ShareList = Loadable(lazy(() => import('./views/Shares/ShareList')));
-const ShareView = Loadable(lazy(() => import('./views/Shares/ShareView')));
 
 const WorksheetList = Loadable(
-  lazy(() => import('./views/Worksheets/WorksheetList'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetList'))
 );
 const WorksheetView = Loadable(
-  lazy(() => import('./views/Worksheets/WorksheetView'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetView'))
 );
 const WorksheetCreateForm = Loadable(
-  lazy(() => import('./views/Worksheets/WorksheetCreateForm'))
+  lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))
 );
 
 const GlossaryList = Loadable(
-  lazy(() => import('./views/Glossaries/GlossaryList'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryList'))
 );
 const GlossaryView = Loadable(
-  lazy(() => import('./views/Glossaries/GlossaryView'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryView'))
 );
 const GlossaryCreateForm = Loadable(
-  lazy(() => import('./views/Glossaries/GlossaryCreateForm'))
+  lazy(() => import('./modules/Glossaries/views/GlossaryCreateForm'))
 );
 
 const AdministrationView = Loadable(
-  lazy(() => import('./views/Administration/AdministrationView'))
+  lazy(() => import('./modules/Administration/views/AdministrationView'))
 );
 
 const routes = [
@@ -206,14 +202,6 @@ const routes = [
         ]
       },
       {
-        path: 'warehouse/:uri',
-        element: <WarehouseView />
-      },
-      {
-        path: 'warehouse/:uri/edit',
-        element: <WarehouseEditForm />
-      },
-      {
         children: [
           {
             path: 'environments',
@@ -226,22 +214,14 @@ const routes = [
           {
             path: 'environments/:uri/edit',
             element: <EnvironmentEditForm />
-          },
-          {
-            path: 'environments/:uri/warehouses/new',
-            element: <WarehouseCreateForm />
-          },
-          {
-            path: 'environments/:uri/warehouses/import',
-            element: <WarehouseImportForm />
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.CATALOG) && {
         path: 'catalog',
         element: <Catalog />
       },
-      {
+      isModuleEnabled(ModuleNames.DATASETS) && {
         children: [
           {
             path: 'datasets',
@@ -289,7 +269,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.MLSTUDIO) && {
         children: [
           {
             path: 'mlstudio',
@@ -305,7 +285,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.NOTEBOOKS) && {
         children: [
           {
             path: 'notebooks',
@@ -321,7 +301,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.DASHBOARDS) && {
         children: [
           {
             path: 'dashboards',
@@ -345,7 +325,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.PIPELINES) && {
         children: [
           {
             path: 'pipelines',
@@ -365,7 +345,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.SHARES) && {
         children: [
           {
             path: 'shares',
@@ -377,7 +357,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.WORKSHEETS) && {
         children: [
           {
             path: 'worksheets',
@@ -393,7 +373,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.GLOSSARIES) && {
         children: [
           {
             path: 'glossaries',
