@@ -11,8 +11,24 @@ The data.all package is a mono-repo comprising several modules:
 - [deploy/](#deploy)
 - [backend/](#backend)
   - [base/](#base)
+    - db
+    - api
+    - cdkproxy
   - [core/](#core)
+    - Feature toogle
+    - Permisisons
+    - WorkerHandler
+    - Stack helper
   - [modules/](#core)
+    - db
+    - aws
+    - handlers
+    - cdk
+    - api
+    - services
+    - indexers
+    - tasks
+    - `__init__` and module loading
 - [frontend/](#frontend)
 - [tests/](#tests)
 - [compose/](#compose)
@@ -64,7 +80,7 @@ In the pipeline stack `PipelineStack` we deploy the following stacks and sub-sta
 There are other elements in the `deploy` folder:
 ```
 deploy/
-├── pivot_role/  : with the template for the data.all IAM Pivot Role 
+├── pivot_role/  : with the YAML template for the data.all IAM Pivot Role (manually created)
 ├── cdk_exec_role/  : with the template for an optional role that can be used to bootstrap environments in cdk bootstrap 
 ├── configs/ : scripts that create configuration files for Cognito, CloudFront and CloudWatch RUM
 ├── custom_resources/ : resources or actions not included in CloudFormation
@@ -94,9 +110,8 @@ Inside `dataall/` we have 3 main sub-packages:
 - modules - additional plug-in components that can be configured or disabled
 
 ### base/ <a name="base"></a>
-The base package is structured as you can see in the diagram. 
-In the diagram there is a small definition of each subpackages. For `api` and `cdkproxy`
-we have included some additional details.
+The base package is divided into the listed components. We explain `db`, `api` and `cdkproxy` in more detail 
+in each of their subsections.
 ```
 base/
 ├── api/  : gql wrapper package. Contants and context definition.
@@ -108,16 +123,18 @@ base/
 ├── __init__.py
 ├── config.py : Config class to manage the config.json file
 ├── context.py : Class to manage the API calls context
-├── loader.py : Classes and methos that manage the loading of modules
+├── loader.py : Classes and methods that manage the loading of modules
 ```
 
 #### db
-The exports from this package are:
 
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+Backend code relies on the popular Python's `sqlalchemy` ORM package to connect and perform operations
+against the RDS database. Among other components in `base.db`we export:
+
+1. `get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `Base` : a SQL alchemy Base metadata class
+3. `Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `create_schema_and_tables` :  a method that will create schema and tables
 
 #### api
 The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
@@ -188,7 +205,7 @@ on the server side. For example, in the following case the `config.json` file ha
 ```
 
 If we go to the `core.environment.api` package we will see that some resolvers have been decorated depending on this flag.
-Any resolver, any api call, can be enabled or disabled by introducing more core-toogle features.
+Any resolver, any api call, can be enabled or disabled by introducing more core-toogle features in both the core and/or the modules.
 ```
 @is_feature_enabled('core.features.env_aws_actions')
 def _get_environment_group_aws_session(
@@ -203,7 +220,7 @@ In particular, `permission_checker.py` contains the decorators that validate the
 `db` the RDS tables and operations with RDS, `api` the calls related to permissions and `permissions.py` the core module permission definitions.
 
 #### WorkerHandler
-In `core/tasks/service_handlers.py` we defined the `WorkerHandler` Python class, responsible of routing tasks 
+In `core/tasks/service_handlers.py` we defined the `WorkerHandler` Python class, that routes tasks 
 to the Worker AWS Lambda (for tasks that are processed asynchronously).
 
 This class has a singleton instance called `Worker`. It exposes a decorator function to register handler 
@@ -248,7 +265,7 @@ def handler(event, context=None):
 ```
 
 
-Finally, the `WorkerHandler` will `process` the tasks: it reads task data from the RDS Database, routes to 
+Finally, the `WorkerHandler` will `process` the tasks: it reads the task metadata from the RDS Database, routes to 
 the decorated handler function 
 and assumes a role in the AWS Account where the action needs to be performed.
 
@@ -284,10 +301,6 @@ module/
 ├── __init__.py
 ```
 
-#### ModuleInterfaces in __init__.py
-
-
-
 #### db
 
 The idea is that this package processes all requests to the RDS database for the module metadata, 
@@ -297,8 +310,8 @@ The package contains 2 types of classes:
 - Suffixed with `_models`: it defines tables and their schemas in our Aurora RDS database.
 - Suffixed with `_repositories`: api calls against the RDS Aurora database.
 
-API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to find all deleted tables
-of a specific data.all dataset.
+Database data operations done by the backend rely on the popular Python's `sqlalchemy` ORM package. Here is an example 
+of a query to find all deleted tables of a specific data.all dataset.
 ```
     @staticmethod
     def find_all_deleted_tables(session, dataset_uri):
@@ -313,6 +326,10 @@ of a specific data.all dataset.
             .all()
         )
 ```
+#### indexers
+This package is only needed for modules that need to interact with the OpenSearch Catalog. It leverages the 
+`BaseIndexer` class to implement the different upsert and delete operations in the catalog.
+
 
 #### aws
 
@@ -349,8 +366,42 @@ They often use the `db` repositories and `aws` clients as it happens in the `Dat
             return {"profiling_status": profiling.status}
 
 ```
+
+#### tasks
+
+In this package you should define the module ECS long-running tasks. For example, the ECS task
+definition to run the sharing of datasets is placed in `dataset_sharing.tasks.share_manager`.
+
+In addition, the task needs to be defined in the deployment of the ECS tasks. Here is an extract of
+`deploy/stacks/container.py` where that particular task is defined. Use the `run_if` decorator to
+set its dependency with a certain module.
+
+```
+    @run_if("modules.datasets.active")
+    def add_share_management_task(self):
+        share_management_task_definition = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-manager',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+            family=f'{self._resource_prefix}-{self._envname}-share-manager',
+        )
+
+        share_management_container = share_management_task_definition.add_container(
+            f'ShareManagementTaskContainer{self._envname}',
+            container_name=f'container',
+            image=ecs.ContainerImage.from_ecr_repository(
+                repository=self._ecr_repository, tag=self._cdkproxy_image_tag
+            ),
+            environment=self._create_env('DEBUG'),
+            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            ...
+```
+
 #### cdk
-Under this directory you will find 4 different types of classes:
+Under this directory you will find 4 different types of classes used in CDK deployments of infrastructure.
 - resource stacks
 - environment extensions
 - environment team role policies (usually called `env_role_XXX_policy`)
@@ -360,7 +411,7 @@ Under this directory you will find 4 different types of classes:
 
 Resource stacks, are CDK stacks deployed when a resource is created. For example, when we create a Dataset we deploy
 the stack defined in `dataset_stack.py` and decorated as follows. The decorator and the stack manager are implemented
-in `base.cdkproxy`. We will see how stacks are deployed in the services subsection.
+in `base.cdkproxy`.
 
 ```
 @stack(stack='dataset')
@@ -392,7 +443,9 @@ an IAM role as part of the environment cdk stack. That IAM role has different pe
 features that it has access to. Those features often correspond to modules. In the Environment team role policies files
 is where we define these policies that need to be added to a team IAM role if the feature is enabled for its team.
 
-The IAM policy statements need to be defined creating a class that inherits the `ServicePolicy` class. Here is an example:
+The IAM policy statements need to be defined creating a class that inherits the `ServicePolicy` class. Here is an example,
+if the `dataset` module is active and a data.all Team has the `CREATE_DATASET` permissions the 
+`DatasetDatabrewServicePolicy.get_statements` returned statements will be added to the team IAM policies.
 
 ```
 class DatasetDatabrewServicePolicy(ServicePolicy):
@@ -411,7 +464,7 @@ class DatasetDatabrewServicePolicy(ServicePolicy):
 **Pivot role policies** 
 
 We want the dataallPivotRole to follow least-privilege permissions and have only those IAM statements that are needed
-to operate a certain configuration of data.all. Imagine that you disable the `Dashboards` module, in that case, the 
+to operate a certain configuration of data.all. Imagine that you disable the `dashboards` module, in that case, the 
 pivotRole should not have any Quicksight related permissions needed by Dashboards. We achieve this modular definition
 of pivotRole policies by using the `PivotRoleStatementSet` class to define the policies needed by the pivotRole for a module.
 If the module is enabled, then the auto-created pivotRole is deployed with the additional PivotRoleStatementSet and viceversa.
@@ -521,17 +574,6 @@ You might have overlooked the ECS interface. In the `dataall.aws` package we als
 ECS Fargate cluster that performs long-running tasks. ECS `run_ecs_task` function connects with our cluster and
 runs one of the tasks declared in the `dataall.tasks` package.
 
-### dataall/tasks
-
-In this package we define the long-running tasks executed by the ECS Fargate cluster:
-- `bucket_policy_updater`: folder sharing by updating S3 bucket policies
-- `catalog_indexer`: full indexing of all items from our persistence layer in the OpenSearch cluster
-- `cdkproxy`: deployment of CDK stacks with `dataall/cdkproxy` package
-- `share_manager`: table sharing operations
-- `stacks_updater`: updates CDK stacks (support of cdkproxy)
-- `tables_syncer`: syncs the tables between the Glue Catalog and the Aurora RDS database for our datasets.
-
-
 
 The sub-package  `stacks` holds the
 definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
@@ -594,6 +636,54 @@ Remember, in the `dataall.aws` package is where we defined the interface with EC
 We are passing the task definition and the docker container to ECS which will use then the `dataall/cdkproxy` package
 deployed in a docker container. The docker image is stored in ECR in the tooling account.
 
+
+#### ModuleInterfaces in __init__.py
+Core and module code is executed in different compute components of the architecture of data.all. All backend code is 
+executed in AWS Lambdas (GraphQL Lambda, Worker Lambda, ESProxy Lambda) or in 
+ECS Fargate tasks on demand (CDKProxy task and Share task) or scheduled (Stack updates, Catalog Syncer).
+
+
+If a module is active, the module code needs to be imported to the corresponding compute component so that it can be executed.
+To import the necessary code into each of the compute components, we will use the `ModuleInterface` ABC class defined in `base.loader.py`. 
+
+
+In the `__init__` file of each of the modules we will declare a `ModuleInterface` class for each compute component that
+needs to run module code. We need to define the abstract class method `is_supported`
+returning the `ImportMode` that the particular `ModuleInterface` is interacting with.
+
+
+There are 5 types of `ImportMode` (imported from `base.loader.py`) 
+depending on the different infrastructure components that import module code.
+- API - GraphQL API Lambda
+- CDK - CDK Proxy
+- HANDLERS - AWS Worker Lambda
+- STACK_UPDATER_TASK - ECS Task that updates CDK stacks
+- CATALOG_INDEXER_TASK - ECS Task that updates items indexed in the Catalog
+
+Still not clear? Let's look at the following example from `modules.mlstudio`. `MLStudioApiModuleInterface` is a class
+that inherits `ModuleInterface`. `is_supported` returns `ImportMode.API` which means that the interface 
+will import code into the GraphQL API Lambda. 
+
+Since we want the GraphQL API Lambda to execute module code, we will import `dataall.modules.mlstudio.api` and other 
+API related sub-packages when the interface class is initialized. In the sections below, we will dive deep
+into the typical sub-packages for each ImportMode, but for the loading just remember: interface to import module code
+in each of the compute components.
+
+```
+class MLStudioApiModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for MLStudio GraphQl lambda"""
+
+    @classmethod
+    def is_supported(cls, modes):
+        return ImportMode.API in modes
+
+    def __init__(self):
+        import dataall.modules.mlstudio.api
+        from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
+        TargetType("mlstudio", GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
+
+        log.info("API of sagemaker mlstudio has been imported")
+```
 
 
 ## frontend/ <a name="frontend"></a>
