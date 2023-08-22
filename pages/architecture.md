@@ -136,7 +136,7 @@ this is achieved by connecting the VPN to the VPC in data.all.
 
 With the following commands you can create the ACM certificate and Route 53 private hosted zone:
 1.	`cd` to empty directory
-2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem`
+2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem -addext "subjectAltName=DNS:<YOUR-HOSTED-ZONE-NAME>,DNS:*.<YOUR-HOSTED-ZONE-NAME>"`
 3.	This command will create a no password file to load in ACM: `openssl rsa -in dataallkey.pem -out dataallkeynopwd.pem `
 4.	`aws route53 create-hosted-zone --name <domain-name> --vpc VPCRegion=<vpc_region>,VPCId=<vpc-id> --caller-reference 07:12:22 --query HostedZone.Id --output text `
 5.	`aws acm import-certificate --region us-east-1 --certificate fileb://<filepath to cert> --private-key fileb://<filepath to no password key> --query CertificateArn --output text`
