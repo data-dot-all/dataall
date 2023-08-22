@@ -55,10 +55,16 @@ class Environment(Resource, Base):
 
 
 class EnvironmentParameter(Base):
-    __tablename__ = "environment_parameters"
+    __tablename__ = 'environment_parameters'
     environmentUri = Column(String, primary_key=True)
-    paramKey = Column(String, primary_key=True),
-    paramValue = Column(String, nullable=True)
+    key = Column('paramKey', String, primary_key=True)
+    value = Column('paramValue', String, nullable=True)
+
+    def __init__(self, env_uri, key, value):
+        super().__init__()
+        self.environmentUri = env_uri
+        self.key = key
+        self.value = value
 
 
 class SagemakerNotebook(Resource, Base):
@@ -130,6 +136,7 @@ def upgrade():
 
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
+        raise ex
 
 
 def downgrade():
@@ -152,18 +159,24 @@ def downgrade():
         op.add_column("environment", Column("warehousesEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
-        params = session.query(EnvironmentParameter).all()
+        envs_all = session.query(Environment).all()
         envs = []
-        for param in params:
-            print(param)
-            envs.append(Environment(
-                environmentUri=param.environmentUri,
-                notebooksEnabled=params["notebooksEnabled"] == "true",
-                mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
-                pipelinesEnabled=params["pipelinesEnabled"] == "true",
-                dashboardsEnabled=params["dashboardsEnabled"] == "true",
-                warehousesEnabled=params["warehousesEnabled"] == "true",
-            ))
+        for env in envs_all:
+            params = (
+                session.query(EnvironmentParameter)
+                .filter(EnvironmentParameter.environmentUri == EnvironmentParameter.environmentUri)
+            )
+            env_params = {}
+            for param in params:
+                env_params[param.key] = param.value == "true"
+            print(env_params)
+
+            env.notebooksEnabled = env_params.get("notebooksEnabled", False)
+            env.mlStudiosEnabled = env_params.get("mlStudiosEnabled", False)
+            env.pipelinesEnabled = env_params.get("pipelinesEnabled", False)
+            env.dashboardsEnabled = env_params.get("dashboardsEnabled", False)
+            env.warehousesEnabled = env_params.get("warehousesEnabled", False)
+            session.commit()
 
         save_deleted_permissions(session)
 
@@ -171,16 +184,25 @@ def downgrade():
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
 
+        print("Adding Back Tenant Administrator Table")
+        op.create_table(
+            "tenant_administrator",
+            Column("userName", String, primary_key=True, nullable=False),
+            Column("tenantUri", String, nullable=False),
+            Column("userRoleInTenant", String, nullable=False, default='ADMIN'),
+        )
+
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
+        raise ex
 
 
 def _add_param_if_exists(params: List[EnvironmentParameter], env: Environment, key, val) -> None:
     if val is not None:
         params.append(EnvironmentParameter(
-            environmentUri=env.environmentUri,
-            paramKey=key,
-            paramValue=str(val).lower()
+            env.environmentUri,
+            key,
+            str(val).lower()
         ))
 
 
@@ -226,22 +248,28 @@ def migrate_groups_permissions(session):
 
 def delete_unused_permissions(session):
     for name in UNUSED_RESOURCE_PERMISSIONS:
-        perm = Permission.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
-        (
-            session.query(ResourcePolicyPermission)
-            .filter(ResourcePolicyPermission.permissionUri == perm.permissionUri)
-            .delete()
-        )
-        session.delete(perm)
+        try:
+            perm = Permission.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
+            (
+                session.query(ResourcePolicyPermission)
+                .filter(ResourcePolicyPermission.permissionUri == perm.permissionUri)
+                .delete()
+            )
+            session.delete(perm)
+        except Exception as ex:
+            print(f"Resource Permissions Named: {name} not found and does not exist, skipping delete...")
 
     for name in UNUSED_TENANT_PERMISSIONS:
-        perm = Permission.get_permission_by_name(session, name, PermissionType.TENANT.value)
-        (
-            session.query(TenantPolicyPermission)
-            .filter(TenantPolicyPermission.permissionUri == perm.permissionUri)
-            .delete()
-        )
-        session.delete(perm)
+        try:
+            perm = Permission.get_permission_by_name(session, name, PermissionType.TENANT.value)
+            (
+                session.query(TenantPolicyPermission)
+                .filter(TenantPolicyPermission.permissionUri == perm.permissionUri)
+                .delete()
+            )
+            session.delete(perm)
+        except Exception as ex:
+            print(f"Resource Permissions Named: {name} not found and does not exist, skipping delete...")
 
 
 def save_deleted_permissions(session):
