@@ -54,10 +54,7 @@ class EnvironmentService:
             validated=False,
             isOrganizationDefaultEnvironment=False,
             userRoleInEnvironment=EnvironmentPermission.Owner.value,
-            EnvironmentDefaultIAMRoleName=data.get(
-                'EnvironmentDefaultIAMRoleName', 'unknown'
-            ),
-            EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
+            EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             resourcePrefix=data.get('resourcePrefix'),
         )
@@ -81,7 +78,7 @@ class EnvironmentService:
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
 
-        if not data.get('EnvironmentDefaultIAMRoleName'):
+        if not data.get('EnvironmentDefaultIAMRoleArn'):
             env_role_name = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,
@@ -94,8 +91,8 @@ class EnvironmentService:
             )
             env.EnvironmentDefaultIAMRoleImported = False
         else:
-            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleName']
-            env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env.EnvironmentDefaultIAMRoleName}'
+            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split("/")[-1]
+            env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
         if data.get('vpcId'):
@@ -234,8 +231,9 @@ class EnvironmentService:
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
 
-        if data.get('environmentIAMRoleName'):
-            env_group_iam_role_name = data['environmentIAMRoleName']
+        if data.get('environmentIAMRoleArn'):
+            env_group_iam_role_arn = data['environmentIAMRoleArn']
+            env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
             env_role_imported = True
         else:
             env_group_iam_role_name = NamingConventionService(
@@ -244,6 +242,7 @@ class EnvironmentService:
                 pattern=NamingConventionPattern.IAM,
                 resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
+            env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
 
         athena_workgroup = NamingConventionService(
@@ -258,7 +257,7 @@ class EnvironmentService:
             groupUri=group,
             invitedBy=get_context().username,
             environmentIAMRoleName=env_group_iam_role_name,
-            environmentIAMRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}',
+            environmentIAMRoleArn=env_group_iam_role_arn,
             environmentIAMRoleImported=env_role_imported,
             environmentAthenaWorkGroup=athena_workgroup,
         )
