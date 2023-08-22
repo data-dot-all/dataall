@@ -877,7 +877,7 @@ class PipelineStack(Stack):
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',
-                        f'docker build -f docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
+                        f'docker build -f frontend/docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
