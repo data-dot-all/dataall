@@ -180,7 +180,6 @@ def downgrade():
 
         save_deleted_permissions(session)
 
-        session.add_all(envs)
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
 
@@ -191,6 +190,7 @@ def downgrade():
             Column("tenantUri", String, nullable=False),
             Column("userRoleInTenant", String, nullable=False, default='ADMIN'),
         )
+        session.commit()
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
