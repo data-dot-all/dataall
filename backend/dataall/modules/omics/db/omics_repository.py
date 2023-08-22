@@ -6,12 +6,12 @@ from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
-from dataall.db import paginate, exceptions
+from dataall.base.db import paginate, exceptions
 from dataall.modules.omics.db.models import OmicsWorkflow, OmicsRun
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 
 
-class OmicsRepository(GroupResource):
+class OmicsRepository(EnvironmentResource):
     """DAO layer for Omics"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
@@ -21,24 +21,53 @@ class OmicsRepository(GroupResource):
 
     def _query_workflows(self, filter) -> Query:
         query = self._session.query(OmicsWorkflow)
-        if filter and filter.get("term"):
-            query = query.filter(
-                or_(
-                    OmicsWorkflow.description.ilike(filter.get("term") + "%%"),
-                    OmicsWorkflow.label.ilike(filter.get("term") + "%%"),
-                )
-            )
+        # if filter and filter.get("term"):
+        #     query = query.filter(
+        #         or_(
+        #             OmicsWorkflow.description.ilike(filter.get("term") + "%%"),
+        #             OmicsWorkflow.label.ilike(filter.get("term") + "%%"),
+        #         )
+        #     )
+        print(query)    
         return query
+    
     def paginated_workflows(self,filter=None) -> dict:
+        print (paginate(
+            query=OmicsRepository._query_workflows(filter),
+            page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
+            page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
+        ).to_dict())
+
         return paginate(
             query=OmicsRepository._query_workflows(filter),
             page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
+    
+    def paginated_omics_workflows(self,filter=None) -> dict:
+        
+        return paginate(
+            query=self._query_workflows(filter),
+            page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
+            page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
+        ).to_dict()
 
+    
+    # def get_all_workflow(self,filter=None):
+    #     """Save Omics run to the database"""
+    #     query=self._query_workflows(filter)
+    #     self._session.add(omics_workflow)
+    #     self._session.commit()
+    
+    
     def save_omics_run(self, omics_run):
         """Save Omics run to the database"""
         self._session.add(omics_run)
+        self._session.commit()
+    
+    def save_omics_workflow(self, omics_workflow):
+        """Save Omics run to the database"""
+        self._session.add(omics_workflow)
         self._session.commit()
 
     def _query_user_runs(self, username, groups, filter) -> Query:

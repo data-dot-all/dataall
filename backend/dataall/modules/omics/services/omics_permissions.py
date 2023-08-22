@@ -3,7 +3,7 @@ Add module's permissions to the global permissions.
 Contains permissions for Omics RUNs
 """
 
-from dataall.db.permissions import (
+from dataall.core.permissions.permissions import (
     ENVIRONMENT_ALL,
     ENVIRONMENT_INVITED,
     RESOURCES_ALL_WITH_DESC,

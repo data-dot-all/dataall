@@ -1,13 +1,6 @@
 """The module defines GraphQL mutations for Omics Pipelines"""
 
-#
-# (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# This AWS Content is provided subject to the terms of the AWS Customer
-# Agreement available at http://aws.amazon.com/agreement or other
-# written agreement between Customer and Amazon Web Services, Inc.
-#
-
-from dataall.api import gql
+from dataall.base.api import gql
 from .resolvers import *
 
 createOmicsRun = gql.MutationField(
@@ -17,12 +10,12 @@ createOmicsRun = gql.MutationField(
     resolver=create_omics_run,
 )
 
-# updateOmicsPipeline = gql.MutationField(
-#     name="updateOmicsPipeline",
-#     type=gql.Ref("OmicsPipeline"),
+# updateOmicsRun = gql.MutationField(
+#     name="updateOmicsRun",
+#     type=gql.Ref("OmicsRun"),
 #     args=[
-#         gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
-#         gql.Argument(name="input", type=gql.Ref("UpdateOmicsPipelineInput")),
+#         gql.Argument(name="OmicsRunUri", type=gql.NonNullableType(gql.String)),
+#         gql.Argument(name="input", type=gql.Ref("UpdateOmicsRunInput")),
 #     ],
 #     resolver=update_omics_pipeline,
 # )

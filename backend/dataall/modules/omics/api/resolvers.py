@@ -1,14 +1,10 @@
 import logging
-
-from dataall.db import exceptions
+from dataall.base.api.context import Context
+from dataall.core.stacks.api import stack_helper
+from dataall.base.db import exceptions
 from dataall.modules.omics.api.enums import OmicsRunRole
 from dataall.modules.omics.services.omics_service import OmicsService, OmicsRunCreationRequest
 from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
-from dataall.api.Objects.Stack import stack_helper
-from dataall.api.Objects.Stack.stack_helper import deploy_stack
-from dataall.api.context import Context
-from dataall.db import models, permissions
-from dataall.db.api import Environment, ResourcePolicy, Organization
 
 log = logging.getLogger(__name__)
 
@@ -51,21 +47,22 @@ def create_omics_run(context: Context, source, input=None):
 #     return OmicsPipelineService.update_omics_pipeline(OmicsPipelineUri, input)
 
 
-def list_runs(context: Context, source, filter: dict = None):
+def list_omics_runs(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     return OmicsService.list_user_runs(filter)
 
 
-def list_workflows(context: Context, source, filter: dict = None):
+def list_omics_workflows(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    return OmicsService.list_workflows(filter)
+    retVal = {'nodes': OmicsService.list_omics_workflows(filter)}    
+    # return OmicsService.list_omics_workflows(filter)
+    return retVal
 
 def get_omics_workflow(context: Context, source, workflowUri: str = None):
     RequestValidator.required_uri(workflowUri)
     return OmicsService.get_omics_workflow(workflowUri)
-
 
 
 def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):

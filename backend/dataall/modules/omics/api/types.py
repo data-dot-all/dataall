@@ -1,20 +1,13 @@
-#
-# (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# This AWS Content is provided subject to the terms of the AWS Customer
-# Agreement available at http://aws.amazon.com/agreement or other
-# written agreement between Customer and Amazon Web Services, Inc.
-#
-
-from dataall.api import gql
+from dataall.base.api import gql
 from .resolvers import *
-from dataall.modules.omics.api.enums import OmicsPipelineRole
-from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
-from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.modules.omics.api.enums import OmicsRunRole
+from dataall.core.organizations.api.resolvers import resolve_organization_by_env
+from dataall.core.environment.api.resolvers import resolve_environment
 
-OmicsPipeline = gql.ObjectType(
-    name="OmicsPipeline",
+OmicsRun = gql.ObjectType(
+    name="OmicsRun",
     fields=[
-        gql.Field("OmicsPipelineUri", type=gql.ID),
+        gql.Field("OmicsRunUri", type=gql.ID),
         gql.Field("environmentUri", type=gql.String),
         gql.Field("organizationUri", type=gql.String),
         gql.Field("name", type=gql.String),
@@ -30,9 +23,6 @@ OmicsPipeline = gql.ObjectType(
         gql.Field("CiPipeline", type=gql.String),
         gql.Field("StepFunction", type=gql.String),
         gql.Field("OmicsWorkflow", type=gql.String),
-        gql.Field("CiPipelineStatus", type=gql.String, resolver=resolve_cipipeline_status),
-        gql.Field("StepFunctionStatus", type=gql.String, resolver=resolve_step_function_status),
-        gql.Field("OmicsWorkflowStatus", type=gql.String, resolver=resolve_workflow_status),
         gql.Field("SamlGroupName", type=gql.String),
         gql.Field("AwsResources", type=gql.String),
         gql.Field("environment", type=gql.Ref("Environment"), resolver=resolve_environment),
@@ -41,24 +31,49 @@ OmicsPipeline = gql.ObjectType(
         gql.Field("S3InputPrefix", type=gql.String),
         gql.Field("S3OutputBucket", type=gql.String),
         gql.Field("S3OutputPrefix", type=gql.String),
-        gql.Field("stack", gql.Ref("Stack"), resolver=resolve_omics_pipeline_stack),
         gql.Field(
             "userRoleForPipeline",
-            type=OmicsPipelineRole.toGraphQLEnum(),
+            type=OmicsRunRole.toGraphQLEnum(),
             resolver=resolve_user_role,
         ),
     ],
 )
 
 
-OmicsPipelineSearchResults = gql.ObjectType(
-    name="OmicsPipelineSearchResults",
+OmicsRunSearchResults = gql.ObjectType(
+    name="OmicsRunSearchResults",
     fields=[
         gql.Field(name="count", type=gql.Integer),
         gql.Field(name="page", type=gql.Integer),
         gql.Field(name="pages", type=gql.Integer),
         gql.Field(name="hasNext", type=gql.Boolean),
         gql.Field(name="hasPrevious", type=gql.Boolean),
-        gql.Field(name="nodes", type=gql.ArrayType(OmicsPipeline)),
+        gql.Field(name="nodes", type=gql.ArrayType(OmicsRun)),
+    ],
+)
+
+OmicsWorkflow = gql.ObjectType(
+    name="OmicsWorkflow",
+    fields=[
+        gql.Field(name="arn", type=gql.String),
+        # gql.Field(name="creationTime", type=gql.String),
+        # gql.Field(name="digest", type=gql.String),
+        gql.Field(name="id", type=gql.String),
+        gql.Field(name="name", type=gql.String),
+        gql.Field(name="status", type=gql.String),
+        gql.Field(name="type", type=gql.String),
+        gql.Field(name="description", type=gql.String),
+    ],
+)
+
+OmicsWorkflows = gql.ObjectType(
+    name="OmicsWorkflows",
+    fields=[
+        # gql.Field(name="count", type=gql.Integer),
+        # gql.Field(name="page", type=gql.Integer),
+        # gql.Field(name="pages", type=gql.Integer),
+        # gql.Field(name="hasNext", type=gql.Boolean),
+        # gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="nodes", type=gql.ArrayType(OmicsWorkflow)),
     ],
 )

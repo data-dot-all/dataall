@@ -1,13 +1,6 @@
 """The module defines GraphQL input types for Omics Runs"""
 
-#
-# (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# This AWS Content is provided subject to the terms of the AWS Customer
-# Agreement available at http://aws.amazon.com/agreement or other
-# written agreement between Customer and Amazon Web Services, Inc.
-#
-
-from dataall.api import gql
+from dataall.base.api import gql
 
 NewOmicsRunInput = gql.InputType(
     name="NewOmicsRunInput",

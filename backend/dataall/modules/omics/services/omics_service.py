@@ -2,26 +2,33 @@
 A service layer for Omics pipelines
 Central part for working with Omics workflow runs
 """
-import contextlib
 import dataclasses
 import logging
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-from dataall.api.Objects.Stack import stack_helper
-from dataall.core.context import get_context as context
-from dataall.core.environment.db.repositories import EnvironmentParameterRepository
-from dataall.db.api import (
-    ResourcePolicy,
-    Environment, KeyValueTag, Stack,
-)
-from dataall.db import models, exceptions
+
+from dataall.base.context import get_context
+from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.stack import Stack
+from dataall.base.db import exceptions
+from dataall.modules.omics.db.models import *
+
 from dataall.modules.omics.aws.omics_client import client
-from dataall.modules.omics.db.mlstudio_repository import OmicsRepository
+from dataall.modules.omics.db.omics_repository import OmicsRepository
+from dataall.modules.omics.aws.omics_client import OmicsClient
 from dataall.modules.omics.db.models import OmicsRun
-from dataall.modules.omics.services import permissions
-from dataall.modules.omics.services.permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.modules.omics.services.omics_permissions import (
+    MANAGE_OMICS_RUNS,
+    CREATE_OMICS_RUN,
+    GET_OMICS_RUN,
+    OMICS_RUN_ALL,
+    DELETE_OMICS_RUN
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,21 +62,19 @@ class OmicsService:
     Encapsulate the logic of interactions with Omics pipelines.
     """
 
-    _OMICS_RUN_RESOURCE_TYPE = "omics_run"
-
     @staticmethod
     @has_tenant_permission(MANAGE_OMICS_RUNS)
     @has_resource_permission(CREATE_OMICS_RUN)
     @has_group_permission(CREATE_OMICS_RUN)
-    def CREATE_OMICS_RUN(*, uri: str, admin_group: str, request: OmicsRunCreationRequest) -> OmicsRun:
+    def create_omics_run(*, uri: str, admin_group: str, request: OmicsRunCreationRequest) -> OmicsRun:
         """
         Creates an omics_run and attach policies to it
         Throws an exception if omics_run are not enabled for the environment
         """
 
         with _session() as session:
-            environment = Environment.get_environment_by_uri(session, uri)
-            enabled = EnvironmentParameterRepository(session).get_param(uri, "omicsEnabled")
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
 
             if not enabled and enabled.lower() != "true":
                 raise exceptions.UnauthorizedOperation(
@@ -77,16 +82,8 @@ class OmicsService:
                     message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
                 )
 
-            env_group = request.environment
-            if not env_group:
-                env_group = Environment.get_environment_group(
-                    session,
-                    group_uri=admin_group,
-                    environment_uri=environment.environmentUri,
-                )
-
             omics_run = OmicsRun(
-                owner=context().username,
+                owner=get_context().username,
                 organizationUri=environment.organizationUri,
                 environmentUri=environment.environmentUri,
                 SamlAdminGroupName=admin_group,
@@ -100,11 +97,13 @@ class OmicsService:
 
             OmicsRepository(session).save_omics_run(omics_run)
 
+            ## TODO: add omics client boto3 API calls
+
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
-                permissions=permissions.OMICS_RUN_ALL,
+                permissions=OMICS_RUN_ALL,
                 resource_uri=omics_run.runUri,
                 resource_type=OmicsRun.__name__,
             )
@@ -113,44 +112,65 @@ class OmicsService:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
-                    permissions=permissions.OMICS_RUN_ALL,
+                    permissions=OMICS_RUN_ALL,
                     resource_uri=omics_run.runUri,
                     resource_type=OmicsRun.__name__,
                 )
-            ## TODO: do we need to create and deploy a stack??
-            Stack.create_stack(
-                session=session,
-                environment_uri=omics_run.environmentUri,
-                target_type='omics_run',
-                target_uri=omics_run.runUri,
-                target_label=omics_run.label,
-            )
-
-        stack_helper.deploy_stack(targetUri=omics_run.runUri)
-
         return omics_run
 
     @staticmethod
-    def list_user_omics_runs(filter) -> dict:
-        """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
+    def _get_omics_run(session, uri):
+        omics_run = OmicsRepository(session).find_omics_run(uri)
+        if not omics_run:
+            raise exceptions.ObjectNotFound("OmicsRun", uri)
+        return omics_run
+
+    @staticmethod
+    @has_resource_permission(GET_OMICS_RUN)
+    def get_omics_run(*, uri: str):
         with _session() as session:
-            return OmicsRepository(session).paginated_user_runs(
-                username=context().username,
-                groups=context().groups,
-                filter=filter
-            )
+            return OmicsService._get_omics_run(session, uri)
 
 
     @staticmethod
-    @has_resource_permission(permissions.DELETE_OMICS_RUN)
-    def delete_omics_run(*, uri: str, delete_from_aws: bool):
+    def list_user_omics_runs(*, filter: dict) -> dict:
+        """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
+        with _session() as session:
+            return OmicsRepository(session).paginated_user_runs(
+                username=get_context().username,
+                groups=get_context().groups,
+                filter=filter
+            )
+    
+    @staticmethod
+    def list_omics_workflows1(filter: dict) -> dict:
+        """List Omics workflows."""
+        with _session() as session:
+            return OmicsRepository(session).paginated_omics_workflows(
+                filter=filter
+            )
+
+    @staticmethod
+    def list_omics_workflows(filter: dict) -> dict:
+        """List Omics workflows."""
+        omicsClient = OmicsClient('545117064741')
+        workflows = omicsClient.list_workflows()
+        # for workflow in workflows:
+        #     omicsWorkflow = OmicsWorkflow(id=workflow['id'], name=workflow['name'], arn=workflow['arn'], status=workflow['status'], type=workflow['type'])
+        #     with _session() as session:
+        #         OmicsRepository(session).save_omics_workflow(omicsWorkflow)
+        return omicsClient.list_workflows()
+
+
+    @staticmethod
+    @has_resource_permission(DELETE_OMICS_RUN)
+    def delete_omics_run(*, uri: str):
         ##T TODO: IMPLEMENT IN omics_repository
         """Deletes Omics project from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
-            omics_run = OmicsRepository(session).find_omics_run(uri)
+            omics_run = OmicsService._get_omics_run(session, uri)
             if not omics_run:
                 raise exceptions.ObjectNotFound("OmicsRun", uri)
-            KeyValueTag.delete_key_value_tags(session, omics_run.runUri, 'omics_run')
             session.delete(omics_run)
 
             ResourcePolicy.delete_resource_policy(
@@ -159,18 +179,8 @@ class OmicsService:
                 group=omics_run.SamlAdminGroupName,
             )
 
-            env: models.Environment = Environment.get_environment_by_uri(
-                session, omics_run.environmentUri
-            )
 
-        if delete_from_aws:
-            stack_helper.delete_stack(
-                target_uri=uri,
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region
-            )
 
 
 def _session():
-    return context().db_engine.scoped_session()
+    return get_context().db_engine.scoped_session()

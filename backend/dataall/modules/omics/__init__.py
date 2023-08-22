@@ -1,37 +1,35 @@
-#TODO 1: define loading interfaces
 """Contains the code related to X"""
 import logging
+from typing import Set
 
-from dataall.db.api import TargetType
-from dataall.modules.loader import ImportMode, ModuleInterface
-from dataall.modules.notebooks.db.repositories import NotebookRepository
+from dataall.base.loader import ImportMode, ModuleInterface
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 log = logging.getLogger(__name__)
 
 
-class NotebookApiModuleInterface(ModuleInterface):
-    """Implements ModuleInterface for notebook GraphQl lambda"""
+class OmicsApiModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for omics GraphQl lambda"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.API in modes
 
     def __init__(self):
-        import dataall.modules.notebooks.api
+        import dataall.modules.omics.api
+        from dataall.modules.omics.services.omics_permissions import GET_OMICS_RUN, UPDATE_OMICS_RUN
 
-        from dataall.modules.notebooks.services.permissions import GET_NOTEBOOK, UPDATE_NOTEBOOK
-        TargetType("notebook", GET_NOTEBOOK, UPDATE_NOTEBOOK)
-
-        log.info("API of sagemaker notebooks has been imported")
+        log.info("API of omics has been imported")
 
 
-class NotebookCdkModuleInterface(ModuleInterface):
-    """Implements ModuleInterface for notebook ecs tasks"""
+class OmicsCdkModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for omics ecs tasks"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CDK in modes
 
     def __init__(self):
-        import dataall.modules.notebooks.cdk
-        log.info("API of sagemaker notebooks has been imported")
+        import dataall.modules.omics.cdk
+        log.info("API of Omics has been imported")
