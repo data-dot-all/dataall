@@ -46,18 +46,34 @@ UNUSED_TENANT_PERMISSIONS = [
 ]
 
 
+class Environment(Resource, Base):
+    __tablename__ = "environment"
+    environmentUri = Column(String, primary_key=True)
+    notebooksEnabled = Column(Boolean)
+    mlStudiosEnabled = Column(Boolean)
+    pipelinesEnabled = Column(Boolean)
+    dashboardsEnabled = Column(Boolean)
+    warehousesEnabled = Column(Boolean)
+
+
 def upgrade():
     """
     The script does the following migration:
-        1) ....
+        1) For permissions that are renamed, the group permissions are migrated
+        2) Delete unused permissions
+        3) Drop unused tenant_administrator table
     """
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
+        print("Migrating renamed permissions...")
         migrate_groups_permissions(session)
+
+        print("Deleting unused permissions...")
         delete_unused_permissions(session)
 
+        print("Dropping tenant administrator table...")
         op.drop_table("tenant_administrator")
 
     except Exception as ex:
@@ -66,13 +82,23 @@ def upgrade():
 
 
 def downgrade():
+    """
+    The script does the following migration:
+        1) For permissions that are renamed, the group permissions are migrated
+        2) Re-create unused permissions
+        3) Re-create unused tenant_administrator table
+    """
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
+        print("Migrating renamed permissions...")
+        # TODO: revert the migration of permissions
+
+        print("Migrating unused permissions...")
         save_deleted_permissions(session)
 
-        print("Adding Back Tenant Administrator Table")
+        print("Adding back tenant administrator table...")
         op.create_table(
             "tenant_administrator",
             Column("userName", String, primary_key=True, nullable=False),
