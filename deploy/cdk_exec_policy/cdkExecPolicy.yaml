@@ -79,7 +79,7 @@ Resources:
               - 'iam:CreatePolicyVersion'
               - 'iam:DeletePolicyVersion'
             Resource:
-               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/service-role/AWSQuickSight*'
+               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
           - Sid: QuickSight
             Effect: Allow
             Action:
