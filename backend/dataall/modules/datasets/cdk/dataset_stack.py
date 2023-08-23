@@ -298,10 +298,12 @@ class DatasetStack(Stack):
                     sid="GlueAccessDefault",
                     actions=[
                         "glue:GetDatabase",
+                        "glue:CreateDatabase",
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
+                        f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
                     ]
                 ),
                 iam.PolicyStatement(
