@@ -5,21 +5,15 @@ Revises: 4a0618805341
 Create Date: 2023-08-23 13:06:38.450645
 
 """
-import sqlalchemy as sa
-
-from typing import List
 
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import Resource
 from dataall.core.permissions.db.permission_models import PermissionType, ResourcePolicyPermission, \
     TenantPolicyPermission
-from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
 
 # revision identifiers, used by Alembic.
@@ -59,16 +53,12 @@ class Environment(Resource, Base):
 def upgrade():
     """
     The script does the following migration:
-        1) For permissions that are renamed, the group permissions are migrated
-        2) Delete unused permissions
-        3) Drop unused tenant_administrator table
+        1) Delete unused permissions
+        2) Drop unused tenant_administrator table
     """
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-
-        print("Migrating renamed permissions...")
-        migrate_groups_permissions(session)
 
         print("Deleting unused permissions...")
         delete_unused_permissions(session)
@@ -84,16 +74,12 @@ def upgrade():
 def downgrade():
     """
     The script does the following migration:
-        1) For permissions that are renamed, the group permissions are migrated
-        2) Re-create unused permissions
-        3) Re-create unused tenant_administrator table
+        1) Re-create unused permissions
+        2) Re-create unused tenant_administrator table
     """
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-
-        print("Migrating renamed permissions...")
-        # TODO: revert the migration of permissions
 
         print("Migrating unused permissions...")
         save_deleted_permissions(session)
@@ -110,38 +96,6 @@ def downgrade():
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
         raise ex
-
-
-def find_all_groups(session):
-    return session.query(EnvironmentGroup).all()
-
-
-def migrate_groups_permissions(session):
-    """
-    Adds new permission if the old exist. needed to get rid of old hacks in the code
-    """
-    permissions = [CREATE_DATASET, LIST_ENVIRONMENT_DATASETS]
-
-    groups = find_all_groups(session)
-    for group in groups:
-        new_perms = []
-        for existed, to_add in permissions:
-            if not ResourcePolicy.has_group_resource_permission(
-                session,
-                group_uri=group,
-                permission_name=existed,
-                resource_uri=group.environmentUri,
-            ):
-                new_perms.append(to_add)
-
-        if new_perms:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=group.groupUri,
-                permissions=new_perms,
-                resource_uri=group.environmentUri,
-                resource_type=Environment.__name__
-            )
 
 
 def delete_unused_permissions(session):
