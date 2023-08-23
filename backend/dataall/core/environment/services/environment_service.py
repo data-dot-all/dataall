@@ -830,7 +830,6 @@ class EnvironmentService:
         for role in env_roles:
             env_resources += EnvironmentResourceManager.count_consumption_role_resources(
                 session,
-                environment,
                 role.consumptionRoleUri
             )
 
