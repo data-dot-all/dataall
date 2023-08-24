@@ -836,8 +836,8 @@ const EnvironmentCreateForm = (props) => {
                                 touched.EnvironmentDefaultIAMRoleArn &&
                                 errors.EnvironmentDefaultIAMRoleArn
                               }
-                              label="IAM Role ARN"
-                              placeholder="Bring your own IAM role (Optionally - Specify Entire Role ARN)"
+                              label="(Optional) IAM Role ARN"
+                              placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
                               name="EnvironmentDefaultIAMRoleArn"
                               onBlur={handleBlur}
                               onChange={handleChange}

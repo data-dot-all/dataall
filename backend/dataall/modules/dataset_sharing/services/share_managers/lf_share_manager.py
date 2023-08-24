@@ -10,6 +10,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -61,7 +62,12 @@ class LFShareManager:
         -------
         List of principals
         """
-        principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
+
+        principal_iam_role_arn = IAM.get_role_arn_by_name(
+            account_id=self.target_environment.AwsAccountId,
+            role_name=self.share.principalIAMRoleName
+        )
+        principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
 
         if dashboard_enabled:

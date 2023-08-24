@@ -239,8 +239,8 @@ export const EnvironmentTeamInviteForm = (props) => {
                         touched.environmentIAMRoleArn &&
                         errors.environmentIAMRoleArn
                       }
-                      label="IAM Role ARN"
-                      placeholder="Bring your own IAM role (Optional - Specify Entire Role ARN)"
+                      label="(Optional) IAM Role ARN"
+                      placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
                       name="environmentIAMRoleArn"
                       onChange={handleChange}
                       value={values.environmentIAMRoleArn}
