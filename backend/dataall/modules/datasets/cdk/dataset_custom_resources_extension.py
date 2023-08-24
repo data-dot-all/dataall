@@ -80,7 +80,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
                 'DataLakeAdmins': [
                     f'arn:aws:iam::{setup.environment().AwsAccountId}:role/{setup.pivot_role_name}',
                 ],
-                'Version':"data.all V2"
+                'Version': "data.all V2"
             },
         )
 
