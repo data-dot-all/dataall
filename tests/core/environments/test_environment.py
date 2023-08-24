@@ -379,7 +379,7 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
             environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
-            environmentIAMRoleName='myteamrole',
+            environmentIAMRoleArn=f'arn:aws::{env_fixture.awsAccountId}:role/myteamrole',
         ),
         groups=[group.name, group2.name],
     )
@@ -650,7 +650,7 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
         input={
             'label': f'dev',
             'description': f'test',
-            'EnvironmentDefaultIAMRoleName': 'myOwnIamRole',
+            'EnvironmentDefaultIAMRoleArn': f'arn:aws:iam::{env_fixture.AwsAccountId}:role/myOwnIamRole',
             'organizationUri': org_fixture.organizationUri,
             'AwsAccountId': env_fixture.AwsAccountId,
             'tags': ['a', 'b', 'c'],
