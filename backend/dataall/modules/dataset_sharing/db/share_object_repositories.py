@@ -892,7 +892,7 @@ class ShareObjectRepository:
                     Dataset.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.distinct(Dataset.datasetUri)
 
     @staticmethod
     def paginated_user_datasets(
