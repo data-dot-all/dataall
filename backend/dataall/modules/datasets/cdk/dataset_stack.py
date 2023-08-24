@@ -451,7 +451,6 @@ class DatasetStack(Stack):
                     'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-'
                 },
                 'DatabaseAdministrators': dataset_admins,
-                'TriggerUpdate': True
             },
         )
 
