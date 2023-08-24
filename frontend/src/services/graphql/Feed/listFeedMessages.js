@@ -27,9 +27,6 @@ export const listFeedMessages = ({ targetUri, targetType, filter }) => ({
           ... on Dashboard {
             label
           }
-          ... on Worksheet {
-            label
-          }
           ... on DataPipeline {
             label
           }
