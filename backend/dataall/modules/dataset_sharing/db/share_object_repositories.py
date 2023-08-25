@@ -318,11 +318,11 @@ class ShareItemSM:
 class ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
-        return ShareObjectRepository.count_principal_shares(session, group_uri, PrincipalType.Group)
+        return ShareObjectRepository.count_principal_shares(session, group_uri, environment.environmentUri, PrincipalType.Group)
 
     @staticmethod
     def count_role_resources(session, role_uri):
-        return ShareObjectRepository.count_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
+        return ShareObjectRepository.count_role_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
 
     @staticmethod
     def delete_env(session, environment):
@@ -1149,13 +1149,27 @@ class ShareObjectRepository:
         ).all()
 
     @staticmethod
-    def count_principal_shares(session, principal_id: str, principal_type: PrincipalType):
+    def count_principal_shares(session, principal_id: str, environment_uri: str, principal_type: PrincipalType):
         return (
             session.query(ShareObject)
             .filter(
                 and_(
                     ShareObject.principalId == principal_id,
-                    ShareObject.principalType == principal_type.value
+                    ShareObject.principalType == principal_type.value,
+                    ShareObject.environmentUri == environment_uri
+                )
+            )
+            .count()
+        )
+
+    @staticmethod
+    def count_role_principal_shares(session, principal_id: str, principal_type: PrincipalType):
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.principalId == principal_id,
+                    ShareObject.principalType == principal_type.value,
                 )
             )
             .count()
