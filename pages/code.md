@@ -114,7 +114,7 @@ The base package is divided into the listed components. We explain `db`, `api` a
 in each of their subsections.
 ```
 base/
-├── api/  : gql wrapper package. Contants and context definition.
+├── api/  : gql wrapper package. Constants and context definition.
 ├── aws/  :  wrapper client upon boto3 calls used across several modules (e.g. IAM class).
 ├── cdkproxy/ : CDK application that deploys stacks in environment accounts exposing a REST API.
 ├── db/ : configuration, connection parameters and base utilities for the RDS Aurora database
@@ -284,7 +284,7 @@ The `core.stacks` package implements handlers, database logic and apis to manage
 
 Modules are components that can be plugged in (or out) of your data.all deployment. Their features are configured in
 the `config.json` file. In contrast to the `core` package, `modules` are meant to be customized and enriched with new
-features. You can even go ahead and customize or create new modules, see the developing modules section for more details.
+features. You can even go ahead and customize or create new modules.
 
 Each module can contain all or a subset of the listed sub-packages:
 
@@ -525,12 +525,8 @@ module service.
 #### services
 Here is where the business logic of the module API calls is defined. There are 2 types of files in this directory:
 - One `<MODULE_NAME>_permissions.py` file that defines the application permissions that apply to the module.
-- One or more `<MODULE_NAME>_<SUBCOMPONENT>_service.py` files that define the 
-
-**Services**
-
-##TODO
-
+- One or more `<MODULE_NAME>_<SUBCOMPONENT>_service.py` files that define all the application logic related to the module subcomponent. Like 
+calling the `db` repositories, triggering `handlers` with the WorkerHandler or `cdk` stack deployments with the stack helper.
 
 **Permissions** 
 
@@ -553,6 +549,9 @@ Each of these decorators refer to a different type of permission:
 - `ENVIRONMENT_PERMISSIONS` - Granted to any group in an environment. For each resource we should define a list of actions regarding that resource that are executed on the environment (e.g. List resources X in an environment)
 - `RESOURCE_PERMISSION` - Granted to any group. For each resource we should define a list of all actions that can be done on the resource. We also need to add the permissions for the Environment resource (ENVIRONMENT_PERMISSIONS)
 
+If a function is decorated with permission checker decorators, it should pass `uri` and `admin_group` as parameters. They
+are needed to validate the permissions of the user in relation to the groups and resources.
+
 When creating a new resource that has associated permissions, the corresponding RESOURCE_PERMISSIONS should be attached.
 You can take the example for dataset creation as a reference.
 
@@ -567,76 +566,6 @@ You can take the example for dataset creation as a reference.
 ```
 
 
-
-
-#### ECS
-You might have overlooked the ECS interface. In the `dataall.aws` package we also define the connection to the
-ECS Fargate cluster that performs long-running tasks. ECS `run_ecs_task` function connects with our cluster and
-runs one of the tasks declared in the `dataall.tasks` package.
-
-
-The sub-package  `stacks` holds the
-definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
-
-1. environment:  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
-2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
-3. notebook: SageMaker Notebook resources
-4. pipeline: CI/CD pipeline resources
-5. redshift_cluster: Redshift stack
-6. sagemakerstudio: SageMaker Studio user profile
-
-
-To register a new type of stack, use the `@stack` decorator as in the example below  :
-
-```python
-
-from aws_cdk import (
-    aws_s3 as s3,
-    aws_sqs as sqs,
-    core
-)
-from dataall.cdkproxy.stacks import stack
-
-@stack(stack="mypredefinedstack")
-class MyPredefinedStack(core.Stack):
-    def __init__(self, scope, id, **kwargs):
-        super().__init__(scope, id, **kwargs)
-        #constructs goes here
-
-```
-
-**Let's take an end-to-end example** 
-
-In `data.api` dataset resolvers we have the GraphQL call to create a dataset:
-```
-def create_dataset(context: Context, source, input=None):
-[...]
-    stack_helper.deploy_dataset_stack(context, dataset)
-    return dataset
-```
-
-Which uses the stack_helper from `Stack` GraphQL Type (`backend/dataall/api/Objects/Stack/stack_helper.py`) to queue or 
-run the ECS task.
-```
-def deploy_stack(context, targetUri):
-    [.....]
-            if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
-                stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
-            else:
-                task: models.Task = models.Task(
-                    action='ecs.cdkproxy.deploy', targetUri=stack.stackUri
-                )
-                session.add(task)
-                session.commit()
-                Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-
-        return stack
-```
-Remember, in the `dataall.aws` package is where we defined the interface with ECS and the `run_cdkproxy_task` function.
-We are passing the task definition and the docker container to ECS which will use then the `dataall/cdkproxy` package
-deployed in a docker container. The docker image is stored in ECR in the tooling account.
-
-
 #### ModuleInterfaces in __init__.py
 Core and module code is executed in different compute components of the architecture of data.all. All backend code is 
 executed in AWS Lambdas (GraphQL Lambda, Worker Lambda, ESProxy Lambda) or in 
@@ -644,7 +573,9 @@ ECS Fargate tasks on demand (CDKProxy task and Share task) or scheduled (Stack u
 
 
 If a module is active, the module code needs to be imported to the corresponding compute component so that it can be executed.
-To import the necessary code into each of the compute components, we will use the `ModuleInterface` ABC class defined in `base.loader.py`. 
+To import the necessary code into each of the compute components, we will use the `ModuleInterface` ABC class defined in `base.loader.py`.
+
+![](img/HLD-backend-data.allV2.drawio.png#zoom#shadow)
 
 
 In the `__init__` file of each of the modules we will declare a `ModuleInterface` class for each compute component that
@@ -659,6 +590,14 @@ depending on the different infrastructure components that import module code.
 - HANDLERS - AWS Worker Lambda
 - STACK_UPDATER_TASK - ECS Task that updates CDK stacks
 - CATALOG_INDEXER_TASK - ECS Task that updates items indexed in the Catalog
+
+**Note**: if you want to add a new `ImportMode` class, you'll need to define the new import mode and use the 
+`loader` base functions in your compute component. In the `backend/api_handler.py` you can see one example. Pay
+attention to the `load_modules` function.
+
+```
+load_modules(modes={ImportMode.API})
+```
 
 Still not clear? Let's look at the following example from `modules.mlstudio`. `MLStudioApiModuleInterface` is a class
 that inherits `ModuleInterface`. `is_supported` returns `ImportMode.API` which means that the interface 
