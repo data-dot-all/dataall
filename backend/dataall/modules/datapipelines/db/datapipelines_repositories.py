@@ -14,6 +14,7 @@ from dataall.base.utils.naming_convention import (
 )
 from dataall.base.utils import slugify
 
+
 class DatapipelinesRepository(EnvironmentResource):
     """DAO layer for datapipelines"""
     _DEFAULT_PAGE = 1
@@ -77,13 +78,6 @@ class DatapipelinesRepository(EnvironmentResource):
         )
         session.add(activity)
         return pipeline
-
-    @staticmethod
-    def get_clone_url_http(session, environmentUri, repo):
-        env: Environment = session.query(Environment).get(
-            environmentUri
-        )
-        return f'codecommit::{env.region}://{repo}'
 
     @staticmethod
     def get_pipeline_by_uri(session, uri):

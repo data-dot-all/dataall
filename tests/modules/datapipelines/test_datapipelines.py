@@ -106,7 +106,7 @@ def test_nopermissions_pipelines(client, env_fixture, db, user, group, pipeline)
 
 def test_get_pipeline(client, env_fixture, db, user, group, pipeline, module_mocker):
     module_mocker.patch(
-        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_creds_from_aws',
+        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_credentials_from_aws',
         return_value=True,
     )
     response = client.query(
@@ -133,22 +133,6 @@ def test_get_pipeline(client, env_fixture, db, user, group, pipeline, module_moc
         groups=[group.name],
     )
     assert response.data.getDataPipelineCredsLinux
-
-    module_mocker.patch(
-        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService.ls',
-        return_value=[{'response': 'return value'}],
-    )
-    response = client.query(
-        """
-        query browseDataPipelineRepository($input:DataPipelineBrowseInput!){
-            browseDataPipelineRepository(input:$input)
-        }
-        """,
-        input=dict(branch='master', DataPipelineUri=pipeline.DataPipelineUri),
-        username=user.username,
-        groups=[group.name],
-    )
-    assert response.data.browseDataPipelineRepository
 
 
 def test_delete_pipelines(client, env_fixture, db, user, group, pipeline):
