@@ -2,12 +2,14 @@ import json
 import logging
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.activity.db.activity_models import Activity
+from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
@@ -16,11 +18,7 @@ from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, 
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
     CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
-from dataall.base.utils import slugify
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,116 +29,104 @@ class DataPipelineService:
     @has_resource_permission(CREATE_PIPELINE)
     @has_group_permission(CREATE_PIPELINE)
     def create_pipeline(
-        session,
-        admin_group,
-        username: str,
         uri: str,
+        admin_group: str,
         data: dict = None,
     ) -> DataPipeline:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
-        environment = EnvironmentService.get_environment_by_uri(session, uri)
-        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            if not enabled:
+                raise exceptions.UnauthorizedOperation(
+                    action=CREATE_PIPELINE,
+                    message=f'Pipelines feature is disabled for the environment {environment.label}',
+                )
 
-        if not enabled:
-            raise exceptions.UnauthorizedOperation(
-                action=CREATE_PIPELINE,
-                message=f'Pipelines feature is disabled for the environment {environment.label}',
+            pipeline = DatapipelinesRepository.create_pipeline(
+                session=session,
+                username=context.username,
+                admin_group=admin_group,
+                uri=environment.environmentUri,
+                data=data
             )
 
-        pipeline: DataPipeline = DataPipeline(
-            owner=username,
-            environmentUri=environment.environmentUri,
-            SamlGroupName=admin_group,
-            label=data['label'],
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
-            AwsAccountId=environment.AwsAccountId,
-            region=environment.region,
-            repo=slugify(data['label']),
-            devStrategy=data['devStrategy'],
-            template="",
-        )
-
-        session.add(pipeline)
-        session.commit()
-
-        aws_compliant_name = NamingConventionService(
-            target_uri=pipeline.DataPipelineUri,
-            target_label=pipeline.label,
-            pattern=NamingConventionPattern.DEFAULT,
-            resource_prefix=environment.resourcePrefix,
-        ).build_compliant_name()
-
-        pipeline.repo = aws_compliant_name
-        pipeline.name = aws_compliant_name
-
-        activity = Activity(
-            action='PIPELINE:CREATE',
-            label='PIPELINE:CREATE',
-            owner=username,
-            summary=f'{username} created dashboard {pipeline.label} in {environment.label}',
-            targetUri=pipeline.DataPipelineUri,
-            targetType='pipeline',
-        )
-        session.add(activity)
-
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=data['SamlGroupName'],
-            permissions=PIPELINE_ALL,
-            resource_uri=pipeline.DataPipelineUri,
-            resource_type=DataPipeline.__name__,
-        )
-
-        if environment.SamlGroupName != pipeline.SamlGroupName:
             ResourcePolicy.attach_resource_policy(
                 session=session,
-                group=environment.SamlGroupName,
+                group=admin_group,
                 permissions=PIPELINE_ALL,
                 resource_uri=pipeline.DataPipelineUri,
                 resource_type=DataPipeline.__name__,
             )
 
+            if environment.SamlGroupName != pipeline.SamlGroupName:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=environment.SamlGroupName,
+                    permissions=PIPELINE_ALL,
+                    resource_uri=pipeline.DataPipelineUri,
+                    resource_type=DataPipeline.__name__,
+                )
+
+
+            if data['devStrategy'] == 'cdk-trunk':
+                Stack.create_stack(
+                    session=session,
+                    environment_uri=pipeline.environmentUri,
+                    target_type='cdkpipeline',
+                    target_uri=pipeline.DataPipelineUri,
+                    target_label=pipeline.label,
+                    payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+                )
+            else:
+                Stack.create_stack(
+                    session=session,
+                    environment_uri=pipeline.environmentUri,
+                    target_type='pipeline',
+                    target_uri=pipeline.DataPipelineUri,
+                    target_label=pipeline.label,
+                    payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+                )
+
+            stack_helper.deploy_stack(pipeline.DataPipelineUri)
         return pipeline
 
     @staticmethod
     @has_group_permission(CREATE_PIPELINE)
     def create_pipeline_environment(
-        session,
-        admin_group,
-        uri,
-        username: str,
         data: dict = None,
     ) -> DataPipelineEnvironment:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
-        environment = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
-        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            if not enabled:
+                raise exceptions.UnauthorizedOperation(
+                    action=CREATE_PIPELINE,
+                    message=f'Pipelines feature is disabled for the environment {environment.label}',
+                )
 
-        if not enabled:
-            raise exceptions.UnauthorizedOperation(
-                action=CREATE_PIPELINE,
-                message=f'Pipelines feature is disabled for the environment {environment.label}',
+            pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, data['pipelineUri'])
+
+            pipeline_env: DataPipelineEnvironment = DataPipelineEnvironment(
+                owner=context.username,
+                label=f"{pipeline.label}-{environment.label}",
+                environmentUri=environment.environmentUri,
+                environmentLabel=environment.label,
+                pipelineUri=pipeline.DataPipelineUri,
+                pipelineLabel=pipeline.label,
+                envPipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}{data['stage']}",
+                AwsAccountId=environment.AwsAccountId,
+                region=environment.region,
+                stage=data['stage'],
+                order=data['order'],
+                samlGroupName=data['samlGroupName']
             )
 
-        pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, data['pipelineUri'])
-
-        pipeline_env: DataPipelineEnvironment = DataPipelineEnvironment(
-            owner=username,
-            label=f"{pipeline.label}-{environment.label}",
-            environmentUri=environment.environmentUri,
-            environmentLabel=environment.label,
-            pipelineUri=pipeline.DataPipelineUri,
-            pipelineLabel=pipeline.label,
-            envPipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}{data['stage']}",
-            AwsAccountId=environment.AwsAccountId,
-            region=environment.region,
-            stage=data['stage'],
-            order=data['order'],
-            samlGroupName=data['samlGroupName']
-        )
-
-        session.add(pipeline_env)
-        session.commit()
+            session.add(pipeline_env)
+            session.commit()
 
         return pipeline_env
 
@@ -166,22 +152,27 @@ class DataPipelineService:
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(GET_PIPELINE)
     def get_pipeline(
-        session,
         uri: str,
     ) -> DataPipeline:
-        return DatapipelinesRepository.get_pipeline_by_uri(session, uri)
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatapipelinesRepository.get_pipeline_by_uri(session, uri)
 
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(UPDATE_PIPELINE)
     def update_pipeline(
-        session, uri, data=None
+        uri, data=None
     ) -> DataPipeline:
-        pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
-        if data:
-            if isinstance(data, dict):
-                for k in data.keys():
-                    setattr(pipeline, k, data.get(k))
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
+            if data:
+                if isinstance(data, dict):
+                    for k in data.keys():
+                        setattr(pipeline, k, data.get(k))
+        if (pipeline.template == ""):
+            stack_helper.deploy_stack(pipeline.DataPipelineUri)
         return pipeline
 
     @staticmethod
@@ -198,10 +189,11 @@ class DataPipelineService:
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(GET_PIPELINE)
     def get_pipeline_environment(
-        session,
         uri: str,
     ) -> DataPipeline:
-        return DatapipelinesRepository.get_pipeline_environment_by_uri(session, uri)
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatapipelinesRepository.get_pipeline_environment_by_uri(session, uri)
 
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)

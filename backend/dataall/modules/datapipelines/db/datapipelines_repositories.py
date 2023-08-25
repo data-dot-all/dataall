@@ -2,11 +2,17 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.activity.db.activity_models import Activity
 from dataall.base.db import exceptions, paginate
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
-
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
+from dataall.base.utils import slugify
 
 class DatapipelinesRepository(EnvironmentResource):
     """DAO layer for datapipelines"""
@@ -23,6 +29,54 @@ class DatapipelinesRepository(EnvironmentResource):
                 ))
             .count()
         )
+
+    @staticmethod
+    def create_pipeline(
+            session,
+            username: str,
+            admin_group: str,
+            uri: str,
+            data: dict = None,
+    ) -> DataPipeline:
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
+
+        pipeline: DataPipeline = DataPipeline(
+            owner=username,
+            environmentUri=environment.environmentUri,
+            SamlGroupName=admin_group,
+            label=data['label'],
+            description=data.get('description', 'No description provided'),
+            tags=data.get('tags', []),
+            AwsAccountId=environment.AwsAccountId,
+            region=environment.region,
+            repo=slugify(data['label']),
+            devStrategy=data['devStrategy'],
+            template="",
+        )
+
+        session.add(pipeline)
+        session.commit()
+
+        aws_compliant_name = NamingConventionService(
+            target_uri=pipeline.DataPipelineUri,
+            target_label=pipeline.label,
+            pattern=NamingConventionPattern.DEFAULT,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        pipeline.repo = aws_compliant_name
+        pipeline.name = aws_compliant_name
+
+        activity = Activity(
+            action='PIPELINE:CREATE',
+            label='PIPELINE:CREATE',
+            owner=username,
+            summary=f'{username} created pipeline {pipeline.label} in {environment.label}',
+            targetUri=pipeline.DataPipelineUri,
+            targetType='pipeline',
+        )
+        session.add(activity)
+        return pipeline
 
     @staticmethod
     def get_clone_url_http(session, environmentUri, repo):

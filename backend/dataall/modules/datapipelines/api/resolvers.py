@@ -7,7 +7,6 @@ from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
@@ -20,62 +19,17 @@ log = logging.getLogger(__name__)
 
 def create_pipeline(context: Context, source, input=None):
     _validate_input(input)
-
-    with context.engine.scoped_session() as session:
-        pipeline = DataPipelineService.create_pipeline(
-            session=session,
-            admin_group=input['SamlGroupName'],
-            username=context.username,
-            uri=input['environmentUri'],
-            data=input,
-        )
-        if input['devStrategy'] == 'cdk-trunk':
-            Stack.create_stack(
-                session=session,
-                environment_uri=pipeline.environmentUri,
-                target_type='cdkpipeline',
-                target_uri=pipeline.DataPipelineUri,
-                target_label=pipeline.label,
-                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-            )
-        else:
-            Stack.create_stack(
-                session=session,
-                environment_uri=pipeline.environmentUri,
-                target_type='pipeline',
-                target_uri=pipeline.DataPipelineUri,
-                target_label=pipeline.label,
-                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-            )
-
-    stack_helper.deploy_stack(pipeline.DataPipelineUri)
-
-    return pipeline
+    admin_group = input['SamlGroupName']
+    uri = input['environmentUri']
+    return DataPipelineService.create_pipeline(uri=uri, admin_group=admin_group, data=input)
 
 
 def create_pipeline_environment(context: Context, source, input=None):
-    with context.engine.scoped_session() as session:
-        pipeline_env = DataPipelineService.create_pipeline_environment(
-            session=session,
-            admin_group=input['samlGroupName'],
-            uri=input['environmentUri'],
-            username=context.username,
-            data=input,
-        )
-    return pipeline_env
+    return DataPipelineService.create_pipeline_environment(data=input)
 
 
 def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict = None):
-    with context.engine.scoped_session() as session:
-        pipeline = DataPipelineService.update_pipeline(
-            session=session,
-            uri=DataPipelineUri,
-            data=input,
-        )
-    if (pipeline.template == ""):
-        stack_helper.deploy_stack(pipeline.DataPipelineUri)
-
-    return pipeline
+    return DataPipelineService.update_pipeline(uri=DataPipelineUri,data=input)
 
 
 def list_pipelines(context: Context, source, filter: dict = None):
@@ -91,11 +45,7 @@ def list_pipelines(context: Context, source, filter: dict = None):
 
 
 def get_pipeline(context: Context, source, DataPipelineUri: str = None):
-    with context.engine.scoped_session() as session:
-        return DataPipelineService.get_pipeline(
-            session=session,
-            uri=DataPipelineUri,
-        )
+    return DataPipelineService.get_pipeline(uri=DataPipelineUri)
 
 
 def resolve_user_role(context: Context, source: DataPipeline):
@@ -109,11 +59,7 @@ def resolve_user_role(context: Context, source: DataPipeline):
 
 
 def get_pipeline_environment(context: Context, source: DataPipelineEnvironment, **kwargs):
-    with context.engine.scoped_session() as session:
-        return DataPipelineService.get_pipeline_environment(
-            session=session,
-            uri=source.envPipelineUri,
-        )
+    return DataPipelineService.get_pipeline_environment(uri=source.envPipelineUri)
 
 
 def list_pipeline_environments(context: Context, source: DataPipeline, filter: dict = None):
