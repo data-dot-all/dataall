@@ -71,11 +71,11 @@ In the pipeline stack `PipelineStack` we deploy the following stacks and sub-sta
     - `S3ResourcesStack` : S3 resources
     - `SecretsManagerStack` : AWS SSM Secrets
     - `SqsStack` : SQS
-    - `VpcStack`: VPC
+    - `VpcStack`: Backend VPC and Networking Componenets (e.g. subnets, security groups, service endpoints, etc.)
 - `AuroraServerlessStack`: Aurora RDS Database and associated resources - for integration testing
 - `CodeArtifactStack`: for our Docker Images
 - `ECRStage`: for our Docker Images
-- `VpcStack`
+- `VpcStack`: Tooling VPC and Networking Componenets (e.g. subnets, security groups, service endpoints, etc.)
 
 There are other elements in the `deploy` folder:
 ```
@@ -95,7 +95,7 @@ backend/
 ├── dataall/  : application package (explained in detail below) 
 ├── docker/  :  Dockerfiles deployed in ECR (/prod) and used in docker compose locally (/dev)
 ├── migrations/ : scripts used by alembic to update the Aurora RDS database tables. README explaining details.
-├── alembic.ini : used in migrations
+├── alembic.ini : used in database migrations
 ├── api_handler.py : GraphQL Lambda handler
 ├── aws_handler.py : Worker Lambda handler
 ├── search_handler.py :  ESProxy Lambda handler
@@ -129,7 +129,7 @@ base/
 #### db
 
 Backend code relies on the popular Python's `sqlalchemy` ORM package to connect and perform operations
-against the RDS database. Among other components in `base.db`we export:
+against the RDS database. Among other components in `base.db` we export:
 
 1. `get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
 2. `Base` : a SQL alchemy Base metadata class
@@ -189,10 +189,10 @@ core-module/
 ├── any additional functionality
 ```
 The sub-packages `api`, `db` and `cdk` are better explained in the modules/ section. Here, we will focus
-on those core additional functionalities that are used by all modules: Feature toogle, Permissions, WorkerHandler and Stack helper.
+on those core additional functionalities that are used by all modules: Feature toggle, Permissions, WorkerHandler and Stack helper.
 
-#### Feature toogle
-In `core/feature_toogle_checker` you will find a decorator that allows users to enable or disable certain
+#### Feature toggle
+In `core/feature_toggle_checker` you will find a decorator that allows users to enable or disable certain
 API calls from the core functionalities or the modules functionalities. This is useful whenever a customer wants to disable a particular feature
 on the server side. For example, in the following case the `config.json` file has disabled a feature called `env_aws_actions`.
 
@@ -205,7 +205,7 @@ on the server side. For example, in the following case the `config.json` file ha
 ```
 
 If we go to the `core.environment.api` package we will see that some resolvers have been decorated depending on this flag.
-Any resolver, any api call, can be enabled or disabled by introducing more core-toogle features in both the core and/or the modules.
+Any resolver, any api call, can be enabled or disabled by introducing more core-toggle features in both the core and/or the modules.
 ```
 @is_feature_enabled('core.features.env_aws_actions')
 def _get_environment_group_aws_session(
@@ -216,8 +216,10 @@ def _get_environment_group_aws_session(
 
 #### Permissions
 The `core.permissions` package implements the permission logic for the application and adds the permissions for the core modules.
-In particular, `permission_checker.py` contains the decorators that validate the user permissions with respect to a resource, 
-`db` the RDS tables and operations with RDS, `api` the calls related to permissions and `permissions.py` the core module permission definitions.
+In particular, `permission_checker.py` contains the decorators that validate the user permissions with respect to a resource.
+- `db/` - the RDS tables and operations with RDS
+- `api/` - the calls related to permissions
+- `permissions.py` - the core module permission definitions
 
 #### WorkerHandler
 In `core/tasks/service_handlers.py` we defined the `WorkerHandler` Python class, that routes tasks 
@@ -232,7 +234,7 @@ functions that can be run by the Worker.
     def FUNCTION_NAME(engine, task: Task):
 ```
 
-We will use the 2 apis of the `Worker` class to send tasks to the Lambda and use the corresponding registered handler.
+We use the 2 apis of the `Worker` class to send tasks to the Lambda and use the corresponding registered handler.
 
 1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
 2. `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
@@ -265,9 +267,9 @@ def handler(event, context=None):
 ```
 
 
-Finally, the `WorkerHandler` will `process` the tasks: it reads the task metadata from the RDS Database, routes to 
+Finally, the `WorkerHandler` will `process` the tasks by reading the task metadata from the RDS Database, routing to 
 the decorated handler function 
-and assumes a role in the AWS Account where the action needs to be performed.
+and assuming a role in the AWS Account where the action needs to be performed.
 
 If you want to see an example check the `core.stacks` or "Stack helper" package which contains a number of CloudFormation handlers.
 
@@ -295,7 +297,7 @@ module/
 ├── cdk/  :  CDK stacks to be deployed
 ├── db/ : models (database table models) and repositories (database operations)
 ├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
-├── indexers/ : eh eh he he
+├── indexers/ : code to handle upsert/delete operations of data.all resources to the OpenSearch Catalog
 ├── services/ : business logic
 ├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
 ├── __init__.py
@@ -303,7 +305,7 @@ module/
 
 #### db
 
-The idea is that this package processes all requests to the RDS database for the module metadata, 
+This package processes all requests to the RDS database for the module metadata, 
 it can be from the Lambda API Handler, Lambda Worker or the ECS tasks.
 
 The package contains 2 types of classes:
@@ -327,7 +329,7 @@ of a query to find all deleted tables of a specific data.all dataset.
         )
 ```
 #### indexers
-This package is only needed for modules that need to interact with the OpenSearch Catalog. It leverages the 
+This package is required for modules that need to interact with the OpenSearch Catalog. It leverages the 
 `BaseIndexer` class to implement the different upsert and delete operations in the catalog.
 
 
@@ -422,9 +424,9 @@ class DatasetStack(Stack):
 **Environment extensions**
 
 For some modules, the environment stack includes base resources that are used for all users in the 
-environment account. Taking the example of the `mltudio` module, we see that in `cdk/mlstudio_stack.py`
+environment account. Taking the example of the `mlstudio` module, we see that in `cdk/mlstudio_stack.py`
 we define a class that uses the base class `EnvironmentStackExtension`. This class requires the definition of
-a function called `extent`, that "extends" the resources created by the environment stack with the module particular
+a function called `extent`, that "extends" the resources created by the environment stack with the module-specific
 resources. In this case we add the SageMaker domain to the environment stack.
 
 ```
@@ -599,12 +601,16 @@ attention to the `load_modules` function.
 load_modules(modes={ImportMode.API})
 ```
 
-Still not clear? Let's look at the following example from `modules.mlstudio`. `MLStudioApiModuleInterface` is a class
+For a deeper dive - let's look at the following example from `modules.mlstudio`:
+
+`MLStudioApiModuleInterface` is a class
 that inherits `ModuleInterface`. `is_supported` returns `ImportMode.API` which means that the interface 
 will import code into the GraphQL API Lambda. 
 
 Since we want the GraphQL API Lambda to execute module code, we will import `dataall.modules.mlstudio.api` and other 
-API related sub-packages when the interface class is initialized. In the sections below, we will dive deep
+API related sub-packages when the interface class is initialized. 
+
+In the sections below, we will dive deep
 into the typical sub-packages for each ImportMode, but for the loading just remember: interface to import module code
 in each of the compute components.
 
@@ -647,7 +653,7 @@ Careful, Hooks are a way to reuse stateful logic but not the state itself.
 
 
 We use some React hooks such as useState, useEffect and useCallback in our UI views. In addition, we also define
-some custom hooks in the `hooks` folder:
+some custom hooks in the `hooks/` folder:
 
 ```
 hooks/:
@@ -662,7 +668,7 @@ hooks/:
 
 We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
 fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
-Inside `hooks`, in `useClient` we initialize `ApolloClient`.
+Inside `hooks/`, in `useClient` we initialize `ApolloClient`.
 
 ### api
 This folder contains the GraphQL API definitions for each of our GraphQL Types.
@@ -702,7 +708,7 @@ Contains each of the UI views. Each data.all component (e.g. Dataset, Environmen
 of views. There are views that apply to multiple components. For example, we use the Stack views
 in several tabs of our components. 
 
-Inside the views we use hooks from `hooks` and call the GraphQL APIs defined in `api`. 
+Inside the views we use hooks from `hooks/` and call the GraphQL APIs defined in `api/`. 
 
 ### components, theme and icons
 Auxiliary UI resources used in views:
