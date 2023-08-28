@@ -28,6 +28,7 @@ class ImportMode(Enum):
 
     API = auto()
     CDK = auto()
+    CDK_CLI_EXTENSION = auto()
     HANDLERS = auto()
     STACK_UPDATER_TASK = auto()
     CATALOG_INDEXER_TASK = auto()

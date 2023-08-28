@@ -33,8 +33,8 @@ class CDKCliWrapperExtension:
         raise NotImplementedError("Method extend_deployment is not implemented")
 
     @abstractmethod
-    def cleanup(self):
-        raise NotImplementedError("Method cleanup is not implemented")
+    def post_deployment(self):
+        raise NotImplementedError("Method post_deployment is not implemented")
 
 
 _CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, CDKCliWrapperExtension] = {}
@@ -72,7 +72,7 @@ def update_stack_output(session, stack):
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
     logger.warning(f'Loading stacks and _CDK_CLI_WRAPPER_EXTENSIONS {_CDK_CLI_WRAPPER_EXTENSIONS}')
     from dataall.base.loader import load_modules, ImportMode
-    load_modules(modes={ImportMode.CDK})
+    load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
 
     logger.warning(f'Starting new stack from  stackid {stackid}')
     region = os.getenv('AWS_REGION', 'eu-west-1')
@@ -171,11 +171,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 cwd=cwd,
             )
 
-            if stack.stack == 'cdkpipeline':
-                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
-                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
-
-                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].cleanup()
+            if extension:
+                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].post_deployment()
+            else:
+                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the post-deployment')
 
             if process.returncode == 0:
                 meta = describe_stack(stack)
