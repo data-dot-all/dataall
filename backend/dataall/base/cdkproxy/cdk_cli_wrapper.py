@@ -123,11 +123,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             else:
                 logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment')
 
-            cwd = (
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
-                if path
-                else os.path.dirname(os.path.abspath(__file__))
-            )
+            cwd = (path if path else os.path.dirname(os.path.abspath(__file__)))
 
             app_path = app_path or './app.py'
 
