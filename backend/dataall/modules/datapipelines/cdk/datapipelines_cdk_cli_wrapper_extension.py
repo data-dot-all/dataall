@@ -19,6 +19,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
         venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
         self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, stack.targetUri)
         path = f'./cdkpipeline/{self.pipeline.repo}/'
+        app_path = './app.py'
         if not venv_name:
             logger.info('Successfully Updated CDK Pipeline')
             meta = describe_stack(stack)
