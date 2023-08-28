@@ -57,32 +57,28 @@ class DatapipelinesCdkModuleInterface(ModuleInterface):
 
     @staticmethod
     def is_supported(modes: List[ImportMode]):
+        # return True if CDK in modes
         return ImportMode.CDK in modes
 
     def __init__(self):
         import dataall.modules.datapipelines.cdk
+
+        log.info("Datapipelines stacks have been imported")
+
+
+class DatapipelinesCdkCLIExtensionModuleInterface(ModuleInterface):
+    """Loads datapipelines cdk CLI extension - for cdkpipelines """
+
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
+        # return True if CDK_CLI extension in modes
+        return ImportMode.CDK_CLI_EXTENSION in modes
+
+    def __init__(self):
         from dataall.base.cdkproxy.cdk_cli_wrapper import _CDK_CLI_WRAPPER_EXTENSIONS
         from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import \
             DatapipelinesCDKCliWrapperExtension
 
         _CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension()
 
-        log.info("Datapipelines stacks have been imported")
-
-
-
-# class DatapipelinesCdkCLIExtensionModuleInterface(ModuleInterface):
-#     """Loads datapipelines cdk CLI extension - for cdkpipelines """
-#
-#     @staticmethod
-#     def is_supported(modes: List[ImportMode]):
-#         return ImportMode.CDK_CLI_EXTENSION in modes
-#
-#     def __init__(self):
-#         from dataall.base.cdkproxy.cdk_cli_wrapper import _CDK_CLI_WRAPPER_EXTENSIONS
-#         from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import \
-#             DatapipelinesCDKCliWrapperExtension
-#
-#         _CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension()
-#
-#         log.info("Datapipelines cdkpipeline stack has been imported as CDK_CLI_WRAPPER_EXTENSION")
+        log.info("Datapipelines cdkpipeline stack has been imported as CDK_CLI_WRAPPER_EXTENSION")
