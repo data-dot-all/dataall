@@ -15,9 +15,8 @@ class RamClient:
         self._account_id = account_id
 
     def _get_resource_share_invitations(
-        self, resource_share_arns, receiver_account
+        self, resource_share_arns, sender_account, receiver_account
     ):
-        sender_account = self._account_id
         log.info(f'Listing invitations for resourceShareArns: {resource_share_arns}')
         try:
             resource_share_invitations = []
@@ -89,7 +88,7 @@ class RamClient:
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
         ram_invitations = target_ram._get_resource_share_invitations(
-            resource_share_arns, source['accountid'],
+            resource_share_arns, source['accountid'], target['accountid']
         )
         log.info(
             f'Found {len(ram_invitations)} RAM invitations for resourceShareArn: {resource_share_arns}'
