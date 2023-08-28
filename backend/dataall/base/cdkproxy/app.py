@@ -7,13 +7,13 @@ from aws_cdk import Environment, App
 from tabulate import tabulate
 
 from dataall.base.cdkproxy.stacks import instanciate_stack
-from dataall.base.loader import load_modules, ImportMode
+#from dataall.base.loader import load_modules, ImportMode
 
 print(sys.version)
 logger = logging.getLogger('cdkapp process')
 logger.setLevel('INFO')
 
-load_modules(modes={ImportMode.CDK})
+#load_modules(modes={ImportMode.CDK})
 
 
 class CdkRunner:

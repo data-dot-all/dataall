@@ -70,10 +70,9 @@ def update_stack_output(session, stack):
 
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
-    logger.warning(f'Loading stacks and _CDK_CLI_WRAPPER_EXTENSIONS {_CDK_CLI_WRAPPER_EXTENSIONS}')
-    from dataall.base.loader import load_modules, ImportMode
-    load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
-
+    #from dataall.base.loader import load_modules, ImportMode
+    #load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
+    logger.warning(f' _CDK_CLI_WRAPPER_EXTENSIONS {_CDK_CLI_WRAPPER_EXTENSIONS}')
     logger.warning(f'Starting new stack from  stackid {stackid}')
     region = os.getenv('AWS_REGION', 'eu-west-1')
     sts = boto3.client(
