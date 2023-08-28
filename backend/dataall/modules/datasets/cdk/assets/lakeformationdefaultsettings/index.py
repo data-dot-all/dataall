@@ -9,13 +9,37 @@ log = logging.getLogger(__name__)
 
 AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
 AWS_REGION = os.environ.get('AWS_REGION')
-lf_client = boto3.client("lakeformation", region_name=os.environ.get("AWS_REGION"))
+lf_client = boto3.client("lakeformation", region_name=AWS_REGION)
+glue_client = boto3.client('glue', region_name=AWS_REGION)
 iam_client = boto3.client('iam')
 
 
 def clean_props(**props):
     data = {k: props[k] for k in props.keys() if k != 'ServiceToken'}
     return data
+
+
+def create_default_glue_database():
+    log.info(f"Get default Glue database in {AWS_ACCOUNT}/{AWS_REGION}, if it does not exist create")
+    default_db_exists = False
+    try:
+        glue_client.get_database(Name="default")
+        default_db_exists = True
+    except ClientError as e:
+        log.info(f"Could not get default glue database, received {str(e)}. Creating default database...")
+        try:
+            response = glue_client.create_database(
+                DatabaseInput={
+                    'Name': 'default',
+                    'Description': 'Default Hive database',
+                    'LocationUri': 'file:/tmp/spark-warehouse'
+                },
+            )
+            default_db_exists = True
+        except ClientError as e:
+            log.exception(f"Could not create default Glue Database in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}")
+            raise Exception(f"Could not create Glue Database in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}")
+    return default_db_exists
 
 
 def validate_principals(principals):
@@ -28,7 +52,7 @@ def validate_principals(principals):
                 log.info(f'Adding principal {principal} to validated principals')
                 validated_principals.append(principal)
             except Exception as e:
-                log.exception(f'Failed to get role {principal} due to: {e}')
+                log.exception(f'Failed to get role {principal} due to: {str(e)}')
     return validated_principals
 
 
@@ -71,6 +95,10 @@ def on_create(event):
             },
         )
         log.info(f'Successfully configured AWS LakeFormation data lake admins: {validated_new_admins}| {response}')
+
+        default_db = create_default_glue_database()
+        if default_db:
+            log.info(f'Default glue database created = {default_db}')
 
     except ClientError as e:
         log.exception(f'Failed to setup AWS LakeFormation data lake admins due to: {e}')
