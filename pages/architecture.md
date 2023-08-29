@@ -407,28 +407,6 @@ We also have the option to **import** a dataset, in such case we can reuse an ex
 -   Glue jobs related to the dataset are by default running outside the VPC.
 
 
-### Warehouses
-
-Warehouse are Amazon Redshift Clusters created or imported by data.all
-that allows data teams to implement secure, automated, data warehousing
-including loading data from S3 through Spectrum. A warehouse in data.all is created
-inside an environment (in its linked AWS account) and it is mapped to:
-
-  |Service|           Resource|   Description|
-  |-----------------| ---------- |----------------------------------------------|
-  |Redshift |         Cluster  |  Amazon Redshift cluster for data warehousing|
-  |KMS|               Key |       Key encryption used by the Redshift cluster|
-  |Secrets Manager|   Secret|     Stores Redshift cluster user credentials|
-
-
-**Security and Networking configuration**:
-
--   Encryption: Amazon Redshift Cluster is encrypted with KMS.
--   Traceability: All access to data is logged through AWS CloudTrail
-    logs.
--   Networking Configuration: Redshift cluster is deployed only within a
-    private subnet.
-
 ### Notebooks
 
 Notebooks in data.all are a concept that allows Data Scientists to build
