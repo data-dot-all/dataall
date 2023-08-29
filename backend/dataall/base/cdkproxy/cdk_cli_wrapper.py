@@ -116,7 +116,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             extension = _CDK_CLI_WRAPPER_EXTENSIONS.get(stack.stack)
             if extension:
                 logger.info(f'Extending CDK deployment process with steps for the following stack: {stack.stack}')
-                finish_deployment, path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
+                finish_deployment, path, app_path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
                     stack=stack,
                     session=session,
                     env=env

@@ -42,7 +42,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
             }
         )
 
-        return False, path
+        return False, path, app_path
 
     def post_deployment(self):
         CDKPipelineStack.clean_up_repo(path=f'./{self.pipeline.repo}')
