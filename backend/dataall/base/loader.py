@@ -238,16 +238,15 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
                 "Declare the module in depends_on"
             )
 
-    # 4) Takes all loaded packages filtering those that support the current import modes it checks that it is expected to be loaded as a checked_module
+    # 4) Checks all references for modules (when ModuleInterfaces don't exist or not supported)
     checked_module_names = {module.name() for module in expected_load}
+    # Modules from the config that doesn't support the current mode weren't added in Step1, adding them here
     checked_module_names |= in_config
-    dataall_packages_names = [_get_module_name(package) for package in sys.modules.keys() if package.startswith(_MODULE_PREFIX) and package != __name__]
-    for module in _all_modules():
-        if module.name() in dataall_packages_names and module.is_supported(modes):
-            if module.name() and module.name() not in checked_module_names:
-                raise ImportError(f"The package {module.name()} has been imported, but it doesn't contain ModuleInterface."
-                                  f"checked_packages that can be loaded: {checked_module_names} "
-                                  f"data.all packages loaded: {dataall_packages_names}")
+    for module in sys.modules.keys():
+        if module.startswith(_MODULE_PREFIX) and module != __name__:  # skip loader
+            name = _get_module_name(module)
+            if name and name not in checked_module_names:
+                raise ImportError(f"The package {module} has been imported, but it doesn't contain ModuleInterface")
 
 
 def _describe_loading(in_config: Set[str], inactive: Set[str]):
