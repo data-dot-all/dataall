@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, 
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)

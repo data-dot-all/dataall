@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.datasets import Dataset
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
