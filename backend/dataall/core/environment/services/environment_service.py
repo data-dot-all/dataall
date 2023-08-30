@@ -332,6 +332,15 @@ class EnvironmentService:
                 message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
             )
 
+        group_env_consumption_roles = EnvironmentService.query_user_environment_consumption_roles(
+            session, [group], uri, {}
+        ).all()
+        if group_env_consumption_roles:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Team',
+                message=f'Team: {group} has consumption role(s) on this environment.',
+            )
+
         group_membership = EnvironmentService.find_environment_group(
             session, group, environment.environmentUri
         )
