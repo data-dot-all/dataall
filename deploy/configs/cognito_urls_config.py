@@ -110,11 +110,13 @@ def setup_cognito(
                         {'Name': 'email', 'Value': f'{username}@amazonaws.com'}
                     ],
                     TemporaryPassword='da@'
+                    + random.SystemRandom().choice(string.ascii_uppercase)
+                    + random.SystemRandom().choice(string.digits)
                     + ''.join(
                         random.SystemRandom().choice(
                             string.ascii_uppercase + string.digits
                         )
-                        for _ in range(13)
+                        for _ in range(11)
                     ),
                     MessageAction='SUPPRESS',
                 )
