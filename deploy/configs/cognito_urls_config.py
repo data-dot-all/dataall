@@ -114,15 +114,17 @@ def setup_cognito(
                     UserAttributes=[
                         {'Name': 'email', 'Value': f'{username}@amazonaws.com'}
                     ],
-                    TemporaryPassword=shuffle_password('da@'
-                    + random.SystemRandom().choice(string.ascii_uppercase)
-                    + random.SystemRandom().choice(string.digits)
-                    + ''.join(
-                        random.SystemRandom().choice(
-                            string.ascii_uppercase + string.digits
+                    TemporaryPassword='da@'
+                    + shuffle_password(
+                        random.SystemRandom().choice(string.ascii_uppercase)
+                        + random.SystemRandom().choice(string.digits)
+                        + ''.join(
+                            random.SystemRandom().choice(
+                                string.ascii_uppercase + string.digits
+                            )
+                            for _ in range(11)
                         )
-                        for _ in range(11)
-                    )),
+                    ),
                     MessageAction='SUPPRESS',
                 )
                 print(f'User Created Successfully...: {response}')
