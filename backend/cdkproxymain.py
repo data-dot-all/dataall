@@ -14,6 +14,7 @@ from dataall.base.cdkproxy.stacks import StackManager
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.stacks.db.stack_models import Stack
 
+
 print('\n'.join(sys.path))
 
 logger = logging.getLogger('cdksass')

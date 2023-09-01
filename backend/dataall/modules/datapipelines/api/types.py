@@ -1,6 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datapipelines.api.resolvers import list_pipeline_environments, \
-    get_clone_url_http, get_stack, resolve_user_role
+from dataall.modules.datapipelines.api.resolvers import resolve_pipeline_environments, resolve_clone_url_http, resolve_stack, resolve_user_role
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.core.environment.api.resolvers import resolve_environment
 from dataall.core.organizations.api.resolvers import resolve_organization_by_env
@@ -27,13 +26,12 @@ DataPipeline = gql.ObjectType(
         gql.Field(
             'developmentEnvironments',
             type=gql.Ref('DataPipelineEnvironmentSearchResults'),
-            resolver=list_pipeline_environments,
+            resolver=resolve_pipeline_environments,
         ),
         gql.Field('template', type=gql.String),
         gql.Field('devStrategy', type=gql.String),
-        gql.Field('cloneUrlHttp', gql.String, resolver=get_clone_url_http),
-        gql.Field('stack', gql.Ref('Stack'), resolver=get_stack),
-        # gql.Field('cicdStack', gql.Ref('Stack'), resolver=get_cicd_stack),
+        gql.Field('cloneUrlHttp', gql.String, resolver=resolve_clone_url_http),
+        gql.Field('stack', gql.Ref('Stack'), resolver=resolve_stack),
         gql.Field(
             'userRoleForPipeline',
             type=DataPipelineRole.toGraphQLEnum(),

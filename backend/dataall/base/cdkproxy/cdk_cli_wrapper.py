@@ -33,8 +33,8 @@ class CDKCliWrapperExtension:
         raise NotImplementedError("Method extend_deployment is not implemented")
 
     @abstractmethod
-    def cleanup(self):
-        raise NotImplementedError("Method cleanup is not implemented")
+    def post_deployment(self):
+        raise NotImplementedError("Method post_deployment is not implemented")
 
 
 _CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, CDKCliWrapperExtension] = {}
@@ -113,7 +113,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             extension = _CDK_CLI_WRAPPER_EXTENSIONS.get(stack.stack)
             if extension:
                 logger.info(f'Extending CDK deployment process with steps for the following stack: {stack.stack}')
-                finish_deployment, path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
+                finish_deployment, path, app_path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
                     stack=stack,
                     session=session,
                     env=env
@@ -123,11 +123,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             else:
                 logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment')
 
-            cwd = (
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
-                if path
-                else os.path.dirname(os.path.abspath(__file__))
-            )
+            cwd = (path if path else os.path.dirname(os.path.abspath(__file__)))
 
             app_path = app_path or './app.py'
 
@@ -171,11 +167,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 cwd=cwd,
             )
 
-            if stack.stack == 'cdkpipeline':
-                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
-                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
-
-                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].cleanup()
+            if extension:
+                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].post_deployment()
+            else:
+                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the post-deployment')
 
             if process.returncode == 0:
                 meta = describe_stack(stack)
