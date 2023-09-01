@@ -30,6 +30,33 @@ The data.all package is a mono-repo comprising several modules:
     - tasks
     - `__init__` and module loading
 - [frontend/](#frontend)
+  - [src/](#src)
+    - [authentication/](#authentication)
+    - [design/](#design)
+    - [globalErrors/](#globalErrors)
+    - [modules/](#modules)
+      - Administration
+      - Catalog
+      - Dashboards
+      - Datasets
+      - Environments
+      - Folders
+      - Glossaries
+      - MLStudio
+      - Notebooks
+      - NotFound
+      - Organizations
+      - Pipelines
+      - [Shared](#shared)
+      - Shares
+      - Tables
+      - Worksheets
+    - [services/](#services)
+      - graphql
+      - hooks
+    - [utils/](#utils)
+      - helpers
+    - [jsconfig.json](#jsconfig)
 - [tests/](#tests)
 - [compose/](#compose)
 - [documentation/](#userguide)
@@ -632,90 +659,204 @@ class MLStudioApiModuleInterface(ModuleInterface):
 
 
 ## frontend/ <a name="frontend"></a>
-The frontend code is a React App. In this section we will focus on the components specific to data.all, particularly
-the `src` folder.
+The frontend part of this project is developed using React.js and bootstrapped using [Create React App](https://github.com/facebook/create-react-app). You can run the app in development mode using `yarn start`, and open [http://localhost:8080](http://localhost:8080) to view it in the browser.
 
-### contexts
-We define React Contexts to define "global" props that affect many child components in the application. 
-For example, we set the initial Theme as "dark". We also use Contexts to define Authorization parameters which
-might come from Amplify or from our local setting. 
-
-- Amplify Context
-- Local Context
-- Settings Context
-
-### hooks
-Hooks are an addition to React 16.8. As they say in the docs: 
-*"Hooks are functions that let you hook into React state and lifecycle features 
-from function components."*  With hooks we can share
-the same stateful logic across different components. 
-Careful, Hooks are a way to reuse stateful logic but not the state itself.
-
-
-We use some React hooks such as useState, useEffect and useCallback in our UI views. In addition, we also define
-some custom hooks in the `hooks/` folder:
-
+Overview of the frontend directory:
 ```
-hooks/:
-├── useAuth: useContext on the context defined in contexts
-├── useCardStyle
-├── useClient: initialize Apollo Client (see below)
-├── useGroups: obtain Cognito or SAML groups for the user
-├── useScrollReset
-├── useSettings
-└── useToken: for Searches in Catalog
+frontend/
+├── docker/
+├──── dev/
+├────── Dockerfile : contains the docker config for the dev environment
+├────── nginx.config : contains the nginx config for the dev environment
+├──── prod/
+├────── Dockerfile : contains the docker config for the prod environment 
+├────── nginx.config : contains the nginx config for the prod environment
+├── public/ : contains static files such as index.html and icons like the app logo and favicon
+├── src/ : contains the major components of the frontend code, to be discussed in detail in the src/ section below
+└── jsconfig.json : used to reference the root folder and map aliases/modules to their respective paths relative to the root folder.
 ```
 
-We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
-fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
-Inside `hooks/`, in `useClient` we initialize `ApolloClient`.
+### src/ <a name="src"></a>
+This section contains the major components of the frontend code. Here is a short description of all the components of the src folder, we will deep dive subsequently on the contents of each module.
 
-### api
-This folder contains the GraphQL API definitions for each of our GraphQL Types.
-
-
-Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
-in the frontend code we use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the
-mutation requires an input of the form `NewDatasetInput` as defined in the dataset `input_types` script in the 
-backend `dataall.api` package. The mutation will return the `datasetUri`, `label` and `userRoleForDataset`.
 ```
-import { gql } from 'apollo-boost';
+src/
+├── authentication/ : contains files, contexts, hooks related to user and guest authentication
+├── design/ : contains scripts related to the ui design of the app, layout and theme settings
+├── globalErrors/ : global error reducers, uses redux
+├── modules/ : contains directories of each view/screen in the app with their related components, hooks and services
+├── services/ : contains common graphql schemas and hooks used to call the backend APIs which are then plugged into the frontend
+├── utils/ : common helpers used across the app
+├── App.js - entry point into the project, wrapped with the theme provider
+├── index.js - react.js index script, wrapped with several providers
+└── routes.js - where all routes and their hierachies are configured
+```
+#### authentication/ <a name="authentication"></a>
+In this section, we handle the user and guest authentication logic and views for the application. The directory contains React `contexts`, `hooks`, `components` and `views` used to handle local and production environment authentication. 
 
-const createDataset = (input) => {
-  console.log('rcv', input);
-  return {
-    variables: {
-      input
-    },
-    mutation: gql`
-      mutation CreateDataset($input: NewDatasetInput) {
-        createDataset(input: $input) {
-          datasetUri
-          label
-          userRoleForDataset
+```
+autentication/
+├── components/
+├── contexts/
+├── hooks/
+├── views/
+└── index.js
+```
+
+We used React Context API to handle the authentication state mangagement. `CognitoAuthContext.js` handles the AWS deployment and `LocalAuthContext.js` for local deployment.
+Then `AWS Amplify` is used to connect the app to `AWS Cognito` for production auth and a default anonymous user  is set for local environment.
+
+The `useAuth` hook is used to decide the auth context to use depending on the deployment environment, and `AuthGuard` is a wrapper to verify authentication before routing users to the requested pages in the application.
+
+To create a user for your production deployment, follow these steps:
+ - Login to your AWS deployment account, then create a user pool in `AWS Cognito`.
+ - Add a user to the user group and attach the user to a user group
+ - Use the credentials to login to `data.all`, you will be asked to change your password on the first login.
+
+
+#### design/ <a name="design"></a>
+This section contains script relating to the UI design of the frontend, including theming and theme settings, layout, icons, design components and logic. 
+
+```
+design/
+├── components/
+├── contexts/
+├── hooks/
+├── icons/
+├── theme/
+└── index.js
+```
+
+There are two themes, `DARK` and `LIGHT` and their basic settings can be found in the `theme/` directory.
+We used React Context API to handle theme settings in `SettingsContext.js`, the default theme is set to match the browser's prefered color scheme or `DARK` if no color scheme is set.  
+
+Common hooks used in the UI design like `useCardStyle` (default card component styling), `useScrollReset` (scroll to the top of the page) are in the `hooks` directory. 
+
+#### globalErrors/ <a name="globalErrors"></a>
+In this section, we used Redux to handle global error notifications. Error actions that are dispatched across the application are handled by the `errorReducer.js` which are then displayed in the `ErrorNotification.js` snackbar.
+
+#### modules/ <a name="modules"></a>
+The modules folder is one of the most important folder in the `src/` directory. It contains distinctive logically related views, services and hooks of `data.all` features that we have sectioned into modules.
+
+##### Overview of the modules directory:
+```
+modules/
+├── Administration/
+├── Catalog/
+├── Dashboards/
+├── Datasets/
+├── ...
+├── MLStudio/
+├── Shared/
+└── constants.js
+```
+Each module folder contains components, hooks, services and pages related to a view (screen) in the application. 
+The `components`, `hooks`, and `services` directories contain only their respective parts of the code **that are only used** inside each module. The `views` folder contains the screens or pages in the module. 
+
+##### Structure of a module: <a name="structure_of_a_module"></a>
+```
+ModuleName/
+├── components/ : contains all components (a singular section of a view) used only in module
+├──── ModuleComponentA.js
+├──── ModuleComponentB.js
+├──── index.js
+├── hooks/ : contains all hooks used only in the module
+├──── useSomethingA.js
+├──── useSomethingB.js
+├──── index.js
+├── services/ : all graphql schema code used only in the module
+├──── someServiceA.js
+├──── someServiceB.js
+├──── index.js
+├── views/ : all views/pages belonging to the module 
+├──── ModuleViewA.js
+└──── ModuleViewA.js
+```
+
+As shown above, each directory in a module except the `views` folder must contain an `index.js` file that exports the directory's content. This is to simplify importing different parts of the code, and also to keep implementation details and internal structure of each directory hidden from its consumers.
+
+##### The `Shared` Module: <a name="shared"></a> 
+When working with React projects, often times we have components that are shared across multiple views and among other components.
+
+The shared module contains components that are shared among multiple views in the frontend. Related components are then grouped together in folders and with an `index.js` file that exports the directory's content.
+
+##### Adding a new module:
+To add a new module please follow the following steps:
+- Create a new directory for the new module under `src/modules`
+- The module structure should follow the same structure mentioned above in the [**structure of a module**](#structure_of_a_module) section
+- Mainly the module should be based around its views (or screens) so there must be a views directory
+- All of (components, hooks, services) should be under their respective directory in the module
+- Add the new module screens with their related URLs ot src/routes.js
+- In case they need to use a (component, hook, service) from another module, then that part need to be refactored and moved into the **Shared** directory for shared components, and (authentication, design, globalErrors, ...) folders depending on its purpose.
+- Any utils or helper should be under `src/utils` unless it's a helper that is super specific to this module, then it can be in the same directory as the module under helpers or utils.
+- Lastly, remember all directories in a module except the views folder must have an `index.js` file that exports it's content.
+
+#### services/ <a name="services"></a>
+The services directory contains API calls, hooks and graphql schemas used to call the backend APIs. 
+
+`services/graphql/` directory contains commonly used graphql api definitions sectioned into modules. These APIs are used globally across different modules and that is why they are not under their modules' directories.
+
+For example, the `getDataset` mutation defined in the backend `data.api` package is used in several modules in the frontend code. So it is added to the global graphQL folder. 
+
+We use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the mutation requires an input string of the `datasetUri` and returns a dataset object with the requested values.
+```
+export const getDataset = (datasetUri) => ({
+  variables: {
+    datasetUri
+  },
+  query: gql`
+    query GetDataset($datasetUri: String!) {
+      getDataset(datasetUri: $datasetUri) {
+        datasetUri
+        owner
+        description
+        label
+        name
+        region
+        ...
+        statistics {
+          tables
+          locations
+          upvotes
         }
       }
-    `
-  };
-};
-
-export default createDataset;
+    }
+  `
+});
 
 ```
 
-### views
-Contains each of the UI views. Each data.all component (e.g. Dataset, Environment) has its own subfolder 
-of views. There are views that apply to multiple components. For example, we use the Stack views
-in several tabs of our components. 
+Inside the `services/hooks/` folder, we initialize `ApolloClient` in `useClient.js` and `useGroups.js` handles scripts to obtain Cognito or SAML user groups for the authenticated user.
 
-Inside the views we use hooks from `hooks/` and call the GraphQL APIs defined in `api/`. 
 
-### components, theme and icons
-Auxiliary UI resources used in views:
-- components: default values (e.g. for filters), layouts, popovers...
-- theme: dark or light theme
-- icons
+#### utils/ <a name="utils"></a>
+This directory contains common utility helper methods and constants used across the application. 
 
+For instance, `moduleUtils.js` file handles the logic to activate or deactivate a module in the frontend, you can configure a module's visibility status in the root `config.js` file. 
+
+Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are disabled when `Datasets` or `Dashboards` modules are disabled.
+
+New utilility methods or helpers should be under here unless it's a helper that is super specific to a module, then it can be in the same directory as the module under `helpers` or `utils` folder.
+
+### jsconfig.json <a name="jsconfig"></a>
+The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It reference the root folder (`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
+```
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "authentication/*": ["src/authentication/*"],
+      "design/*": ["src/design/*"],
+      "globalErrors/*": ["src/globalErrors/*"],
+      "modules/*": ["src/modules/*"],
+      "services/*": ["src/services/*"],
+      "utils/*": ["src/utils/*"],
+      "Shared/*": ["src/modules/Shared/*"]
+    }
+  }
+}
+```
+**Please note:** New aliases must be added to the `jsconfig.json` file and mapped to their respective paths in order to be used.
 
 ## tests/ <a name="tests"></a>
 `pytest` is the testing framework used by data.all.
