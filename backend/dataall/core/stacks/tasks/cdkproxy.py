@@ -13,7 +13,7 @@ if not root.hasHandlers():
 logger = logging.getLogger(__name__)
 
 load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
-logger.warning(f'Loading  _CDK_CLI_WRAPPER_EXTENSIONS {_CDK_CLI_WRAPPER_EXTENSIONS}')
+logger.debug(f'Loading  _CDK_CLI_WRAPPER_EXTENSIONS {_CDK_CLI_WRAPPER_EXTENSIONS}')
 
 
 if __name__ == '__main__':
