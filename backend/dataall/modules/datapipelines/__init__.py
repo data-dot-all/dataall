@@ -61,9 +61,11 @@ class DatapipelinesCdkModuleInterface(ModuleInterface):
         return ImportMode.CDK in modes
 
     def __init__(self):
-        from dataall.modules.datapipelines.cdk import datapipelines_pipeline, env_role_datapipelines_stepfunctions_policy, \
-            env_role_datapipelines_lambda_policy, env_role_datapipelines_cicd_policy, \
-            pivot_role_datapipelines_policy
+        from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
+        from dataall.modules.datapipelines.cdk.env_role_datapipelines_stepfunctions_policy import StepFunctions
+        from dataall.modules.datapipelines.cdk.env_role_datapipelines_lambda_policy import Lambda
+        from dataall.modules.datapipelines.cdk.env_role_datapipelines_cicd_policy import AwsCICD
+        from dataall.modules.datapipelines.cdk.pivot_role_datapipelines_policy import PipelinesPivotRole
 
         log.info("Datapipelines stacks have been imported")
 
