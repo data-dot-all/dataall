@@ -1,3 +1,5 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Card,
   CardContent,
@@ -7,12 +9,38 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
-import PropTypes from 'prop-types';
-import React from 'react';
 import { Label } from 'design';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 export const EnvironmentFeatures = (props) => {
   const { environment, ...other } = props;
+
+  // Define your list of features/modules with additional attributes
+  const features = [
+    {
+      title: 'Dashboards',
+      env: 'dashboardsEnabled',
+      active: isModuleEnabled(ModuleNames.DASHBOARDS)
+    },
+    {
+      title: 'Notebooks',
+      env: 'notebooksEnabled',
+      active: isModuleEnabled(ModuleNames.NOTEBOOKS)
+    },
+    {
+      title: 'ML Studio',
+      env: 'mlStudiosEnabled',
+      active: isModuleEnabled(ModuleNames.ML_STUDIO)
+    },
+    {
+      title: 'Pipelines',
+      env: 'pipelinesEnabled',
+      active: isModuleEnabled(ModuleNames.PIPELINES)
+    }
+  ];
+
+  // Filter the features based on the 'active' attribute
+  const activeFeatures = features.filter((feature) => feature.active);
 
   return (
     <Card {...other}>
@@ -20,106 +48,34 @@ export const EnvironmentFeatures = (props) => {
       <Divider />
       <CardContent sx={{ pt: 0 }}>
         <List>
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              Dashboards
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={
-                  environment.parameters['dashboardsEnabled'] === 'true'
-                    ? 'success'
-                    : 'error'
-                }
-              >
-                {environment.parameters['dashboardsEnabled'] === 'true'
-                  ? 'Enabled'
-                  : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              Notebooks
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={
-                  environment.parameters['notebooksEnabled'] === 'true'
-                    ? 'success'
-                    : 'error'
-                }
-              >
-                {environment.parameters['notebooksEnabled'] === 'true'
-                  ? 'Enabled'
-                  : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              ML Studio
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={
-                  environment.parameters['mlStudiosEnabled'] === 'true'
-                    ? 'success'
-                    : 'error'
-                }
-              >
-                {environment.parameters['mlStudiosEnabled'] === 'true'
-                  ? 'Enabled'
-                  : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              Pipelines
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={
-                  environment.parameters['pipelinesEnabled'] === 'true'
-                    ? 'success'
-                    : 'error'
-                }
-              >
-                {environment.parameters['pipelinesEnabled'] === 'true'
-                  ? 'Enabled'
-                  : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>
+          {activeFeatures.map((feature) => (
+            <ListItem
+              key={feature.title}
+              disableGutters
+              divider
+              sx={{
+                justifyContent: 'space-between',
+                padding: 2
+              }}
+            >
+              <Typography color="textSecondary" variant="subtitle2">
+                {feature.title}
+              </Typography>
+              <Typography color="textPrimary" variant="body2">
+                <Label
+                  color={
+                    environment.parameters[feature.env] === 'true'
+                      ? 'success'
+                      : 'error'
+                  }
+                >
+                  {environment.parameters[feature.env] === 'true'
+                    ? 'Enabled'
+                    : 'Disabled'}
+                </Label>
+              </Typography>
+            </ListItem>
+          ))}
         </List>
       </CardContent>
     </Card>
