@@ -25,5 +25,8 @@
 # To ignore a file with a literal ':' character, escape it with
 # a backslash, e.g. "\:foo".
 
-/backend/local.cdkapi.server.py
-/backend/local.graphql.server.py
+/backend/local_cdkapi_server.py
+/backend/local_graphql_server.py
+/backend/docker/dev/*
+/frontend/docker/dev/*
+.github/*
