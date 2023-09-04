@@ -409,7 +409,11 @@ const routes = [
     children: [
       {
         path: '',
-        element: <Catalog />
+        element: isModuleEnabled(ModuleNames.CATALOG) ? (
+          <Catalog />
+        ) : (
+          <OrganizationList />
+        )
       },
       {
         path: '*',
