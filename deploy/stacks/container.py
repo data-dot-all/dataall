@@ -154,25 +154,6 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container_name,
         )
 
-        catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment=self._create_env('INFO'),
-            image_tag=self._cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='catalog-indexer'
-            ),
-            schedule_expression=Schedule.expression('rate(6 hours)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-catalog-indexer-schedule',
-            task_id=f'{resource_prefix}-{envname}-catalog-indexer',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
@@ -220,15 +201,38 @@ class ContainerStack(pyNestedClass):
         self.ecs_cluster = cluster
         self.ecs_task_definitions_families = [
             cdkproxy_task_definition.family,
-            catalog_indexer_task.task_definition.family,
         ]
 
+        self.add_catalog_indexer_task()
         self.add_sync_dataset_table_task()
         self.add_bucket_policy_updater_task()
         self.add_subscription_task()
         self.add_share_management_task()
 
-    @run_if("modules.datasets.active")
+    @run_if(["modules.datasets.active", "modules.dashboards.active"])
+    def add_catalog_indexer_task(self):
+        catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='catalog-indexer'
+            ),
+            schedule_expression=Schedule.expression('rate(6 hours)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-catalog-indexer-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-catalog-indexer',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+
+        self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)
+
+    @run_if(["modules.datasets.active"])
     def add_share_management_task(self):
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -272,7 +276,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(share_management_task_definition.family)
 
-    @run_if("modules.datasets.active")
+    @run_if(["modules.datasets.active"])
     def add_subscription_task(self):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -298,7 +302,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(subscriptions_task.task_definition.family)
 
-    @run_if("modules.datasets.active")
+    @run_if(["modules.datasets.active"])
     def add_bucket_policy_updater_task(self):
         update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -320,7 +324,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(update_bucket_policies_task.task_definition.family)
 
-    @run_if("modules.datasets.active")
+    @run_if(["modules.datasets.active"])
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
