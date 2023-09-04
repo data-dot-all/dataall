@@ -1,74 +1,29 @@
-!apifier*
-!docs*
-!mocks*
-!tests/.store*
-!./.builds*
-!cmd
-.Python
-[Bb]in
-[Ii]nclude
-[Ll]ib
-[Ll]ib64
-[Ll]ocal
-[Ss]hare
-[Ss]cripts
-pyvenv.cfg
-.venv
-.idea*
-*pyc
-pip-selfcheck.json
-site/
-venv/
-htmlconv/
-*.egg-info/
-.coverage
-dist/
-build/
-htmlcov/
-cobertura.xml
-reports
-datahub_build
-authorizer_build
-aws_build
-.pytest_cache
-.aws-sam
-*__pycache__*
-*__pytest_cache__*
-.DS_Store
-*/.DS_Store
-*/*/.DS_Store
-flake8.log
-bandit.log
-cobertura.xml
-*cdk.out*
-/node_modules/
-*venv*
-*pgdata*
-backend/dataall/cdkproxy/cdk.out/
-**.zip
-#Frontend
-/node_modules
-/.pnp
-.pnp.js
+# Items added to this file will be ignored by Semgrep.
+#
+# This file uses .gitignore syntax:
+#
+# To ignore a file anywhere it occurs in your project, enter a
+# glob pattern here. E.g. "*.min.js".
+#
+# To ignore a directory anywhere it occurs in your project, add
+# a trailing slash to the file name. E.g. "dist/".
+#
+# To ignore a file or directory only relative to the project root,
+# include a slash anywhere except the last character. E.g.
+# "/dist/", or "src/generated".
+#
+# Some parts of .gitignore syntax are not supported, and patterns
+# using this syntax will be dropped from the ignore list:
+# - Explicit "include syntax", e.g. "!kept/".
+# - Multi-character expansion syntax, e.g. "*.py[cod]"
+# To include ignore patterns from another file, start a line
+# with ':include', followed by the path of the file. E.g.
+# ":include path/to/other/ignore/file".
+# UPDATE: this will not be be needed in osemgrep which supports
+# all of the .gitignore syntax (!kept/, *.py[cod])
+#
+# To ignore a file with a literal ':' character, escape it with
+# a backslash, e.g. "\:foo".
 
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-.eslintcache
-/.env
-/.env.local
-/.env.development.local
-/.env.test.local
-/.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.idea
-/backend/dataall/cdkproxy/assets/gluedataqualityjob/datahubdq.zip
-/backend/dataall/cdkproxy/assets/glueprofilingjob/datahubdq.zip
+/backend/local.cdkapi.server.py
+/backend/local.graphql.server.py
