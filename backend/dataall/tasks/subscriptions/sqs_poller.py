@@ -23,7 +23,11 @@ def poll_queues(queues):
 
     for queue in queues:
 
-        sqs = boto3.client('sqs', region_name=queue['region'])
+        sqs = boto3.client(
+            'sqs',
+            region_name=queue['region'],
+            endpoint_url=f"https://sqs.{queue['region']}.amazonaws.com"
+        )
         try:
 
             response = sqs.receive_message(

@@ -343,6 +343,7 @@ class ShareObject:
         groupUri = data['groupUri']
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
+        requestPurpose = data.get('requestPurpose')
 
         dataset: models.Dataset = data.get(
             'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
@@ -411,6 +412,7 @@ class ShareObject:
                 principalType=principalType,
                 principalIAMRoleName=principalIAMRoleName,
                 status=ShareObjectStatus.Draft.value,
+                requestPurpose=requestPurpose
             )
             session.add(share)
             session.commit()
@@ -470,8 +472,7 @@ class ShareObject:
 
         # Attaching REQUESTER permissions to:
         # requester group (groupUri)
-        # dataset.SamlAdminGroupName
-        # environment.SamlGroupName
+        # environment.SamlGroupName (if not dataset admins)
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=groupUri,
@@ -479,30 +480,24 @@ class ShareObject:
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=dataset.SamlAdminGroupName,
-            permissions=permissions.SHARE_OBJECT_REQUESTER,
-            resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
-        )
-        if dataset.SamlAdminGroupName != environment.SamlGroupName:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=environment.SamlGroupName,
-                permissions=permissions.SHARE_OBJECT_REQUESTER,
-                resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
-            )
-        # Attaching REQUESTER permissions to:
+
+        # Attaching APPROVER permissions to:
         # dataset.stewards (includes the dataset Admins)
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=dataset.stewards,
+            group=dataset.SamlAdminGroupName,
             permissions=permissions.SHARE_OBJECT_APPROVER,
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
+        if dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=permissions.SHARE_OBJECT_APPROVER,
+                resource_uri=share.shareUri,
+                resource_type=models.ShareObject.__name__,
+            )
         return share
 
     @staticmethod
@@ -607,8 +602,41 @@ class ShareObject:
                 resource_type=models.DatasetTable.__name__,
             )
 
+        share.rejectPurpose = ""
+        session.commit()
+
         api.Notification.notify_share_object_approval(session, username, dataset, share)
         return share
+
+    @staticmethod
+    @has_resource_perm(permissions.SUBMIT_SHARE_OBJECT)
+    def update_share_request_purpose(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.ShareObject:
+        share = ShareObject.get_share_by_uri(session, uri)
+        share.requestPurpose = data.get("requestPurpose")
+        session.commit()
+        return True
+
+    @staticmethod
+    @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
+    def update_share_reject_purpose(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.ShareObject:
+        share = ShareObject.get_share_by_uri(session, uri)
+        share.rejectPurpose = data.get("rejectPurpose")
+        session.commit()
+        return True
 
     @staticmethod
     @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
@@ -624,7 +652,6 @@ class ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
-
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
 
@@ -640,6 +667,11 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
+
+        # Update Reject Purpose
+        share.rejectPurpose = data.get("rejectPurpose")
+        session.commit()
+
         api.Notification.notify_share_object_rejection(session, username, dataset, share)
         return share
 
@@ -1031,6 +1063,7 @@ class ShareObject:
                         f'{{{username}}}'
                     ),
                     models.Dataset.stewards.in_(groups),
+                    models.Dataset.SamlAdminGroupName.in_(groups),
                 )
             )
         )

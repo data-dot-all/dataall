@@ -54,7 +54,7 @@ class CDKPipelineStack:
                 self.code_dir_path = os.path.realpath(
                     os.path.abspath(
                         os.path.join(
-                            __file__, "..", "..", "..", "..", "blueprints", "data_pipeline_blueprint"
+                            __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
                         )
                     )
                 )
@@ -269,6 +269,7 @@ app.synth()
             'PYTHONPATH': python_path,
             'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
+            'COOKIECUTTER_CONFIG': "/dataall/cdkproxy/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(

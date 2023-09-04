@@ -316,7 +316,10 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         username='alice',
         groups=[group.name],
         datasetUri=_dataset.datasetUri,
-        input={'terms': [t1.nodeUri]},
+        input={
+            'terms': [t1.nodeUri],
+            'KmsAlias': ''
+        },
     )
     with db.scoped_session() as session:
         link: models.TermLink = (

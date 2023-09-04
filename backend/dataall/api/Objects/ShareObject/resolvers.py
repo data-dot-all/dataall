@@ -85,14 +85,14 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return share
 
 
-def reject_share_object(context: Context, source, shareUri: str = None):
+def reject_share_object(context: Context, source, shareUri: str = None, rejectPurpose: str = None,):
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=shareUri,
-            data=None,
+            data={"rejectPurpose": rejectPurpose},
             check_perm=True,
         )
 
@@ -222,25 +222,19 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
-        if dataset and dataset.stewards in context.groups:
+        if (
+            dataset and (
+                dataset.stewards in context.groups
+                or dataset.SamlAdminGroupName in context.groups
+                or dataset.owner == context.username
+            )
+        ):
             return ShareObjectPermission.Approvers.value
         if (
             source.owner == context.username
-            or source.principalId in context.groups
-            or dataset.owner == context.username
-            or dataset.SamlAdminGroupName in context.groups
+            or source.groupUri in context.groups
         ):
             return ShareObjectPermission.Requesters.value
-        if (
-            dataset and dataset.stewards in context.groups
-            and (
-                source.owner == context.username
-                or source.principalId in context.groups
-                or dataset.owner == context.username
-                or dataset.SamlAdminGroupName in context.groups
-            )
-        ):
-            return ShareObjectPermission.ApproversAndRequesters.value
         else:
             return ShareObjectPermission.NoPermission.value
 
@@ -374,4 +368,28 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
             uri=None,
             data=filter,
             check_perm=None,
+        )
+
+
+def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.update_share_request_purpose(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=shareUri,
+            data={"requestPurpose": requestPurpose},
+            check_perm=True,
+        )
+
+
+def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.update_share_reject_purpose(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=shareUri,
+            data={"rejectPurpose": rejectPurpose},
+            check_perm=True,
         )

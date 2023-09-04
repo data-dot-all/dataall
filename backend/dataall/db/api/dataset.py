@@ -149,8 +149,7 @@ class Dataset:
         ).build_compliant_name()
         dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
 
-        kms_alias = bucket_name
-        dataset.KmsAlias = data.get('KmsKeyId') or kms_alias
+        dataset.KmsAlias = bucket_name
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -170,13 +169,20 @@ class Dataset:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
 
-        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-crawler'
-        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-profiler'
+        glue_etl_basename = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE_ETL,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
+        dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-trigger'
-        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dataquality'
+        dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
+        dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dqtrigger'
+        dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
         return dataset
 
     @staticmethod
@@ -326,6 +332,9 @@ class Dataset:
             for k in data.keys():
                 if k != 'stewards':
                     setattr(dataset, k, data.get(k))
+            if data.get('KmsAlias') not in ["Undefined"]:
+                dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
+                dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
             if data.get('stewards') and data.get('stewards') != dataset.stewards:
                 if data.get('stewards') != dataset.SamlAdminGroupName:
                     Dataset.transfer_stewardship_to_new_stewards(
@@ -358,6 +367,26 @@ class Dataset:
 
     @staticmethod
     def transfer_stewardship_to_owners(session, dataset):
+        # Remove Steward Resource Policy on Dataset
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+
+        # Remove Steward Resource Policy on Dataset Tables
+        dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if dataset.stewards != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+
+        # Remove Steward Resource Policy on Dataset Share Objects
         dataset_shares = (
             session.query(models.ShareObject)
             .filter(models.ShareObject.datasetUri == dataset.datasetUri)
@@ -365,19 +394,17 @@ class Dataset:
         )
         if dataset_shares:
             for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=permissions.SHARE_OBJECT_APPROVER,
+                    group=dataset.stewards,
                     resource_uri=share.shareUri,
-                    resource_type=models.ShareObject.__name__,
                 )
         return dataset
 
     @staticmethod
     def transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
         env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        if dataset.stewards != env.SamlGroupName:
+        if dataset.stewards != dataset.SamlAdminGroupName:
             ResourcePolicy.delete_resource_policy(
                 session=session,
                 group=dataset.stewards,
@@ -393,7 +420,7 @@ class Dataset:
 
         dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
-            if dataset.stewards != env.SamlGroupName:
+            if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
@@ -421,11 +448,12 @@ class Dataset:
                     resource_uri=share.shareUri,
                     resource_type=models.ShareObject.__name__,
                 )
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
         return dataset
 
     @staticmethod
@@ -520,11 +548,19 @@ class Dataset:
 
     @staticmethod
     def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [models.ShareObject]:
-        query = session.query(models.ShareObject).filter(
-            and_(
-                models.ShareObject.datasetUri == dataset_uri,
-                models.ShareObject.deleted.is_(None),
-                models.ShareObject.existingSharedItems.is_(True),
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(models.ShareObject)
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    models.ShareObject.datasetUri == dataset_uri,
+                    models.ShareObject.deleted.is_(None),
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                )
             )
         )
         return query.all()
@@ -568,23 +604,36 @@ class Dataset:
 
     @staticmethod
     def _delete_dataset_shares_with_no_shared_items(session, dataset_uri):
-        share_objects = (
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        shares = (
             session.query(models.ShareObject)
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+            )
             .filter(
                 and_(
                     models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.existingSharedItems.is_(False),
+                    models.ShareObjectItem.status.notin_(share_item_shared_states),
                 )
             )
             .all()
         )
-        for share in share_objects:
-            (
+        for share in shares:
+            share_items = (
                 session.query(models.ShareObjectItem)
                 .filter(models.ShareObjectItem.shareUri == share.shareUri)
-                .delete()
+                .all()
             )
-            session.delete(share)
+            for item in share_items:
+                session.delete(item)
+
+            share_obj = (
+                session.query(models.ShareObject)
+                .filter(models.ShareObject.shareUri == share.shareUri)
+                .first()
+            )
+            session.delete(share_obj)
 
     @staticmethod
     def _delete_dataset_term_links(session, uri):

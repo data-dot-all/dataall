@@ -13,7 +13,8 @@ from ....api.context import Context
 from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.sns import Sns
+from ....aws.handlers.kms import KMS
+
 from ....aws.handlers.quicksight import Quicksight
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
@@ -29,6 +30,21 @@ def check_dataset_account(environment):
         if quicksight_subscription:
             group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
             return True if group else False
+    return True
+
+
+def check_imported_resources(environment, kmsAlias):
+    if kmsAlias not in ["Undefined", "", "SSE-S3"]:
+        key_id = KMS.get_key_id(
+            account_id=environment.AwsAccountId,
+            region=environment.region,
+            key_alias=f"alias/{kmsAlias}"
+        )
+        if not key_id:
+            raise exceptions.AWSResourceNotFound(
+                action=permissions.IMPORT_DATASET,
+                message=f'KMS key with alias={kmsAlias} cannot be found',
+            )
     return True
 
 
@@ -71,6 +87,7 @@ def import_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
         check_dataset_account(environment=environment)
+        check_imported_resources(environment=environment, kmsAlias=input.get('KmsKeyAlias', ""))
 
         dataset = Dataset.create_dataset(
             session=session,
@@ -83,9 +100,9 @@ def import_dataset(context: Context, source, input=None):
         dataset.imported = True
         dataset.importedS3Bucket = True if input['bucketName'] else False
         dataset.importedGlueDatabase = True if input.get('glueDatabaseName') else False
-        dataset.importedKmsKey = True if input.get('KmsKeyId') else False
+        dataset.importedKmsKey = True if input.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if input.get('adminRoleName') else False
-
+        dataset.KmsAlias = "SSE-S3" if input.get('KmsKeyAlias') == "" else input.get('KmsKeyAlias')
         Dataset.create_dataset_stack(session, dataset)
 
         indexers.upsert_dataset(
@@ -231,6 +248,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
         dataset = Dataset.get_dataset_by_uri(session, datasetUri)
         environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
         check_dataset_account(environment=environment)
+        check_imported_resources(environment=environment, kmsAlias=input.get('KmsAlias', ""))
         updated_dataset = Dataset.update_dataset(
             session=session,
             username=context.username,

@@ -175,6 +175,14 @@ getPivotRolePresignedUrl = gql.QueryField(
     test_scope='Environment',
 )
 
+getCDKExecPolicyPresignedUrl = gql.QueryField(
+    name='getCDKExecPolicyPresignedUrl',
+    args=[gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String))],
+    type=gql.String,
+    resolver=get_cdk_exec_policy_template,
+    test_scope='Environment',
+)
+
 
 getPivotRoleExternalId = gql.QueryField(
     name='getPivotRoleExternalId',

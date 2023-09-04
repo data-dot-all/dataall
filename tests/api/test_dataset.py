@@ -100,7 +100,11 @@ def test_list_datasets(client, dataset1, group):
     assert response.data.listDatasets.nodes[0].datasetUri == dataset1.datasetUri
 
 
-def test_update_dataset(dataset1, client, group, group2):
+def test_update_dataset(dataset1, client, group, group2, module_mocker):
+    module_mocker.patch(
+        'dataall.aws.handlers.kms.KMS.get_key_id',
+        return_value={"some_key"},
+    )
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -119,6 +123,7 @@ def test_update_dataset(dataset1, client, group, group2):
             'label': 'dataset1updated',
             'stewards': group2.name,
             'confidentiality': 'Secret',
+            'KmsAlias': ''
         },
         groups=[group.name],
     )
@@ -164,6 +169,7 @@ def test_update_dataset(dataset1, client, group, group2):
             'label': 'dataset1updated2',
             'stewards': dataset1.SamlAdminGroupName,
             'confidentiality': 'Official',
+            'KmsAlias': ''
         },
         groups=[group.name],
     )
@@ -212,7 +218,10 @@ def test_update_dataset_unauthorized(dataset1, client, group):
         """,
         username='anonymoususer',
         datasetUri=dataset1.datasetUri,
-        input={'label': 'dataset1updated'},
+        input={
+            'label': 'dataset1updated',
+            'KmsAlias': ''
+        },
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
 
@@ -443,7 +452,7 @@ def test_import_dataset(org1, env1, dataset1, client, group):
             'bucketName': 'dhimportedbucket',
             'glueDatabaseName': 'dhimportedGlueDB',
             'adminRoleName': 'dhimportedRole',
-            'KmsKeyId': '1234-YYEY',
+            'KmsKeyAlias': '1234-YYEY',
             'owner': dataset1.owner,
             'SamlAdminGroupName': group.name,
         },

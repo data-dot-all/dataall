@@ -32,7 +32,6 @@ class PipelineStack(Stack):
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
-
         self.validate_deployment_params(git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
@@ -82,67 +81,8 @@ class PipelineStack(Stack):
             resource_prefix=self.resource_prefix,
         )
 
-        self.codebuild_policy = [
-            iam.PolicyStatement(
-                actions=[
-                    'sts:GetServiceBearerToken',
-                ],
-                resources=['*'],
-                conditions={
-                    'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
-                },
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'ecr:GetAuthorizationToken',
-                ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'codeartifact:GetAuthorizationToken',
-                    'codeartifact:GetRepositoryEndpoint',
-                    'codeartifact:ReadFromRepository',
-                    'ecr:GetDownloadUrlForLayer',
-                    'ecr:BatchGetImage',
-                    'ecr:BatchCheckLayerAvailability',
-                    'ecr:PutImage',
-                    'ecr:InitiateLayerUpload',
-                    'ecr:UploadLayerPart',
-                    'ecr:CompleteLayerUpload',
-                    'ecr:GetDownloadUrlForLayer',
-                    'kms:Decrypt',
-                    'kms:Encrypt',
-                    'kms:GenerateDataKey',
-                    'secretsmanager:GetSecretValue',
-                    'secretsmanager:DescribeSecret',
-                    'ssm:GetParametersByPath',
-                    'ssm:GetParameters',
-                    'ssm:GetParameter',
-                    's3:Get*',
-                    's3:Put*',
-                    's3:List*',
-                    'codebuild:CreateReportGroup',
-                    'codebuild:CreateReport',
-                    'codebuild:UpdateReport',
-                    'codebuild:BatchPutTestCases',
-                    'codebuild:BatchPutCodeCoverages',
-                ],
-                resources=[
-                    f'arn:aws:s3:::{self.resource_prefix}*',
-                    f'arn:aws:s3:::{self.resource_prefix}*/*',
-                    f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
-                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
-                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
-                    f'arn:aws:kms:{self.region}:{self.account}:key/*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
-                    f'arn:aws:ecr:{self.region}:{self.account}:repository/{resource_prefix}*',
-                    f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{resource_prefix}*',
-                    f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{resource_prefix}*',
-                ],
-            ),
-        ]
+        self.set_codebuild_iam_roles()
+
         self.pipeline_bucket_name = f'{self.resource_prefix}-{self.git_branch}-code-{self.account}-{self.region}'
         self.pipeline_bucket = s3.Bucket(
             self,
@@ -171,19 +111,6 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
-        self.pipeline_iam_role = iam.Role(
-            self,
-            id=f'CDKPipelinesRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.ServicePrincipal('codepipeline.amazonaws.com'),
-                iam.AccountPrincipal(self.account),
-            ),
-        )
-        for policy in self.codebuild_policy:
-            self.pipeline_iam_role.add_to_policy(policy)
-
         if self.source == 'github':
             source = CodePipelineSource.git_hub(
                 repo_string='awslabs/aws-dataall',
@@ -209,14 +136,14 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
-                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
                     'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
@@ -257,28 +184,6 @@ class PipelineStack(Stack):
                         comment=f'Approve deployment for environment {target_env["envname"]}',
                     )
                 )
-            self.codebuild_policy.append(
-                iam.PolicyStatement(
-                    actions=[
-                        'cloudfront:CreateInvalidation',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
-                        'sts:AssumeRole',
-                    ],
-                    resources=[
-                        f'arn:aws:s3:::{self.resource_prefix}-*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
-                        f'arn:aws:iam::*:role/{resource_prefix}*',
-                        f'arn:aws:cloudfront::*:distribution/*',
-                    ],
-                ),
-            )
 
             self.set_db_migration_stage(
                 target_env,
@@ -288,7 +193,7 @@ class PipelineStack(Stack):
                 self.set_stacks_updater_stage(
                     target_env
                 )
-                
+
             if target_env.get('internet_facing', True):
                 self.set_cloudfront_stage(
                     target_env,
@@ -300,6 +205,158 @@ class PipelineStack(Stack):
             self.set_release_stage()
 
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
+
+    def set_codebuild_iam_roles(self):
+        # IAM Role Creation
+        self.baseline_codebuild_role = iam.Role(
+            self,
+            id=f'CodeBuildBaselineRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-role',
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal('codebuild.amazonaws.com'),
+                iam.ServicePrincipal('codepipeline.amazonaws.com'),
+                iam.AccountPrincipal(self.account),
+            ),
+        )
+        self.expanded_codebuild_role = iam.Role(
+            self,
+            id=f'CodeBuildExpandedRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-expanded-codebuild-role',
+            assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
+        )
+
+        self.baseline_codebuild_policy = iam.Policy(
+            self,
+            'BaselineCodeBuildPolicy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-policy',
+            roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
+            statements= [
+                iam.PolicyStatement(
+                    actions=[
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'sts:GetServiceBearerToken',
+                    ],
+                    resources=['*'],
+                    conditions={
+                        'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
+                    },
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ecr:GetAuthorizationToken',
+                        'ec2:DescribePrefixLists',
+                        'ec2:DescribeManagedPrefixLists'
+                    ],
+                    resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'codeartifact:GetAuthorizationToken',
+                        'codeartifact:GetRepositoryEndpoint',
+                        'codeartifact:ReadFromRepository',
+                        'ecr:GetDownloadUrlForLayer',
+                        'ecr:BatchGetImage',
+                        'ecr:BatchCheckLayerAvailability',
+                        'ecr:PutImage',
+                        'ecr:InitiateLayerUpload',
+                        'ecr:UploadLayerPart',
+                        'ecr:CompleteLayerUpload',
+                        'ecr:GetDownloadUrlForLayer',
+                        'kms:Decrypt',
+                        'kms:Encrypt',
+                        'kms:GenerateDataKey',
+                        'secretsmanager:GetSecretValue',
+                        'secretsmanager:DescribeSecret',
+                        'ssm:GetParametersByPath',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        's3:Get*',
+                        's3:Put*',
+                        's3:List*',
+                        'codebuild:CreateReportGroup',
+                        'codebuild:CreateReport',
+                        'codebuild:UpdateReport',
+                        'codebuild:BatchPutTestCases',
+                        'codebuild:BatchPutCodeCoverages',
+                        'ec2:GetManagedPrefixListEntries'
+                    ],
+                    resources=[
+                        f'arn:aws:s3:::{self.resource_prefix}*',
+                        f'arn:aws:s3:::{self.resource_prefix}*/*',
+                        f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
+                        f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                        f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                        f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                        f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
+                    ],
+                ),
+            ],
+        )
+        self.expanded_codebuild_policy = iam.Policy(
+            self,
+            'ExpandedCodeBuildPolicy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-expanded-codebuild-policy',
+            roles=[self.expanded_codebuild_role],
+            statements= [
+                iam.PolicyStatement(
+                    actions=[
+                        'cloudfront:CreateInvalidation',
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        f'arn:aws:iam::*:role/{self.resource_prefix}*',
+                        f'arn:aws:cloudfront::*:distribution/*',
+                    ],
+                )
+            ],
+        )
+        if self.node.try_get_context('git_release'):
+            self.git_project_role = iam.Role(
+                self,
+                id=f'GitReleaseCBRole{self.git_branch}',
+                role_name=f'{self.resource_prefix}-{self.git_branch}-git-release-role',
+                assumed_by=iam.CompositePrincipal(
+                    iam.ServicePrincipal('codebuild.amazonaws.com'),
+                    iam.AccountPrincipal(self.account),
+                ),
+            )
+            self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
+            self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
+            self.git_release_policy = iam.Policy(
+                self,
+                'GitReleasePolicy',
+                policy_name=f'{self.resource_prefix}-{self.git_branch}-git-release-policy',
+                roles=[self.git_project_role],
+                statements= [
+                    iam.PolicyStatement(
+                        actions=[
+                            'codecommit:CreateBranch',
+                            'codecommit:GetCommit',
+                            'codecommit:ListBranches',
+                            'codecommit:GetRepository',
+                            'codecommit:GetBranch',
+                            'codecommit:GitPull',
+                            'codecommit:PutFile',
+                            'codecommit:CreateCommit',
+                            'codecommit:GitPush',
+                            'codecommit:ListTagsForResource',
+                        ],
+                        resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
+                    )
+                ],
+            )   
 
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
@@ -343,17 +400,6 @@ class PipelineStack(Stack):
     def set_quality_gate_stage(self):
         quality_gate_param = self.node.try_get_context('quality_gate')
         if quality_gate_param is not False:
-            it_project_role = iam.Role(
-                self,
-                id=f'ItCobdeBuildRole{self.git_branch}',
-                role_name=f'{self.resource_prefix}-{self.git_branch}-integration-tests-role',
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('codebuild.amazonaws.com'),
-                    iam.AccountPrincipal(self.account),
-                ),
-            )
-            for policy in self.codebuild_policy:
-                it_project_role.add_to_policy(policy)
             gate_quality_wave = self.pipeline.add_wave('QualityGate')
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
@@ -362,7 +408,7 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
                         f'export schema_name=validation',
                         'python -m venv env',
@@ -370,7 +416,7 @@ class PipelineStack(Stack):
                         'make drop-tables',
                         'make upgrade-db',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -380,13 +426,13 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make check-security',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                 ),
                 pipelines.CodeBuildStep(
@@ -395,17 +441,17 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make lint',
                         'cd frontend',
-                        f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run lint',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                 ),
             )
@@ -422,7 +468,7 @@ class PipelineStack(Stack):
                                 'build': {
                                     'commands': [
                                         'set -eu',
-                                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                         f'export envname={self.git_branch}',
                                         'python -m venv env',
                                         '. env/bin/activate',
@@ -440,7 +486,7 @@ class PipelineStack(Stack):
                         )
                     ),
                     commands=[],
-                    role=it_project_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -455,24 +501,12 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
             )
         else:
-            it_project_role = iam.Role(
-                self,
-                id=f'ItCobdeBuildRole{self.git_branch}',
-                role_name=f'{self.resource_prefix}-{self.git_branch}-integration-tests-role',
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('codebuild.amazonaws.com'),
-                    iam.AccountPrincipal(self.account),
-                ),
-            )
-            for policy in self.codebuild_policy:
-                it_project_role.add_to_policy(policy)
-
             gate_quality_wave = self.pipeline.add_wave('UploadCodeToS3')
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
@@ -486,7 +520,7 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -527,7 +561,7 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
             pipelines.CodeBuildStep(
@@ -545,7 +579,7 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -568,6 +602,7 @@ class PipelineStack(Stack):
                 commit_id=self.image_tag,
                 vpc_id=target_env.get('vpc_id'),
                 vpc_endpoints_sg=target_env.get('vpc_endpoints_sg'),
+                vpc_restricted_nacls=target_env.get('vpc_restricted_nacl', False),
                 internet_facing=target_env.get('internet_facing', True),
                 custom_domain=target_env.get('custom_domain'),
                 ip_ranges=target_env.get('ip_ranges'),
@@ -579,6 +614,8 @@ class PipelineStack(Stack):
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
+                codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
+                codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
             )
         )
         return backend_stage
@@ -608,7 +645,7 @@ class PipelineStack(Stack):
                     'if [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" = "FAILED" ]; then echo "Failed";  cat codebuild-output.json; exit -1; fi',
                     'cat codebuild-output.json ',
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -640,7 +677,7 @@ class PipelineStack(Stack):
                     f'cluster_arn="arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/$cluster_name"',
                     f'aws --profile buildprofile ecs run-task --task-definition $task_definition --cluster "$cluster_arn" --launch-type "FARGATE" --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -695,7 +732,7 @@ class PipelineStack(Stack):
                     'aws s3 sync build/ s3://$bucket --profile buildprofile',
                     "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*' --profile buildprofile",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
             self.cognito_config_action(target_env),
@@ -717,7 +754,7 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
                     '. ./.env.assumed_role',
                     'aws sts get-caller-identity',
@@ -730,7 +767,7 @@ class PipelineStack(Stack):
                     'aws s3 sync site/ s3://$bucket',
                     "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -757,7 +794,7 @@ class PipelineStack(Stack):
                 'pip install boto3==1.20.46',
                 'python deploy/configs/rum_config.py',
             ],
-            role_policy_statements=self.codebuild_policy,
+            role=self.expanded_codebuild_role,
             vpc=self.vpc,
         )
 
@@ -784,7 +821,7 @@ class PipelineStack(Stack):
                 'pip install boto3==1.20.46',
                 'python deploy/configs/cognito_urls_config.py',
             ],
-            role_policy_statements=self.codebuild_policy,
+            role=self.expanded_codebuild_role,
             vpc=self.vpc,
         )
 
@@ -818,7 +855,7 @@ class PipelineStack(Stack):
                         },
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export REACT_APP_STAGE={target_env["envname"]}',
                         f'export envname={target_env["envname"]}',
                         f'export internet_facing={target_env.get("internet_facing", False)}',
@@ -842,7 +879,7 @@ class PipelineStack(Stack):
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.expanded_codebuild_role,
                     vpc=self.vpc,
                 ),
                 pipelines.CodeBuildStep(
@@ -859,14 +896,14 @@ class PipelineStack(Stack):
                         },
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'cd documentation/userguide',
                         'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    role=self.expanded_codebuild_role,
                     vpc=self.vpc,
                 ),
             ],
@@ -888,35 +925,6 @@ class PipelineStack(Stack):
     def set_release_stage(
         self,
     ):
-        git_project_role = iam.Role(
-            self,
-            id=f'GitReleaseCBRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-git-release-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.AccountPrincipal(self.account),
-            ),
-        )
-        for policy in self.codebuild_policy:
-            git_project_role.add_to_policy(policy)
-
-        git_project_role.add_to_policy(
-            iam.PolicyStatement(
-                actions=[
-                    'codecommit:CreateBranch',
-                    'codecommit:GetCommit',
-                    'codecommit:ListBranches',
-                    'codecommit:GetRepository',
-                    'codecommit:GetBranch',
-                    'codecommit:GitPull',
-                    'codecommit:PutFile',
-                    'codecommit:CreateCommit',
-                    'codecommit:GitPush',
-                    'codecommit:ListTagsForResource',
-                ],
-                resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
-            ),
-        )
         self.pipeline.add_wave(
             f'{self.resource_prefix}-{self.git_branch}-release-stage'
         ).add_post(
@@ -932,7 +940,7 @@ class PipelineStack(Stack):
                             'build': {
                                 'commands': [
                                     'set -eu',
-                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                     'python -m venv env',
                                     '. env/bin/activate',
                                     'pip install git-remote-codecommit',
@@ -946,7 +954,7 @@ class PipelineStack(Stack):
                         },
                     )
                 ),
-                role=git_project_role,
+                role=self.git_project_role,
                 vpc=self.vpc,
                 security_groups=[self.codebuild_sg],
                 commands=[],
