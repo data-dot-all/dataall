@@ -1,0 +1,35 @@
+name: Run Semgrep-full
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+  schedule:
+    - cron:  '0 1 * * 2'
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep-full:
+    runs-on: ubuntu-latest
+
+    container:
+      # A Docker image with Semgrep installed. Do not change this.
+      image: returntocorp/semgrep
+
+    # Skip any PR created by dependabot to avoid permission issues:
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep ci --verbose --metrics=off --sarif --output=semgrep.sarif
+        env:
+           # Add the rules that Semgrep uses by setting the SEMGREP_RULES environment variable.
+           SEMGREP_RULES: p/default # more at semgrep.dev/explore
+
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
