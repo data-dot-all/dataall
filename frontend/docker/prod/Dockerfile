@@ -17,7 +17,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.s
 RUN . ~/.nvm/nvm.sh && nvm install node
 RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
 
-RUN . ~/.nvm/nvm.sh && npm install -g npm yarn
+RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/yarn.lock ./
