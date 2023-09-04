@@ -44,6 +44,7 @@ import {
   EnvironmentTeams,
   EnvironmentNetworks
 } from '../components';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -52,7 +53,7 @@ const tabs = [
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
   },
-  {
+  isModuleEnabled(ModuleNames.DATASETS) && {
     label: 'Datasets',
     value: 'datasets',
     icon: <FolderOpen fontSize="small" />
