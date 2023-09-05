@@ -13,6 +13,24 @@ export const listFeedMessages = ({ targetUri, targetType, filter }) => ({
       $filter: FeedMessageFilter
     ) {
       getFeed(targetUri: $targetUri, targetType: $targetType) {
+        target {
+          __typename
+          ... on DatasetTable {
+            label
+          }
+          ... on Dataset {
+            label
+          }
+          ... on DatasetStorageLocation {
+            label
+          }
+          ... on Dashboard {
+            label
+          }
+          ... on DataPipeline {
+            label
+          }
+        }
         messages(filter: $filter) {
           count
           hasNext
