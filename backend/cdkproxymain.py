@@ -23,7 +23,6 @@ logger.warning(
 )
 
 
-
 def connect():
     logger.info(f'Connecting to database for environment: `{ENVNAME}`')
     try:
