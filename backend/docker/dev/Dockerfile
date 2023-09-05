@@ -4,9 +4,6 @@ ARG NODE_VERSION=16
 ARG NVM_VERSION=v0.37.2
 ARG PYTHON_VERSION=python3.8
 
-RUN mkdir /code
-RUN mkdir /build
-
 RUN yum clean all
 RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
@@ -30,7 +27,7 @@ COPY ./docker/dev/wait-for-it.sh /build/wait-for-it.sh
 RUN chmod +x /build/wait-for-it.sh
 RUN chown -R app:root /build/wait-for-it.sh
 
-WORKDIR /code
+WORKDIR /dataall
 RUN touch ~/.bashrc
 
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh | bash
@@ -53,9 +50,13 @@ COPY ./requirements.txt dh.requirements.txt
 COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
 COPY ./dataall /dataall
 
+ADD ./cdkproxymain.py /cdkproxymain.py
+ADD ./local_graphql_server.py /local_graphql_server.py
+
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
+WORKDIR /
 
 ENTRYPOINT [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
