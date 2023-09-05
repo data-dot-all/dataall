@@ -69,7 +69,7 @@ NEW_PERMISSIONS = [
 ]
 new_permissions = {k: k for k in NEW_PERMISSIONS}
 new_permissions[CREATE_SGMSTUDIO_USER] = 'Create SageMaker Studio users on this environment'
-new_permissions[RUN_ATHENA_QUERY] = 'Run Worksheet queries on this environment'
+new_permissions[RUN_ATHENA_QUERY] = 'Run Worksheet Athena queries on this environment'
 new_permissions[CREATE_SHARE_OBJECT] = 'Create dataset Share requests for this environment'
 
 
