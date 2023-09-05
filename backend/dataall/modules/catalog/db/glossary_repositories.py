@@ -9,16 +9,13 @@ from dataall.core.permissions import permissions
 from dataall.modules.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
 from dataall.base.db.paginator import Page
 from dataall.base.context import get_context
-from dataall.core.permissions.permission_checker import has_tenant_permission
 
 logger = logging.getLogger(__name__)
 
 
-class Glossary:
+class GlossaryRepository:
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
     def create_glossary(session, data=None):
-        Glossary.validate_params(data)
         g: GlossaryNode = GlossaryNode(
             label=data.get('label'),
             nodeType='G',
@@ -35,9 +32,7 @@ class Glossary:
         return g
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
-    def create_category(session, uri, data=None):
-        Glossary.validate_params(data)
+    def create_category(session, parent, data=None):
         parent: GlossaryNode = session.query(GlossaryNode).get(uri)
         if not parent:
             raise exceptions.ObjectNotFound('Glossary', uri)
@@ -56,9 +51,7 @@ class Glossary:
         return cat
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
     def create_term(session, uri, data=None):
-        Glossary.validate_params(data)
         parent: GlossaryNode = session.query(GlossaryNode).get(uri)
         if not parent:
             raise exceptions.ObjectNotFound('Glossary or Category', uri)
@@ -297,13 +290,6 @@ class Glossary:
         return paginate(
             q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
         ).to_dict()
-
-    @staticmethod
-    def validate_params(data):
-        if not data:
-            exceptions.RequiredParameter('data')
-        if not data.get('label'):
-            exceptions.RequiredParameter('name')
 
     @staticmethod
     def list_node_children(session, source, filter):

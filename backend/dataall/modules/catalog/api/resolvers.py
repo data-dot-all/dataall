@@ -4,10 +4,25 @@ from sqlalchemy import and_, or_, asc
 
 from dataall.modules.catalog.api.enums import GlossaryRole
 from dataall.modules.catalog.api.registry import GlossaryRegistry
+from dataall.modules.catalog.services.glossaries_service import GlossariesService
 from dataall.base.api.context import Context
 from dataall.modules.catalog.db.glossary_repositories import Glossary
 from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.base.db import paginate, exceptions
+
+
+def _validate_creation_request(data):
+    if not data:
+        raise exceptions.RequiredParameter(data)
+    if not data.get('admin'):
+        raise exceptions.RequiredParameter('admin')
+    if not data.get('label'):
+        raise exceptions.RequiredParameter('label')
+
+
+def _required_uri(uri):
+    if not uri:
+        raise exceptions.RequiredParameter('URI')
 
 
 def resolve_glossary_node(obj: GlossaryNode, *_):
@@ -21,24 +36,35 @@ def resolve_glossary_node(obj: GlossaryNode, *_):
         return None
 
 
-def create_glossary(
-    context: Context, source, input: dict = None
-) -> GlossaryNode:
-    with context.engine.scoped_session() as session:
-        return Glossary.create_glossary(session, input)
+def create_glossary(context: Context, source, input: dict = None):
+    _validate_creation_request(input)
+    return GlossariesService.create_glossary(data=input)
+
+def create_category(
+    context: Context, source, parentUri: str = None, input: dict = None
+):
+    _required_uri(parentUri)
+    return GlossariesService.create_category(uri=parentUri, data=input)
+
+def create_term(context: Context, source, parentUri: str = None, input: dict = None):
+    _required_uri(parentUri)
+    return GlossariesService.create_category(uri=parentUri, data=input)
 
 
-def tree(context: Context, source: GlossaryNode):
-    if not source:
-        return None
-    adjency_list = {}
-    with context.engine.scoped_session() as session:
-        q = session.query(GlossaryNode).filter(
-            GlossaryNode.path.startswith(f'{source.path}/')
-        )
-        for node in q:
-            if not adjency_list.get(node.parentUri):
-                adjency_list[node.parentUri] = []
+
+#TODO: check if it is used
+
+# def tree(context: Context, source: GlossaryNode):
+#     if not source:
+#         return None
+#     adjency_list = {}
+#     with context.engine.scoped_session() as session:
+#         q = session.query(GlossaryNode).filter(
+#             GlossaryNode.path.startswith(f'{source.path}/')
+#         )
+#         for node in q:
+#             if not adjency_list.get(node.parentUri):
+#                 adjency_list[node.parentUri] = []
 
 
 def node_tree(context: Context, source: GlossaryNode, filter: dict = None):
@@ -78,25 +104,6 @@ def list_node_children(
     with context.engine.scoped_session() as session:
         return Glossary.list_node_children(session, source, filter)
 
-
-def create_category(
-    context: Context, source, parentUri: str = None, input: dict = None
-):
-    with context.engine.scoped_session() as session:
-        return Glossary.create_category(
-            session=session,
-            uri=parentUri,
-            data=input,
-        )
-
-
-def create_term(context: Context, source, parentUri: str = None, input: dict = None):
-    with context.engine.scoped_session() as session:
-        return Glossary.create_term(
-            session=session,
-            uri=parentUri,
-            data=input,
-        )
 
 
 def list_glossaries(context: Context, source, filter: dict = None):
