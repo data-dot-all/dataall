@@ -681,7 +681,7 @@ This section contains the major components of the frontend code. Here is a short
 
 ```
 src/
-├── authentication/ : contains files, contexts, hooks related to user and guest authentication
+├── authentication/ : contains files, contexts, hooks related to user authentication
 ├── design/ : contains scripts related to the ui design of the app, layout and theme settings
 ├── globalErrors/ : global error reducers, uses redux
 ├── modules/ : contains directories of each view/screen in the app with their related components, hooks and services
@@ -707,11 +707,6 @@ We used React Context API to handle the authentication state mangagement. `Cogni
 Then `AWS Amplify` is used to connect the app to `AWS Cognito` for production auth and a default anonymous user  is set for local environment.
 
 The `useAuth` hook is used to decide the auth context to use depending on the deployment environment, and `AuthGuard` is a wrapper to verify authentication before routing users to the requested pages in the application.
-
-To create a user for your production deployment, follow these steps:
- - Login to your AWS deployment account, then create a user pool in `AWS Cognito`.
- - Add a user to the user group and attach the user to a user group
- - Use the credentials to login to `data.all`, you will be asked to change your password on the first login.
 
 
 #### design/ <a name="design"></a>
@@ -791,6 +786,35 @@ To add a new module please follow the following steps:
 - Any utils or helper should be under `src/utils` unless it's a helper that is super specific to this module, then it can be in the same directory as the module under helpers or utils.
 - Lastly, remember all directories in a module except the views folder must have an `index.js` file that exports it's content.
 
+##### Disabling a module:
+We use the `config.json` file to configure module visibility, all modules are active by default. You can disable a module by setting the `active` parameter for the module to `false`.
+
+**Note:** Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are also disabled when `Datasets` or `Dashboards` modules are disabled.
+```
+{
+  "modules": {
+      "mlstudio": {
+          "active": true
+      },
+      "notebooks": {
+          "active": true
+      },
+      "datapipelines": {
+          "active": true
+      },
+      "datasets": {
+          "active": false
+      },
+      "worksheets": {
+          "active": true
+      },
+      "dashboards": {
+          "active": true
+      }
+  }
+}
+```
+
 #### services/ <a name="services"></a>
 The services directory contains API calls, hooks and graphql schemas used to call the backend APIs. 
 
@@ -832,7 +856,7 @@ Inside the `services/hooks/` folder, we initialize `ApolloClient` in `useClient.
 #### utils/ <a name="utils"></a>
 This directory contains common utility helper methods and constants used across the application. 
 
-For instance, `moduleUtils.js` file handles the logic to activate or deactivate a module in the frontend, you can configure a module's visibility status in the root `config.js` file. 
+For instance, `moduleUtils.js` file handles the logic to activate or deactivate a module in the frontend, you can configure a module's visibility status in the root `config.json` file.
 
 Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are disabled when `Datasets` or `Dashboards` modules are disabled.
 
