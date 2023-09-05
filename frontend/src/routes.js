@@ -154,19 +154,19 @@ const GlossaryCreateForm = Loadable(
 
 //TODO: review this routing
 const OmicsList = Loadable(
-  lazy(() => import('./views/Omics/OmicsListView'))
+  lazy(() => import('./modules/Omics/views/OmicsListView'))
 );
 const OmicsWorkflowsList = Loadable(
-  lazy(() => import('./views/Omics/OmicsWorkflowsList'))
+  lazy(() => import('./modules/Omics/views/OmicsWorkflowsList'))
 );
 const OmicsWorkflowsView = Loadable(
-  lazy(() => import('./views/Omics/OmicsWorkflowView'))
+  lazy(() => import('./modules/Omics/views/OmicsWorkflowView'))
 );
 const OmicsRunsList = Loadable(
-  lazy(() => import('./views/Omics/OmicsRunsList'))
+  lazy(() => import('./modules/Omics/views/OmicsRunsList'))
 );
 const OmicsRunCreateForm = Loadable(
-  lazy(() => import('./views/Omics/OmicsRunCreateForm'))
+  lazy(() => import('./modules/Omics/views/OmicsRunCreateForm'))
 );
 const AdministrationView = Loadable(
   lazy(() => import('./modules/Administration/views/AdministrationView'))

@@ -56,14 +56,25 @@ def list_omics_runs(context: Context, source, filter: dict = None):
 def list_omics_workflows(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    retVal = {'nodes': OmicsService.list_omics_workflows(filter)}    
-    # return OmicsService.list_omics_workflows(filter)
-    return retVal
+    # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}    
+    return OmicsService.list_omics_workflows(filter)
 
-def get_omics_workflow(context: Context, source, workflowUri: str = None):
-    RequestValidator.required_uri(workflowUri)
-    return OmicsService.get_omics_workflow(workflowUri)
+def load_omics_workflows(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+    # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}
+    OmicsService.load_omics_workflows(filter)    
+    return OmicsService.list_omics_workflows(filter)
 
+def get_omics_workflow(context: Context, source, workflowId: str = None):
+    print('**** WorkflowId: ', workflowId)
+    RequestValidator.required_uri(workflowId)
+    return OmicsService.get_omics_workflow(workflowId)
+
+def get_workflow_run(context: Context, source, runId: str = None):
+    print('**** WorkflowId: ', runId)
+    RequestValidator.required_uri(runId)
+    return OmicsService.get_workflow_run(runId)
 
 def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):
     RequestValidator.required_uri(runUri)

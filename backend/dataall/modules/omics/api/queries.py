@@ -12,8 +12,8 @@ listOmicsRuns = gql.QueryField(
 
 getOmicsWorkflow = gql.QueryField(
     name="getOmicsWorkflow",
-    args=[gql.Argument(name="workflowUri", type=gql.NonNullableType(gql.String))],
-    type=gql.Ref("OmicsRun"),
+    args=[gql.Argument(name="workflowId", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("OmicsWorkflow"),
     resolver=get_omics_workflow,
 )
 
@@ -22,4 +22,18 @@ listOmicsWorkflows = gql.QueryField(
     args=[gql.Argument(name="workflowUri", type=gql.NonNullableType(gql.String))],
     type=gql.Ref("OmicsWorkflows"),
     resolver=list_omics_workflows,
+)
+
+loadOmicsWorkflows = gql.QueryField(
+    name="loadOmicsWorkflows",
+    args=[gql.Argument(name="workflowUri", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("OmicsWorkflows"),
+    resolver=load_omics_workflows,
+)
+
+getWorkflowRun = gql.QueryField(
+    name="getWorkflowRun",
+    args=[gql.Argument(name="runId", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("OmicsRunStatus"),
+    resolver=get_workflow_run,
 )

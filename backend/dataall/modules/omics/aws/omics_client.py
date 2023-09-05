@@ -14,11 +14,37 @@ class OmicsClient:
     """
 
     def __init__(self, awsAccountId: str):
-        session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::545117064741:role/dataallPivotRole')
+        # session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::545117064741:role/dataallPivotRole')
+        session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::290341535759:role/OmicsCallsPatrickRole')
         self._client = session.client('omics')
         
     #TODO: Implement boto3 client calls for Omics
         
+    def get_workflow(self, id: str):
+        try:
+            response = self._client.get_workflow(id=id,
+                type='READY2RUN'
+            )
+            return response
+        except ClientError as e:
+            logger.error(
+                f'Could not retrieve Ready2Run Omics Workflows status due to: {e} '
+            )
+            return 'ERROR LISTING WORKFLOWS'
+
+    def get_workflow_run(self, id: str):
+        try:
+            response = self._client.get_run(id=id
+            )
+            return response
+        except ClientError as e:
+            logger.error(
+                f'Could not retrieve workflow run status due to: {e} '
+            )
+            return 'ERROR GETTING WORKFLOW RUN'    
+        
+
+    
     def list_workflows(self) -> list:
         try:
             response = self._client.list_workflows(

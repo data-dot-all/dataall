@@ -63,17 +63,32 @@ OmicsWorkflow = gql.ObjectType(
         gql.Field(name="status", type=gql.String),
         gql.Field(name="type", type=gql.String),
         gql.Field(name="description", type=gql.String),
+        gql.Field(name="parameterTemplate", type=gql.String),
     ],
 )
 
 OmicsWorkflows = gql.ObjectType(
     name="OmicsWorkflows",
     fields=[
-        # gql.Field(name="count", type=gql.Integer),
-        # gql.Field(name="page", type=gql.Integer),
-        # gql.Field(name="pages", type=gql.Integer),
-        # gql.Field(name="hasNext", type=gql.Boolean),
-        # gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="count", type=gql.Integer),
+        gql.Field(name="page", type=gql.Integer),
+        gql.Field(name="pages", type=gql.Integer),
+        gql.Field(name="hasNext", type=gql.Boolean),
+        gql.Field(name="hasPrevious", type=gql.Boolean),
         gql.Field(name="nodes", type=gql.ArrayType(OmicsWorkflow)),
+    ],
+)
+
+OmicsRunStatus = gql.ObjectType(
+    name="OmicsRunStatus",
+    fields=[
+        gql.Field(name="arn", type=gql.String),
+        # gql.Field(name="creationTime", type=gql.String),
+        # gql.Field(name="digest", type=gql.String),
+        gql.Field(name="id", type=gql.String),
+        gql.Field(name="status", type=gql.String),
+        gql.Field(name="runId", type=gql.String),
+        gql.Field(name="name", type=gql.String),
+        gql.Field(name="outputUri", type=gql.String),
     ],
 )

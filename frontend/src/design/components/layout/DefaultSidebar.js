@@ -85,7 +85,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
     };
 
     const omicsSection = {
-      title: 'Notebooks',
+      title: 'Omics',
       path: '/console/omics',
       icon: <MdShowChart size={15} />,
       active: isModuleEnabled(ModuleNames.OMICS)
@@ -123,7 +123,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
             notebooksSection,
             mlStudioSection,
             pipelinesSection,
-            dashboardsSection
+            dashboardsSection,
+            omicsSection
           ]
         },
         {
