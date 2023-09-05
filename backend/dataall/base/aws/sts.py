@@ -105,7 +105,6 @@ class SessionHelper:
         Returns:
             string: name of the assumed role
         """
-        return "dataallPivotRole-cdk"
         SessionHelper._get_parameter_value(
             parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
 

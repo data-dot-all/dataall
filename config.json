@@ -18,10 +18,10 @@
             }
         },
         "worksheets": {
-            "active": false
+            "active": true
         },
         "dashboards": {
-            "active": false
+            "active": true
         }
     },
     "core": {
