@@ -2,9 +2,7 @@ import logging
 import os
 import sys
 
-from dataall.base.cdkproxy.cdk_cli_wrapper import deploy_cdk_stack, _CDK_CLI_WRAPPER_EXTENSIONS
-from dataall.base.cdkproxy.stacks import StackManager
-from dataall.base.loader import load_modules, ImportMode
+from dataall.base.cdkproxy.cdk_cli_wrapper import deploy_cdk_stack
 from dataall.base.db import get_engine
 
 root = logging.getLogger()
