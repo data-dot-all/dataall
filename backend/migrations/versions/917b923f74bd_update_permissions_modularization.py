@@ -40,6 +40,7 @@ UNUSED_TENANT_PERMISSIONS = [
 ]
 
 
+
 class Environment(Resource, Base):
     __tablename__ = "environment"
     environmentUri = Column(String, primary_key=True)
