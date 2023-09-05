@@ -275,22 +275,14 @@ class EnvironmentService:
 
     @staticmethod
     def validate_permissions(session, uri, g_permissions, group):
+        """
+        g_permissions: coming from frontend = ENVIRONMENT_INVITATION_REQUEST
+
+        """
         if permissions.INVITE_ENVIRONMENT_GROUP in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
 
-        if permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-
-        if permissions.CREATE_NETWORK in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
-
-        g_permissions.append(permissions.GET_ENVIRONMENT)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
-        g_permissions.append(permissions.CREDENTIALS_ENVIRONMENT)
-
+        g_permissions.extend(permissions.ENVIRONMENT_INVITED_DEFAULT)
         g_permissions = list(set(g_permissions))
 
         if g_permissions not in permissions.ENVIRONMENT_INVITED:
