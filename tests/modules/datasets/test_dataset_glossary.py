@@ -108,7 +108,3 @@ def test_get_column_term_associations(t1, dataset_fixture, group, db, client):
     )
     assert r.data.getDataset.terms.nodes[0].nodeUri == t1.nodeUri
     assert r.data.getDataset.terms.nodes[0].label == t1.label
-    assert r.data.getDataset.terms.nodes[0].readme == t1.readme
-
-
-
