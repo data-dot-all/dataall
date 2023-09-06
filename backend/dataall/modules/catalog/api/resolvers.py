@@ -39,7 +39,7 @@ def create_category(
 
 def create_term(context: Context, source, parentUri: str = None, input: dict = None):
     _required_uri(parentUri)
-    return GlossariesService.create_category(uri=parentUri, data=input)
+    return GlossariesService.create_term(uri=parentUri, data=input)
 
 
 def update_node(context: Context, source, nodeUri: str = None, input: dict = None):
@@ -49,7 +49,7 @@ def update_node(context: Context, source, nodeUri: str = None, input: dict = Non
 
 def delete_node(context: Context, source, nodeUri: str = None) -> bool:
     _required_uri(nodeUri)
-    return GlossariesService.update_node(uri=nodeUri)
+    return GlossariesService.delete_node(uri=nodeUri)
 
 
 def list_glossaries(context: Context, source, filter: dict = None):

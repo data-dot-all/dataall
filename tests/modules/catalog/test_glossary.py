@@ -18,6 +18,7 @@ def g1(client, group):
         """,
         input={
             'label': 'Customer Glossary',
+            'admin': group.name,
             'readme': 'Glossary of customer related data',
         },
         username='alice',
@@ -133,10 +134,11 @@ def test_list_glossaries(client):
         """
     )
     assert response.data.listGlossaries.count == 1
+    assert response.data.listGlossaries.nodes[0].stats.terms == 1
     assert response.data.listGlossaries.nodes[0].stats.categories == 2
 
 
-def test_hierarchical_search(client):
+def test_search_glossary(client):
     response = client.query(
         """
         query SearchGlossary($filter:GlossaryNodeSearchFilter){
@@ -201,43 +203,6 @@ def test_get_glossary(client, g1):
     assert r.data.getGlossary.readme == g1.readme
 
 
-def test_get_category(client, c1):
-    r = client.query(
-        """
-        query GetCategory($nodeUri:String!){
-            getCategory(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-            }
-        }
-        """,
-        nodeUri=c1.nodeUri,
-    )
-    print(r)
-    assert r.data.getCategory.nodeUri == c1.nodeUri
-    assert r.data.getCategory.label == c1.label
-    assert r.data.getCategory.readme == c1.readme
-
-
-def test_get_term(client, t1):
-    r = client.query(
-        """
-        query GetTerm($nodeUri:String!){
-            getTerm(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-            }
-        }
-        """,
-        nodeUri=t1.nodeUri,
-    )
-    assert r.data.getTerm.nodeUri == t1.nodeUri
-    assert r.data.getTerm.label == t1.label
-    assert r.data.getTerm.readme == t1.readme
-
-
 def test_glossary_categories(client, g1, c1):
     r = client.query(
         """
@@ -265,55 +230,6 @@ def test_glossary_categories(client, g1, c1):
     )
     assert r.data.getGlossary.categories.count == 1
     assert r.data.getGlossary.categories.nodes[0].nodeUri == c1.nodeUri
-
-
-def test_list_subcategory(client, c1):
-    r = client.query(
-        """
-        query GetCategory($nodeUri:String!){
-            getCategory(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-                categories{
-                    count
-                    nodes{
-                        nodeUri
-                        label
-                        readme
-                    }
-                }
-            }
-        }
-        """,
-        nodeUri=c1.nodeUri,
-    )
-
-    assert r.data.getCategory.categories.count == 1
-
-
-def test_list_category_terms(client, c1):
-    r = client.query(
-        """
-        query GetCategory($nodeUri:String!){
-            getCategory(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-                terms{
-                    count
-                    nodes{
-                        nodeUri
-                        label
-                        readme
-                    }
-                }
-            }
-        }
-        """,
-        nodeUri=c1.nodeUri,
-    )
-    assert r.data.getCategory.terms.count == 1
 
 
 def test_update_glossary(client, g1, group):
@@ -443,7 +359,7 @@ def test_list_glossaries_after_delete(client):
     assert response.data.listGlossaries.nodes[0].stats.categories == 0
 
 
-def test_hierarchical_search_after_delete(client):
+def test_search_glossary_after_delete(client):
     response = client.query(
         """
         query SearchGlossary($filter:GlossaryNodeSearchFilter){
