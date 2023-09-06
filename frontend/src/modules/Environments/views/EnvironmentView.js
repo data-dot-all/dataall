@@ -53,10 +53,11 @@ const tabs = [
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
   },
-  isModuleEnabled(ModuleNames.DATASETS) && {
+  {
     label: 'Datasets',
     value: 'datasets',
-    icon: <FolderOpen fontSize="small" />
+    icon: <FolderOpen fontSize="small" />,
+    active: isModuleEnabled(ModuleNames.DATASETS)
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
   {
@@ -67,6 +68,8 @@ const tabs = [
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
+
+const activeTabs = tabs.filter((tab) => tab.active !== false);
 
 const EnvironmentView = () => {
   const dispatch = useDispatch();
@@ -235,7 +238,7 @@ const EnvironmentView = () => {
               value={currentTab}
               variant="fullWidth"
             >
-              {tabs.map((tab) => (
+              {activeTabs.map((tab) => (
                 <Tab
                   key={tab.value}
                   label={tab.label}
