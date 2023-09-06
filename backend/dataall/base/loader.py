@@ -145,7 +145,7 @@ def _load_module(name: str):
     Loads a module but not initializing it
     """
     try:
-        importlib.import_module(f"{_MODULE_PREFIX}.{name}") # nosemgrep: dynamic-urllib-use-detected
+        importlib.import_module(f"{_MODULE_PREFIX}.{name}")  # nosemgrep: dynamic-urllib-use-detected
         # semgrep finding ignored as no upstream user input is passed to the import_module function
         # Only code admins will have access to the parameters of the f-string
         return True
