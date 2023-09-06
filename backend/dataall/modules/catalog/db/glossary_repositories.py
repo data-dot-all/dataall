@@ -447,7 +447,7 @@ class GlossaryRepository:
             session.delete(link)
 
     @staticmethod
-    def search_terms(session, data=None):
+    def search_glossary_terms(session, data=None):
         q = session.query(GlossaryNode).filter(
             GlossaryNode.deleted.is_(None)
         )

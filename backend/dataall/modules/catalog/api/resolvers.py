@@ -172,4 +172,4 @@ def dismiss_term_association(context: Context, source, linkUri: str = None):
 def search_glossary(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    return GlossariesService.search_glossary(data=filter)
+    return GlossariesService.search_glossary_terms(data=filter)

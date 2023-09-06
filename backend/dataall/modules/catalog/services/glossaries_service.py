@@ -133,6 +133,6 @@ class GlossariesService:
             )
 
     @staticmethod
-    def search_glossary(data: dict = None):
+    def search_glossary_terms(data: dict = None):
         with _session() as session:
-            return GlossaryRepository.search_terms(session=session, data=data)
+            return GlossaryRepository.search_glossary_terms(session=session, data=data)
