@@ -21,18 +21,29 @@ import { useNavigate } from 'react-router';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { Info } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import getOmicsRun from '../../api/Omics/listOmicsRuns';
-import deleteOmicsRun from '../../api/Omics/deleteOmicsRun';
-import OmicsWorkflowDetails from './OmicsWorkflowDetails';
-//import getSagemakerStudioUserPresignedUrl from '../../api/MLStudio/getSagemakerStudioUserPresignedUrl';
-import StackStatus from '../Stack/StackStatus';
+import {
+  StackStatus,
+  Stack
+} from 'modules/Shared';
+import { useClient } from 'services';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  useSettings
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+
+
+// TODO getOmicsRun does not exist
+import {
+  //getOmicsRun,
+  deleteOmicsRun
+} from '../services';
+import {
+  OmicsWorkflowsListItem,
+  OmicsWorkflowDetails
+} from '../components';
+
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

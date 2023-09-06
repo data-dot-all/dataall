@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import { Box, Container, Divider, Tab, Tabs } from '@mui/material';
 import { FaAws } from 'react-icons/fa';
 import { Info } from '@mui/icons-material';
-import { useSettings } from '../../../design/hooks/useSettings';
+import { useSettings } from 'design';
+
 import { OmicsRunList } from './OmicsRunsList';
 import { OmicsWorkflowsList } from './OmicsWorkflowsList';
 //TODO: mostly done, but review

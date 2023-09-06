@@ -1,7 +1,9 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import ObjectBrief from '../../components/ObjectBrief';
-import ObjectMetadata from '../../components/ObjectMetadata';
+import {
+    ObjectBrief,
+    ObjectMetadata
+} from 'design';
 
 const OmicsRunDetails = (props) => {
   const { omicsRun, ...other } = props;

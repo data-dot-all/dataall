@@ -21,17 +21,17 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
 import { useCallback, useEffect, useState } from 'react';
-import { useClient } from '../../../services/hooks/useClient';
-import { ChevronRightIcon } from '../../../design/icons/ChevronRightIcon';
-import { ArrowLeftIcon } from '../../../design/icons/ArrowLeftIcon';
-import { useSettings } from '../../../design/hooks/useSettings';
-import { createOmicsRun} from '../services/createOmicsRun';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-//import ChipInput from '../../components/TagsInput';
-//import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import * as Defaults from '../../components/defaults';
+import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  ChipInput,
+  Defaults,
+  useSettings
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { createOmicsRun } from '../services';
+
 
 const OmicsRunCreateForm = (props) => {
   const navigate = useNavigate();

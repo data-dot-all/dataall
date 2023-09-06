@@ -13,17 +13,22 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import OmicsWorkflowsListItem from './OmicsWorkflowsListItem';
-import listOmicsWorkflows from '../../api/Omics/listOmicsWorkflows';
+
+import { useClient } from 'services';
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  ChipInput,
+  Defaults,
+  Pager,
+  PlusIcon,
+  SearchInput,
+  useSettings
+} from 'design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { listOmicsWorkflows } from '../services';
+import { OmicsWorkflowsListItem } from '../components';
+
 
 function OmicsPageHeader() {
   return (
