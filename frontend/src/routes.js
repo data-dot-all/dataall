@@ -409,7 +409,7 @@ const routes = [
     children: [
       {
         path: '',
-        element: <Catalog />
+        element: <EnvironmentList />
       },
       {
         path: '*',
