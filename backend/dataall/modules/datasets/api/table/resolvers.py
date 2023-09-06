@@ -1,6 +1,6 @@
 import logging
 
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
@@ -53,7 +53,7 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
+        return GlossaryRepository.get_glossary_terms_links(
             session, source.tableUri, 'DatasetTable'
         )
 

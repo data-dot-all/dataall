@@ -1,5 +1,5 @@
 from dataall.base.api.context import Context
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.modules.vote.db.vote_repositories import Vote
 from dataall.base.db.exceptions import RequiredParameter
@@ -106,7 +106,7 @@ def delete_dashboard(context: Context, source, dashboardUri: str = None):
 
 def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
+        return GlossaryRepository.get_glossary_terms_links(
             session, source.dashboardUri, 'Dashboard'
         )
 

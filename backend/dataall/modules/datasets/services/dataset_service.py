@@ -14,7 +14,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.vote.db.vote_repositories import Vote
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
@@ -205,7 +205,7 @@ class DatasetService:
                     resource_type=Dataset.__name__,
                 )
                 if data.get('terms'):
-                    Glossary.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
+                    GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
@@ -530,5 +530,5 @@ class DatasetService:
     def delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
-            Glossary.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
-        Glossary.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+            GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
+        GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')

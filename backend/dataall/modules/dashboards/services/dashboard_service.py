@@ -2,7 +2,7 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.modules.vote.db.vote_repositories import Vote
@@ -101,7 +101,7 @@ class DashboardService:
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dashboard.SamlGroupName
             )
-            Glossary.delete_glossary_terms_links(
+            GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
             )
             Vote.delete_votes(session, dashboard.dashboardUri, 'dashboard')
@@ -129,7 +129,7 @@ class DashboardService:
     def _update_glossary(session, dashboard, data):
         context = get_context()
         if 'terms' in data:
-            Glossary.set_glossary_terms_links(
+            GlossaryRepository.set_glossary_terms_links(
                 session,
                 context.username,
                 dashboard.dashboardUri,
