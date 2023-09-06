@@ -15,26 +15,25 @@ import { ModuleNames, isModuleEnabled } from 'utils';
 export const EnvironmentFeatures = (props) => {
   const { environment, ...other } = props;
 
-  // Define your list of features/modules with additional attributes
   const features = [
     {
       title: 'Dashboards',
-      env: 'dashboardsEnabled',
+      enabledEnvVariableName: 'dashboardsEnabled',
       active: isModuleEnabled(ModuleNames.DASHBOARDS)
     },
     {
       title: 'Notebooks',
-      env: 'notebooksEnabled',
+      enabledEnvVariableName: 'notebooksEnabled',
       active: isModuleEnabled(ModuleNames.NOTEBOOKS)
     },
     {
       title: 'ML Studio',
-      env: 'mlStudiosEnabled',
+      enabledEnvVariableName: 'mlStudiosEnabled',
       active: isModuleEnabled(ModuleNames.ML_STUDIO)
     },
     {
       title: 'Pipelines',
-      env: 'pipelinesEnabled',
+      enabledEnvVariableName: 'pipelinesEnabled',
       active: isModuleEnabled(ModuleNames.PIPELINES)
     }
   ];
@@ -64,12 +63,14 @@ export const EnvironmentFeatures = (props) => {
               <Typography color="textPrimary" variant="body2">
                 <Label
                   color={
-                    environment.parameters[feature.env] === 'true'
+                    environment.parameters[feature.enabledEnvVariableName] ===
+                    'true'
                       ? 'success'
                       : 'error'
                   }
                 >
-                  {environment.parameters[feature.env] === 'true'
+                  {environment.parameters[feature.enabledEnvVariableName] ===
+                  'true'
                     ? 'Enabled'
                     : 'Disabled'}
                 </Label>
