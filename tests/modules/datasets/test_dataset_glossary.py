@@ -26,54 +26,6 @@ def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
     yield cols
 
 
-def test_dataset_link_term(client, t1, _columns, group):
-    col = _columns[0]
-    r = client.query(
-        """
-        mutation LinkTerm(
-            $nodeUri:String!,
-            $targetUri:String!,
-            $targetType:String!,
-        ){
-            linkTerm(
-                nodeUri:$nodeUri,
-                targetUri:$targetUri,
-                targetType:$targetType
-            ){
-                linkUri
-            }
-        }
-        """,
-        nodeUri=t1.nodeUri,
-        targetUri=col.columnUri,
-        targetType='Column',
-        username='alice',
-        groups=[group.name],
-    )
-    link_uri = r.data.linkTerm.linkUri
-
-    r = client.query(
-        """
-        query GetGlossaryTermLink($linkUri:String!){
-            getGlossaryTermLink(linkUri:$linkUri){
-                linkUri
-                created
-                target{
-                    __typename
-                    ... on DatasetTableColumn{
-                         label
-                        columnUri
-                    }
-                }
-            }
-        }
-        """,
-        linkUri=link_uri,
-        username='alice',
-    )
-    print(r)
-
-
 def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group):
     response = client.query(
         """
@@ -128,33 +80,35 @@ def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group
     assert not link.approvedBySteward
 
 
-def test_get_column_term_associations(t1, db, client):
+def test_get_column_term_associations(t1, dataset_fixture, group, db, client):
     r = client.query(
         """
-        query GetTerm($nodeUri:String!){
-            getTerm(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-                associations{
-                    count
-                    nodes{
-                        linkUri
-                        target{
-                            ... on DatasetTableColumn{
-                                label
-                                columnUri
-                            }
-                        }
-                    }
+        query GetDataset($datasetUri: String!) {
+          getDataset(datasetUri: $datasetUri) {
+            datasetUri
+            owner
+            description
+            terms {
+              count
+              nodes {
+                __typename
+                ... on Term {
+                  nodeUri
+                  path
+                  label
                 }
+              }
             }
-
+          }
         }
         """,
-        nodeUri=t1.nodeUri,
+        datasetUri=dataset_fixture.datasetUri,
         username='alice',
+        groups=[group.name],
     )
-    assert r.data.getTerm.nodeUri == t1.nodeUri
-    assert r.data.getTerm.label == t1.label
-    assert r.data.getTerm.readme == t1.readme
+    assert r.data.getDataset.terms.nodes[0].nodeUri == t1.nodeUri
+    assert r.data.getDataset.terms.nodes[0].label == t1.label
+    assert r.data.getDataset.terms.nodes[0].readme == t1.readme
+
+
+
