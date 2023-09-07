@@ -1,42 +1,41 @@
 from typing import Dict, Type
-
-from dataall.modules.vote.db.vote_repositories import Vote
+from dataall.base.db import exceptions
+from dataall.modules.vote.services.vote_service import VoteService
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
 
 
-def add_vote_type(target_type: str, indexer: Type[BaseIndexer]):
-    _VOTE_TYPES[target_type] = indexer
+def _required_param(param, name):
+    if not param:
+        raise exceptions.RequiredParameter(name)
+
+
+def upvote(context, source, input=None):
+    if not input:
+        raise exceptions.RequiredParameter('data')
+    _required_param(param=input['targetUri'], name='URI')
+    _required_param(param=input['targetType'], name='targetType')
+    _required_param(param=input['upvote'], name='Upvote')
+    return VoteService.upvote(
+        targetUri=input['targetUri'],
+        targetType=input['targetType'],
+        upvote=input['upvote']
+    )
+
+
+def get_vote(context, source, targetUri: str = None, targetType: str = None):
+    _required_param(param=targetUri, name='URI')
+    _required_param(param=targetType, name='targetType')
+    return VoteService.get_vote(
+        target_uri=targetUri,
+        target_type=targetType
+    )
 
 
 def count_upvotes(
     context, source, targetUri: str = None, targetType: str = None
 ):
-    with context.engine.scoped_session() as session:
-        return Vote.count_upvotes(
-            session=session,
-            uri=targetUri,
-            target_type=targetType
-        )
-
-
-def upvote(context, source, input=None):
-    with context.engine.scoped_session() as session:
-        vote = Vote.upvote(
-            session=session,
-            uri=input['targetUri'],
-            data=input,
-        )
-
-        _VOTE_TYPES[vote.targetType].upsert(session, vote.targetUri)
-        return vote
-
-
-def get_vote(context, source, targetUri: str = None, targetType: str = None):
-    with context.engine.scoped_session() as session:
-        return Vote.find_vote(
-            session=session,
-            target_uri=targetUri,
-            target_type=targetType
-        )
+    _required_param(param=targetUri, name='URI')
+    _required_param(param=targetType, name='targetType')
+    return VoteService.count_upvotes(targetUri=targetUri, targetType=targetType)
