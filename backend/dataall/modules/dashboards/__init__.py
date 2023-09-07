@@ -30,7 +30,7 @@ class DashboardApiModuleInterface(ModuleInterface):
         import dataall.modules.dashboards.api
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.modules.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
-        from dataall.modules.vote.api.resolvers import add_vote_type
+        from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
         FeedRegistry.register(FeedDefinition("Dashboard", Dashboard))
