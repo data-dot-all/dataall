@@ -6,6 +6,10 @@ documentation, we greatly value feedback and contributions from our community.
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
 information to effectively respond to your bug report or contribution.
 
+## First Things First
+
+When in doubt, **open an issue**. For almost any type of contribution, the first step is to open an issue.  Even if you think you already know the best solution, writing down a description of the problem you are trying to solve will not only give everyone else context, but also help [consolidate your thoughts]9https://en.wikipedia.org/wiki/Rubber_duck_debugging).  If its a really trivial change, like a typo or spelling error, you can skip this step, but when in doubt, open an issue
+
 
 ## Reporting Bugs/Feature Requests
 
@@ -37,6 +41,16 @@ To send us a pull request, please:
 
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+
+## Review Process
+
+We deeply appreciate everyone who takes the time to make a contribution. We will review all contributions as quickly as possible. As a reminder, opening an issue discussing your change before you make it is the best way to smooth the PR process. This will prevent a rejection because someone else is already working on the problem, or because the solution is incompatible with the architectural direction.
+
+During the PR process, expect that there will be some back-and-forth. Please try to respond to comments in a timely fashion, and if you don't wish to continue with the PR, let us know. If a PR takes too many iterations for its complexity or size, we may reject it. Additionally, if you stop responding we may close the PR as abandoned. In either case, if you feel this was done in error, please add a comment on the PR.
+
+If we accept the PR, a [maintainer](MAINTAINERS.md) will merge your change and usually take care of backporting it to appropriate branches ourselves.
+
+If we reject the PR, we will close the pull request with a comment explaining why. This decision isn't always final: if you feel we have misunderstood your intended change or otherwise think that we should reconsider then please continue the conversation with a comment on the PR and we'll do our best to address any further points you raise.
 
 
 ## Finding contributions to work on
