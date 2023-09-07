@@ -358,12 +358,12 @@ class DatasetService:
                 )
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
-            for uri in tables:
-                DatasetIndexer.delete_doc(doc_id=uri)
+            for tableUri in tables:
+                DatasetIndexer.delete_doc(doc_id=tableUri)
 
             folders = [f.locationUri for f in DatasetLocationRepository.get_dataset_folders(session, uri)]
-            for uri in folders:
-                DatasetIndexer.delete_doc(doc_id=uri)
+            for folderUri in folders:
+                DatasetIndexer.delete_doc(doc_id=folderUri)
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
