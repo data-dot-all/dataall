@@ -140,6 +140,7 @@ def graphql_server():
     # GraphQL queries are always sent as POST
     logger.debug(request.data)
     data = request.get_json()
+    print('*** Request ***', request.data)
 
     context = request_context(request.headers, mock=True)
     logger.debug(context)
