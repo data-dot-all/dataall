@@ -15,7 +15,7 @@ const tabs = [
 
 const OmicsView = () => {
   const { settings } = useSettings();
-  const [currentTab, setCurrentTab] = useState('overview');
+  const [currentTab, setCurrentTab] = useState('workflows');
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);

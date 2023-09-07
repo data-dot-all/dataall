@@ -17,13 +17,7 @@ import { useNavigate } from 'react-router';
 import { FiCodesandbox } from 'react-icons/fi';
 import React from 'react';
 
-import {
-  IconAvatar,
-  StackStatus,
-  Label,
-  useCardStyle
-} from 'design';
-
+import { IconAvatar, StackStatus, Label, useCardStyle } from 'design';
 
 export const OmicsWorkflowsListItem = (props) => {
   const { workflow } = props;
