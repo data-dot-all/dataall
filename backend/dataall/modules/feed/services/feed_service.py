@@ -61,4 +61,4 @@ class FeedService:
     @staticmethod
     def list_feed_messages(targetUri: str, filter: dict = None):
         with _session() as session:
-            return FeedRepository(session).paginated_feed_messages(targetUri=targetUri, filter=filter)
+            return FeedRepository(session).paginated_feed_messages(uri=targetUri, filter=filter)
