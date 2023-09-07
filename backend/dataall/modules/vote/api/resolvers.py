@@ -7,7 +7,7 @@ _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
 
 
 def _required_param(param, name):
-    if not param:
+    if param is None:
         raise exceptions.RequiredParameter(name)
 
 
@@ -28,8 +28,8 @@ def get_vote(context, source, targetUri: str = None, targetType: str = None):
     _required_param(param=targetUri, name='URI')
     _required_param(param=targetType, name='targetType')
     return VoteService.get_vote(
-        target_uri=targetUri,
-        target_type=targetType
+        targetUri=targetUri,
+        targetType=targetType
     )
 
 

@@ -49,6 +49,6 @@ class VoteService:
         with _session() as session:
             return VoteRepository.count_upvotes(
                 session=session,
-                uri=targetUri,
+                targetUri=targetUri,
                 target_type=targetType
             )
