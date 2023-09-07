@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 // TODO: review API output
-const listOmicsRuns = (filter) => ({
+export const listOmicsRuns = (filter) => ({
   variables: {
     filter
   },
@@ -43,5 +43,3 @@ const listOmicsRuns = (filter) => ({
     }
   `
 });
-
-export default listOmicsRuns;

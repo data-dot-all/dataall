@@ -16,12 +16,16 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
 import { FiCodesandbox } from 'react-icons/fi';
 import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import StackStatus from '../../components/StackStatus';
-import { Label } from '../../../design/components/Label';
-import { useCardStyle } from '../../../design/hooks/useCardStyle';
 
-const OmicsWorkflowsListItem = (props) => {
+import {
+  IconAvatar,
+  StackStatus,
+  Label,
+  useCardStyle
+} from 'design';
+
+
+export const OmicsWorkflowsListItem = (props) => {
   const { workflow } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -251,4 +255,3 @@ const OmicsWorkflowsListItem = (props) => {
 OmicsWorkflowsListItem.propTypes = {
   workflow: PropTypes.object.isRequired
 };
-export default OmicsWorkflowsListItem;

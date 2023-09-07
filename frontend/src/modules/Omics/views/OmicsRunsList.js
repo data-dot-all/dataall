@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
-import { useCallback, useEffect, useState } from 'react';
 
 import { useClient } from 'services';
 import {
@@ -26,7 +25,6 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 
 import { OmicsWorkflowsListItem } from '../components';
 import { listOmicsRuns } from '../services';
-
 
 function OmicsPageHeader() {
   return (
@@ -77,10 +75,10 @@ function OmicsPageHeader() {
   );
 }
 
-const OmicsRunList = () => {
+export const OmicsRunList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
@@ -172,5 +170,3 @@ const OmicsRunList = () => {
     </>
   );
 };
-
-export default OmicsRunList;

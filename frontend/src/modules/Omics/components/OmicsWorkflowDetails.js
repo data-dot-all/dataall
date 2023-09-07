@@ -1,11 +1,8 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import {
-    ObjectBrief,
-    ObjectMetadata
-} from 'design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
-const OmicsWorkflowDetails = (props) => {
+export const OmicsWorkflowDetails = (props) => {
   const { workflow, ...other } = props;
 
   return (
@@ -41,5 +38,3 @@ const OmicsWorkflowDetails = (props) => {
 OmicsWorkflowDetails.propTypes = {
   workflow: PropTypes.object.isRequired
 };
-
-export default OmicsWorkflowDetails;

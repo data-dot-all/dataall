@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 // TODO: add output fields
-const getOmicsWorkflow = (workflowUri) => ({
+export const getOmicsWorkflow = (workflowUri) => ({
   variables: {
     workflowUri
   },
@@ -14,5 +14,3 @@ const getOmicsWorkflow = (workflowUri) => ({
     }
   `
 });
-
-export default getOmicsWorkflow;

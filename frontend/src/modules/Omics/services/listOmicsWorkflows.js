@@ -1,7 +1,7 @@
 import { gql } from 'apollo-boost';
 
 // TODO: review API output
-const listOmicsWorkflows = (filter) => ({
+export const listOmicsWorkflows = (filter) => ({
   variables: {
     filter
   },
@@ -27,6 +27,3 @@ const listOmicsWorkflows = (filter) => ({
     }
   `
 });
-
-export default listOmicsWorkflows;
-

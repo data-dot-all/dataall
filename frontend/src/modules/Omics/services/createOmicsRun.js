@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createOmicsRun = (input) => ({
+export const createOmicsRun = (input) => ({
   variables: {
     input
   },
@@ -17,5 +17,3 @@ const createOmicsRun = (input) => ({
     }
   `
 });
-
-export default createOmicsRun;

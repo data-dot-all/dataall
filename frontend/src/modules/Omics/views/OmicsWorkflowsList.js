@@ -16,9 +16,9 @@ import { Helmet } from 'react-helmet-async';
 
 import { useClient } from 'services';
 import {
-  ArrowLeftIcon,
+  //ArrowLeftIcon,
   ChevronRightIcon,
-  ChipInput,
+  //ChipInput,
   Defaults,
   Pager,
   PlusIcon,
@@ -28,7 +28,6 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listOmicsWorkflows } from '../services';
 import { OmicsWorkflowsListItem } from '../components';
-
 
 function OmicsPageHeader() {
   return (
@@ -79,10 +78,10 @@ function OmicsPageHeader() {
   );
 }
 
-const OmicsWorkflowsList = () => {
+export const OmicsWorkflowsList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
@@ -174,5 +173,3 @@ const OmicsWorkflowsList = () => {
     </>
   );
 };
-
-export default OmicsWorkflowsList;
