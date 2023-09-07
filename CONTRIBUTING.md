@@ -8,7 +8,7 @@ information to effectively respond to your bug report or contribution.
 
 ## First Things First
 
-When in doubt, **open an issue**. For almost any type of contribution, the first step is to open an issue.  Even if you think you already know the best solution, writing down a description of the problem you are trying to solve will not only give everyone else context, but also help [consolidate your thoughts]9https://en.wikipedia.org/wiki/Rubber_duck_debugging).  If its a really trivial change, like a typo or spelling error, you can skip this step, but when in doubt, open an issue
+When in doubt, **open an issue**. For almost any type of contribution, the first step is to open an issue.  Even if you think you already know the best solution, writing down a description of the problem you are trying to solve will not only give everyone else context, but also help [consolidate your thoughts](https://en.wikipedia.org/wiki/Rubber_duck_debugging).  If its a really trivial change, like a typo or spelling error, you can skip this step, but when in doubt, open an issue
 
 
 ## Reporting Bugs/Feature Requests
