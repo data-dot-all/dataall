@@ -250,7 +250,6 @@ class GlossaryRepository:
             )
         q = q.order_by(asc(path))
 
-
         return paginate(
             q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)
         ).to_dict()
