@@ -77,13 +77,11 @@ class GlossariesService:
             return GlossaryRepository.get_glossary_categories_terms_and_associations(session=session, path=path)
 
     @staticmethod
-    def list_term_associations(uri: str, nodeType: str, path: str, filter: dict = None):
+    def list_term_associations(node: GlossaryNode, filter: dict = None):
         with _session() as session:
             return GlossaryRepository.list_term_associations(
                 session=session,
-                uri=uri,
-                nodeType=nodeType,
-                source_path=path,
+                node=node,
                 filter=filter,
                 target_model_definitions=GlossaryRegistry.definitions()
             )

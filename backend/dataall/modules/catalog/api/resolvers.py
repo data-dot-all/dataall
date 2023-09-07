@@ -123,9 +123,7 @@ def resolve_term_associations(
     if not filter:
         filter = {}
     return GlossariesService.list_term_associations(
-        uri=source.nodeUri,
-        nodeType=source.nodeType,
-        path=source.path,
+        node=source,
         filter=filter
     )
 

@@ -198,7 +198,7 @@ class GlossaryRepository:
         return {'categories': categories, 'terms': terms, 'associations': associations}
 
     @staticmethod
-    def list_term_associations(session, target_model_definitions, uri, nodeType, source_path, filter=None):
+    def list_term_associations(session, target_model_definitions, node, filter=None):
         query = None
         for definition in target_model_definitions:
             model = definition.model
@@ -209,10 +209,11 @@ class GlossaryRepository:
                 model.name.label('name'),
                 model.description.label('description'),
             )
-            if query:
-                query.union(subquery)
-            else:
-                query = subquery
+            if subquery.first() is not None:
+                if query:
+                    query.union(subquery)
+                else:
+                    query = subquery
 
         if query is None:
             return Page([], 1, 1, 0)  # empty page. All modules are turned off
@@ -231,12 +232,12 @@ class GlossaryRepository:
                 linked_objects, TermLink.targetUri == linked_objects.c.targetUri
             )
         )
-        if nodeType == 'T':
-            q = q.filter(TermLink.nodeUri == uri)
-        elif nodeType in ['C', 'G']:
-            q = q.filter(GlossaryNode.path.startswith(source_path))
+        if node.nodeType == 'T':
+            q = q.filter(TermLink.nodeUri == node.nodeUri)
+        elif node.nodeType in ['C', 'G']:
+            q = q.filter(GlossaryNode.path.startswith(node.path))
         else:
-            raise Exception(f'InvalidNodeType ({uri}/{nodeType})')
+            raise Exception(f'InvalidNodeType ({node.nodeUri}/{node.nodeType})')
 
         term = filter.get('term')
         if term:
@@ -248,6 +249,7 @@ class GlossaryRepository:
                 )
             )
         q = q.order_by(asc(path))
+
 
         return paginate(
             q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)
