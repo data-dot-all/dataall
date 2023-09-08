@@ -334,9 +334,9 @@ check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide
 | dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
 
 
-### Configure module features
+### Disable module features
 As you probably noticed, the `dataset` module contains an additional field called `features` in the `config.json`. 
-If there is a particular functionality that you want to enable or disable or parametrize you can do so in this section. 
+If there is a particular functionality that you want to enable or disable you can do so in this section. 
 In the example config.json, the feature that enables file upload from data.all UI has been disabled.
 
 ```json
@@ -349,15 +349,11 @@ In the example config.json, the feature that enables file upload from data.all U
         }
     },
 ```
-
-This table collects the currently available features. But, what happens when you need a feature that is not in this list?
-Developing new features is relatively easy, check the [Developing modules](../developing-modules/) section to see how to add new features.
-
-| **Feature**   | **Module** | **Description**                             |   
-|---------------|------------|---------------------------------------------|
+| **Feature**   | **Module** | **Description**                      |   
+|---------------|------------|--------------------------------------|
 | file_uploads  | datasets   | Upload files in a Dataset in the Upload tab |
-| file_actions  | datasets   |                                             |
-| aws_actions   | datasets   |                                             |
+| file_actions  | datasets   | Create, Read, Update, Delete on Dataset Folders                                     |
+| aws_actions   | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                     |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
@@ -370,11 +366,12 @@ a particular feature in the core is to add it to the core section of the `config
         }
     }
 ```
-This is the list of core features that can be switched on/off at the moment.
+This is the list of core features that can be switched on/off at the moment. Take it as an example if you need to 
+disable any other core feature.
 
-| **Feature**   |  **Description**                             |   
-|---------------|---------------------------------------------|
-| env_aws_actions |  |
+| **Feature**   | **Module** | **Description**                      |   
+|---------------|------------|--------------------------------------|
+| env_aws_actions   | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI   |
 
 
 

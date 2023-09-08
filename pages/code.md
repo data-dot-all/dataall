@@ -451,7 +451,7 @@ class DatasetStack(Stack):
 **Environment extensions**
 
 For some modules, the environment stack includes base resources that are used for all users in the 
-environment account. Taking the example of the `mlstudio` module, we see that in `cdk/mlstudio_stack.py`
+environment account. Taking the example of the `mlstudio` module, we see that in `cdk/mlstudio_extension.py`
 we define a class that uses the base class `EnvironmentStackExtension`. This class requires the definition of
 a function called `extent`, that "extends" the resources created by the environment stack with the module-specific
 resources. In this case we add the SageMaker domain to the environment stack.
@@ -510,6 +510,9 @@ class DatasetsPivotRole(PivotRoleStatementSet):
         statements = [
 ```
 
+Note that this is only possible for auto-created pivot roles. For manually created pivot roles, the out-of-the-box 
+CloudFormation YAML contains all permissions required for all modules. We recommend you to use auto-created
+pivot roles to avoid manual errors and ensure least-privilege permissions.
 
 #### api
 
@@ -612,10 +615,11 @@ needs to run module code. We need to define the abstract class method `is_suppor
 returning the `ImportMode` that the particular `ModuleInterface` is interacting with.
 
 
-There are 5 types of `ImportMode` (imported from `base.loader.py`) 
+There are 6 types of `ImportMode` (imported from `base.loader.py`) 
 depending on the different infrastructure components that import module code.
 - API - GraphQL API Lambda
 - CDK - CDK Proxy
+- CDK_CLI_EXTENSION - CDK Proxy extension imports
 - HANDLERS - AWS Worker Lambda
 - STACK_UPDATER_TASK - ECS Task that updates CDK stacks
 - CATALOG_INDEXER_TASK - ECS Task that updates items indexed in the Catalog
@@ -765,7 +769,7 @@ ModuleName/
 ├──── index.js
 ├── views/ : all views/pages belonging to the module 
 ├──── ModuleViewA.js
-└──── ModuleViewA.js
+└──── ModuleViewB.js
 ```
 
 As shown above, each directory in a module except the `views` folder must contain an `index.js` file that exports the directory's content. This is to simplify importing different parts of the code, and also to keep implementation details and internal structure of each directory hidden from its consumers.
@@ -863,7 +867,7 @@ Some modules visibility depends on others, for example, `Glossary` and `Catalog`
 New utilility methods or helpers should be under here unless it's a helper that is super specific to a module, then it can be in the same directory as the module under `helpers` or `utils` folder.
 
 ### jsconfig.json <a name="jsconfig"></a>
-The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It reference the root folder (`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
+The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It references the root folder (`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
 ```
 {
   "compilerOptions": {
