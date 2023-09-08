@@ -211,7 +211,7 @@ class GlossaryRepository:
             )
             if subquery.first() is not None:
                 if query:
-                    query.union(subquery)
+                    query = query.union(subquery)
                 else:
                     query = subquery
 

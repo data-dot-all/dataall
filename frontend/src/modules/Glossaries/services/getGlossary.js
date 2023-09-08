@@ -36,6 +36,9 @@ export const getGlossary = (nodeUri) => ({
               ... on DatasetTable {
                 label
               }
+              ... on DatasetStorageLocation {
+                label
+              }
             }
           }
         }
