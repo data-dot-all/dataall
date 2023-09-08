@@ -200,6 +200,7 @@ class GlossaryRepository:
     @staticmethod
     def list_term_associations(session, target_model_definitions, node, filter=None):
         query = None
+        subqueries = []
         for definition in target_model_definitions:
             model = definition.model
             subquery = session.query(
@@ -210,10 +211,9 @@ class GlossaryRepository:
                 model.description.label('description'),
             )
             if subquery.first() is not None:
-                if query:
-                    query = query.union(subquery)
-                else:
-                    query = subquery
+                subqueries.append(subquery)
+
+        query = subqueries[0].union(*subqueries[1:])
 
         if query is None:
             return Page([], 1, 1, 0)  # empty page. All modules are turned off
@@ -232,6 +232,7 @@ class GlossaryRepository:
                 linked_objects, TermLink.targetUri == linked_objects.c.targetUri
             )
         )
+
         if node.nodeType == 'T':
             q = q.filter(TermLink.nodeUri == node.nodeUri)
         elif node.nodeType in ['C', 'G']:
