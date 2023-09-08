@@ -59,5 +59,5 @@ def resolve_glossary_terms(
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(
-            session, source.locationUri, 'DatasetStorageLocation'
+            session, source.locationUri, 'Folder'
         )
