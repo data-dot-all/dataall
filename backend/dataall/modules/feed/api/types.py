@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.feed.api.resolvers import resolve_feed_target_type, resolve_messages, resolve_target
+from dataall.modules.feed.api.resolvers import resolve_feed_target_type, resolve_feed_messages
 from dataall.modules.feed.api.registry import FeedRegistry
 
 
@@ -14,11 +14,10 @@ Feed = gql.ObjectType(
     fields=[
         gql.Field(name='feedTargetUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='feedTargetType', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='target', resolver=resolve_target, type=gql.Ref('FeedTarget')),
         gql.Field(
             name='messages',
             args=[gql.Argument(name='filter', type=gql.Ref('FeedMessageFilter'))],
-            resolver=resolve_messages,
+            resolver=resolve_feed_messages,
             type=gql.Ref('FeedMessages'),
         ),
     ],
