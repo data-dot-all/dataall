@@ -5,7 +5,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.catalog.db.glossary_repositories import Glossary
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.modules.vote.db.vote_repositories import Vote
+from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
@@ -104,7 +104,7 @@ class DashboardService:
             Glossary.delete_glossary_terms_links(
                 session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
             )
-            Vote.delete_votes(session, dashboard.dashboardUri, 'dashboard')
+            VoteRepository.delete_votes(session, dashboard.dashboardUri, 'dashboard')
 
         DashboardIndexer.delete_doc(doc_id=uri)
         return True

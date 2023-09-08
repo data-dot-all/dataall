@@ -15,7 +15,7 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import Glossary
-from dataall.modules.vote.db.vote_repositories import Vote
+from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -221,7 +221,7 @@ class DatasetService:
             count_locations = DatasetLocationRepository.count_dataset_locations(
                 session, dataset.datasetUri
             )
-            count_upvotes = Vote.count_upvotes(
+            count_upvotes = VoteRepository.count_upvotes(
                 session, dataset.datasetUri, target_type='dataset'
             )
         return {
@@ -372,7 +372,7 @@ class DatasetService:
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
-            Vote.delete_votes(session, dataset.datasetUri, 'dataset')
+            VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
