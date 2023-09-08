@@ -41,14 +41,12 @@ class DatasetApiModuleInterface(ModuleInterface):
         import dataall.modules.datasets.api
         from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
         from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-        from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
+        from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
-        FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
         FeedRegistry.register(FeedDefinition("Dataset", Dataset))
 
-        GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         GlossaryRegistry.register(GlossaryDefinition(
             target_type="Folder",
             object_type="DatasetStorageLocation",
