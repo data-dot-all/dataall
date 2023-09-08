@@ -102,6 +102,6 @@ class DatasetLocationService:
             session,
             get_context().username,
             location.locationUri,
-            'DatasetStorageLocation',
+            'Folder',
             terms
         )

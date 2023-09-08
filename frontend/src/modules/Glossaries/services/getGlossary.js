@@ -21,27 +21,6 @@ export const getGlossary = (nodeUri) => ({
           terms
           associations
         }
-        associations {
-          count
-          page
-          pages
-          hasNext
-          hasPrevious
-          nodes {
-            __typename
-            target {
-              ... on Dataset {
-                label
-              }
-              ... on DatasetTable {
-                label
-              }
-              ... on DatasetStorageLocation {
-                label
-              }
-            }
-          }
-        }
       }
     }
   `

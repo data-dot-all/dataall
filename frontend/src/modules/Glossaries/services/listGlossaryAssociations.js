@@ -36,27 +36,7 @@ export const listGlossaryAssociations = ({ nodeUri, filter }) => ({
             }
             targetType
             target {
-              __typename
-              ... on Dataset {
-                datasetUri
-                name
-                label
-              }
-              ... on DatasetTable {
-                tableUri
-                name
-                label
-              }
-              ... on DatasetStorageLocation {
-                locationUri
-                name
-                label
-              }
-              ... on Dashboard {
-                dashboardUri
-                name
-                label
-              }
+              label
             }
           }
         }
