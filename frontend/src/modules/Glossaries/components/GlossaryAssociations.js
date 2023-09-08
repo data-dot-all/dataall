@@ -145,9 +145,7 @@ export const GlossaryAssociations = ({ glossary }) => {
                             <span>Table</span>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.targetType === 'Folder' && (
-                            <span>Folder</span>
-                          )}
+                          {item.targetType === 'Folder' && <span>Folder</span>}
                           {item.targetType === 'Dashboard' && (
                             <span>Dashboard</span>
                           )}
