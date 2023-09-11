@@ -1,7 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.catalog.api.resolvers import (
-    create_glossary, update_node, delete_node, create_category, create_term, link_term,
-    request_link, approve_term_association, dismiss_term_association
+    create_glossary, update_node, delete_node, create_category, create_term,
+    approve_term_association, dismiss_term_association
 )
 
 
@@ -62,30 +62,6 @@ deleteCategory = gql.MutationField(
     type=gql.Integer,
 )
 
-
-linkTerm = gql.MutationField(
-    name='linkTerm',
-    resolver=link_term,
-    args=[
-        gql.Argument(name='nodeUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='targetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='targetType', type=gql.NonNullableType(gql.String)),
-    ],
-    type=gql.Ref('GlossaryTermLink'),
-)
-
-requestLink = gql.MutationField(
-    name='requestLink',
-    resolver=request_link,
-    args=[
-        gql.Argument(name='nodeUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='targetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='targetType', type=gql.NonNullableType(gql.String)),
-    ],
-    type=gql.Ref('GlossaryTermLink'),
-)
-
-
 createTerm = gql.MutationField(
     name='createTerm',
     type=gql.Ref('Term'),
@@ -112,7 +88,6 @@ deleteTerm = gql.MutationField(
     resolver=delete_node,
     args=[gql.Argument(name='nodeUri', type=gql.NonNullableType(gql.String))],
 )
-
 
 approveTermAssociation = gql.MutationField(
     name='approveTermAssociation',

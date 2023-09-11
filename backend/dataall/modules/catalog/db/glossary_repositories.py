@@ -1,24 +1,21 @@
 import logging
 from datetime import datetime
 
-from sqlalchemy import asc, or_, and_, literal, case
-from sqlalchemy.orm import with_expression, aliased
+from sqlalchemy import asc, or_, and_, literal
+from sqlalchemy.orm import with_expression
 
-from dataall.base.db import exceptions, paginate, Resource
-from dataall.core.permissions import permissions
+from dataall.base.db import exceptions, paginate
 from dataall.modules.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
+from dataall.modules.catalog.api.registry import GlossaryRegistry
 from dataall.base.db.paginator import Page
 from dataall.base.context import get_context
-from dataall.core.permissions.permission_checker import has_tenant_permission
 
 logger = logging.getLogger(__name__)
 
 
-class Glossary:
+class GlossaryRepository:
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
     def create_glossary(session, data=None):
-        Glossary.validate_params(data)
         g: GlossaryNode = GlossaryNode(
             label=data.get('label'),
             nodeType='G',
@@ -35,9 +32,7 @@ class Glossary:
         return g
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
     def create_category(session, uri, data=None):
-        Glossary.validate_params(data)
         parent: GlossaryNode = session.query(GlossaryNode).get(uri)
         if not parent:
             raise exceptions.ObjectNotFound('Glossary', uri)
@@ -56,9 +51,7 @@ class Glossary:
         return cat
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
     def create_term(session, uri, data=None):
-        Glossary.validate_params(data)
         parent: GlossaryNode = session.query(GlossaryNode).get(uri)
         if not parent:
             raise exceptions.ObjectNotFound('Glossary or Category', uri)
@@ -81,68 +74,6 @@ class Glossary:
         return term
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
-    def delete_node(session, uri):
-        count = 0
-        node: GlossaryNode = session.query(GlossaryNode).get(uri)
-        if not node:
-            raise exceptions.ObjectNotFound('Node', uri)
-        node.deleted = datetime.now()
-        if node.nodeType in ['G', 'C']:
-            children = session.query(GlossaryNode).filter(
-                and_(
-                    GlossaryNode.path.startswith(node.path),
-                    GlossaryNode.deleted.is_(None),
-                )
-            )
-            count = children.count() + 1
-            children.update({'deleted': datetime.now()}, synchronize_session=False)
-        else:
-            count = 1
-        return count
-
-    @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
-    def update_node(session, uri, data=None):
-        node: GlossaryNode = session.query(GlossaryNode).get(uri)
-        if not node:
-            raise exceptions.ObjectNotFound('Node', uri)
-        for k in data.keys():
-            setattr(node, k, data.get(k))
-        return node
-
-    @staticmethod
-    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
-    def link_term(session, uri, target_model: Resource, data):
-        term: GlossaryNode = session.query(GlossaryNode).get(uri)
-        if not term:
-            raise exceptions.ObjectNotFound('Node', uri)
-        if term.nodeType != 'T':
-            raise exceptions.InvalidInput(
-                'NodeType',
-                'term.nodeType',
-                'associations are allowed for Glossary terms only',
-            )
-
-        target_uri: str = data['targetUri']
-        target_type: str = data['targetType']
-
-        target = session.query(target_model).get(target_uri)
-        if not target:
-            raise exceptions.ObjectNotFound('Association target', uri)
-
-        link = TermLink(
-            owner=get_context().username,
-            approvedByOwner=data.get('approvedByOwner', True),
-            approvedBySteward=data.get('approvedBySteward', True),
-            nodeUri=uri,
-            targetUri=target_uri,
-            targetType=target_type,
-        )
-        session.add(link)
-        return link
-
-    @staticmethod
     def list_glossaries(session, data=None):
         q = session.query(GlossaryNode).filter(
             GlossaryNode.nodeType == 'G', GlossaryNode.deleted.is_(None)
@@ -157,6 +88,171 @@ class Glossary:
             )
         return paginate(
             q, page_size=data.get('pageSize', 10), page=data.get('page', 1)
+        ).to_dict()
+
+    @staticmethod
+    def list_node_children(session, path, filter):
+        q = (
+            session.query(GlossaryNode)
+            .filter(GlossaryNode.path.startswith(path + '/'))
+            .order_by(asc(GlossaryNode.path))
+        )
+        term = filter.get('term')
+        nodeType = filter.get('nodeType')
+        if term:
+            q = q.filter(
+                or_(
+                    GlossaryNode.label.ilike(term),
+                    GlossaryNode.readme.ilike(term),
+                )
+            )
+        if nodeType:
+            q = q.filter(GlossaryNode.nodeType == nodeType)
+        return paginate(
+            q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
+        ).to_dict()
+
+    @staticmethod
+    def get_node_tree(session, path, filter):
+        q = (
+            session.query(GlossaryNode)
+            .filter(GlossaryNode.path.startswith(path))
+            .filter(GlossaryNode.deleted.is_(None))
+            .order_by(asc(GlossaryNode.path))
+        )
+        term = filter.get('term')
+        nodeType = filter.get('nodeType')
+        if term:
+            q = q.filter(
+                or_(
+                    GlossaryNode.label.ilike(term),
+                    GlossaryNode.readme.ilike(term),
+                )
+            )
+        if nodeType:
+            q = q.filter(GlossaryNode.nodeType == nodeType)
+
+        return paginate(
+            q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
+        ).to_dict()
+
+    @staticmethod
+    def get_node_link_to_target(session, username, uri, targetUri):
+        link = (
+            session.query(TermLink)
+            .filter(
+                and_(
+                    TermLink.nodeUri == uri,
+                    TermLink.targetUri == targetUri,
+                )
+            )
+            .first()
+        )
+        if not link:
+            link = {
+                'nodeUri': uri,
+                'targetUri': targetUri,
+                'created': datetime.now().isoformat(),
+                'owner': username,
+                'approvedByOwner': False,
+                'approvedBySteward': False,
+            }
+
+        return link
+
+    @staticmethod
+    def get_glossary_categories_terms_and_associations(session, path):
+        categories = (
+            session.query(GlossaryNode)
+            .filter(
+                and_(
+                    GlossaryNode.path.startswith(path),
+                    GlossaryNode.nodeType == 'C',
+                    GlossaryNode.deleted.is_(None),
+                )
+            )
+            .count()
+        )
+        terms = (
+            session.query(GlossaryNode)
+            .filter(
+                and_(
+                    GlossaryNode.path.startswith(path),
+                    GlossaryNode.nodeType == 'T',
+                    GlossaryNode.deleted.is_(None),
+                )
+            )
+            .count()
+        )
+
+        associations = (
+            session.query(TermLink)
+            .join(
+                GlossaryNode,
+                GlossaryNode.nodeType == TermLink.nodeUri,
+            )
+            .filter(GlossaryNode.path.startswith(path))
+            .count()
+        )
+
+        return {'categories': categories, 'terms': terms, 'associations': associations}
+
+    @staticmethod
+    def list_term_associations(session, target_model_definitions, node, filter=None):
+        query = None
+        subqueries = []
+        for definition in target_model_definitions:
+            model = definition.model
+            subquery = session.query(
+                definition.target_uri().label('targetUri'),
+                literal(definition.target_type.lower()).label('targetType'),
+                model.label.label('label'),
+                model.name.label('name'),
+                model.description.label('description'),
+            )
+            if subquery.first() is not None:
+                subqueries.append(subquery)
+
+        query = subqueries[0].union(*subqueries[1:])
+
+        if query is None:
+            return Page([], 1, 1, 0)  # empty page. All modules are turned off
+
+        linked_objects = query.subquery('linked_objects')
+
+        path = GlossaryNode.path
+        q = (
+            session.query(TermLink)
+            .options(with_expression(TermLink.path, path))
+            .join(
+                GlossaryNode,
+                GlossaryNode.nodeUri == TermLink.nodeUri,
+            )
+            .join(
+                linked_objects, TermLink.targetUri == linked_objects.c.targetUri
+            )
+        )
+
+        if node.nodeType == 'T':
+            q = q.filter(TermLink.nodeUri == node.nodeUri)
+        elif node.nodeType in ['C', 'G']:
+            q = q.filter(GlossaryNode.path.startswith(node.path))
+        else:
+            raise Exception(f'InvalidNodeType ({node.nodeUri}/{node.nodeType})')
+
+        term = filter.get('term')
+        if term:
+            q = q.filter(
+                or_(
+                    linked_objects.c.label.ilike('%' + term + '%'),
+                    linked_objects.c.description.ilike(f'%{term}'),
+                    linked_objects.c.targetType.ilike(f'%{term}'),
+                )
+            )
+        q = q.order_by(asc(path))
+
+        return paginate(
+            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)
         ).to_dict()
 
     @staticmethod
@@ -203,193 +299,92 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def hierarchical_search(session, data=None):
-        q = session.query(GlossaryNode).options(
-            with_expression(GlossaryNode.isMatch, literal(True))
-        )
-        q = q.filter(GlossaryNode.deleted.is_(None))
-        term = data.get('term', None)
-        if term:
-            q = q.filter(
-                or_(
-                    GlossaryNode.label.ilike('%' + term.upper() + '%'),
-                    GlossaryNode.readme.ilike('%' + term.upper() + '%'),
-                )
-            )
-        matches = q.subquery('matches')
-        parents = aliased(GlossaryNode, name='parents')
-        children = aliased(GlossaryNode, name='children')
+    def get_node(session, uri) -> GlossaryNode:
+        node: GlossaryNode = session.query(GlossaryNode).get(uri)
+        if not node:
+            raise exceptions.ObjectNotFound('Node', uri)
+        return node
 
-        if term:
-            parent_expr = case(
-                [
-                    (
-                        or_(
-                            parents.label.ilike(f'%{term}%'),
-                            parents.readme.ilike(f'%{term}%'),
-                        )
-                    )
-                ],
-                else_=literal(False),
-            )
-        else:
-            parent_expr = literal(False)
+    @staticmethod
+    def update_node(session, uri, data=None) -> GlossaryNode:
+        node: GlossaryNode = session.query(GlossaryNode).get(uri)
+        if not node:
+            raise exceptions.ObjectNotFound('Node', uri)
+        for k in data.keys():
+            setattr(node, k, data.get(k))
+        return node
 
-        ascendants = (
-            session.query(parents)
-            .options(with_expression(parents.isMatch, parent_expr))
-            .join(
+    @staticmethod
+    def delete_node(session, uri) -> bool:
+        count = 0
+        node: GlossaryNode = session.query(GlossaryNode).get(uri)
+        if not node:
+            raise exceptions.ObjectNotFound('Node', uri)
+        node.deleted = datetime.now()
+        if node.nodeType in ['G', 'C']:
+            children = session.query(GlossaryNode).filter(
                 and_(
-                    matches,
-                    matches.c.path.startswith(parents.path),
-                    matches,
-                    matches.c.deleted.is_(None),
+                    GlossaryNode.path.startswith(node.path),
+                    GlossaryNode.deleted.is_(None),
                 )
             )
-        )
-
-        if term:
-            child_expr = case(
-                [
-                    (
-                        or_(
-                            children.label.ilike(f'%{term}%'),
-                            children.readme.ilike(f'%{term}%'),
-                        ),
-                        and_(children.deleted.is_(None)),
-                    )
-                ],
-                else_=literal(False),
-            )
+            count = children.count() + 1
+            children.update({'deleted': datetime.now()}, synchronize_session=False)
         else:
-            child_expr = literal(False)
-
-        descendants = (
-            session.query(children)
-            .options(with_expression(children.isMatch, child_expr))
-            .join(
-                matches,
-                children.path.startswith(matches.c.path),
-            )
-        )
-
-        all = ascendants.union(descendants)
-        q = all.order_by(GlossaryNode.path)
-
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 100)
-        ).to_dict()
+            count = 1
+        return count
 
     @staticmethod
-    def search_terms(session, data=None):
-        q = session.query(GlossaryNode).filter(
-            GlossaryNode.deleted.is_(None)
+    def approve_term_association(session, username, groups, linkUri: str = None):
+        updated = False
+        link: TermLink = session.query(TermLink).get(linkUri)
+        if not link:
+            raise exceptions.ObjectNotFound('Link', linkUri)
+        GlossaryRepository._verify_term_association_approver_role(
+            session, username, groups, link
         )
-        term = data.get('term')
-        if term:
-            q = q.filter(
-                or_(
-                    GlossaryNode.label.ilike(term),
-                    GlossaryNode.readme.ilike(term),
-                )
-            )
-        q = q.order_by(asc(GlossaryNode.path))
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        if not link.approvedBySteward:
+            link.approvedBySteward = True
+            updated = True
+        GlossaryRepository._reindex(session=session, linkUri=linkUri)
+        return updated
 
     @staticmethod
-    def validate_params(data):
-        if not data:
-            exceptions.RequiredParameter('data')
-        if not data.get('label'):
-            exceptions.RequiredParameter('name')
+    def dismiss_term_association(session, username, groups, linkUri: str = None):
+        updated = False
+        link: TermLink = session.query(TermLink).get(linkUri)
+        if not link:
+            raise exceptions.ObjectNotFound('Link', linkUri)
+        GlossaryRepository._verify_term_association_approver_role(
+            session, username, groups, link
+        )
+        if link.approvedBySteward:
+            link.approvedBySteward = False
+            updated = True
+        GlossaryRepository._reindex(session, linkUri=linkUri)
+        return updated
 
     @staticmethod
-    def list_node_children(session, source, filter):
-        q = (
-            session.query(GlossaryNode)
-            .filter(GlossaryNode.path.startswith(source.path + '/'))
-            .order_by(asc(GlossaryNode.path))
-        )
-        term = filter.get('term')
-        nodeType = filter.get('nodeType')
-        if term:
-            q = q.filter(
-                or_(
-                    GlossaryNode.label.ilike(term),
-                    GlossaryNode.readme.ilike(term),
-                )
+    def _verify_term_association_approver_role(session, username, groups, link):
+        glossary_node = session.query(GlossaryNode).get(link.nodeUri)
+        if glossary_node.owner != username and glossary_node.admin not in groups:
+            raise exceptions.UnauthorizedOperation(
+                'ASSOCIATE_GLOSSARY_TERM',
+                f'User: {username} is not allowed to manage glossary term associations',
             )
-        if nodeType:
-            q = q.filter(GlossaryNode.nodeType == nodeType)
-        return paginate(
-            q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
-        ).to_dict()
 
     @staticmethod
-    def list_term_associations(session, target_model_definitions, data=None):
-        source = data['source']
-        filter = data['filter']
-
-        query = None
-        for definition in target_model_definitions:
-            model = definition.model
-            subquery = session.query(
-                definition.target_uri().label('targetUri'),
-                literal(definition.target_type.lower()).label('targetType'),
-                model.label.label('label'),
-                model.name.label('name'),
-                model.description.label('description'),
-            )
-            if query:
-                query.union(subquery)
-            else:
-                query = subquery
-
-        if query is None:
-            return Page([], 1, 1, 0)  # empty page. All modules are turned off
-
-        linked_objects = query.subquery('linked_objects')
-
-        path = GlossaryNode.path
-        q = (
-            session.query(TermLink)
-            .options(with_expression(TermLink.path, path))
-            .join(
-                GlossaryNode,
-                GlossaryNode.nodeUri == TermLink.nodeUri,
-            )
-            .join(
-                linked_objects, TermLink.targetUri == linked_objects.c.targetUri
-            )
-        )
-        if source.nodeType == 'T':
-            q = q.filter(TermLink.nodeUri == source.nodeUri)
-        elif source.nodeType in ['C', 'G']:
-            q = q.filter(GlossaryNode.path.startswith(source.path))
-        else:
-            raise Exception(f'InvalidNodeType ({source.nodeUri}/{source.nodeType})')
-
-        term = filter.get('term')
-        if term:
-            q = q.filter(
-                or_(
-                    linked_objects.c.label.ilike('%' + term + '%'),
-                    linked_objects.c.description.ilike(f'%{term}'),
-                    linked_objects.c.targetType.ilike(f'%{term}'),
-                )
-            )
-        q = q.order_by(asc(path))
-
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)
-        ).to_dict()
+    def _reindex(session, linkUri):
+        link: TermLink = session.query(TermLink).get(linkUri)
+        if not link:
+            return
+        GlossaryRegistry.reindex(session, link.targetType, link.targetUri)
 
     @staticmethod
     def set_glossary_terms_links(
         session, username, target_uri, target_type, glossary_terms
     ):
+        """Used in dependent modules to assign glossary terms to resources"""
         current_links = session.query(TermLink).filter(
             TermLink.targetUri == target_uri
         )
@@ -421,6 +416,7 @@ class Glossary:
 
     @staticmethod
     def get_glossary_terms_links(session, target_uri, target_type):
+        """Used in dependent modules get assigned glossary terms to resources"""
         terms = (
             session.query(GlossaryNode)
             .join(
@@ -438,6 +434,7 @@ class Glossary:
 
     @staticmethod
     def delete_glossary_terms_links(session, target_uri, target_type):
+        """Used in dependent modules remove assigned glossary terms to resources"""
         term_links = (
             session.query(TermLink)
             .filter(
@@ -450,3 +447,21 @@ class Glossary:
         )
         for link in term_links:
             session.delete(link)
+
+    @staticmethod
+    def search_glossary_terms(session, data=None):
+        q = session.query(GlossaryNode).filter(
+            GlossaryNode.deleted.is_(None)
+        )
+        term = data.get('term')
+        if term:
+            q = q.filter(
+                or_(
+                    GlossaryNode.label.ilike(term),
+                    GlossaryNode.readme.ilike(term),
+                )
+            )
+        q = q.order_by(asc(GlossaryNode.path))
+        return paginate(
+            q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
+        ).to_dict()

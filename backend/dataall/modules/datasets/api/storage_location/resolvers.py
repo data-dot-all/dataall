@@ -1,5 +1,5 @@
 from dataall.base.api.context import Context
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.feature_toggle_checker import is_feature_enabled
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
@@ -58,6 +58,6 @@ def resolve_glossary_terms(
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
+        return GlossaryRepository.get_glossary_terms_links(
             session, source.locationUri, 'DatasetStorageLocation'
         )
