@@ -681,7 +681,9 @@ frontend/
 ```
 
 ### src/ <a name="src"></a>
-This section contains the major components of the frontend code. Here is a short description of all the components of the src folder, we will deep dive subsequently on the contents of each module.
+This section contains the major components of the frontend code. Here is a diagram and a short description of all the components of the src folder, we will deep dive subsequently on the contents of each module.
+
+![](img/HLD-frontend-data.allV2.drawio.png#zoom#shadow)
 
 ```
 src/
