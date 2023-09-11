@@ -18,8 +18,8 @@ export const useGroups = () => {
         ? session
             .getIdToken()
             .payload['custom:saml.groups'].replace('[', '')
-            .replace(']', '')
-            .replace(/, /g, ',')
+            .replace(']', '') // nosemgrep: incomplete-sanitization
+            .replace(/, /g, ',') // nosemgrep: incomplete-sanitization
             .split(',')
         : [];
       setGroups([].concat(cognitoGroups).concat(samlGroups).filter(Boolean));
