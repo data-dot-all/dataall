@@ -6,7 +6,6 @@ from dataall.modules.catalog.api.resolvers import (
     resolve_link_node, resolve_link_target,
 
 )
-from dataall.modules.catalog.api.registry import GlossaryRegistry
 
 GlossaryNode = gql.Union(
     name='GlossaryNode',
@@ -250,10 +249,11 @@ GlossarySearchResult = gql.ObjectType(
     ],
 )
 
-GlossaryTermLinkTarget = gql.Union(
+GlossaryTermLinkTarget = gql.ObjectType(
     name='GlossaryTermLinkTarget',
-    type_registry=GlossaryRegistry,
-    resolver=target_union_resolver,
+    fields=[
+        gql.Field(name='label', type=gql.String)
+    ],
 )
 
 GlossaryTermLink = gql.ObjectType(
