@@ -698,7 +698,7 @@ src/
 └── routes.js - where all routes and their hierachies are configured
 ```
 #### authentication/ <a name="authentication"></a>
-In this section, we handle the user and guest authentication logic and views for the application. The directory contains React `contexts`, `hooks`, `components` and `views` used to handle local and production environment authentication. 
+In this section, we handle the user authentication logic and views for the application. The directory contains React `contexts`, `hooks`, `components` and `views` used to handle local and production environment authentication. 
 
 ```
 autentication/
@@ -709,14 +709,16 @@ autentication/
 └── index.js
 ```
 
-We used React Context API to handle the authentication state mangagement. `CognitoAuthContext.js` handles the AWS deployment and `LocalAuthContext.js` for local deployment.
+We used React Context API to handle the authentication state management. `CognitoAuthContext.js` handles the AWS deployment and `LocalAuthContext.js` for local deployment.
 Then `AWS Amplify` is used to connect the app to `AWS Cognito` for production auth and a default anonymous user  is set for local environment.
 
-The `useAuth` hook is used to decide the auth context to use depending on the deployment environment, and `AuthGuard` is a wrapper to verify authentication before routing users to the requested pages in the application.
+The `useAuth` hook is used to decide the auth context to use depending on the deployment environment, and `AuthGuard` is a 
+wrapper to verify authentication before routing users to the requested pages in the application.
 
 
 #### design/ <a name="design"></a>
-This section contains script relating to the UI design of the frontend, including theming and theme settings, layout, icons, design components and logic. 
+This section contains script relating to the UI design of the frontend, including theming and theme settings, layout, 
+icons, design components and logic. 
 
 ```
 design/
@@ -729,106 +731,27 @@ design/
 ```
 
 There are two themes, `DARK` and `LIGHT` and their basic settings can be found in the `theme/` directory.
-We used React Context API to handle theme settings in `SettingsContext.js`, the default theme is set to match the browser's prefered color scheme or `DARK` if no color scheme is set.  
+We used React Context API to handle theme settings in `SettingsContext.js`, the default theme is set to match the 
+browser's prefered color scheme or `DARK` if no color scheme is set.  
 
-Common hooks used in the UI design like `useCardStyle` (default card component styling), `useScrollReset` (scroll to the top of the page) are in the `hooks` directory. 
+Common hooks used in the UI design like `useCardStyle` (default card component styling), `useScrollReset` (scroll to 
+the top of the page) are in the `hooks` directory. 
 
 #### globalErrors/ <a name="globalErrors"></a>
-In this section, we used Redux to handle global error notifications. Error actions that are dispatched across the application are handled by the `errorReducer.js` which are then displayed in the `ErrorNotification.js` snackbar.
+In this section, we used Redux to handle global error notifications. Error actions that are dispatched across the 
+application are handled by the `errorReducer.js` which are then displayed in the `ErrorNotification.js` snackbar.
 
-#### modules/ <a name="modules"></a>
-The modules folder is one of the most important folder in the `src/` directory. It contains distinctive logically related views, services and hooks of `data.all` features that we have sectioned into modules.
-
-##### Overview of the modules directory:
-```
-modules/
-├── Administration/
-├── Catalog/
-├── Dashboards/
-├── Datasets/
-├── ...
-├── MLStudio/
-├── Shared/
-└── constants.js
-```
-Each module folder contains components, hooks, services and pages related to a view (screen) in the application. 
-The `components`, `hooks`, and `services` directories contain only their respective parts of the code **that are only used** inside each module. The `views` folder contains the screens or pages in the module. 
-
-##### Structure of a module: <a name="structure_of_a_module"></a>
-```
-ModuleName/
-├── components/ : contains all components (a singular section of a view) used only in module
-├──── ModuleComponentA.js
-├──── ModuleComponentB.js
-├──── index.js
-├── hooks/ : contains all hooks used only in the module
-├──── useSomethingA.js
-├──── useSomethingB.js
-├──── index.js
-├── services/ : all graphql schema code used only in the module
-├──── someServiceA.js
-├──── someServiceB.js
-├──── index.js
-├── views/ : all views/pages belonging to the module 
-├──── ModuleViewA.js
-└──── ModuleViewB.js
-```
-
-As shown above, each directory in a module except the `views` folder must contain an `index.js` file that exports the directory's content. This is to simplify importing different parts of the code, and also to keep implementation details and internal structure of each directory hidden from its consumers.
-
-##### The `Shared` Module: <a name="shared"></a> 
-When working with React projects, often times we have components that are shared across multiple views and among other components.
-
-The shared module contains components that are shared among multiple views in the frontend. Related components are then grouped together in folders and with an `index.js` file that exports the directory's content.
-
-##### Adding a new module:
-To add a new module please follow the following steps:
-- Create a new directory for the new module under `src/modules`
-- The module structure should follow the same structure mentioned above in the [**structure of a module**](#structure_of_a_module) section
-- Mainly the module should be based around its views (or screens) so there must be a views directory
-- All of (components, hooks, services) should be under their respective directory in the module
-- Add the new module screens with their related URLs ot src/routes.js
-- In case they need to use a (component, hook, service) from another module, then that part need to be refactored and moved into the **Shared** directory for shared components, and (authentication, design, globalErrors, ...) folders depending on its purpose.
-- Any utils or helper should be under `src/utils` unless it's a helper that is super specific to this module, then it can be in the same directory as the module under helpers or utils.
-- Lastly, remember all directories in a module except the views folder must have an `index.js` file that exports it's content.
-
-##### Disabling a module:
-We use the `config.json` file to configure module visibility, all modules are active by default. You can disable a module by setting the `active` parameter for the module to `false`.
-
-**Note:** Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are also disabled when `Datasets` or `Dashboards` modules are disabled.
-```
-{
-  "modules": {
-      "mlstudio": {
-          "active": true
-      },
-      "notebooks": {
-          "active": true
-      },
-      "datapipelines": {
-          "active": true
-      },
-      "datasets": {
-          "active": false
-      },
-      "worksheets": {
-          "active": true
-      },
-      "dashboards": {
-          "active": true
-      }
-  }
-}
-```
 
 #### services/ <a name="services"></a>
-The services directory contains API calls, hooks and graphql schemas used to call the backend APIs. 
+The services directory contains API calls, hooks and graphql schemas used to call the backend APIs.
 
-`services/graphql/` directory contains commonly used graphql api definitions sectioned into modules. These APIs are used globally across different modules and that is why they are not under their modules' directories.
+`services/graphql/` directory contains commonly used graphql api definitions sectioned into modules. These APIs are 
+shared across different modules and that is why they are not under their modules' directories. 
+For example, the `getDataset` mutation defined in the backend `data.api` package is used in several modules in the 
+frontend code. So it is added to the global graphQL folder. 
 
-For example, the `getDataset` mutation defined in the backend `data.api` package is used in several modules in the frontend code. So it is added to the global graphQL folder. 
-
-We use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the mutation requires an input string of the `datasetUri` and returns a dataset object with the requested values.
+We use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the mutation requires an 
+input string of the `datasetUri` and returns a dataset object with the requested values.
 ```
 export const getDataset = (datasetUri) => ({
   variables: {
@@ -856,20 +779,116 @@ export const getDataset = (datasetUri) => ({
 
 ```
 
-Inside the `services/hooks/` folder, we initialize `ApolloClient` in `useClient.js` and `useGroups.js` handles scripts to obtain Cognito or SAML user groups for the authenticated user.
-
+Inside the `services/hooks/` folder, we initialize `ApolloClient` in `useClient.js` and `useGroups.js` handles 
+scripts to obtain Cognito or SAML user groups for the authenticated user.
 
 #### utils/ <a name="utils"></a>
-This directory contains common utility helper methods and constants used across the application. 
+This directory contains common utility helper methods and constants used across the application. New utility methods o
+r helpers should be placed here unless it's a helper that is super specific to a module, then it can be in the same 
+directory as the module under `helpers` or `utils` folder.
 
-For instance, `moduleUtils.js` file handles the logic to activate or deactivate a module in the frontend, you can configure a module's visibility status in the root `config.json` file.
+#### modules/ <a name="modules"></a>
+The modules folder is one of the most important folder in the `src/` directory. It contains distinctive logically 
+related views, services and hooks of `data.all` features that we have sectioned into modules.
 
-Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are disabled when `Datasets` or `Dashboards` modules are disabled.
 
-New utilility methods or helpers should be under here unless it's a helper that is super specific to a module, then it can be in the same directory as the module under `helpers` or `utils` folder.
+##### Overview of the modules directory
+Each module folder contains components, hooks, services and pages related to a view (screen) in the application. 
+The `components`, `hooks`, and `services` directories contain only their respective parts of the code **that are only used** 
+inside each module. The `views` folder contains the screens or pages in the module. 
+
+```
+modules/
+├── Administration/
+├── Catalog/
+├── Dashboards/
+├── Datasets/
+├── ...
+├── MLStudio/
+├── Shared/
+└── constants.js
+```
+
+##### Structure of a module <a name="structure_of_a_module"></a>
+As shown below, each directory in a module except the `views` folder must contain an `index.js` file that exports 
+the directory's content. This is to simplify importing different parts of the code, and also to keep implementation 
+details and internal structure of each directory hidden from its consumers.
+
+```
+ModuleName/
+├── components/ : contains all components (a singular section of a view) used only in module
+├──── ModuleComponentA.js
+├──── ModuleComponentB.js
+├──── index.js
+├── hooks/ : contains all hooks used only in the module
+├──── useSomethingA.js
+├──── useSomethingB.js
+├──── index.js
+├── services/ : all graphql schema code used only in the module
+├──── someServiceA.js
+├──── someServiceB.js
+├──── index.js
+├── views/ : all views/pages belonging to the module 
+├──── ModuleViewA.js
+└──── ModuleViewB.js
+```
+
+##### The `Shared` Module <a name="shared"></a> 
+When working with React projects, often times we have components that are shared across multiple views and among 
+other components. The shared module contains components that are shared among multiple views in the frontend. Related 
+components are then grouped together in folders and with an `index.js` file that exports the directory's content.
+
+#### Enabling/Disabling modules
+
+We use the `config.json` file at the root level of the repository to configure module visibility, all modules are 
+active by default. You can disable a module by setting the `active` parameter for the module to `false`.
+
+**Note:** Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are also disabled 
+when `Datasets` or `Dashboards` modules are disabled.
+```
+{
+  "modules": {
+      "mlstudio": {
+          "active": true
+      },
+      "notebooks": {
+          "active": true
+      },
+      "datapipelines": {
+          "active": true
+      },
+      "datasets": {
+          "active": false
+      },
+      "worksheets": {
+          "active": true
+      },
+      "dashboards": {
+          "active": true
+      }
+  }
+}
+```
+
+For the frontend, the `moduleUtils.js` file in `src/utils/helpers` handles the logic to activate or deactivate a module. The
+`isModuleEnabled` function is used to enable or disable routes and items in the default sidebar or in other views.
+
+##### Adding a new module
+To create a new module please follow the following steps:
+1. Create a new directory for the new module under `src/modules`
+2. The module structure should follow the same structure mentioned above in the [**structure of a module**](#structure_of_a_module) section. Typically, the module will be based around its views (or screens) so at minimum it should contain the `views` directory. All of (`components`, `hooks`, `services`) code should be placed under its respective directory in the module. 
+3. In case they need to use a (`component`, `hook`, `service`) from another module, then that part needs to be refactored and moved into the **Shared** directory for shared components, and (`authentication`, `design`, `globalErrors`, ...) folders depending on its purpose. 
+4. Any utils or helper should be under `src/utils` unless it's a helper that is super specific to this module, then it can be in the same directory as the module under helpers or utils. 
+5. All directories in a module except the `views` folder must have an `index.js` file that exports it's content. 
+8. Declare the module name in `moduleUtils.js`
+9. Add the new module screens with their related URLs in `src/routes.js`
+10. Finally, add the new module to the sidebar/or to other core views. Example in `frontend/src/design/components/layout/DefaultSidebar.js`
+
 
 ### jsconfig.json <a name="jsconfig"></a>
-The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It references the root folder (`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
+The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It references the root folder 
+(`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
+
 ```
 {
   "compilerOptions": {
@@ -886,7 +905,8 @@ The `jsconfig.json` file is used to configure aliases and React.js absolute impo
   }
 }
 ```
-**Please note:** New aliases must be added to the `jsconfig.json` file and mapped to their respective paths in order to be used.
+**Please note:** New aliases must be added to the `jsconfig.json` file and mapped to their respective paths in order to 
+be used.
 
 ## tests/ <a name="tests"></a>
 `pytest` is the testing framework used by data.all.
