@@ -75,7 +75,7 @@ class CDKPipelineStack:
                 process = subprocess.run(
                     "; ".join(update_cmds),
                     text=True,
-                    shell=True,  # nosec
+                    shell=True,    # nosemgrep
                     encoding='utf-8',
                     cwd=self.code_dir_path,
                     env=self.env
@@ -102,7 +102,7 @@ class CDKPipelineStack:
         process = subprocess.run(
             '; '.join(cmd_init),
             text=True,
-            shell=True,  # nosec
+            shell=True,    # nosemgrep
             encoding='utf-8',
             cwd=self.code_dir_path,
             env=self.env
@@ -204,7 +204,7 @@ app.synth()
         process = subprocess.run(
             '; '.join(git_cmds),
             text=True,
-            shell=True,  # nosec
+            shell=True,    # nosemgrep
             encoding='utf-8',
             cwd=os.path.join(self.code_dir_path, self.pipeline.repo),
             env=self.env
@@ -228,7 +228,7 @@ app.synth()
             process = subprocess.run(
                 ' '.join(precmd),
                 text=True,
-                shell=True,  # nosec
+                shell=True,  # nosemgrep
                 encoding='utf-8',
                 capture_output=True,
                 cwd=cwd

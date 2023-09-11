@@ -189,7 +189,7 @@ class PipelineStack(Stack):
                 process = subprocess.run(
                     "; ".join(update_cmds),
                     text=True,
-                    shell=True,  # nosec
+                    shell=True,  # nosemgrep
                     encoding='utf-8',
                     cwd=code_dir_path,
                     env=env_vars
@@ -524,7 +524,7 @@ class PipelineStack(Stack):
         process = subprocess.run(
             '; '.join(cmd_init),
             text=True,
-            shell=True,  # nosec
+            shell=True,  # nosemgrep
             encoding='utf-8',
             cwd=code_dir_path,
             env=env_vars
