@@ -161,7 +161,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             process = subprocess.run(
                 ' '.join(cmd),
                 text=True,
-                shell=True,  # nosec, nosemgrep
+                shell=True,  # nosec # nosemgrep
                 encoding='utf-8',
                 env=env,
                 cwd=cwd,
@@ -212,7 +212,7 @@ def cdk_installed():
     subprocess.run(
         cmd,
         text=True,
-        shell=True,  # nosec, nosemgrep
+        shell=True,  # nosec # nosemgrep
         encoding='utf-8',
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
