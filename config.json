@@ -1,10 +1,10 @@
 {
     "modules": {
         "mlstudio": {
-            "active": false
+            "active": true
         },
         "notebooks": {
-            "active": false
+            "active": true
         },
         "datapipelines": {
             "active": true
