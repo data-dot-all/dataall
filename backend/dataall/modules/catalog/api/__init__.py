@@ -4,7 +4,6 @@ from . import (
     mutations,
     resolvers,
     types,
-    registry
 )
 
-__all__ = ['registry', 'resolvers', 'types', 'input_types', 'queries', 'mutations']
+__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations']
