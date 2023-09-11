@@ -1,38 +1,24 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM public.ecr.aws/docker/library/node:18-slim
 
-ARG NODE_VERSION=16
-ARG NGINX_VERSION=1.12
-ARG NVM_VERSION=v0.37.0
+WORKDIR /app
 
-RUN yum update -y && \
-    yum install -y tar gzip openssl && \
-    yum clean all -y
-RUN amazon-linux-extras install nginx$NGINX_VERSION
+COPY ./frontend/package.json ./
+COPY ./frontend/yarn.lock ./
 
-RUN touch ~/.bashrc
+# Install packages, use --ignore-scripts to not call postinstall, as it causes this step to fail because config.json
+# is not copied yet, and copying it here will trigger new install if config changes, which is inconvenient for development.
+RUN yarn install --ignore-scripts --verbose
 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash
-RUN . ~/.nvm/nvm.sh && nvm install node
-RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
+COPY ./frontend/docker/dev/.env .
+COPY ./frontend .
 
-RUN . ~/.nvm/nvm.sh && npm install -g npm yarn
+# Copy config.json to docker root, because app scripts read it from ".."
+COPY ./config.json /
 
-COPY package.json yarn.lock ./
+# Disable linting before starting the server
+ENV DISABLE_ESLINT_PLUGIN=true
 
-RUN . ~/.nvm/nvm.sh && yarn install
+# Set the port to serve the application
+ENV PORT=80
 
-ENV PATH="./node_modules/.bin:$PATH"
-
-COPY ./docker/dev/.env ./
-
-COPY ./docker/dev/nginx.config /etc/nginx/nginx.template
-
-RUN cp /etc/nginx/nginx.template /etc/nginx/nginx.conf
-
-COPY . ./
-
-RUN . ~/.nvm/nvm.sh && yarn build
-
-RUN cp -a build/. /usr/share/nginx/html/
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD yarn start

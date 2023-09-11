@@ -23,6 +23,9 @@ RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
 COPY backend/. ./
 
+ENV config_location="config.json"
+COPY config.json ./config.json
+
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}
 

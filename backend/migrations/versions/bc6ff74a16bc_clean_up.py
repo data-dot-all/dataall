@@ -8,7 +8,7 @@ Create Date: 2022-09-16 10:45:21.612824
 from alembic import op
 import os
 import sqlalchemy as sa
-from dataall.db import get_engine, has_table, create_schema_if_not_exists
+from dataall.base.db import get_engine, has_table, create_schema_if_not_exists
 
 
 # revision identifiers, used by Alembic.

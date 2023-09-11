@@ -9,7 +9,11 @@ from alembic import op
 from sqlalchemy import orm, Column, String, and_
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import api, models, permissions
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'
@@ -31,15 +35,15 @@ def upgrade():
         session = orm.Session(bind=bind)
 
         print('Getting all Share Objects...')
-        shares: [models.ShareObject] = session.query(models.ShareObject).all()
+        shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-            environment = api.Environment.get_environment_by_uri(session, share.environmentUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             # Env Admins
             # Delete Share Object Permissions on Share Env Admin if Not Share Requester Group
             if share.groupUri != environment.SamlGroupName:
-                api.ResourcePolicy.delete_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
                     resource_uri=share.shareUri,
@@ -48,34 +52,34 @@ def upgrade():
 
             # Dataset Admins
             # Delete and Recreate Dataset Share Object Permissions to be Share Object Approver Permission Set
-            api.ResourcePolicy.delete_resource_policy(
+            ResourcePolicy.delete_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 resource_uri=share.shareUri,
             )
-            api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=permissions.SHARE_OBJECT_APPROVER,
+                permissions=SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}")
 
             # Dataset Stewards
             # Delete and Recreate Dataset Share Object Permissions to be Share Object Approver Permission Set
             if dataset.SamlAdminGroupName != dataset.stewards:
-                api.ResourcePolicy.delete_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     resource_uri=share.shareUri,
                 )
-                api.ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=dataset.stewards,
-                    permissions=permissions.SHARE_OBJECT_APPROVER,
+                    permissions=SHARE_OBJECT_APPROVER,
                     resource_uri=share.shareUri,
-                    resource_type=models.ShareObject.__name__,
+                    resource_type=ShareObject.__name__,
                 )
                 print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Steward {dataset.stewards} on Share {share.shareUri}")
 
@@ -93,19 +97,19 @@ def downgrade():
         session = orm.Session(bind=bind)
 
         print('Getting all Share Objects...')
-        shares: [models.ShareObject] = session.query(models.ShareObject).all()
+        shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-            environment = api.Environment.get_environment_by_uri(session, share.environmentUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             # Env Admins
             # Add SHARE_OBJECT_REQUESTER to Env Admin Group
-            api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=environment.SamlGroupName,
-                permissions=permissions.SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             print(f"Adding SHARE_OBJECT_REQUESTER Permissions for Share Env Admin {environment.SamlGroupName} on Share {share.shareUri}")
 
@@ -113,17 +117,17 @@ def downgrade():
             # Remove SHARE_OBJECT_APPROVER Permissions if Exists Separate from Stewards(i.e. if steward != owner)
             # Add SHARE_OBJECT_REQUESTER Permissions to Dataset Admin Group
             if dataset.SamlAdminGroupName != dataset.stewards:
-                api.ResourcePolicy.delete_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.SamlAdminGroupName,
                     resource_uri=share.shareUri,
                 )
-            api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=permissions.SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             print(f"Adding SHARE_OBJECT_REQUESTER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}")
     except Exception as e:

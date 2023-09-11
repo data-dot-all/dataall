@@ -11,9 +11,15 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import api, models, permissions, utils
-from dataall.db.models.Enums import ShareObjectStatus, ShareableType, PrincipalType
+from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.base.db import utils
+from dataall.core.permissions import permissions
 from datetime import datetime
+
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'
@@ -108,7 +114,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        api.Permission.init_permissions(session)
+        Permission.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -118,18 +124,18 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Back-filling consumer role permissions for environments...')
-        envs = api.Environment.list_all_active_environments(session=session)
+        envs = EnvironmentService.list_all_active_environments(session=session)
         for env in envs:
-            groups = api.Environment.query_all_environment_groups(
+            groups = EnvironmentService.query_all_environment_groups(
                 session=session, uri=env.environmentUri, filter=None
             )
             for group in groups:
-                api.ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.attach_resource_policy(
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,
                     permissions=permissions.CONSUMPTION_ENVIRONMENT_ROLE_ALL,
-                    resource_type=models.Environment.__name__,
+                    resource_type=Environment.__name__,
                 )
         print('Consumer Role Permissions created successfully')
     except Exception as e:

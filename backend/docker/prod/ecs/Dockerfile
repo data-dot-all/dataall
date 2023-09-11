@@ -46,7 +46,7 @@ RUN $PYTHON_VERSION -m pip install -U pip
 
 # App specific
 ADD backend/requirements.txt /dh.requirements.txt
-ADD backend/dataall/cdkproxy/requirements.txt /cdk.requirements.txt
+ADD backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
 
 RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt" \
     && /bin/bash -c "pip3.8 install -r /cdk.requirements.txt"
@@ -55,8 +55,11 @@ ADD backend/dataall /dataall
 VOLUME ["/dataall"]
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
-RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars
-ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/cdkproxy/assets/glueprofilingjob/jars/
+ENV config_location="/config.json"
+COPY config.json /config.json
+
+RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
+ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 
 WORKDIR /
 
