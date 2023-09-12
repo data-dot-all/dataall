@@ -17,13 +17,13 @@ class SolutionBundling:
         command = [
             f'cp -a {self.source_path}/. {output_dir}/ && pip install -r {requirements_path} -t {output_dir}'
         ]
-        subprocess.check_output(
+        subprocess.check_output(  # nosemgrep
             command,  # nosemgrep
             stderr=subprocess.STDOUT,  # nosemgrep
             shell=True,  # nosemgrep
         )
 
-        ls_output = subprocess.check_output(
+        ls_output = subprocess.check_output(  # nosemgrep
             [f'ls -ll {output_dir}'],  # nosemgrep
             stderr=subprocess.STDOUT,  # nosemgrep
             shell=True, # nosemgrep
