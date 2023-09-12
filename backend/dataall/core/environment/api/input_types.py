@@ -31,7 +31,7 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('vpcId', gql.String),
         gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('EnvironmentDefaultIAMRoleName', gql.String),
+        gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
 
@@ -98,7 +98,7 @@ InviteGroupOnEnvironmentInput = gql.InputType(
         gql.Argument('permissions', gql.ArrayType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
-        gql.Argument('environmentIAMRoleName', gql.String),
+        gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
     ],
 )
 
