@@ -1,5 +1,6 @@
 """Contains the code related to worksheets"""
 import logging
+from typing import Type, List
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
@@ -17,12 +18,16 @@ class WorksheetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
-
         import dataall.modules.worksheets.api
 
         EnvironmentResourceManager.register(WorksheetRepository())
-
         log.info("API of worksheets has been imported")
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets import DatasetApiModuleInterface
+
+        return [DatasetApiModuleInterface]
 
 
 class WorksheetCdkModuleInterface(ModuleInterface):
@@ -36,3 +41,9 @@ class WorksheetCdkModuleInterface(ModuleInterface):
         import dataall.modules.worksheets.cdk
 
         log.info("CDK module of worksheets has been imported")
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets import DatasetCdkModuleInterface
+
+        return [DatasetCdkModuleInterface]

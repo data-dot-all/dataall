@@ -14,8 +14,8 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.catalog.db.glossary_repositories import Glossary
-from dataall.modules.vote.db.vote_repositories import Vote
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -205,7 +205,7 @@ class DatasetService:
                     resource_type=Dataset.__name__,
                 )
                 if data.get('terms'):
-                    Glossary.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
+                    GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
@@ -221,7 +221,7 @@ class DatasetService:
             count_locations = DatasetLocationRepository.count_dataset_locations(
                 session, dataset.datasetUri
             )
-            count_upvotes = Vote.count_upvotes(
+            count_upvotes = VoteRepository.count_upvotes(
                 session, dataset.datasetUri, target_type='dataset'
             )
         return {
@@ -358,12 +358,12 @@ class DatasetService:
                 )
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
-            for uri in tables:
-                DatasetIndexer.delete_doc(doc_id=uri)
+            for tableUri in tables:
+                DatasetIndexer.delete_doc(doc_id=tableUri)
 
             folders = [f.locationUri for f in DatasetLocationRepository.get_dataset_folders(session, uri)]
-            for uri in folders:
-                DatasetIndexer.delete_doc(doc_id=uri)
+            for folderUri in folders:
+                DatasetIndexer.delete_doc(doc_id=folderUri)
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
@@ -372,7 +372,7 @@ class DatasetService:
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
-            Vote.delete_votes(session, dataset.datasetUri, 'dataset')
+            VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
@@ -530,5 +530,5 @@ class DatasetService:
     def delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
-            Glossary.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
-        Glossary.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+            GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
+        GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')

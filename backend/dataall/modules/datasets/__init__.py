@@ -30,9 +30,9 @@ class DatasetApiModuleInterface(ModuleInterface):
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.core.stacks.db.target_type_repositories import TargetType
-        from dataall.modules.vote.api.resolvers import add_vote_type
+        from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
-        from dataall.modules.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -41,14 +41,12 @@ class DatasetApiModuleInterface(ModuleInterface):
         import dataall.modules.datasets.api
         from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
         from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-        from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
+        from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
-        FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
         FeedRegistry.register(FeedDefinition("Dataset", Dataset))
 
-        GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         GlossaryRegistry.register(GlossaryDefinition(
             target_type="Folder",
             object_type="DatasetStorageLocation",

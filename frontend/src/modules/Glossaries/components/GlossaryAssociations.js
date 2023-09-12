@@ -137,65 +137,63 @@ export const GlossaryAssociations = ({ glossary }) => {
                         <TableCell>{item.term.label}</TableCell>
                         <TableCell>
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename === 'Dataset' && (
+                          {item.targetType === 'Dataset' && (
                             <span>Dataset</span>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename === 'DatasetTable' && (
+                          {item.targetType === 'DatasetTable' && (
                             <span>Table</span>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename ===
-                            'DatasetStorageLocation' && <span>Folder</span>}
-                          {item.target.__typename === 'Dashboard' && (
+                          {item.targetType === 'Folder' && <span>Folder</span>}
+                          {item.targetType === 'Dashboard' && (
                             <span>Dashboard</span>
                           )}
                         </TableCell>
                         <TableCell>
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename === 'Dataset' && (
+                          {item.targetType === 'Dataset' && (
                             <Link
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/datasets/${item.targetUri}`}
+                              to={`/console/datasets/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
                             </Link>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename === 'DatasetTable' && (
+                          {item.targetType === 'DatasetTable' && (
                             <Link
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/datasets/table/${item.targetUri}`}
+                              to={`/console/datasets/table/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
                             </Link>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename ===
-                            'DatasetStorageLocation' && (
+                          {item.targetType === 'Folder' && (
                             <Link
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/datasets/folder/${item.targetUri}`}
+                              to={`/console/datasets/folder/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
                             </Link>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
-                          {item.target.__typename === 'Dashboard' && (
+                          {item.targetType === 'Dashboard' && (
                             <Link
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/dashboards/${item.targetUri}`}
+                              to={`/console/dashboards/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}

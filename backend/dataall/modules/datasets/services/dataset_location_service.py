@@ -1,5 +1,5 @@
 from dataall.base.context import get_context
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
@@ -88,7 +88,7 @@ class DatasetLocationService:
 
             ShareObjectRepository.delete_shares(session, location.locationUri)
             DatasetLocationRepository.delete(session, location)
-            Glossary.delete_glossary_terms_links(
+            GlossaryRepository.delete_glossary_terms_links(
                 session,
                 target_uri=location.locationUri,
                 target_type='DatasetStorageLocation',
@@ -98,10 +98,10 @@ class DatasetLocationService:
 
     @staticmethod
     def _create_glossary_links(session, location, terms):
-        Glossary.set_glossary_terms_links(
+        GlossaryRepository.set_glossary_terms_links(
             session,
             get_context().username,
             location.locationUri,
-            'DatasetStorageLocation',
+            'Folder',
             terms
         )
