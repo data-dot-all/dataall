@@ -23,6 +23,12 @@ function isModuleEnabled(module) {
   if (module === ModuleNames.SHARES) {
     return getModuleActiveStatus(ModuleNames.DATASETS);
   }
+  if (module === ModuleNames.WORKSHEETS) {
+    return (
+      getModuleActiveStatus(ModuleNames.DATASETS) &&
+      getModuleActiveStatus(ModuleNames.WORKSHEETS)
+    );
+  }
 
   return getModuleActiveStatus(module);
 }
