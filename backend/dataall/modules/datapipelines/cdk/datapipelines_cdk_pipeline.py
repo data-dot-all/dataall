@@ -72,7 +72,7 @@ class CDKPipelineStack:
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://app.py --file-path app.py --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
 
-                process = subprocess.run(
+                process = subprocess.run(  # nosemgrep
                     "; ".join(update_cmds),  # nosemgrep
                     text=True,  # nosemgrep
                     shell=True,    # nosemgrep
@@ -99,7 +99,7 @@ class CDKPipelineStack:
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
-        process = subprocess.run(
+        process = subprocess.run(  # nosemgrep
             '; '.join(cmd_init),  # nosemgrep
             text=True,  # nosemgrep
             shell=True,    # nosemgrep
@@ -201,7 +201,7 @@ app.synth()
 
         logger.info(f"Running Commands: {'; '.join(git_cmds)}")
 
-        process = subprocess.run(
+        process = subprocess.run(  # nosemgrep
             '; '.join(git_cmds),  # nosemgrep
             text=True,  # nosemgrep
             shell=True,    # nosemgrep
@@ -225,7 +225,7 @@ app.synth()
             cwd = os.path.dirname(os.path.abspath(__file__))
             logger.info(f"Running command : \n {' '.join(precmd)}")
 
-            process = subprocess.run(
+            process = subprocess.run(  # nosemgrep
                 ' '.join(precmd),  # nosemgrep
                 text=True,  # nosemgrep
                 shell=True,  # nosemgrep

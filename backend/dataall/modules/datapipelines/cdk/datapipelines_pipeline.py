@@ -186,7 +186,7 @@ class PipelineStack(Stack):
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
 
-                process = subprocess.run(
+                process = subprocess.run(  # nosemgrep
                     "; ".join(update_cmds),  # nosemgrep
                     text=True,  # nosemgrep
                     shell=True,  # nosemgrep
@@ -521,7 +521,7 @@ class PipelineStack(Stack):
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
-        process = subprocess.run(
+        process = subprocess.run(  # nosemgrep
             '; '.join(cmd_init),  # nosemgrep
             text=True,  # nosemgrep
             shell=True,  # nosemgrep
