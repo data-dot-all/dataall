@@ -13,6 +13,7 @@ class NamingConventionPattern(Enum):
     GLUE_ETL = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 52}
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
+    OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
 
 
 class NamingConventionService:
@@ -47,6 +48,9 @@ class NamingConventionService:
         elif self.service == NamingConventionPattern.NOTEBOOK:
             regex = self.service.NOTEBOOK.value['regex']
             return self.build_notebook_compliant_name(regex)
+        elif self.service == NamingConventionPattern.OPENSEARCH:
+            regex = self.service.OPENSEARCH.value['regex']
+            return self.build_opensearch_compliant_name(regex)
         else:
             regex = self.service.DEFAULT.value['regex']
             return self.build_default_compliant_name(regex)
@@ -65,6 +69,9 @@ class NamingConventionService:
 
     def build_notebook_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.NOTEBOOK.value['max_length'] - len(self.resource_prefix +self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.NOTEBOOK.value['separator'], lowercase=True)}"
+
+    def build_opensearch_compliant_name(self, regex) -> str:
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.OPENSEARCH.value['max_length'] - len(self.resource_prefix))], regex_pattern=fr'{regex}', separator=self.service.OPENSEARCH.value['separator'], lowercase=True)}"
 
     def build_default_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.DEFAULT.value['max_length'] - len(self.resource_prefix +self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.DEFAULT.value['separator'], lowercase=True)}"

@@ -4,17 +4,17 @@
             "active": false
         },
         "notebooks": {
-            "active": false
+            "active": true
         },
         "datapipelines": {
-            "active": false
+            "active": true
         },
         "datasets": {
-            "active": false,
+            "active": true,
             "features": {
-                "file_uploads": true,
-                "file_actions": true,
-                "aws_actions": true
+                "file_uploads": false,
+                "file_actions": false,
+                "aws_actions": false
             }
         },
         "worksheets": {
@@ -26,7 +26,7 @@
     },
     "core": {
         "features": {
-            "env_aws_actions": true
+            "env_aws_actions": false
         }
     }
 }
