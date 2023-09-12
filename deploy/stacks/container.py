@@ -1,3 +1,4 @@
+from typing import Dict
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -11,6 +12,7 @@ from aws_cdk import (
 from aws_cdk.aws_applicationautoscaling import Schedule
 
 from .pyNestedStack import pyNestedClass
+from .run_if import run_if
 
 
 class ContainerStack(pyNestedClass):
@@ -32,16 +34,21 @@ class ContainerStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+        self._envname = envname
+        self._resource_prefix = resource_prefix
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
 
-        cdkproxy_image_tag = f'cdkproxy-{image_tag}'
-        
+        self._cdkproxy_image_tag = f'cdkproxy-{image_tag}'
+        self._ecr_repository = ecr_repository
+        self._vpc = vpc
+        self._prod_sizing = prod_sizing
+
         (self.scheduled_tasks_sg, self.share_manager_sg) = self.create_ecs_security_groups(
-            envname, 
-            resource_prefix, 
-            vpc, 
+            envname,
+            resource_prefix,
+            vpc,
             vpce_connection,
             s3_prefix_list,
             lambdas
@@ -65,7 +72,7 @@ class ContainerStack(pyNestedClass):
         )
         cdkproxy_image = ecs.ContainerImage.from_ecr_repository(
             repository=ecr_repository,
-            tag=cdkproxy_image_tag
+            tag=self._cdkproxy_image_tag
         )
 
         cdkproxy_task_definition = ecs.CfnTaskDefinition(
@@ -74,7 +81,7 @@ class ContainerStack(pyNestedClass):
             container_definitions=[ecs.CfnTaskDefinition.ContainerDefinitionProperty(
                 image=cdkproxy_image.image_name,
                 name=cdkproxy_container_name,
-                command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
+                command=['python3.8', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
                 environment=[
                     ecs.CfnTaskDefinition.KeyValuePairProperty(
                         name="AWS_REGION",
@@ -87,6 +94,10 @@ class ContainerStack(pyNestedClass):
                     ecs.CfnTaskDefinition.KeyValuePairProperty(
                         name="LOGLEVEL",
                         value="DEBUG"
+                    ),
+                    ecs.CfnTaskDefinition.KeyValuePairProperty(
+                        name="config_location",
+                        value="/config.json"
                     ),
                 ],
                 essential=True,
@@ -143,63 +154,13 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container_name,
         )
 
-        sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='tables-syncer'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-tables-syncer-schedule',
-            task_id=f'{resource_prefix}-{envname}-tables-syncer',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-
-        catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.catalog_indexer'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='catalog-indexer'
-            ),
-            schedule_expression=Schedule.expression('rate(6 hours)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-catalog-indexer-schedule',
-            task_id=f'{resource_prefix}-{envname}-catalog-indexer',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.stacks_updater'],
+            command=['python3.8', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='stacks-updater'
             ),
@@ -217,101 +178,6 @@ class ContainerStack(pyNestedClass):
             f'StacksUpdaterTaskDefParam{envname}',
             parameter_name=f'/dataall/{envname}/ecs/task_def_arn/stacks_updater',
             string_value=stacks_updater_task_def.task_definition_arn,
-        )
-
-        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.bucket_policy_updater'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='policies-updater'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-policies-updater-schedule',
-            task_id=f'{resource_prefix}-{envname}-policies-updater',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-
-        subscriptions_task, subscription_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=[
-                'python3.8',
-                '-m',
-                'dataall.tasks.subscriptions.subscription_service',
-            ],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='subscriptions'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-subscriptions-schedule',
-            task_id=f'{resource_prefix}-{envname}-subscriptions',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-
-        share_management_task_definition = ecs.FargateTaskDefinition(
-            self,
-            f'{resource_prefix}-{envname}-share-manager',
-            cpu=1024,
-            memory_limit_mib=2048,
-            task_role=self.task_role,
-            execution_role=self.task_role,
-            family=f'{resource_prefix}-{envname}-share-manager',
-        )
-
-        share_management_container = share_management_task_definition.add_container(
-            f'ShareManagementTaskContainer{envname}',
-            container_name=f'container',
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
-            ),
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'DEBUG',
-            },
-            command=['python3.8', '-m', 'dataall.tasks.share_manager'],
-            logging=ecs.LogDriver.aws_logs(
-                stream_prefix='task',
-                log_group=self.create_log_group(
-                    envname, resource_prefix, log_group_name='share-manager'
-                ),
-            ),
-            readonly_root_filesystem=True,
-        )
-
-        ssm.StringParameter(
-            self,
-            f'ShareManagementTaskDef{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/task_def_arn/share_management',
-            string_value=share_management_task_definition.task_definition_arn,
-        )
-
-        ssm.StringParameter(
-            self,
-            f'ShareManagementContainerParam{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/container/share_management',
-            string_value=share_management_container.container_name,
         )
 
         ssm.StringParameter(
@@ -335,12 +201,150 @@ class ContainerStack(pyNestedClass):
         self.ecs_cluster = cluster
         self.ecs_task_definitions_families = [
             cdkproxy_task_definition.family,
-            sync_tables_task.task_definition.family,
-            update_bucket_policies_task.task_definition.family,
-            catalog_indexer_task.task_definition.family,
-            share_management_task_definition.family,
-            subscriptions_task.task_definition.family,
         ]
+
+        self.add_catalog_indexer_task()
+        self.add_sync_dataset_table_task()
+        self.add_bucket_policy_updater_task()
+        self.add_subscription_task()
+        self.add_share_management_task()
+
+    @run_if(["modules.datasets.active", "modules.dashboards.active"])
+    def add_catalog_indexer_task(self):
+        catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='catalog-indexer'
+            ),
+            schedule_expression=Schedule.expression('rate(6 hours)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-catalog-indexer-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-catalog-indexer',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+
+        self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)
+
+    @run_if(["modules.datasets.active"])
+    def add_share_management_task(self):
+        share_management_task_definition = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-manager',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+            family=f'{self._resource_prefix}-{self._envname}-share-manager',
+        )
+
+        share_management_container = share_management_task_definition.add_container(
+            f'ShareManagementTaskContainer{self._envname}',
+            container_name=f'container',
+            image=ecs.ContainerImage.from_ecr_repository(
+                repository=self._ecr_repository, tag=self._cdkproxy_image_tag
+            ),
+            environment=self._create_env('DEBUG'),
+            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix='task',
+                log_group=self.create_log_group(
+                    self._envname, self._resource_prefix, log_group_name='share-manager'
+                ),
+            ),
+            readonly_root_filesystem=True,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareManagementTaskDef{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/share_management',
+            string_value=share_management_task_definition.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareManagementContainerParam{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/share_management',
+            string_value=share_management_container.container_name,
+        )
+        self.ecs_task_definitions_families.append(share_management_task_definition.family)
+
+    @run_if(["modules.datasets.active"])
+    def add_subscription_task(self):
+        subscriptions_task, subscription_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=[
+                'python3.8',
+                '-m',
+                'dataall.modules.datasets.tasks.dataset_subscription_task',
+            ],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='subscriptions'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-subscriptions-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-subscriptions',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(subscriptions_task.task_definition.family)
+
+    @run_if(["modules.datasets.active"])
+    def add_bucket_policy_updater_task(self):
+        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('DEBUG'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='policies-updater'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-policies-updater-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-policies-updater',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(update_bucket_policies_task.task_definition.family)
+
+    @run_if(["modules.datasets.active"])
+    def add_sync_dataset_table_task(self):
+        sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='tables-syncer'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-tables-syncer-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-tables-syncer',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(sync_tables_task.task_definition.family)
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
@@ -352,7 +356,7 @@ class ContainerStack(pyNestedClass):
             disable_inline_rules=True,
         )
 
-        # Requires RAM Access via NAT 
+        # Requires RAM Access via NAT
         share_manager_sg = ec2.SecurityGroup(
             self,
             f'ShareManagerSG{envname}',
@@ -361,8 +365,8 @@ class ContainerStack(pyNestedClass):
             allow_all_outbound=False,
             disable_inline_rules=True,
         )
-        
-        for sg in [scheduled_tasks_sg,share_manager_sg]:
+
+        for sg in [scheduled_tasks_sg, share_manager_sg]:
             sg_connection = ec2.Connections(security_groups=[sg])
             # Add ECS to VPC Endpoint Connection
             if vpce_connection:
@@ -607,7 +611,7 @@ class ContainerStack(pyNestedClass):
         vpc,
         security_group,
         prod_sizing,
-    ) -> ecs_patterns.ScheduledFargateTask:
+    ) -> (ecs.FargateTaskDefinition, ecs_patterns.ScheduledFargateTask):
         task = ecs.FargateTaskDefinition(
             self,
             task_id,
@@ -650,3 +654,11 @@ class ContainerStack(pyNestedClass):
     @property
     def ecs_task_role(self) -> iam.Role:
         return self.task_role
+
+    def _create_env(self, log_lvl) -> Dict:
+        return {
+            'AWS_REGION': self.region,
+            'envname': self._envname,
+            'LOGLEVEL': log_lvl,
+            'config_location': '/config.json'
+        }

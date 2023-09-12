@@ -12,8 +12,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
-from dataall.db import utils, Resource
-from dataall.utils.naming_convention import (
+from dataall.base.db import utils, Resource
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

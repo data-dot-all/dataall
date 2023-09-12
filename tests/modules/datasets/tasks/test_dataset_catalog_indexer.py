@@ -1,0 +1,61 @@
+import pytest
+
+from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+
+
+@pytest.fixture(scope='module', autouse=True)
+def sync_dataset(org_fixture, env_fixture, db):
+    with db.scoped_session() as session:
+        dataset = Dataset(
+            organizationUri=org_fixture.organizationUri,
+            environmentUri=env_fixture.environmentUri,
+            label='label',
+            owner='foo',
+            SamlAdminGroupName='foo',
+            businessOwnerDelegationEmails=['foo@amazon.com'],
+            businessOwnerEmail=['bar@amazon.com'],
+            name='name',
+            S3BucketName='S3BucketName',
+            GlueDatabaseName='GlueDatabaseName',
+            KmsAlias='kmsalias',
+            AwsAccountId='123456789012',
+            region='eu-west-1',
+            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
+            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
+        )
+        session.add(dataset)
+    yield dataset
+
+
+@pytest.fixture(scope='module', autouse=True)
+def table(org, env, db, sync_dataset):
+    with db.scoped_session() as session:
+        table = DatasetTable(
+            datasetUri=sync_dataset.datasetUri,
+            AWSAccountId='12345678901',
+            S3Prefix='S3prefix',
+            label='label',
+            owner='foo',
+            name='name',
+            GlueTableName='table1',
+            S3BucketName='S3BucketName',
+            GlueDatabaseName='GlueDatabaseName',
+            region='eu-west-1',
+        )
+        session.add(table)
+    yield table
+
+
+def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
+    mocker.patch(
+        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
+        return_value=[table]
+    )
+    mocker.patch(
+        'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
+    )
+    indexed_objects_counter = index_objects(
+        engine=db
+    )
+    assert indexed_objects_counter == 2

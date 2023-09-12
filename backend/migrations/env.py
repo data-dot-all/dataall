@@ -4,8 +4,8 @@ from logging.config import fileConfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-from dataall.db.base import Base
-from dataall.db.connection import ENVNAME, get_engine
+from dataall.base.db.base import Base
+from dataall.base.db.connection import ENVNAME, get_engine
 
 config = context.config
 
