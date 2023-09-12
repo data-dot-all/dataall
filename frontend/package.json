@@ -13,7 +13,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint --ext js src",
-    "lint:fix": "eslint --fix --ext js src"
+    "lint:fix": "eslint --fix --ext js src",
+    "audit": "npx better-npm-audit audit --level=high --registry='https://registry.npmjs.org/'"
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
@@ -67,9 +68,7 @@
   "overrides": {
     "@appbaseio/reactivesearch": {
       "react-redux": "^7.2.6"
-    }
-  },
-  "resolutions": {
+    },
     "nth-check": "^2.0.1"
   },
   "devDependencies": {
