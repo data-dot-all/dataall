@@ -54,13 +54,22 @@ class DatasetService:
     def check_imported_resources(environment, data):
         kms_alias = data.get('KmsKeyAlias')
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
+            key_exists = KmsClient(environment.AwsAccountId, environment.region).check_key_exists(
+                key_alias=f"alias/{kms_alias}"
+            )
+            if not key_exists:
+                raise exceptions.AWSResourceNotFound(
+                    action=IMPORT_DATASET,
+                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {environment.AwsAccountId}',
+                )
+
             key_id = KmsClient(environment.AwsAccountId, environment.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_id:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found',
+                    message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
                 )
         return True
 
