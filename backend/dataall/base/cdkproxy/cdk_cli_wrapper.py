@@ -158,13 +158,13 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
 
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
-            process = subprocess.run(
-                ' '.join(cmd),
-                text=True,
+            process = subprocess.run(  # nosemgrep
+                ' '.join(cmd),  # nosemgrep
+                text=True,  # nosemgrep
                 shell=True,  # nosemgrep
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
+                encoding='utf-8',  # nosemgrep
+                env=env,  # nosemgrep
+                cwd=cwd,  # nosemgrep
             )
 
             if extension:
