@@ -10,7 +10,7 @@
             "active": false
         },
         "datasets": {
-            "active": true,
+            "active": false,
             "features": {
                 "file_uploads": true,
                 "file_actions": true,
@@ -21,7 +21,7 @@
             "active": false
         },
         "dashboards": {
-            "active": false
+            "active": true
         }
     },
     "core": {
