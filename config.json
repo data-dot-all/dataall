@@ -21,7 +21,7 @@
             "active": false
         },
         "dashboards": {
-            "active": true
+            "active": false
         }
     },
     "core": {
