@@ -44,6 +44,18 @@ class OmicsClient:
             return 'ERROR GETTING WORKFLOW RUN'    
         
 
+    def run_omics_workflow(self, workflowId: str, workflowType: str, roleArn: str, parameters: str):
+        try:
+            response = self._client.start_run(workflowId, workflowType, roleArn, parameters
+            )
+            return response
+        except ClientError as e:
+            logger.error(
+                f'Could not retrieve workflow run status due to: {e} '
+            )
+            return 'ERROR RUNNING OMICS WORKFLOW'           
+        
+
     
     def list_workflows(self) -> list:
         try:

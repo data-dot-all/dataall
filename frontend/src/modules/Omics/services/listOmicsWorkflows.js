@@ -6,7 +6,7 @@ export const listOmicsWorkflows = (filter) => ({
     filter
   },
   query: gql`
-    query listOmicsWorkflows($filter: OmicsWorkflowsFilter) {
+    query listOmicsWorkflows($filter: OmicsFilter) {
       listOmicsWorkflows(filter: $filter) {
         count
         page
@@ -14,14 +14,13 @@ export const listOmicsWorkflows = (filter) => ({
         hasNext
         hasPrevious
         nodes {
-          workflowUri
+          arn
           name
-          owner
+          id
           description
-          label
-          created
-          tags
-          // TODO: review this output
+          status
+          type
+          parameterTemplate
         }
       }
     }

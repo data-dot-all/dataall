@@ -21,10 +21,7 @@ import { useNavigate } from 'react-router';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { Info } from '@mui/icons-material';
-import {
-  StackStatus,
-  Stack
-} from 'modules/Shared';
+import { StackStatus, Stack } from 'modules/Shared';
 import { useClient } from 'services';
 import {
   ChevronRightIcon,
@@ -33,17 +30,13 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-
 // TODO getOmicsRun does not exist
 import {
   //getOmicsRun,
   deleteOmicsRun
 } from '../services';
-import {
-  OmicsWorkflowsListItem,
-  OmicsWorkflowDetails
-} from '../components';
-
+// import { OmicsWorkflowsListItem, OmicsWorkflowDetails } from '../components';
+import { OmicsWorkflowDetails } from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -74,7 +67,8 @@ const OmicsWorkflowView = () => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(getOmicsRun(params.uri));
+    // const response = await client.query(getOmicsRun(params.uri));
+    const response = null;
     if (!response.errors) {
       setOmicsRun(response.data.getOmicsRun);
       if (stack) {

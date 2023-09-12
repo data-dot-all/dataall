@@ -92,3 +92,17 @@ OmicsRunStatus = gql.ObjectType(
         gql.Field(name="outputUri", type=gql.String),
     ],
 )
+
+RunOmicsWorkflowStatus = gql.ObjectType(
+    name="RunOmicsWorkflowStatus",
+    fields=[
+        gql.Field(name="arn", type=gql.String),
+        # gql.Field(name="creationTime", type=gql.String),
+        # gql.Field(name="digest", type=gql.String),
+        gql.Field(name="id", type=gql.String),
+        gql.Field(name="status", type=gql.String),
+        gql.Field(name="runId", type=gql.String),
+        gql.Field(name="name", type=gql.String),
+        gql.Field(name="outputUri", type=gql.String),
+    ],
+)

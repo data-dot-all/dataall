@@ -149,6 +149,13 @@ class OmicsService:
         return response
 
     @staticmethod
+    def run_omics_workflow(workflowId: str, workflowType: str, roleArn: str, parameters: str) -> dict:
+        """List Omics workflows."""
+        omicsClient = OmicsClient('290341535759')
+        response = omicsClient.run_omics_workflow(workflowId,workflowType, roleArn, parameters)
+        return response
+    
+    @staticmethod
     def list_user_omics_runs(*, filter: dict) -> dict:
         """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
         with _session() as session:

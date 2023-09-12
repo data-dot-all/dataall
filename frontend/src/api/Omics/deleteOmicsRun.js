@@ -6,14 +6,8 @@ const deleteOmicsRun = (runUri, deleteFromAWS) => ({
     deleteFromAWS
   },
   mutation: gql`
-    mutation deleteOmicsRun(
-      $runUri: String!
-      $deleteFromAWS: Boolean
-    ) {
-      deleteOmicsRun(
-        runUri: $runUri
-        deleteFromAWS: $deleteFromAWS
-      )
+    mutation deleteOmicsRun($runUri: String!, $deleteFromAWS: Boolean) {
+      deleteOmicsRun(runUri: $runUri, deleteFromAWS: $deleteFromAWS)
     }
   `
 });

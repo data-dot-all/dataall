@@ -29,4 +29,3 @@ const listOmicsWorkflows = (filter) => ({
 });
 
 export default listOmicsWorkflows;
-

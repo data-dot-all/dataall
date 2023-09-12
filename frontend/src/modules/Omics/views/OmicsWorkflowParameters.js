@@ -1,9 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import {
-    ObjectBrief,
-    ObjectMetadata
-} from 'design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
 const OmicsWorkflowDetails = (props) => {
   const { workflow, ...other } = props;
@@ -18,9 +15,7 @@ const OmicsWorkflowDetails = (props) => {
             name={workflow.label || '-'}
             description={workflow.description || 'No description provided'}
             tags={
-              workflow.tags && workflow.tags.length > 0
-                ? workflow.tags
-                : ['-']
+              workflow.tags && workflow.tags.length > 0 ? workflow.tags : ['-']
             }
           />
         </Box>
@@ -30,7 +25,9 @@ const OmicsWorkflowDetails = (props) => {
           inputParameters={workflow.inputParameters}
           downloadParameterTemplateFile={workflow.downloadParameterTemplateFile}
           inputParameterJsonTemplate={workflow.inputParameterJsonTemplate}
-          downloadTestAndExampleParameterFiles={workflow.downloadTestAndExampleParameterFiles}
+          downloadTestAndExampleParameterFiles={
+            workflow.downloadTestAndExampleParameterFiles
+          }
           fixedValues={workflow.fixedValues}
         />
       </Grid>

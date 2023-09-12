@@ -1,9 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import {
-    ObjectBrief,
-    ObjectMetadata
-} from 'design';
+import { ObjectBrief, ObjectMetadata } from 'design';
 
 const OmicsRunDetails = (props) => {
   const { omicsRun, ...other } = props;
@@ -18,9 +15,7 @@ const OmicsRunDetails = (props) => {
             name={omicsRun.label || '-'}
             description={omicsRun.description || 'No description provided'}
             tags={
-              omicsRun.tags && omicsRun.tags.length > 0
-                ? omicsRun.tags
-                : ['-']
+              omicsRun.tags && omicsRun.tags.length > 0 ? omicsRun.tags : ['-']
             }
           />
         </Box>

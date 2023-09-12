@@ -30,8 +30,8 @@ UpdateOmicsRunInput = gql.InputType(
     ],
 )
 
-OmicsRunFilter = gql.InputType(
-    name="OmicsRunFilter",
+OmicsFilter = gql.InputType(
+    name="OmicsFilter",
     arguments=[
         gql.Argument(name="term", type=gql.String),
         gql.Argument(name="page", type=gql.Integer),

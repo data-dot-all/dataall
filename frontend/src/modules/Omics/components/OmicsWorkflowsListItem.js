@@ -24,8 +24,8 @@ export const OmicsWorkflowsListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid item key={workflow.workflowUri} md={3} xs={12} {...props}>
-      <Card key={workflow.workflowUri} className={classes.card} raised>
+    <Grid item key={workflow.id} md={3} xs={12} {...props}>
+      <Card key={workflow.id} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -41,7 +41,7 @@ export const OmicsWorkflowsListItem = (props) => {
                 color="textPrimary"
                 variant="h6"
                 onClick={() => {
-                  navigate(`/console/omics/${workflow.workflowUri}`);
+                  navigate(`/console/omics/${workflow.id}`);
                 }}
                 sx={{
                   width: '99%',
@@ -53,8 +53,8 @@ export const OmicsWorkflowsListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={workflow.label}>
-                  <span>{workflow.label}</span>
+                <Tooltip title={workflow.name}>
+                  <span>{workflow.name}</span>
                 </Tooltip>
               </Link>
               <Typography color="textSecondary" variant="body2">
@@ -152,7 +152,7 @@ export const OmicsWorkflowsListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid container>
+          {/* <Grid container>
             <Grid item md={4} xs={12}>
               <Typography color="textSecondary" variant="body2">
                 <FaIcons.FaAws /> Account
@@ -163,7 +163,7 @@ export const OmicsWorkflowsListItem = (props) => {
                 {workflow.environment.AwsAccountId}
               </Typography>
             </Grid>
-          </Grid>
+          </Grid> */}
         </Box>
         <Box
           sx={{
@@ -171,7 +171,7 @@ export const OmicsWorkflowsListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid container>
+          {/* <Grid container>
             <Grid item md={4} xs={12}>
               <Typography color="textSecondary" variant="body2">
                 <FaIcons.FaGlobe /> Region
@@ -182,7 +182,7 @@ export const OmicsWorkflowsListItem = (props) => {
                 {workflow.environment.region}
               </Typography>
             </Grid>
-          </Grid>
+          </Grid> */}
         </Box>
         <Box
           sx={{
@@ -212,7 +212,7 @@ export const OmicsWorkflowsListItem = (props) => {
           <Grid
             alignItems="center"
             container
-            key={workflow.workflowUri}
+            key={workflow.id}
             justifyContent="space-between"
             spacing={3}
           />
@@ -236,7 +236,7 @@ export const OmicsWorkflowsListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={`/console/omics/${workflow.workflowUri}`}
+              to={`/console/omics/${workflow.id}`}
             >
               Learn More
             </Button>

@@ -160,7 +160,7 @@ export const OmicsWorkflowsList = () => {
               <Box>
                 <Grid container spacing={3}>
                   {items.nodes.map((node) => (
-                    <OmicsWorkflowsListItem omicsuser={node} />
+                    <OmicsWorkflowsListItem workflow={node} />
                   ))}
                 </Grid>
 
