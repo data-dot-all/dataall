@@ -1,5 +1,4 @@
 from dataall.modules.catalog.api.enums import GlossaryRole
-from dataall.modules.catalog.api.registry import GlossaryRegistry
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
 from dataall.base.api.context import Context
 from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
@@ -140,10 +139,6 @@ def resolve_term_glossary(context, source: GlossaryNode, **kwargs):
     parentUri = source.path.split('/')[1]
     _required_uri(parentUri)
     return GlossariesService.get_node(uri=parentUri)
-
-
-def target_union_resolver(obj, *_):
-    return GlossaryRegistry.find_object_type(obj)
 
 
 def resolve_link_target(context, source, **kwargs):

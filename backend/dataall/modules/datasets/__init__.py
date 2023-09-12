@@ -32,7 +32,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.core.stacks.db.target_type_repositories import TargetType
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
-        from dataall.modules.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer

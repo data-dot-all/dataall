@@ -6,7 +6,7 @@ from sqlalchemy.orm import with_expression
 
 from dataall.base.db import exceptions, paginate
 from dataall.modules.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
-from dataall.modules.catalog.api.registry import GlossaryRegistry
+from dataall.modules.catalog.indexers.registry import GlossaryRegistry
 from dataall.base.db.paginator import Page
 from dataall.base.context import get_context
 

@@ -8,7 +8,7 @@ from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.modules.catalog.services.glossaries_permissions import (
     MANAGE_GLOSSARIES
 )
-from dataall.modules.catalog.api.registry import GlossaryRegistry
+from dataall.modules.catalog.indexers.registry import GlossaryRegistry
 logger = logging.getLogger(__name__)
 
 
