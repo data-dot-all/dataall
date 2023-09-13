@@ -1,3 +1,6 @@
+import os 
+import sys 
+
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_iam as iam,
@@ -8,6 +11,10 @@ from aws_cdk import (
     aws_logs as logs,
     RemovalPolicy,
 )
+
+parent_dir = os.path.dirname(os.path.realpath(__file__))
+backend_dir = parent_dir.rsplit("/", 2)[0]
+sys.path.append(backend_dir)
 
 from backend.dataall.base.utils.naming_convention import (
     NamingConventionService,
