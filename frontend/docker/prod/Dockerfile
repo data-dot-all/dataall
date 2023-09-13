@@ -17,15 +17,17 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.s
 RUN . ~/.nvm/nvm.sh && nvm install node
 RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
 
-RUN . ~/.nvm/nvm.sh && npm install -g npm yarn
+RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 
-COPY package.json yarn.lock ./
+WORKDIR /app
+COPY ./frontend/package.json ./frontend/yarn.lock ./
+COPY ./config.json /
 
 RUN . ~/.nvm/nvm.sh && yarn install
 
 ENV PATH="./node_modules/.bin:$PATH"
 
-COPY ./docker/prod/nginx.config /etc/nginx/nginx.template
+COPY ./frontend/docker/prod/nginx.config /etc/nginx/nginx.template
 
 ENV SERVERNAME=$DOMAIN
 
@@ -39,7 +41,7 @@ RUN cp /etc/nginx/nginx.template /etc/nginx/nginx.conf
 
 RUN cat /etc/nginx/nginx.conf
 
-COPY . ./
+COPY ./frontend ./
 
 RUN . ~/.nvm/nvm.sh && yarn build
 

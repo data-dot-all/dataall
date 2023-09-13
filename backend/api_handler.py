@@ -9,11 +9,15 @@ from ariadne import (
     graphql_sync,
 )
 
-from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sqs import SqsQueue
-from dataall.db import init_permissions, get_engine, api, permissions
-from dataall.searchproxy import connect
+from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
+from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.sqs import SqsQueue
+from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.core.permissions.db import save_permissions_with_tenant
+from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.base.db import get_engine
+from dataall.core.permissions import permissions
+from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -23,14 +27,14 @@ start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
 
+load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
-ES = connect(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
-init_permissions(ENGINE)
+save_permissions_with_tenant(ENGINE)
 
 
 def resolver_adapter(resolver):
@@ -42,7 +46,6 @@ def resolver_adapter(resolver):
                 username=info.context['username'],
                 groups=info.context['groups'],
                 schema=info.context['schema'],
-                cdkproxyurl=info.context['cdkproxyurl'],
             ),
             source=obj or None,
             **kwargs,
@@ -97,7 +100,6 @@ def handler(event, context):
 
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)
-    log.debug('ElasticSearch %s', ES)
     log.debug('Engine %s', ENGINE.engine.url)
 
     if event['httpMethod'] == 'OPTIONS':
@@ -117,14 +119,14 @@ def handler(event, context):
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = api.TenantPolicy.find_tenant_policy(
+                    policy = TenantPolicy.find_tenant_policy(
                         session, group, 'dataall'
                     )
                     if not policy:
                         print(
                             f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
                         )
-                        api.TenantPolicy.attach_group_tenant_policy(
+                        TenantPolicy.attach_group_tenant_policy(
                             session=session,
                             group=group,
                             permissions=permissions.TENANT_ALL,
@@ -135,14 +137,15 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
+        set_context(RequestContext(ENGINE, username, groups))
+
         app_context = {
             'engine': ENGINE,
-            'es': ES,
             'username': username,
             'groups': groups,
             'schema': SCHEMA,
-            'cdkproxyurl': None,
         }
+
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
@@ -150,6 +153,8 @@ def handler(event, context):
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )
+
+    dispose_context()
     response = json.dumps(response)
 
     log.info('Lambda Response %s', response)

@@ -7,9 +7,11 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI, BackgroundTasks, status, Response
 
-import dataall.cdkproxy.cdk_cli_wrapper as wrapper
-from dataall.cdkproxy.stacks import StackManager
-from dataall import db
+import dataall.base.cdkproxy.cdk_cli_wrapper as wrapper
+from dataall.base import db
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.stacks.db.stack_models import Stack
+
 
 print('\n'.join(sys.path))
 
@@ -21,15 +23,12 @@ logger.warning(
 )
 
 
-StackManager.registered_stacks()
-
-
 def connect():
     logger.info(f'Connecting to database for environment: `{ENVNAME}`')
     try:
         engine = db.get_engine(envname=ENVNAME)
         with engine.scoped_session() as session:
-            orgs = session.query(db.models.Organization).all()
+            orgs = session.query(Organization).all()
         return engine
     except Exception as e:
         raise Exception('Connection Error')
@@ -52,7 +51,12 @@ def up(response: Response):
 def check_creds(response: Response):
     logger.info('GET /awscreds')
     try:
-        sts = boto3.client('sts', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        sts = boto3.client(
+            'sts',
+            region_name=region,
+            endpoint_url=f"https://sts.{region}.amazonaws.com"
+        )
         data = sts.get_caller_identity()
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
@@ -84,7 +88,7 @@ def check_connect(response: Response):
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
             '_ts': datetime.now().isoformat(),
-            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.params['host']}:{engine.dbconfig.params['port']})",
+            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.host})",
         }
     except Exception as e:
         logger.exception('DBCONNECTIONERROR')
@@ -146,7 +150,7 @@ async def create_stack(
 
     for stackid in stack_ids:
         with engine.scoped_session() as session:
-            stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+            stack: Stack = session.query(Stack).get(stackid)
             if not stack:
                 logger.warning(f'Could not find stack with stackUri `{stackid}`')
                 response.status_code = status.HTTP_302_FOUND
@@ -189,7 +193,7 @@ async def delete_stack(
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_302_FOUND
@@ -227,7 +231,7 @@ def get_stack(stackid: str, response: Response):
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: db.models.Stack = session.query(db.models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_404_NOT_FOUND

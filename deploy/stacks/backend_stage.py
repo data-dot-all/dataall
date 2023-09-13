@@ -17,6 +17,7 @@ class BackendStage(Stage):
         tooling_account_id=None,
         pipeline_bucket=None,
         vpc_id=None,
+        vpc_restricted_nacls=False,
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
@@ -29,6 +30,8 @@ class BackendStage(Stage):
         shared_dashboard_sessions='anonymous',
         enable_opensearch_serverless=False,
         enable_pivot_role_auto_create=False,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -43,6 +46,7 @@ class BackendStage(Stage):
             pipeline_bucket=pipeline_bucket,
             image_tag=commit_id,
             vpc_id=vpc_id,
+            vpc_restricted_nacls=vpc_restricted_nacls,
             vpc_endpoints_sg=vpc_endpoints_sg,
             internet_facing=internet_facing,
             custom_domain=custom_domain,
@@ -55,6 +59,8 @@ class BackendStage(Stage):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_opensearch_serverless=enable_opensearch_serverless,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
+            codeartifact_domain_name=codeartifact_domain_name,
+            codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             **kwargs,
         )
 

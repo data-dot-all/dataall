@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "authentication/*": ["src/authentication/*"],
+      "design/*": ["src/design/*"],
+      "globalErrors/*": ["src/globalErrors/*"],
+      "modules/*": ["src/modules/*"],
+      "services/*": ["src/services/*"],
+      "utils/*": ["src/utils/*"],
+      "Shared/*": ["src/modules/Shared/*"]
+    }
+  }
+}

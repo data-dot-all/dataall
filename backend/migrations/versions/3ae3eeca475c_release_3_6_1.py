@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
-from dataall.db import utils
+from dataall.base.db import utils
 
 
 # revision identifiers, used by Alembic.

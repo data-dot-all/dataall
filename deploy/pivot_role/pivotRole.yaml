@@ -26,9 +26,9 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - glue.amazonaws.com
                 - lakeformation.amazonaws.com
                 - lambda.amazonaws.com
+                - glue.amazonaws.com
             Action:
               - 'sts:AssumeRole'
           - Effect: Allow
@@ -40,48 +40,25 @@ Resources:
             Condition:
               StringEquals:
                 'sts:ExternalId': !Ref ExternalId
+              StringLike:
+                'aws:PrincipalArn': [
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*graphql-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*awsworker-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*ecs-tasks-role"
+                ]
   PivotRolePolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: Athena
+          - Sid: ReadBuckets
             Action:
-              - 'athena:GetQuery*'
-              - 'athena:StartQueryExecution'
-              - 'athena:ListWorkGroups'
+              - 's3:ListAllMyBuckets'
+              - 's3:GetBucketLocation'
+              - 's3:PutBucketTagging'
             Effect: Allow
             Resource: '*'
-          - Sid: AthenaWorkgroups
-            Action:
-              - 'athena:GetWorkGroup'
-              - 'athena:CreateWorkGroup'
-              - 'athena:UpdateWorkGroup'
-              - 'athena:DeleteWorkGroup'
-              - 'athena:TagResource'
-              - 'athena:UntagResource'
-              - 'athena:ListTagsForResource'
-            Effect: Allow
-            Resource: !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
-          - Sid: AwsGlueCrawlerBucket
-            Effect: Allow
-            Action: 's3:GetObject'
-            Resource:
-              - 'arn:aws:s3:::crawler-public*'
-          - Sid: ManagedAccessPoints
-            Action:
-              - 's3:GetAccessPoint'
-              - 's3:GetAccessPointPolicy'
-              - 's3:ListAccessPoints'
-              - 's3:CreateAccessPoint'
-              - 's3:DeleteAccessPoint'
-              - 's3:GetAccessPointPolicyStatus'
-              - 's3:DeleteAccessPointPolicy'
-              - 's3:PutAccessPointPolicy'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: ManagedBuckets
             Action:
               - 's3:List*'
@@ -105,82 +82,6 @@ Resources:
             Effect: Allow
             Resource:
               - 'arn:aws:s3:::*'
-          - Sid: AWSLoggingBuckets
-            Action:
-              - 's3:PutBucketAcl'
-              - 's3:PutBucketNotification'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
-          - Sid: ReadBuckets
-            Action:
-              - 's3:ListAllMyBuckets'
-              - 's3:GetBucketLocation'
-              - 's3:PutBucketTagging'
-            Effect: Allow
-            Resource: '*'
-          - Sid: CWMetrics
-            Action:
-              - 'cloudwatch:PutMetricData'
-              - 'cloudwatch:GetMetricData'
-              - 'cloudwatch:GetMetricStatistics'
-            Effect: Allow
-            Resource: '*'
-          - Sid: Logs
-            Effect: Allow
-            Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource:
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws-glue/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
-          - Sid: Logging
-            Action:
-              - 'logs:PutLogEvents'
-            Effect: Allow
-            Resource: '*'
-          - Sid: CWEvents
-            Action:
-              - 'events:DeleteRule'
-              - 'events:List*'
-              - 'events:PutRule'
-              - 'events:PutTargets'
-              - 'events:RemoveTargets'
-            Effect: Allow
-            Resource: '*'
-          - Sid: Glue
-            Action:
-              - 'glue:BatchCreatePartition'
-              - 'glue:BatchDeletePartition'
-              - 'glue:BatchDeleteTable'
-              - 'glue:CreateCrawler'
-              - 'glue:CreateDatabase'
-              - 'glue:CreatePartition'
-              - 'glue:CreateTable'
-              - 'glue:DeleteCrawler'
-              - 'glue:DeleteDatabase'
-              - 'glue:DeleteJob'
-              - 'glue:DeletePartition'
-              - 'glue:DeleteTable'
-              - 'glue:DeleteTrigger'
-              - 'glue:BatchGet*'
-              - 'glue:Get*'
-              - 'glue:List*'
-              - 'glue:StartCrawler'
-              - 'glue:StartJobRun'
-              - 'glue:StartTrigger'
-              - 'glue:SearchTables'
-              - 'glue:UpdateDatabase'
-              - 'glue:UpdatePartition'
-              - 'glue:UpdateTable'
-              - 'glue:UpdateTrigger'
-              - 'glue:UpdateJob'
-              - 'glue:TagResource'
-              - 'glue:UpdateCrawler'
-            Effect: Allow
-            Resource: '*'
           - Sid: KMS
             Action:
               - 'kms:Decrypt'
@@ -193,30 +94,69 @@ Resources:
             Effect: Allow
             Resource:
               - '*'
-          - Sid: KMSAlias
-            Action:
-              - 'kms:DeleteAlias'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:aws:kms:*:${AWS::AccountId}:alias/${EnvironmentResourcePrefix}*'
-          - Sid: KMSCreate
+          - Sid: KMSList
             Action:
               - 'kms:List*'
               - 'kms:DescribeKey'
-              - 'kms:CreateAlias'
-              - 'kms:CreateKey'
             Effect: Allow
             Resource: '*'
-          - Sid: Organizations
-            Action: 'organizations:DescribeOrganization'
-            Effect: Allow
-            Resource: '*'
-          - Sid: ResourcesGroupTags
+          - Sid: AthenaWorkgroups
             Action:
-              - 'tag:*'
-              - 'resource-groups:*'
+              - 'athena:GetWorkGroup'
+              - 'athena:GetQueryExecution'
+              - 'athena:GetQueryResults'
+              - 'athena:StartQueryExecution'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
+          - Sid: ManagedAccessPoints
+            Action:
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
+          - Sid: GlueCatalog
+            Action:
+              - 'glue:BatchCreatePartition'
+              - 'glue:BatchDeletePartition'
+              - 'glue:BatchDeleteTable'
+              - 'glue:CreateDatabase'
+              - 'glue:CreatePartition'
+              - 'glue:CreateTable'
+              - 'glue:DeleteDatabase'
+              - 'glue:DeletePartition'
+              - 'glue:DeleteTable'
+              - 'glue:BatchGet*'
+              - 'glue:Get*'
+              - 'glue:List*'
+              - 'glue:SearchTables'
+              - 'glue:UpdateDatabase'
+              - 'glue:UpdatePartition'
+              - 'glue:UpdateTable'
+              - 'glue:TagResource'
+              - 'glue:DeleteResourcePolicy'
+              - 'glue:PutResourcePolicy'
             Effect: Allow
             Resource: '*'
+          - Sid: GlueETL
+            Action:
+              - 'glue:StartCrawler'
+              - 'glue:StartJobRun'
+              - 'glue:StartTrigger'
+              - 'glue:UpdateTrigger'
+              - 'glue:UpdateJob'
+              - 'glue:UpdateCrawler'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:crawler/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:job/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:trigger/${EnvironmentResourcePrefix}*'
           - Sid: SNSPublish
             Action:
               - 'sns:Publish'
@@ -245,6 +185,33 @@ Resources:
               - 'sqs:SendMessage'
             Effect: Allow
             Resource: !Sub 'arn:aws:sqs:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+          - Sid: AWSLoggingBuckets
+            Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutBucketNotification'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
+          - Sid: CWMetrics
+            Action:
+              - 'cloudwatch:PutMetricData'
+              - 'cloudwatch:GetMetricData'
+              - 'cloudwatch:GetMetricStatistics'
+            Effect: Allow
+            Resource: '*'
+          - Sid: Logs
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+            Resource:
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
+          - Sid: Logging
+            Action:
+              - 'logs:PutLogEvents'
+            Effect: Allow
+            Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-0
       Roles:
         - !Ref PivotRoleName
@@ -256,75 +223,20 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: Redshift
-            Effect: Allow
-            Action:
-              - 'redshift:DeleteTags'
-              - 'redshift:ModifyClusterIamRoles'
-              - 'redshift:DescribeClusterSecurityGroups'
-              - 'redshift:DescribeClusterSubnetGroups'
-              - 'redshift:pauseCluster'
-              - 'redshift:resumeCluster'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftRead
-            Effect: Allow
-            Action:
-              - 'redshift:DescribeClusters'
-              - 'redshift:CreateTags'
-              - 'redshift:DescribeClusterSubnetGroups'
-            Resource: '*'
-          - Sid: RedshiftCreds
-            Effect: Allow
-            Action:
-              - 'redshift:GetClusterCredentials'
-            Resource:
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbgroup:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbname:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbuser:*/*'
-          - Sid: AllowRedshiftSubnet
-            Effect: Allow
-            Action:
-              - 'redshift:CreateClusterSubnetGroup'
-            Resource: '*'
-          - Sid: AllowRedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
           - Sid: EC2SG
             Effect: Allow
             Action:
-              - 'ec2:CreateSecurityGroup'
-              - 'ec2:CreateNetworkInterface'
-              - 'ec2:Describe*'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:DescribeVpcs'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeNetworkInterfaces'
             Resource: '*'
-          - Sid: TagsforENI
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:CreateTags'
-            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
-          - Sid: DeleteENI
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteNetworkInterface'
-            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
           - Sid: SageMakerNotebookActions
             Effect: Allow
             Action:
               - 'sagemaker:ListTags'
               - 'sagemaker:DescribeUserProfile'
-              - 'sagemaker:DeleteNotebookInstance'
               - 'sagemaker:StopNotebookInstance'
               - 'sagemaker:CreatePresignedNotebookInstanceUrl'
               - 'sagemaker:DescribeNotebookInstance'
@@ -370,8 +282,6 @@ Resources:
               - 'ram:UpdateResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
             Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'true'
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
@@ -390,106 +300,37 @@ Resources:
             Action:
               - 'ram:DeleteResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
-            Condition:
-              StringEqualsIfExists:
-                'aws:ResourceTag/dataall': 'true'
           - Sid: RamInvitations
             Effect: Allow
             Action:
               - "ram:AcceptResourceShareInvitation"
               - "ram:RejectResourceShareInvitation"
-              - "ec2:DescribeAvailabilityZones"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
-          - Sid: RamReadGlue
+          - Sid: RamRead
             Effect: Allow
             Action:
-              - 'glue:PutResourcePolicy'
-              - 'glue:DeleteResourcePolicy'
               - 'ram:Get*'
               - 'ram:List*'
             Resource: '*'
-          - Sid: SGCreateTag
-            Effect: Allow
-            Action:
-              - 'ec2:CreateTags'
-            Resource:
-              - !Sub 'arn:aws:ec2:*:${AWS::AccountId}:security-group/*'
-            Condition:
-              StringEquals:
-                'aws:RequestTag/dataall': 'true'
-          - Sid: SGandRedshift
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:DeleteSecurityGroup'
-              - 'redshift:DeleteClusterSubnetGroup'
-            Resource:
-              - '*'
-            Condition:
-              'ForAnyValue:StringEqualsIfExists':
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
-            Condition:
-              StringEqualsIfExists:
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: DevTools0
-            Effect: Allow
-            Action: 'cloudformation:ValidateTemplate'
-            Resource: '*'
-          - Sid: DevTools1
-            Effect: Allow
-            Action:
-              - 'secretsmanager:CreateSecret'
-              - 'secretsmanager:DeleteSecret'
-              - 'secretsmanager:TagResource'
-              - 'codebuild:DeleteProject'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: DevTools2
-            Effect: Allow
-            Action:
-              - 'codebuild:CreateProject'
-              - 'ecr:CreateRepository'
-              - 'ssm:PutParameter'
-              - 'ssm:AddTagsToResource'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:RequestTag/dataall': 'true'
           - Sid: CloudFormation
-            Effect: Allow
-            Action:
-              - 'cloudformation:CreateStack'
-            Resource:
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
-          - Sid: CloudFormation2
             Effect: Allow
             Action:
               - 'cloudformation:DescribeStacks'
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
-              - 'cloudformation:GetTemplate'
-              - 'cloudformation:ListStackResources'
-              - 'cloudformation:DescribeStackResource'
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormationDataPipelines
+            Effect: Allow
+            Action:
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:DescribeStackResources'
+              - 'cloudformation:DescribeStackEvents'
+              - 'cloudformation:DeleteStack'
+            Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
@@ -505,8 +346,6 @@ Resources:
           - Sid: LakeFormation
             Effect: Allow
             Action:
-              - "lakeformation:RegisterResource"
-              - "lakeformation:DeregisterResource"
               - "lakeformation:UpdateResource"
               - "lakeformation:DescribeResource"
               - "lakeformation:AddLFTagsToResource"
@@ -533,61 +372,10 @@ Resources:
               - 'lakeformation:GetWorkUnitResults'
               - 'lakeformation:GetQueryState'
               - 'lakeformation:GetQueryStatistics'
-              - 'lakeformation:StartTransaction'
-              - 'lakeformation:CommitTransaction'
-              - 'lakeformation:CancelTransaction'
-              - 'lakeformation:ExtendTransaction'
-              - 'lakeformation:DescribeTransaction'
-              - 'lakeformation:ListTransactions'
               - 'lakeformation:GetTableObjects'
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
             Resource: '*'
-          - Sid: Compute
-            Effect: Allow
-            Action:
-              - 'lambda:CreateFunction'
-              - 'lambda:AddPermission'
-              - 'lambda:InvokeFunction'
-              - 'lambda:RemovePermission'
-              - 'lambda:GetFunction'
-              - 'lambda:GetFunctionConfiguration'
-              - 'lambda:DeleteFunction'
-              - 'ecr:CreateRepository'
-              - 'ecr:SetRepositoryPolicy'
-              - 'ecr:DeleteRepository'
-              - 'ecr:DescribeImages'
-              - 'ecr:BatchDeleteImage'
-              - 'codepipeline:GetPipelineState'
-              - 'codepipeline:DeletePipeline'
-              - 'codepipeline:GetPipeline'
-              - 'codepipeline:CreatePipeline'
-              - 'codepipeline:TagResource'
-              - 'codepipeline:UntagResource'
-            Resource:
-              - !Sub 'arn:aws:lambda:*:${AWS::AccountId}:function:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:codepipeline:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:ecr:*:${AWS::AccountId}:repository/${EnvironmentResourcePrefix}*'
-          - Sid: DatabrewList
-            Effect: Allow
-            Action:
-              - 'databrew:List*'
-            Resource: '*'
-          - Sid: DatabrewPermissions
-            Effect: Allow
-            Action:
-              - 'databrew:BatchDeleteRecipeVersion'
-              - 'databrew:Delete*'
-              - 'databrew:Describe*'
-              - 'databrew:PublishRecipe'
-              - 'databrew:SendProjectSessionAction'
-              - 'databrew:Start*'
-              - 'databrew:Stop*'
-              - 'databrew:TagResource'
-              - 'databrew:UntagResource'
-              - 'databrew:Update*'
-            Resource: !Sub 'arn:aws:databrew:*:${AWS::AccountId}:*/${EnvironmentResourcePrefix}*'
           - Sid: QuickSight
             Effect: Allow
             Action:
@@ -598,7 +386,7 @@ Resources:
               - "quicksight:DescribeDashboard"
               - "quicksight:DescribeUser"
               - "quicksight:SearchDashboards"
-              - "quicksight:GetDashboardEmbedUrl"
+              - "quicksight:GenerateEmbedUrlForRegisteredUser"
               - "quicksight:GenerateEmbedUrlForAnonymousUser"
               - "quicksight:UpdateUser"
               - "quicksight:ListUserGroups"
@@ -641,19 +429,6 @@ Resources:
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/ddk/*'
-          - Sid: Secretsmanager
-            Effect: Allow
-            Action:
-              - "secretsmanager:DescribeSecret"
-              - "secretsmanager:GetSecretValue"
-            Resource:
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
-          - Sid: SecretsmanagerList
-            Effect: Allow
-            Action:
-              - "secretsmanager:ListSecrets"
-            Resource: '*'
           - Sid: IAMListGet
             Action:
               - 'iam:Get*'
@@ -671,9 +446,16 @@ Resources:
               - 'iam:PassRole'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${PivotRoleName}'
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
+          - Sid: IAMPassRoleGlue
+            Action:
+              - 'iam:PassRole'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+            Condition:
+              StringEquals:
+                'iam:PassedToService': [ "glue.amazonaws.com" ]
           - Sid: STS
             Action:
               - 'sts:AssumeRole'
@@ -681,14 +463,6 @@ Resources:
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/ddk-*'
-          - Sid: StepFunctions
-            Action:
-              - 'states:DescribeStateMachine'
-              - 'states:ListExecutions'
-              - 'states:StartExecution'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:aws:states:*:${AWS::AccountId}:stateMachine:${EnvironmentResourcePrefix}*'
           - Sid: CodeCommit
             Action:
               - 'codecommit:GetFile'

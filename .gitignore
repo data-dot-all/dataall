@@ -44,7 +44,7 @@ cobertura.xml
 /node_modules/
 *venv*
 *pgdata*
-backend/dataall/cdkproxy/cdk.out/
+backend/dataall/base/cdkproxy/cdk.out/
 **.zip
 #Frontend
 /node_modules
@@ -70,5 +70,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .idea
-/backend/dataall/cdkproxy/assets/gluedataqualityjob/datahubdq.zip
-/backend/dataall/cdkproxy/assets/glueprofilingjob/datahubdq.zip

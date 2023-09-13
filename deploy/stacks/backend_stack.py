@@ -1,4 +1,5 @@
 from builtins import super
+import boto3
 
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
@@ -34,6 +35,7 @@ class BackendStack(Stack):
         image_tag=None,
         pipeline_bucket=None,
         vpc_id=None,
+        vpc_restricted_nacls=False,
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
@@ -46,6 +48,8 @@ class BackendStack(Stack):
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
         enable_opensearch_serverless=False,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -61,10 +65,13 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
+            restricted_nacl=vpc_restricted_nacls,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
+        vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
+        self.s3_prefix_list = self.get_s3_prefix_list()
 
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
 
@@ -78,18 +85,17 @@ class BackendStack(Stack):
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
-            **kwargs,
-        )
-
-        SecretsManagerStack(
-            self,
-            f'Secrets',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            enable_cw_canaries=enable_cw_canaries,
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
+        if enable_cw_canaries:
+            SecretsManagerStack(
+                self,
+                f'Secrets',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                **kwargs,
+            )
 
         s3_resources_stack = S3ResourcesStack(
             self,
@@ -129,6 +135,7 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
+            vpce_connection=vpce_connection,
             sqs_queue=sqs_stack.queue,
             image_tag=image_tag,
             ecr_repository=repo,
@@ -147,12 +154,18 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
-            vpc_endpoints_sg=vpc_endpoints_sg,
+            vpce_connection=vpce_connection,
             ecr_repository=repo,
             image_tag=image_tag,
             prod_sizing=prod_sizing,
             pivot_role_name=self.pivot_role_name,
             tooling_account_id=tooling_account_id,
+            s3_prefix_list=self.s3_prefix_list,
+            lambdas=[
+                self.lambda_api_stack.aws_handler,
+                self.lambda_api_stack.api_handler,
+                self.lambda_api_stack.elasticsearch_proxy_handler,
+            ],
             **kwargs,
         )
 
@@ -162,8 +175,12 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
+            s3_prefix_list=self.s3_prefix_list,
             tooling_account_id=tooling_account_id,
             pipeline_bucket=pipeline_bucket,
+            vpce_connection=vpce_connection,
+            codeartifact_domain_name=codeartifact_domain_name,
+            codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             **kwargs,
         )
 
@@ -243,6 +260,7 @@ class BackendStack(Stack):
                 security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
                 vpc=vpc,
                 allow_all_outbound=False,
+                disable_inline_rules=True,
             )
 
         else:
@@ -277,7 +295,7 @@ class BackendStack(Stack):
             ],
             database=aurora_stack.cluster.cluster_identifier,
             ecs_cluster=self.ecs_stack.ecs_cluster,
-            ecs_task_definitions=self.ecs_stack.ecs_task_definitions,
+            ecs_task_definitions_families=self.ecs_stack.ecs_task_definitions_families,
             backend_api=self.lambda_api_stack.backend_api_name,
             queue_name=sqs_stack.queue.queue_name,
             **kwargs,
@@ -342,3 +360,15 @@ class BackendStack(Stack):
             collection_id=aoss_stack.collection_id,
             collection_name=aoss_stack.collection_name,
         )
+
+    def get_s3_prefix_list(self):
+        ec2_client = boto3.client("ec2", region_name=self.region)
+        response = ec2_client.describe_prefix_lists(
+            Filters=[
+                {
+                    'Name': 'prefix-list-name',
+                    'Values': [f'com.amazonaws.{self.region}.s3']
+                },
+            ]
+        )
+        return response['PrefixLists'][0].get("PrefixListId")

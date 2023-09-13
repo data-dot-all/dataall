@@ -10,6 +10,7 @@
 
 # production
 /build
+/src/generated
 
 # misc
 .DS_Store
@@ -24,3 +25,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .idea
+.yarn
