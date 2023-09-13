@@ -1,7 +1,7 @@
 # Project Governance (Very Minimal Governance model)
 
 This open source project is managed by a Steering Committee composed of the maintainers of this project. Maintainers are
-defined as individuals with full commit access to the project repositories.
+defined as individuals with [maintain-level permissions on the data.all repository](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-permission-levels-for-an-organization).
 
 ## Steering Committee
 
