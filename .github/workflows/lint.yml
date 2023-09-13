@@ -4,15 +4,9 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
-<<<<<<< HEAD:.github/workflows/minimal-security-check.yml
-    - main
-    - release/*
-    - main-v2
-=======
       - main
       - release/*
       - main-v2
->>>>>>> new-main:.github/workflows/lint.yml
 
 jobs:
   lint:
