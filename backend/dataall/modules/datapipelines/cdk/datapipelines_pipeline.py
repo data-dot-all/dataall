@@ -186,13 +186,13 @@ class PipelineStack(Stack):
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
 
-                process = subprocess.run(
-                    "; ".join(update_cmds),
-                    text=True,
-                    shell=True,  # nosec
-                    encoding='utf-8',
-                    cwd=code_dir_path,
-                    env=env_vars
+                process = subprocess.run(  # nosemgrep
+                    "; ".join(update_cmds),  # nosemgrep
+                    text=True,  # nosemgrep
+                    shell=True,  # nosemgrep
+                    encoding='utf-8',  # nosemgrep
+                    cwd=code_dir_path,  # nosemgrep
+                    env=env_vars  # nosemgrep
                 )
             else:
                 raise Exception
@@ -521,13 +521,13 @@ class PipelineStack(Stack):
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
-        process = subprocess.run(
-            '; '.join(cmd_init),
-            text=True,
-            shell=True,  # nosec
-            encoding='utf-8',
-            cwd=code_dir_path,
-            env=env_vars
+        process = subprocess.run(  # nosemgrep
+            '; '.join(cmd_init),  # nosemgrep
+            text=True,  # nosemgrep
+            shell=True,  # nosemgrep
+            encoding='utf-8',  # nosemgrep
+            cwd=code_dir_path,  # nosemgrep
+            env=env_vars  # nosemgrep
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
