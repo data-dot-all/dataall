@@ -14,10 +14,10 @@ from aws_cdk import (
 )
 
 parent_dir = os.path.dirname(os.path.realpath(__file__))
-backend_dir = parent_dir.rsplit("/", 2)[0] + "/backend/dataall/base/utils"
+backend_dir = parent_dir.rsplit("/", 2)[0] + "/backend/dataall/base"
 sys.path.insert(0, backend_dir)
 
-from naming_convention import (
+from utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
