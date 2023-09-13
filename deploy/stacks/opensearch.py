@@ -9,11 +9,6 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
-
 from .pyNestedStack import pyNestedClass
 
 
@@ -64,7 +59,7 @@ class OpenSearchStack(pyNestedClass):
         self.domain = opensearch.Domain(
             self,
             f'OpenSearchDomain{envname}',
-            domain_name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='domain'),
+            domain_name=f'{resource_prefix}-{envname}-domain',
             version=opensearch.EngineVersion.OPENSEARCH_1_1,
             capacity=opensearch.CapacityConfig(
                 data_nodes=2, master_nodes=3 if prod_sizing else 0
@@ -148,13 +143,3 @@ class OpenSearchStack(pyNestedClass):
     @property
     def domain_endpoint(self) -> str:
         return self.domain.domain_endpoint
-
-    @staticmethod
-    def _set_os_compliant_name(prefix: str, name: str) -> str:
-        compliant_name = NamingConventionService(
-            target_uri=None,
-            target_label=name,
-            pattern=NamingConventionPattern.OPENSEARCH,
-            resource_prefix=prefix,
-        ).build_compliant_name()
-        return compliant_name
