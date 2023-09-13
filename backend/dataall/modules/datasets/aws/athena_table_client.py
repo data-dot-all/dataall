@@ -48,7 +48,9 @@ class AthenaTableClient:
         sql = 'select * from {table_identifier} limit 50'.format(
             table_identifier=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
         )
-        cursor.execute(sql)
+        cursor.execute(sql)  # nosemgrep
+        # it is not possible to build the query string with the table.X parameters using Pyathena connect
+        # to remediate sql injections we built the Identifier class that removes any malicious code from the string
         fields = []
         for f in cursor.description:
             fields.append(json.dumps({'name': f[0]}))

@@ -128,7 +128,9 @@ class SessionHelper:
         request_parameters += '&Session=' + urllib.parse.quote_plus(json_string_with_temp_credentials)
         request_url = 'https://signin.aws.amazon.com/federation' + request_parameters
 
-        r = urllib.request.urlopen(request_url).read()
+        r = urllib.request.urlopen(request_url).read()  # nosemgrep
+        # The request parameters and url does not include any upstream input from data.all users.
+        # there is no danger of malicious actors introducing values
 
         signin_token = json.loads(r)
         request_parameters = '?Action=login'
