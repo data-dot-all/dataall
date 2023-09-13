@@ -9,7 +9,7 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
-from backend.dataall.base.utils.naming_convention import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
