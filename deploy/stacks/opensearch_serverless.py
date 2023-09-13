@@ -61,8 +61,8 @@ class OpenSearchServerlessStack(pyNestedClass):
 
         cfn_encryption_policy = opensearchserverless.CfnSecurityPolicy(
             self,
-            f'OpenSearchCollectionEncryptionPolicy{envname}',
-            name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='encryption-policy'),
+            f'OpenSearchEncryptionPolicy{envname}',
+            name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='encryption-added-text-policy'),
             type='encryption',
             policy=self._get_encryption_policy(
                 collection_name=self.cfn_collection.name,
@@ -72,7 +72,7 @@ class OpenSearchServerlessStack(pyNestedClass):
 
         cfn_vpc_endpoint = opensearchserverless.CfnVpcEndpoint(
             self,
-            f'OpenSearchCollectionVpcEndpoint{envname}',
+            f'OpenSearchVpcEndpoint{envname}',
             name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='vpc-endpoint'),
             vpc_id=vpc.vpc_id,
             security_group_ids=[vpc_endpoints_sg.security_group_id],
@@ -81,7 +81,7 @@ class OpenSearchServerlessStack(pyNestedClass):
 
         cfn_network_policy = opensearchserverless.CfnSecurityPolicy(
             self,
-            f'OpenSearchCollectionNetworkPolicy{envname}',
+            f'OpenSearchNetworkPolicy{envname}',
             name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='network-policy'),
             type='network',
             policy=self._get_network_policy(
@@ -99,7 +99,7 @@ class OpenSearchServerlessStack(pyNestedClass):
 
         opensearchserverless.CfnAccessPolicy(
             self,
-            f'OpenSearchCollectionAccessPolicy{envname}',
+            f'OpensearchAccessPolicy{envname}',
             name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='access-policy'),
             type='data',
             policy=self._get_access_policy(
