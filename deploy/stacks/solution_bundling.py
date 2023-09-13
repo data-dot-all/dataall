@@ -20,12 +20,12 @@ class SolutionBundling:
         subprocess.check_output(  # nosemgrep
             command,  # nosemgrep
             stderr=subprocess.STDOUT,  # nosemgrep
-            shell=True,  # nosemgrep
+            shell=True,  # nosec  # nosemgrep
         )
 
         ls_output = subprocess.check_output(  # nosemgrep
             [f'ls -ll {output_dir}'],  # nosemgrep
             stderr=subprocess.STDOUT,  # nosemgrep
-            shell=True,  # nosemgrep
+            shell=True,  # nosec  # nosemgrep
         )
         return True

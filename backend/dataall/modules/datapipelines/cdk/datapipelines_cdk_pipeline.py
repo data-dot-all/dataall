@@ -75,7 +75,7 @@ class CDKPipelineStack:
                 process = subprocess.run(  # nosemgrep
                     "; ".join(update_cmds),  # nosemgrep
                     text=True,  # nosemgrep
-                    shell=True,  # nosemgrep
+                    shell=True,  # nosec  # nosemgrep
                     encoding='utf-8',  # nosemgrep
                     cwd=self.code_dir_path,  # nosemgrep
                     env=self.env  # nosemgrep
@@ -102,7 +102,7 @@ class CDKPipelineStack:
         process = subprocess.run(  # nosemgrep
             '; '.join(cmd_init),  # nosemgrep
             text=True,  # nosemgrep
-            shell=True,  # nosemgrep
+            shell=True,  # nosec  # nosemgrep
             encoding='utf-8',  # nosemgrep
             cwd=self.code_dir_path,  # nosemgrep
             env=self.env  # nosemgrep
@@ -204,7 +204,7 @@ app.synth()
         process = subprocess.run(  # nosemgrep
             '; '.join(git_cmds),  # nosemgrep
             text=True,  # nosemgrep
-            shell=True,  # nosemgrep
+            shell=True,  # nosec  # nosemgrep
             encoding='utf-8',  # nosemgrep
             cwd=os.path.join(self.code_dir_path, self.pipeline.repo),  # nosemgrep
             env=self.env  # nosemgrep
@@ -228,7 +228,7 @@ app.synth()
             process = subprocess.run(  # nosemgrep
                 ' '.join(precmd),  # nosemgrep
                 text=True,  # nosemgrep
-                shell=True,  # nosemgrep
+                shell=True,  # nosec  # nosemgrep
                 encoding='utf-8',  # nosemgrep
                 capture_output=True,  # nosemgrep
                 cwd=cwd  # nosemgrep

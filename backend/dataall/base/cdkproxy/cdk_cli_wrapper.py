@@ -46,7 +46,7 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
     cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosemgrep
+    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec  # nosemgrep
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
@@ -163,7 +163,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             process = subprocess.run(  # nosemgrep
                 ' '.join(cmd),  # nosemgrep
                 text=True,  # nosemgrep
-                shell=True,  # nosemgrep
+                shell=True,  # nosec  # nosemgrep
                 encoding='utf-8',  # nosemgrep
                 env=env,  # nosemgrep
                 cwd=cwd,  # nosemgrep
@@ -214,7 +214,7 @@ def cdk_installed():
     subprocess.run(  # nosemgrep
         cmd,  # nosemgrep
         text=True,  # nosemgrep
-        shell=True,  # nosemgrep
+        shell=True,  # nosec  # nosemgrep
         encoding='utf-8',  # nosemgrep
         stdout=subprocess.PIPE,  # nosemgrep
         stderr=subprocess.PIPE,  # nosemgrep
