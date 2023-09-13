@@ -1,3 +1,6 @@
+import os 
+import sys 
+
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_iam as iam,
@@ -7,6 +10,15 @@ from aws_cdk import (
     aws_kms,
     aws_logs as logs,
     RemovalPolicy,
+)
+
+parent_dir = os.path.dirname(os.path.realpath(__file__))
+backend_dir = parent_dir.rsplit("/", 2)[0]
+sys.path.append(backend_dir)
+
+from backend.dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
 )
 
 from .pyNestedStack import pyNestedClass
@@ -59,7 +71,7 @@ class OpenSearchStack(pyNestedClass):
         self.domain = opensearch.Domain(
             self,
             f'OpenSearchDomain{envname}',
-            domain_name=f'{resource_prefix}-{envname}-domain',
+            domain_name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='domain'),
             version=opensearch.EngineVersion.OPENSEARCH_1_1,
             capacity=opensearch.CapacityConfig(
                 data_nodes=2, master_nodes=3 if prod_sizing else 0
@@ -143,3 +155,13 @@ class OpenSearchStack(pyNestedClass):
     @property
     def domain_endpoint(self) -> str:
         return self.domain.domain_endpoint
+
+    @staticmethod
+    def _set_os_compliant_name(prefix: str, name: str) -> str:
+        compliant_name = NamingConventionService(
+            target_uri=None,
+            target_label=name,
+            pattern=NamingConventionPattern.OPENSEARCH,
+            resource_prefix=prefix,
+        ).build_compliant_name()
+        return compliant_name
