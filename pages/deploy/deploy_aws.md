@@ -74,8 +74,39 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
+## 4. Bootstrap tooling account
+The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
+It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
 
-## 4. Configure cdk.json
+The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
+Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
+
+
+Run the commands below with the AWS credentials of the tooling account:
+
+Your region (can be any supported region)
+```bash
+cdk bootstrap aws://<tooling-account-id>/<aws-region>
+```
+North Virginia region (needed to be able to deploy cross region to us-east-1)
+```bash
+cdk bootstrap aws://<tooling-account-id>/us-east-1
+```
+## 5. Bootstrap deployment account(s)
+
+Run the commands below with the AWS credentials of the deployment account:
+
+Your region (can be any supported region)
+```bash
+cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
+```
+North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
+```bash
+cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east-1
+```
+
+
+## 6. Configure the deployment options in the cdk.json file
 We use a parameters cdk.json file to configure and customize your deployment of data.all. This file is at the root level
 of our repository. Open it, you should be seen something like:
 ```json
@@ -235,8 +266,116 @@ deploy to 2 deployments accounts.
   }
 }
 ```
+## 7. Configure the application modules in the config.json file
+In data.all V2 you can enable, disable, configure and add new modules to your data.all deployment in the `config.json` file
+located at the top level of the repository. Here is an example file, where you
+can distinguish 2 parts: `modules` and `core`. Read the following subsections to understand each of these parts and 
+the different configuration options. 
 
-## 5. Run CDK synth and check cdk.context.json
+```json
+{
+    "modules": {
+        "datasets": {
+            "active": true,
+            "features": {
+                "file_uploads": false,
+                "file_actions": true,
+                "aws_actions": true
+            }
+        },
+        "mlstudio": {
+            "active": true
+        },
+        "notebooks": {
+            "active": true
+        },
+        "datapipelines": {
+            "active": true
+        },
+        "worksheets": {
+            "active": true
+        },
+        "dashboards": {
+            "active": true
+        }
+    },
+    "core": {
+        "features": {
+            "env_aws_actions": true
+        }
+    }
+}
+```
+
+### Enable/disable modules
+The first thing that you'll need to do is to set a certain module to `"active": true` to enable the module or `"active": false` to disable it. 
+If a module is disabled, the module related APIs and frontend views won't be created.
+
+If a module depends on other modules we do not need to explicitly define it as active in the `config.json`. For example,
+`datasets` depend on the `dataset-sharing` module. `dataset-sharing` will be loaded even if we do not declare it in the
+`config.json`.
+
+The following table contains a list of the available modules and their dependencies with a very brief explanation of the
+functionality. If you want to know more about each module, 
+check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
+
+| **Module**      | **depends on**                                      | **Description**                                                                       |   
+|-----------------|-----------------------------------------------------|---------------------------------------------------------------------------------------|
+| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.         |
+| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
+| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
+| datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
+| dataset_sharing | datasets_base                                       | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
+| datasets_base   | None                                                | Shared code related to Datasets.                                                      |
+| worksheets      | None                                                | Athena query editor integrated in data.all UI                                         |
+| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
+| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
+| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
+| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
+
+
+### Disable module features
+As you probably noticed, the `dataset` module contains an additional field called `features` in the `config.json`. 
+If there is a particular functionality that you want to enable or disable you can do so in this section. 
+In the example config.json, the feature that enables file upload from data.all UI has been disabled.
+
+```json
+    "datasets": {
+        "active": true,
+        "features": {
+            "file_uploads": false,
+            "file_actions": true,
+            "aws_actions": true
+        }
+    },
+```
+| **Feature**   | **Module** | **Description**                      |   
+|---------------|------------|--------------------------------------|
+| file_uploads  | datasets   | Upload files in a Dataset in the Upload tab |
+| file_actions  | datasets   | Create, Read, Update, Delete on Dataset Folders                                     |
+| aws_actions   | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                     |
+
+### Disable core features
+In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
+a particular feature in the core is to add it to the core section of the `config.json` and enable/disable it. 
+
+```json
+    "core": {
+        "features": {
+            "env_aws_actions": true
+        }
+    }
+```
+This is the list of core features that can be switched on/off at the moment. Take it as an example if you need to 
+disable any other core feature.
+
+| **Feature**   | **Module** | **Description**                      |   
+|---------------|------------|--------------------------------------|
+| env_aws_actions   | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI   |
+
+
+
+## 8. Run CDK synth and check cdk.context.json
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
 With this command, CDK will create a **cdk.context.json** file with key-value pairs that are checked at 
 synthesis time. Think of them as environment variables for the synthesis of CloudFormation stacks. 
@@ -288,7 +427,7 @@ Here is an example of a generated cdk.context.json file:
 }
 ````
 
-## 6. Add CDK context file
+## 9. Add CDK context file
 The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
 repository. Add the generated context file to the repo by running the commands below 
 (remember, with the tooling account credentials).
@@ -299,39 +438,7 @@ git commit -m "CDK configuration"
 git push
 ```
 
-## 7. Bootstrap tooling account
-The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
-It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
-
-The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
-Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
-
-
-Run the commands below with the AWS credentials of the tooling account:
-
-Your region (can be any supported region)
-```bash
-cdk bootstrap aws://<tooling-account-id>/<aws-region>
-```
-North Virginia region (needed to be able to deploy cross region to us-east-1)
-```bash
-cdk bootstrap aws://<tooling-account-id>/us-east-1
-```
-## 8. Bootstrap deployment account(s)
-
-Run the commands below with the AWS credentials of the deployment account:
-
-Your region (can be any supported region)
-```bash
-cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
-```
-North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
-```bash
-cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east-1
-```
-
-
-## 9. Run CDK deploy
+## 10. Run CDK deploy
 You are all set to start the deployment, with the AWS credentials for the tooling account, run the command below. 
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
@@ -342,7 +449,7 @@ In case you used the default values, this is how the command would look like:
 ```bash
 cdk deploy dataall-main-cicd-stack
 ```
-## 10. Configure Cloudwatch RUM (enable_cw_rum=true)
+## 11. Configure Cloudwatch RUM (enable_cw_rum=true)
 
 If you enabled CloudWatch RUM in the **cdk.json** file: 
 

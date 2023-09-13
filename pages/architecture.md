@@ -136,7 +136,7 @@ this is achieved by connecting the VPN to the VPC in data.all.
 
 With the following commands you can create the ACM certificate and Route 53 private hosted zone:
 1.	`cd` to empty directory
-2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem`
+2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem -addext "subjectAltName=DNS:<YOUR-HOSTED-ZONE-NAME>,DNS:*.<YOUR-HOSTED-ZONE-NAME>"`
 3.	This command will create a no password file to load in ACM: `openssl rsa -in dataallkey.pem -out dataallkeynopwd.pem `
 4.	`aws route53 create-hosted-zone --name <domain-name> --vpc VPCRegion=<vpc_region>,VPCId=<vpc-id> --caller-reference 07:12:22 --query HostedZone.Id --output text `
 5.	`aws acm import-certificate --region us-east-1 --certificate fileb://<filepath to cert> --private-key fileb://<filepath to no password key> --query CertificateArn --output text`
@@ -406,28 +406,6 @@ We also have the option to **import** a dataset, in such case we can reuse an ex
 -   Traceability: On our structured data, all SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation.
 -   Glue jobs related to the dataset are by default running outside the VPC.
 
-
-### Warehouses
-
-Warehouse are Amazon Redshift Clusters created or imported by data.all
-that allows data teams to implement secure, automated, data warehousing
-including loading data from S3 through Spectrum. A warehouse in data.all is created
-inside an environment (in its linked AWS account) and it is mapped to:
-
-  |Service|           Resource|   Description|
-  |-----------------| ---------- |----------------------------------------------|
-  |Redshift |         Cluster  |  Amazon Redshift cluster for data warehousing|
-  |KMS|               Key |       Key encryption used by the Redshift cluster|
-  |Secrets Manager|   Secret|     Stores Redshift cluster user credentials|
-
-
-**Security and Networking configuration**:
-
--   Encryption: Amazon Redshift Cluster is encrypted with KMS.
--   Traceability: All access to data is logged through AWS CloudTrail
-    logs.
--   Networking Configuration: Redshift cluster is deployed only within a
-    private subnet.
 
 ### Notebooks
 

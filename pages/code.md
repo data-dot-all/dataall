@@ -10,15 +10,62 @@ The data.all package is a mono-repo comprising several modules:
 
 - [deploy/](#deploy)
 - [backend/](#backend)
+  - [base/](#base)
+    - db
+    - api
+    - cdkproxy
+  - [core/](#core)
+    - Feature toogle
+    - Permisisons
+    - WorkerHandler
+    - Stack helper
+  - [modules/](#core)
+    - db
+    - aws
+    - handlers
+    - cdk
+    - api
+    - services
+    - indexers
+    - tasks
+    - `__init__` and module loading
 - [frontend/](#frontend)
+  - [src/](#src)
+    - [authentication/](#authentication)
+    - [design/](#design)
+    - [globalErrors/](#globalErrors)
+    - [modules/](#modules)
+      - Administration
+      - Catalog
+      - Dashboards
+      - Datasets
+      - Environments
+      - Folders
+      - Glossaries
+      - MLStudio
+      - Notebooks
+      - NotFound
+      - Organizations
+      - Pipelines
+      - [Shared](#shared)
+      - Shares
+      - Tables
+      - Worksheets
+    - [services/](#services)
+      - graphql
+      - hooks
+    - [utils/](#utils)
+      - helpers
+    - [jsconfig.json](#jsconfig)
 - [tests/](#tests)
+- [compose/](#compose)
 - [documentation/](#userguide)
 
 ## deploy/ <a name="deploy"></a>
 We deploy the data.all tooling, backend and frontend using AWS Cloud Development Kit, which offers
 high level abstractions to create AWS resources.
 
-The `deploy` package is a CDK application, with an `app.py` deploying a CICD stack. In the final deploy step of the
+The `deploy` package is a CDK application, with an `app.py` deploying a CICD stack. In the final deployment step of the
 [Deploy to AWS](./deploy-aws/) guide, we are deploying the CICD pipeline stack defined in this section.
 
 
@@ -26,12 +73,11 @@ The `deploy` package is a CDK application, with an `app.py` deploying a CICD sta
 As explained above, here is the code that defines the CICD pipeline in the tooling account. More specifically,
 the `PipelineStack` is defined in `stacks/pipeline.py` 
 
-
 From this stack, we deploy a CodePipeline pipeline and other stacks as standalone resources (e.g. `VpcStack` from `stacks/vpc.py`).
 In addition, we define some CodePipeline deployment stages such as the stage that deploys 
 the backend code `BackendStage` from `stacks/backend_stage`.
 
-In the pipeline stack `PipelineStack` we deploy the following, which deploy the sub-stacks:
+In the pipeline stack `PipelineStack` we deploy the following stacks and sub-stacks:
 - `AlbFrontStage`
   - `AlbFrontStack`: Application Load Balancer for the UI applications
 - `CloudfrontStage`
@@ -40,10 +86,10 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
   - `BackendStack`: 
     - `AuroraServerlessStack`: Aurora RDS Database and associated resources - data.all objects metadata
     - `IdpStack`: Cognito and IdP stack
-    - `ContainerStack`: ECS stack
+    - `ContainerStack`: ECS stack ----> contains the ECS task definitions which are defined in backend.core and backend.modules
     - `CloudWatchCanariesStack` if enable_cw_canaries=true
     - `CloudWatchRumStack` if enable_cw_run=true
-    - `DBMigrationStack`: tool to migrate between Aurora versions of the database
+    - `DBMigrationStack`: tool to migrate between Aurora versions of the database table schemas
     - `LambdaApiStack` : Lambda Function stack
     - `MonitoringStack` : CloudWatch alarms and monitoring resources
     - `OpenSearchStack`: OpenSearch cluster - data.all central catalog (default)
@@ -52,269 +98,188 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
     - `S3ResourcesStack` : S3 resources
     - `SecretsManagerStack` : AWS SSM Secrets
     - `SqsStack` : SQS
-    - `VpcStack`: VPC
+    - `VpcStack`: Backend VPC and Networking Componenets (e.g. subnets, security groups, service endpoints, etc.)
 - `AuroraServerlessStack`: Aurora RDS Database and associated resources - for integration testing
 - `CodeArtifactStack`: for our Docker Images
 - `ECRStage`: for our Docker Images
-- `VpcStack`
-
-
+- `VpcStack`: Tooling VPC and Networking Componenets (e.g. subnets, security groups, service endpoints, etc.)
 
 There are other elements in the `deploy` folder:
 ```
 deploy/
-├── pivot_role/  : with the template for the data.all IAM Pivot Role 
+├── pivot_role/  : with the YAML template for the data.all IAM Pivot Role (manually created)
+├── cdk_exec_role/  : with the template for an optional role that can be used to bootstrap environments in cdk bootstrap 
 ├── configs/ : scripts that create configuration files for Cognito, CloudFront and CloudWatch RUM
 ├── custom_resources/ : resources or actions not included in CloudFormation
 └── canaries/: scripts for canary used in Canary stack if CloudWatch canary is enabled
 ```
 
 ## backend/ <a name="backend"></a>
-In this section we will touch upon the main components of the backend code. We will start with how do we communicate
-with the Aurora database, then we will focus on the code run by each of the compute components:
-API Handler Lambda, the Worker Lambda, the ECS Fargate Cluster and the OpenSearch Lambda. 
+In this section we will touch upon the main components of the backend code. Here is a short description of all the components
+and in the subsections we detail the structure of the `dataall` package.
+```
+backend/
+├── dataall/  : application package (explained in detail below) 
+├── docker/  :  Dockerfiles deployed in ECR (/prod) and used in docker compose locally (/dev)
+├── migrations/ : scripts used by alembic to update the Aurora RDS database tables. README explaining details.
+├── alembic.ini : used in database migrations
+├── api_handler.py : GraphQL Lambda handler
+├── aws_handler.py : Worker Lambda handler
+├── search_handler.py :  ESProxy Lambda handler
+├── cdkproxymain.py : ECS CDK task
+├── local_cdkapi_server.py : CDKProxy local server used in docker (replacing the cdkproxymain)
+├── local_graphql_server.py : Graphql local server used in docker (replacing the api_handler)
+├── requirements.txt : requirements file used in Docker images for Lambdas and local containers of the backend
+```
+Inside `dataall/` we have 3 main sub-packages:
+- base - common code used in core and modules
+- core - components that are needed to operate data.all correctly
+- modules - additional plug-in components that can be configured or disabled
 
-### dataall.db
+### base/ <a name="base"></a>
+The base package is divided into the listed components. We explain `db`, `api` and `cdkproxy` in more detail 
+in each of their subsections.
+```
+base/
+├── api/  : gql wrapper package. Constants and context definition.
+├── aws/  :  wrapper client upon boto3 calls used across several modules (e.g. IAM class).
+├── cdkproxy/ : CDK application that deploys stacks in environment accounts exposing a REST API.
+├── db/ : configuration, connection parameters and base utilities for the RDS Aurora database
+├── searchproxy/ : connection and search utils for the OpenSearch cluster
+├── utils/ : generic utilities
+├── __init__.py
+├── config.py : Config class to manage the config.json file
+├── context.py : Class to manage the API calls context
+├── loader.py : Classes and methods that manage the loading of modules
+```
 
-The `dataall.db` package implements the database connection with our persistence layer.
-It can work with a local postgresql instance or with an Aurora database instance.
+#### db
 
-The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
-or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
+Backend code relies on the popular Python's `sqlalchemy` ORM package to connect and perform operations
+against the RDS database. Among other components in `base.db` we export:
 
+1. `get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `Base` : a SQL alchemy Base metadata class
+3. `Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `create_schema_and_tables` :  a method that will create schema and tables
 
-The package has two modules:
-- `models`: it defines the tables and their schemas in our Aurora RDS database.
-- `api`: api calls against the RDS Aurora database.
+#### api
+The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
+The overall flow of GraphQL resolution is  found in the `app.py` module using the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
 
-API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to count the tables
-of an specific data.all dataset.
+The data.all `base.api` package contains the `gql` sub-package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
+
+#### cdkproxy
+This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
+`cdkproxy` is a package that exposes a REST API to run registered cloudformation stacks using AWS CDK. It is deployed as a docker container running on AWS ECS.
+
+When a data.all resource is created, the API sends an HTTP request 
+to the docker service and the code runs the appropriate stack using `cdk` cli.
+
+These stacks are deployed with the `cdk` cli wrapper
+The API itself consists of 4 actions/paths:
+
+- GET / : checks if the server is running
+- POST /stack/{stackid} : creates or updates the stack
+- DELETE /stack/{stackid} : deletes the stack
+- GET /stack/{stackid] : returns stack status
+
+The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
+web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
+
+### core/ <a name="core"></a>
+Core contains those functionalities that are indispensable to run data.all. Customization of the core should be limited
+as it affects downstream functionalities.
+
+- activity
+- cognito_groups
+- environment
+- notifications
+- organizations
+- permissions
+- stacks
+- tasks
+- vpc
+
+These "core-modules" follow a similar structure composed of the listed sub-components. 
+Note that not all the sub-components are present in all core-modules.
+```
+core-module/
+├── api/  : api definition and validation (in resolvers)
+├── aws/  :  wrapper client upon boto3 calls
+├── cdk/  :  CDK stacks to be deployed
+├── db/ : models (database table models) and repositories (database operations)
+├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
+├── services/ : business logic
+├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
+├── __init__.py
+├── any additional functionality
+```
+The sub-packages `api`, `db` and `cdk` are better explained in the modules/ section. Here, we will focus
+on those core additional functionalities that are used by all modules: Feature toggle, Permissions, WorkerHandler and Stack helper.
+
+#### Feature toggle
+In `core/feature_toggle_checker` you will find a decorator that allows users to enable or disable certain
+API calls from the core functionalities or the modules functionalities. This is useful whenever a customer wants to disable a particular feature
+on the server side. For example, in the following case the `config.json` file has disabled a feature called `env_aws_actions`.
+
+```json
+    "core": {
+        "features": {
+            "env_aws_actions": true
+        }
+    }
+```
+
+If we go to the `core.environment.api` package we will see that some resolvers have been decorated depending on this flag.
+Any resolver, any api call, can be enabled or disabled by introducing more core-toggle features in both the core and/or the modules.
+```
+@is_feature_enabled('core.features.env_aws_actions')
+def _get_environment_group_aws_session(
+    session, username, groups, environment, groupUri=None
+):
+...
+```
+
+#### Permissions
+The `core.permissions` package implements the permission logic for the application and adds the permissions for the core modules.
+In particular, `permission_checker.py` contains the decorators that validate the user permissions with respect to a resource.
+- `db/` - the RDS tables and operations with RDS
+- `api/` - the calls related to permissions
+- `permissions.py` - the core module permission definitions
+
+#### WorkerHandler
+In `core/tasks/service_handlers.py` we defined the `WorkerHandler` Python class, that routes tasks 
+to the Worker AWS Lambda (for tasks that are processed asynchronously).
+
+This class has a singleton instance called `Worker`. It exposes a decorator function to register handler 
+functions that can be run by the Worker. 
+
 ```
     @staticmethod
-    def count_dataset_tables(session, dataset_uri):
-        return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
+    @Worker.handler(path='SOMEPATH')
+    def FUNCTION_NAME(engine, task: Task):
 ```
 
-The exports from this package are:
-
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
-
-**Note**: Granular permissions specified from the UI are stored in the permission table. Check the permission model and
-apis to dig deeper into the logic.
-
-
-### dataall/api
-
-The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
-The overall flow of GraphQL resolution is  found in the `app.py` module using
-the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
-
-The data.all `api` package is where the GraphQL API is defined. This is the Lambda that processes all API calls
-made from the frontend. This folder contains 2 packages: 
-- `gql`: package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
-- `Objects`: containing the business logic of our application.
-
-
-Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
-and each defines the following modules:
-
-1. `schema.py` :  the definition of the schema
-2. `mutations.py` : the definition of mutations for the GraphQL type
-3. `queries.py` : the definition of queries for the GraphQL type
-3. `input_types.py` : the definition on input types for the GraphQL type
-4. `resolvers.py` : the actual code that *resolves* the fields
-
-**Let's take an example** 
-
-We perform one type (GraphQL type) of API calls referent to data.all environments. Hence,
-we created an Object called "Environment" by adding a GraphQL Type with the above listed modules. 
-In `schema.py` we defined the schema of the Environment. The schema can define fields from subqueries.
-
-Now let's see how to add an API call for the creation of Environments. Since 
-creating an environment is a mutation (it modifies the object), we added a MutationField in the `mutations.py` script with the 
-`createEnvironment` API call and its expected input and output type. Here, we also referenced the "resolver" that we 
-defined in the `resolvers.py` as the function `create_environment`.
-
-
-You can directly check any of the Objects in the code, they follow this structure:
-
-- `dataall.api.Objects.Foo.schema.py`
-
-```python
-
-from dataall.api import gql
-from dataall.api.Objects.foo.resolvers import resolve_bar
-
-Foo = gql.ObjectType(
-    name="Foo",
-    fields=[
-        gql.Field(
-            name="fooId",
-            type=gql.NonNullableType(gql.ID)
-        ),
-        gql.Field(
-            name="bar",
-            type=gql.String,
-            args=[
-                gql.Argument(name="upper", type=gql.Boolean)
-            ],
-            resolver=resolve_bar
-        )
-    ]
-)
-
-```
-- `dataall.api.Objects.Foo.queries.py`
-
-```python
-
-from dataall.api import gql
-from dataall.api.Objects.foo.resolvers import get_foo
-
-getFoo = gql.Field(
-    name="getFooById",
-    type=gql.Ref("Foo"),
-    resolver=get_foo
-)
-
-```
-
-- `dataall.api.Objects.Foo.resolvers.py`
-
-
-
-```python
-def resolve_bar(context, source,upper:bool=False):
-    tmp = f"hello {context.username}"
-    if upper:
-        return tmp.upper()
-    return tmp
-
-def get_foo(context, source, fooId:str=None):
-    return {"fooId" : fooId}
-
-```
-
-The parameters are defined as follows:
-
-1. The `context` is provided by the GraphQL engine as an object with two properties
-    - `context.engine` : a db.Engine instance (the database connection)
-    - `context.username` : the username performing the api call
-2. The `source` parameter is optional. If  provided, it holds the result of the parent field
-3. `**kwargs` are the named field parameters
-
-**Note**: If you are adding a new Object/GraphQL type, 
-don't forget to add it in`backend/dataall/api/Objects/__init__.py`
-
-### dataall/aws
-
-The `dataall.aws` package is where all the AWS logic is implemented. It serves 
-as an interface that performs API calls to AWS services. It has a unique folder containing:
-
-```
-handlers/:
-├── cloudformation.py
-├── cloudwatch.py
-├── codecommit.py 
-├── codepipeline.py
-├── ecs.py ---------------------> Interface with ECS Fargate cluster
-├── glue.py
-├── parameter_store.py
-├── quicksight.py
-├── redshift.py
-├── s3.py
-├── sagemaker.py
-├── sagemaker_studio.py
-├── service_handlers.py ---------> Interface with Worker Lambda
-├── sns.py
-├── sqs.py
-├── stepfunction.py
-└── sts.py ---> used to assume roles on different AWS accounts
-```
-
-These scripts define Python classes that can imported (e.g. by the API resolvers in `dataall.api`). Here is an example of
-the Dataset resolvers `backend/dataall/api/Objects/Dataset/resolvers.py` where we import
-and use the class `Glue` to interact with AWS Glue:
-```
-def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
-    [.....]
-        crawler = Glue.get_glue_crawler(
-            {
-                'crawler_name': dataset.GlueCrawlerName,
-                'region': dataset.region,
-                'accountid': dataset.AwsAccountId,
-            }
-        )
-    [.....]
-```
-#### WorkerHandler
-In `service_handlers.py` we defined the `WorkerHandler`  Python class.
-Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
-asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
-asynchronously by the Worker Lambda function.
-The `WorkerHandler`  is in charge of
-routing tasks to the Worker AWS Lambda. 
-
-This class has a singleton instance called `Worker` that has two apis:
+We use the 2 apis of the `Worker` class to send tasks to the Lambda and use the corresponding registered handler.
 
 1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
-2.  `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
+2. `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
 
-
-The `Worker` singleton exposes a decorator function to register handler functions that can 
-be run by the worker. For example, for the Glue handlers (in `handlers/glue.py`), we want to define that the function 
-`start_crawler` is run by the Worker Lambda. Therefore we use the decorator and define its path:
-
+In the corresponding API call where you want to trigger the Worker Lambda, create a Task in RDS and queue it as in the following example.
 ```
-    @staticmethod
-    @Worker.handler(path='glue.crawler.start')
-    def start_crawler(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
-            return Glue.start_glue_crawler(
-                {
-                    'crawler_name': dataset.GlueCrawlerName,
-                    'region': dataset.region,
-                    'accountid': dataset.AwsAccountId,
-                    'database': dataset.GlueDatabaseName,
-                    'location': location,
-                }
-            )
-```
-
-
-The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
-defined first in the Aurora database and then we pass their unique identifier to the queue. In the example
-below, taken from the same dataset resolver, we are queueing a `glue.crawler.start` action.
-
-```
-def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
-    [...]
-
         task = models.Task(
-            targetUri=datasetUri,
-            action='glue.crawler.start',
-            payload={'location': location},
+            targetUri=OBJECTURI,
+            action='SOMEPATH',
+            payload={.....},
         )
         session.add(task)
         session.commit()
 
         Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-    [...]
 ```
 
-
-The Worker AWS Lambda receives JSON objects with the task fields. Below is the code of the Worker Lambda defined in
+Then, the Worker AWS Lambda receives JSON objects with the Task fields. Below is the code of the Worker Lambda defined in
 `backend/aws_handler.py`.
 
 ```
@@ -329,203 +294,623 @@ def handler(event, context=None):
 ```
 
 
-The `WorkerHandler` in `dataall.aws` will then `process` the tasks: it reads task data from the Database, routes to 
+Finally, the `WorkerHandler` will `process` the tasks by reading the task metadata from the RDS Database, routing to 
 the decorated handler function 
-and assumes a role in the AWS Account where the action needs to be performed.
+and assuming a role in the AWS Account where the action needs to be performed.
 
-#### ECS
-You might have overlooked the ECS interface. In the `dataall.aws` package we also define the connection to the
-ECS Fargate cluster that performs long-running tasks. ECS `run_ecs_task` function connects with our cluster and
-runs one of the tasks declared in the `dataall.tasks` package.
+If you want to see an example check the `core.stacks` or "Stack helper" package which contains a number of CloudFormation handlers.
 
-### dataall/tasks
-
-In this package we define the long-running tasks executed by the ECS Fargate cluster:
-- `bucket_policy_updater`: folder sharing by updating S3 bucket policies
-- `catalog_indexer`: full indexing of all items from our persistence layer in the OpenSearch cluster
-- `cdkproxy`: deployment of CDK stacks with `dataall/cdkproxy` package
-- `share_manager`: table sharing operations
-- `stacks_updater`: updates CDK stacks (support of cdkproxy)
-- `tables_syncer`: syncs the tables between the Glue Catalog and the Aurora RDS database for our datasets.
-
-### dataall/cdkproxy
-
-This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
-`cdkproxy` is a package that exposes a REST API to run pre-defined
-cloudformation stacks using AWS CDK.
-
-**It is deployed as a docker container running on AWS ECS.**
-
-When a data.all resource is created, the API sends an HTTP request 
-to the docker service and the code runs the appropriate stack using `cdk` cli.
-
-These stacks are deployed with the `cdk` cli wrapper
-The API itself consists of 4 actions/paths :
-
-- GET / : checks if the server is running
-- POST /stack/{stackid} : creates or updates the stack
-- DELETE /stack/{stackid} : deletes the stack
-- GET /stack/{stackid] : returns stack status
-
-The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
-web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
-
-The sub-package  `stacks` holds the
-definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
-
-1. environment:  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
-2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
-3. notebook: SageMaker Notebook resources
-4. pipeline: CI/CD pipeline resources
-5. redshift_cluster: Redshift stack
-6. sagemakerstudio: SageMaker Studio user profile
+#### Stack helper
+The `core.stacks` package implements handlers, database logic and apis to manage CloudFormation (CDK) stacks that belong to a data.all module
+(core module or plugable module). Some of the activities that it implements are:
+- trigger the deployment of stacks
+- describe status of stacks
+- deletion of stacks
+- record/look-up metadata about stacks in RDS
 
 
-To register a new type of stack, use the `@stack` decorator as in the example below  :
+### modules/ <a name="modules"></a>
 
-```python
+Modules are components that can be plugged in (or out) of your data.all deployment. Their features are configured in
+the `config.json` file. In contrast to the `core` package, `modules` are meant to be customized and enriched with new
+features. You can even go ahead and customize or create new modules.
 
-from aws_cdk import (
-    aws_s3 as s3,
-    aws_sqs as sqs,
-    core
-)
-from dataall.cdkproxy.stacks import stack
+Each module can contain all or a subset of the listed sub-packages:
 
-@stack(stack="mypredefinedstack")
-class MyPredefinedStack(core.Stack):
-    def __init__(self, scope, id, **kwargs):
-        super().__init__(scope, id, **kwargs)
-        #constructs goes here
+```
+module/
+├── api/  : api definition and validation (in resolvers)
+├── aws/  :  wrapper client upon boto3 calls
+├── cdk/  :  CDK stacks to be deployed
+├── db/ : models (database table models) and repositories (database operations)
+├── handlers/ : code that will be executed in AWS Worker lambda (short-living tasks)
+├── indexers/ : code to handle upsert/delete operations of data.all resources to the OpenSearch Catalog
+├── services/ : business logic
+├── tasks/ : code that will be executed in ECS Tasks (long-living tasks)
+├── __init__.py
+```
+
+#### db
+
+This package processes all requests to the RDS database for the module metadata, 
+it can be from the Lambda API Handler, Lambda Worker or the ECS tasks.
+
+The package contains 2 types of classes:
+- Suffixed with `_models`: it defines tables and their schemas in our Aurora RDS database.
+- Suffixed with `_repositories`: api calls against the RDS Aurora database.
+
+Database data operations done by the backend rely on the popular Python's `sqlalchemy` ORM package. Here is an example 
+of a query to find all deleted tables of a specific data.all dataset.
+```
+    @staticmethod
+    def find_all_deleted_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
+        )
+```
+#### indexers
+This package is required for modules that need to interact with the OpenSearch Catalog. It leverages the 
+`BaseIndexer` class to implement the different upsert and delete operations in the catalog.
+
+
+#### aws
+
+The `aws` package is where all the AWS logic is implemented. It serves 
+as an interface that performs API calls to AWS services. In other words, if a module performs calls 
+to a particular AWS service, the corresponding boto3 client should be declared in the module `aws` package.
+We recommend to leverage the `SessionHelper` class defined in `dataall.base.aws.sts` to start a session with 
+the dataallPivotRole or any other role in the environment account.
+
+
+#### handlers
+
+Please review the section dedicated to `WorkerHandler` in /core. As explained, AWS Worker Lambda handlers are
+registered by decorating them. The handlers package of each module contains the different handlers for the module.
+They often use the `db` repositories and `aws` clients as it happens in the `DatasetProfilingGlueHandler` that uses
+`DatasetRepository` and `GlueDatasetProfilerClient`.
+
+
+```
+    @staticmethod
+    @Worker.handler('glue.job.profiling_run_status')
+    def get_profiling_run(engine, task: Task):
+        with engine.scoped_session() as session:
+            profiling: DatasetProfilingRun = (
+                DatasetProfilingRepository.get_profiling_run(
+                    session, profiling_run_uri=task.targetUri
+                )
+            )
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, profiling.datasetUri)
+            status = GlueDatasetProfilerClient(dataset).get_job_status(profiling)
+
+            profiling.status = status
+            session.commit()
+            return {"profiling_status": profiling.status}
 
 ```
 
-**Let's take an end-to-end example** 
+#### tasks
 
-In `data.api` dataset resolvers we have the GraphQL call to create a dataset:
+In this package you should define the module ECS long-running tasks. For example, the ECS task
+definition to run the sharing of datasets is placed in `dataset_sharing.tasks.share_manager`.
+
+In addition, the task needs to be defined in the deployment of the ECS tasks. Here is an extract of
+`deploy/stacks/container.py` where that particular task is defined. Use the `run_if` decorator to
+set its dependency with a certain module.
+
+```
+    @run_if("modules.datasets.active")
+    def add_share_management_task(self):
+        share_management_task_definition = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-manager',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+            family=f'{self._resource_prefix}-{self._envname}-share-manager',
+        )
+
+        share_management_container = share_management_task_definition.add_container(
+            f'ShareManagementTaskContainer{self._envname}',
+            container_name=f'container',
+            image=ecs.ContainerImage.from_ecr_repository(
+                repository=self._ecr_repository, tag=self._cdkproxy_image_tag
+            ),
+            environment=self._create_env('DEBUG'),
+            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            ...
+```
+
+#### cdk
+Under this directory you will find 4 different types of classes used in CDK deployments of infrastructure.
+- resource stacks
+- environment extensions
+- environment team role policies (usually called `env_role_XXX_policy`)
+- pivot role policies (usually called `pivot_role_XXX_policy`)
+
+**Resource stacks**
+
+Resource stacks, are CDK stacks deployed when a resource is created. For example, when we create a Dataset we deploy
+the stack defined in `dataset_stack.py` and decorated as follows. The decorator and the stack manager are implemented
+in `base.cdkproxy`.
+
+```
+@stack(stack='dataset')
+class DatasetStack(Stack):
+    ...
+```
+
+**Environment extensions**
+
+For some modules, the environment stack includes base resources that are used for all users in the 
+environment account. Taking the example of the `mlstudio` module, we see that in `cdk/mlstudio_extension.py`
+we define a class that uses the base class `EnvironmentStackExtension`. This class requires the definition of
+a function called `extent`, that "extends" the resources created by the environment stack with the module-specific
+resources. In this case we add the SageMaker domain to the environment stack.
+
+```
+class SageMakerDomainExtension(EnvironmentStackExtension):
+
+    @staticmethod
+    def extent(setup: EnvironmentSetup):
+        _environment = setup.environment()
+
+```
+
+**Environment team role policies**
+
+If a team is invited to an environment and the module is enabled for that particular team, data.all creates
+an IAM role as part of the environment cdk stack. That IAM role has different permissions depending on the 
+features that it has access to. Those features often correspond to modules. In the Environment team role policies files
+is where we define these policies that need to be added to a team IAM role if the feature is enabled for its team.
+
+The IAM policy statements need to be defined creating a class that inherits the `ServicePolicy` class. Here is an example,
+if the `dataset` module is active and a data.all Team has the `CREATE_DATASET` permissions the 
+`DatasetDatabrewServicePolicy.get_statements` returned statements will be added to the team IAM policies.
+
+```
+class DatasetDatabrewServicePolicy(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS DataBrew.
+    """
+    def get_statements(self, group_permissions, **kwargs):
+        if CREATE_DATASET not in group_permissions:
+            return []
+
+        statements = [
+              ....
+
+```
+
+**Pivot role policies** 
+
+We want the dataallPivotRole to follow least-privilege permissions and have only those IAM statements that are needed
+to operate a certain configuration of data.all. Imagine that you disable the `dashboards` module, in that case, the 
+pivotRole should not have any Quicksight related permissions needed by Dashboards. We achieve this modular definition
+of pivotRole policies by using the `PivotRoleStatementSet` class to define the policies needed by the pivotRole for a module.
+If the module is enabled, then the auto-created pivotRole is deployed with the additional PivotRoleStatementSet and viceversa.
+
+
+```
+class DatasetsPivotRole(PivotRoleStatementSet):
+    """
+    Class including all permissions needed  by the pivot role to work with Datasets based in S3 and Glue databases
+    It allows pivot role to:
+    - ....
+    """
+    def get_statements(self):
+        statements = [
+```
+
+Note that this is only possible for auto-created pivot roles. For manually created pivot roles, the out-of-the-box 
+CloudFormation YAML contains all permissions required for all modules. We recommend you to use auto-created
+pivot roles to avoid manual errors and ensure least-privilege permissions.
+
+#### api
+
+The `api` package depends on `base.api` and defines the API calls executed by the GraphQL Lambda handler.
+You might have one single group of API calls or split them in multiple packages. Independently if you have a single package (e.g. `dashboards.api`) or multiple packages (e.g. `datasets.api`), 
+each package should always follow the same structure:
+
+1. `types.py` :  definition of GraphQL ObjectTypes
+2. `mutations.py` : definition of GraphQL MutationFields --> API calls that modify an ObjectType
+3. `queries.py` : definition of GraphQL QueryFields for the --> API calls that query information about an ObjectType
+3. `input_types.py` : definition of GraphQL InputTypes used as input for MutationFields and QueryFields
+4. `resolvers.py` : code that is executed in the MutationFields and QueryFields API calls. Input validation, no business logic.
+5. (optional) `enums.py`: enums used in ObjectTypes and InputTypes
+
+**Note:** all these classes need to be imported in the `module.api.__init__.py`
+
+As briefly explained above, the `resolvers` define the code that is executed by the Lambda whenever an API call
+is made. In the resolvers we verify the input of the API call and we call the corresponding Service where the business logic 
+is defined. Resolvers should NOT include any business logic.
+
+Each resolver receives the following parameters:
+
+1. The `context` is provided by the GraphQL engine as an object with two properties
+    - `context.engine` : a db.Engine instance (the database connection)
+    - `context.username` : the username performing the api call
+2. The `source` parameter is optional. If  provided, it holds the result of the parent field
+3. `**kwargs` are the named field parameters
+
+For example, let's see the dataset creation resolver (`modules.dataset.api.resolvers.py`):
 ```
 def create_dataset(context: Context, source, input=None):
-[...]
-    stack_helper.deploy_dataset_stack(context, dataset)
-    return dataset
+    RequestValidator.validate_creation_request(input)
+
+    admin_group = input['SamlAdminGroupName']
+    uri = input['environmentUri']
+    return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=input)
 ```
 
-Which uses the stack_helper from `Stack` GraphQL Type (`backend/dataall/api/Objects/Stack/stack_helper.py`) to queue or 
-run the ECS task.
+As you can verify, in the resolvers we do not include any business logic, we only verify the input and call the corresponding
+module service.
+
+#### services
+Here is where the business logic of the module API calls is defined. There are 2 types of files in this directory:
+- One `<MODULE_NAME>_permissions.py` file that defines the application permissions that apply to the module.
+- One or more `<MODULE_NAME>_<SUBCOMPONENT>_service.py` files that define all the application logic related to the module subcomponent. Like 
+calling the `db` repositories, triggering `handlers` with the WorkerHandler or `cdk` stack deployments with the stack helper.
+
+**Permissions** 
+
+With the permissions checkers implemented in `core.permissions` and in `core.environment.env_permission_checker.py`, 
+if a service function is decorated, data.all checks the permission
+of the user before executing the action. For example, in the `create_dataset` function of the `DatasetService`, 
+we take the user and check whether it has tenant permissions to MANAGE_DATASETS, has resource permissions on the 
+environment resource to CREATE_DATASET or if the user groups have permissions to CREATE_DATASET in that environment.
+
 ```
-def deploy_stack(context, targetUri):
-    [.....]
-            if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
-                stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
-            else:
-                task: models.Task = models.Task(
-                    action='ecs.cdkproxy.deploy', targetUri=stack.stackUri
-                )
-                session.add(task)
-                session.commit()
-                Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-
-        return stack
+@staticmethod
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
+    @has_group_permission(CREATE_DATASET)
+    def create_dataset(uri, admin_group, data: dict):
+      .....
 ```
-Remember, in the `dataall.aws` package is where we defined the interface with ECS and the `run_cdkproxy_task` function.
-We are passing the task definition and the docker container to ECS which will use then the `dataall/cdkproxy` package
-deployed in a docker container. The docker image is stored in ECR in the tooling account.
+Each of these decorators refer to a different type of permission:
+- `TENANT_PERMISSIONS` - Granted to the Tenant group. For each resource we should define a corresponding MANAGE_<RESOURCE> permission
+- `ENVIRONMENT_PERMISSIONS` - Granted to any group in an environment. For each resource we should define a list of actions regarding that resource that are executed on the environment (e.g. List resources X in an environment)
+- `RESOURCE_PERMISSION` - Granted to any group. For each resource we should define a list of all actions that can be done on the resource. We also need to add the permissions for the Environment resource (ENVIRONMENT_PERMISSIONS)
+
+If a function is decorated with permission checker decorators, it should pass `uri` and `admin_group` as parameters. They
+are needed to validate the permissions of the user in relation to the groups and resources.
+
+When creating a new resource that has associated permissions, the corresponding RESOURCE_PERMISSIONS should be attached.
+You can take the example for dataset creation as a reference.
+
+```
+    ResourcePolicy.attach_resource_policy(
+        session=session,
+        group=environment.SamlGroupName,
+        permissions=DATASET_ALL,
+        resource_uri=dataset.datasetUri,
+        resource_type=Dataset.__name__,
+    )
+```
 
 
-### dataall/searchproxy
-The `dataall/searchproxy` package manages all operations with the OpenSearch cluster. Similarly to `dataall/db`, this
-package implements the connection with the OpenSearch cluster for all compute components: API handler Lambda, Worker Lambda
-and ECS tasks.
+#### ModuleInterfaces in __init__.py
+Core and module code is executed in different compute components of the architecture of data.all. All backend code is 
+executed in AWS Lambdas (GraphQL Lambda, Worker Lambda, ESProxy Lambda) or in 
+ECS Fargate tasks on demand (CDKProxy task and Share task) or scheduled (Stack updates, Catalog Syncer).
+
+
+If a module is active, the module code needs to be imported to the corresponding compute component so that it can be executed.
+To import the necessary code into each of the compute components, we will use the `ModuleInterface` ABC class defined in `base.loader.py`.
+
+![](img/HLD-backend-data.allV2.drawio.png#zoom#shadow)
+
+
+In the `__init__` file of each of the modules we will declare a `ModuleInterface` class for each compute component that
+needs to run module code. We need to define the abstract class method `is_supported`
+returning the `ImportMode` that the particular `ModuleInterface` is interacting with.
+
+
+There are 6 types of `ImportMode` (imported from `base.loader.py`) 
+depending on the different infrastructure components that import module code.
+- API - GraphQL API Lambda
+- CDK - CDK Proxy
+- CDK_CLI_EXTENSION - CDK Proxy extension imports
+- HANDLERS - AWS Worker Lambda
+- STACK_UPDATER_TASK - ECS Task that updates CDK stacks
+- CATALOG_INDEXER_TASK - ECS Task that updates items indexed in the Catalog
+
+**Note**: if you want to add a new `ImportMode` class, you'll need to define the new import mode and use the 
+`loader` base functions in your compute component. In the `backend/api_handler.py` you can see one example. Pay
+attention to the `load_modules` function.
+
+```
+load_modules(modes={ImportMode.API})
+```
+
+For a deeper dive - let's look at the following example from `modules.mlstudio`:
+
+`MLStudioApiModuleInterface` is a class
+that inherits `ModuleInterface`. `is_supported` returns `ImportMode.API` which means that the interface 
+will import code into the GraphQL API Lambda. 
+
+Since we want the GraphQL API Lambda to execute module code, we will import `dataall.modules.mlstudio.api` and other 
+API related sub-packages when the interface class is initialized. 
+
+In the sections below, we will dive deep
+into the typical sub-packages for each ImportMode, but for the loading just remember: interface to import module code
+in each of the compute components.
+
+```
+class MLStudioApiModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for MLStudio GraphQl lambda"""
+
+    @classmethod
+    def is_supported(cls, modes):
+        return ImportMode.API in modes
+
+    def __init__(self):
+        import dataall.modules.mlstudio.api
+        from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
+        TargetType("mlstudio", GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
+
+        log.info("API of sagemaker mlstudio has been imported")
+```
+
 
 ## frontend/ <a name="frontend"></a>
-The frontend code is a React App. In this section we will focus on the components specific to data.all, particularly
-the `src` folder.
+The frontend part of this project is developed using React.js and bootstrapped using [Create React App](https://github.com/facebook/create-react-app). You can run the app in development mode using `yarn start`, and open [http://localhost:8080](http://localhost:8080) to view it in the browser.
 
-### contexts
-We define React Contexts to define "global" props that affect many child components in the application. 
-For example, we set the initial Theme as "dark". We also use Contexts to define Authorization parameters which
-might come from Amplify or from our local setting. 
-
-- Amplify Context
-- Local Context
-- Settings Context
-
-### hooks
-Hooks are an addition to React 16.8. As they say in the docs: 
-*"Hooks are functions that let you hook into React state and lifecycle features 
-from function components."*  With hooks we can share
-the same stateful logic across different components. 
-Careful, Hooks are a way to reuse stateful logic but not the state itself.
-
-
-We use some React hooks such as useState, useEffect and useCallback in our UI views. In addition, we also define
-some custom hooks in the `hooks` folder:
-
+Overview of the frontend directory:
 ```
-hooks/:
-├── useAuth: useContext on the context defined in contexts
-├── useCardStyle
-├── useClient: initialize Apollo Client (see below)
-├── useGroups: obtain Cognito or SAML groups for the user
-├── useScrollReset
-├── useSettings
-└── useToken: for Searches in Catalog
+frontend/
+├── docker/
+├──── dev/
+├────── Dockerfile : contains the docker config for the dev environment
+├────── nginx.config : contains the nginx config for the dev environment
+├──── prod/
+├────── Dockerfile : contains the docker config for the prod environment 
+├────── nginx.config : contains the nginx config for the prod environment
+├── public/ : contains static files such as index.html and icons like the app logo and favicon
+├── src/ : contains the major components of the frontend code, to be discussed in detail in the src/ section below
+└── jsconfig.json : used to reference the root folder and map aliases/modules to their respective paths relative to the root folder.
 ```
 
-We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
-fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
-Inside `hooks`, in `useClient` we initialize `ApolloClient`.
+### src/ <a name="src"></a>
+This section contains the major components of the frontend code. Here is a diagram and a short description of all the components of the src folder, we will deep dive subsequently on the contents of each module.
 
-### api
-This folder contains the GraphQL API definitions for each of our GraphQL Types.
+![](img/HLD-frontend-data.allV2.drawio.png#zoom#shadow)
 
-
-Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
-in the frontend code we use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the
-mutation requires an input of the form `NewDatasetInput` as defined in the dataset `input_types` script in the 
-backend `dataall.api` package. The mutation will return the `datasetUri`, `label` and `userRoleForDataset`.
 ```
-import { gql } from 'apollo-boost';
+src/
+├── authentication/ : contains files, contexts, hooks related to user authentication
+├── design/ : contains scripts related to the ui design of the app, layout and theme settings
+├── globalErrors/ : global error reducers, uses redux
+├── modules/ : contains directories of each view/screen in the app with their related components, hooks and services
+├── services/ : contains common graphql schemas and hooks used to call the backend APIs which are then plugged into the frontend
+├── utils/ : common helpers used across the app
+├── App.js - entry point into the project, wrapped with the theme provider
+├── index.js - react.js index script, wrapped with several providers
+└── routes.js - where all routes and their hierachies are configured
+```
+#### authentication/ <a name="authentication"></a>
+In this section, we handle the user authentication logic and views for the application. The directory contains React `contexts`, `hooks`, `components` and `views` used to handle local and production environment authentication. 
 
-const createDataset = (input) => {
-  console.log('rcv', input);
-  return {
-    variables: {
-      input
-    },
-    mutation: gql`
-      mutation CreateDataset($input: NewDatasetInput) {
-        createDataset(input: $input) {
-          datasetUri
-          label
-          userRoleForDataset
+```
+autentication/
+├── components/
+├── contexts/
+├── hooks/
+├── views/
+└── index.js
+```
+
+We used React Context API to handle the authentication state management. `CognitoAuthContext.js` handles the AWS deployment and `LocalAuthContext.js` for local deployment.
+Then `AWS Amplify` is used to connect the app to `AWS Cognito` for production auth and a default anonymous user  is set for local environment.
+
+The `useAuth` hook is used to decide the auth context to use depending on the deployment environment, and `AuthGuard` is a 
+wrapper to verify authentication before routing users to the requested pages in the application.
+
+
+#### design/ <a name="design"></a>
+This section contains script relating to the UI design of the frontend, including theming and theme settings, layout, 
+icons, design components and logic. 
+
+```
+design/
+├── components/
+├── contexts/
+├── hooks/
+├── icons/
+├── theme/
+└── index.js
+```
+
+There are two themes, `DARK` and `LIGHT` and their basic settings can be found in the `theme/` directory.
+We used React Context API to handle theme settings in `SettingsContext.js`, the default theme is set to match the 
+browser's prefered color scheme or `DARK` if no color scheme is set.  
+
+Common hooks used in the UI design like `useCardStyle` (default card component styling), `useScrollReset` (scroll to 
+the top of the page) are in the `hooks` directory. 
+
+#### globalErrors/ <a name="globalErrors"></a>
+In this section, we used Redux to handle global error notifications. Error actions that are dispatched across the 
+application are handled by the `errorReducer.js` which are then displayed in the `ErrorNotification.js` snackbar.
+
+
+#### services/ <a name="services"></a>
+The services directory contains API calls, hooks and graphql schemas used to call the backend APIs.
+
+`services/graphql/` directory contains commonly used graphql api definitions sectioned into modules. These APIs are 
+shared across different modules and that is why they are not under their modules' directories. 
+For example, the `getDataset` mutation defined in the backend `data.api` package is used in several modules in the 
+frontend code. So it is added to the global graphQL folder. 
+
+We use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the mutation requires an 
+input string of the `datasetUri` and returns a dataset object with the requested values.
+```
+export const getDataset = (datasetUri) => ({
+  variables: {
+    datasetUri
+  },
+  query: gql`
+    query GetDataset($datasetUri: String!) {
+      getDataset(datasetUri: $datasetUri) {
+        datasetUri
+        owner
+        description
+        label
+        name
+        region
+        ...
+        statistics {
+          tables
+          locations
+          upvotes
         }
       }
-    `
-  };
-};
-
-export default createDataset;
+    }
+  `
+});
 
 ```
 
-### views
-Contains each of the UI views. Each data.all component (e.g. Dataset, Environment) has its own subfolder 
-of views. There are views that apply to multiple components. For example, we use the Stack views
-in several tabs of our components. 
+Inside the `services/hooks/` folder, we initialize `ApolloClient` in `useClient.js` and `useGroups.js` handles 
+scripts to obtain Cognito or SAML user groups for the authenticated user.
 
-Inside the views we use hooks from `hooks` and call the GraphQL APIs defined in `api`. 
+#### utils/ <a name="utils"></a>
+This directory contains common utility helper methods and constants used across the application. New utility methods o
+r helpers should be placed here unless it's a helper that is super specific to a module, then it can be in the same 
+directory as the module under `helpers` or `utils` folder.
 
-### components, theme and icons
-Auxiliary UI resources used in views:
-- components: default values (e.g. for filters), layouts, popovers...
-- theme: dark or light theme
-- icons
+#### modules/ <a name="modules"></a>
+The modules folder is one of the most important folder in the `src/` directory. It contains distinctive logically 
+related views, services and hooks of `data.all` features that we have sectioned into modules.
 
+
+##### Overview of the modules directory
+Each module folder contains components, hooks, services and pages related to a view (screen) in the application. 
+The `components`, `hooks`, and `services` directories contain only their respective parts of the code **that are only used** 
+inside each module. The `views` folder contains the screens or pages in the module. 
+
+```
+modules/
+├── Administration/
+├── Catalog/
+├── Dashboards/
+├── Datasets/
+├── ...
+├── MLStudio/
+├── Shared/
+└── constants.js
+```
+
+##### Structure of a module <a name="structure_of_a_module"></a>
+As shown below, each directory in a module except the `views` folder must contain an `index.js` file that exports 
+the directory's content. This is to simplify importing different parts of the code, and also to keep implementation 
+details and internal structure of each directory hidden from its consumers.
+
+```
+ModuleName/
+├── components/ : contains all components (a singular section of a view) used only in module
+├──── ModuleComponentA.js
+├──── ModuleComponentB.js
+├──── index.js
+├── hooks/ : contains all hooks used only in the module
+├──── useSomethingA.js
+├──── useSomethingB.js
+├──── index.js
+├── services/ : all graphql schema code used only in the module
+├──── someServiceA.js
+├──── someServiceB.js
+├──── index.js
+├── views/ : all views/pages belonging to the module 
+├──── ModuleViewA.js
+└──── ModuleViewB.js
+```
+
+##### The `Shared` Module <a name="shared"></a> 
+When working with React projects, often times we have components that are shared across multiple views and among 
+other components. The shared module contains components that are shared among multiple views in the frontend. Related 
+components are then grouped together in folders and with an `index.js` file that exports the directory's content.
+
+#### Enabling/Disabling modules
+
+We use the `config.json` file at the root level of the repository to configure module visibility, all modules are 
+active by default. You can disable a module by setting the `active` parameter for the module to `false`.
+
+**Note:** Some modules visibility depends on others, for example, `Glossary` and `Catalog` modules are also disabled 
+when `Datasets` or `Dashboards` modules are disabled.
+```
+{
+  "modules": {
+      "mlstudio": {
+          "active": true
+      },
+      "notebooks": {
+          "active": true
+      },
+      "datapipelines": {
+          "active": true
+      },
+      "datasets": {
+          "active": false
+      },
+      "worksheets": {
+          "active": true
+      },
+      "dashboards": {
+          "active": true
+      }
+  }
+}
+```
+
+For the frontend, the `moduleUtils.js` file in `src/utils/helpers` handles the logic to activate or deactivate a module. The
+`isModuleEnabled` function is used to enable or disable routes and items in the default sidebar or in other views.
+
+##### Adding a new module
+To create a new module please follow the following steps:
+1. Create a new directory for the new module under `src/modules`
+2. The module structure should follow the same structure mentioned above in the [**structure of a module**](#structure_of_a_module) section. Typically, the module will be based around its views (or screens) so at minimum it should contain the `views` directory. All of (`components`, `hooks`, `services`) code should be placed under its respective directory in the module. 
+3. In case they need to use a (`component`, `hook`, `service`) from another module, then that part needs to be refactored and moved into the **Shared** directory for shared components, and (`authentication`, `design`, `globalErrors`, ...) folders depending on its purpose. 
+4. Any utils or helper should be under `src/utils` unless it's a helper that is super specific to this module, then it can be in the same directory as the module under helpers or utils. 
+5. All directories in a module except the `views` folder must have an `index.js` file that exports it's content. 
+8. Declare the module name in `moduleUtils.js`
+9. Add the new module screens with their related URLs in `src/routes.js`
+10. Finally, add the new module to the sidebar/or to other core views. Example in `frontend/src/design/components/layout/DefaultSidebar.js`
+
+
+### jsconfig.json <a name="jsconfig"></a>
+The `jsconfig.json` file is used to configure aliases and React.js absolute imports. It references the root folder 
+(`baseUrl`) and map aliases or modules names to their respective paths relative to the root folder.
+
+```
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "authentication/*": ["src/authentication/*"],
+      "design/*": ["src/design/*"],
+      "globalErrors/*": ["src/globalErrors/*"],
+      "modules/*": ["src/modules/*"],
+      "services/*": ["src/services/*"],
+      "utils/*": ["src/utils/*"],
+      "Shared/*": ["src/modules/Shared/*"]
+    }
+  }
+}
+```
+**Please note:** New aliases must be added to the `jsconfig.json` file and mapped to their respective paths in order to 
+be used.
 
 ## tests/ <a name="tests"></a>
 `pytest` is the testing framework used by data.all.
-Developers can actually test the GraphQL API directly, as data.all can run as a local Flask app. 
+Developers can test the GraphQL API directly, as data.all can run as a local Flask app. 
 API tests are found in the tests/api package.
 
 The pytest fixtures found in conftest.py starts a local development Flask server that exposes the 
@@ -555,8 +940,15 @@ def test_get_dataset_as_owner(dataset, graphql_client):
 ```
 
 ## compose/ <a name="compose"></a>
-It contains the elements used by docker compose to deploy data.all locally. 
-Check [Deploy to AWS](./deploy-aws/) for more details.
+It contains the elements used by docker compose to deploy data.all locally. The application is containerized in
+5 containers that are orchestrated with docker-compose. 
+- frontend
+- graphql
+- db
+- cdkproxy
+- esproxy
+
+Check [Deploy locally](./deploy-locally/) if you want to use this feature and run data.all locally.
 
 ## documentation/ <a name="userguide"></a>
 This folder contains information for developers to add content to the user guide documentation accessible from the UI.
