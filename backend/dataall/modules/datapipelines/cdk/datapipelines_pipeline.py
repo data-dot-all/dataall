@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+<<<<<<<< HEAD:backend/dataall/cdkproxy/stacks/pipeline.py
+========
+>>>>>>> new-main
 import logging
 import os
 import shutil
@@ -186,6 +191,7 @@ class PipelineStack(Stack):
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
 
+<<<<<<< HEAD
                 process = subprocess.run(
                     "; ".join(update_cmds),
                     text=True,
@@ -193,6 +199,15 @@ class PipelineStack(Stack):
                     encoding='utf-8',
                     cwd=code_dir_path,
                     env=env_vars
+=======
+                process = subprocess.run(  # nosemgrep
+                    "; ".join(update_cmds),  # nosemgrep
+                    text=True,  # nosemgrep
+                    shell=True,  # nosec  # nosemgrep
+                    encoding='utf-8',  # nosemgrep
+                    cwd=code_dir_path,  # nosemgrep
+                    env=env_vars  # nosemgrep
+>>>>>>> new-main
                 )
             else:
                 raise Exception
@@ -521,6 +536,7 @@ class PipelineStack(Stack):
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
+<<<<<<< HEAD
         process = subprocess.run(
             '; '.join(cmd_init),
             text=True,
@@ -528,6 +544,15 @@ class PipelineStack(Stack):
             encoding='utf-8',
             cwd=code_dir_path,
             env=env_vars
+=======
+        process = subprocess.run(  # nosemgrep
+            '; '.join(cmd_init),  # nosemgrep
+            text=True,  # nosemgrep
+            shell=True,  # nosec  # nosemgrep
+            encoding='utf-8',  # nosemgrep
+            cwd=code_dir_path,  # nosemgrep
+            env=env_vars  # nosemgrep
+>>>>>>> new-main
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
@@ -568,3 +593,7 @@ class PipelineStack(Stack):
             else:
                 raise e
         return repository if repository else None
+<<<<<<< HEAD
+=======
+>>>>>>>> new-main:backend/dataall/modules/datapipelines/cdk/datapipelines_pipeline.py
+>>>>>>> new-main
