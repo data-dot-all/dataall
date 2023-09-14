@@ -14,7 +14,7 @@ class NamingConventionPattern(Enum):
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
-
+    OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
 
 class NamingConventionService:
     def __init__(
@@ -51,6 +51,9 @@ class NamingConventionService:
         elif self.service == NamingConventionPattern.OPENSEARCH:
             regex = self.service.OPENSEARCH.value['regex']
             return self.build_opensearch_compliant_name(regex)
+        elif self.service == NamingConventionPattern.OPENSEARCH_SERVERLESS:
+            regex = self.service.OPENSEARCH.value['regex']
+            return self.build_opensearch_serverless_compliant_name(regex)
         else:
             regex = self.service.DEFAULT.value['regex']
             return self.build_default_compliant_name(regex)
@@ -72,6 +75,9 @@ class NamingConventionService:
 
     def build_opensearch_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.OPENSEARCH.value['max_length'] - len(self.resource_prefix))], regex_pattern=fr'{regex}', separator=self.service.OPENSEARCH.value['separator'], lowercase=True)}"
+
+    def build_opensearch_serverless_compliant_name(self, regex) -> str:
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.OPENSEARCH_SERVERLESS.value['max_length'] - len(self.resource_prefix))], regex_pattern=fr'{regex}', separator=self.service.OPENSEARCH_SERVERLESS.value['separator'], lowercase=True)}"
 
     def build_default_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.DEFAULT.value['max_length'] - len(self.resource_prefix +self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.DEFAULT.value['separator'], lowercase=True)}"
