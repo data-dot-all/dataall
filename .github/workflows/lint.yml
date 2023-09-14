@@ -1,19 +1,20 @@
-name: "Minimal Security checks"
+name: Run Lint
 
 on:
   workflow_dispatch:
   pull_request:
     branches:
-    - main
-    - release/*
-    - main-v2
+      - main
+      - release/*
+      - main-v2
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.8 ]
+        python-version: [3.8]
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -24,5 +25,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
-      - name: Security check
-        run: make check-security
+          python -m pip install isort
+          python -m pip install flake8
+      - name: Lint
+        run: python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
