@@ -14,13 +14,13 @@ export const useGroups = () => {
     } else {
       const session = await Auth.currentSession();
       const cognitoGroups = session.getIdToken().payload['cognito:groups'];
-      const samlGroups = session.getIdToken().payload['custom:saml.groups'] // nosemgrep
-        ? session // nosemgrep
-            .getIdToken() // nosemgrep
-            .payload['custom:saml.groups'].replace('[', '') // nosemgrep
-            .replace(']', '') // nosemgrep
-            .replace(/, /g, ',') // nosemgrep
-            .split(',') // nosemgrep
+      const samlGroups = session.getIdToken().payload['custom:saml.groups']
+        ? session
+            .getIdToken()
+            .payload['custom:saml.groups'].replaceAll('[', '')
+            .replaceAll(']', '')
+            .replace(/, /g, ',')
+            .split(',')
         : [];
       setGroups([].concat(cognitoGroups).concat(samlGroups).filter(Boolean));
     }
