@@ -55,8 +55,8 @@ class DatasetService:
         kms_alias = data.get('KmsKeyAlias')
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
             key_exists = KmsClient(environment.AwsAccountId, environment.region).check_key_exists(
-                  key_alias=f"alias/{kms_alias}"
-              )
+                key_alias=f"alias/{kms_alias}"
+            )
             if not key_exists:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
