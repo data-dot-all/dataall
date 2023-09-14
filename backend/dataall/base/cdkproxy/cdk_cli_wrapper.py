@@ -169,14 +169,14 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 cwd=cwd,
             )
             cmd2 = ['cdk', 'deploy', '--all', '--require-approval', 'never', '-c', f"appid='{stack.name}'",
-                '-c', f"account='{stack.accountid}'",  # the target accountid
-                '-c', f"region='{stack.region}'",  # the target region
-                '-c', f"stack='{stack.stack}'",  # the predefined stack
-                '-c', f"target_uri='{stack.targetUri}'",  # the payload for the stack with additional parameters
-                '-c', "data='{}'",  # skips synth step when no changes apply
-                '--app', f'"{sys.executable}', f'"{app_path}"',
-                '--verbose',
-            ]
+                    '-c', f"account='{stack.accountid}'",  # the target accountid
+                    '-c', f"region='{stack.region}'",  # the target region
+                    '-c', f"stack='{stack.stack}'",  # the predefined stack
+                    '-c', f"target_uri='{stack.targetUri}'",  # the payload for the stack with additional parameters
+                    '-c', "data='{}'",  # skips synth step when no changes apply
+                    '--app', f'"{sys.executable}', f'"{app_path}"',
+                    '--verbose',
+                    ]
 
             logger.info(f"Running command : \n {' '.join(cmd2)}")
 
@@ -228,7 +228,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd1 = ['.','~/.nvm/nvm.sh']
+    cmd1 = ['.', '~/.nvm/nvm.sh']
     logger.info(f"Running command {' '.join(cmd1)}")
     subprocess.run(
         cmd1,
