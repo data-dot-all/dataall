@@ -12,8 +12,9 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
+BACKEND_UTILS_PATH = "/backend/dataall/base"
 parent_dir = os.path.dirname(os.path.realpath(__file__))
-backend_dir = parent_dir.rsplit("/", 2)[0] + "/backend/dataall/base"
+backend_dir = parent_dir.rsplit("/", 2)[0] + BACKEND_UTILS_PATH
 sys.path.insert(0, backend_dir)
 
 from utils.naming_convention import (
