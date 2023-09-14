@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import subprocess
+import re
 
 import boto3
 import botocore
@@ -33,7 +34,8 @@ else:
     # Configuration of the branch in subsequent deployments
     git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
-git_branch = git_branch if git_branch != "" else "main"
+
+git_branch = re.sub('^[a-zA-Z0-9-_]+$', '', git_branch)[:12] if git_branch != "" else "main"
 
 # Configuration of the cdk.json SSM or in Repository
 try:
