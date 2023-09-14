@@ -29,7 +29,7 @@ export const EnvironmentFeatures = (props) => {
     {
       title: 'ML Studio',
       enabledEnvVariableName: 'mlStudiosEnabled',
-      active: isModuleEnabled(ModuleNames.ML_STUDIO)
+      active: isModuleEnabled(ModuleNames.MLSTUDIO)
     },
     {
       title: 'Pipelines',
