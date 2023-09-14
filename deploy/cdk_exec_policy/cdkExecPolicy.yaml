@@ -16,17 +16,17 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          
+
           - Sid: Athena
             Effect: Allow
-            Action: 
+            Action:
               - 'athena:CreateWorkGroup'
               - 'athena:*Tag*'
               - 'athena:GetWorkGroup'
               - 'athena:DeleteWorkGroup'
             Resource:
               - !Sub 'arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
-          
+
           - Sid: IAM
             Effect: Allow
             Action:
@@ -56,8 +56,7 @@ Resources:
               - 'iam:*Role*'
             Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
 
-          - Sid: IAMTwo
-            Effect: Allow
+          - Effect: Allow
             Action:
               - 'sts:DecodeAuthorizationMessage'
             Resource: '*'
@@ -81,13 +80,13 @@ Resources:
               - 'quicksight:RegisterUser'
               - 'quicksight:Describe*'
             Resource: '*'
-          
+
           - Sid: QuicksightDeny
             Effect: Deny
             Action:
               - 'quicksight:Unsubscribe'
             Resource: '*'
-          
+
           - Sid: KMS
             Effect: Allow
             Action:
@@ -106,7 +105,7 @@ Resources:
               - 'kms:ScheduleKeyDeletion'
               - 'kms:*Tag*'
             Resource: '*'
-          
+
           - Sid: Lambda
             Effect: Allow
             Action:
@@ -122,9 +121,9 @@ Resources:
               - 'lambda:RemovePermission'
             Resource:
               - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
-              - !Sub 'arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:layer:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:function:${EnvironmentResourcePrefix}*'
-          
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvironmentResourcePrefix}*'
+
           - Sid: S3
             Effect: Allow
             Action:
@@ -138,7 +137,7 @@ Resources:
               - 's3:DeleteBucketPolicy'
               - 's3:DeleteBucket'
             Resource: !Sub 'arn:${AWS::Partition}:s3:::*'
-          
+
           - Sid: S3CDK
             Effect: Allow
             Action:
@@ -146,7 +145,7 @@ Resources:
             Resource:
               - !Sub 'arn:${AWS::Partition}:s3:::cdktoolkit-stagingbucket-*'
               - !Sub 'arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}*'
-          
+
           - Sid: SQS
             Effect: Allow
             Action:
@@ -156,7 +155,7 @@ Resources:
               - 'sqs:DeleteQueue'
               - 'sqs:GetQueueAttributes'
             Resource: !Sub 'arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
-          
+
           - Sid: Sagemaker
             Effect: Allow
             Action:
@@ -169,11 +168,11 @@ Resources:
               - 'sagemaker:DescribeUserProfile'
               - 'sagemaker:DeleteUserProfile'
               - 'sagemaker:*NotebookInstance'
-            Resource: 
-              - !Sub 'arn:${AWS::Partition}:sagemaker:*:${AWS::AccountId}:domain/*'
-              - !Sub 'arn:${AWS::Partition}:sagemaker:*:${AWS::AccountId}:user-profile/*'
-              - !Sub 'arn:${AWS::Partition}:sagemaker:*:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
-          
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:domain/*'
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
+
           - Sid: SSM
             Effect: Allow
             Action:
@@ -181,11 +180,11 @@ Resources:
               - 'ssm:PutParameter'
               - 'ssm:*Tag*'
               - 'ssm:DeleteParameter'
-            Resource: 
-              - !Sub 'arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:parameter/cdk*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk*'
               - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
-          
+
           - Sid: Logs
             Effect: Allow
             Action:
@@ -197,13 +196,13 @@ Resources:
               - 'logs:DeleteRetentionPolicy'
               - 'logs:*Tag*'
             Resource: !Sub 'arn:${AWS::Partition}:logs:*:*:*'
-          
+
           - Sid: CFN
             Effect: Allow
             Action:
               - 'cloudformation:*'
             Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
-          
+
           - Sid: ECR
             Effect: Allow
             Action:
@@ -214,7 +213,7 @@ Resources:
               - 'ecr:CreateRepository'
               - 'ecr:DeleteRepository'
             Resource: !Sub 'arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/cdk-*'
-          
+
           - Sid: LF
             Effect: Allow
             Action:
