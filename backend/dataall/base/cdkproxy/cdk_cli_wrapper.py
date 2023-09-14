@@ -46,7 +46,7 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
     cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec  # nosemgrep
+    process = subprocess.run(cmd, text=True, shell=False, encoding='utf-8', capture_output=True)
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
@@ -157,16 +157,36 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
+            cmd1 = ['', '.', '~/.nvm/nvm.sh']
+            logger.info(f"Running command : \n {' '.join(cmd1)}")
 
-            logger.info(f"Running command : \n {' '.join(cmd)}")
+            process = subprocess.run(
+                cmd1,
+                text=True,
+                shell=False,
+                encoding='utf-8',
+                env=env,
+                cwd=cwd,
+            )
+            cmd2 = ['cdk', 'deploy', '--all', '--require-approval', 'never', '-c', f"appid='{stack.name}'",
+                '-c', f"account='{stack.accountid}'",  # the target accountid
+                '-c', f"region='{stack.region}'",  # the target region
+                '-c', f"stack='{stack.stack}'",  # the predefined stack
+                '-c', f"target_uri='{stack.targetUri}'",  # the payload for the stack with additional parameters
+                '-c', "data='{}'",  # skips synth step when no changes apply
+                '--app', f'"{sys.executable}', f'"{app_path}"',
+                '--verbose',
+            ]
 
-            process = subprocess.run(  # nosemgrep
-                ' '.join(cmd),  # nosemgrep
-                text=True,  # nosemgrep
-                shell=True,  # nosec  # nosemgrep
-                encoding='utf-8',  # nosemgrep
-                env=env,  # nosemgrep
-                cwd=cwd,  # nosemgrep
+            logger.info(f"Running command : \n {' '.join(cmd2)}")
+
+            process = subprocess.run(
+                cmd2,
+                text=True,
+                shell=False,
+                encoding='utf-8',
+                env=env,
+                cwd=cwd,
             )
 
             if extension:
@@ -208,17 +228,28 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd = ['. ~/.nvm/nvm.sh && cdk', '--version']
-    logger.info(f"Running command {' '.join(cmd)}")
+    cmd1 = ['.','~/.nvm/nvm.sh']
+    logger.info(f"Running command {' '.join(cmd1)}")
+    subprocess.run(
+        cmd1,
+        text=True,
+        shell=False,
+        encoding='utf-8',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=os.path.dirname(__file__),
+    )
 
-    subprocess.run(  # nosemgrep
-        cmd,  # nosemgrep
-        text=True,  # nosemgrep
-        shell=True,  # nosec  # nosemgrep
-        encoding='utf-8',  # nosemgrep
-        stdout=subprocess.PIPE,  # nosemgrep
-        stderr=subprocess.PIPE,  # nosemgrep
-        cwd=os.path.dirname(__file__),  # nosemgrep
+    cmd2 = ['cdk', '--version']
+    logger.info(f"Running command {' '.join(cmd2)}")
+    subprocess.run(
+        cmd2,
+        text=True,
+        shell=False,
+        encoding='utf-8',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=os.path.dirname(__file__),
     )
 
 

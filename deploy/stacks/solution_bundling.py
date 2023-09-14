@@ -15,7 +15,7 @@ class SolutionBundling:
     def try_bundle(self, output_dir: str, options: BundlingOptions) -> bool:
         requirements_path = Path(self.source_path, 'requirements.txt')
         subprocess.check_output(
-            ['cp', 'a', f'{self.source_path}/.', f'{output_dir}/'],
+            ['cp', '-a', f'{self.source_path}/.', f'{output_dir}/'],
             stderr=subprocess.STDOUT,
             shell=False,
         )
