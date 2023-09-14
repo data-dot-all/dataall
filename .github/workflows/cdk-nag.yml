@@ -29,9 +29,9 @@ jobs:
       - name: Git clone
         uses: actions/checkout@v3
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::020286015001:role/aws-dataall-github-actions
+          role-to-assume: arn:aws:iam::109658928441:role/aws-dataall-github-actions
           role-session-name: dataall-gh-act
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
       - name: Set up Node.js
