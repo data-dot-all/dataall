@@ -56,11 +56,6 @@ Resources:
               - 'iam:*Role*'
             Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
 
-          - Effect: Allow
-            Action:
-              - 'sts:DecodeAuthorizationMessage'
-            Resource: '*'
-
           - Sid: Quicksight
             Effect: Allow
             Action:
