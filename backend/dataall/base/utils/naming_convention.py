@@ -52,7 +52,7 @@ class NamingConventionService:
             regex = self.service.OPENSEARCH.value['regex']
             return self.build_opensearch_compliant_name(regex)
         elif self.service == NamingConventionPattern.OPENSEARCH_SERVERLESS:
-            regex = self.service.OPENSEARCH.value['regex']
+            regex = self.service.OPENSEARCH_SERVERLESS.value['regex']
             return self.build_opensearch_serverless_compliant_name(regex)
         else:
             regex = self.service.DEFAULT.value['regex']
