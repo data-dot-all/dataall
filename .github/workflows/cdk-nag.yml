@@ -2,16 +2,12 @@ name: CDK Nag
 
 on:
   workflow_dispatch:
-  push:
     paths:
-    - "deploy/**"
+      - "deploy/**"
     branches:
-    - main
-  pull_request:
-    paths:
-    - "deploy/**"
-    branches:
-    - main
+      - main
+  schedule:
+    - cron: '0 1 * * 2'
 
 permissions:
   id-token: write
