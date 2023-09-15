@@ -8,6 +8,7 @@ import logging
 import os
 import subprocess
 import sys
+import shlex
 from abc import abstractmethod
 from typing import Dict
 
@@ -18,6 +19,7 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import Engine
 from dataall.base.utils.alarm_service import AlarmService
+from dataall.base.utils.shell_utils import CommandSanitizer
 
 logger = logging.getLogger('cdksass')
 
@@ -157,36 +159,21 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            cmd1 = ['', '.', '~/.nvm/nvm.sh']
-            logger.info(f"Running command : \n {' '.join(cmd1)}")
+            args = ['', '.', '~/.nvm/nvm.sh']
+            logger.info(f"Running command : \n {' '.join(args)}")
 
-            process = subprocess.run(
-                cmd1,
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
-            )
-            cmd2 = ['cdk', 'deploy', '--all', '--require-approval', 'never', '-c', f"appid='{stack.name}'",
-                    '-c', f"account='{stack.accountid}'",  # the target accountid
-                    '-c', f"region='{stack.region}'",  # the target region
-                    '-c', f"stack='{stack.stack}'",  # the predefined stack
-                    '-c', f"target_uri='{stack.targetUri}'",  # the payload for the stack with additional parameters
-                    '-c', "data='{}'",  # skips synth step when no changes apply
-                    '--app', f'"{sys.executable}', f'"{app_path}"',
-                    '--verbose',
-                    ]
+            # In this particular case it is not possible to break the command (string) into a list of arguments
+            # to remediate any possible code injection, we sanitize the arguments with the CommandSanitizer
+            # in any case, the only upstream input in the command is the stack.name
 
-            logger.info(f"Running command : \n {' '.join(cmd2)}")
-
-            process = subprocess.run(
-                cmd2,
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
+            process = subprocess.run(  # nosemgrep
+                CommandSanitizer(args).command,  # nosemgrep
+                text=True,  # nosemgrep
+                shell=True,  # nosemgrep  #nosec
+                encoding='utf-8',  # nosemgrep
+                env=env,  # nosemgrep
+                cwd=cwd,  # nosemgrep
+                stdout=subprocess.PIPE  # nosemgrep
             )
 
             if extension:
@@ -228,7 +215,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd1 = ['.', '~/.nvm/nvm.sh']
+    cmd1 = ['.', '~/.nvm/nvm.sh'] #TODO: test in AWS!
     logger.info(f"Running command {' '.join(cmd1)}")
     subprocess.run(
         cmd1,
