@@ -7,16 +7,15 @@ on:
     - "deploy/**"
     branches:
     - main
-  pull_request_target:
+  pull_request:
     paths:
     - "deploy/**"
     branches:
     - main
-    types: [assigned, opened, synchronize, edited, ready_for_review, reopened]
 
-#permissions:
-#  id-token: write
-#  contents: read
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   cdk-nag:
