@@ -18,7 +18,6 @@ LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 logger = logging.getLogger(__name__)
 
-ssmc = boto3.client('ssm')
 
 if os.getenv("GITHUB_ACTIONS"):
     account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
@@ -43,6 +42,7 @@ git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" e
 # Configuration of the cdk.json SSM or in Repository
 try:
     logger.info("Trying to get cdkjson parameter from SSM")
+    ssmc = boto3.client('ssm')
     response = ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
     cdkjson = json.loads(response['Parameter']['Value']).get('context')
 
