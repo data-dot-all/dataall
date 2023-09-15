@@ -172,7 +172,7 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
+          EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
           resourcePrefix: values.resourcePrefix,
           parameters: [
             {
@@ -478,7 +478,7 @@ const EnvironmentCreateForm = (props) => {
                 notebooksEnabled: true,
                 mlStudiosEnabled: true,
                 pipelinesEnabled: true,
-                EnvironmentDefaultIAMRoleName: '',
+                EnvironmentDefaultIAMRoleArn: '',
                 resourcePrefix: 'dataall'
               }}
               validationSchema={Yup.object().shape({
@@ -506,7 +506,7 @@ const EnvironmentCreateForm = (props) => {
                 privateSubnetIds: Yup.array().nullable(),
                 publicSubnetIds: Yup.array().nullable(),
                 vpcId: Yup.string().nullable(),
-                EnvironmentDefaultIAMRoleName: Yup.string().nullable(),
+                EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
                   .matches(
@@ -828,20 +828,20 @@ const EnvironmentCreateForm = (props) => {
                           <CardContent>
                             <TextField
                               error={Boolean(
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                  errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                  errors.EnvironmentDefaultIAMRoleArn
                               )}
                               fullWidth
                               helperText={
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                errors.EnvironmentDefaultIAMRoleArn
                               }
-                              label="IAM Role Name"
-                              placeholder="Bring your own IAM role (Optional)"
-                              name="EnvironmentDefaultIAMRoleName"
+                              label="(Optional) IAM Role ARN"
+                              placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
+                              name="EnvironmentDefaultIAMRoleArn"
                               onBlur={handleBlur}
                               onChange={handleChange}
-                              value={values.EnvironmentDefaultIAMRoleName}
+                              value={values.EnvironmentDefaultIAMRoleArn}
                               variant="outlined"
                             />
                           </CardContent>

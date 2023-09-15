@@ -408,7 +408,7 @@ class EnvironmentSetup(Stack):
                 iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
-                    role_arn=f'arn:aws:iam::{self._environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
+                    role_arn=group.environmentIAMRoleArn,
                 )
         return group_roles
 

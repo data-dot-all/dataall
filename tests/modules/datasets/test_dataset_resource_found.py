@@ -67,7 +67,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
             environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
-            environmentIAMRoleName='myteamrole',
+            environmentIAMRoleArn=f'arn:aws::{env_fixture.AwsAccountId}:role/myteamrole',
         ),
         groups=[group.name, group2.name],
     )
