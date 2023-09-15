@@ -61,8 +61,8 @@ class OpenSearchServerlessStack(pyNestedClass):
 
         cfn_encryption_policy = opensearchserverless.CfnSecurityPolicy(
             self,
-            f'OpenSearchEncryptionPolicy{envname}',
-            name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='encrypt-policy'),
+            f'OpenSearchCollectionEncryptionPolicy{envname}',
+            name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='encryption-policy'),
             type='encryption',
             policy=self._get_encryption_policy(
                 collection_name=self.cfn_collection.name,
