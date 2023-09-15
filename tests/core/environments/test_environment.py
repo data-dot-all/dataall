@@ -379,7 +379,7 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
             environmentUri=env_fixture.environmentUri,
             groupUri=group2.name,
             permissions=env_permissions,
-            environmentDefaultIAMRoleArn=f'arn:aws::{env_fixture.AwsAccountId}:role/myteamrole',
+            environmentIAMRoleArn=f'arn:aws::{env_fixture.AwsAccountId}:role/myteamrole',
         ),
         groups=[group.name, group2.name],
     )
