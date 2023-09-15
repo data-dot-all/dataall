@@ -42,7 +42,7 @@ git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" e
 # Configuration of the cdk.json SSM or in Repository
 try:
     logger.info("Trying to get cdkjson parameter from SSM")
-    ssmc = boto3.client('ssm')
+    ssmc = boto3.client('ssm', os.getenv('CDK_DEFAULT_REGION'))
     response = ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
     cdkjson = json.loads(response['Parameter']['Value']).get('context')
 
