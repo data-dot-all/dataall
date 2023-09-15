@@ -47,7 +47,6 @@ Resources:
             Resource:
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*'
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/service-role/AWSQuickSight*'
 
           - Sid: IAMTwo
             Effect: Allow
