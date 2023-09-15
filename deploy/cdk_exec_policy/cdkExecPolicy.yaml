@@ -235,6 +235,12 @@ Resources:
               - 'elasticfilesystem:DeleteFileSystem'
             Resource: '*'
 
+          - Sid: EC2Deny
+            Effect: Deny
+            Action:
+              - 'ec2:*Instance*'
+            Resource: '*'
+
           - Sid: CodePipeline
             Effect: Allow
             Action:
