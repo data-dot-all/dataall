@@ -32,9 +32,10 @@ else:
 
 git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" else "main"
 
-
+logger.info(os.getenv("GITHUB_ACTIONS"))
 # Configuration of the cdk.json SSM or in Repository
 if os.getenv("GITHUB_ACTIONS"):
+    logger.info("Running github actions")
     account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
     app = App(context={"availability-zones:account=111111111111:region=eu-west-1": ["eu-west-1a","eu-west-1b"]})
 else:
