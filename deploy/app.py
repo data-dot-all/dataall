@@ -36,7 +36,7 @@ git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" e
 # Configuration of the cdk.json SSM or in Repository
 if os.getenv("GITHUB_ACTIONS"):
     account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
-    app = App()
+    app = App(context={"availability-zones:account=111111111111:region=eu-west-1": ["eu-west-1a","eu-west-1b"]})
 else:
     account_id = boto3.client('sts').get_caller_identity().get('Account') or os.getenv('CDK_DEFAULT_ACCOUNT')
     try:
