@@ -98,7 +98,7 @@ InviteGroupOnEnvironmentInput = gql.InputType(
         gql.Argument('permissions', gql.ArrayType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
-        gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
+        gql.Argument('environmentIAMRoleArn', gql.String),
     ],
 )
 
