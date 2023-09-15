@@ -12,6 +12,7 @@ on:
     - "deploy/**"
     branches:
     - main
+    types: [assigned, opened, synchronize, edited, ready_for_review, reopened]
 
 #permissions:
 #  id-token: write
