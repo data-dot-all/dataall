@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import subprocess
+import re
 
 import boto3
 import botocore
@@ -19,9 +20,11 @@ logger = logging.getLogger(__name__)
 
 ssmc = boto3.client('ssm')
 
-account_id = boto3.client('sts').get_caller_identity().get('Account') or os.getenv(
-    'CDK_DEFAULT_ACCOUNT'
-)
+if os.getenv("GITHUB_ACTIONS"):
+    account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
+else:
+    account_id = boto3.client('sts').get_caller_identity().get('Account') or os.getenv('CDK_DEFAULT_ACCOUNT')
+
 
 if not os.environ.get("DATAALL_REPO_BRANCH", None):
     # Configuration of the branch in first deployment
@@ -33,7 +36,9 @@ else:
     # Configuration of the branch in subsequent deployments
     git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
-git_branch = git_branch if git_branch != "" else "main"
+
+git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" else "main"
+
 
 # Configuration of the cdk.json SSM or in Repository
 try:

@@ -11,7 +11,8 @@ on:
     paths:
     - "deploy/**"
     branches:
-    - main
+    - v2m*
+    - v1m*
 
 permissions:
   id-token: write
@@ -23,16 +24,17 @@ jobs:
       matrix:
         python-version: [3.8]
     env:
-      CDK_DEFAULT_REGION: us-east-1
-      CDK_DEFAULT_ACCOUNT: 111111111111
-      CDK_CONTEXT:
-        "availability-zones:account=111111111111:region=us-east-1":
-          - "us-east-1a"
-          - "us-east-1b"
+      AWS_DEFAULT_REGION: us-east-1
     runs-on: ubuntu-latest
     steps:
       - name: Git clone
         uses: actions/checkout@v3
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::109658928441:role/aws-dataall-github-actions
+          role-session-name: dataall-gh-act
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
       - name: Set up Node.js
         uses: actions/setup-node@v3
       - name: Install CDK 
@@ -48,4 +50,4 @@ jobs:
       - name: Install Requirements
         run: python -m pip install -r deploy/requirements.txt
       - name: CDK Synth
-        run: npx cdk synth --context ${{ env.CDK_CONTEXT }}
+        run: npx cdk synth
