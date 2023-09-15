@@ -24,6 +24,8 @@ jobs:
         python-version: [3.8]
     env:
       GITHUB_ACTIONS: true
+      CDK_DEFAULT_REGION: eu-west-1
+      CDK_DEFAULT_ACCOUNT: 111111111111
     runs-on: ubuntu-latest
     steps:
       - name: Git clone
