@@ -45,4 +45,3 @@ jobs:
       - name: CDK Synth
         run: |
           npx cdk synth
-          rm cdk.context.json
