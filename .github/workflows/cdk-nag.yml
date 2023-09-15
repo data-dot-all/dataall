@@ -24,7 +24,7 @@ jobs:
         python-version: [3.8]
     env:
 
-      CDK_DEFAULT_REGION: us-east-1
+      CDK_DEFAULT_REGION: eu-west-1
       CDK_DEFAULT_ACCOUNT: 111111111111
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +46,7 @@ jobs:
         run: python -m pip install -r deploy/requirements.txt
       - name: CDK Synth
         run: |
-          json='{"availability-zones:account=111111111111:region=us-east-1": ["us-east-1a","us-east-1b"]}'
+          json='{"availability-zones:account=111111111111:region=eu-west-1": ["eu-west-1a","eu-west-1b"]}'
           echo "$json" > cdk.context.json
           npx cdk synth
           rm cdk.context.json
