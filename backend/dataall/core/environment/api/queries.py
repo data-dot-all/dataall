@@ -2,7 +2,7 @@ from dataall.base.api import gql
 
 from dataall.core.environment.api.input_types import EnvironmentFilter
 from dataall.core.environment.api.resolvers import *
-from dataall.core.environment.api.types import Environment, EnvironmentSearchResult
+from dataall.core.environment.api.types import Environment, EnvironmentSearchResult, EnvironmentSimplifiedSearchResult
 
 
 getTrustAccount = gql.QueryField(
@@ -28,6 +28,16 @@ listEnvironments = gql.QueryField(
     resolver=list_environments,
     test_scope='Environment',
 )
+
+
+listValidEnvironments = gql.QueryField(
+    name='listValidEnvironments',
+    args=[gql.Argument('filter', EnvironmentFilter)],
+    type=EnvironmentSimplifiedSearchResult,
+    resolver=list_valid_environments,
+    test_scope='Environment',
+)
+
 
 listEnvironmentNetworks = gql.QueryField(
     name='listEnvironmentNetworks',

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
+from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -515,6 +516,28 @@ class EnvironmentService:
             page=data.get('page', 1),
             page_size=data.get('pageSize', 5),
         ).to_dict()
+
+    @staticmethod
+    def list_valid_user_environments(session, data=None) -> dict:
+        context = get_context()
+        query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
+        environments = []
+        for env in query:
+            stack = stack_helper.get_stack_with_cfn_resources(
+                targetUri=env.environmentUri,
+                environmentUri=env.environmentUri,
+            )
+            if stack.status in ["CREATE_COMPLETE", "UPDATE_COMPLETE"]: #TODO ENUM FOR CFN AND LIST OF VALID
+                valid = {
+                    'environmentUri': env.environmentUri,
+                    'label': env.label,
+                }
+                environments.append(valid)
+
+        return {
+            'count': len(environments),
+            'nodes': environments,
+        }
 
     @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
