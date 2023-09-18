@@ -59,12 +59,14 @@ def list_omics_workflows(context: Context, source, filter: dict = None):
     # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}    
     return OmicsService.list_omics_workflows(filter)
 
-def load_omics_workflows(context: Context, source, filter: dict = None):
-    if not filter:
-        filter = {}
-    # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}
-    OmicsService.load_omics_workflows(filter)    
-    return OmicsService.list_omics_workflows(filter)
+# TODO: clean-up
+# this is now the task in omics.tasks.omics_workflows_fetcher
+# def load_omics_workflows(context: Context, source, filter: dict = None):
+#     if not filter:
+#         filter = {}
+#     # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}
+#     OmicsService.load_omics_workflows(filter)
+#     return OmicsService.list_omics_workflows(filter)
 
 def get_omics_workflow(context: Context, source, workflowId: str = None):
     print('**** WorkflowId: ', workflowId)

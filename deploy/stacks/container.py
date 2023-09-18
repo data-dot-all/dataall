@@ -227,6 +227,7 @@ class ContainerStack(pyNestedClass):
         self.add_bucket_policy_updater_task()
         self.add_subscription_task()
         self.add_share_management_task()
+        self.add_omics_fetch_workflows_task()
 
     @run_if("modules.datasets.active")
     def add_share_management_task(self):
@@ -341,6 +342,29 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
         self.ecs_task_definitions_families.append(sync_tables_task.task_definition.family)
+
+    @run_if("modules.omics.active")
+    def add_omics_fetch_workflows_task(self):
+        fetch_omics_workflows_task, fetch_omics_workflows_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('DEBUG'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='omics-workflows-fetcher'
+            ),
+            schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-omics-workflows-fetcher-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-omics-workflows-fetcher',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(fetch_omics_workflows_task.task_definition.family)
+
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(

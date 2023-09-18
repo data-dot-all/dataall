@@ -13,10 +13,10 @@ class OmicsClient:
     An Omics proxy client that is used to send requests to AWS
     """
 
-    def __init__(self, awsAccountId: str):
+    def __init__(self, awsAccountId: str, region: str):
         # session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::545117064741:role/dataallPivotRole')
         session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::290341535759:role/OmicsCallsPatrickRole')
-        self._client = session.client('omics')
+        self._client = session.client('omics', region_name=region)
         
     #TODO: Implement boto3 client calls for Omics
         
@@ -59,17 +59,23 @@ class OmicsClient:
     
     def list_workflows(self) -> list:
         try:
-            response = self._client.list_workflows(
-                type='READY2RUN',
-                maxResults=100 
+            paginator = self._client.get_paginator('list_workflows')
+            response_pages = paginator.paginate(
+                PaginationConfig={
+                    'MaxItems': 123,
+                    'PageSize': 123,
+                }
             )
-            # items = response.get('items', 'ERROR LISTING WORKFLOWS')
-            return response.get('items', 'ERROR LISTING WORKFLOWS')
+            found_workflows = []
+            for page in response_pages:
+                found_workflows.extend(page['items'])
+            return found_workflows
         except ClientError as e:
             logger.error(
                 f'Could not retrieve Ready2Run Omics Workflows status due to: {e} '
             )
             return 'ERROR LISTING WORKFLOWS'
+
 
 def client(run: OmicsRun) -> OmicsClient:
     """Factory method to retrieve the client to send request to AWS"""

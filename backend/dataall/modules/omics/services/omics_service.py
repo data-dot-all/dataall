@@ -172,17 +172,18 @@ class OmicsService:
             return OmicsRepository(session).paginated_omics_workflows(
                 filter=filter
             )
-
-    @staticmethod
-    def load_omics_workflows(filter: dict) -> dict:
-        """List Omics workflows."""
-        omicsClient = OmicsClient('545117064741')
-        workflows = omicsClient.list_workflows()
-        for workflow in workflows:
-            omicsWorkflow = OmicsWorkflow(id=workflow['id'], name=workflow['name'], arn=workflow['arn'], status=workflow['status'], type=workflow['type'])
-            with _session() as session:
-                OmicsRepository(session).save_omics_workflow(omicsWorkflow)
-        return omicsClient.list_workflows()
+    # TODO: clean-up
+    # Replaced by ecs task
+    # @staticmethod
+    # def load_omics_workflows(filter: dict) -> dict:
+    #     """List Omics workflows."""
+    #     omicsClient = OmicsClient('545117064741')
+    #     workflows = omicsClient.list_workflows()
+    #     for workflow in workflows:
+    #         omicsWorkflow = OmicsWorkflow(id=workflow['id'], name=workflow['name'], arn=workflow['arn'], status=workflow['status'], type=workflow['type'])
+    #         with _session() as session:
+    #             OmicsRepository(session).save_omics_workflow(omicsWorkflow)
+    #     return omicsClient.list_workflows()
 
 
     @staticmethod
