@@ -17,8 +17,8 @@ export const useGroups = () => {
       const samlGroups = session.getIdToken().payload['custom:saml.groups']
         ? session
             .getIdToken()
-            .payload['custom:saml.groups'].replace('[', '')
-            .replace(']', '')
+            .payload['custom:saml.groups'].replaceAll('[', '')
+            .replaceAll(']', '')
             .replace(/, /g, ',')
             .split(',')
         : [];

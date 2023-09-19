@@ -362,13 +362,16 @@ class BackendStack(Stack):
         )
 
     def get_s3_prefix_list(self):
-        ec2_client = boto3.client("ec2", region_name=self.region)
-        response = ec2_client.describe_prefix_lists(
-            Filters=[
-                {
-                    'Name': 'prefix-list-name',
-                    'Values': [f'com.amazonaws.{self.region}.s3']
-                },
-            ]
-        )
+        try:
+            ec2_client = boto3.client("ec2", region_name=self.region)
+            response = ec2_client.describe_prefix_lists(
+                Filters=[
+                    {
+                        'Name': 'prefix-list-name',
+                        'Values': [f'com.amazonaws.{self.region}.s3']
+                    },
+                ]
+            )
+        except:
+            return ""
         return response['PrefixLists'][0].get("PrefixListId")
