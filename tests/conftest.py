@@ -144,13 +144,6 @@ def permissions(db):
         yield Permission.init_permissions(session)
 
 
-@pytest.fixture(scope='function', autouse=True)
-def patch_ssm(mocker):
-    mocker.patch(
-        'dataall.utils.parameter.Parameter.get_parameter', return_value='param'
-    )
-
-
 @pytest.fixture(scope='module', autouse=True)
 def patch_stack_tasks(module_mocker):
     module_mocker.patch(
