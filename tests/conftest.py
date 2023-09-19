@@ -147,7 +147,7 @@ def permissions(db):
 @pytest.fixture(scope='function', autouse=True)
 def patch_ssm(mocker):
     mocker.patch(
-        'dataall.utils.parameter.Parameter.get_parameter', return_value='param'
+        'dataall.base.utils.parameter.Parameter.get_parameter', return_value='param'
     )
 
 
