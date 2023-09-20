@@ -143,8 +143,6 @@ class ProcessLFSameAccountShare(LFShareManager):
 
                 self.revoke_table_resource_link_access(table, principals)
 
-                principals = [p for p in principals if "arn:aws:quicksight" not in p]
-
                 self.revoke_source_table_access(table, principals)
 
                 self.delete_resource_link_table(table)
