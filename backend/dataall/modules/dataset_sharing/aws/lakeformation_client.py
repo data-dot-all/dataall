@@ -255,6 +255,7 @@ class LakeFormationClient:
         source_accountid = data['source_accountid']
         for target_principal in target_principals:
             try:
+
                 aws_session = SessionHelper.remote_session(target_accountid)
                 lakeformation = aws_session.client('lakeformation', region_name=region)
 
