@@ -523,6 +523,41 @@ class LambdaApiStack(pyNestedClass):
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
+
+        # Initiate Auth
+        initiate_auth = gw.root.add_resource(path_part='initiate-auth')
+        initiate_auth_proxy = initiate_auth.add_resource(
+            path_part='{proxy+}',
+            default_integration=integration,
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_methods=apigw.Cors.ALL_METHODS,
+                allow_origins=apigw.Cors.ALL_ORIGINS,
+                allow_headers=['*'],
+            ),
+        )
+        initiate_auth_proxy.add_method(
+            'POST',
+            authorizer=cognito_authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+        # Repsond To Challenge
+        respond_to_challenge = gw.root.add_resource(path_part='respond-to-challenge')
+        respond_to_challenge_proxy = respond_to_challenge.add_resource(
+            path_part='{proxy+}',
+            default_integration=integration,
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_methods=apigw.Cors.ALL_METHODS,
+                allow_origins=apigw.Cors.ALL_ORIGINS,
+                allow_headers=['*'],
+            ),
+        )
+        respond_to_challenge_proxy.add_method(
+            'POST',
+            authorizer=cognito_authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')
         search_validation_model = apigw.Model(
