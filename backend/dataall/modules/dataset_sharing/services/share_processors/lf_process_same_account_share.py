@@ -143,8 +143,6 @@ class ProcessLFSameAccountShare(LFShareManager):
 
                 self.revoke_table_resource_link_access(table, principals)
 
-                principals = [p for p in principals if "arn:aws:quicksight" not in p]
-
                 self.revoke_source_table_access(table, principals)
 
                 self.delete_resource_link_table(table)
@@ -159,13 +157,3 @@ class ProcessLFSameAccountShare(LFShareManager):
                 success = False
 
         return success
-
-    def clean_up_share(self) -> bool:
-        """"
-        1) deletes deprecated shared db in target account
-        Returns
-        -------
-        True if clean-up succeeds
-        """
-        self.delete_shared_database()
-        return True
