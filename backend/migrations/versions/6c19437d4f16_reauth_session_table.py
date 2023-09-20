@@ -47,6 +47,7 @@ def upgrade():
         print(f"Failed to execute the migration script due to: {ex}")
         raise ex
 
+
 def downgrade():
     """
     The script does the following migration:
