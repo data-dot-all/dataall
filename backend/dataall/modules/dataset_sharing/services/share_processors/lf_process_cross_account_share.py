@@ -161,6 +161,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     self.session,
                     self.target_environment.environmentUri,
                     share_item.itemUri,
+                    share_item.shareItemUri
                 ):
                     principals = [p for p in principals if "arn:aws:quicksight" not in p]
 
