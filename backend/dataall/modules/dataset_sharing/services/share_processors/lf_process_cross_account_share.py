@@ -124,7 +124,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             a) update its status to REVOKE_IN_PROGRESS with Action Start
             b) check if item exists on glue catalog raise error if not and flag item status to failed
             c) revoke table resource link: undo grant permission to resource link table for team role in target account
-            d) revoke source table access: undo grant permission to table for team role in source account
+            d) revoke source table access: undo grant permission to table for team role in source account (and for QS Group if no other shares present for table)
             e) delete resource link table
             h) update share item status to REVOKE_SUCCESSFUL with Action Success
 
@@ -156,6 +156,13 @@ class ProcessLFCrossAccountShare(LFShareManager):
                          f'For principals {principals}')
 
                 self.revoke_table_resource_link_access(table, principals)
+
+                if ShareObjectRepository.other_approved_share_item_table_exists(
+                    self.session,
+                    self.target_environment.environmentUri,
+                    share_item.itemUri,
+                ):
+                    principals = [p for p in principals if "arn:aws:quicksight" not in p]
 
                 self.revoke_source_table_access(table, principals)
 

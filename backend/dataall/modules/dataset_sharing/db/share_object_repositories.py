@@ -793,6 +793,25 @@ class ShareObjectRepository:
         )
 
     @staticmethod
+    def other_approved_share_item_table_exists(session, environment_uri, item_uri):
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        return (
+            session.query(ShareObject)
+            .join(
+                ShareObjectItem,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .filter(
+                and_(
+                    ShareObject.environmentUri == environment_uri,
+                    ShareObjectItem.itemUri == item_uri,
+                    ShareObjectItem.status.in_(share_item_shared_states)
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
     def get_share_items_states(session, share_uri, item_uris=None):
         query = (
             session.query(ShareObjectItem)
