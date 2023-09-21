@@ -227,8 +227,8 @@ class PipelineStack(Stack):
 
         self.baseline_codebuild_policy = iam.ManagedPolicy(
             self,
-            'BaselineCodeBuildPolicy',
-            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-policy',
+            'BaselineCodeBuildManagedPolicy',
+            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
             statements= [
                 iam.PolicyStatement(
@@ -306,8 +306,8 @@ class PipelineStack(Stack):
         )
         self.expanded_codebuild_policy = iam.ManagedPolicy(
             self,
-            'ExpandedCodeBuildPolicy',
-            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-expanded-codebuild-policy',
+            'ExpandedCodeBuildManagedPolicy',
+            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-expanded-cb-policy',
             roles=[self.expanded_codebuild_role],
             statements= [
                 iam.PolicyStatement(
@@ -336,8 +336,8 @@ class PipelineStack(Stack):
             self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
             self.git_release_policy = iam.ManagedPolicy(
                 self,
-                'GitReleasePolicy',
-                managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-git-release-policy',
+                'GitReleaseManagedPolicy',
+                managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-gitrelease-policy',
                 roles=[self.git_project_role],
                 statements= [
                     iam.PolicyStatement(
