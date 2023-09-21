@@ -4,6 +4,7 @@ export const listOmicsRuns = (filter) => ({
   variables: {
     filter
   },
+  // TODO: review this output
   query: gql`
     query listOmicsRuns($filter: OmicsRunsFilter) {
       listOmicsRuns(filter: $filter) {
@@ -20,7 +21,6 @@ export const listOmicsRuns = (filter) => ({
           label
           created
           tags
-          // TODO: review this output
           environment {
             label
             name
