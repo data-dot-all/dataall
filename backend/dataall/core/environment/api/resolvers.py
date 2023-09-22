@@ -294,6 +294,7 @@ def list_valid_environments(context: Context, source, filter=None):
     with context.engine.scoped_session() as session:
         return EnvironmentService.list_valid_user_environments(session, filter)
 
+
 def list_environment_networks(
     context: Context, source, environmentUri=None, filter=None
 ):

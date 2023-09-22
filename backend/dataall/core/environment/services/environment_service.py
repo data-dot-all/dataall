@@ -29,6 +29,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.stacks.db.enums import StackStatus
 
 log = logging.getLogger(__name__)
 
@@ -527,7 +528,11 @@ class EnvironmentService:
                 targetUri=env.environmentUri,
                 environmentUri=env.environmentUri,
             )
-            if stack.status in ["CREATE_COMPLETE", "UPDATE_COMPLETE"]: #TODO ENUM FOR CFN AND LIST OF VALID
+            if stack.status in [
+                StackStatus.CREATE_COMPLETE.value,
+                StackStatus.UPDATE_COMPLETE.value,
+                StackStatus.UPDATE_ROLLBACK_COMPLETE.value
+            ]:
                 valid = {
                     'environmentUri': env.environmentUri,
                     'label': env.label,
