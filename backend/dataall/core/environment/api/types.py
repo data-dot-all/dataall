@@ -126,7 +126,7 @@ EnvironmentSearchResult = gql.ObjectType(
 )
 
 EnvironmentSimplified = gql.ObjectType(
-    name='EnvironmentSearchResult',
+    name='EnvironmentSimplified',
     fields=[
         gql.Field(name='environmentUri', type=gql.ID),
         gql.Field(name='label', type=gql.String),
@@ -134,7 +134,7 @@ EnvironmentSimplified = gql.ObjectType(
 )
 
 EnvironmentSimplifiedSearchResult = gql.ObjectType(
-    name='EnvironmentSearchResult',
+    name='EnvironmentSimplifiedSearchResult',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='nodes', type=gql.ArrayType(EnvironmentSimplified)),
