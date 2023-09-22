@@ -304,7 +304,7 @@ class PipelineStack(Stack):
                         f'arn:aws:s3:::{self.resource_prefix}*',
                         f'arn:aws:s3:::{self.resource_prefix}*/*',
                         f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*'
+                        f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
                         f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
                         f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
                         f'arn:aws:kms:{self.region}:{self.account}:key/*',
