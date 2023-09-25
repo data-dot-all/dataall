@@ -57,7 +57,7 @@ Review pull requests regularly, comment, suggest, reject, merge and close. Accep
 
 Manage labels, review issues regularly, and triage by labelling them.
 
-We use key value labels, use the `priority:`, `type:` and `status:` when triaging issues.
+We use key value labels, use the `priority:`, `type:`, `effort:` and `status:` when triaging issues.
 
 Use the `good first issue` label to let new community members know where to start and `blocker` for issues that scare you or need immediate attention. Request for more information from a submitter if an issue is not clear. Create new labels as needed by the project.
 
@@ -80,8 +80,7 @@ have any centralized management dashboard, so maintainers may use tags or other 
 
 Ensure the repo highlights features that should be elevated to the project roadmap. Be clear about the feature’s status, 
 priority, target version, and whether or not it should be elevated to the roadmap. Any feature that you want highlighted 
-on the OpenSearch Roadmap should be tagged with "roadmap". The OpenSearch [project-meta maintainers](https://github.com/opensearch-project/project-meta/blob/main/MAINTAINERS.md) 
-will highlight features tagged "roadmap" on the project wide [OpenSearch Roadmap](https://github.com/orgs/opensearch-project/projects/1).
+on the data.all Roadmap should be tagged with "roadmap".
 
 ### Add Continuous Integration Checks
 
