@@ -1,8 +1,8 @@
 ## Overview
 
 This document contains a list of maintainers in this repo. See [RESPONSIBILITIES.md](./RESPONSIBILITIES.md) 
-that explains what the role of maintainer means, what maintainers do in this and other repos, and how they should be 
-doing it. If you're interested in contributing, and becoming a maintainer, see [CONTRIBUTING](CONTRIBUTING.md).
+that explains what the role of maintainer means, what maintainers do, how they should be 
+doing it, and how to become one. If you're interested in becoming a maintainer, the best place to start is by first [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Current Maintainers
 
