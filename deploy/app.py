@@ -30,7 +30,7 @@ else:
     git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
 
-git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:12] if git_branch != "" else "main"
+git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:99] if git_branch != "" else "main"
 
 # Configuration of the cdk.json SSM or in Repository
 if os.getenv("GITHUB_ACTIONS"):
