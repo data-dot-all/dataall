@@ -569,7 +569,7 @@ class PipelineStack(Stack):
                 id='LambdaImage',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                    # privileged=True,
+                    privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
@@ -587,7 +587,7 @@ class PipelineStack(Stack):
                 id='ECSImage',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                    # privileged=True,
+                    privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
