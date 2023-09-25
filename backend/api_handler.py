@@ -114,9 +114,15 @@ def handler(event, context):
         }
 
     if 'authorizer' in event['requestContext']:
-        username = event['requestContext']['authorizer']['claims']['email']
+        if 'claims' not in event['requestContext']['authorizer']:
+            claims = event['requestContext']['authorizer']
+        else:
+            claims = event['requestContext']['authorizer']['claims']
+        username = claims['email']
+        log.debug('username is %s', username)
         try:
-            groups = get_groups(event['requestContext']['authorizer']['claims'])
+            groups = get_groups(claims)
+            log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
                     policy = TenantPolicy.find_tenant_policy(
