@@ -452,7 +452,7 @@ class LambdaApiStack(pyNestedClass):
             self, 'CustomAuthorizer',
             handler=authorizer_fn,
             identity_sources=[apigw.IdentitySource.header('Authorization')],
-            authorizer_name='Custom Authorizer'
+            authorizer_name='CustomAuthorizer'
         )
         # custom_authorizer.add_to_policy(iam.PolicyStatement(
         #     effect=iam.Effect.ALLOW,
