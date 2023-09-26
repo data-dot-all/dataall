@@ -145,7 +145,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             f'AuthorizerFunction-{envname}',
             function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-            handler='customer_authorizer.lambda_handler',
+            handler='custom_authorizer.lambda_handler',
             code=_lambda.Code.from_asset(
                 path=custom_authorizer_assets,
                 bundling=BundlingOptions(

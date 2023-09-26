@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+import boto3
 from jose import jwk
 from jose.jwt import get_unverified_header, decode, ExpiredSignatureError, JWTError
 import logging
@@ -8,6 +9,8 @@ import logging
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+ssm = boto3.client('ssm')
 
 USER_POOL_ID = os.environ["USER_POOL_ID"]
 CLIENT_ID = os.environ["CLIENT_ID"]
@@ -86,6 +89,13 @@ def lambda_handler(incoming_event, context):
     effect = 'Allow'
     policy = generate_policy(verified_claims, effect, incoming_event['methodArn'])
     print('generated policy is ', policy)
+
+    try:
+        param_value = ssm.get_parameter(Name='dataall/reauth/operations')['Parameter']['Value']
+
+    except Exception as e:
+        print(e)
+
     return policy
 
 

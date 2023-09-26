@@ -44,7 +44,8 @@ export const useClient = () => {
             'access-control-allow-origin': '*',
             Authorization: t ? `${t}` : '',
             AccessKeyId: 'none',
-            SecretKey: 'none'
+            SecretKey: 'none',
+            'operation-name': operation.operationName
           }
         });
         return forward(operation);
