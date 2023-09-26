@@ -305,7 +305,7 @@ def test_paging(db, client, org_fixture, env_fixture, user, group):
                 description='desc',
                 SamlGroupName=group.name,
                 EnvironmentDefaultIAMRoleName='EnvRole',
-                EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
+                EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole',
                 CDKRoleArn='arn:aws::123456789012:role/EnvRole',
                 userRoleInEnvironment='999',
             )
