@@ -212,6 +212,16 @@ def mock_glue_client(mocker):
     yield mock_client
 
 
+@pytest.fixture(scope="function")
+def mock_iam_client(mocker):
+    mock_client = MagicMock()
+    mocker.patch(
+        "dataall.base.aws.iam.IAM",
+        mock_client
+    )
+    yield mock_client
+
+
 def test_init(processor_same_account, processor_cross_account):
     assert processor_same_account.dataset
     assert processor_same_account.share
@@ -231,6 +241,7 @@ def test_build_shared_db_name(
 
 
 def test_get_share_principals(
+        mocker,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
         source_environment: Environment,
@@ -239,9 +250,18 @@ def test_get_share_principals(
         share_cross_account: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
+    get_iam_role_arn_mock = mocker.patch(
+        "dataall.base.aws.iam.IAM.get_role_arn_by_name",
+        side_effect = lambda account_id, role_name : f"arn:aws:iam::{account_id}:role/{role_name}"
+    )
+
     # Then, it should return
     assert processor_same_account.get_share_principals() == [f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
+    get_iam_role_arn_mock.assert_called_once()
+    get_iam_role_arn_mock.reset_mock()
+
     assert processor_cross_account.get_share_principals() == [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
+    get_iam_role_arn_mock.assert_called_once()
 
 
 def test_create_shared_database(
@@ -354,7 +374,7 @@ def test_build_share_data(
         'target': {
             'accountid': source_environment.AwsAccountId,
             'region': source_environment.region,
-            'principals': [f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"],
+            'principals': [None],
             'database': (dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254],
         },
     }
@@ -372,7 +392,7 @@ def test_build_share_data(
         'target': {
             'accountid': target_environment.AwsAccountId,
             'region': target_environment.region,
-            'principals': [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
+            'principals': [None],
             'database': (dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254],
         },
     }
