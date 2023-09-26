@@ -144,6 +144,7 @@ class BackendStack(Stack):
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
+            user_pool_client=cognito_stack.client,
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )

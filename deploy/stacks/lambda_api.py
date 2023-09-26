@@ -49,6 +49,7 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
+        user_pool_client=None,
         pivot_role_name=None,
         **kwargs,
     ):
@@ -144,7 +145,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             f'AuthorizerFunction-{envname}',
             function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-            handler='index.on_event',
+            handler='customer_authorizer.lambda_handler',
             code=_lambda.Code.from_asset(
                 path=custom_authorizer_assets,
                 bundling=BundlingOptions(
@@ -155,7 +156,12 @@ class LambdaApiStack(pyNestedClass):
             memory_size=512 if prod_sizing else 256,
             description='dataall Custom authorizer, cognito',
             timeout=Duration.seconds(20),
-            environment={'envname': envname, 'LOG_LEVEL': 'DEBUG'},
+            environment={
+                'envname': envname, 
+                'LOG_LEVEL': 'DEBUG',
+                'CLIENT_ID': user_pool_client.user_pool_client_id,
+                'USER_POOL_ID': user_pool.user_pool_id
+            },
             vpc=vpc,
             runtime=_lambda.Runtime.PYTHON_3_9,
         )

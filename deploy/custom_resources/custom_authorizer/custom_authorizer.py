@@ -1,16 +1,21 @@
 import json
+import os
 import requests
 from jose import jwk
 from jose.jwt import get_unverified_header, decode, ExpiredSignatureError, JWTError
 import logging
 
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+USER_POOL_ID = os.environ["USER_POOL_ID"]
+CLIENT_ID = os.environ["CLIENT_ID"]
+
 ISSUER_CONFIGS = {
-    "https://cognito-idp.us-east-1.amazonaws.com/USER_POOL_ID": {
-        "jwks_uri": "https://cognito-idp.us-east-1.amazonaws.com/USER_POOL_ID/.well-known/jwks.json",
-        "allowed_audiences": "CLIENT_ID",
+    f"https://cognito-idp.us-east-1.amazonaws.com/{USER_POOL_ID}": {
+        "jwks_uri": f"https://cognito-idp.us-east-1.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json",
+        "allowed_audiences": CLIENT_ID,
     },
 }
 ALLOWED_API_RESOURCE_NAMES = ["graphql", "search"]
@@ -60,7 +65,7 @@ def validate_jwt_token(jwt_token):
             raise Exception('Unauthorized')
         public_key = issuer_keys.get(kid)
         payload = decode(jwt_token, public_key.get('jwk'), algorithms=['RS256', 'HS256'],
-                         issuer=public_key.get('issuer'), audience=public_key.get('audience'), options=jwt_options)
+                         issuer=public_key.get('issuer'), audience=public_key.get('audience'), options={"verify_at_hash": False})
 
         return payload
     except ExpiredSignatureError:
@@ -72,7 +77,7 @@ def validate_jwt_token(jwt_token):
 
 
 def lambda_handler(incoming_event, context):
-    auth_token = incoming_event['authorizationToken']
+    auth_token = incoming_event.get("headers", {}).get('Authorization',None)
     if not auth_token:
         raise Exception('Unauthorized')
     verified_claims = validate_jwt_token(auth_token)
@@ -138,8 +143,10 @@ if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
     token = ""
     event = {
-        "type": "TOKEN",
-        "authorizationToken": token,
+        "type": "REQUEST",
+        "headers": {
+            "Authorization": token
+        },
         "methodArn": "arn:aws:execute-api:us-east-1:012356677990:abc1cv8nko/prod/POST/graphql/api"
     }
     lambda_handler(event, None)
