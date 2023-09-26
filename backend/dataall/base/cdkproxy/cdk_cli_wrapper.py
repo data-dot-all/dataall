@@ -18,6 +18,7 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import Engine
 from dataall.base.utils.alarm_service import AlarmService
+from dataall.base.utils.shell_utils import CommandSanitizer
 
 logger = logging.getLogger('cdksass')
 
@@ -130,7 +131,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            cmd = [
+            args = [
                 '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy --all',
@@ -157,31 +158,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            cmd1 = ['', '.', '~/.nvm/nvm.sh']
-            logger.info(f"Running command : \n {' '.join(cmd1)}")
+            logger.info(f"Running command : \n {' '.join(args)}")
 
             process = subprocess.run(
-                cmd1,
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
-            )
-            cmd2 = ['cdk', 'deploy', '--all', '--require-approval', 'never', '-c', f"appid='{stack.name}'",
-                    '-c', f"account='{stack.accountid}'",  # the target accountid
-                    '-c', f"region='{stack.region}'",  # the target region
-                    '-c', f"stack='{stack.stack}'",  # the predefined stack
-                    '-c', f"target_uri='{stack.targetUri}'",  # the payload for the stack with additional parameters
-                    '-c', "data='{}'",  # skips synth step when no changes apply
-                    '--app', f'"{sys.executable}', f'"{app_path}"',
-                    '--verbose',
-                    ]
-
-            logger.info(f"Running command : \n {' '.join(cmd2)}")
-
-            process = subprocess.run(
-                cmd2,
+                CommandSanitizer(args).command,
                 text=True,
                 shell=False,
                 encoding='utf-8',
