@@ -166,14 +166,14 @@ def handler(event, context):
         }
 
         try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}//reauth/apis")
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis")
+            print("SSM", reauth_apis)
         except Exception as e:
             reauth_apis = None
             print("NO REAUTH SSM")
             print(e)
 
-        if reauth_apis:
-            print("SSM", reauth_apis)
+        if reauth_apis and query.get('operationName', None) in reauth_apis:
             raise ReAuthException(reauth_apis)
             # operationName = incoming_event.get("headers", {}).get('operation-name',None)
             # print("OPERATION", operationName)
