@@ -50,6 +50,7 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        reauth_apis=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -86,6 +87,7 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
+            reauth_apis=reauth_apis,
             **kwargs,
         )
         if enable_cw_canaries:

@@ -619,6 +619,7 @@ class PipelineStack(Stack):
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
+                reauth_apis = target_env.get('reauth_apis', None),
             )
         )
         return backend_stage
