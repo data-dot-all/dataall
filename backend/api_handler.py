@@ -47,6 +47,7 @@ class ReAuthException(Exception):
     """
     def __init__(self, operationName, message="Re-Auth is Required"):
         self.operationName = operationName
+        self.message = message
         super().__init__(self.message)
 
 
@@ -176,13 +177,17 @@ def handler(event, context):
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
-    print("PRINTING")
-    print(executable_schema)
-    print(query)
-    print(app_context)
     if reauth_apis and query.get('operationName', None) in reauth_apis:
         print("REQUIRE REAUTH")
-        raise ReAuthException(reauth_apis)
+        try:
+            with ENGINE.scoped_session() as session:
+                reauth_session = TenantPolicy.find_reauth_session(session, username)
+                print(reauth_session)
+                if not reauth_session:
+                    raise ReAuthException
+        except Exception as e:
+            print(f'REAUTH ERROR: {e}')
+            raise ReAuthException(reauth_apis)
         # operationName = incoming_event.get("headers", {}).get('operation-name',None)
         # print("OPERATION", operationName)
 
