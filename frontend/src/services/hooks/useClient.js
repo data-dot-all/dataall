@@ -74,7 +74,7 @@ export const useClient = () => {
     };
     if (token) {
       initClient().catch((e) => {
-        if (err.response.status == 401) { // IF COMING FROM RE AUTH
+        if (err.response.status === 401) { // IF COMING FROM RE AUTH
           reAuthInitiate();
         } else {
           console.error(e);

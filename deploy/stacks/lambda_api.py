@@ -1,5 +1,4 @@
 import json
-import os
 
 from aws_cdk import (
     aws_iam as iam,
@@ -18,7 +17,6 @@ from aws_cdk import (
     CfnOutput,
     Fn,
     RemovalPolicy,
-    BundlingOptions
 )
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
@@ -28,7 +26,6 @@ from aws_cdk.aws_ec2 import (
 )
 
 from .pyNestedStack import pyNestedClass
-from .solution_bundling import SolutionBundling
 
 
 class LambdaApiStack(pyNestedClass):
@@ -414,8 +411,7 @@ class LambdaApiStack(pyNestedClass):
             authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
             identity_source='method.request.header.Authorization',
             results_cache_ttl=Duration.minutes(60),
-        ) 
-
+        )
         if not internet_facing:
             if apig_vpce:
                 api_vpc_endpoint = InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
