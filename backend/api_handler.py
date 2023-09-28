@@ -12,6 +12,7 @@ from ariadne import (
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
+from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
@@ -36,6 +37,16 @@ Worker.queue = SqsQueue.send
 
 save_permissions_with_tenant(ENGINE)
 
+class ReAuthException(Exception):
+    """Exception raised when reAuth is required.
+
+    Attributes:
+        operationName -- input salary which caused the error
+        message -- explanation of the error
+    """
+    def __init__(self, operationName, message="Re-Auth is Required"):
+        self.operationName = operationName
+        super().__init__(self.message)
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
@@ -152,10 +163,33 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
+        try:
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}//reauth/apis")
+        except Exception as e:
+            reauth_apis = None
+            print("NO REAUTH SSM")
+            print(e)
+
+        if reauth_apis:
+        #     operationName = incoming_event.get("headers", {}).get('operation-name',None)
+        #     print("OPERATION", operationName)
+            print("SSM", reauth_apis)
+        #     if operationName in reauth_apis:
+        #         ## TODO - Check Aurora and If No Session then REAUTH
+        #         print("REQUIRE REAUTH")
+        #         raise Exception('Unauthorized')
+                # raise ReAuthException(operationName)
+
+
+
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
+    print("PRINTING")
+    print(executable_schema)
+    print(query)
+    print(app_context)
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )

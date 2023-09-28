@@ -14,7 +14,8 @@
         "region": "us-east-1",
         "prod_sizing": false,
         "vpc_restricted_nacl": true,
-        "enable_pivot_role_auto_create": true
+        "enable_pivot_role_auto_create": true,
+        "reauth_apis": ["ListWorksheets", "ListSagemakerNotebooks"]
       }
     ]
   }

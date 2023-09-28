@@ -23,6 +23,7 @@ class ParamStoreStack(pyNestedClass):
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
         pivot_role_name='dataallPivotRole',
+        reauth_apis=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -79,6 +80,13 @@ class ParamStoreStack(pyNestedClass):
                 f'QSDashboardIdEnv{envname}',
                 parameter_name=f'/dataall/{envname}/quicksightmonitoring/DashboardId',
                 string_value='updateme',
+            )
+        if reauth_apis:
+            aws_ssm.StringParameter(
+                self,
+                f'ReAuthAPIs{envname}',
+                parameter_name=f'/dataall/{envname}/reauth/apis',
+                string_value=','.join(reauth_apis),
             )
 
         aws_ssm.StringParameter(

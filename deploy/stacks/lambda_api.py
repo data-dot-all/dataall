@@ -49,7 +49,6 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
-        user_pool_client=None,
         pivot_role_name=None,
         **kwargs,
     ):
@@ -132,39 +131,6 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
-        custom_authorizer_assets = os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                'custom_resources',
-                'custom_authorizer',
-            )
-        )
-
-        authorizer_fn = _lambda.Function(
-            self,
-            f'AuthorizerFunction-{envname}',
-            function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-            handler='custom_authorizer.lambda_handler',
-            code=_lambda.Code.from_asset(
-                path=custom_authorizer_assets,
-                bundling=BundlingOptions(
-                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                    local=SolutionBundling(source_path=custom_authorizer_assets),
-                ),
-            ),
-            memory_size=512 if prod_sizing else 256,
-            description='dataall Custom authorizer, cognito',
-            timeout=Duration.seconds(20),
-            environment={
-                'envname': envname, 
-                'LOG_LEVEL': 'DEBUG',
-                'CLIENT_ID': user_pool_client.user_pool_client_id,
-                'USER_POOL_ID': user_pool.user_pool_id
-            },
-            vpc=vpc,
-            runtime=_lambda.Runtime.PYTHON_3_9,
-        )
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
@@ -207,7 +173,6 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             vpc,
             user_pool,
-            authorizer_fn,
         )
 
         self.create_sns_topic(
@@ -359,7 +324,6 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix,
         vpc,
         user_pool,
-        authorizer_fn,
     ):
 
         api_deploy_options = apigw.StageOptions(
@@ -383,7 +347,6 @@ class LambdaApiStack(pyNestedClass):
             apig_vpce,
             resource_prefix,
             user_pool,
-            authorizer_fn,
         )
 
         # Create IP set if IP filtering enabled in CDK.json
@@ -443,7 +406,6 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce,
         resource_prefix,
         user_pool,
-        authorizer_fn,
     ):
         cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
@@ -453,18 +415,6 @@ class LambdaApiStack(pyNestedClass):
             identity_source='method.request.header.Authorization',
             results_cache_ttl=Duration.minutes(60),
         ) 
-
-        custom_authorizer = apigw.RequestAuthorizer(
-            self, 'CustomAuthorizer',
-            handler=authorizer_fn,
-            identity_sources=[apigw.IdentitySource.header('Authorization')],
-            authorizer_name='CustomAuthorizer'
-        )
-        # custom_authorizer.add_to_policy(iam.PolicyStatement(
-        #     effect=iam.Effect.ALLOW,
-        #     actions=['lambda:InvokeFunction'],
-        #     resources=[authorizer_fn.function_arn]
-        # ))
 
         if not internet_facing:
             if apig_vpce:
@@ -572,8 +522,8 @@ class LambdaApiStack(pyNestedClass):
         )
         graphql_proxy.add_method(
             'POST',
-            authorizer=custom_authorizer,
-            authorization_type=apigw.AuthorizationType.CUSTOM,
+            authorizer=cognito_authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
