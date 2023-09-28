@@ -37,6 +37,7 @@ Worker.queue = SqsQueue.send
 
 save_permissions_with_tenant(ENGINE)
 
+
 class ReAuthException(Exception):
     """Exception raised when reAuth is required.
 
@@ -47,6 +48,7 @@ class ReAuthException(Exception):
     def __init__(self, operationName, message="Re-Auth is Required"):
         self.operationName = operationName
         super().__init__(self.message)
+
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
@@ -171,16 +173,14 @@ def handler(event, context):
             print(e)
 
         if reauth_apis:
-        #     operationName = incoming_event.get("headers", {}).get('operation-name',None)
-        #     print("OPERATION", operationName)
             print("SSM", reauth_apis)
-        #     if operationName in reauth_apis:
-        #         ## TODO - Check Aurora and If No Session then REAUTH
-        #         print("REQUIRE REAUTH")
-        #         raise Exception('Unauthorized')
-                # raise ReAuthException(operationName)
-
-
+            raise ReAuthException(reauth_apis)
+            # operationName = incoming_event.get("headers", {}).get('operation-name',None)
+            # print("OPERATION", operationName)
+            # if operationName in reauth_apis:
+            #     print("REQUIRE REAUTH")
+            #     raise Exception('Unauthorized')
+            #     raise ReAuthException(operationName)
 
     else:
         raise Exception(f'Could not initialize user context from event {event}')
