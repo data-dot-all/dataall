@@ -172,16 +172,6 @@ def handler(event, context):
             reauth_apis = None
             print("NO REAUTH SSM")
             print(e)
-
-        if reauth_apis and query.get('operationName', None) in reauth_apis:
-            raise ReAuthException(reauth_apis)
-            # operationName = incoming_event.get("headers", {}).get('operation-name',None)
-            # print("OPERATION", operationName)
-            # if operationName in reauth_apis:
-            #     print("REQUIRE REAUTH")
-            #     raise Exception('Unauthorized')
-            #     raise ReAuthException(operationName)
-
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
@@ -190,6 +180,12 @@ def handler(event, context):
     print(executable_schema)
     print(query)
     print(app_context)
+    if reauth_apis and query.get('operationName', None) in reauth_apis:
+        print("REQUIRE REAUTH")
+        raise ReAuthException(reauth_apis)
+        # operationName = incoming_event.get("headers", {}).get('operation-name',None)
+        # print("OPERATION", operationName)
+
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )
