@@ -72,6 +72,9 @@ source = app.node.try_get_context('repository_source') or 'codecommit'
 
 env = Environment(account=account_id, region=cdk_pipeline_region)
 
+# Central ECR repository - DPP Changes
+central_ecr = app.node.try_get_context('EcrConfiguration')
+
 pipeline = PipelineStack(
     app,
     "{resource_prefix}-{git_branch}-cicd-stack".format(resource_prefix=resource_prefix, git_branch=git_branch),
@@ -79,7 +82,8 @@ pipeline = PipelineStack(
     target_envs=target_envs,
     git_branch=git_branch,
     resource_prefix=resource_prefix,
-    source=source
+    source=source,
+    central_ecr=central_ecr,
 )
 
 Aspects.of(app).add(AwsSolutionsChecks(reports=True, verbose=False))

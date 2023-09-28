@@ -50,6 +50,7 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        api_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -145,6 +146,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
+            api_waf=api_waf
             **kwargs,
         )
 

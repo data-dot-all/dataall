@@ -15,6 +15,7 @@ class CloudfrontStage(Stage):
         tooling_account_id=None,
         custom_domain=None,
         custom_waf_rules=None,
+        cloudfront_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -27,6 +28,7 @@ class CloudfrontStage(Stage):
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
+            cloudfront_waf=cloudfront_waf
         )
 
         Tags.of(cloudfront_stack).add('Application', f'{resource_prefix}-{envname}')

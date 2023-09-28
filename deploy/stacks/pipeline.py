@@ -29,6 +29,7 @@ class PipelineStack(Stack):
         git_branch='main',
         resource_prefix='dataall',
         source='codecommit',
+        central_ecr=None,
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
@@ -111,11 +112,12 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
+        # Dpp changes - Yara repo name and token name changes
         if self.source == 'github':
             source = CodePipelineSource.git_hub(
-                repo_string='awslabs/aws-dataall',
+                repo_string='yara-digitalproduction/dpp-dp-aws-dataall',
                 branch=self.git_branch,
-                authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
+                authentication=SecretValue.secrets_manager(secret_id='/adf/github_token',json_field='token'),
             )
 
         else:
@@ -174,8 +176,8 @@ class PipelineStack(Stack):
 
         for target_env in target_envs:
             self.pipeline_bucket.grant_read(iam.AccountPrincipal(target_env['account']))
-
-            backend_stage = self.set_backend_stage(target_env, repository_name)
+            # Add central_ecr to backend stage
+            backend_stage = self.set_backend_stage(target_env, repository_name, central_ecr)
 
             if target_env.get('with_approval'):
                 backend_stage.add_pre(
@@ -588,7 +590,13 @@ class PipelineStack(Stack):
         )
         return repository_name
 
-    def set_backend_stage(self, target_env, repository_name):
+    def set_backend_stage(self, target_env, repository_name, central_ecr):
+        # Dpp changes for central ecr repo & API WAF
+        if central_ecr:
+            ecr_repo_name=f"arn:aws:ecr:{central_ecr['region']}:{central_ecr['account']}:repository/{central_ecr['repository_name']}"
+        else:
+            ecr_repo_name=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}'
+
         backend_stage = self.pipeline.add_stage(
             BackendStage(
                 self,
@@ -601,7 +609,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 tooling_account_id=self.account,
                 pipeline_bucket=self.pipeline_bucket_name,
-                ecr_repository=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}',
+                ecr_repository=ecr_repo_name,
                 commit_id=self.image_tag,
                 vpc_id=target_env.get('vpc_id'),
                 vpc_endpoints_sg=target_env.get('vpc_endpoints_sg'),
@@ -619,6 +627,7 @@ class PipelineStack(Stack):
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
+                api_waf=target_env.get('APIWAF')
             )
         )
         return backend_stage
@@ -686,6 +695,7 @@ class PipelineStack(Stack):
         )
 
     def set_cloudfront_stage(self, target_env):
+        # Dpp changes, add cloudfront_waf
         cloudfront_stage = self.pipeline.add_stage(
             CloudfrontStage(
                 self,
@@ -698,6 +708,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 tooling_account_id=self.account,
                 custom_domain=target_env.get('custom_domain'),
+                cloudfront_waf=target_env.get('CloudfrontWAF')
             )
         )
         front_stage_actions = (

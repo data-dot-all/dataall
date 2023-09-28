@@ -47,6 +47,7 @@ class LambdaApiStack(pyNestedClass):
         prod_sizing=False,
         user_pool=None,
         pivot_role_name=None,
+        api_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -170,6 +171,7 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             vpc,
             user_pool,
+            api_waf,
         )
 
         self.create_sns_topic(
@@ -321,6 +323,7 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix,
         vpc,
         user_pool,
+        api_waf,
     ):
 
         api_deploy_options = apigw.StageOptions(
@@ -358,19 +361,24 @@ class LambdaApiStack(pyNestedClass):
                 ip_address_version='IPV4',
                 scope='REGIONAL',
             )
-
-        acl = wafv2.CfnWebACL(
-            self,
-            'ACL-ApiGW',
-            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
-            scope='REGIONAL',
-            visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                cloud_watch_metrics_enabled=True,
-                metric_name='waf-apigw',
-                sampled_requests_enabled=True,
-            ),
-            rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
-        )
+        if api_waf:
+            acl = {
+                "Arn": api_waf.get("Arn"),
+                "logical_id": api_waf.get("logical_id")
+            }
+        else:
+            acl = wafv2.CfnWebACL(
+                self,
+                'ACL-ApiGW',
+                default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+                scope='REGIONAL',
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='waf-apigw',
+                    sampled_requests_enabled=True,
+                ),
+                rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
+            )
 
         wafv2.CfnWebACLAssociation(
             self,
