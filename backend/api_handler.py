@@ -184,7 +184,7 @@ def handler(event, context):
                 reauth_session = TenantPolicy.find_reauth_session(session, username)
                 print(reauth_session)
                 if not reauth_session:
-                    raise ReAuthException
+                    raise Exception("ReAuth")
         except Exception as e:
             print(f'REAUTH ERROR: {e}')
             return {
