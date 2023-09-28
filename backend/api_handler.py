@@ -187,7 +187,16 @@ def handler(event, context):
                     raise ReAuthException
         except Exception as e:
             print(f'REAUTH ERROR: {e}')
-            raise ReAuthException(reauth_apis)
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'content-type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Methods': '*',
+                },
+                'body': e,
+            }
         # operationName = incoming_event.get("headers", {}).get('operation-name',None)
         # print("OPERATION", operationName)
 
