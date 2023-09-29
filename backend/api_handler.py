@@ -195,7 +195,21 @@ def handler(event, context):
                     'Access-Control-Allow-Headers': '*',
                     'Access-Control-Allow-Methods': '*',
                 },
-                'body': "ReAuth Required",
+                'body': {
+                    "data": {query.get('operationName', "OPERATION") : None},
+                    "errors": [
+                        {
+                            "message": "ReAuth Required",
+                            "locations": None,
+                            "path": [query.get('operationName', "OPERATION")]
+                        }
+                    ]
+                }
+                
+                
+                
+                "ReAuth Required",
+                
             }
 
     success, response = graphql_sync(
@@ -217,3 +231,5 @@ def handler(event, context):
         },
         'body': response,
     }
+
+# assert result["errors"][0]["message"] == "Invalid"
