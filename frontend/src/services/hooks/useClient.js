@@ -6,6 +6,7 @@ import {
   HttpLink,
   InMemoryCache
 } from 'apollo-boost';
+import { Auth, Amplify } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { useToken, useAuth } from 'authentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -50,7 +51,7 @@ export const useClient = () => {
         });
         return forward(operation);
       });
-      const errorLink = onError(({ graphQLErrors, networkError }) => {
+      const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
         // if (graphQLErrors) {
         //   for (let err of graphQLErrors) {
         //     switch (err.extensions.code) {
