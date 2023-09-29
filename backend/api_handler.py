@@ -187,6 +187,16 @@ def handler(event, context):
                     raise Exception("ReAuth")
         except Exception as e:
             print(f'REAUTH ERROR: {e}')
+            response = {
+                "data": {query.get('operationName', "OPERATION") : None},
+                "errors": [
+                    {
+                        "message": "ReAuth Required",
+                        "locations": None,
+                        "path": [query.get('operationName', "OPERATION")]
+                    }
+                ]
+            }
             return {
                 'statusCode': 401,
                 'headers': {
@@ -195,16 +205,7 @@ def handler(event, context):
                     'Access-Control-Allow-Headers': '*',
                     'Access-Control-Allow-Methods': '*',
                 },
-                'body': {
-                    "data": {query.get('operationName', "OPERATION") : None},
-                    "errors": [
-                        {
-                            "message": "ReAuth Required",
-                            "locations": None,
-                            "path": [query.get('operationName', "OPERATION")]
-                        }
-                    ]
-                }
+                'body': json.dumps(response)
             }
 
     success, response = graphql_sync(
