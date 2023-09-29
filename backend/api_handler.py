@@ -205,11 +205,6 @@ def handler(event, context):
                         }
                     ]
                 }
-                
-                
-                
-                "ReAuth Required",
-                
             }
 
     success, response = graphql_sync(
