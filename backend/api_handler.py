@@ -195,10 +195,8 @@ def handler(event, context):
                     'Access-Control-Allow-Headers': '*',
                     'Access-Control-Allow-Methods': '*',
                 },
-                'body': e,
+                'body': "ReAuth Required",
             }
-        # operationName = incoming_event.get("headers", {}).get('operation-name',None)
-        # print("OPERATION", operationName)
 
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
