@@ -96,3 +96,17 @@ class Tenant(Base):
     description = Column(String, default='No description provided')
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
+
+
+class ReAuthSession(Base):
+    __tablename__ = 'auth_session'
+    sessionId = Column(String, primary_key=True, default=utils.uuid('auth_session'))
+    clientId = Column(String, nullable=True)
+    referrerUrl = Column(String, nullable=True)
+    stepUpStatus = Column(String, nullable=False)
+    token = Column(String, nullable=False)
+    ttl = Column(String, nullable=False)
+    username = Column(String, nullable=False)
+    created = Column(DateTime, default=datetime.datetime.now)
+    updated = Column(DateTime, onupdate=datetime.datetime.now)
+    deleted = Column(DateTime, nullable=True)

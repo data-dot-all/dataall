@@ -137,6 +137,34 @@ class TenantPolicy:
         return tenant_policy
 
     @staticmethod
+    def find_reauth_session(session, username: str):
+        reauth_session = (
+            session.query(models.ReAuthSession)
+            .filter(
+                and_(
+                    models.ReAuthSession.username == username,
+                )
+            )
+            .first()
+        )
+        return reauth_session
+    
+    @staticmethod
+    def create_reauth_session(session, username: str):
+        reauth_user_session = models.ReAuthSession(
+            clientId="testclientId",
+            referrerUrl='testreferrerUrl',
+            stepUpStatus='teststepup',
+            token='token',
+            ttl='5',
+            username=username
+        )
+        session.add(reauth_user_session)
+        session.commit()
+        return reauth_user_session
+
+
+    @staticmethod
     def validate_find_tenant_policy(group_uri, tenant_name):
         if not group_uri:
             raise exceptions.RequiredParameter(param_name='group_uri')

@@ -47,7 +47,6 @@ class ReAuthException(Exception):
     """
     def __init__(self, operationName, message="Re-Auth is Required"):
         self.operationName = operationName
-        self.message = message
         super().__init__(self.message)
 
 
@@ -167,47 +166,23 @@ def handler(event, context):
         }
 
         try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis")
-            print("SSM", reauth_apis)
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}//reauth/apis")
         except Exception as e:
             reauth_apis = None
             print("NO REAUTH SSM")
             print(e)
+
+        if reauth_apis:
+            print("SSM", reauth_apis)
+            raise ReAuthException(reauth_apis)
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
-    if reauth_apis and query.get('operationName', None) in reauth_apis:
-        print("REQUIRE REAUTH")
-        try:
-            with ENGINE.scoped_session() as session:
-                reauth_session = TenantPolicy.find_reauth_session(session, username)
-                print(reauth_session)
-                if not reauth_session:
-                    raise Exception("ReAuth")
-        except Exception as e:
-            print(f'REAUTH ERROR: {e}')
-            response = {
-                "data": {query.get('operationName', "OPERATION") : None},
-                "errors": [
-                    {
-                        "message": "ReAuth Required",
-                        "locations": None,
-                        "path": [query.get('operationName')]
-                    }
-                ]
-            }
-            return {
-                'statusCode': 401,
-                'headers': {
-                    'content-type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Methods': '*',
-                },
-                'body': json.dumps(response)
-            }
-
+    print("PRINTING")
+    print(executable_schema)
+    print(query)
+    print(app_context)
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )

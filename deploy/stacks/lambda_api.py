@@ -129,6 +129,23 @@ class LambdaApiStack(pyNestedClass):
             )
         )
 
+        reauth_sg = self.create_lambda_sgs(envname, "reauth", resource_prefix, vpc)
+        self.reauth_handler = _lambda.DockerImageFunction(
+            self,
+            'ReAuth',
+            function_name=f'{resource_prefix}-{envname}-reauth',
+            description='dataall reauth workflow',
+            role=self.create_function_role(envname, resource_prefix, 'reauth', pivot_role_name),
+            code=_lambda.DockerImageCode.from_ecr(
+                repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
+            ),
+            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            memory_size=1664 if prod_sizing else 256,
+            timeout=Duration.minutes(15),
+            vpc=vpc,
+            security_groups=[reauth_sg],
+            tracing=_lambda.Tracing.ACTIVE,
+        )
         # Add VPC Endpoint Connectivity
         if vpce_connection:
             for lmbda in [
@@ -335,6 +352,7 @@ class LambdaApiStack(pyNestedClass):
         graphql_api = self.set_up_graphql_api_gateway(
             api_deploy_options,
             self.api_handler,
+            self.reauth_handler,
             self.backend_api_name,
             self.elasticsearch_proxy_handler,
             envname,
@@ -394,6 +412,7 @@ class LambdaApiStack(pyNestedClass):
         self,
         api_deploy_options,
         api_handler,
+        reauth_handler,
         backend_api_name,
         elasticsearch_proxy_handler,
         envname,
@@ -469,6 +488,7 @@ class LambdaApiStack(pyNestedClass):
             )
         api_url = gw.url
         integration = apigw.LambdaIntegration(api_handler)
+        reauth_integration = apigw.LambdaIntegration(reauth_handler)
         request_validator = apigw.RequestValidator(
             self,
             f'{resource_prefix}-{envname}-api-validator',
@@ -528,7 +548,7 @@ class LambdaApiStack(pyNestedClass):
         initiate_auth = gw.root.add_resource(path_part='initiate-auth')
         initiate_auth_proxy = initiate_auth.add_resource(
             path_part='{proxy+}',
-            default_integration=integration,
+            default_integration=reauth_integration,
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_methods=apigw.Cors.ALL_METHODS,
                 allow_origins=apigw.Cors.ALL_ORIGINS,
