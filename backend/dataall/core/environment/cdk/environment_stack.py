@@ -1,11 +1,9 @@
 import logging
 import os
-import pathlib
 from abc import abstractmethod
 from typing import List, Type
 
 from aws_cdk import (
-    custom_resources as cr,
     aws_s3 as s3,
     aws_iam as iam,
     aws_sns as sns,

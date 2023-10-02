@@ -1,4 +1,5 @@
-from dataall.base.context import get_context
+import os
+from dataall.base import db
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -13,8 +14,8 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     """
     def get_statements(self):
         allowed_buckets = []
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
+        engine = db.get_engine(envname=os.environ.get('envname', 'local'))
+        with engine.scoped_session() as session:
             datasets = DatasetRepository.query_environment_datasets(
                 session, uri=self.environmentUri, filter=None
             )
