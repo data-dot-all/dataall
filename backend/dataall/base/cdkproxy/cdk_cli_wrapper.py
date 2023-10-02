@@ -8,7 +8,6 @@ import logging
 import os
 import subprocess
 import sys
-import shlex
 from abc import abstractmethod
 from typing import Dict
 
@@ -132,7 +131,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            cmd = [
+            args = [
                 '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy --all',
@@ -159,21 +158,15 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            args = ['', '.', '~/.nvm/nvm.sh']
             logger.info(f"Running command : \n {' '.join(args)}")
 
-            # In this particular case it is not possible to break the command (string) into a list of arguments
-            # to remediate any possible code injection, we sanitize the arguments with the CommandSanitizer
-            # in any case, the only upstream input in the command is the stack.name
-
-            process = subprocess.run(  # nosemgrep
-                CommandSanitizer(args).command,  # nosemgrep
-                text=True,  # nosemgrep
-                shell=True,  # nosemgrep  #nosec
-                encoding='utf-8',  # nosemgrep
-                env=env,  # nosemgrep
-                cwd=cwd,  # nosemgrep
-                stdout=subprocess.PIPE  # nosemgrep
+            process = subprocess.run(
+                CommandSanitizer(args).command,
+                text=True,
+                shell=False,
+                encoding='utf-8',
+                env=env,
+                cwd=cwd,
             )
 
             if extension:
@@ -215,7 +208,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd1 = ['.', '~/.nvm/nvm.sh'] #TODO: test in AWS!
+    cmd1 = ['.', '~/.nvm/nvm.sh']
     logger.info(f"Running command {' '.join(cmd1)}")
     subprocess.run(
         cmd1,
