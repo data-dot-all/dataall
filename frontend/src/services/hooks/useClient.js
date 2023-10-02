@@ -92,7 +92,7 @@ export const useClient = () => {
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
                 console.error(oldHeaders);
-                Auth.signOut();
+                // Auth.signOut();
                 handleReAuthModalOpen(true);
                 return (
                   <ReAuthModal
