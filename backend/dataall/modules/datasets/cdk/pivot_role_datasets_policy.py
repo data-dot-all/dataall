@@ -1,4 +1,7 @@
+from dataall.base.context import get_context
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from aws_cdk import aws_iam as iam
 
 
@@ -9,10 +12,21 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     - ....
     """
     def get_statements(self):
+        allowed_buckets = []
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            datasets = DatasetRepository.query_environment_datasets(
+                session, uri=self.environmentUri, filter=None
+            )
+            if datasets:
+                dataset: Dataset
+                for dataset in datasets:
+                    allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+
         statements = [
-            # S3 Imported Buckets - restrict resources via bucket policies
+            # S3 Dataset Buckets
             iam.PolicyStatement(
-                sid='ImportedBuckets',
+                sid='DatasetBuckets',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:List*',
@@ -21,11 +35,10 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     's3:GetObject',
                     's3:PutBucketPolicy',
                     's3:PutBucketTagging',
-                    's3:PutObject',
                     's3:PutObjectAcl',
                     's3:PutBucketOwnershipControls',
                 ],
-                resources=['arn:aws:s3:::*'],
+                resources=allowed_buckets,
             ),
             # For dataset preview
             iam.PolicyStatement(

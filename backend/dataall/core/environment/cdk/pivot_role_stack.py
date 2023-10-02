@@ -13,13 +13,15 @@ class PivotRoleStatementSet(object):
             env_resource_prefix,
             role_name,
             account,
-            region
+            region,
+            environmentUri
     ):
         self.stack = stack
         self.env_resource_prefix = env_resource_prefix
         self.role_name = role_name
         self.account = account
         self.region = region
+        self.environmentUri = environmentUri
 
     def generate_policies(self) -> List[iam.ManagedPolicy]:
         """
@@ -66,6 +68,7 @@ class PivotRole(NestedStack):
         super().__init__(scope, construct_id, **kwargs)
         self.env_resource_prefix = config['resourcePrefix']
         self.role_name = config['roleName']
+        self.environmentUri = config['environmentUri']
 
         from dataall.core.environment.cdk import pivot_role_core_policies
 
@@ -94,7 +97,8 @@ class PivotRole(NestedStack):
             env_resource_prefix=self.env_resource_prefix,
             role_name=self.role_name,
             account=self.account,
-            region=self.region
+            region=self.region,
+            environmentUri=self.environmentUri
         ).generate_policies()
 
         logger.info(f'Managed Policies: {managed_policies}')

@@ -148,6 +148,7 @@ class EnvironmentSetup(Stack):
                 'accountId': self.dataall_central_account,
                 'externalId': self.external_id,
                 'resourcePrefix': self._environment.resourcePrefix,
+                'environmentUri': self._environment.environmentUri
             }
             pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
             self.pivot_role = iam.Role.from_role_arn(
