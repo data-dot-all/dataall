@@ -202,6 +202,25 @@ class ContainerStack(pyNestedClass):
         self.ecs_task_definitions_families = [
             cdkproxy_task_definition.family,
         ]
+        reauth_session_task, reauth_session_task_def = self.set_scheduled_task(
+            cluster=cluster,
+            command=['python3.8', '-m', 'dataall.core.environment.tasks.reauth_session_cleaner'],
+            container_id=f'container',
+            ecr_repository=ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                envname, resource_prefix, log_group_name='reauth-session'
+            ),
+            schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
+            scheduled_task_id=f'{resource_prefix}-{envname}-reauth-session-schedule',
+            task_id=f'{resource_prefix}-{envname}-reauth-session',
+            task_role=self.task_role,
+            vpc=vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(reauth_session_task.task_definition.family)
 
         self.add_catalog_indexer_task()
         self.add_sync_dataset_table_task()

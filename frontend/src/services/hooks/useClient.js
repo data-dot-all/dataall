@@ -121,9 +121,13 @@ export const useClient = () => {
 
 // Step-up - initiate
 async function getNewToken() {
-  await Auth.signOut();
-  useAuth();
-  return useToken();
+  const { user, logout, login } = useAuth();
+  await logout();
+  navigate('/');
+  await login();
+  const session = await Auth.currentSession();
+  const t = await session.getIdToken().getJwtToken();
+  return t;
   // const login = async () => {
   //   Auth.federatedSignIn()
   //     .then((user) => {

@@ -227,5 +227,3 @@ def handler(event, context):
         },
         'body': response,
     }
-
-# assert result["errors"][0]["message"] == "Invalid"
