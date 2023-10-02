@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 class S3DatasetClient:
 
     def __init__(self, dataset: Dataset):
-        self._client = SessionHelper.remote_session(dataset.AwsAccountId).client(
+        self._client = SessionHelper.remote_session(accountid=dataset.AwsAccountId, role=dataset.IAMDatasetAdminRoleArn).client(
             's3',
             region_name=dataset.region,
             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
