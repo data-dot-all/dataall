@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useToken, useAuth } from 'authentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useNavigate } from 'react-router';
+import { ReAuthModal } from 'authentication/components/ReAuthModal';
 
 const defaultOptions = {
   watchQuery: {
@@ -31,6 +32,16 @@ export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
+  // const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const [isReAuthOpen, setIsReAuthOpen] = useState(false);
+
+  const handleReAuthModalOpen = () => {
+    setIsReAuthOpen(true);
+  };
+
+  const handleReAuthModalClose = () => {
+    setIsReAuthOpen(false);
+  };
 
   useEffect(() => {
     const initClient = async () => {
@@ -80,14 +91,24 @@ export const useClient = () => {
               );
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
-                const newToken = ReAuthtNewToken();
-                operation.setContext({
-                  headers: {
-                    ...oldHeaders,
-                    authorization: newToken
-                  }
-                });
-                return forward(operation);
+                console.error(oldHeaders);
+                Auth.signOut();
+                handleReAuthModalOpen(true);
+                return (
+                  <ReAuthModal
+                    onApply={handleReAuthModalClose}
+                    onClose={handleReAuthModalClose}
+                    open={isReAuthOpen}
+                  />
+                );
+                // const newToken = ReAuthtNewToken();
+                // operation.setContext({
+                //   headers: {
+                //     ...oldHeaders,
+                //     authorization: newToken
+                //   }
+                // });
+                // return forward(operation);
               }
             });
           }
@@ -119,7 +140,7 @@ export const useClient = () => {
     //     }
     //   });
     // }
-  }, [token, dispatch]);
+  }, [token, dispatch, isReAuthOpen]);
   return client;
 };
 

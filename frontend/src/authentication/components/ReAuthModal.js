@@ -24,12 +24,11 @@ import { Auth } from 'aws-amplify';
 //     body: JSON.stringify(credentials)
 //   })
 //     .then(data => data.json())
-//  }
+//  } 
 
-
-export default function ReAuthModal() {
+  export const ReAuthModal = (props) => {
   const { onApply, onClose, open, ...other } = props;
-
+  const { logout, login } = useAuth();
   // const handleSubmit = async e => {
   //   e.preventDefault();
   //   const token = await loginUser({
@@ -41,6 +40,7 @@ export default function ReAuthModal() {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
+      await logout();
       await Auth.signIn(values.username, values.password);
       // await this.props.SetAuthState(AuthState.SignedIn)
       setStatus({ success: true });
@@ -55,6 +55,9 @@ export default function ReAuthModal() {
       if (onApply) {
         onApply();
       }
+
+      // TODO: QUERY TO CREATE REAUTH SESSION
+
     } catch (err) {
       console.error(err);
       setStatus({ success: false });
