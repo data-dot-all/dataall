@@ -22,6 +22,7 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.utils.shell_utils import CommandSanitizer
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,11 @@ class PipelineStack(Stack):
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
+
+                CommandSanitizer(args=[pipeline.repo])
+
+                # This command is too complex to be executed as a list of commands. We need to run it with shell=True
+                # However, the input arguments have be sanitized with the CommandSanitizer
 
                 process = subprocess.run(  # nosemgrep
                     "; ".join(update_cmds),  # nosemgrep
@@ -507,6 +513,7 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
+    @staticmethod
     def initialize_repo(pipeline, code_dir_path, env_vars):
 
         venv_name = ".venv"
@@ -520,6 +527,11 @@ class PipelineStack(Stack):
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
+
+        CommandSanitizer(args=[pipeline.repo])
+
+        # This command is too complex to be executed as a list of commands. We need to run it with shell=True
+        # However, the input arguments have be sanitized with the CommandSanitizer
 
         process = subprocess.run(  # nosemgrep
             '; '.join(cmd_init),  # nosemgrep

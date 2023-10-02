@@ -131,7 +131,17 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            args = [
+            input_args = [
+                stack.name,
+                stack.accountid,
+                stack.region,
+                stack.stack,
+                stack.targetUri
+            ]
+
+            CommandSanitizer(input_args)
+
+            cmd = [
                 '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy --all',
@@ -158,15 +168,18 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            logger.info(f"Running command : \n {' '.join(args)}")
+            logger.info(f"Running command : \n {' '.join(cmd)}")
+
+            # This command is too complex to be executed as a list of commands. We need to run it with shell=True
+            # However, the input arguments have be sanitized with the CommandSanitizer
 
             process = subprocess.run(
-                CommandSanitizer(args).command,
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
+                ' '.join(cmd),  # nosemgrep
+                text=True,  # nosemgrep
+                shell=True,  # nosec  # nosemgrep
+                encoding='utf-8',  # nosemgrep
+                env=env,  # nosemgrep
+                cwd=cwd,  # nosemgrep
             )
 
             if extension:
