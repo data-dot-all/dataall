@@ -173,7 +173,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             # This command is too complex to be executed as a list of commands. We need to run it with shell=True
             # However, the input arguments have be sanitized with the CommandSanitizer
 
-            process = subprocess.run(
+            process = subprocess.run(  # nosemgrep
                 ' '.join(cmd),  # nosemgrep
                 text=True,  # nosemgrep
                 shell=True,  # nosec  # nosemgrep
