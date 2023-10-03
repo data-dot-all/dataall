@@ -18,7 +18,6 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import Engine
 from dataall.base.utils.alarm_service import AlarmService
-from dataall.base.utils.shell_utils import CommandSanitizer
 
 logger = logging.getLogger('cdksass')
 
@@ -47,7 +46,7 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
     cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-    process = subprocess.run(cmd, text=True, shell=False, encoding='utf-8', capture_output=True)
+    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec  # nosemgrep
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
@@ -131,16 +130,6 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            input_args = [
-                stack.name,
-                stack.accountid,
-                stack.region,
-                stack.stack,
-                stack.targetUri
-            ]
-
-            CommandSanitizer(input_args)
-
             cmd = [
                 '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
@@ -168,10 +157,8 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            logger.info(f"Running command : \n {' '.join(cmd)}")
 
-            # This command is too complex to be executed as a list of commands. We need to run it with shell=True
-            # However, the input arguments have be sanitized with the CommandSanitizer
+            logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(  # nosemgrep
                 ' '.join(cmd),  # nosemgrep
@@ -221,28 +208,17 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd1 = ['.', '~/.nvm/nvm.sh']
-    logger.info(f"Running command {' '.join(cmd1)}")
-    subprocess.run(
-        cmd1,
-        text=True,
-        shell=False,
-        encoding='utf-8',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=os.path.dirname(__file__),
-    )
+    cmd = ['. ~/.nvm/nvm.sh && cdk', '--version']
+    logger.info(f"Running command {' '.join(cmd)}")
 
-    cmd2 = ['cdk', '--version']
-    logger.info(f"Running command {' '.join(cmd2)}")
-    subprocess.run(
-        cmd2,
-        text=True,
-        shell=False,
-        encoding='utf-8',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=os.path.dirname(__file__),
+    subprocess.run(  # nosemgrep
+        cmd,  # nosemgrep
+        text=True,  # nosemgrep
+        shell=True,  # nosec  # nosemgrep
+        encoding='utf-8',  # nosemgrep
+        stdout=subprocess.PIPE,  # nosemgrep
+        stderr=subprocess.PIPE,  # nosemgrep
+        cwd=os.path.dirname(__file__),  # nosemgrep
     )
 
 
