@@ -33,11 +33,11 @@ export const useClient = () => {
   const [client, setClient] = useState(null);
   const token = useToken();
   // const [isOpeningModal, setIsOpeningModal] = useState(false);
-  const [isReAuthOpen, setIsReAuthOpen] = useState(true);
+  const [isReAuthOpen, setIsReAuthOpen] = useState(false);
 
-  // const handleReAuthModalOpen = () => {
-  //   setIsReAuthOpen(true);
-  // };
+  const handleReAuthModalOpen = () => {
+    setIsReAuthOpen(true);
+  };
 
   const handleReAuthModalClose = () => {
     setIsReAuthOpen(false);
@@ -92,9 +92,8 @@ export const useClient = () => {
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
                 console.error(oldHeaders);
-                console.error(isReAuthOpen);
                 // Auth.signOut();
-                // handleReAuthModalOpen(true);
+                handleReAuthModalOpen(true);
                 return (
                   <ReAuthModal
                     onApply={handleReAuthModalClose}
