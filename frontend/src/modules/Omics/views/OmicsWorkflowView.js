@@ -16,10 +16,7 @@ import {
 } from '@mui/material';
 import { Info } from '@mui/icons-material';
 import { useClient } from 'services';
-import {
-  ChevronRightIcon, 
-  useSettings
-} from 'design';
+import { ChevronRightIcon, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 import { getOmicsWorkflow } from '../services';
@@ -27,7 +24,7 @@ import { getOmicsWorkflow } from '../services';
 import { OmicsWorkflowDetails } from '../components';
 
 const tabs = [
-  { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+  { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> }
 ];
 
 const OmicsWorkflowView = () => {
@@ -39,16 +36,16 @@ const OmicsWorkflowView = () => {
   // const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
+  // const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [omicsWorkflow, setOmicsWorkflow] = useState(null);
 
-  const handleDeleteObjectModalOpen = () => {
-    setIsDeleteObjectModalOpen(true);
-  };
+  // const handleDeleteObjectModalOpen = () => {
+  //   setIsDeleteObjectModalOpen(true);
+  // };
 
-  const handleDeleteObjectModalClose = () => {
-    setIsDeleteObjectModalOpen(false);
-  };
+  // const handleDeleteObjectModalClose = () => {
+  //   setIsDeleteObjectModalOpen(false);
+  // };
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
@@ -73,7 +70,7 @@ const OmicsWorkflowView = () => {
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
-  
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -86,7 +83,6 @@ const OmicsWorkflowView = () => {
       <Helmet>
         <title>Omics: Workflow Details</title>
       </Helmet>
-      
       <Box
         sx={{
           backgroundColor: 'background.default',

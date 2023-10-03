@@ -12,7 +12,7 @@ export const OmicsWorkflowDetails = (props) => {
           <ObjectBrief
             title="Details"
             uri={workflow.id || '-'}
-            name={workflow.label || '-'}
+            name={workflow.name || '-'}
             description={workflow.description || 'No description provided'}
             tags={
               workflow.tags && workflow.tags.length > 0 ? workflow.tags : ['-']
@@ -28,7 +28,7 @@ export const OmicsWorkflowDetails = (props) => {
           // language={workflow.language}
           // runTime={workflow.runTime || '-'}
           // listPrice={workflow.listPrice}
-          // description={workflow.description}
+          description={workflow.description}
         />
       </Grid>
     </Grid>
