@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def clean_expired_reauth_sessions(engine):
-    now = datetime.datetime.now()
+    now = datetime.datetime.utcnow()
     with engine.scoped_session() as session:
         reauth_sessions = session.query(ReAuthSession).all()
         log.info(f'Found {len(reauth_sessions)} reauth sessions')
@@ -23,7 +23,7 @@ def clean_expired_reauth_sessions(engine):
         try:
             for reauth_session in reauth_sessions:
                 expiry_time = reauth_session.created + datetime.timedelta(minutes=int(reauth_session.ttl))
-                if reauth_session.created > expiry_time:
+                if now > expiry_time:
                     session.delete(reauth_session)
                     session.commit()
         except Exception as e:
