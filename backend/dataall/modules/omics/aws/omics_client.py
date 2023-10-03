@@ -15,7 +15,7 @@ class OmicsClient:
 
     def __init__(self, awsAccountId: str, region: str):
         # session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::545117064741:role/dataallPivotRole')
-        session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::290341535759:role/OmicsCallsPatrickRole')
+        session = SessionHelper.remote_session(awsAccountId)
         self._client = session.client('omics', region_name=region)
         
     #TODO: Implement boto3 client calls for Omics

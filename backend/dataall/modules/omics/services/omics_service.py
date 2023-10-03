@@ -135,7 +135,7 @@ class OmicsService:
     @staticmethod
     def get_omics_workflow(workflowId: str) -> dict:
         """List Omics workflows."""
-        omicsClient = OmicsClient('545117064741')
+        omicsClient = OmicsClient('856197974211','us-east-1')
         response = omicsClient.get_workflow(workflowId)
         parameterTemplateJson = json.dumps(response['parameterTemplate'])
         response['parameterTemplate'] = parameterTemplateJson
@@ -144,7 +144,7 @@ class OmicsService:
     @staticmethod
     def get_workflow_run(runId: str) -> dict:
         """List Omics workflows."""
-        omicsClient = OmicsClient('290341535759')
+        omicsClient = OmicsClient('856197974211','us-east-1')
         response = omicsClient.get_workflow_run(runId)
         return response
 

@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c 'aws configure set region "eu-west-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
+    entrypoint: /bin/bash -c 'aws configure set region "us-east-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
     expose:
       - 2805
     ports:
@@ -17,8 +17,8 @@ services:
     environment:
       envname: 'dkrcompose'
       config_location: "/config.json"
-      AWS_REGION: "${AWS_REGION:-eu-west-1}"
-      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-us-east-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
@@ -40,8 +40,8 @@ services:
     environment:
       envname: 'dkrcompose'
       config_location: "/config.json"
-      AWS_REGION: "${AWS_REGION:-eu-west-1}"
-      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-us-east-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
