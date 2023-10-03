@@ -12,10 +12,8 @@ class OmicsWorkflowType(enum.Enum):
     PRIVATE = "PRIVATE"
     READY2RUN = "READY2RUN"
 
-## TODO: define the fields in the RDS tables
 class OmicsWorkflow(Resource, Base):
     __tablename__ = "omics_workflow"
-    # workflowid = Column(String, nullable=False, primary_key=True, default=utils.uuid("omicsWorkflowUri"))
     arn = Column(String, nullable=False)
     id = Column(String, nullable=False, primary_key=True, default=utils.uuid("omicsWorkflowUri"))
     label = Column(String, nullable=False, default=utils.uuid("omicsWorkflowUri"))
@@ -24,7 +22,7 @@ class OmicsWorkflow(Resource, Base):
     status = Column(String, nullable=False)
     type = Column(String, nullable=False)
     description = Column(String, nullable=True)
-     # TODO: add...
+    environmentUri = Column(String, nullable=False)
 
 class OmicsRun(Resource, Base):
     __tablename__ = "omics_run"
