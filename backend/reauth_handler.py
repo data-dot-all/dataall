@@ -10,14 +10,9 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
-from dataall.core.tasks.service_handlers import Worker
-from dataall.base.aws.sqs import SqsQueue
-from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.base.db import get_engine
-from dataall.core.permissions import permissions
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
@@ -33,7 +28,6 @@ SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
-Worker.queue = SqsQueue.send
 
 save_permissions_with_tenant(ENGINE)
 
@@ -137,68 +131,20 @@ def handler(event, context):
             groups = get_groups(claims)
             log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
-                for group in groups:
-                    policy = TenantPolicy.find_tenant_policy(
-                        session, group, 'dataall'
-                    )
-                    if not policy:
-                        print(
-                            f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
-                        )
-                        TenantPolicy.attach_group_tenant_policy(
-                            session=session,
-                            group=group,
-                            permissions=permissions.TENANT_ALL,
-                            tenant_name='dataall',
-                        )
-
+                reauth_session = TenantPolicy.create_reauth_session(session, username)
+                print(reauth_session)
         except Exception as e:
-            print(f'Error managing groups due to: {e}')
+            print(f'Error creating reauth session due to: {e}')
             groups = []
-
-        set_context(RequestContext(ENGINE, username, groups))
-
-        app_context = {
-            'engine': ENGINE,
-            'username': username,
-            'groups': groups,
-            'schema': SCHEMA,
-        }
-
-        try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}//reauth/apis")
-        except Exception as e:
-            reauth_apis = None
-            print("NO REAUTH SSM")
-            print(e)
-
-        if reauth_apis:
-            print("SSM", reauth_apis)
-            raise ReAuthException(reauth_apis)
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
-    query = json.loads(event.get('body'))
-    print("PRINTING")
-    print(executable_schema)
-    print(query)
-    print(app_context)
-    success, response = graphql_sync(
-        schema=executable_schema, data=query, context_value=app_context
-    )
-
-    dispose_context()
-    response = json.dumps(response)
-
-    log.info('Lambda Response %s', response)
-
     return {
-        'statusCode': 200 if success else 400,
+        'statusCode': 200,
         'headers': {
             'content-type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
         },
-        'body': response,
     }

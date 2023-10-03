@@ -32,6 +32,8 @@ def create_react_env_file(
     print(f'GraphQl API: {graphql_api_url}')
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
+    reauth_api_url = f'{api_url}initiate-auth/api'
+    print(f'ReAuth API: {reauth_api_url}')
 
     pivot_role_auto_create = ssm.get_parameter(Name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate")['Parameter'][
         'Value'
@@ -62,6 +64,7 @@ def create_react_env_file(
         file_content = f"""GENERATE_SOURCEMAP=false
 REACT_APP_GRAPHQL_API={graphql_api_url}
 REACT_APP_SEARCH_API={search_api_url}
+REACT_APP_REAUTH_API={reauth_api_url}
 REACT_APP_COGNITO_USER_POOL_ID={user_pool_id}
 REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
 REACT_APP_COGNITO_DOMAIN={domain}
