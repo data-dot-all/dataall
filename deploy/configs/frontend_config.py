@@ -33,7 +33,7 @@ def create_react_env_file(
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
     reauth_api_url = f'{api_url}initiate-auth/api'
-    print(f'Search API: {reauth_api_url}')
+    print(f'ReAuth API: {reauth_api_url}')
 
     pivot_role_auto_create = ssm.get_parameter(Name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate")['Parameter'][
         'Value'

@@ -204,7 +204,7 @@ class ContainerStack(pyNestedClass):
         ]
         reauth_session_task, reauth_session_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.core.environment.tasks.reauth_session_cleaner'],
+            command=['python3.8', '-m', 'dataall.core.permissions.tasks.reauth_session_cleaner'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
