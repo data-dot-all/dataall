@@ -56,14 +56,13 @@ OmicsWorkflow = gql.ObjectType(
     name="OmicsWorkflow",
     fields=[
         gql.Field(name="arn", type=gql.String),
-        # gql.Field(name="creationTime", type=gql.String),
-        # gql.Field(name="digest", type=gql.String),
         gql.Field(name="id", type=gql.String),
         gql.Field(name="name", type=gql.String),
         gql.Field(name="status", type=gql.String),
         gql.Field(name="type", type=gql.String),
         gql.Field(name="description", type=gql.String),
-        gql.Field(name="parameterTemplate", type=gql.String),
+        gql.Field(name="parameterTemplate", type=gql.String), # from the omics client
+        gql.Field(name="environmentUri", type=gql.String),
     ],
 )
 

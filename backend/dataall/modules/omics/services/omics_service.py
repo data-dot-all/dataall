@@ -13,13 +13,9 @@ from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
-from dataall.modules.omics.db.models import *
 import json
 
-from dataall.modules.omics.aws.omics_client import client
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 from dataall.modules.omics.aws.omics_client import OmicsClient
 from dataall.modules.omics.db.models import OmicsRun
@@ -135,24 +131,24 @@ class OmicsService:
     @staticmethod
     def get_omics_workflow(workflowId: str) -> dict:
         """List Omics workflows."""
-        omicsClient = OmicsClient('856197974211','us-east-1')
-        response = omicsClient.get_workflow(workflowId)
-        parameterTemplateJson = json.dumps(response['parameterTemplate'])
-        response['parameterTemplate'] = parameterTemplateJson
+        with _session() as session:
+            response = OmicsClient.get_omics_workflow(id=workflowId, session=session)
+            parameterTemplateJson = json.dumps(response['parameterTemplate'])
+            response['parameterTemplate'] = parameterTemplateJson
         return response
     
     @staticmethod
     def get_workflow_run(runId: str) -> dict:
         """List Omics workflows."""
-        omicsClient = OmicsClient('856197974211','us-east-1')
-        response = omicsClient.get_workflow_run(runId)
+        with _session() as session:
+            response = OmicsClient.get_workflow_run(id=runId, session=session)
         return response
 
     @staticmethod
     def run_omics_workflow(workflowId: str, workflowType: str, roleArn: str, parameters: str) -> dict:
         """List Omics workflows."""
-        omicsClient = OmicsClient('290341535759')
-        response = omicsClient.run_omics_workflow(workflowId,workflowType, roleArn, parameters)
+        with _session() as session:
+            response = OmicsClient.run_omics_workflow(workflowId,workflowType, roleArn, parameters, session)
         return response
     
     @staticmethod
@@ -172,18 +168,6 @@ class OmicsService:
             return OmicsRepository(session).paginated_omics_workflows(
                 filter=filter
             )
-    # TODO: clean-up
-    # Replaced by ecs task
-    # @staticmethod
-    # def load_omics_workflows(filter: dict) -> dict:
-    #     """List Omics workflows."""
-    #     omicsClient = OmicsClient('545117064741')
-    #     workflows = omicsClient.list_workflows()
-    #     for workflow in workflows:
-    #         omicsWorkflow = OmicsWorkflow(id=workflow['id'], name=workflow['name'], arn=workflow['arn'], status=workflow['status'], type=workflow['type'])
-    #         with _session() as session:
-    #             OmicsRepository(session).save_omics_workflow(omicsWorkflow)
-    #     return omicsClient.list_workflows()
 
 
     @staticmethod

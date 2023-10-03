@@ -25,8 +25,7 @@ def fetch_omics_workflows(engine):
         environments = session.query(Environment)
         is_first_time = True
         for env in environments:
-            omicsClient = OmicsClient(awsAccountId=env.AwsAccountId, region=env.region)
-            workflows = omicsClient.list_workflows()
+            workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region)
             for workflow in workflows:
                 if is_first_time or workflow['type'] == OmicsWorkflowType.PRIVATE.value:
                     omicsWorkflow = OmicsWorkflow(
@@ -36,7 +35,6 @@ def fetch_omics_workflows(engine):
                         status=workflow['status'],
                         type=workflow['type'],
                         environmentUri=env.environmentUri,
-                        awsAccount=env.AwsAccountId
                     )
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
             is_first_time = False

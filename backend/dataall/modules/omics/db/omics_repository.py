@@ -19,6 +19,9 @@ class OmicsRepository(EnvironmentResource):
     def __init__(self, session):
         self._session = session
 
+    def get_workflow(self, id: str):
+        return self._session.query(OmicsWorkflow).get(id)
+
     def _query_workflows(self, filter) -> Query:
         query = self._session.query(OmicsWorkflow)
         # if filter and filter.get("term"):
