@@ -1,6 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from 'design';
+import { ObjectBrief } from 'design';
 
 export const OmicsWorkflowDetails = (props) => {
   const { workflow, ...other } = props;
@@ -13,24 +13,25 @@ export const OmicsWorkflowDetails = (props) => {
             title="Details"
             uri={workflow.id || '-'}
             name={workflow.name || '-'}
-            description={workflow.description || 'No description provided'}
+            description={workflow.description || '-'}
+            parameterTemplate={workflow.parameterTemplate || '-'}
             tags={
               workflow.tags && workflow.tags.length > 0 ? workflow.tags : ['-']
             }
           />
         </Box>
       </Grid>
-      <Grid item lg={4} xl={3} xs={12}>
+      {/* <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           name={workflow.name}
           publisher={workflow.id}
-          // version={workflow.version}
+          parameterTemplate={workflow.parameterTemplate}
           // language={workflow.language}
           // runTime={workflow.runTime || '-'}
           // listPrice={workflow.listPrice}
           description={workflow.description}
         />
-      </Grid>
+      </Grid> */}
     </Grid>
   );
 };

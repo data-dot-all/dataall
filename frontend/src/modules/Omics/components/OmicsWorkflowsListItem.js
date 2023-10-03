@@ -41,7 +41,7 @@ export const OmicsWorkflowsListItem = (props) => {
                 color="textPrimary"
                 variant="h6"
                 onClick={() => {
-                  navigate(`/console/omics/${workflow.id}`);
+                  navigate(`/console/omics/workflows/${workflow.id}`);
                 }}
                 sx={{
                   width: '99%',
@@ -236,7 +236,7 @@ export const OmicsWorkflowsListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={`/console/omics/${workflow.id}`}
+              to={`/console/omics/workflows/${workflow.id}`}
             >
               Learn More
             </Button>

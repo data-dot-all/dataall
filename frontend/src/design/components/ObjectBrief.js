@@ -20,6 +20,7 @@ export const ObjectBrief = (props) => {
     topics,
     title,
     confidentiality,
+    parameterTemplate,
     ...other
   } = props;
 
@@ -111,6 +112,16 @@ export const ObjectBrief = (props) => {
               </Box>
             </Box>
           )}
+          {parameterTemplate && (
+            <Box>
+              <Typography color="textSecondary" variant="subtitle2">
+                parameterTemplate
+              </Typography>
+              <Typography color="textPrimary" variant="subtitle2">
+                {parameterTemplate}
+              </Typography>
+            </Box>
+          )}
         </Box>
         <Box sx={{ mt: 3 }}>
           <Typography color="textSecondary" variant="subtitle2">
@@ -133,5 +144,6 @@ ObjectBrief.propTypes = {
   uri: PropTypes.string.isRequired,
   topics: PropTypes.arrayOf(PropTypes.string),
   title: PropTypes.string,
-  confidentiality: PropTypes.string
+  confidentiality: PropTypes.string,
+  parameterTemplate: PropTypes.string
 };

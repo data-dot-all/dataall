@@ -4,6 +4,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Box,
+  Button,
   Breadcrumbs,
   CircularProgress,
   Container,
@@ -16,7 +17,7 @@ import {
 } from '@mui/material';
 import { Info } from '@mui/icons-material';
 import { useClient } from 'services';
-import { ChevronRightIcon, useSettings } from 'design';
+import { ChevronRightIcon, useSettings, PlusIcon } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 import { getOmicsWorkflow } from '../services';
@@ -103,6 +104,22 @@ const OmicsWorkflowView = () => {
               </Breadcrumbs>
             </Grid>
           </Grid>
+
+          <Grid>
+            <Box sx={{ m: -1 }}>
+              <Button
+                color="primary"
+                component={RouterLink}
+                startIcon={<PlusIcon fontSize="small" />}
+                sx={{ m: 1 }}
+                to="/console/omics/runs/new"
+                variant="contained"
+              >
+                Create Run
+              </Button>
+            </Box>
+          </Grid>
+
           <Box sx={{ mt: 3 }}>
             <Tabs
               indicatorColor="primary"
