@@ -148,7 +148,7 @@ class TenantPolicy:
             .first()
         )
         return reauth_session
-    
+
     @staticmethod
     def create_reauth_session(session, username: str):
         reauth_user_session = models.ReAuthSession(
@@ -162,7 +162,6 @@ class TenantPolicy:
         session.add(reauth_user_session)
         session.commit()
         return reauth_user_session
-
 
     @staticmethod
     def validate_find_tenant_policy(group_uri, tenant_name):

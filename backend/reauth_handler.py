@@ -148,4 +148,3 @@ def handler(event, context):
             'Access-Control-Allow-Methods': '*',
         },
     }
-
