@@ -5,7 +5,6 @@ import { Helmet } from 'react-helmet-async';
 import {
   Box,
   Breadcrumbs,
-  Button,
   CircularProgress,
   Container,
   Divider,
@@ -15,47 +14,33 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { FaAws, FaTrash } from 'react-icons/fa';
-import { SiJupyter } from 'react-icons/si';
-import { useNavigate } from 'react-router';
-import { LoadingButton } from '@mui/lab';
-import { useSnackbar } from 'notistack';
 import { Info } from '@mui/icons-material';
-import { StackStatus, Stack } from 'modules/Shared';
 import { useClient } from 'services';
 import {
-  ChevronRightIcon,
-  DeleteObjectWithFrictionModal,
+  ChevronRightIcon, 
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-// TODO getOmicsRun does not exist
-import {
-  //getOmicsRun,
-  deleteOmicsRun
-} from '../services';
+import { getOmicsWorkflow } from '../services';
 // import { OmicsWorkflowsListItem, OmicsWorkflowDetails } from '../components';
 import { OmicsWorkflowDetails } from '../components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
 
 const OmicsWorkflowView = () => {
   const dispatch = useDispatch();
   const { settings } = useSettings();
-  const { enqueueSnackbar } = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
   const params = useParams();
   const client = useClient();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const [omicsRun, setOmicsRun] = useState(null);
-  const [stack, setStack] = useState(null);
-  //const [isOpeningOmicsRun, setIsOpeningOmicsRun] = useState(false);
+  const [omicsWorkflow, setOmicsWorkflow] = useState(null);
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -67,34 +52,17 @@ const OmicsWorkflowView = () => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    // const response = await client.query(getOmicsRun(params.uri));
-    const response = null;
+    const response = await client.query(getOmicsWorkflow(params.uri));
     if (!response.errors) {
-      setOmicsRun(response.data.getOmicsRun);
-      if (stack) {
-        setStack(response.data.getOmicsRun.stack);
-      }
+      setOmicsWorkflow(response.data.getOmicsWorkflow);
     } else {
       const error = response.errors
         ? response.errors[0].message
-        : 'Omics Run not found';
+        : 'Omics Workflownot found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack]);
-
-  // const getMLStudioPresignedUrl = async () => {
-  //   setIsOpeningSagemakerStudio(true);
-  //   const response = await client.query(
-  //     getSagemakerStudioUserPresignedUrl(mlstudio.sagemakerStudioUserUri)
-  //   );
-  //   if (!response.errors) {
-  //     window.open(response.data.getSagemakerStudioUserPresignedUrl);
-  //   } else {
-  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //   }
-  //   setIsOpeningSagemakerStudio(false);
-  // };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
@@ -105,42 +73,20 @@ const OmicsWorkflowView = () => {
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
-  const removeOmicsRun = async (deleteFromAWS = false) => {
-    const response = await client.mutate(
-      deleteOmicsRun(omicsRun.omicsRun, deleteFromAWS)
-    );
-    if (!response.errors) {
-      handleDeleteObjectModalClose();
-      enqueueSnackbar('Omics Run deleted', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      navigate('/console/omics');
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
-
+  
   if (loading) {
     return <CircularProgress />;
   }
-  if (!omicsRun) {
+  if (!omicsWorkflow) {
     return null;
   }
 
   return (
     <>
       <Helmet>
-        <title>Omics: Run Details</title>
+        <title>Omics: Workflow Details</title>
       </Helmet>
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={omicsRun.environment?.environmentUri}
-      />
+      
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -152,60 +98,23 @@ const OmicsWorkflowView = () => {
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
               <Typography color="textPrimary" variant="h5">
-                Omics Run {omicsRun.label}
+                Omics Workflow {omicsWorkflow.name}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link underline="hover" color="textPrimary" variant="subtitle2">
-                  Play
-                </Link>
                 <Link
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to="/console/mlstudio"
+                  to={`/console/omics/workflows/${omicsWorkflow.id}`}
                   variant="subtitle2"
                 >
-                  Workflows
-                </Link>
-                <Link
-                  underline="hover"
-                  color="textPrimary"
-                  component={RouterLink}
-                  to={`/console/omics/${omicsRun.omicsRunrUri}`}
-                  variant="subtitle2"
-                >
-                  {omicsRun.label}
+                  {omicsWorkflow.name}
                 </Link>
               </Breadcrumbs>
-            </Grid>
-            <Grid item>
-              <Box sx={{ m: -1 }}>
-                <LoadingButton
-                  //loading={isOpeningOmicsRun}
-                  color="primary"
-                  startIcon={<SiJupyter size={15} />}
-                  sx={{ m: 1 }}
-                  //onClick={getOmicsRunPresignedUrl}
-                  type="button"
-                  variant="outlined"
-                >
-                  Open Omics Run
-                </LoadingButton>
-                <Button
-                  color="primary"
-                  startIcon={<FaTrash size={15} />}
-                  sx={{ m: 1 }}
-                  onClick={handleDeleteObjectModalOpen}
-                  type="button"
-                  variant="outlined"
-                >
-                  Delete
-                </Button>
-              </Box>
             </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
@@ -231,27 +140,11 @@ const OmicsWorkflowView = () => {
           <Divider />
           <Box sx={{ mt: 3 }}>
             {currentTab === 'overview' && (
-              <OmicsWorkflowDetails omicsRun={omicsRun} />
-            )}
-            {currentTab === 'stack' && (
-              <Stack
-                environmentUri={omicsRun.environment.environmentUri}
-                stackUri={omicsRun.stack.stackUri}
-                targetUri={omicsRun.omicsRunUri}
-                targetType="omics"
-              />
+              <OmicsWorkflowDetails workflow={omicsWorkflow} />
             )}
           </Box>
         </Container>
       </Box>
-      <DeleteObjectWithFrictionModal
-        objectName={omicsRun.label}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={removeOmicsRun}
-        isAWSResource
-      />
     </>
   );
 };

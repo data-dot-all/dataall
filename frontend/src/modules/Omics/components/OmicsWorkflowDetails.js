@@ -11,7 +11,7 @@ export const OmicsWorkflowDetails = (props) => {
         <Box>
           <ObjectBrief
             title="Details"
-            uri={workflow.workflowUri || '-'}
+            uri={workflow.id || '-'}
             name={workflow.label || '-'}
             description={workflow.description || 'No description provided'}
             tags={
@@ -23,12 +23,12 @@ export const OmicsWorkflowDetails = (props) => {
       <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           name={workflow.name}
-          publisher={workflow.publisher}
-          version={workflow.version}
-          language={workflow.language}
-          runTime={workflow.runTime || '-'}
-          listPrice={workflow.listPrice}
-          description={workflow.description}
+          publisher={workflow.id}
+          // version={workflow.version}
+          // language={workflow.language}
+          // runTime={workflow.runTime || '-'}
+          // listPrice={workflow.listPrice}
+          // description={workflow.description}
         />
       </Grid>
     </Grid>
