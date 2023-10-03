@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from operator import and_
-from datetime import datetime
+import datetime
 
 from dataall.base.db import get_engine
 from dataall.core.permissions.db.permission_models import ReAuthSession
@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def clean_expired_reauth_sessions(engine):
-    now = datetime.now()
+    now = datetime.datetime.now()
     with engine.scoped_session() as session:
         reauth_sessions = session.query(ReAuthSession).all()
         log.info(f'Found {len(reauth_sessions)} reauth sessions')
