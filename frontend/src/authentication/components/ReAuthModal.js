@@ -4,19 +4,7 @@ import { Box, CardContent, Dialog, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
 // import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-// import { SET_ERROR } from 'globalErrors';
-// import { Auth } from 'aws-amplify';
 import { useAuth } from 'authentication';
-// async function loginUser(credentials) {
-//   return fetch(process.env.REACT_APP_GRAPHQL_API, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json'
-//     },
-//     body: JSON.stringify(credentials)
-//   })
-//     .then(data => data.json())
-//  }
 
 export const ReAuthModal = () => {
   // const { onApply, onClose, open, ...other } = props;
@@ -78,7 +66,7 @@ export const ReAuthModal = () => {
               password: ''
             }}
             validationSchema={Yup.object().shape({
-              username: Yup.object().required('*Usernmae is required'),
+              username: Yup.object().required('*Username is required'),
               password: Yup.string().required('*Password is required')
             })}
             onSubmit={async (
@@ -103,7 +91,8 @@ export const ReAuthModal = () => {
                   <CardContent>
                     <TextField
                       fullWidth
-                      disabled
+                      error={Boolean(touched.environment && errors.environment)}
+                      helperText={touched.environment && errors.environment}
                       label="Username"
                       name="username"
                       onBlur={handleBlur}
@@ -115,7 +104,8 @@ export const ReAuthModal = () => {
                   <CardContent>
                     <TextField
                       fullWidth
-                      disabled
+                      error={Boolean(touched.environment && errors.environment)}
+                      helperText={touched.environment && errors.environment}
                       label="Password"
                       name="password"
                       onBlur={handleBlur}

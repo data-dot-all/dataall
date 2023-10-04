@@ -32,7 +32,6 @@ export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
-  const { auth } = useAuth();
   // const [isOpeningModal, setIsOpeningModal] = useState(false);
   // const [isReAuthOpen, setIsReAuthOpen] = useState(false);
 
@@ -96,8 +95,9 @@ export const useClient = () => {
               );
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
+                const auth = useAuth();
                 console.error(oldHeaders);
-                a.dispatch({
+                auth.dispatch({
                   type: 'REAUTH',
                   payload: {
                     reAuthStatus: true
