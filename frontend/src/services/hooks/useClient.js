@@ -32,6 +32,7 @@ export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
+  const auth = useAuth();
   // const [isOpeningModal, setIsOpeningModal] = useState(false);
   // const [isReAuthOpen, setIsReAuthOpen] = useState(false);
 
@@ -42,11 +43,18 @@ export const useClient = () => {
   // const handleReAuthModalClose = () => {
   //   setIsReAuthOpen(false);
   // };
+  const setReAuth = async () => {
+    auth.dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: true
+      }
+    });
+  };
 
   useEffect(() => {
     const initClient = async () => {
       const t = token;
-      const a = auth;
       const httpLink = new HttpLink({
         uri: process.env.REACT_APP_GRAPHQL_API
       });
@@ -95,14 +103,15 @@ export const useClient = () => {
               );
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
-                const auth = useAuth();
+
                 console.error(oldHeaders);
-                auth.dispatch({
-                  type: 'REAUTH',
-                  payload: {
-                    reAuthStatus: true
-                  }
-                });
+                setReAuth();
+                // auth.dispatch({
+                //   type: 'REAUTH',
+                //   payload: {
+                //     reAuthStatus: true
+                //   }
+                // });
 
                 // // Auth.signOut();
                 // handleReAuthModalOpen(true);
@@ -152,7 +161,7 @@ export const useClient = () => {
     //     }
     //   });
     // }
-  }, [token, dispatch, auth]);
+  }, [token, dispatch]);
   return client;
 };
 
