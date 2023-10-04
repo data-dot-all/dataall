@@ -5,7 +5,7 @@ import { Formik } from 'formik';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
 // import { SET_ERROR } from 'globalErrors';
-import { Auth } from 'aws-amplify';
+// import { Auth } from 'aws-amplify';
 import { useAuth } from 'authentication';
 // async function loginUser(credentials) {
 //   return fetch(process.env.REACT_APP_GRAPHQL_API, {
@@ -20,7 +20,7 @@ import { useAuth } from 'authentication';
 
 export const ReAuthModal = (props) => {
   const { onApply, onClose, open, ...other } = props;
-  const { logout, login } = useAuth();
+  // const { logout, login } = useAuth();
   // const handleSubmit = async e => {
   //   e.preventDefault();
   //   const token = await loginUser({
@@ -30,10 +30,11 @@ export const ReAuthModal = (props) => {
   //   setToken(token);
   // }
 
+  // When State is REAUTH --> LOAD
+  const { reAuthStatus } = useAuth();
+
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      await logout();
-      await Auth.signIn(values.username, values.password);
       // await this.props.SetAuthState(AuthState.SignedIn)
       setStatus({ success: true });
       setSubmitting(false);
@@ -59,100 +60,102 @@ export const ReAuthModal = (props) => {
   }
 
   return (
-    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
-      <Box sx={{ p: 3 }}>
-        <Typography
-          align="center"
-          color="textPrimary"
-          gutterBottom
-          variant="h4"
-        >
-          ReAuth Credentials
-        </Typography>
-        <form>
-          <p>Username</p>
-          <input type="username" />
-          <p>Password</p>
-          <input type="password" />
-          <div>
-            <button type="button" onClick={login}>
-              {' '}
-              Login{' '}
-            </button>
-          </div>
-        </form>
+    reAuthStatus && (
+      <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
         <Box sx={{ p: 3 }}>
-          <Formik
-            initialValues={{
-              username: '',
-              password: ''
-            }}
-            validationSchema={Yup.object().shape({
-              username: Yup.object().required('*Usernmae is required'),
-              password: Yup.string().required('*Password is required')
-            })}
-            onSubmit={async (
-              values,
-              { setErrors, setStatus, setSubmitting }
-            ) => {
-              await submit(values, setStatus, setSubmitting, setErrors);
-            }}
+          <Typography
+            align="center"
+            color="textPrimary"
+            gutterBottom
+            variant="h4"
           >
-            {({
-              errors,
-              handleBlur,
-              handleChange,
-              isSubmitting,
-              handleSubmit,
-              setFieldValue,
-              touched,
-              values
-            }) => (
-              <form onSubmit={handleSubmit}>
-                <Box>
+            ReAuth Credentials
+          </Typography>
+          {/* <form>
+            <p>Username</p>
+            <input type="username" />
+            <p>Password</p>
+            <input type="password" />
+            <div>
+              <button type="button" onClick={submit}>
+                {' '}
+                Login{' '}
+              </button>
+            </div>
+          </form> */}
+          <Box sx={{ p: 3 }}>
+            <Formik
+              initialValues={{
+                username: '',
+                password: ''
+              }}
+              validationSchema={Yup.object().shape({
+                username: Yup.object().required('*Usernmae is required'),
+                password: Yup.string().required('*Password is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
+                await submit(values, setStatus, setSubmitting, setErrors);
+              }}
+            >
+              {({
+                errors,
+                handleBlur,
+                handleChange,
+                isSubmitting,
+                handleSubmit,
+                setFieldValue,
+                touched,
+                values
+              }) => (
+                <form onSubmit={handleSubmit}>
+                  <Box>
+                    <CardContent>
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Username"
+                        name="username"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.username}
+                        variant="outlined"
+                      />
+                    </CardContent>
+                    <CardContent>
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Password"
+                        name="password"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.password}
+                        variant="outlined"
+                      />
+                    </CardContent>
+                  </Box>
                   <CardContent>
-                    <TextField
+                    <LoadingButton
                       fullWidth
-                      disabled
-                      label="Username"
-                      name="username"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.username}
-                      variant="outlined"
-                    />
+                      startIcon={<SendIcon fontSize="small" />}
+                      color="primary"
+                      disabled={isSubmitting}
+                      type="submit"
+                      variant="contained"
+                    >
+                      ReAuth Button
+                    </LoadingButton>
                   </CardContent>
-                  <CardContent>
-                    <TextField
-                      fullWidth
-                      disabled
-                      label="Password"
-                      name="password"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.password}
-                      variant="outlined"
-                    />
-                  </CardContent>
-                </Box>
-                <CardContent>
-                  <LoadingButton
-                    fullWidth
-                    startIcon={<SendIcon fontSize="small" />}
-                    color="primary"
-                    disabled={isSubmitting}
-                    type="submit"
-                    variant="contained"
-                  >
-                    ReAuth Button
-                  </LoadingButton>
-                </CardContent>
-              </form>
-            )}
-          </Formik>
+                </form>
+              )}
+            </Formik>
+          </Box>
         </Box>
-      </Box>
-    </Dialog>
+      </Dialog>
+    )
   );
 };
 

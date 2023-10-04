@@ -37,7 +37,8 @@ const handlers = {
       ...state,
       isAuthenticated,
       isInitialized: true,
-      user
+      user,
+      reAuthStatus: false
     };
   },
   LOGIN: (state, action) => {
@@ -53,7 +54,15 @@ const handlers = {
     ...state,
     isAuthenticated: false,
     user: null
-  })
+  }),
+  REAUTH: (state, action) => {
+    const { reAuthStatus } = action.payload;
+
+    return {
+      ...state,
+      reAuthStatus
+    };
+  }
 };
 
 const reducer = (state, action) =>
@@ -63,7 +72,8 @@ export const CognitoAuthContext = createContext({
   ...initialState,
   platform: 'Amplify',
   login: () => Promise.resolve(),
-  logout: () => Promise.resolve()
+  logout: () => Promise.resolve(),
+  reauth: () => Promise.resolve()
 });
 
 export const CognitoAuthProvider = (props) => {
@@ -118,6 +128,17 @@ export const CognitoAuthProvider = (props) => {
       });
   };
 
+  const reauth = async (status) => {
+    dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: status
+      }
+    }).catch((e) => {
+      console.error('Failed to authenticate user', e);
+    });
+  };
+
   const logout = async () => {
     await Auth.signOut();
     dispatch({
@@ -132,7 +153,8 @@ export const CognitoAuthProvider = (props) => {
         dispatch,
         platform: 'Amplify',
         login,
-        logout
+        logout,
+        reauth
       }}
     >
       {children}

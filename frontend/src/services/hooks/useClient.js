@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useToken, useAuth } from 'authentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useNavigate } from 'react-router';
-import { ReAuthModal } from 'authentication/components/ReAuthModal';
+// import { ReAuthModal } from 'authentication/components/ReAuthModal';
 
 const defaultOptions = {
   watchQuery: {
@@ -32,16 +32,17 @@ export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
+  const { auth } = useAuth();
   // const [isOpeningModal, setIsOpeningModal] = useState(false);
-  const [isReAuthOpen, setIsReAuthOpen] = useState(false);
+  // const [isReAuthOpen, setIsReAuthOpen] = useState(false);
 
-  const handleReAuthModalOpen = () => {
-    setIsReAuthOpen(true);
-  };
+  // const handleReAuthModalOpen = () => {
+  //   setIsReAuthOpen(true);
+  // };
 
-  const handleReAuthModalClose = () => {
-    setIsReAuthOpen(false);
-  };
+  // const handleReAuthModalClose = () => {
+  //   setIsReAuthOpen(false);
+  // };
 
   useEffect(() => {
     const initClient = async () => {
@@ -49,6 +50,9 @@ export const useClient = () => {
       const httpLink = new HttpLink({
         uri: process.env.REACT_APP_GRAPHQL_API
       });
+      // const reauthhttpLink = new HttpLink({
+      //   uri: process.env.REACT_APP_REAUTH_API
+      // });
       const authLink = new ApolloLink((operation, forward) => {
         operation.setContext({
           headers: {
@@ -92,15 +96,22 @@ export const useClient = () => {
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
                 console.error(oldHeaders);
-                // Auth.signOut();
-                handleReAuthModalOpen(true);
-                return (
-                  <ReAuthModal
-                    onApply={handleReAuthModalClose}
-                    onClose={handleReAuthModalClose}
-                    open={isReAuthOpen}
-                  />
-                );
+                auth.dispatch({
+                  type: 'REAUTH',
+                  payload: {
+                    reAuthStatus: true
+                  }
+                });
+
+                // // Auth.signOut();
+                // handleReAuthModalOpen(true);
+                // return (
+                //   <ReAuthModal
+                //     onApply={handleReAuthModalClose}
+                //     onClose={handleReAuthModalClose}
+                //     open={isReAuthOpen}
+                //   />
+                // );
                 // const newToken = ReAuthtNewToken();
                 // operation.setContext({
                 //   headers: {
@@ -140,9 +151,100 @@ export const useClient = () => {
     //     }
     //   });
     // }
-  }, [token, dispatch, isReAuthOpen]);
+  }, [token, dispatch, auth]);
   return client;
 };
+
+// export function stepUpInitiate(mock) {
+//   return (dispatch) => {
+//     console.log("StepUpActions.stepUpInitiate(): mock:", mock || false);
+//     // eslint-disable-next-line no-undef
+//     return new Promise((resolve, reject) => {
+
+//       if (mock) {
+//         dispatch({
+//           type: 'step_up_initiated',
+//           payload: {
+//             code: "SMS_STEP_UP"
+//           }
+//         });
+//         return;
+//       }
+
+//       Auth.currentSession()
+//         .then((session) => {
+//           const accessToken = session.getAccessToken().getJwtToken();
+//           const idToken = session.getIdToken().getJwtToken();
+//           return {accessToken, idToken};
+//         })
+//         .then((tokens) => {
+//           const { accessToken, idToken } = tokens;
+//           // API call
+//           API.post(process.env.REACT_APP_REAUTH_API, "initiate-auth/api", {
+//             headers: {
+//               Identification: `Bearer ${idToken}`,
+//               Authorization: `Bearer ${accessToken}`,
+//             },
+//             response: true // OPTIONAL (return the entire Axios response object instead of only response.data)
+//           })
+//           // handle API success
+//           .then((response) => {
+//             console.log("StepUpActions.stepUpInitiate(): response:", response);
+//             if (response && response.data &&
+//                 (
+//                   response.data.code === "SOFTWARE_TOKEN_STEP_UP" ||
+//                   response.data.code === "SMS_STEP_UP" ||
+//                   response.data.code === "EMAIL_STEP_UP" ||
+//                   response.data.code === "MAYBE_SOFTWARE_TOKEN_STEP_UP"
+//                 )
+//               ) {
+//               dispatch({
+//                 type: STEP_UP_INITIATED,
+//                 payload: {
+//                   code: response.data.code
+//                 }
+//               });
+//               resolve(true); // resolve with dummy value
+//             } else {
+//               dispatch({
+//                 type: STEP_UP_ERROR,
+//                 payload: {
+//                   message: "Invalid step-up initiate response",
+//                   origin: STEP_UP_INITIATED
+//                 }
+//               });
+//               resolve(true); // resolve with dummy value
+//             }
+//           })
+//           // catch API.post() error
+//           .catch((err) => {
+//             console.log("StepUpActions.stepUpInitiate(): error response:", err);
+//             // const errorMessage = `${err.message}. ${err.response.data}`;
+//             dispatch({
+//               type: STEP_UP_ERROR,
+//               payload: {
+//                 message: err.message,
+//                 origin: STEP_UP_INITIATED
+//               }
+//             });
+//             reject(false); // reject with dummy value
+//           });
+//         })
+//         // catch Auth.currentSession() error
+//         .catch((err) => {
+//           console.log("StepUpActions.stepUpInitiate(): error response:", err);
+//           dispatch({
+//             type: STEP_UP_ERROR,
+//             payload: {
+//               message: err.message,
+//               origin: STEP_UP_INITIATED
+//             }
+//           });
+//           reject(false); // reject with dummy value
+//         });
+//     });
+//   };
+// }
 
 // Step-up - initiate
 // export function useNewToken() {
