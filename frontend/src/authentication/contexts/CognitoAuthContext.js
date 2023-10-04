@@ -26,7 +26,8 @@ Auth.configure({
 const initialState = {
   isAuthenticated: false,
   isInitialized: false,
-  user: null
+  user: null,
+  reAuthStatus: false
 };
 
 const handlers = {

@@ -96,7 +96,7 @@ export const useClient = () => {
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
                 console.error(oldHeaders);
-                auth.dispatch({
+                dispatch({
                   type: 'REAUTH',
                   payload: {
                     reAuthStatus: true
