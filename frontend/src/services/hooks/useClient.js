@@ -47,6 +47,7 @@ export const useClient = () => {
   useEffect(() => {
     const initClient = async () => {
       const t = token;
+      const a = auth;
       const httpLink = new HttpLink({
         uri: process.env.REACT_APP_GRAPHQL_API
       });
@@ -96,7 +97,7 @@ export const useClient = () => {
               if (message === 'ReAuth Required') {
                 const oldHeaders = operation.getContext().headers;
                 console.error(oldHeaders);
-                dispatch({
+                a.dispatch({
                   type: 'REAUTH',
                   payload: {
                     reAuthStatus: true
