@@ -13,7 +13,13 @@ log = logging.getLogger(__name__)
 class S3DatasetClient:
 
     def __init__(self, dataset: Dataset):
-        self._client = SessionHelper.remote_session(accountid=dataset.AwsAccountId, role=dataset.IAMDatasetAdminRoleArn).client(
+        """
+        It first starts a session assuming the pivot role,
+        then we define another session assuming the dataset role from the pivot role
+        """
+        pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        session = SessionHelper.get_session(base_session=pivot_role_session, role_arn=dataset.IAMDatasetAdminRoleArn)
+        self._client = session.client(
             's3',
             region_name=dataset.region,
             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
