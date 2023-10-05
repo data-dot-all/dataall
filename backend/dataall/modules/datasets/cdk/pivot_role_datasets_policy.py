@@ -13,34 +13,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     - ....
     """
     def get_statements(self):
-        allowed_buckets = []
-        engine = db.get_engine(envname=os.environ.get('envname', 'local'))
-        with engine.scoped_session() as session:
-            datasets = DatasetRepository.query_environment_datasets(
-                session, uri=self.environmentUri, filter=None
-            )
-            if datasets:
-                dataset: Dataset
-                for dataset in datasets:
-                    allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
-
         statements = [
-            # S3 Dataset Buckets
-            iam.PolicyStatement(
-                sid='DatasetBuckets',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:List*',
-                    's3:GetBucket*',
-                    's3:GetLifecycleConfiguration',
-                    's3:GetObject',
-                    's3:PutBucketPolicy',
-                    's3:PutBucketTagging',
-                    's3:PutObjectAcl',
-                    's3:PutBucketOwnershipControls',
-                ],
-                resources=allowed_buckets,
-            ),
             # For dataset preview
             iam.PolicyStatement(
                 sid='AthenaWorkgroupsDataset',
@@ -152,4 +125,33 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 }
             )
         ]
+        allowed_buckets = []
+        engine = db.get_engine(envname=os.environ.get('envname', 'local'))
+        with engine.scoped_session() as session:
+            datasets = DatasetRepository.query_environment_datasets(
+                session, uri=self.environmentUri, filter=None
+            )
+            if datasets:
+                dataset: Dataset
+                for dataset in datasets:
+                    allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+
+        if allowed_buckets:
+            # S3 Dataset Buckets
+            dataset_statement = iam.PolicyStatement(
+                sid='DatasetBuckets',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:List*',
+                    's3:GetBucket*',
+                    's3:GetLifecycleConfiguration',
+                    's3:GetObject',
+                    's3:PutBucketPolicy',
+                    's3:PutBucketTagging',
+                    's3:PutObjectAcl',
+                    's3:PutBucketOwnershipControls',
+                ],
+                resources=allowed_buckets,
+            )
+            statements.append(dataset_statement)
         return statements
