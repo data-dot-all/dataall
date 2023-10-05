@@ -4,6 +4,20 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "quality_gate": false,
+    "tooling_region": "us-east-1",
+    "DeploymentEnvironments": [
+        {
+            "envname": "env",
+            "account": "290341535759",
+            "region": "us-east-1",
+            "with_approval": false,
+            "internet_facing": true,
+            "prod_sizing": false,
+            "enable_cw_rum": false,
+            "enable_cw_canaries": false
+        }
+    ]
   }
 }
