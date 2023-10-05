@@ -30,6 +30,8 @@ GET_SGMSTUDIO_NOTEBOOK = 'GET_SGMSTUDIO_NOTEBOOK'
 UPDATE_SGMSTUDIO_NOTEBOOK = 'UPDATE_SGMSTUDIO_NOTEBOOK'
 DELETE_SGMSTUDIO_NOTEBOOK = 'DELETE_SGMSTUDIO_NOTEBOOK'
 SGMSTUDIO_NOTEBOOK_URL = 'SGMSTUDIO_NOTEBOOK_URL'
+RUN_ATHENA_QUERY = 'RUN_ATHENA_QUERY'
+CREATE_SHARE_OBJECT = 'CREATE_SHARE_OBJECT'
 
 OLD_PERMISSIONS = [
     CREATE_SGMSTUDIO_NOTEBOOK,
@@ -37,11 +39,14 @@ OLD_PERMISSIONS = [
     GET_SGMSTUDIO_NOTEBOOK,
     UPDATE_SGMSTUDIO_NOTEBOOK,
     DELETE_SGMSTUDIO_NOTEBOOK,
-    SGMSTUDIO_NOTEBOOK_URL
+    SGMSTUDIO_NOTEBOOK_URL,
+    RUN_ATHENA_QUERY,
+    CREATE_SHARE_OBJECT
+
 ]
 old_permissions = {k: k for k in OLD_PERMISSIONS}
 old_permissions[CREATE_SGMSTUDIO_NOTEBOOK] = 'Create ML Studio profiles on this environment'
-
+old_permissions[CREATE_SHARE_OBJECT] = 'Request datasets access for this environment'
 
 CREATE_SGMSTUDIO_USER = 'CREATE_SGMSTUDIO_USER'
 LIST_ENVIRONMENT_SGMSTUDIO_USERS = 'LIST_ENVIRONMENT_SGMSTUDIO_USERS'
@@ -50,6 +55,7 @@ GET_SGMSTUDIO_USER = 'GET_SGMSTUDIO_USER'
 UPDATE_SGMSTUDIO_USER = 'UPDATE_SGMSTUDIO_USER'
 DELETE_SGMSTUDIO_USER = 'DELETE_SGMSTUDIO_USER'
 SGMSTUDIO_USER_URL = 'SGMSTUDIO_USER_URL'
+RUN_ATHENA_QUERY = 'RUN_ATHENA_QUERY'
 
 NEW_PERMISSIONS = [
     CREATE_SGMSTUDIO_USER,
@@ -57,10 +63,14 @@ NEW_PERMISSIONS = [
     GET_SGMSTUDIO_USER,
     UPDATE_SGMSTUDIO_USER,
     DELETE_SGMSTUDIO_USER,
-    SGMSTUDIO_USER_URL
+    SGMSTUDIO_USER_URL,
+    RUN_ATHENA_QUERY,
+    CREATE_SHARE_OBJECT
 ]
 new_permissions = {k: k for k in NEW_PERMISSIONS}
 new_permissions[CREATE_SGMSTUDIO_USER] = 'Create SageMaker Studio users on this environment'
+new_permissions[RUN_ATHENA_QUERY] = 'Run Worksheet Athena queries on this environment'
+new_permissions[CREATE_SHARE_OBJECT] = 'Create dataset Share requests for this environment'
 
 
 def upgrade():
@@ -68,6 +78,7 @@ def upgrade():
     The script does the following migration:
         1) create missing permissions MANAGE_SGMSTUDIO_USERS from MANAGE_NOTEBOOKS tenant permission
         2) Rename SageMaker Studio permissions from SGMSTUDIO_NOTEBOOK to SGMSTUDIO_USER
+        and add description to RUN_ATHENA_QUERY and create share object
         3) Rename sagemaker_studio_user_profile column names
     """
     try:

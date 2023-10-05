@@ -7,7 +7,7 @@ COPY ./frontend/yarn.lock ./
 
 # Install packages, use --ignore-scripts to not call postinstall, as it causes this step to fail because config.json
 # is not copied yet, and copying it here will trigger new install if config changes, which is inconvenient for development.
-RUN yarn install --ignore-scripts --verbose --network-timeout 100000
+RUN yarn install --ignore-scripts --verbose
 
 COPY ./frontend/docker/dev/.env .
 COPY ./frontend .

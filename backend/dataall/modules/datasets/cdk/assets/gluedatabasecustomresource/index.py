@@ -49,13 +49,6 @@ def on_create(event):
     except ClientError as e:
         pass
 
-    default_db_exists = False
-    try:
-        glue_client.get_database(Name="default")
-        default_db_exists = True
-    except ClientError as e:
-        pass
-
     if not exists:
         try:
             db_input = props.get('DatabaseInput').copy()
@@ -110,6 +103,15 @@ def on_create(event):
                 'PermissionsWithGrantOption': ['SELECT', 'ALTER', 'DESCRIBE'],
             }
         )
+
+        default_db_exists = False
+        try:
+            glue_client.get_database(Name="default")
+            default_db_exists = True
+        except ClientError as e:
+            log.exception(f'Failed to get default glue database due to: {e}')
+            raise Exception(f'Failed to get default glue database due to: {e}')
+
         if default_db_exists:
             Entries.append(
                 {

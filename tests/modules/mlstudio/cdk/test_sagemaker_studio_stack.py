@@ -2,7 +2,8 @@ import pytest
 from aws_cdk.assertions import Template
 from aws_cdk import App, Stack, aws_iam
 
-from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile, SageMakerDomainExtension
+from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile
+from dataall.modules.mlstudio.cdk.mlstudio_extension import SageMakerDomainExtension
 
 
 class MockEnvironmentSageMakerExtension(Stack):

@@ -11,6 +11,7 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 logger = logging.getLogger(__name__)
 
+
 if __name__ == '__main__':
     envname = os.environ.get('envname', 'local')
     engine = get_engine(envname=envname)

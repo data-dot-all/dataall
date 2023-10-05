@@ -7,6 +7,11 @@ import boto3
 from botocore.exceptions import ClientError
 
 
+def shuffle_password(pwd):
+    chars = list(pwd)
+    random.shuffle(chars)
+    return ''.join(chars)
+
 def setup_cognito(
     region,
     resource_prefix,
@@ -110,11 +115,15 @@ def setup_cognito(
                         {'Name': 'email', 'Value': f'{username}@amazonaws.com'}
                     ],
                     TemporaryPassword='da@'
-                    + ''.join(
-                        random.SystemRandom().choice(
-                            string.ascii_uppercase + string.digits
+                    + shuffle_password(
+                        random.SystemRandom().choice(string.ascii_uppercase)
+                        + random.SystemRandom().choice(string.digits)
+                        + ''.join(
+                            random.SystemRandom().choice(
+                                string.ascii_uppercase + string.digits
+                            )
+                            for _ in range(11)
                         )
-                        for _ in range(13)
                     ),
                     MessageAction='SUPPRESS',
                 )

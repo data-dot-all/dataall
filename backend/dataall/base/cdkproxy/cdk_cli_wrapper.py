@@ -33,8 +33,8 @@ class CDKCliWrapperExtension:
         raise NotImplementedError("Method extend_deployment is not implemented")
 
     @abstractmethod
-    def cleanup(self):
-        raise NotImplementedError("Method cleanup is not implemented")
+    def post_deployment(self):
+        raise NotImplementedError("Method post_deployment is not implemented")
 
 
 _CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, CDKCliWrapperExtension] = {}
@@ -46,7 +46,7 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
     cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec
+    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec  # nosemgrep
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
@@ -70,6 +70,8 @@ def update_stack_output(session, stack):
 
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
+    from dataall.base.loader import load_modules, ImportMode
+    load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
     logger.warning(f'Starting new stack from  stackid {stackid}')
     region = os.getenv('AWS_REGION', 'eu-west-1')
     sts = boto3.client(
@@ -113,7 +115,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             extension = _CDK_CLI_WRAPPER_EXTENSIONS.get(stack.stack)
             if extension:
                 logger.info(f'Extending CDK deployment process with steps for the following stack: {stack.stack}')
-                finish_deployment, path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
+                finish_deployment, path, app_path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
                     stack=stack,
                     session=session,
                     env=env
@@ -123,11 +125,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             else:
                 logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment')
 
-            cwd = (
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
-                if path
-                else os.path.dirname(os.path.abspath(__file__))
-            )
+            cwd = (path if path else os.path.dirname(os.path.abspath(__file__)))
 
             app_path = app_path or './app.py'
 
@@ -162,20 +160,19 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
 
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
-            process = subprocess.run(
-                ' '.join(cmd),
-                text=True,
-                shell=True,  # nosec
-                encoding='utf-8',
-                env=env,
-                cwd=cwd,
+            process = subprocess.run(  # nosemgrep
+                ' '.join(cmd),  # nosemgrep
+                text=True,  # nosemgrep
+                shell=True,  # nosec  # nosemgrep
+                encoding='utf-8',  # nosemgrep
+                env=env,  # nosemgrep
+                cwd=cwd,  # nosemgrep
             )
 
-            if stack.stack == 'cdkpipeline':
-                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
-                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
-
-                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].cleanup()
+            if extension:
+                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].post_deployment()
+            else:
+                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the post-deployment')
 
             if process.returncode == 0:
                 meta = describe_stack(stack)
@@ -214,14 +211,14 @@ def cdk_installed():
     cmd = ['. ~/.nvm/nvm.sh && cdk', '--version']
     logger.info(f"Running command {' '.join(cmd)}")
 
-    subprocess.run(
-        cmd,
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=os.path.dirname(__file__),
+    subprocess.run(  # nosemgrep
+        cmd,  # nosemgrep
+        text=True,  # nosemgrep
+        shell=True,  # nosec  # nosemgrep
+        encoding='utf-8',  # nosemgrep
+        stdout=subprocess.PIPE,  # nosemgrep
+        stderr=subprocess.PIPE,  # nosemgrep
+        cwd=os.path.dirname(__file__),  # nosemgrep
     )
 
 

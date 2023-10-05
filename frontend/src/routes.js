@@ -361,7 +361,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.SHARES) && {
         children: [
           {
             path: 'shares',
@@ -389,7 +389,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.GLOSSARIES) && {
         children: [
           {
             path: 'glossaries',
@@ -449,7 +449,7 @@ const routes = [
     children: [
       {
         path: '',
-        element: <Catalog />
+        element: <EnvironmentList />
       },
       {
         path: '*',

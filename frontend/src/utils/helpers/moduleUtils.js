@@ -15,10 +15,19 @@ const ModuleNames = {
 };
 
 function isModuleEnabled(module) {
-  if (module === ModuleNames.CATALOG) {
+  if (module === ModuleNames.CATALOG || module === ModuleNames.GLOSSARIES) {
     return (
       getModuleActiveStatus(ModuleNames.DATASETS) ||
       getModuleActiveStatus(ModuleNames.DASHBOARDS)
+    );
+  }
+  if (module === ModuleNames.SHARES) {
+    return getModuleActiveStatus(ModuleNames.DATASETS);
+  }
+  if (module === ModuleNames.WORKSHEETS) {
+    return (
+      getModuleActiveStatus(ModuleNames.DATASETS) &&
+      getModuleActiveStatus(ModuleNames.WORKSHEETS)
     );
   }
 

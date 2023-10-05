@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.modules.catalog.db.glossary_repositories import Glossary
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
@@ -47,7 +47,7 @@ class DatasetTableService:
 
             DatasetTableRepository.save(session, table)
             if 'terms' in table_data:
-                Glossary.set_glossary_terms_links(
+                GlossaryRepository.set_glossary_terms_links(
                     session, get_context().username, table.tableUri, 'DatasetTable', table_data['terms']
                 )
 
@@ -70,7 +70,7 @@ class DatasetTableService:
             ShareObjectRepository.delete_shares(session, table.tableUri)
             DatasetTableRepository.delete(session, table)
 
-            Glossary.delete_glossary_terms_links(
+            GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=table.tableUri, target_type='DatasetTable'
             )
         DatasetTableIndexer.delete_doc(doc_id=uri)

@@ -50,7 +50,7 @@ import {
   WorksheetResult
 } from '../components';
 
-export const WorksheetView = () => {
+const WorksheetView = () => {
   const navigate = useNavigate();
   const params = useParams();
   const dispatch = useDispatch();
@@ -699,3 +699,5 @@ export const WorksheetView = () => {
     </>
   );
 };
+
+export default WorksheetView;

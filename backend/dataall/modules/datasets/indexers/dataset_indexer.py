@@ -1,7 +1,7 @@
 """Indexes Datasets in OpenSearch"""
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
-from dataall.modules.vote.db.vote_repositories import Vote
+from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
@@ -17,7 +17,7 @@ class DatasetIndexer(BaseIndexer):
 
         count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
         count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
-        count_upvotes = Vote.count_upvotes(
+        count_upvotes = VoteRepository.count_upvotes(
             session, dataset_uri, target_type='dataset'
         )
 

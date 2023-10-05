@@ -28,6 +28,7 @@ class ImportMode(Enum):
 
     API = auto()
     CDK = auto()
+    CDK_CLI_EXTENSION = auto()
     HANDLERS = auto()
     STACK_UPDATER_TASK = auto()
     CATALOG_INDEXER_TASK = auto()
@@ -144,7 +145,9 @@ def _load_module(name: str):
     Loads a module but not initializing it
     """
     try:
-        importlib.import_module(f"{_MODULE_PREFIX}.{name}")
+        importlib.import_module(f"{_MODULE_PREFIX}.{name}")  # nosemgrep
+        # semgrep finding ignored as no upstream user input is passed to the import_module function
+        # Only code admins will have access to the parameters of the f-string
         return True
     except ModuleNotFoundError as e:
         log.error(f"Couldn't load module due to: {e}")
