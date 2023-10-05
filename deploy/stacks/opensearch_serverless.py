@@ -215,7 +215,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         compliant_name = NamingConventionService(
             target_uri=None,
             target_label=name,
-            pattern=NamingConventionPattern.OPENSEARCH,
+            pattern=NamingConventionPattern.OPENSEARCH_SERVERLESS,
             resource_prefix=prefix,
         ).build_compliant_name()
         return compliant_name
