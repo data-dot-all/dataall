@@ -14,6 +14,7 @@ class NamingConventionPattern(Enum):
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
 
+
 class NamingConventionService:
     def __init__(
         self,
