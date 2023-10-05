@@ -23,7 +23,7 @@ class NamingConventionService:
         resource_prefix: str,
     ):
         self.target_label = target_label
-        self.target_uri = target_uri
+        self.target_uri = target_uri if target_uri else ""
         self.service = pattern.name
         self.resource_prefix = resource_prefix
 
@@ -34,4 +34,5 @@ class NamingConventionService:
         regex = NamingConventionPattern[self.service].value['regex']
         separator = NamingConventionPattern[self.service].value['separator']
         max_length = NamingConventionPattern[self.service].value['max_length']
-        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length- len(self.resource_prefix + self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+        suffix = f"-{self.target_uri}" if len(self.target_uri) else ""
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length- len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
