@@ -24,7 +24,9 @@ def fetch_omics_workflows(engine):
         is_first_time = True
         for env in environments:
             workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region)
+            log.info(f"Found workflows {str(workflows)} in environment {env.environmentUri}")
             for workflow in workflows:
+                log.info(f"Processing workflow name={workflow['name']}, id={workflow['id']}...")
                 existing_workflow = OmicsRepository(session).get_workflow(workflow['id'])
                 if existing_workflow is not None:
                     log.info(f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping...")
