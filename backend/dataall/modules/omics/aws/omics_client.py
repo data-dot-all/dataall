@@ -71,22 +71,24 @@ class OmicsClient:
 
     
     @staticmethod
-    def list_workflows(awsAccountId, region) -> list:
+    def list_workflows(awsAccountId, region, type) -> list:
         try:
+            found_workflows = []
             client = OmicsClient.client(awsAccountId=awsAccountId, region=region)
             paginator = client.get_paginator('list_workflows')
             response_pages = paginator.paginate(
+                type=type,
                 PaginationConfig={
-                    'MaxItems': 100,
+                    'MaxItems': 1000,
                     'PageSize': 100,
                 }
             )
-            found_workflows = []
             for page in response_pages:
                 found_workflows.extend(page['items'])
+            logger.info(f"{type} workflows = {found_workflows}")
             return found_workflows
         except ClientError as e:
             logger.error(
-                f'Could not retrieve Ready2Run Omics Workflows status due to: {e} '
+                f'Could not retrieve {type} Omics Workflows status due to: {e} '
             )
             return 'ERROR LISTING WORKFLOWS'

@@ -23,7 +23,9 @@ def fetch_omics_workflows(engine):
         environments = session.query(Environment)
         is_first_time = True
         for env in environments:
-            workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region)
+            ready_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.READY2RUN.value)
+            private_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.PRIVATE.value)
+            workflows = ready_workflows + private_workflows
             log.info(f"Found workflows {str(workflows)} in environment {env.environmentUri}")
             for workflow in workflows:
                 log.info(f"Processing workflow name={workflow['name']}, id={workflow['id']}...")
@@ -43,8 +45,6 @@ def fetch_omics_workflows(engine):
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
             is_first_time = False
     return True
-
-
 
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
