@@ -1,11 +1,8 @@
 import logging
 import os
 import sys
-from operator import and_
 
-from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.environment.db.environment_models import Environment
 from dataall.base.db import get_engine
 from dataall.modules.omics.aws.omics_client import OmicsClient
 from dataall.modules.omics.db.models import OmicsWorkflow, OmicsWorkflowType
@@ -21,13 +18,18 @@ log = logging.getLogger(__name__)
 
 def fetch_omics_workflows(engine):
     """List Omics workflows."""
+    log.info(f'Starting omics workflows fetcher')
     with engine.scoped_session() as session:
         environments = session.query(Environment)
         is_first_time = True
         for env in environments:
             workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region)
             for workflow in workflows:
-                if is_first_time or workflow['type'] == OmicsWorkflowType.PRIVATE.value:
+                existing_workflow = OmicsRepository(session).get_workflow(workflow['id'])
+                if existing_workflow is not None:
+                    log.info(f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping...")
+                elif is_first_time or workflow['type'] == OmicsWorkflowType.PRIVATE.value:
+                    log.info(f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering...")
                     omicsWorkflow = OmicsWorkflow(
                         id=workflow['id'],
                         name=workflow['name'],
