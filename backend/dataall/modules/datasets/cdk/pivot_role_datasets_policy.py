@@ -1,5 +1,6 @@
 import os
 from dataall.base import db
+from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -128,18 +129,21 @@ class DatasetsPivotRole(PivotRoleStatementSet):
         allowed_buckets = []
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
-            datasets = DatasetRepository.query_environment_datasets(
+            datasets = DatasetRepository.query_environment_imported_datasets(
                 session, uri=self.environmentUri, filter=None
             )
             if datasets:
                 dataset: Dataset
                 for dataset in datasets:
                     allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+                for i in range(10):
+                    allowed_buckets.append(f'arn:aws:s3:::fakedataset-{i}')
 
         if allowed_buckets:
-            # S3 Dataset Buckets
-            dataset_statement = iam.PolicyStatement(
-                sid='DatasetBuckets',
+            # Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
+
+            base_statement = iam.PolicyStatement(
+                sid='ImportedDatasetBuckets',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:List*',
@@ -151,7 +155,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     's3:PutObjectAcl',
                     's3:PutBucketOwnershipControls',
                 ],
-                resources=allowed_buckets,
+                resources="RESOURCES",
             )
-            statements.append(dataset_statement)
+            dataset_statement = split_policy_with_resources_in_statements(
+                statement_without_resources=base_statement,
+                resources=allowed_buckets
+            )
+            statements.extend(dataset_statement)
         return statements

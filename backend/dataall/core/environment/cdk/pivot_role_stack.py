@@ -2,6 +2,7 @@ import logging
 from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
+from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,11 @@ class PivotRoleStatementSet(object):
             logger.info(f'Adding {service.__name__} statements to policy')
             logger.info(f'statements: {str(service.get_statements(self))}')
 
-        statements_chunks: list = [
-            statements[i: i + 10] for i in range(0, len(statements), 10)
-        ]
+        statements_chunks = split_policy_statements_in_chunks(statements)
+
+        # statements_chunks: list = [
+        #     statements[i: i + 10] for i in range(0, len(statements), 10)
+        # ]
 
         for index, chunk in enumerate(statements_chunks):
             policies.append(
