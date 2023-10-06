@@ -77,8 +77,8 @@ class OmicsClient:
             paginator = client.get_paginator('list_workflows')
             response_pages = paginator.paginate(
                 PaginationConfig={
-                    'MaxItems': 123,
-                    'PageSize': 123,
+                    'MaxItems': 100,
+                    'PageSize': 100,
                 }
             )
             found_workflows = []
