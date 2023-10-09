@@ -379,13 +379,17 @@ class LambdaApiStack(pyNestedClass):
                 ),
                 rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
             )
+            acl = {
+                "Arn": acl.attr_arn,
+                "logical_id": acl.logical_id
+            }
 
         wafv2.CfnWebACLAssociation(
             self,
             'WafApiGW',
             resource_arn=f'arn:aws:apigateway:{self.region}::'
             f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
-            web_acl_arn=acl.get_att('Arn').to_string(),
+            web_acl_arn=acl.get("Arn"),
         )
 
         # Dpp changes
