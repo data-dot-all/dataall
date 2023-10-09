@@ -1,58 +1,95 @@
 from typing import List
+import logging
+from aws_cdk import aws_iam as iam
+
+logger = logging.getLogger(__name__)
 
 POLICY_LIMIT = 6144
+POLICY_HEADERS_BUFFER = 144
+MAXIMUM_NUMBER_MANAGED_POLICIES = 20  # Soft limit 10, hard limit 20
+
 
 def split_policy_statements_in_chunks(statements: List):
     """
-    Splits a list of IAM policy statements into a list of lists (chunks)
-    For each chunk, the size should remain below the POLICY LIMIT
+    Splitter used for IAM policies with an undefined number of statements
+    - Ensures that the size of the IAM policy remains below the POLICY LIMIT
+    - If it exceeds the POLICY LIMIT, it breaks the policy into multiple policies (chunks)
+    - Note the POLICY_HEADERS_BUFFER to account for the headers of the policy which usually take around ~60chars
     """
     chunks = []
     index = 0
-    print("Initial loop")
-    # Index = number of statements
-    print(f"statements = {len(statements)}")
+    statements_list_of_strings = [str(s.to_json()) for s in statements]
+    total_length = len(', '.join(statements_list_of_strings))
+    logger.info(f"Number of statements = {len(statements)}")
+    logger.info(f"Total length of statements = {total_length}")
+    max_length = max(statements_list_of_strings, key=len)
+    if len(max_length) > POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+        raise Exception(f"Policy statement {max_length} exceeds maximum policy size")
     while index < len(statements):
         chunk = []
-        chunk_size = len(statements[index].to_string())
-        print(f"-----------------")
-        print(f"chunk = {chunk}")
-        print(f"chunk_size = {chunk_size}")
-        while chunk_size + len(statements[index].to_string()) < POLICY_LIMIT:
-            for statement in statements[index:]:
-                print(statement.to_string())
-                chunk.append(statement)
-                print(f"statement size= {len(statement.to_string())}")
-                chunk_size += len(statement.to_string())
-                index += 1
-                print(f"################")
-                #print(f"chunk = {chunk}")
-                print(f"chunk_size = {chunk_size}")
-                print(f"index={index}")
+        chunk_size = 0
+        while index < len(statements) and chunk_size + len(str(statements[index].to_json())) < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+            chunk.append(statements[index])
+            chunk_size += len(str(statements[index].to_json()))
+            index += 1
         chunks.append(chunk)
-        print(chunks)
-
+    logger.info(f"Total number of managed policies = {len(chunks)}")
+    if len(chunks) > MAXIMUM_NUMBER_MANAGED_POLICIES:
+        raise Exception("The number of policies calculated exceeds the allowed maximum number of managed policies")
     return chunks
 
 
-def split_policy_with_resources_in_statements(statement_without_resources, resources):
+def split_policy_with_resources_in_statements(base_sid, effect, actions, resources):
     """
-    Ensures that the size of an IAM statement is below the POLICY LIMIT
-    If it exceeds the POLICY LIMIT, it breaks the statement in multiple statements
+    Splitter used for IAM policy statements with an undefined number of resources.
+    - Ensures that the size of the IAM statement is below the POLICY LIMIT
+    - If it exceeds the POLICY LIMIT, it breaks the statement in multiple statements with a subset of resources
+    - Note the POLICY_HEADERS_BUFFER to account for the headers of the policy which usually take around ~60chars
     """
-    resulting_statement = statement_without_resources.replace("RESOURCES", resources)
-    if len(str(resulting_statement)) < POLICY_LIMIT:
+    statement_without_resources = iam.PolicyStatement(
+        sid=base_sid,
+        effect=effect,
+        actions=actions,
+        resources=["*"]
+    )
+    resources_str = '" ," '.join(r for r in resources)
+    number_resources = len(resources)
+    max_length = len(max(resources, key=len))
+    base_length = len(str(statement_without_resources.to_json()))
+    total_length = base_length + len(resources_str)
+    logger.info(f"Policy base length = {base_length}")
+    logger.info(f"Number of resources = {number_resources}, resource maximum length = {max_length}")
+    logger.info(f"Resources as string length = {len(resources_str)}")
+    logger.info(f"Total length approximated as base length + resources string length = {total_length}")
+
+    if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+        logger.info("Not exceeding policy limit, returning statement ...")
+        resulting_statement = iam.PolicyStatement(
+            sid=base_sid,
+            effect=effect,
+            actions=actions,
+            resources=resources
+        )
         return [resulting_statement]
     else:
+        logger.info("Exceeding policy limit, splitting statement ...")
+        index = 0
+        split = 0
         resulting_statements = []
-        splits = len(str(resources))/(POLICY_LIMIT-len(str(statement_without_resources)))
-        print(splits)
-        split_size = len(str(resulting_statement))/splits
-        for index in range(splits):
-            print(index)
-            print(index+split_size)
-            resulting_statement = statement_without_resources.replace("RESOURCES", resources[index,index+split_size])
-            resulting_statements.append((resulting_statement))
+        while index < len(resources):
+            size = 0
+            res = []
+            while index < len(resources) and (size + len(resources[index]) + 5) < POLICY_LIMIT - POLICY_HEADERS_BUFFER - base_length:
+                res.append(resources[index])
+                size += (len(resources[index]) + 5)
+                index += 1
+            resulting_statement = iam.PolicyStatement(
+                sid=base_sid + str(split),
+                effect=effect,
+                actions=actions,
+                resources=res
+            )
+            split += 1
+            resulting_statements.append(resulting_statement)
+        logger.info(f"Statement divided into {split+1} smaller statements")
     return resulting_statements
-
-

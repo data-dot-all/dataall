@@ -41,10 +41,6 @@ class PivotRoleStatementSet(object):
 
         statements_chunks = split_policy_statements_in_chunks(statements)
 
-        # statements_chunks: list = [
-        #     statements[i: i + 10] for i in range(0, len(statements), 10)
-        # ]
-
         for index, chunk in enumerate(statements_chunks):
             policies.append(
                 iam.ManagedPolicy(

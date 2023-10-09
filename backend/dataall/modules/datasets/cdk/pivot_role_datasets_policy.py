@@ -136,14 +136,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 dataset: Dataset
                 for dataset in datasets:
                     allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
-                for i in range(10):
-                    allowed_buckets.append(f'arn:aws:s3:::fakedataset-{i}')
 
         if allowed_buckets:
             # Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
-
-            base_statement = iam.PolicyStatement(
-                sid='ImportedDatasetBuckets',
+            dataset_statement = split_policy_with_resources_in_statements(
+                base_sid='ImportedDatasetBuckets',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:List*',
@@ -155,10 +152,6 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     's3:PutObjectAcl',
                     's3:PutBucketOwnershipControls',
                 ],
-                resources="RESOURCES",
-            )
-            dataset_statement = split_policy_with_resources_in_statements(
-                statement_without_resources=base_statement,
                 resources=allowed_buckets
             )
             statements.extend(dataset_statement)
