@@ -487,7 +487,7 @@ class CloudfrontDistro(pyNestedClass):
                     iam.ServicePrincipal('lambda.amazonaws.com'),
                 ),
             ),
-            runtime=_lambda.Runtime.NODEJS_14_X,
+            runtime=_lambda.Runtime.NODEJS_18_X,
         )
 
         http_header_func_version = http_header_func.current_version
