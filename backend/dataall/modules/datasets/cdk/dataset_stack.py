@@ -379,7 +379,7 @@ class DatasetStack(Stack):
             role_name=dataset.IAMDatasetAdminRoleArn.split('/')[-1],
             assumed_by=iam.CompositePrincipal(
                 iam.ArnPrincipal(
-                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'  # TODO: issues in local testing
+                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
                 iam.ServicePrincipal('glue.amazonaws.com'),
             ),
