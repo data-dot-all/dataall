@@ -37,6 +37,6 @@ class CloudfrontStack(Stack):
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
-            cloudfront_waf=cloudfront_waf
+            cloudfront_waf=cloudfront_waf,
             **kwargs,
         )
