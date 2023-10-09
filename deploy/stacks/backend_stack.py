@@ -146,7 +146,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
-            api_waf=api_waf
+            api_waf=api_waf,
             **kwargs,
         )
 
