@@ -358,7 +358,7 @@ class CloudfrontDistro(pyNestedClass):
 
         userguide_docs_distribution, user_docs_bucket = self.build_static_site(
             f'userguide',
-            acl,
+            web_acl_id,
             auth_at_edge,
             envname,
             resource_prefix,
@@ -519,7 +519,6 @@ class CloudfrontDistro(pyNestedClass):
         ssl_support_method,
         security_policy,
         logging_bucket,
-        web_acl_id,
     ):
 
         parse = auth_at_edge.devdoc_app.get_att('Outputs.ParseAuthHandler').to_string()
@@ -594,7 +593,7 @@ class CloudfrontDistro(pyNestedClass):
             },
             default_root_object='index.html',
             error_responses=self.error_responses(),
-            web_acl_id=web_acl_id.get_att('Arn').to_string(),
+            web_acl_id=acl.get_att('Arn').to_string(),
             log_bucket=logging_bucket,
             log_file_prefix=f'cloudfront-logs/{construct_id}'
         )
