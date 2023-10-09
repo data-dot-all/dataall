@@ -62,7 +62,7 @@ class BackendStage(Stage):
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             codeartifact_domain_name=codeartifact_domain_name,
             codeartifact_pip_repo_name=codeartifact_pip_repo_name,
-            api_waf=api_waf
+            api_waf=api_waf,
             **kwargs,
         )
 

@@ -627,7 +627,7 @@ class PipelineStack(Stack):
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
-                api_waf=target_env.get('APIWAF')
+                api_waf=target_env.get('APIWAF'),
             )
         )
         return backend_stage
