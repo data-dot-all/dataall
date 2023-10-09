@@ -385,7 +385,7 @@ class LambdaApiStack(pyNestedClass):
             'WafApiGW',
             resource_arn=f'arn:aws:apigateway:{self.region}::'
             f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
-            web_acl_arn=acl.get_att("Arn"),
+            web_acl_arn=acl.get_att('Arn').to_string(),
         )
 
         # Dpp changes
