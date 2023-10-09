@@ -405,7 +405,7 @@ class LambdaApiStack(pyNestedClass):
                 self,
                 f'WebAclId{envname}',
                 export_name=f'{resource_prefix}-{envname}-api-webacl',
-                value=Fn.select(0, Fn.split('|', Fn.ref(acl.logical_id))),
+                value=Fn.select(0, Fn.split('|', Fn.ref(acl.get("logical_id")))),
             )
 
         CfnOutput(self, f'Url{envname}', value=graphql_api.url)
