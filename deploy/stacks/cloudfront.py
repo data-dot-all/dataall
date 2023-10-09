@@ -230,7 +230,7 @@ class CloudfrontDistro(pyNestedClass):
         if cloudfront_waf and cloudfront_waf.get('config_auto_association'):
             web_acl_id = None
         else:
-            web_acl_id = acl.get('Arn')
+            web_acl_id = acl.get_att('Arn')
 
         logging_bucket = s3.Bucket(
             self,
