@@ -388,12 +388,22 @@ class LambdaApiStack(pyNestedClass):
             web_acl_arn=acl.get_att('Arn').to_string(),
         )
 
-        CfnOutput(
-            self,
-            f'WebAclId{envname}',
-            export_name=f'{resource_prefix}-{envname}-api-webacl',
-            value=Fn.select(0, Fn.split('|', Fn.ref(acl.logical_id))),
-        )
+        # Dpp changes
+        if api_waf:
+            CfnOutput(
+                self,
+                f'WebAclId{envname}',
+                export_name=f'{resource_prefix}-{envname}-api-webacl',
+                value=api_waf.get("logical_id"),
+            )
+        else:
+            CfnOutput(
+                self,
+                f'WebAclId{envname}',
+                export_name=f'{resource_prefix}-{envname}-api-webacl',
+                value=Fn.select(0, Fn.split('|', Fn.ref(acl.logical_id))),
+            )
+
         CfnOutput(self, f'Url{envname}', value=graphql_api.url)
 
         return graphql_api, acl
