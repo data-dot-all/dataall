@@ -230,7 +230,7 @@ class CloudfrontDistro(pyNestedClass):
         if cloudfront_waf and cloudfront_waf.get('config_auto_association'):
             web_acl_id = None
         else:
-            web_acl_id = acl
+            web_acl_id = acl.get_att('Arn').to_string()
 
         logging_bucket = s3.Bucket(
             self,
@@ -318,7 +318,7 @@ class CloudfrontDistro(pyNestedClass):
             ),
             default_root_object='index.html',
             error_responses=self.error_responses(),
-            web_acl_id=web_acl_id.get_att('Arn').to_string(),
+            web_acl_id=web_acl_id,
             log_bucket=logging_bucket,
             log_file_prefix='cloudfront-logs/frontend',
         )
@@ -593,7 +593,7 @@ class CloudfrontDistro(pyNestedClass):
             },
             default_root_object='index.html',
             error_responses=self.error_responses(),
-            web_acl_id=acl.get_att('Arn').to_string(),
+            web_acl_id=acl,
             log_bucket=logging_bucket,
             log_file_prefix=f'cloudfront-logs/{construct_id}'
         )
