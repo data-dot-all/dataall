@@ -522,7 +522,7 @@ class EnvironmentService:
     def list_valid_user_environments(session, data=None) -> dict:
         context = get_context()
         query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
-        environments = []
+        valid_environments = []
         for env in query:
             stack = stack_helper.get_stack_with_cfn_resources(
                 targetUri=env.environmentUri,
@@ -533,17 +533,11 @@ class EnvironmentService:
                 StackStatus.UPDATE_COMPLETE.value,
                 StackStatus.UPDATE_ROLLBACK_COMPLETE.value
             ]:
-                valid = {
-                    'environmentUri': env.environmentUri,
-                    'label': env.label,
-                    'region': env.region,
-                    'organizationUri': env.organizationUri
-                }
-                environments.append(valid)
+                valid_environments.append(env)
 
         return {
-            'count': len(environments),
-            'nodes': environments,
+            'count': len(valid_environments),
+            'nodes': valid_environments,
         }
 
     @staticmethod
