@@ -11,5 +11,5 @@ setuptools.setup(
     author=__author__,
     package_dir={'': 'stacks'},
     packages=setuptools.find_packages(where='stacks'),
-    python_requires='>=3.7',
+    python_requires='>=3.8',
 )
