@@ -11,6 +11,12 @@ export const listValidEnvironments = ({ filter }) => ({
         nodes {
           environmentUri
           label
+          region
+          organization {
+            organizationUri
+            name
+            label
+          }
         }
       }
     }

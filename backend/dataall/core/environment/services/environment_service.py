@@ -536,6 +536,8 @@ class EnvironmentService:
                 valid = {
                     'environmentUri': env.environmentUri,
                     'label': env.label,
+                    'region': env.region,
+                    'organizationUri': env.organizationUri
                 }
                 environments.append(valid)
 
