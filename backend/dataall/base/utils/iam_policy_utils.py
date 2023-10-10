@@ -5,7 +5,7 @@ from aws_cdk import aws_iam as iam
 logger = logging.getLogger(__name__)
 
 POLICY_LIMIT = 6144
-POLICY_HEADERS_BUFFER = 144
+POLICY_HEADERS_BUFFER = 144  # The policy headers take around 60 chars. An extra buffer of 84 chars is added for any additional spacing or char that is unaccounted.
 MAXIMUM_NUMBER_MANAGED_POLICIES = 20  # Soft limit 10, hard limit 20
 
 
@@ -26,9 +26,13 @@ def split_policy_statements_in_chunks(statements: List):
     if len(max_length) > POLICY_LIMIT - POLICY_HEADERS_BUFFER:
         raise Exception(f"Policy statement {max_length} exceeds maximum policy size")
     while index < len(statements):
+        #  Iterating until all statements are assigned to a chunk.
+        #  "index" represents the statement position in the statements list
         chunk = []
         chunk_size = 0
         while index < len(statements) and chunk_size + len(str(statements[index].to_json())) < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+            #  Appends a statement to the chunk until we reach its maximum size.
+            #  It compares, current size of the statements < allowed size for the statements section of a policy
             chunk.append(statements[index])
             chunk_size += len(str(statements[index].to_json()))
             index += 1
@@ -77,11 +81,15 @@ def split_policy_with_resources_in_statements(base_sid, effect, actions, resourc
         split = 0
         resulting_statements = []
         while index < len(resources):
+            #  Iterating until all resources are defined in a policy statement.
+            #  "index" represents the position of the resource in the resources list
             size = 0
             res = []
             while index < len(resources) and (size + len(resources[index]) + 5) < POLICY_LIMIT - POLICY_HEADERS_BUFFER - base_length:
+                #  Appending a resource to the "res" list until we reach the maximum size for the resources section
+                #  It compares: current size of resources versus the allowed size of the resource section in a statement
                 res.append(resources[index])
-                size += (len(resources[index]) + 5)
+                size += (len(resources[index]) + 5)  # +5 for the 4 extra characters (", ") around each resource, plus additional ones []
                 index += 1
             resulting_statement = iam.PolicyStatement(
                 sid=base_sid + str(split),
