@@ -1,17 +1,19 @@
-import SendIcon from '@mui/icons-material/Send';
-import { LoadingButton } from '@mui/lab';
+// import SendIcon from '@mui/icons-material/Send';
+// import { LoadingButton } from '@mui/lab';
 import {
   Box,
-  CardContent,
+  // CardContent,
   Dialog,
-  TextField,
+  // TextField,
   Typography,
   Button
 } from '@mui/material';
-import { Formik } from 'formik';
+// import { Formik } from 'formik';
 // import PropTypes from 'prop-types';
-import * as Yup from 'yup';
+// import * as Yup from 'yup';
 import { useAuth } from 'authentication';
+// import { createReAuthSession } from 'authentication/contexts/services';
+// import { useClient } from 'services';
 
 export const ReAuthModal = () => {
   // const { onApply, onClose, open, ...other } = props;
@@ -22,6 +24,8 @@ export const ReAuthModal = () => {
     try {
       setStatus({ success: true });
       setSubmitting(false);
+      await reauth();
+      // await client.query(createReAuthSession());
       // enqueueSnackbar('ReAuth Confirmed', {
       //   anchorOrigin: {
       //     horizontal: 'right',
@@ -67,7 +71,17 @@ export const ReAuthModal = () => {
             </div>
           </form> */}
         <Box sx={{ p: 3 }}>
-          <Formik
+          <Button
+            color="primary"
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            onClick={submit}
+          >
+            Re-Authenticate
+          </Button>
+          {/* <Formik
             initialValues={{
               username: '',
               password: ''
@@ -136,19 +150,9 @@ export const ReAuthModal = () => {
                 </CardContent>
               </form>
             )}
-          </Formik>
+          </Formik> */}
         </Box>
       </Box>
-      <Button
-        color="primary"
-        fullWidth
-        size="large"
-        type="submit"
-        variant="contained"
-        onClick={reauth}
-      >
-        Re-Authenticate
-      </Button>
     </Dialog>
   );
 };
