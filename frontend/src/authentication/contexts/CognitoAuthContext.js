@@ -130,6 +130,23 @@ export const CognitoAuthProvider = (props) => {
   };
 
   const reauth = async (status) => {
+    await Auth.signOut();
+    await Auth.federatedSignIn()
+      .then((user) => {
+        dispatch({
+          type: 'LOGIN',
+          payload: {
+            user: {
+              id: user.attributes.email,
+              email: user.attributes.email,
+              name: user.attributes.email
+            }
+          }
+        });
+      })
+      .catch((e) => {
+        console.error('Failed to authenticate user', e);
+      });
     dispatch({
       type: 'REAUTH',
       payload: {
