@@ -20,32 +20,32 @@ export const ReAuthModal = () => {
   // When State is REAUTH --> LOAD
   const { reAuthStatus, reauth } = useAuth();
 
-  async function submit(values, setStatus, setSubmitting, setErrors) {
-    try {
-      setStatus({ success: true });
-      setSubmitting(false);
-      await reauth();
-      // await client.query(createReAuthSession());
-      // enqueueSnackbar('ReAuth Confirmed', {
-      //   anchorOrigin: {
-      //     horizontal: 'right',
-      //     vertical: 'top'
-      //   },
-      //   variant: 'success'
-      // });
-      // if (onApply) {
-      //   onApply();
-      // }
+  // async function submit(values, setStatus, setSubmitting, setErrors) {
+  //   try {
+  //     setStatus({ success: true });
+  //     setSubmitting(false);
+  //     await reauth();
+  //     // await client.query(createReAuthSession());
+  //     // enqueueSnackbar('ReAuth Confirmed', {
+  //     //   anchorOrigin: {
+  //     //     horizontal: 'right',
+  //     //     vertical: 'top'
+  //     //   },
+  //     //   variant: 'success'
+  //     // });
+  //     // if (onApply) {
+  //     //   onApply();
+  //     // }
 
-      // TODO: QUERY TO CREATE REAUTH SESSION
-    } catch (err) {
-      console.error(err);
-      setStatus({ success: false });
-      setErrors({ submit: err.message });
-      setSubmitting(false);
-      // dispatch({ type: SET_ERROR, error: err.message });
-    }
-  }
+  //     // TODO: QUERY TO CREATE REAUTH SESSION
+  //   } catch (err) {
+  //     console.error(err);
+  //     setStatus({ success: false });
+  //     setErrors({ submit: err.message });
+  //     setSubmitting(false);
+  //     // dispatch({ type: SET_ERROR, error: err.message });
+  //   }
+  // }
 
   return (
     <Dialog maxWidth="md" fullWidth open={reAuthStatus}>
@@ -77,7 +77,7 @@ export const ReAuthModal = () => {
             size="large"
             type="submit"
             variant="contained"
-            onClick={submit}
+            onClick={reauth}
           >
             Re-Authenticate
           </Button>
@@ -156,9 +156,3 @@ export const ReAuthModal = () => {
     </Dialog>
   );
 };
-
-// ReAuthModal.propTypes = {
-//   onApply: PropTypes.func,
-//   onClose: PropTypes.func,
-//   open: PropTypes.bool.isRequired
-// };
