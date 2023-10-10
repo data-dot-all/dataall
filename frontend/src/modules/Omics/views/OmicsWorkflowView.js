@@ -112,7 +112,7 @@ const OmicsWorkflowView = () => {
                 component={RouterLink}
                 startIcon={<PlusIcon fontSize="small" />}
                 sx={{ m: 1 }}
-                to="/console/omics/runs/new"
+                to={`/console/omics/runs/new/${omicsWorkflow.id}`}
                 variant="contained"
               >
                 Create Run

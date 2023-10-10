@@ -1,4 +1,4 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
@@ -22,44 +22,62 @@ import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
 import { useCallback, useEffect, useState } from 'react';
 // import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
-import { useClient, listEnvironments } from 'services';
+import { useClient } from 'services';
+import { getOmicsWorkflow } from '../services';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
   // ChipInput,
-  Defaults,
+  // Defaults,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { createOmicsRun } from '../services';
 
 const OmicsRunCreateForm = (props) => {
+  const params = useParams();
+  const client = useClient();
+  const dispatch = useDispatch();
+  const [omicsWorkflow, setOmicsWorkflow] = useState(null);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const dispatch = useDispatch();
-  const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
-  //const [groupOptions, setGroupOptions] = useState([]);
-  //const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const fetchEnvironments = useCallback(async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      listEnvironments({ filter: Defaults.SelectListFilter })
-    );
+    const response = await client.query(getOmicsWorkflow(params.workflowId));
     if (!response.errors) {
-      // setEnvironmentOptions(
-      //   response.data.listEnvironments.nodes.map((e) => ({
-      //     ...e,
-      //     value: e.environmentUri,
-      //     label: e.label
-      //   }))
-      // );
+      setOmicsWorkflow(response.data.getOmicsWorkflow);
     } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Omics Workflownot found';
+      dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch]);
+  }, [client, dispatch, params.uri]);
+
+  //const [groupOptions, setGroupOptions] = useState([]);
+  //const [environmentOptions, setEnvironmentOptions] = useState([]);
+  // const fetchEnvironments = useCallback(async () => {
+  //   setLoading(true);
+  //   const response = await client.query(
+  //     listEnvironments({ filter: Defaults.SelectListFilter })
+  //   );
+  //   if (!response.errors) {
+  //     // setEnvironmentOptions(
+  //     //   response.data.listEnvironments.nodes.map((e) => ({
+  //     //     ...e,
+  //     //     value: e.environmentUri,
+  //     //     label: e.label
+  //     //   }))
+  //     // );
+  //   } else {
+  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
+  //   }
+  //   setLoading(false);
+  // }, [client, dispatch]);
+
   // const fetchGroups = async (environmentUri) => {
   //   try {
   //     const response = await client.query(
@@ -82,13 +100,19 @@ const OmicsRunCreateForm = (props) => {
   //     dispatch({ type: SET_ERROR, error: e.message });
   //   }
   // };
+  // useEffect(() => {
+  //   if (client) {
+  //     fetchEnvironments().catch((e) =>
+  //       dispatch({ type: SET_ERROR, error: e.message })
+  //     );
+  //   }
+  // }, [client, dispatch, fetchEnvironments]);
+
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client, dispatch, fetchEnvironments]);
+  }, [client, dispatch, fetchItem]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -238,23 +262,22 @@ const OmicsRunCreateForm = (props) => {
                             name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.label}
+                            value={omicsWorkflow.id}
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
-                            disabled
                             fullWidth
                             label="Run Name"
                             name="name"
-                            value={values.run ? values.run.name : ''}
+                            onChange={handleChange}
+                            value={values.run}
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
-                            disabled
                             fullWidth
                             label="Region"
                             name="region"
@@ -268,11 +291,10 @@ const OmicsRunCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            disabled
                             fullWidth
                             label="Select S3 Output Destination"
                             name="destination"
-                            value={values.destination ? values.destination : ''}
+                            value={values.destination}
                             variant="outlined"
                           />
                         </CardContent>
@@ -299,7 +321,7 @@ const OmicsRunCreateForm = (props) => {
                             onBlur={handleBlur}
                             onChange={handleChange}
                             rows={12}
-                            value={values.description}
+                            value={omicsWorkflow.parameterTemplate}
                             variant="outlined"
                           />
                           {touched.description && errors.description && (

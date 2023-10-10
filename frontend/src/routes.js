@@ -424,7 +424,7 @@ const routes = [
             element: <OmicsWorkflowsView />
           },
           {
-            path: 'omics/runs/new',
+            path: 'omics/runs/new/:workflowId',
             element: <OmicsRunCreateForm />
           }
         ]
