@@ -14,21 +14,20 @@ import {
   FormHelperText,
   Grid,
   Link,
-  //MenuItem,
+  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
-import { useCallback, useEffect, useState } from 'react';
-// import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
-import { useClient } from 'services';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
 import { getOmicsWorkflow } from '../services';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
   // ChipInput,
-  // Defaults,
+  Defaults,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -51,62 +50,63 @@ const OmicsRunCreateForm = (props) => {
     } else {
       const error = response.errors
         ? response.errors[0].message
-        : 'Omics Workflownot found';
+        : 'Omics Workflow not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
   }, [client, dispatch, params.uri]);
 
-  //const [groupOptions, setGroupOptions] = useState([]);
-  //const [environmentOptions, setEnvironmentOptions] = useState([]);
-  // const fetchEnvironments = useCallback(async () => {
-  //   setLoading(true);
-  //   const response = await client.query(
-  //     listEnvironments({ filter: Defaults.SelectListFilter })
-  //   );
-  //   if (!response.errors) {
-  //     // setEnvironmentOptions(
-  //     //   response.data.listEnvironments.nodes.map((e) => ({
-  //     //     ...e,
-  //     //     value: e.environmentUri,
-  //     //     label: e.label
-  //     //   }))
-  //     // );
-  //   } else {
-  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //   }
-  //   setLoading(false);
-  // }, [client, dispatch]);
+  const [groupOptions, setGroupOptions] = useState([]);
+  const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const fetchEnvironments = useCallback(async () => {
+    setLoading(true);
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.SelectListFilter })
+    );
+    if (!response.errors) {
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
+  }, [client, dispatch]);
 
-  // const fetchGroups = async (environmentUri) => {
-  //   try {
-  //     const response = await client.query(
-  //       listEnvironmentGroups({
-  //         filter: Defaults.SelectListFilter,
-  //         environmentUri
-  //       })
-  //     );
-  //     if (!response.errors) {
-  //       setGroupOptions(
-  //         response.data.listEnvironmentGroups.nodes.map((g) => ({
-  //           value: g.groupUri,
-  //           label: g.groupUri
-  //         }))
-  //       );
-  //     } else {
-  //       dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //     }
-  //   } catch (e) {
-  //     dispatch({ type: SET_ERROR, error: e.message });
-  //   }
-  // };
-  // useEffect(() => {
-  //   if (client) {
-  //     fetchEnvironments().catch((e) =>
-  //       dispatch({ type: SET_ERROR, error: e.message })
-  //     );
-  //   }
-  // }, [client, dispatch, fetchEnvironments]);
+  const fetchGroups = async (environmentUri) => {
+    try {
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
+      if (!response.errors) {
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+  useEffect(() => {
+    if (client) {
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    }
+  }, [client, dispatch, fetchEnvironments, fetchItem]);
 
   useEffect(() => {
     if (client) {
@@ -120,9 +120,9 @@ const OmicsRunCreateForm = (props) => {
         createOmicsRun({
           label: values.label,
           environmentUri: values.environment.environmentUri,
-          description: values.description,
+          parameterTemplate: values.parameterTemplate,
           SamlAdminGroupName: values.SamlAdminGroupName,
-          tags: values.tags
+          destination: values.destination
         })
       );
       setStatus({ success: true });
@@ -217,19 +217,21 @@ const OmicsRunCreateForm = (props) => {
             <Formik
               initialValues={{
                 label: '',
-                description: '',
                 SamlAdminGroupName: '',
                 environment: '',
-                tags: []
+                destination: '',
+                parameterTemplate: omicsWorkflow.parameterTemplate
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string().max(255).required('*Workflow is required'),
-                description: Yup.string().max(5000),
+                parameterTemplate: Yup.string().max(5000),
                 SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
-                tags: Yup.array().nullable()
+                destination: Yup.string()
+                  .max(255)
+                  .required('*Destination is required')
               })}
               onSubmit={async (
                 values,
@@ -258,26 +260,64 @@ const OmicsRunCreateForm = (props) => {
                             error={Boolean(touched.label && errors.label)}
                             fullWidth
                             helperText={touched.label && errors.label}
-                            label="Workflow"
+                            label="Workflow id"
                             name="label"
+                            value={omicsWorkflow.id}
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={omicsWorkflow.id}
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.label && errors.label)}
+                            fullWidth
+                            helperText={touched.label && errors.label}
+                            label="Run Name"
+                            name="name"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.label}
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
                             fullWidth
-                            label="Run Name"
-                            name="name"
-                            onChange={handleChange}
-                            value={values.run}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
+                            label="Environment"
+                            name="environment"
+                            onChange={(event) => {
+                              setFieldValue('SamlGroupName', '');
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                              setFieldValue('environment', event.target.value);
+                            }}
+                            select
+                            value={values.environment}
                             variant="outlined"
-                          />
+                          >
+                            {environmentOptions.map((environment) => (
+                              <MenuItem
+                                key={environment.environmentUri}
+                                value={environment}
+                              >
+                                {environment.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         </CardContent>
                         <CardContent>
                           <TextField
+                            disabled
                             fullWidth
                             label="Region"
                             name="region"
@@ -292,10 +332,35 @@ const OmicsRunCreateForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
+                            label="Owners"
+                            name="SamlGroupName"
+                            onChange={handleChange}
+                            select
+                            value={values.SamlGroupName}
+                            variant="outlined"
+                          >
+                            {groupOptions.map((group) => (
+                              <MenuItem key={group.value} value={group.value}>
+                                {group.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
                             label="Select S3 Output Destination"
                             name="destination"
-                            value={values.destination}
+                            value={values.destination} //TODO: datasetUri
                             variant="outlined"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
                           />
                         </CardContent>
                       </Card>
@@ -313,7 +378,7 @@ const OmicsRunCreateForm = (props) => {
                             }}
                             fullWidth
                             helperText={`${
-                              1000 - values.description.length
+                              1000 - values.parameterTemplate.length
                             } characters left`}
                             label="Inline JSON Parameters Template"
                             name="JSON Parameters"
@@ -321,16 +386,17 @@ const OmicsRunCreateForm = (props) => {
                             onBlur={handleBlur}
                             onChange={handleChange}
                             rows={12}
-                            value={omicsWorkflow.parameterTemplate}
+                            value={values.parameterTemplate}
                             variant="outlined"
                           />
-                          {touched.description && errors.description && (
-                            <Box sx={{ mt: 2 }}>
-                              <FormHelperText error>
-                                {errors.description}
-                              </FormHelperText>
-                            </Box>
-                          )}
+                          {touched.parameterTemplate &&
+                            errors.parameterTemplate && (
+                              <Box sx={{ mt: 2 }}>
+                                <FormHelperText error>
+                                  {errors.parameterTemplate}
+                                </FormHelperText>
+                              </Box>
+                            )}
                         </CardContent>
                       </Card>
                       {errors.submit && (
