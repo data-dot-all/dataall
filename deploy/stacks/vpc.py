@@ -44,7 +44,8 @@ class VpcStack(pyNestedClass):
                 allow_all_outbound=False, 
                 disable_inline_rules=True
             )
-            self._create_vpc_endpoints()
+            # Dpp changes disable vpc
+            # self._create_vpc_endpoints()
 
         self.private_subnets = []
         if self.vpc.private_subnets:
