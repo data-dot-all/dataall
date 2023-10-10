@@ -1,6 +1,13 @@
 import SendIcon from '@mui/icons-material/Send';
 import { LoadingButton } from '@mui/lab';
-import { Box, CardContent, Dialog, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  CardContent,
+  Dialog,
+  TextField,
+  Typography,
+  Button
+} from '@mui/material';
 import { Formik } from 'formik';
 // import PropTypes from 'prop-types';
 import * as Yup from 'yup';
@@ -9,7 +16,7 @@ import { useAuth } from 'authentication';
 export const ReAuthModal = () => {
   // const { onApply, onClose, open, ...other } = props;
   // When State is REAUTH --> LOAD
-  const { reAuthStatus } = useAuth();
+  const { reAuthStatus, reauth } = useAuth();
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -132,6 +139,16 @@ export const ReAuthModal = () => {
           </Formik>
         </Box>
       </Box>
+      <Button
+        color="primary"
+        fullWidth
+        size="large"
+        type="submit"
+        variant="contained"
+        onClick={reauth}
+      >
+        Re-Authenticate
+      </Button>
     </Dialog>
   );
 };
