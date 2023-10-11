@@ -35,6 +35,11 @@ class IdpStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+        if self.node.try_get_context('image_tag'):
+            image_tag = self.node.try_get_context('image_tag')
+
+        image_tag = f'lambdas-{image_tag}'
+
         self.user_pool = cognito.UserPool(
             self,
             f'UserPool-{envname}',
