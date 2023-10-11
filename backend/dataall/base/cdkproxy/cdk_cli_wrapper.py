@@ -51,6 +51,11 @@ def aws_configure(profile_name='default'):
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
+        print(f"Successfully curled credentials: {str(process.stdout)}")
+    else:
+        print(
+            f'Failed clean curl credentials due to {str(process.stderr)}'
+        )
 
     return creds
 

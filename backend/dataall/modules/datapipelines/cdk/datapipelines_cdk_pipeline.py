@@ -237,9 +237,25 @@ app.synth()
 
             cwd = os.path.dirname(os.path.abspath(__file__))
             logger.info(f"Running command : \n {' '.join(precmd)}")
+            pre_process = subprocess.run(
+                ['deactivate'],
+                text=True,
+                shell=False,
+                encoding='utf-8',
+                capture_output=True,
+                cwd=cwd
+            )
+
+            if pre_process.returncode == 0:
+                print(f"Successfully cleaned cloned repo: {path}. {str(pre_process.stdout)}")
+            else:
+                logger.error(
+                    f'Failed clean cloned repo: {path} due to {str(pre_process.stderr)}'
+                )
+
 
             process = subprocess.run(
-                precmd,
+                ['rm', '-rf', f"{path}"],
                 text=True,
                 shell=False,
                 encoding='utf-8',
