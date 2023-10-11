@@ -2,7 +2,7 @@
 // import { LoadingButton } from '@mui/lab';
 import {
   Box,
-  // CardContent,
+  CardContent,
   Dialog,
   // TextField,
   Typography,
@@ -58,25 +58,26 @@ export const ReAuthModal = () => {
         >
           ReAuth Credentials
         </Typography>
-        
+
         <Box sx={{ p: 3 }}>
-        <CardContent>
-          <Typography color="textSecondary" variant="subtitle2">
-            In order to perform this action you are required to log in again to the data.all UI.
-            Click the below button to be redirected to log back in before proceeding further or Click
-            away to continue with other data.all operations.
-          </Typography>
-          <Button
-            color="primary"
-            fullWidth
-            size="large"
-            type="submit"
-            variant="contained"
-            onClick={reauth}
-          >
-            Re-Authenticate
-          </Button>
-        </CardContent>
+          <CardContent>
+            <Typography color="textSecondary" variant="subtitle2">
+              In order to perform this action you are required to log in again
+              to the data.all UI. Click the below button to be redirected to log
+              back in before proceeding further or Click away to continue with
+              other data.all operations.
+            </Typography>
+            <Button
+              color="primary"
+              fullWidth
+              size="large"
+              type="submit"
+              variant="contained"
+              onClick={reauth}
+            >
+              Re-Authenticate
+            </Button>
+          </CardContent>
           {/* <Formik
             initialValues={{
               username: '',
