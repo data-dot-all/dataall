@@ -140,7 +140,7 @@ class LambdaApiStack(pyNestedClass):
         reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
         self.re_auth_handler = _lambda.DockerImageFunction(
             self,
-            'AWSWorker',
+            'ReAuthSessionFunction',
             function_name=f'{resource_prefix}-{envname}-re-auth',
             description='dataall lambda for creating re-auth sessions',
             role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
@@ -923,7 +923,7 @@ class LambdaApiStack(pyNestedClass):
 
 
     # @run_if()
-    def create_re_auth_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
+    def create_re_auth_function_role(self, envname, resource_prefix, fn_name):
         
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
