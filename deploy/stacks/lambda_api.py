@@ -13,6 +13,7 @@ from aws_cdk import (
     aws_kms as kms,
     aws_sqs as sqs,
     aws_logs as logs,
+    aws_cognito as cognito,
     Duration,
     CfnOutput,
     Fn,
@@ -128,31 +129,46 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
+        self.lambdas = [
+            self.aws_handler,
+            self.api_handler,
+            self.elasticsearch_proxy_handler,
+        ]
 
-        reauth_sg = self.create_lambda_sgs(envname, "reauth", resource_prefix, vpc)
-        self.reauth_handler = _lambda.DockerImageFunction(
+
+        ## TODO: Make Configurable, Add TTL Parameter
+        reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
+        self.re_auth_handler = _lambda.DockerImageFunction(
             self,
-            'ReAuth',
-            function_name=f'{resource_prefix}-{envname}-reauth',
-            description='dataall reauth workflow',
-            role=self.create_function_role(envname, resource_prefix, 'reauth', pivot_role_name),
+            'AWSWorker',
+            function_name=f'{resource_prefix}-{envname}-re-auth',
+            description='dataall lambda for creating re-auth sessions',
+            role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
             ),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
-            memory_size=1664 if prod_sizing else 256,
-            timeout=Duration.minutes(15),
+            environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': '5'},
+            memory_size=256,
+            timeout=Duration.minutes(1),
             vpc=vpc,
             security_groups=[reauth_sg],
             tracing=_lambda.Tracing.ACTIVE,
         )
+        user_pool.add_trigger(
+            cognito.UserPoolOperation.POST_AUTHENTICATION,
+            self.re_auth_handler,
+        )
+        self.re_auth_handler.add_permission(
+             "CognitoInvoke",
+             principal=iam.ServicePrincipal('cognito-idp.amazonaws.com'),
+             action="lambda:InvokeFunction",
+             source_arn=user_pool.user_pool_arn
+        )
+        self.lambdas.append(self.re_auth_handler)
+
         # Add VPC Endpoint Connectivity
         if vpce_connection:
-            for lmbda in [
-                self.aws_handler,
-                self.api_handler,
-                self.elasticsearch_proxy_handler,
-            ]:
+            for lmbda in self.lambdas:
                 lmbda.connections.allow_from(
                     vpce_connection,
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
@@ -352,7 +368,6 @@ class LambdaApiStack(pyNestedClass):
         graphql_api = self.set_up_graphql_api_gateway(
             api_deploy_options,
             self.api_handler,
-            self.reauth_handler,
             self.backend_api_name,
             self.elasticsearch_proxy_handler,
             envname,
@@ -412,7 +427,6 @@ class LambdaApiStack(pyNestedClass):
         self,
         api_deploy_options,
         api_handler,
-        reauth_handler,
         backend_api_name,
         elasticsearch_proxy_handler,
         envname,
@@ -488,7 +502,6 @@ class LambdaApiStack(pyNestedClass):
             )
         api_url = gw.url
         integration = apigw.LambdaIntegration(api_handler)
-        reauth_integration = apigw.LambdaIntegration(reauth_handler)
         request_validator = apigw.RequestValidator(
             self,
             f'{resource_prefix}-{envname}-api-validator',
@@ -543,40 +556,6 @@ class LambdaApiStack(pyNestedClass):
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
-
-        # Initiate Auth
-        initiate_auth = gw.root.add_resource(path_part='initiate-auth')
-        initiate_auth_proxy = initiate_auth.add_resource(
-            path_part='{proxy+}',
-            default_integration=reauth_integration,
-            default_cors_preflight_options=apigw.CorsOptions(
-                allow_methods=apigw.Cors.ALL_METHODS,
-                allow_origins=apigw.Cors.ALL_ORIGINS,
-                allow_headers=['*'],
-            ),
-        )
-        initiate_auth_proxy.add_method(
-            'POST',
-            authorizer=cognito_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO,
-        )
-
-        # Repsond To Challenge
-        # respond_to_challenge = gw.root.add_resource(path_part='respond-to-challenge')
-        # respond_to_challenge_proxy = respond_to_challenge.add_resource(
-        #     path_part='{proxy+}',
-        #     default_integration=integration,
-        #     default_cors_preflight_options=apigw.CorsOptions(
-        #         allow_methods=apigw.Cors.ALL_METHODS,
-        #         allow_origins=apigw.Cors.ALL_ORIGINS,
-        #         allow_headers=['*'],
-        #     ),
-        # )
-        # respond_to_challenge_proxy.add_method(
-        #     'POST',
-        #     authorizer=cognito_authorizer,
-        #     authorization_type=apigw.AuthorizationType.COGNITO,
-        # )
 
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')
@@ -941,3 +920,89 @@ class LambdaApiStack(pyNestedClass):
 
         dlq.add_to_resource_policy(enforce_tls_statement)
         return dlq
+
+
+    # @run_if()
+    def create_re_auth_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
+        
+        role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
+
+        role_inline_policy = iam.Policy(
+            self,
+            f'{resource_prefix}-{envname}-{fn_name}-policy',
+            policy_name=f'{resource_prefix}-{envname}-{fn_name}-policy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        'secretsmanager:GetSecretValue',
+                        'kms:Decrypt',
+                        'secretsmanager:DescribeSecret',
+                        'kms:Encrypt',
+                        'sqs:ReceiveMessage',
+                        'kms:GenerateDataKey',
+                        'sqs:SendMessage',
+                        'ssm:GetParametersByPath',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                    ],
+                    resources=[
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:task-definition/*{resource_prefix}*:*',
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:sqs:{self.region}:{self.account}:*{resource_prefix}*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        's3:GetObject',
+                        's3:ListBucketVersions',
+                        's3:ListBucket',
+                        's3:GetBucketLocation',
+                        's3:GetObjectVersion',
+                        'logs:StartQuery',
+                        'logs:DescribeLogGroups',
+                        'logs:DescribeLogStreams',
+                    ],
+                    resources=[
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*:log-stream:*',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'logs:DescribeQueries',
+                        'logs:StopQuery',
+                        'logs:GetQueryResults',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents',
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DescribeNetworkInterfaces',
+                        'ec2:DeleteNetworkInterface',
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                        'xray:PutTraceSegments',
+                        'xray:PutTelemetryRecords',
+                        'xray:GetSamplingRules',
+                        'xray:GetSamplingTargets',
+                        'xray:GetSamplingStatisticSummaries',
+                        'cognito-idp:ListGroups',
+                    ],
+                    resources=['*'],
+                ),
+            ],
+        )
+        role = iam.Role(
+            self,
+            role_name,
+            role_name=role_name,
+            inline_policies={f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document},
+            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+        )
+        return role

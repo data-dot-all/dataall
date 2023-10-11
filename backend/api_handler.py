@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import datetime
 from argparse import Namespace
 from time import perf_counter
 
@@ -166,24 +167,24 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
+        # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
             reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis")
             print("SSM", reauth_apis)
         except Exception as e:
             reauth_apis = None
-            print("NO REAUTH SSM")
-            print(e)
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
+
+    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
-        print("REQUIRE REAUTH")
+        now = datetime.datetime.utcnow()
         try:
             with ENGINE.scoped_session() as session:
                 reauth_session = TenantPolicy.find_reauth_session(session, username)
-                print(reauth_session)
-                if not reauth_session:
+                if not reauth_session or reauth_session.created + datetime.timedelta(minutes=int(reauth_session.ttl)) > now:
                     raise Exception("ReAuth")
         except Exception as e:
             print(f'REAUTH ERROR: {e}')

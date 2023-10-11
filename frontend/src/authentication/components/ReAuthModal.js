@@ -58,19 +58,14 @@ export const ReAuthModal = () => {
         >
           ReAuth Credentials
         </Typography>
-        {/* <form>
-            <p>Username</p>
-            <input type="username" />
-            <p>Password</p>
-            <input type="password" />
-            <div>
-              <button type="button" onClick={submit}>
-                {' '}
-                Login{' '}
-              </button>
-            </div>
-          </form> */}
+        
         <Box sx={{ p: 3 }}>
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            In order to perform this action you are required to log in again to the data.all UI.
+            Click the below button to be redirected to log back in before proceeding further or Click
+            away to continue with other data.all operations.
+          </Typography>
           <Button
             color="primary"
             fullWidth
@@ -81,6 +76,7 @@ export const ReAuthModal = () => {
           >
             Re-Authenticate
           </Button>
+        </CardContent>
           {/* <Formik
             initialValues={{
               username: '',

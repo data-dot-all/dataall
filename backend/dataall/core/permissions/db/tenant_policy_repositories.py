@@ -1,5 +1,5 @@
 import logging
-
+import datetime
 from sqlalchemy.sql import and_
 
 from dataall.core.permissions.db.permission_models import PermissionType
@@ -150,18 +150,21 @@ class TenantPolicy:
         return reauth_session
 
     @staticmethod
-    def create_reauth_session(session, username: str):
-        reauth_user_session = models.ReAuthSession(
-            clientId="testclientId",
-            referrerUrl='testreferrerUrl',
-            stepUpStatus='teststepup',
-            token='token',
-            ttl='5',
-            username=username
-        )
-        session.add(reauth_user_session)
+    def update_reauth_session(session, data: dict):
+        reauth_session = TenantPolicy.find_reauth_session(session, data["username"])
+        if reauth_session:
+            reauth_session.updated = datetime.datetime.utcnow()
+        else:
+            reauth_session = models.ReAuthSession(
+                clientId=data["clientId"],
+                userPoolId=data["userPoolId"],
+                ttl=data["ttl"],
+                username=data["username"],
+                email=data["email"]
+            )
+            session.add(reauth_session)
         session.commit()
-        return reauth_user_session
+        return True
 
     @staticmethod
     def validate_find_tenant_policy(group_uri, tenant_name):
