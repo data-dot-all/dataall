@@ -51,7 +51,7 @@ def aws_configure(profile_name='default'):
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
-        print(f"Successfully curled credentials: {str(process.stdout)}")
+        print(f"Successfully curled credentials: {str(process.stdout)}, credentials = {creds}")
     else:
         print(
             f'Failed clean curl credentials due to {str(process.stderr)}'
@@ -176,7 +176,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
             # This command is too complex to be executed as a list of commands. We need to run it with shell=True
-            # However, the input arguments have be sanitized with the CommandSanitizer
+            # However, the input arguments have to be sanitized with the CommandSanitizer
 
             process = subprocess.run(  # nosemgrep
                 ' '.join(cmd),  # nosemgrep

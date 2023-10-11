@@ -228,34 +228,12 @@ app.synth()
     @staticmethod
     def clean_up_repo(path):
         if path:
-            precmd = [
-                'deactivate;',
-                'rm',
-                '-rf',
-                f"{path}"
-            ]
-
+            cmd = ['rm', '-rf', f"{path}"]
             cwd = os.path.dirname(os.path.abspath(__file__))
-            logger.info(f"Running command : \n {' '.join(precmd)}")
-            pre_process = subprocess.run(
-                ['deactivate'],
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                capture_output=True,
-                cwd=cwd
-            )
-
-            if pre_process.returncode == 0:
-                print(f"Successfully cleaned cloned repo: {path}. {str(pre_process.stdout)}")
-            else:
-                logger.error(
-                    f'Failed clean cloned repo: {path} due to {str(pre_process.stderr)}'
-                )
-
+            logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
-                ['rm', '-rf', f"{path}"],
+                cmd,
                 text=True,
                 shell=False,
                 encoding='utf-8',
