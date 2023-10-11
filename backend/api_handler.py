@@ -39,19 +39,6 @@ Worker.queue = SqsQueue.send
 save_permissions_with_tenant(ENGINE)
 
 
-class ReAuthException(Exception):
-    """Exception raised when reAuth is required.
-
-    Attributes:
-        operationName -- input salary which caused the error
-        message -- explanation of the error
-    """
-    def __init__(self, operationName, message="Re-Auth is Required"):
-        self.operationName = operationName
-        self.message = message
-        super().__init__(self.message)
-
-
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
         return resolver(

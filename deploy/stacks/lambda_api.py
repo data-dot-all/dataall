@@ -129,12 +129,6 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
-        self.lambdas = [
-            self.aws_handler,
-            self.api_handler,
-            self.elasticsearch_proxy_handler,
-        ]
-
 
         ## TODO: Make Configurable, Add TTL Parameter
         reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
@@ -164,11 +158,15 @@ class LambdaApiStack(pyNestedClass):
              action="lambda:InvokeFunction",
              source_arn=user_pool.user_pool_arn
         )
-        self.lambdas.append(self.re_auth_handler)
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
-            for lmbda in self.lambdas:
+            for lmbda in [
+                self.aws_handler,
+                self.api_handler,
+                self.elasticsearch_proxy_handler,
+                self.re_auth_handler
+            ]:
                 lmbda.connections.allow_from(
                     vpce_connection,
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
