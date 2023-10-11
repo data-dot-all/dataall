@@ -152,12 +152,12 @@ class LambdaApiStack(pyNestedClass):
             cognito.UserPoolOperation.POST_AUTHENTICATION,
             self.re_auth_handler,
         )
-        self.re_auth_handler.add_permission(
-             "CognitoInvoke",
-             principal=iam.ServicePrincipal('cognito-idp.amazonaws.com'),
-             action="lambda:InvokeFunction",
-             source_arn=user_pool.user_pool_arn
-        )
+        # self.re_auth_handler.add_permission(
+        #      "CognitoInvoke",
+        #      principal=iam.ServicePrincipal('cognito-idp.amazonaws.com'),
+        #      action="lambda:InvokeFunction",
+        #      source_arn=user_pool.user_pool_arn
+        # )
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
