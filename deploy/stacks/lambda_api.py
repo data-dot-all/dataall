@@ -165,7 +165,7 @@ class LambdaApiStack(pyNestedClass):
                 self.aws_handler,
                 self.api_handler,
                 self.elasticsearch_proxy_handler,
-                self.re_auth_handler
+                # self.re_auth_handler
             ]:
                 lmbda.connections.allow_from(
                     vpce_connection,

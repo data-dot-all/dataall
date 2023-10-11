@@ -115,6 +115,8 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
+            # image_tag=image_tag,
+            # ecr_repository=repo,
             **kwargs,
         )
 
@@ -277,7 +279,7 @@ class BackendStack(Stack):
             lambdas=[
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
-                self.lambda_api_stack.re_auth_handler,
+                # self.lambda_api_stack.re_auth_handler,
             ],
             ecs_security_groups=self.ecs_stack.ecs_security_groups,
             codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
@@ -295,7 +297,7 @@ class BackendStack(Stack):
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
                 self.lambda_api_stack.elasticsearch_proxy_handler,
-                self.lambda_api_stack.re_auth_handler,
+                # self.lambda_api_stack.re_auth_handler,
             ],
             database=aurora_stack.cluster.cluster_identifier,
             ecs_cluster=self.ecs_stack.ecs_cluster,

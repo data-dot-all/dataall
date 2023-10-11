@@ -28,6 +28,8 @@ class IdpStack(pyNestedClass):
         internet_facing=True,
         tooling_account_id=None,
         enable_cw_rum=False,
+        # image_tag=None,
+        # ecr_repository=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -203,6 +205,8 @@ class IdpStack(pyNestedClass):
             string_value=cross_account_cognito_config_role.role_name,
         )
 
+        # self.create_reauth_trigger()
+
         if internet_facing:
             role_inline_policy = iam.Policy(
                 self,
@@ -304,3 +308,35 @@ class IdpStack(pyNestedClass):
             export_name=f'CognitoAppCliendId{envname}',
             value=self.client.user_pool_client_id,
         )
+
+    # def create_reauth_trigger():
+    #     # reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
+    #     reauth_sg = ec2.SecurityGroup(
+    #         self,
+    #         f'{name}SG{envname}',
+    #         security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
+    #         vpc=vpc,
+    #         allow_all_outbound=False,
+    #         disable_inline_rules=True,
+    #     )
+
+    #     self.re_auth_handler = _lambda.DockerImageFunction(
+    #         self,
+    #         'ReAuthSessionFunction',
+    #         function_name=f'{resource_prefix}-{envname}-re-auth',
+    #         description='dataall lambda for creating re-auth sessions',
+    #         role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
+    #         code=_lambda.DockerImageCode.from_ecr(
+    #             repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
+    #         ),
+    #         environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': '5'},
+    #         memory_size=256,
+    #         timeout=Duration.minutes(1),
+    #         vpc=vpc,
+    #         security_groups=[reauth_sg],
+    #         tracing=_lambda.Tracing.ACTIVE,
+    #     )
+    #     user_pool.add_trigger(
+    #         cognito.UserPoolOperation.POST_AUTHENTICATION,
+    #         self.re_auth_handler,
+    #     )
