@@ -45,8 +45,9 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print('        Running configure                     ')
     print('..............................................')
-    print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
-    cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
+    AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')
+    print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}")
+    cmd = ['curl', f'169.254.170.2{AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}']
     process = subprocess.run(cmd, text=True, shell=False, encoding='utf-8', capture_output=True)
     creds = None
     if process.returncode == 0:
