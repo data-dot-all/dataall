@@ -107,6 +107,10 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        repo = ecr.Repository.from_repository_arn(
+            self, 'ECRREPO', repository_arn=ecr_repository
+        )
+
         cognito_stack = IdpStack(
             self,
             f'Cognito',
@@ -115,8 +119,9 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
-            # image_tag=image_tag,
-            # ecr_repository=repo,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            vpc=vpc,
             **kwargs,
         )
 
@@ -127,10 +132,6 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             prod_sizing=prod_sizing,
             **kwargs,
-        )
-
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
         )
 
         self.lambda_api_stack = LambdaApiStack(

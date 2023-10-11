@@ -1,10 +1,12 @@
 import os
+import resource
 
 from aws_cdk import (
     custom_resources as cr,
     aws_cognito as cognito,
     aws_ssm as ssm,
     aws_iam as iam,
+    aws_ec2 as ec2,
     aws_lambda as _lambda,
     CfnOutput,
     BundlingOptions,
@@ -28,8 +30,8 @@ class IdpStack(pyNestedClass):
         internet_facing=True,
         tooling_account_id=None,
         enable_cw_rum=False,
-        # image_tag=None,
-        # ecr_repository=None,
+        image_tag=None,
+        ecr_repository=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -205,7 +207,7 @@ class IdpStack(pyNestedClass):
             string_value=cross_account_cognito_config_role.role_name,
         )
 
-        # self.create_reauth_trigger()
+        self.create_reauth_trigger(resource_prefix, envname, vpc, ecr_repository, image_tag, self.user_pool, "re-auth")
 
         if internet_facing:
             role_inline_policy = iam.Policy(
@@ -309,34 +311,118 @@ class IdpStack(pyNestedClass):
             value=self.client.user_pool_client_id,
         )
 
-    # def create_reauth_trigger():
-    #     # reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
-    #     reauth_sg = ec2.SecurityGroup(
-    #         self,
-    #         f'{name}SG{envname}',
-    #         security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
-    #         vpc=vpc,
-    #         allow_all_outbound=False,
-    #         disable_inline_rules=True,
-    #     )
+    def create_reauth_trigger(self, resource_prefix, envname, vpc, ecr_repository, image_tag, user_pool, name):
+        ## TODO: Make Configurable, Add TTL Parameter
+        reauth_sg = ec2.SecurityGroup(
+            self,
+            f'{name}SG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+            disable_inline_rules=True,
+        )
 
-    #     self.re_auth_handler = _lambda.DockerImageFunction(
-    #         self,
-    #         'ReAuthSessionFunction',
-    #         function_name=f'{resource_prefix}-{envname}-re-auth',
-    #         description='dataall lambda for creating re-auth sessions',
-    #         role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
-    #         code=_lambda.DockerImageCode.from_ecr(
-    #             repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
-    #         ),
-    #         environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': '5'},
-    #         memory_size=256,
-    #         timeout=Duration.minutes(1),
-    #         vpc=vpc,
-    #         security_groups=[reauth_sg],
-    #         tracing=_lambda.Tracing.ACTIVE,
-    #     )
-    #     user_pool.add_trigger(
-    #         cognito.UserPoolOperation.POST_AUTHENTICATION,
-    #         self.re_auth_handler,
-    #     )
+        self.re_auth_handler = _lambda.DockerImageFunction(
+            self,
+            'ReAuthSessionFunction',
+            function_name=f'{resource_prefix}-{envname}-re-auth',
+            description='dataall lambda for creating re-auth sessions',
+            role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
+            code=_lambda.DockerImageCode.from_ecr(
+                repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
+            ),
+            environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': '5'},
+            memory_size=256,
+            timeout=Duration.minutes(1),
+            vpc=vpc,
+            security_groups=[reauth_sg],
+            tracing=_lambda.Tracing.ACTIVE,
+        )
+        user_pool.add_trigger(
+            cognito.UserPoolOperation.POST_AUTHENTICATION,
+            self.re_auth_handler,
+        )
+
+    def create_re_auth_function_role(self, envname, resource_prefix, fn_name):
+        
+        role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
+
+        role_inline_policy = iam.Policy(
+            self,
+            f'{resource_prefix}-{envname}-{fn_name}-policy',
+            policy_name=f'{resource_prefix}-{envname}-{fn_name}-policy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        'secretsmanager:GetSecretValue',
+                        'kms:Decrypt',
+                        'secretsmanager:DescribeSecret',
+                        'kms:Encrypt',
+                        'sqs:ReceiveMessage',
+                        'kms:GenerateDataKey',
+                        'sqs:SendMessage',
+                        'ssm:GetParametersByPath',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                    ],
+                    resources=[
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:task-definition/*{resource_prefix}*:*',
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:sqs:{self.region}:{self.account}:*{resource_prefix}*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        's3:GetObject',
+                        's3:ListBucketVersions',
+                        's3:ListBucket',
+                        's3:GetBucketLocation',
+                        's3:GetObjectVersion',
+                        'logs:StartQuery',
+                        'logs:DescribeLogGroups',
+                        'logs:DescribeLogStreams',
+                    ],
+                    resources=[
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*:log-stream:*',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'logs:DescribeQueries',
+                        'logs:StopQuery',
+                        'logs:GetQueryResults',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents',
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DescribeNetworkInterfaces',
+                        'ec2:DeleteNetworkInterface',
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                        'xray:PutTraceSegments',
+                        'xray:PutTelemetryRecords',
+                        'xray:GetSamplingRules',
+                        'xray:GetSamplingTargets',
+                        'xray:GetSamplingStatisticSummaries',
+                        'cognito-idp:ListGroups',
+                    ],
+                    resources=['*'],
+                ),
+            ],
+        )
+        role = iam.Role(
+            self,
+            role_name,
+            role_name=role_name,
+            inline_policies={f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document},
+            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+        )
+        return role
