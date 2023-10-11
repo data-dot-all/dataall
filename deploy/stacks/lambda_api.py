@@ -130,42 +130,12 @@ class LambdaApiStack(pyNestedClass):
             )
         )
 
-        ## TODO: Make Configurable, Add TTL Parameter
-        # reauth_sg = self.create_lambda_sgs(envname, "re-auth", resource_prefix, vpc)
-        # self.re_auth_handler = _lambda.DockerImageFunction(
-        #     self,
-        #     'ReAuthSessionFunction',
-        #     function_name=f'{resource_prefix}-{envname}-re-auth',
-        #     description='dataall lambda for creating re-auth sessions',
-        #     role=self.create_re_auth_function_role(envname, resource_prefix, 're-auth'),
-        #     code=_lambda.DockerImageCode.from_ecr(
-        #         repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
-        #     ),
-        #     environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': '5'},
-        #     memory_size=256,
-        #     timeout=Duration.minutes(1),
-        #     vpc=vpc,
-        #     security_groups=[reauth_sg],
-        #     tracing=_lambda.Tracing.ACTIVE,
-        # )
-        # user_pool.add_trigger(
-        #     cognito.UserPoolOperation.POST_AUTHENTICATION,
-        #     self.re_auth_handler,
-        # )
-        # self.re_auth_handler.add_permission(
-        #      "CognitoInvoke",
-        #      principal=iam.ServicePrincipal('cognito-idp.amazonaws.com'),
-        #      action="lambda:InvokeFunction",
-        #      source_arn=user_pool.user_pool_arn
-        # )
-
         # Add VPC Endpoint Connectivity
         if vpce_connection:
             for lmbda in [
                 self.aws_handler,
                 self.api_handler,
                 self.elasticsearch_proxy_handler,
-                # self.re_auth_handler
             ]:
                 lmbda.connections.allow_from(
                     vpce_connection,
