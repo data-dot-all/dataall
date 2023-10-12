@@ -54,7 +54,7 @@ const OmicsRunCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri]);
+  }, [client, dispatch, params.workflowId]);
 
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
