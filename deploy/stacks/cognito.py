@@ -343,10 +343,10 @@ class IdpStack(pyNestedClass):
             security_groups=[reauth_sg],
             tracing=_lambda.Tracing.ACTIVE,
         )
-        user_pool.add_trigger(
-            cognito.UserPoolOperation.POST_AUTHENTICATION,
-            self.re_auth_handler,
-        )
+        # user_pool.add_trigger(
+        #     cognito.UserPoolOperation.POST_AUTHENTICATION,
+        #     self.re_auth_handler,
+        # )
 
     def create_re_auth_function_role(self, envname, resource_prefix, fn_name):
         

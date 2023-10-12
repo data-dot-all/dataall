@@ -32,6 +32,7 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
+TTL = int(os.environ.get('TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
@@ -169,10 +170,13 @@ def handler(event, context):
     if reauth_apis and query.get('operationName', None) in reauth_apis:
         now = datetime.datetime.utcnow()
         try:
-            with ENGINE.scoped_session() as session:
-                reauth_session = TenantPolicy.find_reauth_session(session, username)
-                if not reauth_session or reauth_session.created + datetime.timedelta(minutes=int(reauth_session.ttl)) > now:
-                    raise Exception("ReAuth")
+            auth_time = claims["auth_time"]
+            if auth_time + datetime.timedelta(minutes=TTL) > now:
+                raise Exception("ReAuth")
+            # with ENGINE.scoped_session() as session:
+            #     reauth_session = TenantPolicy.find_reauth_session(session, username)
+            #     if not reauth_session or reauth_session.created + datetime.timedelta(minutes=int(reauth_session.ttl)) > now:
+                    # raise Exception("ReAuth")
         except Exception as e:
             print(f'REAUTH ERROR: {e}')
             response = {
