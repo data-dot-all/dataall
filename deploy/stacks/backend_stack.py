@@ -119,8 +119,6 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
-            image_tag=image_tag,
-            ecr_repository=repo,
             vpc=vpc,
             **kwargs,
         )
