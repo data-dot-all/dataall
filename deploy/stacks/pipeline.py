@@ -372,7 +372,7 @@ class PipelineStack(Stack):
                         resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
                     )
                 ],
-            )   
+            )
 
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
@@ -635,6 +635,7 @@ class PipelineStack(Stack):
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
+                cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
             )
         )
         return backend_stage

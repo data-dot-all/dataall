@@ -50,6 +50,7 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -113,6 +114,7 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
+            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             **kwargs,
         )
 
