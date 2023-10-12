@@ -1,20 +1,15 @@
 import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
 import { useAuth } from 'authentication';
-// import { SET_ERROR, useDispatch } from 'globalErrors';
 
 export const ReAuthModal = () => {
-  const { reAuthStatus, reauth, auth } = useAuth();
+  const { reAuthStatus, reauth, dispatch } = useAuth();
   const continueSession = async () => {
-    auth
-      .dispatch({
-        type: 'REAUTH',
-        payload: {
-          reAuthStatus: false
-        }
-      })
-      .catch((e) => {
-        console.error('Failed to reauth user', e);
-      });
+    dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: false
+      }
+    });
   };
 
   return (
