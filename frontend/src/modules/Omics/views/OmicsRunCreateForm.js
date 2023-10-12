@@ -47,6 +47,7 @@ const OmicsRunCreateForm = (props) => {
     const response = await client.query(getOmicsWorkflow(params.workflowId));
     if (!response.errors) {
       setOmicsWorkflow(response.data.getOmicsWorkflow);
+      console.log(omicsWorkflow); // eslint-disable-line no-console
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -151,6 +152,9 @@ const OmicsRunCreateForm = (props) => {
   if (loading) {
     return <CircularProgress />;
   }
+  if (!omicsWorkflow) {
+    return null;
+  }
 
   return (
     <>
@@ -216,6 +220,7 @@ const OmicsRunCreateForm = (props) => {
           <Box sx={{ mt: 3 }}>
             <Formik
               initialValues={{
+                omicsWorkflowId: params.workflowId,
                 label: '',
                 SamlAdminGroupName: '',
                 environment: '',
@@ -261,10 +266,9 @@ const OmicsRunCreateForm = (props) => {
                             fullWidth
                             helperText={touched.label && errors.label}
                             label="Workflow id"
-                            name="label"
-                            value={omicsWorkflow.id}
+                            name="omicsWorkflowId"
+                            value={values.omicsWorkflowId}
                             onBlur={handleBlur}
-                            onChange={handleChange}
                             variant="outlined"
                           />
                         </CardContent>
@@ -274,7 +278,7 @@ const OmicsRunCreateForm = (props) => {
                             fullWidth
                             helperText={touched.label && errors.label}
                             label="Run Name"
-                            name="name"
+                            name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.label}
@@ -381,7 +385,7 @@ const OmicsRunCreateForm = (props) => {
                               1000 - values.parameterTemplate.length
                             } characters left`}
                             label="Inline JSON Parameters Template"
-                            name="JSON Parameters"
+                            name="parameterTemplate"
                             multiline
                             onBlur={handleBlur}
                             onChange={handleChange}
