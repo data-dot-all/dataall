@@ -6,6 +6,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
+from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -28,6 +29,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.stacks.db.enums import StackStatus
 
 log = logging.getLogger(__name__)
 
@@ -515,6 +517,28 @@ class EnvironmentService:
             page=data.get('page', 1),
             page_size=data.get('pageSize', 5),
         ).to_dict()
+
+    @staticmethod
+    def list_valid_user_environments(session, data=None) -> dict:
+        context = get_context()
+        query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
+        valid_environments = []
+        for env in query:
+            stack = stack_helper.get_stack_with_cfn_resources(
+                targetUri=env.environmentUri,
+                environmentUri=env.environmentUri,
+            )
+            if stack.status in [
+                StackStatus.CREATE_COMPLETE.value,
+                StackStatus.UPDATE_COMPLETE.value,
+                StackStatus.UPDATE_ROLLBACK_COMPLETE.value
+            ]:
+                valid_environments.append(env)
+
+        return {
+            'count': len(valid_environments),
+            'nodes': valid_environments,
+        }
 
     @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
