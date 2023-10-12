@@ -51,11 +51,9 @@ import {
 import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
-import { useAuth } from 'authentication';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
-  const auth = useAuth();
   const dispatch = useDispatch();
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -133,13 +131,6 @@ function TeamRow({ team, environment, fetchItems }) {
         variant: 'success'
       });
     } else {
-      console.log("REAUTH")
-      auth.dispatch({
-        type: 'REAUTH',
-        payload: {
-          reAuthStatus: true
-        }
-      });
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoadingCreds(false);
