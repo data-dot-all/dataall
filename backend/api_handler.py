@@ -179,9 +179,12 @@ def handler(event, context):
                 "data": {query.get('operationName', "OPERATION") : None},
                 "errors": [
                     {
-                        "message": "ReAuth Required",
+                        "message": "ReAuth Required To Perform This Action",
                         "locations": None,
-                        "path": [query.get('operationName', "OPERATION")]
+                        "path": [query.get('operationName', "OPERATION")],
+                        "extensions": {
+                          "code": "REAUTH"
+                        }
                     }
                 ]
             }
