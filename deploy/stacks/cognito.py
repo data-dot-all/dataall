@@ -1,12 +1,10 @@
 import os
-import resource
 
 from aws_cdk import (
     custom_resources as cr,
     aws_cognito as cognito,
     aws_ssm as ssm,
     aws_iam as iam,
-    aws_ec2 as ec2,
     aws_lambda as _lambda,
     CfnOutput,
     BundlingOptions,
