@@ -228,18 +228,12 @@ app.synth()
     @staticmethod
     def clean_up_repo(path):
         if path:
-            precmd = [
-                'deactivate;',
-                'rm',
-                '-rf',
-                f"{path}"
-            ]
-
+            cmd = ['rm', '-rf', f"{path}"]
             cwd = os.path.dirname(os.path.abspath(__file__))
-            logger.info(f"Running command : \n {' '.join(precmd)}")
+            logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
-                precmd,
+                cmd,
                 text=True,
                 shell=False,
                 encoding='utf-8',

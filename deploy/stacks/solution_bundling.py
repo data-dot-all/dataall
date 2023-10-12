@@ -26,7 +26,7 @@ class SolutionBundling:
             shell=False,
         )
 
-        ls_output = subprocess.check_output(
+        subprocess.check_output(
             ['ls', '-ll', f'{output_dir}'],
             stderr=subprocess.STDOUT,
             shell=False,
