@@ -168,17 +168,13 @@ def handler(event, context):
 
     # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         try:
-            auth_time = claims["auth_time"]
-            if auth_time + datetime.timedelta(minutes=TTL) > now:
+            auth_time_datetime = datetime.datetime.fromtimestamp(claims["auth_time"], tz=datetime.timezone.utc)
+            if auth_time_datetime + datetime.timedelta(minutes=TTL) < now:
                 raise Exception("ReAuth")
-            # with ENGINE.scoped_session() as session:
-            #     reauth_session = TenantPolicy.find_reauth_session(session, username)
-            #     if not reauth_session or reauth_session.created + datetime.timedelta(minutes=int(reauth_session.ttl)) > now:
-                    # raise Exception("ReAuth")
         except Exception as e:
-            print(f'REAUTH ERROR: {e}')
+            print(f'ReAuth Required, Error: {e}')
             response = {
                 "data": {query.get('operationName', "OPERATION") : None},
                 "errors": [
