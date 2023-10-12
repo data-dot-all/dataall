@@ -1,22 +1,15 @@
 import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
 import { useAuth } from 'authentication';
-import { SET_ERROR, useDispatch } from 'globalErrors';
 
 export const ReAuthModal = () => {
-  const { reAuthStatus, reauth, auth } = useAuth();
-  const dispatch = useDispatch();
+  const { reAuthStatus, reauth, dispatch } = useAuth();
   const continueSession = async () => {
-    try {
-      auth.dispatch({
-        type: 'REAUTH',
-        payload: {
-          reAuthStatus: false
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      dispatch({ type: SET_ERROR, error: err.message });
-    }
+    dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: false
+      }
+    });
   };
 
   return (
@@ -38,27 +31,32 @@ export const ReAuthModal = () => {
               to the data.all UI. Click the below button to be redirected to log
               back in before proceeding further or Click away to continue with
               other data.all operations.
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                sx={{ mt: 2 }}
+              >
+                <Button
+                  color="primary"
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  onClick={reauth}
+                >
+                  Re-Authenticate
+                </Button>
+                <Button
+                  color="primary"
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  onClick={() => continueSession()}
+                >
+                  Continue Session
+                </Button>
+              </Box>
             </Typography>
-            <Button
-              color="primary"
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              onClick={reauth}
-            >
-              Re-Authenticate
-            </Button>
-            <Button
-              color="primary"
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              onClick={() => continueSession()}
-            >
-              Continue Session
-            </Button>
           </CardContent>
         </Box>
       </Box>
