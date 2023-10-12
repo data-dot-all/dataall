@@ -15,7 +15,10 @@
         "prod_sizing": false,
         "vpc_restricted_nacl": true,
         "enable_pivot_role_auto_create": true,
-        "reauth_apis": ["ListWorksheets", "ListSagemakerNotebooks"]
+        "reauth_config": {
+          "reauth_apis": ["ListWorksheets", "ListSagemakerNotebooks"],
+          "ttl": 2
+        }
       }
     ]
   }
