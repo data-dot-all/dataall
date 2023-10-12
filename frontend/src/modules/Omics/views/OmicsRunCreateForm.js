@@ -221,16 +221,23 @@ const OmicsRunCreateForm = (props) => {
             <Formik
               initialValues={{
                 omicsWorkflowId: params.workflowId,
-                label: '',
-                SamlAdminGroupName: '',
+                omicsRunName: '',
+                SamlGroupName: '',
                 environment: '',
                 destination: '',
                 parameterTemplate: omicsWorkflow.parameterTemplate
               }}
               validationSchema={Yup.object().shape({
-                label: Yup.string().max(255).required('*Workflow is required'),
-                parameterTemplate: Yup.string().max(5000),
-                SamlAdminGroupName: Yup.string()
+                omicsWorkflowId: Yup.string()
+                  .max(255)
+                  .required('*Workflow is required'),
+                omicsRunName: Yup.string()
+                  .max(255)
+                  .required('*Run Name is required'),
+                parameterTemplate: Yup.string()
+                  .max(5000)
+                  .required('*Parameters are required'),
+                SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
@@ -262,10 +269,14 @@ const OmicsRunCreateForm = (props) => {
                         <CardHeader title="Details" />
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.label && errors.label)}
+                            error={Boolean(
+                              touched.omicsWorkflowId && errors.omicsWorkflowId
+                            )}
                             fullWidth
-                            helperText={touched.label && errors.label}
-                            label="Workflow id"
+                            helperText={
+                              touched.omicsWorkflowId && errors.omicsWorkflowId
+                            }
+                            label="Workflow ID"
                             name="omicsWorkflowId"
                             value={values.omicsWorkflowId}
                             onBlur={handleBlur}
@@ -274,14 +285,18 @@ const OmicsRunCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.label && errors.label)}
+                            error={Boolean(
+                              touched.omicsRunName && errors.omicsRunName
+                            )}
                             fullWidth
-                            helperText={touched.label && errors.label}
+                            helperText={
+                              touched.omicsRunName && errors.omicsRunName
+                            }
                             label="Run Name"
-                            name="label"
+                            name="omicsRunName"
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.label}
+                            value={values.omicsRunName}
                             variant="outlined"
                           />
                         </CardContent>
@@ -359,6 +374,12 @@ const OmicsRunCreateForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
+                            error={Boolean(
+                              touched.destination && errors.destination
+                            )}
+                            helperText={
+                              touched.destination && errors.destination
+                            }
                             label="Select S3 Output Destination"
                             name="destination"
                             value={values.destination} //TODO: datasetUri
