@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import datetime
 from argparse import Namespace
 from time import perf_counter
 
@@ -31,24 +32,12 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
+TTL = int(os.environ.get('TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
 save_permissions_with_tenant(ENGINE)
-
-
-class ReAuthException(Exception):
-    """Exception raised when reAuth is required.
-
-    Attributes:
-        operationName -- input salary which caused the error
-        message -- explanation of the error
-    """
-    def __init__(self, operationName, message="Re-Auth is Required"):
-        self.operationName = operationName
-        self.message = message
-        super().__init__(self.message)
 
 
 def resolver_adapter(resolver):
@@ -166,34 +155,33 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
+        # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
             reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis")
             print("SSM", reauth_apis)
         except Exception as e:
             reauth_apis = None
-            print("NO REAUTH SSM")
-            print(e)
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
+
+    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
-        print("REQUIRE REAUTH")
+        now = datetime.datetime.now(datetime.timezone.utc)
         try:
-            with ENGINE.scoped_session() as session:
-                reauth_session = TenantPolicy.find_reauth_session(session, username)
-                print(reauth_session)
-                if not reauth_session:
-                    raise Exception("ReAuth")
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims["auth_time"]), tz=datetime.timezone.utc)
+            if auth_time_datetime + datetime.timedelta(minutes=TTL) < now:
+                raise Exception("ReAuth")
         except Exception as e:
-            print(f'REAUTH ERROR: {e}')
+            print(f'ReAuth Required, Error: {e}')
             response = {
                 "data": {query.get('operationName', "OPERATION") : None},
                 "errors": [
                     {
                         "message": "ReAuth Required",
                         "locations": None,
-                        "path": [query.get('operationName')]
+                        "path": [query.get('operationName', "OPERATION")]
                     }
                 ]
             }

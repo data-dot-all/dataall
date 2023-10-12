@@ -50,7 +50,7 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
-        reauth_apis=None,
+        reauth_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -87,7 +87,7 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
-            reauth_apis=reauth_apis,
+            reauth_apis=reauth_config.get("reauth_apis", None),
             **kwargs,
         )
         if enable_cw_canaries:
@@ -107,6 +107,10 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        repo = ecr.Repository.from_repository_arn(
+            self, 'ECRREPO', repository_arn=ecr_repository
+        )
+
         cognito_stack = IdpStack(
             self,
             f'Cognito',
@@ -115,6 +119,7 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
+            vpc=vpc,
             **kwargs,
         )
 
@@ -125,10 +130,6 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             prod_sizing=prod_sizing,
             **kwargs,
-        )
-
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
         )
 
         self.lambda_api_stack = LambdaApiStack(
@@ -147,6 +148,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
+            reauth_ttl=reauth_config.get("ttl", 5),
             **kwargs,
         )
 

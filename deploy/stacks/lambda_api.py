@@ -13,6 +13,7 @@ from aws_cdk import (
     aws_kms as kms,
     aws_sqs as sqs,
     aws_logs as logs,
+    aws_cognito as cognito,
     Duration,
     CfnOutput,
     Fn,
@@ -47,6 +48,7 @@ class LambdaApiStack(pyNestedClass):
         prod_sizing=False,
         user_pool=None,
         pivot_role_name=None,
+        reauth_ttl=5,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -94,7 +96,7 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[api_handler_sg],
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'TTL': str(reauth_ttl)},
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -129,23 +131,6 @@ class LambdaApiStack(pyNestedClass):
             )
         )
 
-        reauth_sg = self.create_lambda_sgs(envname, "reauth", resource_prefix, vpc)
-        self.reauth_handler = _lambda.DockerImageFunction(
-            self,
-            'ReAuth',
-            function_name=f'{resource_prefix}-{envname}-reauth',
-            description='dataall reauth workflow',
-            role=self.create_function_role(envname, resource_prefix, 'reauth', pivot_role_name),
-            code=_lambda.DockerImageCode.from_ecr(
-                repository=ecr_repository, tag=image_tag, cmd=['reauth_handler.handler']
-            ),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
-            memory_size=1664 if prod_sizing else 256,
-            timeout=Duration.minutes(15),
-            vpc=vpc,
-            security_groups=[reauth_sg],
-            tracing=_lambda.Tracing.ACTIVE,
-        )
         # Add VPC Endpoint Connectivity
         if vpce_connection:
             for lmbda in [
@@ -352,7 +337,6 @@ class LambdaApiStack(pyNestedClass):
         graphql_api = self.set_up_graphql_api_gateway(
             api_deploy_options,
             self.api_handler,
-            self.reauth_handler,
             self.backend_api_name,
             self.elasticsearch_proxy_handler,
             envname,
@@ -412,7 +396,6 @@ class LambdaApiStack(pyNestedClass):
         self,
         api_deploy_options,
         api_handler,
-        reauth_handler,
         backend_api_name,
         elasticsearch_proxy_handler,
         envname,
@@ -488,7 +471,6 @@ class LambdaApiStack(pyNestedClass):
             )
         api_url = gw.url
         integration = apigw.LambdaIntegration(api_handler)
-        reauth_integration = apigw.LambdaIntegration(reauth_handler)
         request_validator = apigw.RequestValidator(
             self,
             f'{resource_prefix}-{envname}-api-validator',
@@ -543,40 +525,6 @@ class LambdaApiStack(pyNestedClass):
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
-
-        # Initiate Auth
-        initiate_auth = gw.root.add_resource(path_part='initiate-auth')
-        initiate_auth_proxy = initiate_auth.add_resource(
-            path_part='{proxy+}',
-            default_integration=reauth_integration,
-            default_cors_preflight_options=apigw.CorsOptions(
-                allow_methods=apigw.Cors.ALL_METHODS,
-                allow_origins=apigw.Cors.ALL_ORIGINS,
-                allow_headers=['*'],
-            ),
-        )
-        initiate_auth_proxy.add_method(
-            'POST',
-            authorizer=cognito_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO,
-        )
-
-        # Repsond To Challenge
-        # respond_to_challenge = gw.root.add_resource(path_part='respond-to-challenge')
-        # respond_to_challenge_proxy = respond_to_challenge.add_resource(
-        #     path_part='{proxy+}',
-        #     default_integration=integration,
-        #     default_cors_preflight_options=apigw.CorsOptions(
-        #         allow_methods=apigw.Cors.ALL_METHODS,
-        #         allow_origins=apigw.Cors.ALL_ORIGINS,
-        #         allow_headers=['*'],
-        #     ),
-        # )
-        # respond_to_challenge_proxy.add_method(
-        #     'POST',
-        #     authorizer=cognito_authorizer,
-        #     authorization_type=apigw.AuthorizationType.COGNITO,
-        # )
 
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')

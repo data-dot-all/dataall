@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as DBEnum
+from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Enum as DBEnum
 from sqlalchemy.orm import relationship
 
 from dataall.base.db import Base, utils
@@ -100,13 +100,11 @@ class Tenant(Base):
 
 class ReAuthSession(Base):
     __tablename__ = 'auth_session'
-    sessionId = Column(String, primary_key=True, default=utils.uuid('auth_session'))
-    clientId = Column(String, nullable=True)
-    referrerUrl = Column(String, nullable=True)
-    stepUpStatus = Column(String, nullable=False)
-    token = Column(String, nullable=False)
-    ttl = Column(String, nullable=False)
-    username = Column(String, nullable=False)
+    username = Column(String, primary_key=True, nullable=False)
+    email = Column(String, nullable=False)
+    userPoolId = Column(String, nullable=False )
+    clientId = Column(String, nullable=False)
+    ttl = Column(Integer, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime, nullable=True)

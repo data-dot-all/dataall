@@ -129,14 +129,15 @@ export const CognitoAuthProvider = (props) => {
       });
   };
 
-  const reauth = async (status) => {
+  const reauth = async () => {
+    await Auth.signOut();
     dispatch({
       type: 'REAUTH',
       payload: {
-        reAuthStatus: status
+        reAuthStatus: false
       }
     }).catch((e) => {
-      console.error('Failed to authenticate user', e);
+      console.error('Failed to reauth user', e);
     });
   };
 

@@ -25,13 +25,11 @@ def upgrade():
         print("Creating Auth Sessions Table...")
         op.create_table(
             'auth_session',
-            sa.Column('sessionId', sa.VARCHAR(), autoincrement=False, nullable=False),
-            sa.Column('clientId', sa.VARCHAR(), autoincrement=False, nullable=False),
-            sa.Column('referrerUrl', sa.VARCHAR(), autoincrement=False, nullable=False),
-            sa.Column('stepUpStatus', sa.VARCHAR(), autoincrement=False, nullable=False),
-            sa.Column('token', sa.VARCHAR(), autoincrement=False, nullable=False),
-            sa.Column('ttl', sa.VARCHAR(), autoincrement=False, nullable=False),
             sa.Column('username', sa.VARCHAR(), autoincrement=False, nullable=False),
+            sa.Column('email', sa.VARCHAR(), autoincrement=False, nullable=False),
+            sa.Column('userPoolId', sa.VARCHAR(), autoincrement=False, nullable=False),
+            sa.Column('clientId', sa.VARCHAR(), autoincrement=False, nullable=False),
+            sa.Column('ttl', sa.INTEGER(), autoincrement=False, nullable=False),
             sa.Column(
                 'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
             ),
@@ -41,7 +39,7 @@ def upgrade():
             sa.Column(
                 'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
             ),
-            sa.PrimaryKeyConstraint('sessionId', name='sessionId_pkey'),
+            sa.PrimaryKeyConstraint('username', name='username_pkey'),
         )
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
