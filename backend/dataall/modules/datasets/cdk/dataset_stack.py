@@ -242,7 +242,8 @@ class DatasetStack(Stack):
                     sid="ListDatasetBucket",
                     actions=[
                         "s3:ListBucket",
-                        "s3:GetBucketLocation"
+                        "s3:GetBucketLocation",
+                        "s3:GetBucketAcl"
                     ],
                     resources=[dataset_bucket.bucket_arn],
                     effect=iam.Effect.ALLOW,
@@ -413,7 +414,7 @@ class DatasetStack(Stack):
                 type='AWS::LakeFormation::Resource',
                 properties={
                     'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+                    'RoleArn': dataset_admin_role.role_arn,
                     'UseServiceLinkedRole': False,
                 },
             )
