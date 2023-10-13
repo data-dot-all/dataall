@@ -1,11 +1,8 @@
-// TODO: completely
-
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Breadcrumbs,
-  Button,
   Container,
   Grid,
   Link,
@@ -16,12 +13,9 @@ import { Helmet } from 'react-helmet-async';
 
 import { useClient } from 'services';
 import {
-  //ArrowLeftIcon,
   ChevronRightIcon,
-  //ChipInput,
   Defaults,
   Pager,
-  PlusIcon,
   SearchInput,
   useSettings
 } from 'design';

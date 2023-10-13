@@ -14,7 +14,7 @@ from dataall.core.environment.services.environment_resource_manager import Envir
 class OmicsRepository(EnvironmentResource):
     """DAO layer for Omics"""
     _DEFAULT_PAGE = 1
-    _DEFAULT_PAGE_SIZE = 10
+    _DEFAULT_PAGE_SIZE = 20
 
     def __init__(self, session):
         self._session = session

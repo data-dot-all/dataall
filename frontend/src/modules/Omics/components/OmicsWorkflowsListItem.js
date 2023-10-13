@@ -10,14 +10,13 @@ import {
   Typography
 } from '@mui/material';
 import * as FiIcons from 'react-icons/fi';
-import * as FaIcons from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
 import { FiCodesandbox } from 'react-icons/fi';
 import React from 'react';
 
-import { IconAvatar, StackStatus, Label, useCardStyle } from 'design';
+import { IconAvatar, StackStatus, useCardStyle } from 'design';
 
 export const OmicsWorkflowsListItem = (props) => {
   const { workflow } = props;
@@ -53,14 +52,13 @@ export const OmicsWorkflowsListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={workflow.name}>
-                  <span>{workflow.name}</span>
+                <Tooltip title={workflow.id}>
+                  <span>Workflow id: {workflow.id}</span>
                 </Tooltip>
               </Link>
               <Typography color="textSecondary" variant="body2">
-                by{' '}
                 <Link underline="hover" color="textPrimary" variant="subtitle2">
-                  {workflow.owner}
+                  {workflow.name}
                 </Link>
               </Typography>
             </Box>
@@ -68,29 +66,6 @@ export const OmicsWorkflowsListItem = (props) => {
         </Box>
         <Box
           sx={{
-            pb: 2,
-            px: 3
-          }}
-        >
-          <Typography
-            color="textSecondary"
-            variant="body2"
-            sx={{
-              width: '200px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 2
-            }}
-          >
-            <Tooltip title={workflow.description || 'No description provided'}>
-              <span>{workflow.description || 'No description provided'}</span>
-            </Tooltip>
-          </Typography>
-        </Box>
-        <Box
-          sx={{
             px: 3,
             py: 0.5
           }}
@@ -98,91 +73,15 @@ export const OmicsWorkflowsListItem = (props) => {
           <Grid container>
             <Grid item md={4} xs={12}>
               <Typography color="textSecondary" variant="body2">
-                <FaIcons.FaUserShield /> Role
-              </Typography>
-            </Grid>
-            <Grid item md={8} xs={12}>
-              <Label
-                color={
-                  workflow.userRoleForWorkflow === 'Creator'
-                    ? 'primary'
-                    : 'info'
-                }
-              >
-                {workflow.userRoleForWorkflow || '-'}
-              </Label>
-            </Grid>
-          </Grid>
-        </Box>
-        <Box
-          sx={{
-            px: 3,
-            py: 0.5
-          }}
-        >
-          <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
-                <FaIcons.FaUsersCog /> Team
-              </Typography>
-            </Grid>
-            <Grid item md={8} xs={12}>
-              <Typography
-                color="textPrimary"
-                variant="body2"
-                sx={{
-                  width: '200px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  WebkitBoxOrient: 'vertical',
-                  WebkitLineClamp: 2
-                }}
-              >
-                <Tooltip title={workflow.environment?.SamlGroupName || '-'}>
-                  <span>{workflow.environment?.SamlGroupName || '-'}</span>
-                </Tooltip>
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-        <Box
-          sx={{
-            px: 3,
-            py: 0.5
-          }}
-        >
-          {/* <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
-                <FaIcons.FaAws /> Account
-              </Typography>
-            </Grid>
-            <Grid item md={8} xs={6}>
-              <Typography color="textPrimary" variant="body2">
-                {workflow.environment.AwsAccountId}
-              </Typography>
-            </Grid>
-          </Grid> */}
-        </Box>
-        <Box
-          sx={{
-            px: 3,
-            py: 0.5
-          }}
-        >
-          {/* <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
-                <FaIcons.FaGlobe /> Region
+                <FiIcons.FiActivity /> Type
               </Typography>
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                {workflow.environment.region}
+                {workflow.type}
               </Typography>
             </Grid>
-          </Grid> */}
+          </Grid>
         </Box>
         <Box
           sx={{
@@ -198,7 +97,7 @@ export const OmicsWorkflowsListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                <StackStatus status={workflow.stack?.status} />
+                <StackStatus status={workflow.status} />
               </Typography>
             </Grid>
           </Grid>
