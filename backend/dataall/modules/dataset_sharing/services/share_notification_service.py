@@ -1,7 +1,16 @@
-from dataall.core.notifications.db.notification_repositories import Notification
-from dataall.core.notifications.db.notification_models import NotificationType
+import enum
+from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
+
+
+class DataSharingNotificationType(enum.Enum):
+    SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
+    SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
+    SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
+    SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
+    SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
+    DATASET_VERSION = 'DATASET_VERSION'
 
 
 class ShareNotificationService:
@@ -9,10 +18,10 @@ class ShareNotificationService:
     def notify_share_object_submission(
             session, username: str, dataset: Dataset, share: ShareObject
     ):
-        notifications = [Notification.create(
+        notifications = [NotificationRepository.create_notification(
             session=session,
             username=dataset.owner,
-            notification_type=NotificationType.SHARE_OBJECT_SUBMITTED,
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value,
             target_uri=f'{share.shareUri}|{dataset.datasetUri}',
             message=f'User {username} submitted share request for dataset {dataset.label}',
         )]
@@ -29,10 +38,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.SHARE_OBJECT_APPROVED,
+                    notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'User {username} approved share request for dataset {dataset.label}',
                 )
@@ -50,10 +59,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.SHARE_OBJECT_REJECTED,
+                    notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'User {username} rejected share request for dataset {dataset.label}',
                 )
@@ -71,10 +80,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.DATASET_VERSION,
+                    notification_type=DataSharingNotificationType.DATASET_VERSION.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'New data (at {s3_prefix}) is available from dataset {dataset.datasetUri} '
                             f'shared by owner {dataset.owner}',

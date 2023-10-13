@@ -2,19 +2,19 @@ from datetime import datetime
 
 from sqlalchemy import func, and_
 
-from dataall.core.notifications.db import notification_models as models
+from dataall.modules.notifications.db import notification_models as models
 from dataall.base.db import paginate
 
 
-class Notification:
+class NotificationRepository:
     def __init__(self):
         pass
 
     @staticmethod
-    def create(
+    def create_notification(
         session,
         username,
-        notification_type: models.NotificationType,
+        notification_type,
         target_uri,
         message,
     ) -> models.Notification:

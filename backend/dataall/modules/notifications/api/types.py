@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.notifications.db.notification_models import Notification
+from dataall.modules.notifications.db.notification_models import Notification
 
 
 def resolve_enum(context, source: Notification):

@@ -25,6 +25,8 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
+# TODO: at the moment this task is scheduled but failing as SNS subscriptions are disabled
+
 
 class DatasetSubscriptionService:
     def __init__(self, engine):

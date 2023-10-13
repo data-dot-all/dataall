@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.core.notifications.db.notification_repositories import Notification
+from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 log = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ def list_my_notifications(
     filter: dict = None,
 ):
     with context.engine.scoped_session() as session:
-        return Notification.paginated_notifications(
+        return NotificationRepository.paginated_notifications(
             session=session, username=context.username, filter=filter
         )
 
@@ -23,26 +23,26 @@ def mark_as_read(
     notificationUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        return Notification.read_notification(session, notificationUri)
+        return NotificationRepository.read_notification(session, notificationUri)
 
 
 def count_unread_notifications(context: Context, source):
     with context.engine.scoped_session() as session:
-        return Notification.count_unread_notifications(session, context.username)
+        return NotificationRepository.count_unread_notifications(session, context.username)
 
 
 def count_deleted_notifications(context: Context, source):
     with context.engine.scoped_session() as session:
-        return Notification.count_deleted_notifications(
+        return NotificationRepository.count_deleted_notifications(
             session, context.username
         )
 
 
 def count_read_notifications(context: Context, source):
     with context.engine.scoped_session() as session:
-        return Notification.count_read_notifications(session, context.username)
+        return NotificationRepository.count_read_notifications(session, context.username)
 
 
 def delete(context: Context, source, notificationUri):
     with context.engine.scoped_session() as session:
-        return Notification.delete_notification(session, notificationUri)
+        return NotificationRepository.delete_notification(session, notificationUri)
