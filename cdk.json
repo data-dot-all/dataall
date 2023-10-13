@@ -6,7 +6,7 @@
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "us-east-1",
-    "quality_gate": false,
+    "quality_gate": true,
     "DeploymentEnvironments": [
       {
         "envname": "sbx",

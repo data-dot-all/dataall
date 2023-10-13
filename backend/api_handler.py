@@ -183,7 +183,7 @@ def handler(event, context):
                         "locations": None,
                         "path": [query.get('operationName', "OPERATION")],
                         "extensions": {
-                          "code": "REAUTH"
+                            "code": "REAUTH"
                         }
                     }
                 ]

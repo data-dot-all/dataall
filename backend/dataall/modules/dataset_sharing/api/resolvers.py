@@ -92,16 +92,16 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
 
         can_approve = True if (
-                dataset and (
+            dataset and (
                 dataset.stewards in context.groups
                 or dataset.SamlAdminGroupName in context.groups
                 or dataset.owner == context.username
-        )
+            )
         ) else False
 
         can_request = True if (
-                source.owner == context.username
-                or source.groupUri in context.groups
+            source.owner == context.username
+            or source.groupUri in context.groups
         ) else False
 
         return (
