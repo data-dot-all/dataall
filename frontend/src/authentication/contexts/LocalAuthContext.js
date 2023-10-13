@@ -37,7 +37,15 @@ const handlers = {
     ...state,
     isAuthenticated: false,
     user: null
-  })
+  }),
+  REAUTH: (state, action) => {
+    const { reAuthStatus } = action.payload;
+
+    return {
+      ...state,
+      reAuthStatus
+    };
+  }
 };
 
 const reducer = (state, action) =>
@@ -47,7 +55,8 @@ export const LocalAuthContext = createContext({
   ...initialState,
   platform: 'local',
   login: () => Promise.resolve(),
-  logout: () => Promise.resolve()
+  logout: () => Promise.resolve(),
+  reauth: () => Promise.resolve()
 });
 
 export const LocalAuthProvider = (props) => {
@@ -92,6 +101,16 @@ export const LocalAuthProvider = (props) => {
       type: 'LOGOUT'
     });
   };
+  const reauth = async (status) => {
+    dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: status
+      }
+    }).catch((e) => {
+      console.error('Failed to authenticate user', e);
+    });
+  };
 
   return (
     <LocalAuthContext.Provider
@@ -100,7 +119,8 @@ export const LocalAuthProvider = (props) => {
         dispatch,
         platform: 'local',
         login,
-        logout
+        logout,
+        reauth
       }}
     >
       {children}

@@ -64,15 +64,16 @@ export const useClient = () => {
       const errorLink = onError(
         ({ graphQLErrors, networkError, operation, forward }) => {
           if (graphQLErrors) {
-            graphQLErrors.forEach(({ message, locations, path }) => {
-              console.error(
-                `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-              );
-              if (message === 'ReAuth Required') {
-                // console.error(oldHeaders);
-                setReAuth();
+            graphQLErrors.forEach(
+              ({ message, locations, path, extensions }) => {
+                console.error(
+                  `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+                );
+                if (extensions?.code === 'REAUTH') {
+                  setReAuth();
+                }
               }
-            });
+            );
           }
 
           if (networkError) {
