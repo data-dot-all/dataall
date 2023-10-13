@@ -60,20 +60,6 @@ function OmicsPageHeader() {
           </Link>
         </Breadcrumbs>
       </Grid>
-      <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<PlusIcon fontSize="small" />}
-            sx={{ m: 1 }}
-            to="/console/omics/runs/new"
-            variant="contained"
-          >
-            Create Run
-          </Button>
-        </Box>
-      </Grid>
     </Grid>
   );
 }
