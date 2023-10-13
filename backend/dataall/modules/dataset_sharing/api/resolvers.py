@@ -90,21 +90,25 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
-        if (
-            dataset and (
+
+        can_approve = True if (
+                dataset and (
                 dataset.stewards in context.groups
                 or dataset.SamlAdminGroupName in context.groups
                 or dataset.owner == context.username
-            )
-        ):
-            return ShareObjectPermission.Approvers.value
-        if (
+        )
+        ) else False
+
+        can_request = True if (
                 source.owner == context.username
                 or source.groupUri in context.groups
-        ):
-            return ShareObjectPermission.Requesters.value
-        else:
-            return ShareObjectPermission.NoPermission.value
+        ) else False
+
+        return (
+            ShareObjectPermission.ApproversAndRequesters.value if can_approve and can_request
+            else ShareObjectPermission.Approvers.value if can_approve
+            else ShareObjectPermission.Requesters.value if can_request
+            else ShareObjectPermission.NoPermission.value)
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
