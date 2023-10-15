@@ -91,13 +91,14 @@ class VpcStack(pyNestedClass):
             description=f'{resource_prefix}-{envname}-vpcId',
         )
 
-        CfnOutput(
-            self,
-            f'{resource_prefix}-{envname}-publicSubnets',
-            export_name=f'{resource_prefix}-{envname}-publicSubnets',
-            value=(','.join(self.public_subnets)),
-            description=f'{resource_prefix}-{envname}-publicSubnets',
-        )
+        if self.vpc.public_subnets:
+	    CfnOutput(
+                self,
+                f'{resource_prefix}-{envname}-publicSubnets',
+                export_name=f'{resource_prefix}-{envname}-publicSubnets',
+                value=(','.join(self.public_subnets)),
+                description=f'{resource_prefix}-{envname}-publicSubnets',
+            )
 
         if self.vpc.vpc_cidr_block:
             CfnOutput(
