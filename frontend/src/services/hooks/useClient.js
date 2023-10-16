@@ -7,7 +7,8 @@ import {
   InMemoryCache
 } from 'apollo-boost';
 import { useEffect, useState } from 'react';
-import { useToken, useAuth, useRequestContext } from 'authentication';
+import { useToken, useAuth } from 'authentication';
+// useRequestContext
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 const defaultOptions = {
@@ -30,7 +31,7 @@ export const useClient = () => {
   const [client, setClient] = useState(null);
   const token = useToken();
   const auth = useAuth();
-  const { storeRequestInfo } = useRequestContext();
+  // const { storeRequestInfo } = useRequestContext();
 
   const setReAuth = async () => {
     auth.dispatch({
@@ -71,8 +72,8 @@ export const useClient = () => {
                   `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
                 );
                 if (extensions?.code === 'REAUTH') {
-                  // console.error(oldHeaders);
-                  storeRequestInfo(operation);
+                  console.error(operation);
+                  // storeRequestInfo(operation);
                   setReAuth();
                 }
               }

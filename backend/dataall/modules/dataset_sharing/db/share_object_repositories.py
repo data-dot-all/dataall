@@ -790,7 +790,7 @@ class ShareObjectRepository:
                     ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
-            .all()
+            .first()
         )
 
     @staticmethod
