@@ -8,7 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
-import { AuthProvider } from './authentication';
+import { AuthProvider, RequestContextProvider } from './authentication';
 import { SettingsProvider } from './design';
 import { store } from './globalErrors';
 import { reportWebVitals } from './reportWebVitals';
@@ -23,7 +23,9 @@ ReactDOM.render(
             <SettingsProvider>
               <BrowserRouter>
                 <AuthProvider>
-                  <App />
+                  <RequestContextProvider>
+                    <App />
+                  </RequestContextProvider>
                 </AuthProvider>
               </BrowserRouter>
             </SettingsProvider>

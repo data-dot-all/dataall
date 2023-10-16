@@ -2,6 +2,7 @@ import { Auth, Amplify } from 'aws-amplify';
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useReducer } from 'react';
 import { SET_ERROR } from 'globalErrors';
+import { useRequestContext } from './RequestContext';
 
 Amplify.configure({
   Auth: {
@@ -80,7 +81,7 @@ export const CognitoAuthContext = createContext({
 export const CognitoAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-
+  const { requestHeaders, retryRequest } = useRequestContext();
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -123,6 +124,16 @@ export const CognitoAuthProvider = (props) => {
             }
           }
         });
+      })
+      .then(() => {
+        if (Object.keys(requestHeaders).length !== 0) {
+          const session = Auth.currentSession();
+          const token = session.getIdToken().getJwtToken();
+          retryRequest(token);
+          // Headers exist for retry, make API request
+          // TODO: MAKE THE REQUEST
+          // requestHeaders
+        }
       })
       .catch((e) => {
         console.error('Failed to authenticate user', e);
