@@ -34,11 +34,11 @@ class RequestValidator:
 
 def create_omics_run(context: Context, source, input=None):
     RequestValidator.validate_creation_request(input)
-    request = OmicsRunCreationRequest.from_dict(input)
+    # request = OmicsRunCreationRequest.from_dict(input)
     return OmicsService.create_omics_run(
         uri=input["environmentUri"],
         admin_group=input["SamlAdminGroupName"],
-        request=request
+        data=input
     )
 
 

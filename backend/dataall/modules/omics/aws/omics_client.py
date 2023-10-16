@@ -5,6 +5,7 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 from dataall.modules.omics.db.models import OmicsRun
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 from botocore.exceptions import ClientError
+from dataall.core.environment.services.environment_service import EnvironmentService
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +55,18 @@ class OmicsClient:
         
 
     @staticmethod
-    def run_omics_workflow(self, workflowId: str, workflowType: str, roleArn: str, parameters: str, session):
-        workflow = OmicsRepository(session).get_workflow(id=id)
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=workflow.environmentUri)
-        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+    def run_omics_workflow(omics_run: OmicsRun, session):
+        workflow = OmicsRepository(session).get_workflow(id=omics_run.workflowId)
+        group = EnvironmentService.get_environment_group(session, omics_run.SamlAdminGroupName, omics_run.environmentUri)
+        print("********",omics_run)
+        print(workflow)
+        print(group)
+        print("******* AccountId: ",omics_run.AwsAccountId,"****** Region: ",omics_run.region)
+        client = OmicsClient.client(awsAccountId=omics_run.AwsAccountId, region=omics_run.region)
         try:
-            response = client.start_run(workflowId, workflowType, roleArn, parameters
-            )
+            # response = client.start_run(workflowId=omics_run.workflowId, workflowType='READY2RUN', roleArn=group.environmentIAMRoleArn, parameters=omics_run.parameterTemplate )
+            response = client.start_run(workflowId=omics_run.workflowId, workflowType='READY2RUN', roleArn='arn:aws:iam::856197974211:role/service-role/OmicsWorkflow-20231010141883',
+                                        parameters=omics_run.parameterTemplate, outputUri='s3://kiranenv-env-856197974211-f69y6d4k/omics_run_output/' )
             return response
         except ClientError as e:
             logger.error(

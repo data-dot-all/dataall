@@ -67,11 +67,13 @@ class OmicsRepository(EnvironmentResource):
         """Save Omics run to the database"""
         self._session.add(omics_run)
         self._session.commit()
+
     
     def save_omics_workflow(self, omics_workflow):
         """Save Omics run to the database"""
         self._session.add(omics_workflow)
         self._session.commit()
+
 
     def _query_user_runs(self, username, groups, filter) -> Query:
         query = self._session.query(OmicsRun).filter(

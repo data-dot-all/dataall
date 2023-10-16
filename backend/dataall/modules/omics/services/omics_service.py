@@ -60,10 +60,10 @@ class OmicsService:
     """
 
     @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
-    @has_resource_permission(CREATE_OMICS_RUN)
-    @has_group_permission(CREATE_OMICS_RUN)
-    def create_omics_run(*, uri: str, admin_group: str, request: OmicsRunCreationRequest) -> OmicsRun:
+    # @has_tenant_permission(MANAGE_OMICS_RUNS)
+    # @has_resource_permission(CREATE_OMICS_RUN)
+    # @has_group_permission(CREATE_OMICS_RUN)
+    def create_omics_run(*, uri: str, admin_group: str, data: dict) -> OmicsRun:
         """
         Creates an omics_run and attach policies to it
         Throws an exception if omics_run are not enabled for the environment
@@ -71,48 +71,50 @@ class OmicsService:
 
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
+            # enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
 
-            if not enabled and enabled.lower() != "true":
-                raise exceptions.UnauthorizedOperation(
-                    action=CREATE_OMICS_RUN,
-                    message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
-                )
+            # if not enabled and enabled.lower() != "true":
+            #     raise exceptions.UnauthorizedOperation(
+            #         action=CREATE_OMICS_RUN,
+            #         message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
+            #     )
 
             omics_run = OmicsRun(
                 owner=get_context().username,
-                organizationUri=environment.organizationUri,
+                # organizationUri=environment.organizationUri,
                 environmentUri=environment.environmentUri,
                 SamlAdminGroupName=admin_group,
-                label=request.label,
-                description=request.description,
-                tags=request.tags,
                 AwsAccountId=environment.AwsAccountId,
                 region=environment.region,
-                ## TODO: define inputs, based on resolver and on RDS table
+                workflowId=data['workflowId'],
+                parameterTemplate=data['parameterTemplate'],
+                label=data['label']
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
+            # workflow = OmicsRepository(session).get_workflow(id=data['workflowId'])
+            response = OmicsClient.run_omics_workflow(omics_run, session)
+            print(response)
 
             ## TODO: add omics client boto3 API calls
 
 
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=request.SamlAdminGroupName,
-                permissions=OMICS_RUN_ALL,
-                resource_uri=omics_run.runUri,
-                resource_type=OmicsRun.__name__,
-            )
+            # ResourcePolicy.attach_resource_policy(
+            #     session=session,
+            #     group=request.SamlAdminGroupName,
+            #     permissions=OMICS_RUN_ALL,
+            #     resource_uri=omics_run.runUri,
+            #     resource_type=OmicsRun.__name__,
+            # )
 
-            if environment.SamlGroupName != admin_group:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=OMICS_RUN_ALL,
-                    resource_uri=omics_run.runUri,
-                    resource_type=OmicsRun.__name__,
-                )
+            # if environment.SamlGroupName != admin_group:
+            #     ResourcePolicy.attach_resource_policy(
+            #         session=session,
+            #         group=environment.SamlGroupName,
+            #         permissions=OMICS_RUN_ALL,
+            #         resource_uri=omics_run.runUri,
+            #         resource_type=OmicsRun.__name__,
+            #     )
         return omics_run
 
     @staticmethod

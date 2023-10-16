@@ -6,14 +6,11 @@ NewOmicsRunInput = gql.InputType(
     name="NewOmicsRunInput",
     arguments=[
         gql.Field("environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Field("workflowId", type=gql.NonNullableType(gql.String)),
         gql.Field("label", type=gql.NonNullableType(gql.String)),
-        gql.Field("description", type=gql.String),
-        gql.Field("tags", type=gql.ArrayType(gql.String)),
-        gql.Field("created", type=gql.String),
-        gql.Field("updated", type=gql.String),
-        gql.Field("owner", type=gql.String),
-        gql.Field("SamlGroupName", type=gql.NonNullableType(gql.String)),
-        ##TODO: define inputs
+        gql.Field("destination", type=gql.String),
+        gql.Field("parameterTemplate", type=gql.String),
+        gql.Field("SamlAdminGroupName", type=gql.NonNullableType(gql.String)),
     ],
 )
 

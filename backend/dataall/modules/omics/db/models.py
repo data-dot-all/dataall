@@ -27,11 +27,10 @@ class OmicsWorkflow(Resource, Base):
 class OmicsRun(Resource, Base):
     __tablename__ = "omics_run"
     runUri = Column(String, nullable=False, primary_key=True, default=utils.uuid("omicsRunUri"))
-    workflowUri = Column(String, nullable=False)
+    # workflowUri = Column(String, nullable=False)
     environmentUri = Column(String, ForeignKey("environment.environmentUri", ondelete="cascade"), nullable=False)
-    organizationUri = Column(String, nullable=False)
     region = Column(String, default="eu-west-1")
     AwsAccountId = Column(String, nullable=False)
-    SamlGroupName = Column(String, nullable=False)
-    # TODO: add fields
-    userRoleForPipeline = query_expression()
+    SamlAdminGroupName = Column(String, nullable=False)
+    workflowId = Column(String, nullable=False)
+    parameterTemplate = Column(String, nullable=False)
