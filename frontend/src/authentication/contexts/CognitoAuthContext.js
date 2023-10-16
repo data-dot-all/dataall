@@ -81,7 +81,7 @@ export const CognitoAuthContext = createContext({
 export const CognitoAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { requestHeaders, retryRequest } = useRequestContext();
+  const { requestInfo, retryRequest } = useRequestContext();
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -126,13 +126,11 @@ export const CognitoAuthProvider = (props) => {
         });
       })
       .then(() => {
-        if (Object.keys(requestHeaders).length !== 0) {
+        if (Object.keys(requestInfo).length !== 0) {
           const session = Auth.currentSession();
           const token = session.getIdToken().getJwtToken();
           retryRequest(token);
           // Headers exist for retry, make API request
-          // TODO: MAKE THE REQUEST
-          // requestHeaders
         }
       })
       .catch((e) => {
