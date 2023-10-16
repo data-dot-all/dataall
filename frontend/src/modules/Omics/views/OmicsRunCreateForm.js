@@ -21,8 +21,13 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
-import { getOmicsWorkflow } from '../services';
+import {
+  useClient,
+  listEnvironmentGroups,
+  listEnvironments,
+  listDatasetsOwnedByEnvGroup
+} from 'services';
+import { getOmicsWorkflow, createOmicsRun } from '../services';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -31,7 +36,6 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { createOmicsRun } from '../services';
 
 const OmicsRunCreateForm = (props) => {
   const params = useParams();
@@ -59,6 +63,8 @@ const OmicsRunCreateForm = (props) => {
 
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [currentEnv, setCurrentEnv] = useState('');
+  const [datasetOptions, setDatasetOptions] = useState([]);
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -79,6 +85,7 @@ const OmicsRunCreateForm = (props) => {
   }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
+    setCurrentEnv(environmentUri);
     try {
       const response = await client.query(
         listEnvironmentGroups({
@@ -100,6 +107,33 @@ const OmicsRunCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
+
+  const fetchDatasets = async (groupUri) => {
+    let ownedDatasets = [];
+    try {
+      const response = await client.query(
+        listDatasetsOwnedByEnvGroup({
+          filter: Defaults.SelectListFilter,
+          environmentUri: currentEnv,
+          groupUri: groupUri
+        })
+      );
+      if (!response.errors) {
+        ownedDatasets = response.data.listDatasetsOwnedByEnvGroup.nodes?.map(
+          (dataset) => ({
+            value: dataset.datasetUri,
+            label: dataset.label
+          })
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+    setDatasetOptions(ownedDatasets);
+  };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -121,6 +155,7 @@ const OmicsRunCreateForm = (props) => {
         createOmicsRun({
           label: values.label,
           environmentUri: values.environment.environmentUri,
+          workflowId: params.workflowId,
           parameterTemplate: values.parameterTemplate,
           SamlAdminGroupName: values.SamlAdminGroupName,
           destination: values.destination
@@ -138,7 +173,7 @@ const OmicsRunCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/omics/${response.data.createOmicsRun.omicsRunUri}`);
+        navigate(`/console/omics/${response.data.createOmicsRun.runUri}`);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -221,8 +256,8 @@ const OmicsRunCreateForm = (props) => {
             <Formik
               initialValues={{
                 omicsWorkflowId: params.workflowId,
-                omicsRunName: '',
-                SamlGroupName: '',
+                label: '',
+                SamlAdminGroupName: '',
                 environment: '',
                 destination: '',
                 parameterTemplate: omicsWorkflow.parameterTemplate
@@ -231,13 +266,11 @@ const OmicsRunCreateForm = (props) => {
                 omicsWorkflowId: Yup.string()
                   .max(255)
                   .required('*Workflow is required'),
-                omicsRunName: Yup.string()
-                  .max(255)
-                  .required('*Run Name is required'),
+                label: Yup.string().max(255).required('*Run Name is required'),
                 parameterTemplate: Yup.string()
                   .max(5000)
                   .required('*Parameters are required'),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
@@ -285,18 +318,14 @@ const OmicsRunCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(
-                              touched.omicsRunName && errors.omicsRunName
-                            )}
+                            error={Boolean(touched.label && errors.label)}
                             fullWidth
-                            helperText={
-                              touched.omicsRunName && errors.omicsRunName
-                            }
+                            helperText={touched.label && errors.label}
                             label="Run Name"
-                            name="omicsRunName"
+                            name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.omicsRunName}
+                            value={values.label}
                             variant="outlined"
                           />
                         </CardContent>
@@ -312,7 +341,7 @@ const OmicsRunCreateForm = (props) => {
                             label="Environment"
                             name="environment"
                             onChange={(event) => {
-                              setFieldValue('SamlGroupName', '');
+                              setFieldValue('SamlAdminGroupName', '');
                               fetchGroups(
                                 event.target.value.environmentUri
                               ).catch((e) =>
@@ -352,16 +381,27 @@ const OmicsRunCreateForm = (props) => {
                           <TextField
                             fullWidth
                             error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
+                              touched.SamlAdminGroupName &&
+                                errors.SamlAdminGroupName
                             )}
                             helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
+                              touched.SamlAdminGroupName &&
+                              errors.SamlAdminGroupName
                             }
                             label="Owners"
-                            name="SamlGroupName"
-                            onChange={handleChange}
+                            name="SamlAdminGroupName"
+                            onChange={(event) => {
+                              setFieldValue('destination', '');
+                              fetchDatasets(event.target.value).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                              setFieldValue(
+                                'SamlAdminGroupName',
+                                event.target.value
+                              );
+                            }}
                             select
-                            value={values.SamlGroupName}
+                            value={values.SamlAdminGroupName}
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
@@ -382,12 +422,38 @@ const OmicsRunCreateForm = (props) => {
                             }
                             label="Select S3 Output Destination"
                             name="destination"
-                            value={values.destination} //TODO: datasetUri
-                            variant="outlined"
-                            onBlur={handleBlur}
                             onChange={handleChange}
-                          />
+                            select
+                            value={values.destination}
+                            variant="outlined"
+                          >
+                            {datasetOptions.map((dataset) => (
+                              <MenuItem
+                                key={dataset.value}
+                                value={dataset.value}
+                              >
+                                {dataset.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         </CardContent>
+                        {/*<CardContent>*/}
+                        {/*  <TextField*/}
+                        {/*    fullWidth*/}
+                        {/*    error={Boolean(*/}
+                        {/*      touched.destination && errors.destination*/}
+                        {/*    )}*/}
+                        {/*    helperText={*/}
+                        {/*      touched.destination && errors.destination*/}
+                        {/*    }*/}
+                        {/*    label="Select S3 Output Destination"*/}
+                        {/*    name="destination"*/}
+                        {/*    value={values.destination} //TODO: datasetUri*/}
+                        {/*    variant="outlined"*/}
+                        {/*    onBlur={handleBlur}*/}
+                        {/*    onChange={handleChange}*/}
+                        {/*  />*/}
+                        {/*</CardContent>*/}
                       </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>

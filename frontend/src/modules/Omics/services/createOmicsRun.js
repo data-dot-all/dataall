@@ -8,6 +8,7 @@ export const createOmicsRun = (input) => ({
     mutation createOmicsRun($input: NewOmicsRunInput) {
       createOmicsRun(input: $input) {
         label
+        runUri
       }
     }
   `

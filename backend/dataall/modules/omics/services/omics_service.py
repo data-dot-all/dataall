@@ -13,6 +13,7 @@ from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.base.db import exceptions
 import json
 
@@ -71,6 +72,7 @@ class OmicsService:
 
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, data['destination'])
             # enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
 
             # if not enabled and enabled.lower() != "true":
@@ -81,14 +83,15 @@ class OmicsService:
 
             omics_run = OmicsRun(
                 owner=get_context().username,
-                # organizationUri=environment.organizationUri,
+                organizationUri=environment.organizationUri,
                 environmentUri=environment.environmentUri,
                 SamlAdminGroupName=admin_group,
                 AwsAccountId=environment.AwsAccountId,
                 region=environment.region,
                 workflowId=data['workflowId'],
                 parameterTemplate=data['parameterTemplate'],
-                label=data['label']
+                label=data['label'],
+                outputUri=f"s3://{dataset.name}"
             )
 
             OmicsRepository(session).save_omics_run(omics_run)

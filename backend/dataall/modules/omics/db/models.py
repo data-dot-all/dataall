@@ -26,11 +26,12 @@ class OmicsWorkflow(Resource, Base):
 
 class OmicsRun(Resource, Base):
     __tablename__ = "omics_run"
-    runUri = Column(String, nullable=False, primary_key=True, default=utils.uuid("omicsRunUri"))
-    # workflowUri = Column(String, nullable=False)
+    runUri = Column(String, nullable=False, primary_key=True, default=utils.uuid("runUri"))
+    organizationUri = Column(String, nullable=False)
     environmentUri = Column(String, ForeignKey("environment.environmentUri", ondelete="cascade"), nullable=False)
     region = Column(String, default="eu-west-1")
     AwsAccountId = Column(String, nullable=False)
     SamlAdminGroupName = Column(String, nullable=False)
     workflowId = Column(String, nullable=False)
     parameterTemplate = Column(String, nullable=False)
+    outputUri = Column(String, nullable=True)

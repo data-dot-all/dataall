@@ -17,18 +17,10 @@ const OmicsRunDetails = (props) => {
             tags={
               omicsRun.tags && omicsRun.tags.length > 0 ? omicsRun.tags : ['-']
             }
+            parameterTemplate={omicsRun.parameterTemplate || '-'}
+            outputUri={omicsRun.outputUri}
           />
         </Box>
-      </Grid>
-      <Grid item lg={4} xl={3} xs={12}>
-        <ObjectMetadata
-          runID={omicsRun.runID}
-          name={omicsRun.name}
-          status={omicsRun.status}
-          runTime={omicsRun.runTime}
-          createdAt={omicsRun.createdAt}
-          dataset={omicsRun.dataset}
-        />
       </Grid>
     </Grid>
   );
