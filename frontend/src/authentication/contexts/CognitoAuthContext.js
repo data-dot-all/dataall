@@ -126,11 +126,11 @@ export const CognitoAuthProvider = (props) => {
         });
       })
       .then(() => {
-        console.info(requestInfo);
+        console.error(requestInfo);
         if (Object.keys(requestInfo).length !== 0) {
           const session = Auth.currentSession();
           const token = session.getIdToken().getJwtToken();
-          console.info(token);
+          console.error(token);
         }
       })
       .catch((e) => {
