@@ -64,7 +64,7 @@ export const OmicsRunList = () => {
         }}
       >
         <Card>
-          <CardHeader title="Omics runs" />
+          <CardHeader title="Omics Run History" />
           <Divider />
           <Scrollbar>
             <Box sx={{ minWidth: 600 }}>
