@@ -44,14 +44,16 @@ export const ObjectBrief = (props) => {
               </Typography>
             </Box>
           )}
-          <Box sx={{ mt: 3 }}>
-            <Typography color="textSecondary" variant="subtitle2">
-              Name
-            </Typography>
-            <Typography color="textPrimary" variant="subtitle2">
-              {name}
-            </Typography>
-          </Box>
+          {name && (
+            <Box sx={{ mt: 3 }}>
+              <Typography color="textSecondary" variant="subtitle2">
+                Name
+              </Typography>
+              <Typography color="textPrimary" variant="subtitle2">
+                {name}
+              </Typography>
+            </Box>
+          )}
           {confidentiality && (
             <Box sx={{ mt: 3 }}>
               <Typography color="textSecondary" variant="subtitle2">
@@ -117,19 +119,23 @@ export const ObjectBrief = (props) => {
               <Typography color="textSecondary" variant="subtitle2">
                 parameterTemplate
               </Typography>
+              <Box sx={{ mt: 1 }}>
+                <Typography color="textPrimary" variant="subtitle2">
+                  {parameterTemplate}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+          {description && (
+            <Box sx={{ mt: 3 }}>
+              <Typography color="textSecondary" variant="subtitle2">
+                Description
+              </Typography>
               <Typography color="textPrimary" variant="subtitle2">
-                {parameterTemplate}
+                {description}
               </Typography>
             </Box>
           )}
-        </Box>
-        <Box sx={{ mt: 3 }}>
-          <Typography color="textSecondary" variant="subtitle2">
-            Description
-          </Typography>
-          <Typography color="textPrimary" variant="subtitle2">
-            {description}
-          </Typography>
         </Box>
       </CardContent>
     </Card>

@@ -152,7 +152,6 @@ const GlossaryCreateForm = Loadable(
   lazy(() => import('./modules/Glossaries/views/GlossaryCreateForm'))
 );
 
-//TODO: review this routing
 const OmicsList = Loadable(
   lazy(() => import('./modules/Omics/views/OmicsListView'))
 );

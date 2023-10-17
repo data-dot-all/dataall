@@ -50,7 +50,7 @@ def create_omics_run(context: Context, source, input=None):
 def list_omics_runs(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    return OmicsService.list_user_runs(filter)
+    return OmicsService.list_user_omics_runs(filter)
 
 
 def list_omics_workflows(context: Context, source, filter: dict = None):

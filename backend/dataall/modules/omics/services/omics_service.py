@@ -157,7 +157,7 @@ class OmicsService:
         return response
     
     @staticmethod
-    def list_user_omics_runs(*, filter: dict) -> dict:
+    def list_user_omics_runs(filter: dict) -> dict:
         """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
         with _session() as session:
             return OmicsRepository(session).paginated_user_runs(

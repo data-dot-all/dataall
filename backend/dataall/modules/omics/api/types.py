@@ -23,7 +23,17 @@ OmicsRun = gql.ObjectType(
         gql.Field("workflowId", type=gql.String),
         gql.Field("SamlAdminGroupName", type=gql.String),
         gql.Field("parameterTemplate", type=gql.String),
-        gql.Field("outputUri", type=gql.String)
+        gql.Field("outputUri", type=gql.String),
+        gql.Field(
+            name='environment',
+            type=gql.Ref('Environment'),
+            resolver=resolve_environment,
+        ),
+        gql.Field(
+            name='organization',
+            type=gql.Ref('Organization'),
+            resolver=resolve_organization_by_env,
+        ),
         # gql.Field(
         #     "userRoleForPipeline",
         #     type=OmicsRunRole.toGraphQLEnum(),

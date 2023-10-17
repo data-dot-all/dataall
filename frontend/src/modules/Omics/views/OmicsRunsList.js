@@ -1,86 +1,28 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
-  Breadcrumbs,
-  Button,
-  Container,
-  Grid,
-  Link,
-  Typography
+  Card,
+  CardHeader,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 
 import { useClient } from 'services';
-import {
-  ChevronRightIcon,
-  Defaults,
-  Pager,
-  PlusIcon,
-  SearchInput,
-  useSettings
-} from 'design';
+import { Defaults, Pager, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-import { OmicsWorkflowsListItem } from '../components';
 import { listOmicsRuns } from '../services';
-
-function OmicsPageHeader() {
-  return (
-    <Grid
-      alignItems="center"
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
-      <Grid item>
-        <Typography color="textPrimary" variant="h5">
-          Runs
-        </Typography>
-        <Breadcrumbs
-          aria-label="breadcrumb"
-          separator={<ChevronRightIcon fontSize="small" />}
-          sx={{ mt: 1 }}
-        >
-          <Link underline="hover" color="textPrimary" variant="subtitle2">
-            Play
-          </Link>
-          <Link
-            underline="hover"
-            color="textPrimary"
-            component={RouterLink}
-            to="/console/omics"
-            variant="subtitle2"
-          >
-            Runs
-          </Link>
-        </Breadcrumbs>
-      </Grid>
-      <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<PlusIcon fontSize="small" />}
-            sx={{ m: 1 }}
-            to="/console/omics/runs/new"
-            variant="contained"
-          >
-            Create Run
-          </Button>
-        </Box>
-      </Grid>
-    </Grid>
-  );
-}
 
 export const OmicsRunList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
-  const { settings } = useSettings();
-  const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
 
@@ -94,20 +36,6 @@ export const OmicsRunList = () => {
     }
     setLoading(false);
   }, [client, dispatch, filter]);
-
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-    setFilter({ ...filter, term: event.target.value });
-  };
-
-  const handleInputKeyup = (event) => {
-    if (event.code === 'Enter') {
-      setFilter({ page: 1, term: event.target.value });
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    }
-  };
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
@@ -126,7 +54,7 @@ export const OmicsRunList = () => {
   return (
     <>
       <Helmet>
-        <title>Workflows | data.all</title>
+        <title>Runs | data.all</title>
       </Helmet>
       <Box
         sx={{
@@ -135,37 +63,61 @@ export const OmicsRunList = () => {
           py: 5
         }}
       >
-        <Container maxWidth={settings.compact ? 'xl' : false}>
-          <OmicsPageHeader />
-          <Box sx={{ mt: 3 }}>
-            <SearchInput
-              onChange={handleInputChange}
-              onKeyUp={handleInputKeyup}
-              value={inputValue}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              mt: 3
-            }}
-          >
-            {loading ? (
-              <CircularProgress />
-            ) : (
-              <Box>
-                <Grid container spacing={3}>
-                  {items.nodes.map((node) => (
-                    <OmicsWorkflowsListItem omicsuser={node} />
-                  ))}
-                </Grid>
-
-                <Pager items={items} onChange={handlePageChange} />
-              </Box>
-            )}
-          </Box>
-        </Container>
+        <Card>
+          <CardHeader title="Omics runs" />
+          <Divider />
+          <Scrollbar>
+            <Box sx={{ minWidth: 600 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Run identifier</TableCell>
+                    <TableCell>Run name</TableCell>
+                    <TableCell>Workflow id</TableCell>
+                    <TableCell>Created</TableCell>
+                    <TableCell>Owner</TableCell>
+                    <TableCell>Team</TableCell>
+                    <TableCell>Environment</TableCell>
+                    <TableCell>Output S3</TableCell>
+                  </TableRow>
+                </TableHead>
+                <Divider />
+                {loading ? (
+                  <CircularProgress sx={{ mt: 1 }} size={20} />
+                ) : (
+                  <TableBody>
+                    {items.nodes.length > 0 ? (
+                      items.nodes.map((item) => (
+                        <TableRow hover>
+                          <TableCell>{item.runUri}</TableCell>
+                          <TableCell>{item.label}</TableCell>
+                          <TableCell>{item.workflowId}</TableCell>
+                          <TableCell>{item.created}</TableCell>
+                          <TableCell>{item.owner}</TableCell>
+                          <TableCell>{item.SamlAdminGroupName}</TableCell>
+                          <TableCell>{item.environment.label}</TableCell>
+                          <TableCell>{item.outputUri}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell>No items added.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                )}
+              </Table>
+              {items.nodes.length > 0 && (
+                <Pager
+                  mgTop={2}
+                  mgBottom={2}
+                  items={items}
+                  onChange={handlePageChange}
+                />
+              )}
+            </Box>
+          </Scrollbar>
+        </Card>
       </Box>
     </>
   );

@@ -79,7 +79,7 @@ class OmicsRepository(EnvironmentResource):
         query = self._session.query(OmicsRun).filter(
             or_(
                 OmicsRun.owner == username,
-                OmicsRun.SamlGroupName.in_(groups),
+                OmicsRun.SamlAdminGroupName.in_(groups),
             )
         )
         if filter and filter.get("term"):
@@ -94,7 +94,7 @@ class OmicsRepository(EnvironmentResource):
 
     def paginated_user_runs(self, username, groups, filter=None) -> dict:
         return paginate(
-            query=OmicsRepository._query_user_runs(username, groups, filter),
+            query=self._query_user_runs(username, groups, filter),
             page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()

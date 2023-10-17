@@ -4,9 +4,8 @@ export const listOmicsRuns = (filter) => ({
   variables: {
     filter
   },
-  // TODO: review this output
   query: gql`
-    query listOmicsRuns($filter: OmicsRunsFilter) {
+    query listOmicsRuns($filter: OmicsFilter) {
       listOmicsRuns(filter: $filter) {
         count
         page
@@ -15,8 +14,11 @@ export const listOmicsRuns = (filter) => ({
         hasPrevious
         nodes {
           runUri
+          workflowId
           name
           owner
+          SamlAdminGroupName
+          outputUri
           description
           label
           created
@@ -33,10 +35,6 @@ export const listOmicsRuns = (filter) => ({
             label
             name
             organizationUri
-          }
-          stack {
-            stack
-            status
           }
         }
       }
