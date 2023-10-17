@@ -81,7 +81,8 @@ export const CognitoAuthContext = createContext({
 export const CognitoAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { requestInfo, retryRequest } = useRequestContext();
+  const { requestInfo } = useRequestContext();
+  //  retryRequest
   useEffect(() => {
     const initialize = async () => {
       try {
