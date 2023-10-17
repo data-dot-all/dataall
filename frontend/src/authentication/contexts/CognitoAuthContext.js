@@ -81,7 +81,7 @@ export const CognitoAuthContext = createContext({
 export const CognitoAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { requestInfo } = useRequestContext();
+  const { requestInfo, retryRequest } = useRequestContext();
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -131,6 +131,7 @@ export const CognitoAuthProvider = (props) => {
           const session = Auth.currentSession();
           const token = session.getIdToken().getJwtToken();
           console.error(token);
+          retryRequest(token);
         }
       })
       .catch((e) => {
