@@ -92,7 +92,7 @@ class VpcStack(pyNestedClass):
         )
 
         if self.vpc.public_subnets:
-	    CfnOutput(
+            CfnOutput(
                 self,
                 f'{resource_prefix}-{envname}-publicSubnets',
                 export_name=f'{resource_prefix}-{envname}-publicSubnets',
