@@ -1,13 +1,12 @@
 import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
-import { useAuth } from 'authentication';
-// useRequestContext
+import { useAuth, useRequestContext } from 'authentication';
 
 export const ReAuthModal = () => {
   const { reAuthStatus, reauth, dispatch } = useAuth();
-  // const { clearRequestInfo } = useRequestContext();
+  const { clearRequestInfo } = useRequestContext();
 
   const continueSession = async () => {
-    // clearRequestInfo();
+    clearRequestInfo();
     dispatch({
       type: 'REAUTH',
       payload: {

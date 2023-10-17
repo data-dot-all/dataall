@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   from,
   ApolloClient,
@@ -12,9 +13,9 @@ import {
 const RequestContext = createContext();
 
 // Create a custom hook to access the context
-export function useRequestContext() {
+export const useRequestContext = () => {
   return useContext(RequestContext);
-}
+};
 
 const defaultOptions = {
   watchQuery: {
@@ -31,7 +32,8 @@ const defaultOptions = {
   }
 };
 
-export function RequestContextProvider({ children }) {
+export const RequestContextProvider = (props) => {
+  const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
 
   const storeRequestInfo = (info) => {
@@ -83,4 +85,8 @@ export function RequestContextProvider({ children }) {
       {children}
     </RequestContext.Provider>
   );
-}
+};
+
+RequestContextProvider.propTypes = {
+  children: PropTypes.node.isRequired
+};
