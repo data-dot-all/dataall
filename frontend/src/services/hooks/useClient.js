@@ -72,7 +72,8 @@ export const useClient = () => {
                 );
                 if (extensions?.code === 'REAUTH') {
                   console.error(operation);
-                  storeRequestInfo(operation);
+                  const timestamp = new Date(); // Add a timestamp
+                  storeRequestInfo({ operation, timestamp });
                   setReAuth();
                 }
               }
