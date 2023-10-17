@@ -7,6 +7,8 @@ import {
   InMemoryCache,
   HttpLink
 } from '@apollo/client';
+import { useToken } from 'authentication';
+
 // import { useClient } from 'services';
 
 // Create a context for API request headers
@@ -53,7 +55,7 @@ export const restoreRetryRequest = () => {
 export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
-
+  const token = useToken();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
     storeRequestInfoStorage(info);
@@ -70,7 +72,8 @@ export const RequestContextProvider = (props) => {
     if (restoredRequestInfo) {
       // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
       console.error('RETRY');
-      setRequestInfo(restoredRequestInfo);
+      retryRequest(token);
+      // setRequestInfo(restoredRequestInfo);
     }
   }, []);
 

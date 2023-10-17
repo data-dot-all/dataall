@@ -2,7 +2,7 @@ import { Auth, Amplify } from 'aws-amplify';
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useReducer } from 'react';
 import { SET_ERROR } from 'globalErrors';
-import { useRequestContext } from './RequestContext';
+// import { useRequestContext } from './RequestContext';
 
 Amplify.configure({
   Auth: {
@@ -81,7 +81,7 @@ export const CognitoAuthContext = createContext({
 export const CognitoAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { requestInfo } = useRequestContext();
+  // const { requestInfo } = useRequestContext();
   //  retryRequest
   useEffect(() => {
     const initialize = async () => {
@@ -126,25 +126,17 @@ export const CognitoAuthProvider = (props) => {
           }
         });
       })
-      .then(() => {
-        console.error('REQUEST INFO');
-        console.error(requestInfo);
-        if (Object.keys(requestInfo).length !== 0) {
-          const session = Auth.currentSession();
-          const token = session.getIdToken().getJwtToken();
-          console.error(token);
-          // retryRequest(token);
-        }
-      })
       .catch((e) => {
         console.error('Failed to authenticate user', e);
       });
     // .then(() => {
+    //   console.error('REQUEST INFO');
+    //   console.error(requestInfo);
     //   if (Object.keys(requestInfo).length !== 0) {
     //     const session = Auth.currentSession();
     //     const token = session.getIdToken().getJwtToken();
-    //     retryRequest(token);
-    //     // Headers exist for retry, make API request
+    //     console.error(token);
+    //     // retryRequest(token);
     //   }
     // })
   };
