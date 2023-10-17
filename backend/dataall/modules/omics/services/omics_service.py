@@ -91,7 +91,7 @@ class OmicsService:
                 workflowId=data['workflowId'],
                 parameterTemplate=data['parameterTemplate'],
                 label=data['label'],
-                outputUri=f"s3://{dataset.name}"
+                outputUri=f"s3://{environment.resourcePrefix}-{dataset.name}-{dataset.datasetUri}"
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
