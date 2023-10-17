@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   from,
@@ -31,6 +31,24 @@ const defaultOptions = {
     errorPolicy: 'all'
   }
 };
+const REQUEST_INFO_KEY = 'requestInfo';
+
+export const storeRequestInfoStorage = (requestInfo) => {
+  window.localStorage.setItem(REQUEST_INFO_KEY, JSON.stringify(requestInfo));
+};
+
+export const restoreRetryRequest = () => {
+  try {
+    const storedRequestInfo = window.localStorage.getItem(REQUEST_INFO_KEY);
+    if (storedRequestInfo != null) {
+      return JSON.parse(storedRequestInfo);
+    }
+    return null;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
 
 export const RequestContextProvider = (props) => {
   const { children } = props;
@@ -38,11 +56,21 @@ export const RequestContextProvider = (props) => {
 
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
+    storeRequestInfoStorage(info);
   };
 
   const clearRequestInfo = () => {
     setRequestInfo(null);
+    window.localStorage.removeItem('requestInfo');
   };
+
+  useEffect(() => {
+    const restoredRequestInfo = restoreRetryRequest();
+
+    if (restoredRequestInfo) {
+      setRequestInfo(restoredRequestInfo);
+    }
+  }, []);
 
   const retryRequest = async (token) => {
     // const client = useClient();
