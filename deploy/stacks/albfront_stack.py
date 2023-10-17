@@ -10,6 +10,7 @@ from aws_cdk import (
     aws_elasticloadbalancing as elb,
     aws_s3 as s3,
     Stack,
+    CfnOutput,
     Duration,
     RemovalPolicy,
     Fn,
@@ -131,15 +132,19 @@ class AlbFrontStack(Stack):
         logs_bucket.grant_put(iam.ServicePrincipal('delivery.logs.amazonaws.com'))
         logs_bucket.grant_read(iam.ServicePrincipal('delivery.logs.amazonaws.com'))
 
-        frontend_alternate_domain = custom_domain['hosted_zone_name']
-        userguide_alternate_domain = 'userguide.' + custom_domain['hosted_zone_name']
-
-        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
-            self,
-            'CustomDomainHostedZone',
-            hosted_zone_id=custom_domain['hosted_zone_id'],
-            zone_name=custom_domain['hosted_zone_name'],
-        )
+        if custom_domain and custom_domain.get('hosted_zone_id'):
+            hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+                self,
+                'CustomDomainHostedZone',
+                hosted_zone_id=custom_domain['hosted_zone_id'],
+                zone_name=custom_domain['hosted_zone_name'],
+            )
+            frontend_alternate_domain = custom_domain['hosted_zone_name']
+            userguide_alternate_domain = 'userguide.' + custom_domain['hosted_zone_name']
+        else:
+            hosted_zone = None
+            frontend_alternate_domain = None
+            userguide_alternate_domain = None
 
         if custom_domain and custom_domain.get('certificate_arn'):
             certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
@@ -272,6 +277,34 @@ class AlbFrontStack(Stack):
             interval=Duration.seconds(15),
         )
         self.allow_alb_access(userguide_alb, ip_ranges, vpc)
+
+        CfnOutput(
+            self,
+            f'FrontEndService{envname}Arn',
+            export_name=f'frontend-{envname}-arn',
+            value=frontend_alb.load_balancer.load_balancer_arn,
+        )
+
+        CfnOutput(
+            self,
+            f'FrontEndService{envname}HostedZoneId',
+            export_name=f'frontend-{envname}-hostedzoneid',
+            value=frontend_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
+        )
+
+        CfnOutput(
+            self,
+            f'UserGuideService{envname}Arn',
+            export_name=f'userguide-{envname}-arn',
+            value=userguide_alb.load_balancer.load_balancer_arn,
+        )
+
+        CfnOutput(
+            self,
+            f'UserGuideService{envname}HostedZoneId',
+            export_name=f'userguide-{envname}-hostedzoneid',
+            value=userguide_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
+        )
 
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(
