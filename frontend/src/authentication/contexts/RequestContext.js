@@ -68,6 +68,8 @@ export const RequestContextProvider = (props) => {
     const restoredRequestInfo = restoreRetryRequest();
 
     if (restoredRequestInfo) {
+      // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
+      console.error('RETRY');
       setRequestInfo(restoredRequestInfo);
     }
   }, []);
