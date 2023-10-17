@@ -36,7 +36,7 @@ def upgrade():
         sa.Column('deleted', sa.DateTime(), nullable=True),
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
-        sa.PrimaryKeyConstraint('runUri', name='id_pkey'),
+        sa.PrimaryKeyConstraint('runUri', name='omics_run_pkey'),
     )
 
 def downgrade():
