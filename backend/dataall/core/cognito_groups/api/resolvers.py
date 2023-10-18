@@ -1,7 +1,7 @@
 import os
 import logging
 
-from dataall.core.cognito_groups.aws.cognito import Cognito
+from dataall.base.aws.cognito import Cognito
 from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization

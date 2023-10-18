@@ -29,7 +29,7 @@ class ShareNotificationService:
         )]
         session.add_all(notifications)
 
-        create_notification_task(session, email_id, dataset, share, subject, msg)
+        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
         return notifications
 
     @staticmethod
@@ -55,7 +55,7 @@ class ShareNotificationService:
             )
             session.add_all(notifications)
 
-        create_notification_task(session, email_id, dataset, share, subject, msg)
+        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
 
         return notifications
 
@@ -89,7 +89,7 @@ class ShareNotificationService:
             )
             session.add_all(notifications)
 
-        create_notification_task(session, email_id, dataset, share, subject, msg)
+        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
 
         return notifications
 
@@ -129,32 +129,32 @@ class ShareNotificationService:
         stewards.append(dataset.stewards)
         return stewards
 
+    @staticmethod
+    def create_notification_task(session, email_id, dataset, share, subject, msg):
+        share_notification_config = config.get_property('core.share_notifications')
+        requester_group_name = share.groupUri
+        dataset_owner_group = dataset.SamlAdminGroupName
+        dataset_stewards_group = dataset.stewards
 
-def create_notification_task(session, email_id, dataset, share, subject, msg):
-    share_notification_config = config.get_property('core.share_notifications')
-    requesterGroupName = share.groupUri
-    datasetOwnerGroup = dataset.SamlAdminGroupName
-    datasetStewardsGroup = dataset.stewards
+        for share_notification_config_type in share_notification_config.keys():
+            if share_notification_config_type == 'email' and share_notification_config[share_notification_config_type]['active'] == True:
 
-    for share_notification_config_type in share_notification_config.keys():
-        if share_notification_config_type == 'email' and share_notification_config[share_notification_config_type]['active'] == True:
+                notification_task: Task = Task(
+                    action='notification.service',
+                    targetUri=share.shareUri,
+                    payload={
+                        'notificationType' : share_notification_config_type,
+                        'shareRequestUserEmail': email_id,
+                        'subject': subject,
+                        'message': msg,
+                        'requesterGroupName': requester_group_name,
+                        'datasetOwnerGroup': dataset_owner_group,
+                        'datasetStewardsGroup': dataset_stewards_group
+                    },
+                )
+                session.add(notification_task)
+                session.commit()
 
-            notification_task: Task = Task(
-                action='notification.service',
-                targetUri=share.shareUri,
-                payload={
-                    'notificationType' : share_notification_config_type,
-                    'shareRequestUserEmail': email_id,
-                    'subject': subject,
-                    'message': msg,
-                    'requesterGroupName': requesterGroupName,
-                    'datasetOwnerGroup': datasetOwnerGroup,
-                    'datasetStewardsGroup': datasetStewardsGroup
-                },
-            )
-            session.add(notification_task)
-            session.commit()
-
-            Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
-        else:
-            log.info(f'Notification type : {share_notification_config_type} is not active')
+                Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
+            else:
+                log.info(f'Notification type : {share_notification_config_type} is not active')
