@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
 import PropTypes from 'prop-types';
 // import {
 //   from,
@@ -11,6 +17,9 @@ import PropTypes from 'prop-types';
 import { useClient } from 'services';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
+import { useNavigate } from 'react-router';
+import { useSnackbar } from 'notistack';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 // import { useClient } from 'services';
 
 // Create a context for API request headers
@@ -59,6 +68,9 @@ export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
   // const token = useToken();
+  const navigate = useNavigate();
+  const enqueueSnackbar = useSnackbar();
+  const { dispatch } = useDispatch();
   const client = useClient();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -71,56 +83,81 @@ export const RequestContextProvider = (props) => {
   };
 
   useEffect(() => {
-    const restoredRequestInfo = restoreRetryRequest();
-    if (restoredRequestInfo && restoredRequestInfo.timestamp) {
-      const currentTime = new Date();
-      const reauthTime = new Date(
-        restoredRequestInfo.timestamp.replace(/\s/g, '')
-      );
-      console.error(currentTime);
-      console.error(reauthTime);
-      if (currentTime - reauthTime <= 5 * 60 * 1000) {
-        // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
-        console.error('RETRY');
-        console.error(restoredRequestInfo);
-        retryRequest(restoredRequestInfo);
-        // setRequestInfo(restoredRequestInfo);
+    if (client) {
+      const restoredRequestInfo = restoreRetryRequest();
+      // If request info is restored from previous user session
+      if (restoredRequestInfo && restoredRequestInfo.timestamp) {
+        const currentTime = new Date();
+        const reauthTime = new Date(
+          restoredRequestInfo.timestamp.replace(/\s/g, '')
+        );
+        console.error(currentTime);
+        console.error(reauthTime);
+        // If the time is within the TTL, Retry the Request
+        // and navigate to the previous page
+        if (currentTime - reauthTime <= 5 * 60 * 1000) {
+          console.error('RETRY');
+          console.error(restoredRequestInfo);
+          retryRequest(restoredRequestInfo).catch((e) =>
+            dispatch({ type: SET_ERROR, error: e.message })
+          );
+          // setRequestInfo(restoredRequestInfo);
+        }
       }
     }
-  }, []);
+  }, [client, requestInfo]);
 
-  const retryRequest = async (restoredInfo) => {
-    const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
-    await client.query({
-      query: gqlTemplateLiteral,
-      variables: restoredInfo.operation.variables
-    });
-    // const httpLink = new HttpLink({
-    //   uri: process.env.REACT_APP_GRAPHQL_API
-    // });
-    // await client.query(restoredInfo);
-    // const authLink = new ApolloLink((operation, forward) => {
-    //   operation.setContext({
-    //     headers: {
-    //       AccessControlAllowOrigin: '*',
-    //       AccessControlAllowHeaders: '*',
-    //       'access-control-allow-origin': '*',
-    //       Authorization: token ? `${token}` : '',
-    //       AccessKeyId: 'none',
-    //       SecretKey: 'none'
-    //     }
-    //   });
-    //   return forward(operation);
-    // });
-    // const apolloClient = new ApolloClient({
-    //   link: from([authLink, httpLink]),
-    //   cache: new InMemoryCache(),
-    //   defaultOptions
-    // });
+  const retryRequest = useCallback(
+    async (restoredInfo) => {
+      const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
+      const response = client.query({
+        query: gqlTemplateLiteral,
+        variables: restoredInfo.operation.variables
+      });
+      if (!response.errors) {
+        enqueueSnackbar(
+          `Operation Retried Successful: ${restoredInfo.operation.operationName}`,
+          {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          }
+        );
+        navigate(restoredInfo.pathname);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      clearRequestInfo();
 
-    // await apolloClient.query(restoredInfo);
-    clearRequestInfo();
-  };
+      // const httpLink = new HttpLink({
+      //   uri: process.env.REACT_APP_GRAPHQL_API
+      // });
+      // await client.query(restoredInfo);
+      // const authLink = new ApolloLink((operation, forward) => {
+      //   operation.setContext({
+      //     headers: {
+      //       AccessControlAllowOrigin: '*',
+      //       AccessControlAllowHeaders: '*',
+      //       'access-control-allow-origin': '*',
+      //       Authorization: token ? `${token}` : '',
+      //       AccessKeyId: 'none',
+      //       SecretKey: 'none'
+      //     }
+      //   });
+      //   return forward(operation);
+      // });
+      // const apolloClient = new ApolloClient({
+      //   link: from([authLink, httpLink]),
+      //   cache: new InMemoryCache(),
+      //   defaultOptions
+      // });
+
+      // await apolloClient.query(restoredInfo);
+    },
+    [client, dispatch]
+  );
 
   return (
     <RequestContext.Provider

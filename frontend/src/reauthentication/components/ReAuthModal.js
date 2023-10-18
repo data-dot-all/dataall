@@ -1,13 +1,16 @@
 import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
 import { useAuth } from 'authentication';
 import { useRequestContext } from 'reauthentication';
+import { useLocation } from 'react-router-dom';
 import React, { useEffect } from 'react';
 
 export const ReAuthModal = () => {
   const { reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
-  const { storeRequestInfo } = useRequestContext();
+  const { storeRequestInfo, clearRequestInfo } = useRequestContext();
+  const location = useLocation();
 
   const continueSession = async () => {
+    clearRequestInfo();
     dispatch({
       type: 'REAUTH',
       payload: {
@@ -17,14 +20,11 @@ export const ReAuthModal = () => {
     });
   };
 
-  // const reauthenticate = async () => {
-  //   await storeRequestInfo();
-  //   reauth();
-  // };
-
   useEffect(() => {
     if (reAuthStatus && requestInfo) {
-      storeRequestInfo(requestInfo);
+      const timestamp = new Date();
+      const pathname = location.pathname;
+      storeRequestInfo({ requestInfo, timestamp, pathname });
     }
   }, [reAuthStatus, requestInfo]);
 
