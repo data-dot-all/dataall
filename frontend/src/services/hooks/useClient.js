@@ -31,11 +31,12 @@ export const useClient = () => {
   const token = useToken();
   const auth = useAuth();
 
-  const setReAuth = async () => {
+  const setReAuth = async (requestInfo) => {
     auth.dispatch({
       type: 'REAUTH',
       payload: {
-        reAuthStatus: true
+        reAuthStatus: true,
+        requestInfo: requestInfo
       }
     });
   };
@@ -70,7 +71,8 @@ export const useClient = () => {
                   `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
                 );
                 if (extensions?.code === 'REAUTH') {
-                  setReAuth();
+                  console.error(operation);
+                  setReAuth(operation);
                 }
               }
             );

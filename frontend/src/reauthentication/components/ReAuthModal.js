@@ -1,16 +1,32 @@
 import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
 import { useAuth } from 'authentication';
+import { useRequestContext } from 'reauthentication';
+import { useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
 
 export const ReAuthModal = () => {
-  const { reAuthStatus, reauth, dispatch } = useAuth();
+  const { reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
+  const { storeRequestInfo, clearRequestInfo } = useRequestContext();
+  const location = useLocation();
+
   const continueSession = async () => {
+    clearRequestInfo();
     dispatch({
       type: 'REAUTH',
       payload: {
-        reAuthStatus: false
+        reAuthStatus: false,
+        requestInfo: null
       }
     });
   };
+
+  useEffect(() => {
+    if (reAuthStatus && requestInfo) {
+      const timestamp = new Date();
+      const pathname = location.pathname;
+      storeRequestInfo({ requestInfo, timestamp, pathname });
+    }
+  }, [reAuthStatus, requestInfo]);
 
   return (
     <Dialog maxWidth="md" fullWidth open={reAuthStatus}>
