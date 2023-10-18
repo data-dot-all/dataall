@@ -27,6 +27,14 @@
     "core": {
         "features": {
             "env_aws_actions": true
+        },
+        "share_notifications": {
+            "email": {
+                "active": true,
+                "features": {
+                    "group_notifications": true
+                }
+            }
         }
     }
 }

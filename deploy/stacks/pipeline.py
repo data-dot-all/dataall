@@ -636,6 +636,7 @@ class PipelineStack(Stack):
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
                 cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
+                email_notification_sender_email_id=target_env.get('email_sender_id', 'none'),
             )
         )
         return backend_stage

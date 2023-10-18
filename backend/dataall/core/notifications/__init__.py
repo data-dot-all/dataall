@@ -1,1 +1,1 @@
-from dataall.core.notifications import api
+from dataall.core.notifications import api, handlers

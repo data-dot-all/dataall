@@ -19,6 +19,7 @@ from .opensearch_serverless import OpenSearchServerlessStack
 from .param_store_stack import ParamStoreStack
 from .s3_resources import S3ResourcesStack
 from .secrets_stack import SecretsManagerStack
+from .ses_stack import SesStack
 from .sqs import SqsStack
 from .vpc import VpcStack
 
@@ -51,6 +52,7 @@ class BackendStack(Stack):
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
         cognito_user_session_timeout_inmins=43200,
+        email_notification_sender_email_id=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -127,6 +129,18 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        # Create the SES Stack
+        ses_stack = None
+        if custom_domain != None:
+            ses_stack = SesStack(
+                self,
+                'SesStack',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                custom_domain=custom_domain,
+                **kwargs,
+            )
+
         repo = ecr.Repository.from_repository_arn(
             self, 'ECRREPO', repository_arn=ecr_repository
         )
@@ -147,6 +161,9 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
+            email_notification_sender_email_id=email_notification_sender_email_id,
+            email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
+            ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
             **kwargs,
         )
 

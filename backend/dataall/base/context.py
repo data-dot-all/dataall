@@ -22,6 +22,7 @@ class RequestContext:
     """Contains API for every graphql request"""
     db_engine: Engine
     username: str
+    email_id: str
     groups: List[str]
 
 
