@@ -133,10 +133,7 @@ class BackendStack(Stack):
         )
 
         # Create the SES Stack
-        ses_stack = None
-        if custom_domain == None and email_notification_sender_email_id == None and deploy_config.get_property("core.share_notifications.email.active") == True :
-            raise Exception("Cannot Create SES Stack For email notification as Custom Domain and Sender Email Id are not present. Either Disable Email Notification Config or add Custom Domain")
-        ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix)
+        ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix, email_notification_sender_email_id)
 
         repo = ecr.Repository.from_repository_arn(
             self, 'ECRREPO', repository_arn=ecr_repository
@@ -365,7 +362,10 @@ class BackendStack(Stack):
             )
 
     @run_if(["core.share_notifications.email.active"])
-    def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
+    def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix, email_notification_sender_email_id):
+        if custom_domain == None and email_notification_sender_email_id == None and deploy_config.get_property("core.share_notifications.email.active") == True:
+            raise Exception("Cannot Create SES Stack For email notification as Custom Domain and Sender Email Id are not present. Either Disable Email Notification Config or add Custom Domain")
+
         return SesStack(
             self,
             'SesStack',

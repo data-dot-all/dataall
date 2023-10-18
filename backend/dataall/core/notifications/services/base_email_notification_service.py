@@ -1,7 +1,7 @@
 import abc
 
 
-class EmailNotificationService:
+class BaseEmailNotificationService:
 
     @abc.abstractmethod
     def send_email(self, to, message, subject):

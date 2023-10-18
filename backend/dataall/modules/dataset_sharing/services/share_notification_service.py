@@ -7,7 +7,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.context import get_context
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareObjectActions
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus
 
 log = logging.getLogger(__name__)
 
@@ -132,9 +132,14 @@ class ShareNotificationService:
     @staticmethod
     def create_notification_task(session, email_id, dataset, share, subject, msg):
         share_notification_config = config.get_property('core.share_notifications')
-        requester_group_name = share.groupUri
-        dataset_owner_group = dataset.SamlAdminGroupName
-        dataset_stewards_group = dataset.stewards
+
+        notification_recipient_groups_list = [dataset.SamlAdminGroupName, dataset.stewards]
+        notification_recipient_email_ids = []
+
+        if share_notification_config['email']['features']['group_notifications'] == True:
+            notification_recipient_groups_list.append(share.groupUri)
+        else:
+            notification_recipient_email_ids = [email_id]
 
         for share_notification_config_type in share_notification_config.keys():
             if share_notification_config_type == 'email' and share_notification_config[share_notification_config_type]['active'] == True:
@@ -144,12 +149,10 @@ class ShareNotificationService:
                     targetUri=share.shareUri,
                     payload={
                         'notificationType' : share_notification_config_type,
-                        'shareRequestUserEmail': email_id,
                         'subject': subject,
                         'message': msg,
-                        'requesterGroupName': requester_group_name,
-                        'datasetOwnerGroup': dataset_owner_group,
-                        'datasetStewardsGroup': dataset_stewards_group
+                        'recipientGroupsList' : notification_recipient_groups_list,
+                        'recipientEmailList' : notification_recipient_email_ids
                     },
                 )
                 session.add(notification_task)

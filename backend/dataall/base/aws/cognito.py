@@ -2,7 +2,7 @@ import os
 import logging
 import boto3
 
-from dataall.base.services.IdentityProvider import IdentityProvider
+from dataall.base.utils.IdentityProvider import IdentityProvider
 
 log = logging.getLogger(__name__)
 
