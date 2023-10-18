@@ -28,8 +28,7 @@
     },
     "core": {
         "features": {
-            "env_aws_actions": true,
-            "env_feature_management": true
+            "env_aws_actions": true
         }
     }
 }

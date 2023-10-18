@@ -33,6 +33,18 @@ function isModuleEnabled(module) {
   return getModuleActiveStatus(module);
 }
 
+function isAnyFeatureModuleEnabled(modules) {
+  if (
+    isModuleEnabled(ModuleNames.PIPELINES) ||
+    isModuleEnabled(ModuleNames.DASHBOARDS) ||
+    isModuleEnabled(ModuleNames.MLSTUDIO) ||
+    isModuleEnabled(ModuleNames.NOTEBOOKS)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function getModuleActiveStatus(moduleKey) {
   if (
     config.modules &&
@@ -61,4 +73,9 @@ function isFeatureEnabled(moduleKey, featureKey) {
   return false;
 }
 
-export { ModuleNames, isModuleEnabled, isFeatureEnabled };
+export {
+  ModuleNames,
+  isModuleEnabled,
+  isAnyFeatureModuleEnabled,
+  isFeatureEnabled
+};
