@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-  from,
-  ApolloClient,
-  ApolloLink,
-  InMemoryCache,
-  HttpLink
-} from '@apollo/client';
-import { useToken } from 'authentication';
-
+// import {
+//   from,
+//   ApolloClient,
+//   ApolloLink,
+//   InMemoryCache,
+//   HttpLink
+// } from '@apollo/client';
+// import { useToken } from 'authentication';
+import { useClient } from 'services';
 // import { useClient } from 'services';
 
 // Create a context for API request headers
@@ -19,23 +19,24 @@ export const useRequestContext = () => {
   return useContext(RequestContext);
 };
 
-const defaultOptions = {
-  watchQuery: {
-    fetchPolicy: 'no-cache',
-    errorPolicy: 'ignore'
-  },
-  query: {
-    fetchPolicy: 'no-cache',
-    errorPolicy: 'all'
-  },
-  mutate: {
-    fetchPolicy: 'no-cache',
-    errorPolicy: 'all'
-  }
-};
+// const defaultOptions = {
+//   watchQuery: {
+//     fetchPolicy: 'no-cache',
+//     errorPolicy: 'ignore'
+//   },
+//   query: {
+//     fetchPolicy: 'no-cache',
+//     errorPolicy: 'all'
+//   },
+//   mutate: {
+//     fetchPolicy: 'no-cache',
+//     errorPolicy: 'all'
+//   }
+// };
 const REQUEST_INFO_KEY = 'requestInfo';
 
 export const storeRequestInfoStorage = (requestInfo) => {
+  console.error(requestInfo);
   window.localStorage.setItem(REQUEST_INFO_KEY, JSON.stringify(requestInfo));
 };
 
@@ -55,7 +56,8 @@ export const restoreRetryRequest = () => {
 export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
-  const token = useToken();
+  // const token = useToken();
+  const client = useClient();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
     storeRequestInfoStorage(info);
@@ -68,42 +70,45 @@ export const RequestContextProvider = (props) => {
 
   useEffect(() => {
     const restoredRequestInfo = restoreRetryRequest();
-
-    if (restoredRequestInfo) {
+    const currentTime = new Date();
+    const reauthTime = new Date(restoredRequestInfo.timestamp);
+    console.error(currentTime);
+    console.error(reauthTime);
+    if (restoredRequestInfo && currentTime - reauthTime <= 5 * 60 * 1000) {
       // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
       console.error('RETRY');
       console.error(restoredRequestInfo);
-      retryRequest(token, restoredRequestInfo);
+      retryRequest(restoredRequestInfo);
       // setRequestInfo(restoredRequestInfo);
     }
-  }, [token]);
+  }, []);
 
-  const retryRequest = async (token, restoredInfo) => {
+  const retryRequest = async (restoredInfo) => {
     // const client = useClient();
-    const httpLink = new HttpLink({
-      uri: process.env.REACT_APP_GRAPHQL_API
-    });
+    // const httpLink = new HttpLink({
+    //   uri: process.env.REACT_APP_GRAPHQL_API
+    // });
+    await client.query(restoredInfo);
+    // const authLink = new ApolloLink((operation, forward) => {
+    //   operation.setContext({
+    //     headers: {
+    //       AccessControlAllowOrigin: '*',
+    //       AccessControlAllowHeaders: '*',
+    //       'access-control-allow-origin': '*',
+    //       Authorization: token ? `${token}` : '',
+    //       AccessKeyId: 'none',
+    //       SecretKey: 'none'
+    //     }
+    //   });
+    //   return forward(operation);
+    // });
+    // const apolloClient = new ApolloClient({
+    //   link: from([authLink, httpLink]),
+    //   cache: new InMemoryCache(),
+    //   defaultOptions
+    // });
 
-    const authLink = new ApolloLink((operation, forward) => {
-      operation.setContext({
-        headers: {
-          AccessControlAllowOrigin: '*',
-          AccessControlAllowHeaders: '*',
-          'access-control-allow-origin': '*',
-          Authorization: token ? `${token}` : '',
-          AccessKeyId: 'none',
-          SecretKey: 'none'
-        }
-      });
-      return forward(operation);
-    });
-    const apolloClient = new ApolloClient({
-      link: from([authLink, httpLink]),
-      cache: new InMemoryCache(),
-      defaultOptions
-    });
-
-    await apolloClient.query(restoredInfo);
+    // await apolloClient.query(restoredInfo);
     clearRequestInfo();
   };
 
