@@ -33,16 +33,13 @@ function isModuleEnabled(module) {
   return getModuleActiveStatus(module);
 }
 
-function isAnyFeatureModuleEnabled(modules) {
-  if (
+function isAnyFeatureModuleEnabled() {
+  return !!(
     isModuleEnabled(ModuleNames.PIPELINES) ||
     isModuleEnabled(ModuleNames.DASHBOARDS) ||
     isModuleEnabled(ModuleNames.MLSTUDIO) ||
     isModuleEnabled(ModuleNames.NOTEBOOKS)
-  ) {
-    return true;
-  }
-  return false;
+  );
 }
 
 function getModuleActiveStatus(moduleKey) {
