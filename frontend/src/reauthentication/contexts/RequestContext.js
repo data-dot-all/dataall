@@ -12,7 +12,7 @@ import { useClient } from 'services';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
-import { useSnackbar } from 'notistack';
+// import { useSnackbar } from 'notistack';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 // import { useClient } from 'services';
 
@@ -63,7 +63,7 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   // const token = useToken();
   const navigate = useNavigate();
-  const enqueueSnackbar = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
   const { dispatch } = useDispatch();
   const client = useClient();
   const storeRequestInfo = (info) => {
@@ -103,25 +103,26 @@ export const RequestContextProvider = (props) => {
   }, [client]);
 
   const retryRequest = async (restoredInfo) => {
-    const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
+    const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
     const response = client.query({
       query: gqlTemplateLiteral,
-      variables: restoredInfo.operation.variables
+      variables: restoredInfo.requestInfo.variables
     });
     if (!response.errors) {
-      enqueueSnackbar(
-        `Operation Retried Successful: ${restoredInfo.operation.operationName}`,
-        {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        }
-      );
+      // enqueueSnackbar(
+      //   `Operation Retried Successful: ${restoredInfo.operation.operationName}`, {
+      //   anchorOrigin: {
+      //     horizontal: 'right',
+      //     vertical: 'top'
+      //   },
+      //   variant: 'success'
+      // });
       navigate(restoredInfo.pathname);
     } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      dispatch({
+        type: SET_ERROR,
+        error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
+      });
     }
 
     // const httpLink = new HttpLink({
