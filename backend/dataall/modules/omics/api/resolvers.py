@@ -42,11 +42,6 @@ def create_omics_run(context: Context, source, input=None):
     )
 
 
-# def update_omics_pipeline(context: Context, source, OmicsPipelineUri: str, input: dict = None):
-#     RequestValidator.required_uri(OmicsPipelineUri)
-#     return OmicsPipelineService.update_omics_pipeline(OmicsPipelineUri, input)
-
-
 def list_omics_runs(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
@@ -56,27 +51,13 @@ def list_omics_runs(context: Context, source, filter: dict = None):
 def list_omics_workflows(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}    
     return OmicsService.list_omics_workflows(filter)
 
-# TODO: clean-up
-# this is now the task in omics.tasks.omics_workflows_fetcher
-# def load_omics_workflows(context: Context, source, filter: dict = None):
-#     if not filter:
-#         filter = {}
-#     # retVal = {'nodes': OmicsService.list_omics_workflows(filter)}
-#     OmicsService.load_omics_workflows(filter)
-#     return OmicsService.list_omics_workflows(filter)
 
 def get_omics_workflow(context: Context, source, workflowId: str = None):
     print('**** WorkflowId: ', workflowId)
     RequestValidator.required_uri(workflowId)
     return OmicsService.get_omics_workflow(workflowId)
-
-def get_workflow_run(context: Context, source, runId: str = None):
-    print('**** WorkflowId: ', runId)
-    RequestValidator.required_uri(runId)
-    return OmicsService.get_workflow_run(runId)
 
 def run_omics_workflow(context: Context, source, workflowId: str = None, workflowType: str = 'READY2RUN', roleArn: str = None, parameters: str = None):
     print('**** WorkflowId: ', workflowId)
@@ -90,19 +71,11 @@ def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS
         delete_from_aws=deleteFromAWS
     )
 
-
-def resolve_user_role(context: Context, source: OmicsRun):
-    if context.username and source.owner == context.username:
-        return OmicsRunRole.Creator.value
-    elif context.groups and source.SamlGroupName in context.groups:
-        return OmicsRunRole.Admin.value
-    return OmicsRunRole.NoPermission.value
+def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
+    return OmicsService.get_omics_workflow(source.workflowId)
 
 
-def resolve_omics_run_stack(context, source: OmicsRun, **kwargs):
-    return stack_helper.get_stack_with_cfn_resources(
-        targetUri=source.runUri,
-        environmentUri=source.environmentUri,
-    )
+def resolve_omics_run_details(context, source: OmicsRun, **kwargs):
+    return OmicsService.get_omics_run_from_aws(source.runUri)
 
 

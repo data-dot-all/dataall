@@ -74,11 +74,13 @@ export const OmicsRunList = () => {
                     <TableCell>Run identifier</TableCell>
                     <TableCell>Run name</TableCell>
                     <TableCell>Workflow id</TableCell>
+                    <TableCell>Workflow name</TableCell>
                     <TableCell>Created</TableCell>
                     <TableCell>Owner</TableCell>
                     <TableCell>Team</TableCell>
                     <TableCell>Environment</TableCell>
                     <TableCell>Output S3</TableCell>
+                    <TableCell>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <Divider />
@@ -91,12 +93,14 @@ export const OmicsRunList = () => {
                         <TableRow hover>
                           <TableCell>{item.runUri}</TableCell>
                           <TableCell>{item.label}</TableCell>
-                          <TableCell>{item.workflowId}</TableCell>
+                          <TableCell>{item.workflow.id}</TableCell>
+                          <TableCell>{item.workflow.name}</TableCell>
                           <TableCell>{item.created}</TableCell>
                           <TableCell>{item.owner}</TableCell>
                           <TableCell>{item.SamlAdminGroupName}</TableCell>
                           <TableCell>{item.environment.label}</TableCell>
                           <TableCell>{item.outputUri}</TableCell>
+                          <TableCell>{item.status.status}</TableCell>
                         </TableRow>
                       ))
                     ) : (

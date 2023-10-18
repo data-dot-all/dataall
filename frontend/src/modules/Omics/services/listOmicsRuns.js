@@ -36,6 +36,25 @@ export const listOmicsRuns = (filter) => ({
             name
             organizationUri
           }
+          workflow {
+            id
+            name
+            description
+            parameterTemplate
+            status
+            type
+          }
+          status {
+            arn
+            id
+            status
+            runId
+            roleArn
+            statusMessage
+            creationTime
+            startTime
+            stopTime
+          }
         }
       }
     }

@@ -28,7 +28,7 @@ export const OmicsWorkflowsListItem = (props) => {
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
-              alignItems: 'center',
+              alignItems: 'left',
               display: 'flex'
             }}
           >

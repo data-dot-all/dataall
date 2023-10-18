@@ -41,13 +41,16 @@ class OmicsClient:
             return 'ERROR LISTING WORKFLOWS'
 
     @staticmethod
-    def get_workflow_run(id: str, session):
-        workflow = OmicsRepository(session).get_workflow(id=id)
+    def get_omics_run(session, runUri: str):
+        omics_db = OmicsRepository(session)
+        omics_run = omics_db.get_omics_run(runUri=runUri)
+        workflow = omics_db.get_workflow(id=omics_run.workflowId)
         environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=workflow.environmentUri)
         client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
         try:
-            response = client.get_run(id=id
+            response = client.get_run(id=omics_run.runUri
             )
+            print(response)
             return response
         except ClientError as e:
             logger.error(

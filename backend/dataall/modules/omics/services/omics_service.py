@@ -95,43 +95,42 @@ class OmicsService:
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
-            # workflow = OmicsRepository(session).get_workflow(id=data['workflowId'])
+
             response = OmicsClient.run_omics_workflow(omics_run, session)
             print(response)
+            if response:
+                omics_run.runUri = response['id']
+                OmicsRepository(session).save_omics_run(omics_run)
+                # ResourcePolicy.attach_resource_policy(
+                #     session=session,
+                #     group=request.SamlAdminGroupName,
+                #     permissions=OMICS_RUN_ALL,
+                #     resource_uri=omics_run.runUri,
+                #     resource_type=OmicsRun.__name__,
+                # )
 
-            ## TODO: add omics client boto3 API calls
-
-
-            # ResourcePolicy.attach_resource_policy(
-            #     session=session,
-            #     group=request.SamlAdminGroupName,
-            #     permissions=OMICS_RUN_ALL,
-            #     resource_uri=omics_run.runUri,
-            #     resource_type=OmicsRun.__name__,
-            # )
-
-            # if environment.SamlGroupName != admin_group:
-            #     ResourcePolicy.attach_resource_policy(
-            #         session=session,
-            #         group=environment.SamlGroupName,
-            #         permissions=OMICS_RUN_ALL,
-            #         resource_uri=omics_run.runUri,
-            #         resource_type=OmicsRun.__name__,
-            #     )
-        return omics_run
-
-    @staticmethod
-    def _get_omics_run(session, uri):
-        omics_run = OmicsRepository(session).find_omics_run(uri)
-        if not omics_run:
-            raise exceptions.ObjectNotFound("OmicsRun", uri)
-        return omics_run
+                # if environment.SamlGroupName != admin_group:
+                #     ResourcePolicy.attach_resource_policy(
+                #         session=session,
+                #         group=environment.SamlGroupName,
+                #         permissions=OMICS_RUN_ALL,
+                #         resource_uri=omics_run.runUri,
+                #         resource_type=OmicsRun.__name__,
+                #     )
+                return True
+            OmicsRepository(session).delete_omics_run(omics_run)
+            return False
 
     @staticmethod
-    @has_resource_permission(GET_OMICS_RUN)
+    #@has_resource_permission(GET_OMICS_RUN)
     def get_omics_run(*, uri: str):
         with _session() as session:
-            return OmicsService._get_omics_run(session, uri)
+            return OmicsRepository.get_omics_run(session, uri)
+
+    @staticmethod
+    def get_omics_run_from_aws(uri: str):
+        with _session() as session:
+            return OmicsClient.get_omics_run(session, uri)
 
     @staticmethod
     def get_omics_workflow(workflowId: str) -> dict:
@@ -140,13 +139,6 @@ class OmicsService:
             response = OmicsClient.get_omics_workflow(id=workflowId, session=session)
             parameterTemplateJson = json.dumps(response['parameterTemplate'])
             response['parameterTemplate'] = parameterTemplateJson
-        return response
-    
-    @staticmethod
-    def get_workflow_run(runId: str) -> dict:
-        """List Omics workflows."""
-        with _session() as session:
-            response = OmicsClient.get_workflow_run(id=runId, session=session)
         return response
 
     @staticmethod
@@ -174,9 +166,8 @@ class OmicsService:
                 filter=filter
             )
 
-
     @staticmethod
-    @has_resource_permission(DELETE_OMICS_RUN)
+    #@has_resource_permission(DELETE_OMICS_RUN)
     def delete_omics_run(*, uri: str):
         ##T TODO: IMPLEMENT IN omics_repository
         """Deletes Omics project from the database and if delete_from_aws is True from AWS as well"""
