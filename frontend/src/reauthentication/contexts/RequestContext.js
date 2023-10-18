@@ -9,6 +9,8 @@ import PropTypes from 'prop-types';
 // } from '@apollo/client';
 // import { useToken } from 'authentication';
 import { useClient } from 'services';
+import { gql } from '@apollo/client';
+import { print } from 'graphql/language';
 // import { useClient } from 'services';
 
 // Create a context for API request headers
@@ -70,7 +72,7 @@ export const RequestContextProvider = (props) => {
 
   useEffect(() => {
     const restoredRequestInfo = restoreRetryRequest();
-    if (restoredRequestInfo) {
+    if (restoredRequestInfo && restoredRequestInfo.timestamp) {
       const currentTime = new Date();
       const reauthTime = new Date(
         restoredRequestInfo.timestamp.replace(/\s/g, '')
@@ -88,11 +90,15 @@ export const RequestContextProvider = (props) => {
   }, []);
 
   const retryRequest = async (restoredInfo) => {
-    // const client = useClient();
+    const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
+    await client.query({
+      query: gqlTemplateLiteral,
+      variables: restoredInfo.operation.variables
+    });
     // const httpLink = new HttpLink({
     //   uri: process.env.REACT_APP_GRAPHQL_API
     // });
-    await client.query(restoredInfo);
+    // await client.query(restoredInfo);
     // const authLink = new ApolloLink((operation, forward) => {
     //   operation.setContext({
     //     headers: {
