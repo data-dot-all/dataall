@@ -1,20 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-// import {
-//   from,
-//   ApolloClient,
-//   ApolloLink,
-//   InMemoryCache,
-//   HttpLink
-// } from '@apollo/client';
-// import { useToken } from 'authentication';
 import { useClient } from 'services';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
-// import { useSnackbar } from 'notistack';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-// import { useClient } from 'services';
 
 // Create a context for API request headers
 const RequestContext = createContext();
@@ -24,20 +14,6 @@ export const useRequestContext = () => {
   return useContext(RequestContext);
 };
 
-// const defaultOptions = {
-//   watchQuery: {
-//     fetchPolicy: 'no-cache',
-//     errorPolicy: 'ignore'
-//   },
-//   query: {
-//     fetchPolicy: 'no-cache',
-//     errorPolicy: 'all'
-//   },
-//   mutate: {
-//     fetchPolicy: 'no-cache',
-//     errorPolicy: 'all'
-//   }
-// };
 const REQUEST_INFO_KEY = 'requestInfo';
 
 export const storeRequestInfoStorage = (requestInfo) => {
@@ -61,9 +37,7 @@ export const restoreRetryRequest = () => {
 export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
-  // const token = useToken();
   const navigate = useNavigate();
-  // const { enqueueSnackbar } = useSnackbar();
   const { dispatch } = useDispatch();
   const client = useClient();
   const storeRequestInfo = (info) => {
@@ -95,7 +69,6 @@ export const RequestContextProvider = (props) => {
           retryRequest(restoredRequestInfo).catch((e) =>
             dispatch({ type: SET_ERROR, error: e.message })
           );
-          // setRequestInfo(restoredRequestInfo);
         }
         // clearRequestInfo();
       }
@@ -109,14 +82,6 @@ export const RequestContextProvider = (props) => {
       variables: restoredInfo.requestInfo.variables
     });
     if (!response.errors) {
-      // enqueueSnackbar(
-      //   `Operation Retried Successful: ${restoredInfo.operation.operationName}`, {
-      //   anchorOrigin: {
-      //     horizontal: 'right',
-      //     vertical: 'top'
-      //   },
-      //   variant: 'success'
-      // });
       navigate(restoredInfo.pathname);
     } else {
       dispatch({
@@ -124,31 +89,6 @@ export const RequestContextProvider = (props) => {
         error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
       });
     }
-
-    // const httpLink = new HttpLink({
-    //   uri: process.env.REACT_APP_GRAPHQL_API
-    // });
-    // await client.query(restoredInfo);
-    // const authLink = new ApolloLink((operation, forward) => {
-    //   operation.setContext({
-    //     headers: {
-    //       AccessControlAllowOrigin: '*',
-    //       AccessControlAllowHeaders: '*',
-    //       'access-control-allow-origin': '*',
-    //       Authorization: token ? `${token}` : '',
-    //       AccessKeyId: 'none',
-    //       SecretKey: 'none'
-    //     }
-    //   });
-    //   return forward(operation);
-    // });
-    // const apolloClient = new ApolloClient({
-    //   link: from([authLink, httpLink]),
-    //   cache: new InMemoryCache(),
-    //   defaultOptions
-    // });
-
-    // await apolloClient.query(restoredInfo);
   };
 
   return (

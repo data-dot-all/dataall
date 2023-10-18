@@ -8,7 +8,6 @@ import {
 } from 'apollo-boost';
 import { useEffect, useState } from 'react';
 import { useToken, useAuth } from 'authentication';
-// import { useRequestContext } from 'reauthentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 const defaultOptions = {
@@ -31,7 +30,6 @@ export const useClient = () => {
   const [client, setClient] = useState(null);
   const token = useToken();
   const auth = useAuth();
-  // const { storeRequestInfo } = useRequestContext();
 
   const setReAuth = async (requestInfo) => {
     auth.dispatch({
