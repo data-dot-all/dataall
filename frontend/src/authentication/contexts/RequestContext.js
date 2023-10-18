@@ -72,12 +72,13 @@ export const RequestContextProvider = (props) => {
     if (restoredRequestInfo) {
       // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
       console.error('RETRY');
-      retryRequest(token);
+      console.error(restoredRequestInfo);
+      retryRequest(token, restoredRequestInfo);
       // setRequestInfo(restoredRequestInfo);
     }
-  }, []);
+  }, [token]);
 
-  const retryRequest = async (token) => {
+  const retryRequest = async (token, restoredInfo) => {
     // const client = useClient();
     const httpLink = new HttpLink({
       uri: process.env.REACT_APP_GRAPHQL_API
@@ -102,7 +103,7 @@ export const RequestContextProvider = (props) => {
       defaultOptions
     });
 
-    await apolloClient.query(requestInfo);
+    await apolloClient.query(restoredInfo);
     clearRequestInfo();
   };
 
