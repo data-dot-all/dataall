@@ -70,7 +70,7 @@ export const RequestContextProvider = (props) => {
             dispatch({ type: SET_ERROR, error: e.message })
           );
         }
-        // clearRequestInfo();
+        clearRequestInfo();
       }
     }
   }, [client]);
