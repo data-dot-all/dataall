@@ -3,16 +3,20 @@ import { useAuth, useRequestContext } from 'authentication';
 
 export const ReAuthModal = () => {
   const { reAuthStatus, reauth, dispatch } = useAuth();
-  const { clearRequestInfo } = useRequestContext();
+  const { storeRequestInfo } = useRequestContext();
 
   const continueSession = async () => {
-    clearRequestInfo();
     dispatch({
       type: 'REAUTH',
       payload: {
         reAuthStatus: false
       }
     });
+  };
+
+  const reauthenticate = async () => {
+    await storeRequestInfo();
+    reauth();
   };
 
   return (
@@ -45,7 +49,7 @@ export const ReAuthModal = () => {
                   size="large"
                   type="submit"
                   variant="contained"
-                  onClick={reauth}
+                  onClick={() => reauthenticate()}
                 >
                   Re-Authenticate
                 </Button>

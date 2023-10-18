@@ -28,7 +28,8 @@ const initialState = {
   isAuthenticated: false,
   isInitialized: false,
   user: null,
-  reAuthStatus: false
+  reAuthStatus: false,
+  requestInfo: null
 };
 
 const handlers = {
@@ -58,11 +59,12 @@ const handlers = {
     user: null
   }),
   REAUTH: (state, action) => {
-    const { reAuthStatus } = action.payload;
+    const { reAuthStatus, requestInfo } = action.payload;
 
     return {
       ...state,
-      reAuthStatus
+      reAuthStatus,
+      requestInfo
     };
   }
 };
@@ -146,7 +148,8 @@ export const CognitoAuthProvider = (props) => {
     dispatch({
       type: 'REAUTH',
       payload: {
-        reAuthStatus: false
+        reAuthStatus: false,
+        requestInfo: null
       }
     }).catch((e) => {
       console.error('Failed to reauth user', e);

@@ -70,16 +70,18 @@ export const RequestContextProvider = (props) => {
 
   useEffect(() => {
     const restoredRequestInfo = restoreRetryRequest();
-    const currentTime = new Date();
-    const reauthTime = new Date(restoredRequestInfo.timestamp);
-    console.error(currentTime);
-    console.error(reauthTime);
-    if (restoredRequestInfo && currentTime - reauthTime <= 5 * 60 * 1000) {
-      // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
-      console.error('RETRY');
-      console.error(restoredRequestInfo);
-      retryRequest(restoredRequestInfo);
-      // setRequestInfo(restoredRequestInfo);
+    if (restoredRequestInfo) {
+      const currentTime = new Date();
+      const reauthTime = new Date(restoredRequestInfo.timestamp);
+      console.error(currentTime);
+      console.error(reauthTime);
+      if (currentTime - reauthTime <= 5 * 60 * 1000) {
+        // TODO: RETRY REQUEST AFTER TIMESTAMP CHECK
+        console.error('RETRY');
+        console.error(restoredRequestInfo);
+        retryRequest(restoredRequestInfo);
+        // setRequestInfo(restoredRequestInfo);
+      }
     }
   }, []);
 
