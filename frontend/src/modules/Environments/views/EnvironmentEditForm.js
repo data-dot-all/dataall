@@ -32,6 +32,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { getEnvironment, updateEnvironment } from '../services';
+import { isFeatureEnabled } from 'utils';
 
 const EnvironmentEditForm = (props) => {
   const dispatch = useDispatch();
@@ -378,139 +379,143 @@ const EnvironmentEditForm = (props) => {
                           </CardContent>
                         </Card>
                       </Box>
-                      <Box sx={{ mt: 3 }}>
-                        <Card>
-                          <CardHeader title="Features management" />
-                          <CardContent>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.dashboardsEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="dashboardsEnabled"
-                                      value={values.dashboardsEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Dashboards{' '}
-                                      <small>
-                                        (Requires Amazon QuickSight Enterprise
-                                        Subscription)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.dashboardsEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.notebooksEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="notebooksEnabled"
-                                      value={values.notebooksEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Box>
+                      {isFeatureEnabled('core', 'env_feature_management') && (
+                        <Box sx={{ mt: 3 }}>
+                          <Card>
+                            <CardHeader title="Features management" />
+                            <CardContent>
+                              <Box sx={{ ml: 2 }}>
+                                <FormGroup>
+                                  <FormControlLabel
+                                    color="primary"
+                                    control={
+                                      <Switch
+                                        defaultChecked={
+                                          values.dashboardsEnabled
+                                        }
+                                        color="primary"
+                                        onChange={handleChange}
+                                        edge="start"
+                                        name="dashboardsEnabled"
+                                        value={values.dashboardsEnabled}
+                                      />
+                                    }
+                                    label={
                                       <Typography
                                         color="textSecondary"
                                         gutterBottom
                                         variant="subtitle2"
                                       >
-                                        Notebooks{' '}
+                                        Dashboards{' '}
                                         <small>
-                                          (Requires Amazon Sagemaker notebook
-                                          instances)
+                                          (Requires Amazon QuickSight Enterprise
+                                          Subscription)
                                         </small>
                                       </Typography>
-                                    </Box>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.notebooksEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.mlStudiosEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="mlStudiosEnabled"
-                                      value={values.mlStudiosEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      ML Studio{' '}
-                                      <small>
-                                        (Requires Amazon Sagemaker Studio)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.mlStudiosEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.pipelinesEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="pipelinesEnabled"
-                                      value={values.pipelinesEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Pipelines{' '}
-                                      <small>(Requires AWS DevTools)</small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.pipelinesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Box>
+                                    }
+                                    labelPlacement="end"
+                                    value={values.dashboardsEnabled}
+                                  />
+                                </FormGroup>
+                              </Box>
+                              <Box sx={{ ml: 2 }}>
+                                <FormGroup>
+                                  <FormControlLabel
+                                    color="primary"
+                                    control={
+                                      <Switch
+                                        defaultChecked={values.notebooksEnabled}
+                                        color="primary"
+                                        onChange={handleChange}
+                                        edge="start"
+                                        name="notebooksEnabled"
+                                        value={values.notebooksEnabled}
+                                      />
+                                    }
+                                    label={
+                                      <Box>
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Notebooks{' '}
+                                          <small>
+                                            (Requires Amazon Sagemaker notebook
+                                            instances)
+                                          </small>
+                                        </Typography>
+                                      </Box>
+                                    }
+                                    labelPlacement="end"
+                                    value={values.notebooksEnabled}
+                                  />
+                                </FormGroup>
+                              </Box>
+                              <Box sx={{ ml: 2 }}>
+                                <FormGroup>
+                                  <FormControlLabel
+                                    color="primary"
+                                    control={
+                                      <Switch
+                                        defaultChecked={values.mlStudiosEnabled}
+                                        color="primary"
+                                        onChange={handleChange}
+                                        edge="start"
+                                        name="mlStudiosEnabled"
+                                        value={values.mlStudiosEnabled}
+                                      />
+                                    }
+                                    label={
+                                      <Typography
+                                        color="textSecondary"
+                                        gutterBottom
+                                        variant="subtitle2"
+                                      >
+                                        ML Studio{' '}
+                                        <small>
+                                          (Requires Amazon Sagemaker Studio)
+                                        </small>
+                                      </Typography>
+                                    }
+                                    labelPlacement="end"
+                                    value={values.mlStudiosEnabled}
+                                  />
+                                </FormGroup>
+                              </Box>
+                              <Box sx={{ ml: 2 }}>
+                                <FormGroup>
+                                  <FormControlLabel
+                                    color="primary"
+                                    control={
+                                      <Switch
+                                        defaultChecked={values.pipelinesEnabled}
+                                        color="primary"
+                                        onChange={handleChange}
+                                        edge="start"
+                                        name="pipelinesEnabled"
+                                        value={values.pipelinesEnabled}
+                                      />
+                                    }
+                                    label={
+                                      <Typography
+                                        color="textSecondary"
+                                        gutterBottom
+                                        variant="subtitle2"
+                                      >
+                                        Pipelines{' '}
+                                        <small>(Requires AWS DevTools)</small>
+                                      </Typography>
+                                    }
+                                    labelPlacement="end"
+                                    value={values.pipelinesEnabled}
+                                  />
+                                </FormGroup>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Box>
+                      )}
 
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>

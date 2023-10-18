@@ -14,7 +14,9 @@
             "features": {
                 "file_uploads": true,
                 "file_actions": true,
-                "aws_actions": true
+                "aws_actions": true,
+                "preview_data": true,
+                "glue_crawler": true
             }
         },
         "worksheets": {
@@ -26,7 +28,8 @@
     },
     "core": {
         "features": {
-            "env_aws_actions": true
+            "env_aws_actions": true,
+            "env_feature_management": true
         }
     }
 }

@@ -36,13 +36,19 @@ import {
   TableOverview,
   TablePreview
 } from '../components';
+import { isFeatureEnabled } from 'utils';
+
+const previewDataEnabled = isFeatureEnabled('datasets', 'preview_data');
 
 const tabs = [
-  { label: 'Preview', value: 'preview' },
   { label: 'Overview', value: 'overview' },
   { label: 'Columns', value: 'columns' },
   { label: 'Metrics', value: 'metrics' }
 ];
+
+if (previewDataEnabled) {
+  tabs.unshift({ label: 'Preview', value: 'preview' });
+}
 
 function TablePageHeader(props) {
   const { table, handleDeleteObjectModalOpen, isAdmin } = props;
@@ -256,7 +262,9 @@ const TableView = () => {
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'preview' && <TablePreview table={table} />}
+            {previewDataEnabled && currentTab === 'preview' && (
+              <TablePreview table={table} />
+            )}
             {currentTab === 'overview' && (
               <TableOverview table={table} isAdmin={isAdmin} />
             )}
