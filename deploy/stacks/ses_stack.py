@@ -19,7 +19,6 @@ class SesStack(pyNestedClass):
             id,
             envname='dev',
             resource_prefix='dataall',
-            prod_sizing=False,
             custom_domain=None,
             **kwargs,
     ):
@@ -41,6 +40,8 @@ class SesStack(pyNestedClass):
             master_key=self.KMS_SNS,
         )
 
+        self.sns.apply_removal_policy(RemovalPolicy.DESTROY)
+
         hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
             self,
             'data-all-hosted-zone',
@@ -59,6 +60,8 @@ class SesStack(pyNestedClass):
             destination=ses.EventDestination.sns_topic(self.sns),
             events=[ses.EmailSendingEvent.BOUNCE, ses.EmailSendingEvent.DELIVERY_DELAY, ses.EmailSendingEvent.REJECT, ses.EmailSendingEvent.COMPLAINT]
         )
+
+        self.configuration_set.apply_removal_policy(RemovalPolicy.DESTROY)
 
         self.KMS_SNS.add_to_resource_policy(
             iam.PolicyStatement(
@@ -85,3 +88,5 @@ class SesStack(pyNestedClass):
             identity=ses.Identity.public_hosted_zone(hosted_zone),
             configuration_set=self.configuration_set,
         )
+
+        self.ses_identity.apply_removal_policy(RemovalPolicy.DESTROY)
