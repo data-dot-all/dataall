@@ -24,7 +24,6 @@ logger = logging.getLogger('graphql')
 logger.propagate = False
 logger.setLevel(logging.INFO)
 
-sts = boto3.client('sts', region_name='eu-west-1')
 Worker.queue = Worker.process
 ENVNAME = os.getenv('envname', 'local')
 logger.warning(f'Connecting to database `{ENVNAME}`')
