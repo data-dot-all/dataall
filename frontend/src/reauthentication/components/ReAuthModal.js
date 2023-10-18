@@ -1,0 +1,81 @@
+import { Box, CardContent, Dialog, Typography, Button } from '@mui/material';
+import { useAuth } from 'authentication';
+import { useRequestContext } from 'reauthentication';
+import React, { useEffect } from 'react';
+
+export const ReAuthModal = () => {
+  const { reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
+  const { storeRequestInfo } = useRequestContext();
+
+  const continueSession = async () => {
+    dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: false,
+        requestInfo: null
+      }
+    });
+  };
+
+  // const reauthenticate = async () => {
+  //   await storeRequestInfo();
+  //   reauth();
+  // };
+
+  useEffect(() => {
+    if (reAuthStatus && requestInfo) {
+      storeRequestInfo(requestInfo);
+    }
+  }, [reAuthStatus, requestInfo]);
+
+  return (
+    <Dialog maxWidth="md" fullWidth open={reAuthStatus}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h4"
+        >
+          ReAuth Credentials
+        </Typography>
+
+        <Box sx={{ p: 3 }}>
+          <CardContent>
+            <Typography color="textSecondary" variant="subtitle2">
+              In order to perform this action you are required to log in again
+              to the data.all UI. Click the below button to be redirected to log
+              back in before proceeding further or Click away to continue with
+              other data.all operations.
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                sx={{ mt: 2 }}
+              >
+                <Button
+                  color="primary"
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  onClick={reauth}
+                >
+                  Re-Authenticate
+                </Button>
+                <Button
+                  color="primary"
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  onClick={() => continueSession()}
+                >
+                  Continue Session
+                </Button>
+              </Box>
+            </Typography>
+          </CardContent>
+        </Box>
+      </Box>
+    </Dialog>
+  );
+};

@@ -8,7 +8,7 @@ import {
 } from 'apollo-boost';
 import { useEffect, useState } from 'react';
 import { useToken, useAuth } from 'authentication';
-// useRequestContext
+// import { useRequestContext } from 'reauthentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 const defaultOptions = {
