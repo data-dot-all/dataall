@@ -72,7 +72,9 @@ export const RequestContextProvider = (props) => {
     const restoredRequestInfo = restoreRetryRequest();
     if (restoredRequestInfo) {
       const currentTime = new Date();
-      const reauthTime = new Date(restoredRequestInfo.timestamp);
+      const reauthTime = new Date(
+        restoredRequestInfo.timestamp.replace(/\s/g, '')
+      );
       console.error(currentTime);
       console.error(reauthTime);
       if (currentTime - reauthTime <= 5 * 60 * 1000) {
