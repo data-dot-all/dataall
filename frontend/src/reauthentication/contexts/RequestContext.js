@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState
-} from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 // import {
 //   from,
@@ -103,61 +97,58 @@ export const RequestContextProvider = (props) => {
           );
           // setRequestInfo(restoredRequestInfo);
         }
+        // clearRequestInfo();
       }
     }
-  }, [client, requestInfo]);
+  }, [client]);
 
-  const retryRequest = useCallback(
-    async (restoredInfo) => {
-      const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
-      const response = client.query({
-        query: gqlTemplateLiteral,
-        variables: restoredInfo.operation.variables
-      });
-      if (!response.errors) {
-        enqueueSnackbar(
-          `Operation Retried Successful: ${restoredInfo.operation.operationName}`,
-          {
-            anchorOrigin: {
-              horizontal: 'right',
-              vertical: 'top'
-            },
-            variant: 'success'
-          }
-        );
-        navigate(restoredInfo.pathname);
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-      clearRequestInfo();
+  const retryRequest = async (restoredInfo) => {
+    const gqlTemplateLiteral = gql(print(restoredInfo.operation.query));
+    const response = client.query({
+      query: gqlTemplateLiteral,
+      variables: restoredInfo.operation.variables
+    });
+    if (!response.errors) {
+      enqueueSnackbar(
+        `Operation Retried Successful: ${restoredInfo.operation.operationName}`,
+        {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        }
+      );
+      navigate(restoredInfo.pathname);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
 
-      // const httpLink = new HttpLink({
-      //   uri: process.env.REACT_APP_GRAPHQL_API
-      // });
-      // await client.query(restoredInfo);
-      // const authLink = new ApolloLink((operation, forward) => {
-      //   operation.setContext({
-      //     headers: {
-      //       AccessControlAllowOrigin: '*',
-      //       AccessControlAllowHeaders: '*',
-      //       'access-control-allow-origin': '*',
-      //       Authorization: token ? `${token}` : '',
-      //       AccessKeyId: 'none',
-      //       SecretKey: 'none'
-      //     }
-      //   });
-      //   return forward(operation);
-      // });
-      // const apolloClient = new ApolloClient({
-      //   link: from([authLink, httpLink]),
-      //   cache: new InMemoryCache(),
-      //   defaultOptions
-      // });
+    // const httpLink = new HttpLink({
+    //   uri: process.env.REACT_APP_GRAPHQL_API
+    // });
+    // await client.query(restoredInfo);
+    // const authLink = new ApolloLink((operation, forward) => {
+    //   operation.setContext({
+    //     headers: {
+    //       AccessControlAllowOrigin: '*',
+    //       AccessControlAllowHeaders: '*',
+    //       'access-control-allow-origin': '*',
+    //       Authorization: token ? `${token}` : '',
+    //       AccessKeyId: 'none',
+    //       SecretKey: 'none'
+    //     }
+    //   });
+    //   return forward(operation);
+    // });
+    // const apolloClient = new ApolloClient({
+    //   link: from([authLink, httpLink]),
+    //   cache: new InMemoryCache(),
+    //   defaultOptions
+    // });
 
-      // await apolloClient.query(restoredInfo);
-    },
-    [client, dispatch]
-  );
+    // await apolloClient.query(restoredInfo);
+  };
 
   return (
     <RequestContext.Provider
