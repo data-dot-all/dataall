@@ -15,7 +15,9 @@ export const useRequestContext = () => {
 };
 
 const REQUEST_INFO_KEY = 'requestInfo';
-const REAUTH_TTL = parseInt(process.env.REACT_APP_REAUTH_TTL, 10);
+const REAUTH_TTL = process.env.REACT_APP_MY_INT
+  ? parseInt(process.env.REACT_APP_REAUTH_TTL, 10)
+  : 5;
 
 export const storeRequestInfoStorage = (requestInfo) => {
   console.error(requestInfo);
