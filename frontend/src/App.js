@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@mui/material';
-import { SnackbarProvider } from 'notistack';
+// import { SnackbarProvider } from 'notistack';
+// import { RequestContextProvider } from './reauthentication';
 import { useRoutes } from 'react-router-dom';
 import { useAuth } from './authentication';
 import {
@@ -10,7 +11,6 @@ import {
   useSettings
 } from './design';
 import routes from './routes';
-import { RequestContextProvider } from './reauthentication';
 
 export const App = () => {
   const content = useRoutes(routes);
@@ -27,12 +27,12 @@ export const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider dense maxSnack={3} hideIconVariant>
-        <RequestContextProvider>
-          <GlobalStyles />
-          {auth.isInitialized ? content : <SplashScreen />}
-        </RequestContextProvider>
-      </SnackbarProvider>
+      {/* <SnackbarProvider dense maxSnack={3} hideIconVariant>
+        <RequestContextProvider> */}
+      <GlobalStyles />
+      {auth.isInitialized ? content : <SplashScreen />}
+      {/* </RequestContextProvider>
+      </SnackbarProvider> */}
     </ThemeProvider>
   );
 };
