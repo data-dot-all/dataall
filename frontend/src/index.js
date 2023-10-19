@@ -9,7 +9,6 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { AuthProvider } from './authentication';
-import { RequestContextProvider } from './reauthentication';
 import { SettingsProvider } from './design';
 import { store } from './globalErrors';
 import { reportWebVitals } from './reportWebVitals';
@@ -23,11 +22,9 @@ ReactDOM.render(
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <SettingsProvider>
               <BrowserRouter>
-                <RequestContextProvider>
-                  <AuthProvider>
-                    <App />
-                  </AuthProvider>
-                </RequestContextProvider>
+                <AuthProvider>
+                  <App />
+                </AuthProvider>
               </BrowserRouter>
             </SettingsProvider>
           </LocalizationProvider>

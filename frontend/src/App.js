@@ -10,6 +10,7 @@ import {
   useSettings
 } from './design';
 import routes from './routes';
+import { RequestContextProvider } from './reauthentication';
 
 export const App = () => {
   const content = useRoutes(routes);
@@ -27,8 +28,10 @@ export const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <SnackbarProvider dense maxSnack={3} hideIconVariant>
-        <GlobalStyles />
-        {auth.isInitialized ? content : <SplashScreen />}
+        <RequestContextProvider>
+          <GlobalStyles />
+          {auth.isInitialized ? content : <SplashScreen />}
+        </RequestContextProvider>
       </SnackbarProvider>
     </ThemeProvider>
   );

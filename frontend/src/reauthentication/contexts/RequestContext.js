@@ -4,7 +4,7 @@ import { useClient } from 'services';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
-import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useSnackbar } from 'notistack';
 
 // Create a context for API request headers
 const RequestContext = createContext();
@@ -15,7 +15,7 @@ export const useRequestContext = () => {
 };
 
 const REQUEST_INFO_KEY = 'requestInfo';
-const REAUTH_TTL = process.env.REACT_APP_MY_INT
+const REAUTH_TTL = process.env.REACT_APP_REAUTH_TTL
   ? parseInt(process.env.REACT_APP_REAUTH_TTL, 10)
   : 5;
 
@@ -41,8 +41,8 @@ export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
-  const { dispatch } = useDispatch();
   const client = useClient();
+  const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
     storeRequestInfoStorage(info);
@@ -69,11 +69,38 @@ export const RequestContextProvider = (props) => {
         if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           console.error('RETRY');
           console.error(restoredRequestInfo);
-          retryRequest(restoredRequestInfo).catch((e) =>
-            dispatch({ type: SET_ERROR, error: e.message })
-          );
+          retryRequest(restoredRequestInfo)
+            .then((r) => {
+              if (!r.errors) {
+                console.error('NO ERRORS');
+                enqueueSnackbar(
+                  `ReAuth Retry Operation Successful ${restoredRequestInfo.requestInfo.operationName}`,
+                  {
+                    anchorOrigin: {
+                      horizontal: 'right',
+                      vertical: 'top'
+                    },
+                    variant: 'success'
+                  }
+                );
+                navigate(restoredRequestInfo.pathname);
+              } else {
+                enqueueSnackbar(
+                  `ReAuth Retry Operation Failed ${restoredRequestInfo.requestInfo.operationName} with error ${r.errors[0].message}`,
+                  {
+                    anchorOrigin: {
+                      horizontal: 'right',
+                      vertical: 'top'
+                    },
+                    variant: 'error'
+                  }
+                );
+              }
+            })
+            .finally(() => clearRequestInfo());
+        } else {
+          clearRequestInfo();
         }
-        clearRequestInfo();
       }
     }
   }, [client]);
@@ -81,33 +108,19 @@ export const RequestContextProvider = (props) => {
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
     if (restoredInfo.requestInfo.query.definitions[0].operation === 'query') {
-      const response = client.query({
+      const response = await client.query({
         query: gqlTemplateLiteral,
         variables: restoredInfo.requestInfo.variables
       });
-      if (!response.errors) {
-        navigate(restoredInfo.pathname);
-      } else {
-        dispatch({
-          type: SET_ERROR,
-          error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
-        });
-      }
+      return response;
     } else if (
       restoredInfo.requestInfo.query.definitions[0].operation === 'mutation'
     ) {
-      const response = client.mutate({
+      const response = await client.mutate({
         mutation: gqlTemplateLiteral,
         variables: restoredInfo.requestInfo.variables
       });
-      if (!response.errors) {
-        navigate(restoredInfo.pathname);
-      } else {
-        dispatch({
-          type: SET_ERROR,
-          error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
-        });
-      }
+      return response;
     }
   };
 
