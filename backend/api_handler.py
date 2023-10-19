@@ -157,7 +157,7 @@ def handler(event, context):
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis")
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
             print("SSM", reauth_apis)
         except Exception as e:
             reauth_apis = None

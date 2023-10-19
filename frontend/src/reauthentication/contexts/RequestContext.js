@@ -15,6 +15,7 @@ export const useRequestContext = () => {
 };
 
 const REQUEST_INFO_KEY = 'requestInfo';
+const REAUTH_TTL = parseInt(process.env.REACT_APP_REAUTH_TTL, 10)
 
 export const storeRequestInfoStorage = (requestInfo) => {
   console.error(requestInfo);
@@ -63,7 +64,7 @@ export const RequestContextProvider = (props) => {
         console.error(reauthTime);
         // If the time is within the TTL, Retry the Request
         // and navigate to the previous page
-        if (currentTime - reauthTime <= 5 * 60 * 1000) {
+        if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           console.error('RETRY');
           console.error(restoredRequestInfo);
           retryRequest(restoredRequestInfo).catch((e) =>
@@ -77,17 +78,32 @@ export const RequestContextProvider = (props) => {
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
-    const response = client.query({
-      query: gqlTemplateLiteral,
-      variables: restoredInfo.requestInfo.variables
-    });
-    if (!response.errors) {
-      navigate(restoredInfo.pathname);
-    } else {
-      dispatch({
-        type: SET_ERROR,
-        error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
+    if (restoredInfo.requestInfo.query.definitions[0].operation === 'query') {
+      const response = client.query({
+        query: gqlTemplateLiteral,
+        variables: restoredInfo.requestInfo.variables
       });
+      if (!response.errors) {
+        navigate(restoredInfo.pathname);
+      } else {
+        dispatch({
+          type: SET_ERROR,
+          error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
+        });
+      }
+    } else if (restoredInfo.requestInfo.query.definitions[0].operation === 'mutation')  {
+      const response = client.mutate({
+        mutation: gqlTemplateLiteral,
+        variables: restoredInfo.requestInfo.variables
+      });
+      if (!response.errors) {
+        navigate(restoredInfo.pathname);
+      } else {
+        dispatch({
+          type: SET_ERROR,
+          error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
+        });
+      }
     }
   };
 
