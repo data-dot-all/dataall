@@ -1,16 +1,11 @@
 from dataall.base.api import gql
-from dataall.modules.notifications.db.notification_models import Notification
-
-
-def resolve_enum(context, source: Notification):
-    return source.type.name
 
 
 Notification = gql.ObjectType(
     name='Notification',
     fields=[
         gql.Field(name='notificationUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='type', type=gql.String, resolver=resolve_enum),
+        gql.Field(name='type', type=gql.String),
         gql.Field(name='message', type=gql.String),
         gql.Field(name='username', type=gql.NonNullableType(gql.String)),
         gql.Field(name='target_uri', type=gql.NonNullableType(gql.String)),
