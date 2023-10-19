@@ -15,7 +15,7 @@ export const useRequestContext = () => {
 };
 
 const REQUEST_INFO_KEY = 'requestInfo';
-const REAUTH_TTL = parseInt(process.env.REACT_APP_REAUTH_TTL, 10)
+const REAUTH_TTL = parseInt(process.env.REACT_APP_REAUTH_TTL, 10);
 
 export const storeRequestInfoStorage = (requestInfo) => {
   console.error(requestInfo);
@@ -91,7 +91,9 @@ export const RequestContextProvider = (props) => {
           error: `ReAuth for operation ${restoredInfo.requestInfo.operationName} Failed with error message: ${response.errors[0].message}`
         });
       }
-    } else if (restoredInfo.requestInfo.query.definitions[0].operation === 'mutation')  {
+    } else if (
+      restoredInfo.requestInfo.query.definitions[0].operation === 'mutation'
+    ) {
       const response = client.mutate({
         mutation: gqlTemplateLiteral,
         variables: restoredInfo.requestInfo.variables
