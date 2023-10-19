@@ -370,12 +370,12 @@ const EnvironmentCreateForm = (props) => {
                           color="text.secondary"
                           gutterBottom
                         >
-                          If Using Custom CDK Execution Policy (From Step 1):
+                          If Using Custom CDK Execution Policy (From Step 1. Change the ParameterValue dataall to the Data.all environment resource prefix. Default is dataall.):
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                            text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -388,7 +388,7 @@ const EnvironmentCreateForm = (props) => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                          {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                         </Typography>
                       </CardContent>
                     </Card>
