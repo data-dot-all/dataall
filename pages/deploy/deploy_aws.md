@@ -29,9 +29,14 @@ In addition, you will need at least two AWS accounts. For each of these accounts
 ready to use on your terminal. Do not proceed if you are not administrator in the tooling
 account, and in the deployment account(s).
 
-- Tooling account: hosts the code repository, and the CI/CD pipeline.
-- Deployment account(s): hosts data.all's backend, and frontend AWS infrastructure. You can deploy 
-data.all to multiple environments on the same or multiple AWS accounts (e.g dev, test, qa, prod). 
+- **Tooling account**: hosts the code repository, and the CI/CD pipeline. We can use any region to deploy the CI/CD resources
+if the underlying AWS services (CodeCommit, CodeBuild...) are available in the selected region. In addition, you will need
+access to a second region. The reason is that we use [CDK Pipelines](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html), 
+an opinionated CDK construct that deploys a cross-region replication support stack. For all regions except `us-east-1` the replication region is `us-east-1`.
+- **Deployment account(s)**: hosts data.all's backend and frontend AWS infrastructure. You can deploy 
+data.all to multiple environments on the same or multiple AWS accounts (e.g dev, test, qa, prod). If deployment is configured
+with `internet_facing` set to true, `us-east-1` is required for the deployment of some frontend components. 
+Backend resources can be hosted in any region given that the AWS services used are available.
 
 **Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
 and the Deployment account.
@@ -100,7 +105,8 @@ Your region (can be any supported region)
 ```bash
 cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
 ```
-North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
+
+If you plan to configure the deployment with internet-facing frontend, you also need to bootstrap the North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
 ```bash
 cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east-1
 ```
