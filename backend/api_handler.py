@@ -176,12 +176,12 @@ def handler(event, context):
         except Exception as e:
             print(f'ReAuth Required, Error: {e}')
             response = {
-                "data": {query.get('operationName', "OPERATION") : None},
+                "data": {query.get('operationName', 'operation') : None},
                 "errors": [
                     {
-                        "message": "ReAuth Required To Perform This Action",
+                        "message": f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
                         "locations": None,
-                        "path": [query.get('operationName', "OPERATION")],
+                        "path": [query.get('operationName', '')],
                         "extensions": {
                             "code": "REAUTH"
                         }
