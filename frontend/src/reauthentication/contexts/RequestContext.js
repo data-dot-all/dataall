@@ -68,22 +68,18 @@ export const RequestContextProvider = (props) => {
   useEffect(() => {
     if (client) {
       const restoredRequestInfo = restoreRetryRequest();
-      const username = retrieveCurrentUsername();
-      console.error(username);
       // If request info is restored from previous user session
       if (restoredRequestInfo && restoredRequestInfo.timestamp) {
         const currentTime = new Date();
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
         );
-        // If the user is not the same as when reAuth began or waited too long - clear storage
+        // If the user waited too long to reAuth - clear storage
         // Else retry the ReAuth API Request
-        if (restoredRequestInfo.username !== username) {
-          clearRequestInfo();
-        } else if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
+        if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           retryRequest(restoredRequestInfo)
             .then((r) => {
-              if (!r.errors) {
+              if (r && !r.errors) {
                 enqueueSnackbar(
                   `ReAuth Retry Operation Successful ${restoredRequestInfo.requestInfo.operationName}`,
                   {
@@ -100,7 +96,7 @@ export const RequestContextProvider = (props) => {
                 ) {
                   navigate(restoredRequestInfo.pathname);
                 }
-              } else {
+              } else if (r) {
                 enqueueSnackbar(
                   `ReAuth Retry Operation Failed ${restoredRequestInfo.requestInfo.operationName} with error ${r.errors[0].message}`,
                   {
@@ -133,7 +129,13 @@ export const RequestContextProvider = (props) => {
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
-    if (restoredInfo.requestInfo.query.definitions[0].operation === 'query') {
+    const username = await retrieveCurrentUsername();
+    console.error(username);
+    if (username !== restoredInfo.username) {
+      return null;
+    } else if (
+      restoredInfo.requestInfo.query.definitions[0].operation === 'query'
+    ) {
       const response = await client.query({
         query: gqlTemplateLiteral,
         variables: restoredInfo.requestInfo.variables
