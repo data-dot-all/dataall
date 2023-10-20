@@ -9,11 +9,12 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { AuthProvider } from './authentication';
-import { RequestContextProvider } from './reauthentication';
 import { SettingsProvider } from './design';
 import { store } from './globalErrors';
 import { reportWebVitals } from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
+import { SnackbarProvider } from 'notistack';
+import { RequestContextProvider } from './reauthentication';
 
 ReactDOM.render(
   <StrictMode>
@@ -23,11 +24,13 @@ ReactDOM.render(
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <SettingsProvider>
               <BrowserRouter>
-                <RequestContextProvider>
-                  <AuthProvider>
-                    <App />
-                  </AuthProvider>
-                </RequestContextProvider>
+                <SnackbarProvider dense maxSnack={3} hideIconVariant>
+                  <RequestContextProvider>
+                    <AuthProvider>
+                      <App />
+                    </AuthProvider>
+                  </RequestContextProvider>
+                </SnackbarProvider>
               </BrowserRouter>
             </SettingsProvider>
           </LocalizationProvider>
