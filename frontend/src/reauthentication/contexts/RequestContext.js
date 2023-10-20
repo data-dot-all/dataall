@@ -42,7 +42,7 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
-  const user = useAuth();
+  const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -55,7 +55,7 @@ export const RequestContextProvider = (props) => {
   };
 
   useEffect(() => {
-    if (client) {
+    if (client && user) {
       const restoredRequestInfo = restoreRetryRequest();
       // If request info is restored from previous user session
       if (restoredRequestInfo && restoredRequestInfo.timestamp) {
@@ -116,7 +116,7 @@ export const RequestContextProvider = (props) => {
         }
       }
     }
-  }, [client]);
+  }, [client, user]);
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
