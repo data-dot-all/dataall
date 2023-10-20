@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useClient } from 'services';
-import { useAuth } from 'authentication';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
+import { Auth } from 'aws-amplify';
 
 // Create a context for API request headers
 const RequestContext = createContext();
@@ -37,12 +37,21 @@ export const restoreRetryRequest = () => {
   }
 };
 
+export const retrieveCurrentUsername = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+    return user.attributes.email;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
 export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
-  const user = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -63,14 +72,12 @@ export const RequestContextProvider = (props) => {
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
         );
-        // If the time is within the TTL and it is the same User, Retry the Request
-        if (
-          currentTime - reauthTime <= REAUTH_TTL * 60 * 1000 &&
-          restoredRequestInfo.username === user.name
-        ) {
+        // If the user waited too long to reAuth - clear storage
+        // Else retry the ReAuth API Request
+        if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           retryRequest(restoredRequestInfo)
             .then((r) => {
-              if (!r.errors) {
+              if (r && !r.errors) {
                 enqueueSnackbar(
                   `ReAuth Retry Operation Successful ${restoredRequestInfo.requestInfo.operationName}`,
                   {
@@ -87,7 +94,7 @@ export const RequestContextProvider = (props) => {
                 ) {
                   navigate(restoredRequestInfo.pathname);
                 }
-              } else {
+              } else if (r) {
                 enqueueSnackbar(
                   `ReAuth Retry Operation Failed ${restoredRequestInfo.requestInfo.operationName} with error ${r.errors[0].message}`,
                   {
@@ -120,7 +127,13 @@ export const RequestContextProvider = (props) => {
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
-    if (restoredInfo.requestInfo.query.definitions[0].operation === 'query') {
+    const username = await retrieveCurrentUsername();
+    console.error(username);
+    if (username !== restoredInfo.username) {
+      return null;
+    } else if (
+      restoredInfo.requestInfo.query.definitions[0].operation === 'query'
+    ) {
       const response = await client.query({
         query: gqlTemplateLiteral,
         variables: restoredInfo.requestInfo.variables
