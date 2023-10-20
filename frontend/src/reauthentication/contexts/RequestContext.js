@@ -76,7 +76,10 @@ export const RequestContextProvider = (props) => {
                     variant: 'success'
                   }
                 );
-                if (restoredRequestInfo.requestInfo.query.definitions[0].operation == 'query'){
+                if (
+                  restoredRequestInfo.requestInfo.query.definitions[0]
+                    .operation === 'query'
+                ) {
                   navigate(restoredRequestInfo.pathname);
                 }
               } else {
