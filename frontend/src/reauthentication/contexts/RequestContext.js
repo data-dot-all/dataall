@@ -41,7 +41,7 @@ export const restoreRetryRequest = () => {
 export const retrieveCurrentUsername = async () => {
   try {
     const user = await Auth.currentAuthenticatedUser();
-    return user.name
+    return user.attributes.email;
   } catch (err) {
     console.error(err);
     return null;
@@ -80,9 +80,7 @@ export const RequestContextProvider = (props) => {
         // Else retry the ReAuth API Request
         if (restoredRequestInfo.username === username) {
           clearRequestInfo();
-        } else if (
-          currentTime - reauthTime <= REAUTH_TTL * 60 * 1000
-        ) {
+        } else if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           retryRequest(restoredRequestInfo)
             .then((r) => {
               if (!r.errors) {
