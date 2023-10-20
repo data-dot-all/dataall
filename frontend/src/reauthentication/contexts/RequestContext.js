@@ -78,7 +78,7 @@ export const RequestContextProvider = (props) => {
         );
         // If the user is not the same as when reAuth began or waited too long - clear storage
         // Else retry the ReAuth API Request
-        if (restoredRequestInfo.username === username) {
+        if (restoredRequestInfo.username !== username) {
           clearRequestInfo();
         } else if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
           retryRequest(restoredRequestInfo)
