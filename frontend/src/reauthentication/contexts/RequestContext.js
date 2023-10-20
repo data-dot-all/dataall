@@ -99,6 +99,16 @@ export const RequestContextProvider = (props) => {
             })
             .finally(() => clearRequestInfo());
         } else {
+          enqueueSnackbar(
+            `ReAuth Retry Operation Failed ${restoredRequestInfo.requestInfo.operationName} - waited over ${REAUTH_TTL} minutes`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'error'
+            }
+          );
           clearRequestInfo();
         }
       }
