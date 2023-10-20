@@ -4,14 +4,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dataall.core.notifications.handlers.notifications_handler import NotificationHandler
+from dataall.modules.notifications.handlers.notifications_handler import NotificationHandler
 from dataall.core.tasks.db.task_models import Task
 
 
 def mock_cognito_client(mocker):
     mock_client = MagicMock()
     mocker.patch(
-        'dataall.core.notifications.services.email_notification_provider.Cognito',
+        'dataall.modules.notifications.services.email_notification_provider.Cognito',
         mock_client
     )
     return mock_client
@@ -19,7 +19,7 @@ def mock_cognito_client(mocker):
 def mock_ses_client_(mocker):
     mock_ses_client = MagicMock()
     mocker.patch(
-        'dataall.core.notifications.services.email_notification_provider.Ses.get_ses_client',
+        'dataall.modules.notifications.services.email_notification_provider.Ses.get_ses_client',
         mock_ses_client
     )
     return mock_ses_client
@@ -44,12 +44,10 @@ def test_notification_service_email(
             targetUri='some_share_uri',
             payload={
                 'notificationType': 'email',
-                'shareRequestUserEmail': 'email@email.com',
                 'subject': 'subject',
                 'message': 'message',
-                'requesterGroupName': 'requesterGroupName',
-                'datasetOwnerGroup': 'datasetOwnerGroup',
-                'datasetStewardsGroup': 'datasetStewardsGroup'
+                'recipientGroupsList': ['requesterGroupName', 'datasetOwnerGroup', 'datasetStewardsGroup'],
+                'recipientEmailList': ['email@email.com']
             },
         )
         session.add(notification_task)
@@ -74,7 +72,7 @@ def test_notification_service_when_incorrect_task_is_created(
 
     # Mock the email notification provider.send_email_task
     email_notification_provider = mocker.patch(
-        'dataall.core.notifications.services.email_notification_provider.EmailNotificationProvider.send_email_task',
+        'dataall.modules.notifications.services.email_notification_provider.EmailNotificationProvider.send_email_task',
         return_value=None
     )
 
@@ -84,12 +82,10 @@ def test_notification_service_when_incorrect_task_is_created(
             targetUri='some_share_uri',
             payload={
                 'notificationType': 'WrongService',
-                'shareRequestUserEmail': 'email@email.com',
                 'subject': 'subject',
                 'message': 'message',
-                'requesterGroupName': 'requesterGroupName',
-                'datasetOwnerGroup': 'datasetOwnerGroup',
-                'datasetStewardsGroup': 'datasetStewardsGroup'
+                'recipientGroupsList': ['requesterGroupName', 'datasetOwnerGroup', 'datasetStewardsGroup'],
+                'recipientEmailList': []
             },
         )
         session.add(notification_task)
@@ -118,12 +114,10 @@ def test_notification_service_with_no_email_ids_in_group(
             targetUri='some_share_uri',
             payload={
                 'notificationType': 'email',
-                'shareRequestUserEmail': 'email@email.com',
                 'subject': 'subject',
                 'message': 'message',
-                'requesterGroupName': 'requesterGroupName',
-                'datasetOwnerGroup': 'datasetOwnerGroup',
-                'datasetStewardsGroup': 'datasetStewardsGroup'
+                'recipientGroupsList': ['requesterGroupName', 'datasetOwnerGroup', 'datasetStewardsGroup'],
+                'recipientEmailList': []
             },
         )
         session.add(notification_task)
@@ -152,12 +146,10 @@ def test_notification_service_with_sender_email_id_is_none(
             targetUri='some_share_uri',
             payload={
                 'notificationType': 'email',
-                'shareRequestUserEmail': 'email@email.com',
                 'subject': 'subject',
                 'message': 'message',
-                'requesterGroupName': 'requesterGroupName',
-                'datasetOwnerGroup': 'datasetOwnerGroup',
-                'datasetStewardsGroup': 'datasetStewardsGroup'
+                'recipientGroupsList': ['requesterGroupName', 'datasetOwnerGroup', 'datasetStewardsGroup'],
+                'recipientEmailList': []
             },
         )
         session.add(notification_task)
