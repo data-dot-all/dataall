@@ -56,8 +56,7 @@ export const useClient = () => {
             'access-control-allow-origin': '*',
             Authorization: t ? `${t}` : '',
             AccessKeyId: 'none',
-            SecretKey: 'none',
-            'operation-name': operation.operationName
+            SecretKey: 'none'
           }
         });
         return forward(operation);
@@ -71,7 +70,6 @@ export const useClient = () => {
                   `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
                 );
                 if (extensions?.code === 'REAUTH') {
-                  console.error(operation);
                   setReAuth(operation);
                 }
               }
