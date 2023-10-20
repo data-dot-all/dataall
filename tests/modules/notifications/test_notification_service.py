@@ -11,7 +11,7 @@ from dataall.core.tasks.db.task_models import Task
 def mock_cognito_client(mocker):
     mock_client = MagicMock()
     mocker.patch(
-        'dataall.modules.notifications.services.email_notification_provider.Cognito',
+        'dataall.modules.notifications.services.ses_email_notification_service.Cognito',
         mock_client
     )
     return mock_client
@@ -19,7 +19,7 @@ def mock_cognito_client(mocker):
 def mock_ses_client_(mocker):
     mock_ses_client = MagicMock()
     mocker.patch(
-        'dataall.modules.notifications.services.email_notification_provider.Ses.get_ses_client',
+        'dataall.modules.notifications.services.ses_email_notification_service.Ses.get_ses_client',
         mock_ses_client
     )
     return mock_ses_client
@@ -35,7 +35,7 @@ def test_notification_service_email(
 
     # Mock Cognito Client
     cognito_client = mock_cognito_client(mocker)
-    cognito_client().get_user_emailids_from_group.return_value = ["bob@email.com", "bob-1@email.com"]
+    cognito_client().get_user_emailids_from_group.return_value = ["requester@email.com", "dataset_owner@email.com", "dataset_steward@email.com"]
 
     # Create an email task
     with db.scoped_session() as session:
@@ -60,7 +60,7 @@ def test_notification_service_email(
     group_name_list_used_for_share = [x.args[0] for x in cognito_calls]
     assert 'datasetOwnerGroup' in group_name_list_used_for_share and 'datasetStewardsGroup' in group_name_list_used_for_share and 'requesterGroupName' in group_name_list_used_for_share
     mock_ses_client().send_email.assert_called()
-    # Check if the email notification was called for 4 times ( 2 times for approvers, 2 times for requestors. This is because there are two email ids returned for both )
+    # Check if the email notification was called for 4 times 'recipientGroupsList' + 'recipientEmailList'
     assert mock_ses_client().send_email.call_count == 4
 
 # Test to check when unknown notification type is used
@@ -71,8 +71,8 @@ def test_notification_service_when_incorrect_task_is_created(
     ):
 
     # Mock the email notification provider.send_email_task
-    email_notification_provider = mocker.patch(
-        'dataall.modules.notifications.services.email_notification_provider.EmailNotificationProvider.send_email_task',
+    email_notification_service= mocker.patch(
+        'dataall.modules.notifications.services.ses_email_notification_service.SESEmailNotificationService.send_email_task',
         return_value=None
     )
 
@@ -93,7 +93,7 @@ def test_notification_service_when_incorrect_task_is_created(
 
         NotificationHandler.notification_service(db, notification_task)
 
-    email_notification_provider.assert_not_called()
+    email_notification_service.assert_not_called()
 
 # Test to check when empty email id set is returned by cognito
 def test_notification_service_with_no_email_ids_in_group(

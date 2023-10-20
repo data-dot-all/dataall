@@ -140,7 +140,7 @@ class ShareNotificationService:
 
     @staticmethod
     def create_notification_task(session, email_id, dataset, share, subject, msg):
-        share_notification_config = config.get_property('modules.dataset.share_notifications')
+        share_notification_config = config.get_property('modules.datasets.share_notifications')
 
         notification_recipient_groups_list = [dataset.SamlAdminGroupName, dataset.stewards]
         notification_recipient_email_ids = []

@@ -2,7 +2,7 @@ import logging
 
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.notifications.services.ses_email_notification_provider import SESEmailNotificationService
+from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
