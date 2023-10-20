@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useClient } from 'services';
-import { useAuth } from 'authentication';
+// import { useAuth } from 'authentication';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
+import { Auth } from 'aws-amplify';
 
 // Create a context for API request headers
 const RequestContext = createContext();
@@ -37,12 +38,22 @@ export const restoreRetryRequest = () => {
   }
 };
 
+export const retrieveCurrentUsername = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+    return user.name
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
 export const RequestContextProvider = (props) => {
   const { children } = props;
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -57,17 +68,20 @@ export const RequestContextProvider = (props) => {
   useEffect(() => {
     if (client) {
       const restoredRequestInfo = restoreRetryRequest();
-      console.error(user);
+      const username = retrieveCurrentUsername();
+      console.error(username);
       // If request info is restored from previous user session
       if (restoredRequestInfo && restoredRequestInfo.timestamp) {
         const currentTime = new Date();
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
         );
-        // If the time is within the TTL and it is the same User, Retry the Request
-        if (
-          currentTime - reauthTime <= REAUTH_TTL * 60 * 1000 &&
-          restoredRequestInfo.username === user.name
+        // If the user is not the same as when reAuth began or waited too long - clear storage
+        // Else retry the ReAuth API Request
+        if (restoredRequestInfo.username === username) {
+          clearRequestInfo();
+        } else if (
+          currentTime - reauthTime <= REAUTH_TTL * 60 * 1000
         ) {
           retryRequest(restoredRequestInfo)
             .then((r) => {
