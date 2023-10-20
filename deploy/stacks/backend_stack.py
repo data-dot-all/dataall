@@ -361,9 +361,9 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(["core.share_notifications.email.active"])
+    @run_if(["modules.datasets.share_notifications.email.active"])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix, email_notification_sender_email_id):
-        if custom_domain == None and email_notification_sender_email_id == None and deploy_config.get_property("core.share_notifications.email.active") == True:
+        if custom_domain == None and email_notification_sender_email_id == None and deploy_config.get_property("modules.datasets.share_notifications.email.active") == True:
             raise Exception("Cannot Create SES Stack For email notification as Custom Domain and Sender Email Id are not present. Either Disable Email Notification Config or add Custom Domain")
 
         return SesStack(
