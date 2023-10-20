@@ -55,8 +55,9 @@ export const RequestContextProvider = (props) => {
   };
 
   useEffect(() => {
-    if (client && user) {
+    if (client) {
       const restoredRequestInfo = restoreRetryRequest();
+      console.error(user);
       // If request info is restored from previous user session
       if (restoredRequestInfo && restoredRequestInfo.timestamp) {
         const currentTime = new Date();
@@ -116,7 +117,7 @@ export const RequestContextProvider = (props) => {
         }
       }
     }
-  }, [client, user]);
+  }, [client]);
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
