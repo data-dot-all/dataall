@@ -107,10 +107,6 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
-        )
-
         cognito_stack = IdpStack(
             self,
             f'Cognito',
@@ -130,6 +126,10 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             prod_sizing=prod_sizing,
             **kwargs,
+        )
+
+        repo = ecr.Repository.from_repository_arn(
+            self, 'ECRREPO', repository_arn=ecr_repository
         )
 
         self.lambda_api_stack = LambdaApiStack(

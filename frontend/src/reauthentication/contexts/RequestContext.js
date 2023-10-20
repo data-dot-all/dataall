@@ -20,7 +20,6 @@ const REAUTH_TTL = process.env.REACT_APP_REAUTH_TTL
   : 5;
 
 export const storeRequestInfoStorage = (requestInfo) => {
-  console.error(requestInfo);
   window.localStorage.setItem(REQUEST_INFO_KEY, JSON.stringify(requestInfo));
 };
 
@@ -62,17 +61,11 @@ export const RequestContextProvider = (props) => {
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
         );
-        console.error(currentTime);
-        console.error(reauthTime);
         // If the time is within the TTL, Retry the Request
-        // and navigate to the previous page
         if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
-          console.error('RETRY');
-          console.error(restoredRequestInfo);
           retryRequest(restoredRequestInfo)
             .then((r) => {
               if (!r.errors) {
-                console.error('NO ERRORS');
                 enqueueSnackbar(
                   `ReAuth Retry Operation Successful ${restoredRequestInfo.requestInfo.operationName}`,
                   {
@@ -83,7 +76,9 @@ export const RequestContextProvider = (props) => {
                     variant: 'success'
                   }
                 );
-                navigate(restoredRequestInfo.pathname);
+                if (restoredRequestInfo.requestInfo.query.definitions[0].operation == 'query'){
+                  navigate(restoredRequestInfo.pathname);
+                }
               } else {
                 enqueueSnackbar(
                   `ReAuth Retry Operation Failed ${restoredRequestInfo.requestInfo.operationName} with error ${r.errors[0].message}`,

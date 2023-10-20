@@ -13,7 +13,6 @@ from aws_cdk import (
     aws_kms as kms,
     aws_sqs as sqs,
     aws_logs as logs,
-    aws_cognito as cognito,
     Duration,
     CfnOutput,
     Fn,
