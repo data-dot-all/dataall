@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useClient } from 'services';
+import { useAuth } from 'authentication';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
@@ -41,6 +42,7 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
+  const user = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -61,8 +63,11 @@ export const RequestContextProvider = (props) => {
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
         );
-        // If the time is within the TTL, Retry the Request
-        if (currentTime - reauthTime <= REAUTH_TTL * 60 * 1000) {
+        // If the time is within the TTL and it is the same User, Retry the Request
+        if (
+          currentTime - reauthTime <= REAUTH_TTL * 60 * 1000 &&
+          restoredRequestInfo.username === user.name
+        ) {
           retryRequest(restoredRequestInfo)
             .then((r) => {
               if (!r.errors) {

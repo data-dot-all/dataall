@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import React, { useEffect } from 'react';
 
 export const ReAuthModal = () => {
-  const { reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
+  const { user, reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
   const { storeRequestInfo, clearRequestInfo } = useRequestContext();
   const location = useLocation();
 
@@ -24,7 +24,8 @@ export const ReAuthModal = () => {
     if (reAuthStatus && requestInfo) {
       const timestamp = new Date();
       const pathname = location.pathname;
-      storeRequestInfo({ requestInfo, timestamp, pathname });
+      const username = user.name;
+      storeRequestInfo({ requestInfo, timestamp, pathname, username });
     }
   }, [reAuthStatus, requestInfo]);
 
