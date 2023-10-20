@@ -10,7 +10,8 @@ const ModuleNames = {
   NOTEBOOKS: 'notebooks',
   MLSTUDIO: 'mlstudio',
   PIPELINES: 'datapipelines',
-  DASHBOARDS: 'dashboards'
+  DASHBOARDS: 'dashboards',
+  NOTIFICATIONS: 'notifications'
 };
 
 function isModuleEnabled(module) {
@@ -20,7 +21,7 @@ function isModuleEnabled(module) {
       getModuleActiveStatus(ModuleNames.DASHBOARDS)
     );
   }
-  if (module === ModuleNames.SHARES) {
+  if (module === ModuleNames.SHARES || module === ModuleNames.NOTIFICATIONS) {
     return getModuleActiveStatus(ModuleNames.DATASETS);
   }
   if (module === ModuleNames.WORKSHEETS) {

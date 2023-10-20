@@ -15,6 +15,14 @@
                 "file_uploads": true,
                 "file_actions": true,
                 "aws_actions": true
+            },
+            "share_notifications": {
+                "email": {
+                    "active": true,
+                    "features": {
+                        "group_notifications": true
+                    }
+                }
             }
         },
         "worksheets": {
@@ -27,14 +35,6 @@
     "core": {
         "features": {
             "env_aws_actions": true
-        },
-        "share_notifications": {
-            "email": {
-                "active": true,
-                "features": {
-                    "group_notifications": true
-                }
-            }
         }
     }
 }
