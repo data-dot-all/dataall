@@ -1,15 +1,24 @@
 import logging
+import enum
 from dataall.base.config import config
-from dataall.core.notifications.db.notification_repositories import Notification
-from dataall.core.notifications.db.notification_models import NotificationType
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.context import get_context
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus
+from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 log = logging.getLogger(__name__)
+
+
+class DataSharingNotificationType(enum.Enum):
+    SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
+    SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
+    SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
+    SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
+    SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
+    DATASET_VERSION = 'DATASET_VERSION'
 
 
 class ShareNotificationService:
@@ -20,10 +29,10 @@ class ShareNotificationService:
         msg = f'User {username} submitted share request for dataset {dataset.label}'
         subject = f'Data.all | Share Request Submitted for {dataset.label}'
 
-        notifications = [Notification.create(
+        notifications = [NotificationRepository.create_notification(
             session=session,
             username=dataset.owner,
-            notification_type=NotificationType.SHARE_OBJECT_SUBMITTED,
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value,
             target_uri=f'{share.shareUri}|{dataset.datasetUri}',
             message=msg,
         )]
@@ -45,10 +54,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.SHARE_OBJECT_APPROVED,
+                    notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=msg,
                 )
@@ -79,10 +88,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.SHARE_OBJECT_REJECTED,
+                    notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=msg,
                 )
@@ -103,10 +112,10 @@ class ShareNotificationService:
         )
         for user in targeted_users:
             notifications.append(
-                Notification.create(
+                NotificationRepository.create_notification(
                     session=session,
                     username=user,
-                    notification_type=NotificationType.DATASET_VERSION,
+                    notification_type=DataSharingNotificationType.DATASET_VERSION.value,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'New data (at {s3_prefix}) is available from dataset {dataset.datasetUri} '
                             f'shared by owner {dataset.owner}',
@@ -131,7 +140,7 @@ class ShareNotificationService:
 
     @staticmethod
     def create_notification_task(session, email_id, dataset, share, subject, msg):
-        share_notification_config = config.get_property('core.share_notifications')
+        share_notification_config = config.get_property('modules.dataset.share_notifications')
 
         notification_recipient_groups_list = [dataset.SamlAdminGroupName, dataset.stewards]
         notification_recipient_email_ids = []
