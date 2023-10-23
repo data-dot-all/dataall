@@ -23,6 +23,7 @@ def delete_table(context, source, tableUri: str = None):
         return False
     return DatasetTableService.delete_table(uri=tableUri)
 
+
 @is_feature_enabled('modules.datasets.features.preview_data')
 def preview(context, source, tableUri: str = None):
     if not tableUri:
