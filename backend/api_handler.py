@@ -158,7 +158,7 @@ def handler(event, context):
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
             reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
-            print("SSM", reauth_apis)
+            log.info("SSM", reauth_apis)
         except Exception as e:
             reauth_apis = None
     else:
@@ -174,7 +174,7 @@ def handler(event, context):
             if auth_time_datetime + datetime.timedelta(minutes=TTL) < now:
                 raise Exception("ReAuth")
         except Exception as e:
-            print(f'ReAuth Required, Error: {e}')
+            log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
             response = {
                 "data": {query.get('operationName', 'operation') : None},
                 "errors": [
