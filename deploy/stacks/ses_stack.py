@@ -20,7 +20,6 @@ class SesStack(pyNestedClass):
             envname='dev',
             resource_prefix='dataall',
             custom_domain=None,
-            email_notification_sender_email_id=None,
             **kwargs,
     ):
         super().__init__(scope, id,  **kwargs)
@@ -76,21 +75,17 @@ class SesStack(pyNestedClass):
             )
         )
 
-        if email_notification_sender_email_id:
-            identity = ses.Identity.email(email_notification_sender_email_id)
-        else:
-            hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
-                self,
-                'data-all-hosted-zone',
-                zone_name=custom_domain.get('hosted_zone_name'),
-                hosted_zone_id=custom_domain.get('hosted_zone_id')
-            )
-            identity = ses.Identity.public_hosted_zone(hosted_zone)
+        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+            self,
+            'data-all-hosted-zone',
+            zone_name=custom_domain.get('hosted_zone_name'),
+            hosted_zone_id=custom_domain.get('hosted_zone_id')
+        )
 
         self.ses_identity = ses.EmailIdentity(
             self,
             id=f'{resource_prefix}-{envname}-SES-Identity',
-            identity=identity,
+            identity=es.Identity.public_hosted_zone(hosted_zone),
             configuration_set=self.configuration_set,
         )
 
