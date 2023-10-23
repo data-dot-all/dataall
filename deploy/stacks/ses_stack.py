@@ -20,6 +20,7 @@ class SesStack(pyNestedClass):
             envname='dev',
             resource_prefix='dataall',
             custom_domain=None,
+            email_notification_sender_email_id=None,
             **kwargs,
     ):
         super().__init__(scope, id,  **kwargs)
@@ -41,13 +42,6 @@ class SesStack(pyNestedClass):
         )
 
         self.sns.apply_removal_policy(RemovalPolicy.DESTROY)
-
-        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
-            self,
-            'data-all-hosted-zone',
-            zone_name=custom_domain.get('hosted_zone_name'),
-            hosted_zone_id=custom_domain.get('hosted_zone_id')
-        )
 
         self.configuration_set = ses.ConfigurationSet(
             self,
@@ -82,10 +76,21 @@ class SesStack(pyNestedClass):
             )
         )
 
+        if email_notification_sender_email_id:
+            identity = ses.Identity.email(email_notification_sender_email_id)
+        else:
+            hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+                self,
+                'data-all-hosted-zone',
+                zone_name=custom_domain.get('hosted_zone_name'),
+                hosted_zone_id=custom_domain.get('hosted_zone_id')
+            )
+            identity = ses.Identity.public_hosted_zone(hosted_zone)
+
         self.ses_identity = ses.EmailIdentity(
             self,
             id=f'{resource_prefix}-{envname}-SES-Identity',
-            identity=ses.Identity.public_hosted_zone(hosted_zone),
+            identity=identity,
             configuration_set=self.configuration_set,
         )
 
