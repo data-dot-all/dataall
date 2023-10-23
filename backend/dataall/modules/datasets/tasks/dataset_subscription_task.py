@@ -148,12 +148,12 @@ class DatasetSubscriptionService:
                         response = sns_client.publish_dataset_message(message)
                         log.info(f'SNS update publish response {response}')
 
-                        notifications = ShareNotificationService.notify_new_data_available_from_owners(
+                        notifications = ShareNotificationService(
                             session=session,
                             dataset=dataset,
-                            share=share_object,
-                            s3_prefix=prefix,
-                        )
+                            share=share_object
+                        ).notify_new_data_available_from_owners(s3_prefix=prefix)
+
                         log.info(f'Notifications for share owners {notifications}')
 
                     except ClientError as e:
