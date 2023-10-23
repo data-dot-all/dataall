@@ -160,6 +160,7 @@ def handler(event, context):
             reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
             log.info("SSM", reauth_apis)
         except Exception as e:
+            log.info("No ReAuth APIs Found in SSM")
             reauth_apis = None
     else:
         raise Exception(f'Could not initialize user context from event {event}')
