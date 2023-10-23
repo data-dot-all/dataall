@@ -3,6 +3,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { DatasetTables } from './DatasetTables';
 import { DatasetFolders } from './DatasetFolders';
+import { isFeatureEnabled } from 'utils';
 
 export const DatasetData = (props) => {
   const { dataset, isAdmin } = props;
@@ -12,9 +13,11 @@ export const DatasetData = (props) => {
       <Box>
         <DatasetTables dataset={dataset} isAdmin={isAdmin} />
       </Box>
-      <Box sx={{ mt: 3 }}>
-        <DatasetFolders dataset={dataset} isAdmin={isAdmin} />
-      </Box>
+      {isFeatureEnabled('datasets', 'file_actions') && (
+        <Box sx={{ mt: 3 }}>
+          <DatasetFolders dataset={dataset} isAdmin={isAdmin} />
+        </Box>
+      )}
     </Box>
   );
 };
