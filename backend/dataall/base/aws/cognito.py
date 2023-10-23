@@ -15,8 +15,6 @@ class Cognito(IdentityProvider):
     def get_user_emailids_from_group(self, groupName):
         try:
             envname = os.getenv('envname', 'local')
-            if envname == 'local' or envname == 'dkrcompose':
-                raise Exception('Cognito is not supported in local dev environment')
             parameter_path = f'/dataall/{envname}/cognito/userpool'
             ssm = boto3.client('ssm', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
             user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']

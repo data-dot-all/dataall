@@ -181,7 +181,11 @@ class ShareObjectService:
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
             ShareNotificationService.notify_share_object_submission(
-                session, context.username, context.email_id, dataset, share
+                session=session,
+                username=context.username,
+                email_id=context.email_id,
+                dataset=dataset,
+                share=share
             )
             return share
 
