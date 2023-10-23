@@ -65,7 +65,7 @@ class SesStack(pyNestedClass):
                     "kms:GenerateDataKey*"
                 ],
                 principals=[
-                    iam.AnyPrincipal()
+                    iam.AccountPrincipal(self.account)
                 ],
                 resources=['*'],
                 conditions={
