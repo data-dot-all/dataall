@@ -180,13 +180,13 @@ class ShareObjectService:
                 )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
-            ShareNotificationService.notify_share_object_submission(
+
+            ShareNotificationService(
                 session=session,
-                username=context.username,
-                email_id=context.email_id,
                 dataset=dataset,
                 share=share
-            )
+            ).notify_share_object_submission(username=context.username, email_id=context.email_id)
+
             return share
 
     @classmethod
@@ -211,7 +211,11 @@ class ShareObjectService:
             share.rejectPurpose = ""
             session.commit()
 
-            ShareNotificationService.notify_share_object_approval(session, context.username, context.email_id, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_approval(username=context.username, email_id=context.email_id)
 
             approve_share_task: Task = Task(
                 action='ecs.share.approve',
@@ -259,7 +263,12 @@ class ShareObjectService:
             share.rejectPurpose = reject_purpose
             session.commit()
 
-            ShareNotificationService.notify_share_object_rejection(session, context.username, context.email_id, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_rejection(username=context.username, email_id=context.email_id)
+
             return share
 
     @classmethod

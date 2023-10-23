@@ -22,154 +22,118 @@ class DataSharingNotificationType(enum.Enum):
 
 
 class ShareNotificationService:
-    @staticmethod
-    def notify_share_object_submission(
-            session, username: str, email_id: str, dataset: Dataset, share: ShareObject
-    ):
-        """Notification sent to:
-            - dataset.owner - user
-        """
-        msg = f'User {username} submitted share request for dataset {dataset.label}'
-        subject = f'Data.all | Share Request Submitted for {dataset.label}'
+    """
+    Notifications sent to:
+        - dataset.SamlAdminGroupName
+        - dataset.stewards
+        - share.groupUri
+    Emails sent to:
+        - requester user,
+        - requester group (if group_notifications=true)
+        - dataset.SamlAdminGroupName
+        - dataset.stewards
+    """
+    def __init__(self, session, dataset: Dataset, share: ShareObject):
+        self.dataset = dataset
+        self.share = share
+        self.session = session
+        self.notification_target_users = self._get_share_object_targeted_users()
 
-        log.info(f"Creating notification: {dataset.owner}, msg {msg}")
 
-        notifications = [NotificationRepository.create_notification(
-            session=session,
-            username=dataset.owner,
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value,
-            target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-            message=msg,
-        )]
-        session.add_all(notifications)
+    def notify_share_object_submission(self, username: str, email_id: str):
+        msg = f'User {username} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
 
-        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
+        notifications = self._register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg)
+
+        self._create_notification_task(email_id, subject, msg)
+
         return notifications
 
-    @staticmethod
-    def notify_share_object_approval(
-            session, username: str, email_id: str, dataset: Dataset, share: ShareObject
-    ):
+
+    def notify_share_object_approval(self, username: str, email_id: str):
+        msg = f'User {username} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        subject = f'Data.all | Share Request Approved for {self.dataset.label}'
+
+        notifications = self._register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg)
+
+        self._create_notification_task(email_id, subject, msg)
+        return notifications
+
+    def notify_share_object_rejection(self, username: str, email_id: str):
         """Notification sent to:
             - dataset.SamlAdminGroupName - group
             - dataset.stewards - group
             - dataset.owner - user
             - share.owner - user
         """
-        msg = f'User {username} approved share request for dataset {dataset.label}'
-        subject = f'Data.all | Share Request Approved for {dataset.label}'
-
-        notifications = []
-        targeted_users = ShareNotificationService._get_share_object_targeted_users(
-            session, dataset, share
-        )
-        for user in targeted_users:
-            log.info(f"Creating notification: {user}, msg {msg}")
-            notifications.append(
-                NotificationRepository.create_notification(
-                    session=session,
-                    username=user,
-                    notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value,
-                    target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=msg,
-                )
-            )
-            session.add_all(notifications)
-
-        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
-
-        return notifications
-
-    @staticmethod
-    def notify_share_object_rejection(
-            session, username: str, email_id: str, dataset: Dataset, share: ShareObject
-    ):
-        """Notification sent to:
-            - dataset.SamlAdminGroupName - group
-            - dataset.stewards - group
-            - dataset.owner - user
-            - share.owner - user
-        """
-        if share.status == ShareObjectStatus.Rejected.value:
-            msg = f'User {username} rejected share request for dataset {dataset.label}'
-            subject = f'Data.all | Share Request Rejected for {dataset.label}'
-        elif share.status == ShareObjectStatus.Revoked.value:
-            msg = f'User {username} revoked share request for dataset {dataset.label}'
-            subject = f'Data.all | Share Request Revoked for {dataset.label}'
+        if self.share.status == ShareObjectStatus.Rejected.value:
+            msg = f'User {username} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            subject = f'Data.all | Share Request Rejected for {self.dataset.label}'
+        elif self.share.status == ShareObjectStatus.Revoked.value:
+            msg = f'User {username} REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            subject = f'Data.all | Share Request Revoked for {self.dataset.label}'
         else:
-            msg = f'User {username} rejected / revoked share request for dataset {dataset.label}'
-            subject = f'Data.all | Share Request Rejected / Revoked for {dataset.label}'
+            msg = f'User {username} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            subject = f'Data.all | Share Request Rejected / Revoked for {self.dataset.label}'
 
-        notifications = []
-        targeted_users = ShareNotificationService._get_share_object_targeted_users(
-            session, dataset, share
-        )
-        for user in targeted_users:
-            notifications.append(
-                NotificationRepository.create_notification(
-                    session=session,
-                    username=user,
-                    notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value,
-                    target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=msg,
-                )
-            )
-        session.add_all(notifications)
+        notifications = self._register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg)
 
-        ShareNotificationService.create_notification_task(session, email_id, dataset, share, subject, msg)
+        self._create_notification_task(email_id, subject, msg)
 
         return notifications
 
-    @staticmethod
-    def notify_new_data_available_from_owners(
-            session, dataset: Dataset, share: ShareObject, s3_prefix
-    ):
-        notifications = []
-        targeted_users = ShareNotificationService._get_share_object_targeted_users(
-            session, dataset, share
-        )
-        for user in targeted_users:
-            notifications.append(
-                NotificationRepository.create_notification(
-                    session=session,
-                    username=user,
-                    notification_type=DataSharingNotificationType.DATASET_VERSION.value,
-                    target_uri=f'{share.shareUri}|{dataset.datasetUri}',
-                    message=f'New data (at {s3_prefix}) is available from dataset {dataset.datasetUri} '
-                            f'shared by owner {dataset.owner}',
-                )
-            )
-        session.add_all(notifications)
+
+    def notify_new_data_available_from_owners(self, s3_prefix):
+        msg = f'New data (at {s3_prefix}) is available from dataset {self.dataset.datasetUri} shared by owner {self.dataset.owner}'
+
+        notifications = self._register_notifications(
+            notification_type=DataSharingNotificationType.DATASET_VERSION.value, msg=msg)
+
         return notifications
 
-    @staticmethod
-    def _get_share_object_targeted_users(session, dataset, share):
-        targeted_users = ShareNotificationService._get_dataset_stewards(dataset)
-        targeted_users.append(dataset.owner)
-        targeted_users.append(share.owner)
+
+    def _get_share_object_targeted_users(self):
+        targeted_users = list()
+        targeted_users.append(self.dataset.SamlAdminGroupName)
+        targeted_users.append(self.dataset.stewards)
+        targeted_users.append(self.share.owner)
         return targeted_users
 
-    @staticmethod
-    def _get_dataset_stewards(dataset):
-        stewards = list()
-        stewards.append(dataset.SamlAdminGroupName)
-        stewards.append(dataset.stewards)
-        return stewards
 
-    @staticmethod
-    def create_notification_task(session, email_id, dataset, share, subject, msg):
+    def _register_notifications(self, notification_type, msg):
+        notifications = []
+        for user in self.targeted_users:
+            log.info(f"Creating notification for {user}, msg {msg}")
+            notifications.append(
+                NotificationRepository.create_notification(
+                    session=self.session,
+                    username=user,
+                    notification_type=notification_type,
+                    target_uri=f'{self.share.shareUri}|{self.dataset.datasetUri}',
+                    message=msg,
+                )
+            )
+        self.session.add_all(notifications)
+        return notifications
+
+
+    def _create_notification_task(self, email_id, subject, msg):
         """
         Creates SES notification task. Email_id corresponds to the email of the user that triggered the API call.
-            - For submitting and requesting email_id = requester email
+            - For submitting and requesting email_id = requester user email
             - For approving email_id = member of dataset admin or steward team
         """
         share_notification_config = config.get_property('modules.datasets.share_notifications')
 
-        notification_recipient_groups_list = [dataset.SamlAdminGroupName, dataset.stewards]
+        notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
         notification_recipient_email_ids = []
 
         if share_notification_config['email']['features']['group_notifications'] == True:
-            notification_recipient_groups_list.append(share.groupUri)
+            notification_recipient_groups_list.append(self.share.groupUri)
         else:
             notification_recipient_email_ids = [email_id]
 
@@ -178,7 +142,7 @@ class ShareNotificationService:
 
                 notification_task: Task = Task(
                     action='notification.service',
-                    targetUri=share.shareUri,
+                    targetUri=self.share.shareUri,
                     payload={
                         'notificationType' : share_notification_config_type,
                         'subject': subject,
@@ -187,8 +151,8 @@ class ShareNotificationService:
                         'recipientEmailList' : notification_recipient_email_ids
                     },
                 )
-                session.add(notification_task)
-                session.commit()
+                self.session.add(notification_task)
+                self.session.commit()
 
                 Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
             else:
