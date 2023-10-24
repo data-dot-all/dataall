@@ -153,8 +153,13 @@ of our repository. Open it, you should be seen something like:
         "enable_quicksight_monitoring": "boolean_ENABLE_CONNECTION_QUICKSIGHT_RDS|DEFAULT=false",
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
-        "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false"
-        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false"
+        "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false",
+        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
+        "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200",
+        "reauth_config": {
+          "reauth_apis": "list_of_strings_OPERATION_NAMES_TO_REQUIRE_REAUTH_ON|DEFAULT=None",
+          "ttl": "int_TIME_IN_MINUTES_TO_ALLOW_USER_TO_PERFORM_SENSITIVE_APIS_BEFORE_FORCING_REAUTH|DEFAULT=5"
+        }
       }
     ]
   }
@@ -195,6 +200,8 @@ and find 2 examples of cdk.json files.
 | enable_pivot_role_auto_create                 | Optional              | If set to **true**, data.all creates the pivot IAM role as part of the environment stack. If false, a CloudFormation template is provided in the UI and AWS account admins need to deploy this stack as pre-requisite to link a data.all environment (default: false) |
 | enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                               |                                                                                                                      |
 | enable_opensearch_serverless           | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                          |
+| cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                                          |
+| reauth_config           | Optional              | A dictionary containing                    a list of API operations that require a user to re-authenticate before proceeding in the UI (reauth_apis) and a time to live (ttl) for how long a user's re-auth session is valid to perform re-auth enforced APIs before having to re-authenticate again                                                                                       |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -266,7 +273,13 @@ deploy to 2 deployments accounts.
             "ip_ranges": ["IP_RANGE1", "IP_RANGE2"],
             "apig_vpce": "vpc-xxxxxxxxxxxxxx",
             "enable_pivot_role_auto_create": true,
-            "enable_update_dataall_stacks_in_cicd_pipeline": true
+            "enable_update_dataall_stacks_in_cicd_pipeline": true,
+            "enable_opensearch_serverless": true,
+            "cognito_user_session_timeout_inmins": 240,
+            "reauth_config": {
+              "reauth_apis": ["CreateDataset", "ImportDataset", "deleteDataset"],
+              "ttl": 10
+            }
         }
     ]
   }
@@ -287,6 +300,14 @@ the different configuration options.
                 "file_uploads": false,
                 "file_actions": true,
                 "aws_actions": true
+            },
+            "share_notifications": {
+                "email": {
+                    "active": false,
+                    "features": {
+                        "group_notifications": false
+                    }
+                }
             }
         },
         "mlstudio": {
@@ -331,13 +352,14 @@ check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide
 | feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
 | vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
 | datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
-| dataset_sharing | datasets_base                                       | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
+| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
 | datasets_base   | None                                                | Shared code related to Datasets.                                                      |
-| worksheets      | None                                                | Athena query editor integrated in data.all UI                                         |
+| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                         |
 | datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
 | dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
+| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                |
 
 
 ### Disable module features
@@ -351,7 +373,9 @@ In the example config.json, the feature that enables file upload from data.all U
         "features": {
             "file_uploads": false,
             "file_actions": true,
-            "aws_actions": true
+            "aws_actions": true,
+            "preview_data": true,
+            "glue_crawler": true
         }
     },
 ```
@@ -360,6 +384,8 @@ In the example config.json, the feature that enables file upload from data.all U
 | file_uploads  | datasets   | Upload files in a Dataset in the Upload tab |
 | file_actions  | datasets   | Create, Read, Update, Delete on Dataset Folders                                     |
 | aws_actions   | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                     |
+| preview_data  | datasets   | Enable previews of dataset tables for users in data.all UI                                    |
+| glue_crawler  | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                    |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
