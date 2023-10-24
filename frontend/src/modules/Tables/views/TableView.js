@@ -163,7 +163,7 @@ const TableView = () => {
   const client = useClient();
   const navigate = useNavigate();
   const [table, setTable] = useState({});
-  const [currentTab, setCurrentTab] = useState('preview');
+  const [currentTab, setCurrentTab] = useState(tabs[0].value);
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
