@@ -1,5 +1,4 @@
 from aws_cdk import (
-    aws_ssm as ssm,
     aws_kms as kms,
     aws_sns as sns,
     aws_ses as ses,
@@ -85,7 +84,7 @@ class SesStack(pyNestedClass):
         self.ses_identity = ses.EmailIdentity(
             self,
             id=f'{resource_prefix}-{envname}-SES-Identity',
-            identity=es.Identity.public_hosted_zone(hosted_zone),
+            identity=ses.Identity.public_hosted_zone(hosted_zone),
             configuration_set=self.configuration_set,
         )
 

@@ -15,7 +15,7 @@ class NotificationHandler:
     @Worker.handler(path='notification.service')
     def notification_service(engine, task: Task):
         envname = os.getenv('envname', 'local')
-        if envname in ['local','dkrcompose']:
+        if envname in ['local', 'dkrcompose']:
             log.info('Email notifications are not supported in local dev environment')
             return True
         if task.payload.get('notificationType') == 'email':

@@ -67,7 +67,7 @@ class ShareItemService:
                 session=session,
                 dataset=dataset,
                 share=share
-            ).notify_share_object_rejection(username=context.username, email_id=context.email_id)
+            ).notify_share_object_rejection(email_id=context.username)
 
             revoke_share_task: Task = Task(
                 action='ecs.share.revoke',

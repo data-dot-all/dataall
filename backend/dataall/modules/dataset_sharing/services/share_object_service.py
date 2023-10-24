@@ -185,7 +185,7 @@ class ShareObjectService:
                 session=session,
                 dataset=dataset,
                 share=share
-            ).notify_share_object_submission(username=context.username, email_id=context.email_id)
+            ).notify_share_object_submission(email_id=context.username)
 
             return share
 
@@ -215,7 +215,7 @@ class ShareObjectService:
                 session=session,
                 dataset=dataset,
                 share=share
-            ).notify_share_object_approval(username=context.username, email_id=context.email_id)
+            ).notify_share_object_approval(email_id=context.username)
 
             approve_share_task: Task = Task(
                 action='ecs.share.approve',
@@ -267,7 +267,7 @@ class ShareObjectService:
                 session=session,
                 dataset=dataset,
                 share=share
-            ).notify_share_object_rejection(username=context.username, email_id=context.email_id)
+            ).notify_share_object_rejection(email_id=context.username)
 
             return share
 

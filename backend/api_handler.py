@@ -115,7 +115,6 @@ def handler(event, context):
 
     if 'authorizer' in event['requestContext']:
         username = event['requestContext']['authorizer']['claims']['email']
-        email_id = event['requestContext']['authorizer']['claims']['email']
         try:
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
@@ -138,14 +137,13 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, email_id, groups))
+        set_context(RequestContext(ENGINE, username, groups))
 
         app_context = {
             'engine': ENGINE,
             'username': username,
             'groups': groups,
-            'schema': SCHEMA,
-            'emailId': email_id,
+            'schema': SCHEMA
         }
 
     else:
