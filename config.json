@@ -12,11 +12,11 @@
         "datasets": {
             "active": true,
             "features": {
-                "file_uploads": false,
-                "file_actions": false,
-                "aws_actions": false,
+                "file_uploads": true,
+                "file_actions": true,
+                "aws_actions": true,
                 "preview_data": true,
-                "glue_crawler": false
+                "glue_crawler": true
             },
             "share_notifications": {
                 "email": {
