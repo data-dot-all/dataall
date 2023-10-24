@@ -17,6 +17,14 @@
                 "aws_actions": false,
                 "preview_data": false,
                 "glue_crawler": false
+            },
+            "share_notifications": {
+                "email": {
+                    "active": true,
+                    "features": {
+                        "group_notifications": true
+                    }
+                }
             }
         },
         "worksheets": {

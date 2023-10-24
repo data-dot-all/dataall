@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Custom least privilege IAM policy for linking environments to dataall
 Parameters:
   PolicyName:
-    Description: IAM policy name (The same name must be used during CDK bootstrapping. Default is DataAllCustomCDKPolicy.)
+    Description: IAM policy name (The same name must be used during CDK bootstrapping)
     Type: String
     Default: 'DataAllCustomCDKPolicy'
   EnvironmentResourcePrefix:
@@ -16,189 +16,187 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: KMS
-            Action:
-              - 'kms:CreateKey'
-            Effect: Allow
-            Resource: '*'
-          - Sid: ec2
-            Action:
-              - 'ec2:DescribeSecurityGroups'
-              - 'ec2:CreateSecurityGroup'
-              - 'ec2:createTags'
-              - 'ec2:DeleteSecurityGroup'
-              - 'ec2:RevokeSecurityGroupEgress'
-              - 'ec2:AuthorizeSecurityGroupIngress'
-              - 'ec2:AuthorizeSecurityGroupEgress'
-              - 'ec2:RevokeSecurityGroupIngress'
-              - 'ec2:AttachInternetGateway'
-              - 'ec2:DetachInternetGateway'
-              - 'ec2:DescribeInternetGateways'
-              - 'ec2:DescribeRouteTables'
-              - 'ec2:AssociateRouteTable'
-              - 'ec2:DisassociateRouteTable'
-              - 'ec2:CreateRoute'
-              - 'ec2:DeleteRoute'
-            Effect: Allow
-            Resource: '*'
+
           - Sid: Athena
             Effect: Allow
-            Action: 'athena:CreateWorkGroup'
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:athena:*:${AWS::AccountId}:workgroup/*'
-          - Sid: IAM
             Action:
-              - 'iam:CreatePolicy'
-              - 'iam:GetPolicy'
+              - 'athena:CreateWorkGroup'
+              - 'athena:*Tag*'
+              - 'athena:GetWorkGroup'
+              - 'athena:DeleteWorkGroup'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
+
+          - Sid: IAM
             Effect: Allow
+            Action:
+              - 'iam:CreatePolicy*'
+              - 'iam:DeletePolicy*'
+              - 'iam:DetachRolePolicy'
+              - 'iam:DeleteRole'
+              - 'iam:CreateRole'
+              - 'iam:DeleteRolePolicy'
+              - 'iam:*Tag*'
+              - 'iam:PassRole'
+              - 'iam:AttachRolePolicy'
+              - 'iam:*ServiceLinkedRole'
+              - 'iam:Get*'
+              - 'iam:List*'
+              - 'iam:UpdateAssumeRolePolicy'
+              - 'iam:PutRolePolicy'
             Resource:
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
-          - Sid: IAMRole
-            Action:
-              - 'iam:AttachRolePolicy'
-              - 'iam:CreateRole'
-              - 'iam:CreateServiceLinkedRole'
-              - 'iam:GetRole'
-              - 'iam:GetRolePolicy'
-              - 'iam:PutRolePolicy'
-              - 'iam:TagRole'
-              - 'iam:UnTagRole'
-              - 'iam:DeleteRole'
-              - 'iam:DetachRolePolicy'
-              - 'iam:DeleteRolePolicy'
-              - 'iam:PassRole'
-              - 'iam:UpdateAssumeRolePolicy'
-              - 'iam:DeletePolicy'
-              - 'iam:List*'
-              - 'iam:GetServiceLastAccessedDetails'
-            Effect: Allow
-            Resource: '*'
-          - Sid: IAMQuickSight
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*'
+
+          - Sid: IAMTwo
             Effect: Allow
             Action:
-              - 'iam:CreatePolicyVersion'
-              - 'iam:DeletePolicyVersion'
-            Resource:
-               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
-          - Sid: QuickSight
+              - 'sts:AssumeRole'
+              - 'iam:*Role*'
+            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
+
+          - Sid: Quicksight
             Effect: Allow
             Action:
               - 'ds:AuthorizeApplication'
               - 'ds:UnauthorizeApplication'
               - 'ds:CheckAlias'
               - 'ds:CreateAlias'
-              - 'ds:DescribeDirectories'
-              - 'ds:DescribeTrusts'
+              - 'ds:Describe*'
               - 'ds:DeleteDirectory'
               - 'ds:CreateIdentityPoolDirectory'
               - 'quicksight:CreateAdmin'
               - 'quicksight:CreateUser'
               - 'quicksight:Subscribe'
-              - 'quicksight:GetGroupMapping'
+              - 'quicksight:Get*'
               - 'quicksight:SearchDirectoryGroups'
               - 'quicksight:SetGroupMapping'
               - 'quicksight:RegisterUser'
-              - 'quicksight:GetDashboardEmbedUrl'
-              - 'quicksight:DescribeDashboardPermissions'
+              - 'quicksight:Describe*'
             Resource: '*'
-          - Sid: QuickSightDeny
+
+          - Sid: QuicksightDeny
             Effect: Deny
             Action:
               - 'quicksight:Unsubscribe'
             Resource: '*'
-          - Sid: KMSCreateAlias
-            Action:
-              - 'kms:CreateAlias'
+
+          - Sid: KMS
             Effect: Allow
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:kms:*:${AWS::AccountId}:alias/*'
-          - Sid: KMSKey
             Action:
-              - 's3:PutBucketAcl'
-              - 's3:PutBucketNotification'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:s3:::${EnvironmentResourcePrefix}-logging-*'
-          - Sid: ReadBuckets
-            Action:
+              - 'kms:CreateKey'
               - 'kms:CreateAlias'
               - 'kms:CreateGrant'
               - 'kms:Decrypt'
-              - 'kms:DescribeKey'
+              - 'kms:Describe*'
               - 'kms:EnableKeyRotation'
               - 'kms:Encrypt'
-              - 'kms:GetKeyPolicy'
-              - 'kms:GetKeyRotationStatus'
-              - 'kms:ListResourceTags'
+              - 'kms:Get*'
+              - 'kms:List*'
+              - 'kms:Generate*'
               - 'kms:PutKeyPolicy'
-              - 'kms:TagResource'
-            Effect: Allow
-            Resource: !Sub 'arn:${AWS::Partition}:kms:*:${AWS::AccountId}:key/*'
-          - Sid: Lambda
-            Action:
-              - 'lambda:AddPermission'
-              - 'lambda:CreateFunction'
-              - 'lambda:GetFunction'
-              - 'lambda:GetFunctionCodeSigningConfig'
-              - 'lambda:GetRuntimeManagementConfig'
-              - 'lambda:PutFunctionEventInvokeConfig'
-              - 'lambda:InvokeFunction'
-              - 'lambda:RemovePermission'
-            Effect: Allow
+              - 'kms:DeleteAlias'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:*Tag*'
             Resource: '*'
-          - Sid: LambdaPublishLayer
+
+          - Sid: Lambda
             Effect: Allow
             Action:
               - 'lambda:PublishLayerVersion'
+              - 'lambda:DeleteLayerVersion'
+              - 'lambda:DeleteFunction*'
+              - 'lambda:*Tag*'
+              - 'lambda:AddPermission'
+              - 'lambda:CreateFunction'
+              - 'lambda:Get*'
+              - 'lambda:PutFunctionEventInvokeConfig'
+              - 'lambda:InvokeFunction'
+              - 'lambda:RemovePermission'
             Resource:
-              - !Sub 'arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:layer:*'
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvironmentResourcePrefix}*'
+
           - Sid: S3
+            Effect: Allow
             Action:
               - 's3:CreateBucket'
               - 's3:GetBucketPolicy'
-              - 's3:PutBucketCORS'
-              - 's3:PutBucketLogging'
-              - 's3:PutBucketPolicy'
-              - 's3:PutBucketPublicAccessBlock'
-              - 's3:PutBucketTagging'
-              - 's3:PutBucketVersioning'
+              - 's3:GetObject'
+              - 's3:PutBucket*'
+              - 's3:ListBucket'
               - 's3:PutEncryptionConfiguration'
               - 's3:PutLifecycleConfiguration'
               - 's3:DeleteBucketPolicy'
               - 's3:DeleteBucket'
-            Effect: Allow
             Resource: !Sub 'arn:${AWS::Partition}:s3:::*'
+
+          - Sid: S3CDK
+            Effect: Allow
+            Action:
+              - 's3:*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::cdktoolkit-stagingbucket-*'
+              - !Sub 'arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}*'
+
           - Sid: SQS
             Effect: Allow
             Action:
               - 'sqs:CreateQueue'
               - 'sqs:SetQueueAttributes'
-            Resource: !Sub 'arn:${AWS::Partition}:sqs:*:${AWS::AccountId}:*'
+              - 'sqs:*Tag*'
+              - 'sqs:DeleteQueue'
+              - 'sqs:GetQueueAttributes'
+            Resource: !Sub 'arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+
+          - Sid: Sagemaker
+            Effect: Allow
+            Action:
+              - 'sagemaker:*Tag*'
+              - 'sagemaker:CreateDomain'
+              - 'sagemaker:DeleteDomain'
+              - 'sagemaker:DescribeDomain'
+              - 'sagemaker:CreateApp'
+              - 'sagemaker:CreateUserProfile'
+              - 'sagemaker:DescribeUserProfile'
+              - 'sagemaker:DeleteUserProfile'
+              - 'sagemaker:*NotebookInstance'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:domain/*'
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
+              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
+
           - Sid: SSM
             Effect: Allow
             Action:
-              - 'ssm:GetParameters'
+              - 'ssm:Get*'
               - 'ssm:PutParameter'
-            Resource: '*'
+              - 'ssm:*Tag*'
+              - 'ssm:DeleteParameter'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk*'
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
+
           - Sid: Logs
             Effect: Allow
             Action:
               - 'logs:CreateLogGroup'
               - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-              - 'logs:DescribeLogStreams'
+              - 'logs:Put*'
+              - 'logs:DescribeLog*'
+              - 'logs:DeleteLog*'
+              - 'logs:DeleteRetentionPolicy'
+              - 'logs:*Tag*'
             Resource: !Sub 'arn:${AWS::Partition}:logs:*:*:*'
-          - Sid: STS
-            Effect: Allow
-            Action:
-              - 'sts:AssumeRole'
-              - 'iam:*Role*'
-            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
-          - Sid: CloudFormation
+
+          - Sid: CFN
             Effect: Allow
             Action:
               - 'cloudformation:*'
-            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
+
           - Sid: ECR
             Effect: Allow
             Action:
@@ -208,66 +206,59 @@ Resources:
               - 'ecr:DescribeRepositories'
               - 'ecr:CreateRepository'
               - 'ecr:DeleteRepository'
-            Resource: !Sub 'arn:${AWS::Partition}:ecr:*:${AWS::AccountId}:repository/cdk-*'
-          - Sid: SSMTwo
+            Resource: !Sub 'arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/cdk-*'
+
+          - Sid: LF
             Effect: Allow
             Action:
-              - 'ssm:GetParameter'
-              - 'ssm:PutParameter'
-              - 'ssm:DeleteParameter'
-            Resource: !Sub 'arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:parameter/cdk-bootstrap/*'
-          - Sid: CloudformationTwo
-            Effect: Allow
-            Action:
-              - '*'
+              - 'lakeformation:*'
+              - 'glue:*'
             Resource: '*'
-            Condition:
-              'ForAnyValue:StringEquals':
-                'aws:CalledVia': 'cloudformation.amazonaws.com'
-          - Sid: S3Staging
+
+          - Sid: EC2
             Effect: Allow
             Action:
-              - 's3:*'
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}*'
-          - Sid: Pipelines
+              - 'ec2:Describe*'
+              - 'ec2:*SecurityGroup*'
+              - 'ec2:Create*'
+              - 'ec2:*InternetGateway*'
+              - 'ec2:Associate*'
+              - 'ec2:Disassociate*'
+              - 'ec2:Delete*'
+              - 'ec2:Modify*'
+              - 'ec2:Get*'
+              - 'ec2:*Address'
+              - 'elasticfilesystem:CreateFileSystem'
+              - 'elasticfilesystem:TagResource'
+              - 'elasticfilesystem:UntagResource'
+              - 'elasticfilesystem:DeleteFileSystem'
+            Resource: '*'
+
+          - Sid: EC2Deny
+            Effect: Deny
+            Action:
+              - 'ec2:*Instance*'
+            Resource: '*'
+
+          - Sid: CodePipeline
             Effect: Allow
             Action:
-              - 'codepipeline:TagResource'
-              - 'codepipeline:UntagResource'
+              - 'codepipeline:*Tag*'
               - 'codepipeline:CreatePipeline'
               - 'codepipeline:UpdatePipeline'
               - 'codepipeline:StartPipelineExecution'
-              - 'codepipeline:GetPipeline'
-              - 'codepipeline:GetPipelineState'
-              - 'codepipeline:GetPipelineExecution'
-              - 'codepipeline:ListPipelineExecutions'
-              - 'codepipeline:ListActionExecutions'
-              - 'codepipeline:ListActionTypes'
-              - 'codepipeline:ListPipelines'
-              - 'codepipeline:ListTagsForResource'
+              - 'codepipeline:GetPipeline*'
+              - 'codepipeline:List*'
               - 'codepipeline:DeletePipeline'
-              - 'codestar-notifications:ListNotificationRules'
-              - 'codestar-notifications:ListEventTypes'
-              - 'codestar-notifications:ListTargets'
-            Resource: '*'
-          - Sid: PipelinesS3
-            Effect: Allow
-            Action:
-              - 's3:GetObject'
-              - 's3:ListBucket'
-              - 's3:GetBucketPolicy'
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:s3::*:codepipeline-*'
-          - Sid: CodeStarNotificationsReadOnly
-            Effect: Allow
-            Action:
+              - 'codestar-notifications:List*'
               - 'codestar-notifications:DescribeNotificationRule'
+              - 'codecommit:Create*'
+              - 'codecommit:DeleteRepository'
+              - 'codecommit:*Tag*'
+              - 'codebuild:*Project*'
             Resource: '*'
-            Condition:
-              'StringLike':
-                'codestar-notifications:NotificationsForResource': !Sub 'arn:${AWS::Partition}:codepipeline:*'
-          - Sid: Eventrules
+
+          - Sid: Events
             Effect: Allow
             Action:
               - 'events:PutRule'

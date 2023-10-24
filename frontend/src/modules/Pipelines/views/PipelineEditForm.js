@@ -28,7 +28,7 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listEnvironments, useClient } from 'services';
+import { listValidEnvironments, useClient } from 'services';
 import { getDataPipeline, updateDataPipeline } from '../services';
 import { PipelineEnvironmentEditForm } from '../components';
 
@@ -73,11 +73,11 @@ const PipelineEditForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoadingEnvs(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.selectListFilter })
+      listValidEnvironments({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label

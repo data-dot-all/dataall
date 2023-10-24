@@ -372,7 +372,7 @@ class PipelineStack(Stack):
                         resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall-testing'],
                     )
                 ],
-            )   
+            )
 
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
@@ -636,6 +636,8 @@ class PipelineStack(Stack):
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
                 reauth_config = target_env.get('reauth_config', None),
+                cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
+                email_notification_sender_email_id=target_env.get('email_sender_id'),
             )
         )
         return backend_stage

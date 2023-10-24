@@ -1,4 +1,9 @@
+import os
+from dataall.base import db
+from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from aws_cdk import aws_iam as iam
 
 
@@ -10,23 +15,6 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     """
     def get_statements(self):
         statements = [
-            # S3 Imported Buckets - restrict resources via bucket policies
-            iam.PolicyStatement(
-                sid='ImportedBuckets',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:List*',
-                    's3:GetBucket*',
-                    's3:GetLifecycleConfiguration',
-                    's3:GetObject',
-                    's3:PutBucketPolicy',
-                    's3:PutBucketTagging',
-                    's3:PutObject',
-                    's3:PutObjectAcl',
-                    's3:PutBucketOwnershipControls',
-                ],
-                resources=['arn:aws:s3:::*'],
-            ),
             # For dataset preview
             iam.PolicyStatement(
                 sid='AthenaWorkgroupsDataset',
@@ -138,4 +126,33 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 }
             )
         ]
+        allowed_buckets = []
+        engine = db.get_engine(envname=os.environ.get('envname', 'local'))
+        with engine.scoped_session() as session:
+            datasets = DatasetRepository.query_environment_imported_datasets(
+                session, uri=self.environmentUri, filter=None
+            )
+            if datasets:
+                dataset: Dataset
+                for dataset in datasets:
+                    allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+
+        if allowed_buckets:
+            # Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
+            dataset_statement = split_policy_with_resources_in_statements(
+                base_sid='ImportedDatasetBuckets',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:List*',
+                    's3:GetBucket*',
+                    's3:GetLifecycleConfiguration',
+                    's3:GetObject',
+                    's3:PutBucketPolicy',
+                    's3:PutBucketTagging',
+                    's3:PutObjectAcl',
+                    's3:PutBucketOwnershipControls',
+                ],
+                resources=allowed_buckets
+            )
+            statements.extend(dataset_statement)
         return statements

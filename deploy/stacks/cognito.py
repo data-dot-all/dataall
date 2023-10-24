@@ -28,6 +28,7 @@ class IdpStack(pyNestedClass):
         internet_facing=True,
         tooling_account_id=None,
         enable_cw_rum=False,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -64,6 +65,7 @@ class IdpStack(pyNestedClass):
             f'AppClient-{envname}',
             user_pool=self.user_pool,
             prevent_user_existence_errors=True,
+            refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
         )
 
         if enable_cw_rum:

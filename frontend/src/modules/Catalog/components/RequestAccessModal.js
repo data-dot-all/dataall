@@ -21,7 +21,7 @@ import {
   createShareObject,
   listEnvironmentConsumptionRoles,
   listEnvironmentGroups,
-  listEnvironments,
+  listValidEnvironments,
   requestDashboardShare,
   useClient
 } from 'services';
@@ -41,13 +41,13 @@ export const RequestAccessModal = (props) => {
 
   const fetchEnvironments = useCallback(async () => {
     const response = await client.query(
-      listEnvironments({
+      listValidEnvironments({
         filter: Defaults.selectListFilter
       })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label
