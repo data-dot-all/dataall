@@ -32,7 +32,7 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
-TTL = int(os.environ.get('TTL', '5'))
+REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
@@ -171,7 +171,7 @@ def handler(event, context):
         now = datetime.datetime.now(datetime.timezone.utc)
         try:
             auth_time_datetime = datetime.datetime.fromtimestamp(int(claims["auth_time"]), tz=datetime.timezone.utc)
-            if auth_time_datetime + datetime.timedelta(minutes=TTL) < now:
+            if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
                 raise Exception("ReAuth")
         except Exception as e:
             log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
