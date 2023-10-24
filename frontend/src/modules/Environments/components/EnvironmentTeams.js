@@ -177,38 +177,16 @@ function TeamRow({ team, environment, fetchItems }) {
           />
         )}
       </TableCell>
-      {isFeatureEnabled('core', 'env_aws_actions') && (
-        <TableCell>
-          <Box>
-            <LoadingButton
-              loading={accessingConsole}
-              onClick={() => getConsoleLink(team.groupUri)}
-            >
-              <FaIcons.FaAws
-                size={25}
-                color={
-                  theme.palette.mode === 'dark'
-                    ? theme.palette.primary.contrastText
-                    : theme.palette.primary.main
-                }
-              />
-            </LoadingButton>
-            <LoadingButton
-              loading={loadingCreds}
-              onClick={() => generateCredentials(team.groupUri)}
-            >
-              <CopyAllOutlined
-                sx={{
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? theme.palette.primary.contrastText
-                      : theme.palette.primary.main
-                }}
-              />
-            </LoadingButton>
-            {team.groupUri !== environment.SamlGroupName && (
-              <LoadingButton onClick={() => removeGroup(team.groupUri)}>
-                <HiUserRemove
+
+      <TableCell>
+        <Box>
+          {isFeatureEnabled('core', 'env_aws_actions') && (
+            <>
+              <LoadingButton
+                loading={accessingConsole}
+                onClick={() => getConsoleLink(team.groupUri)}
+              >
+                <FaIcons.FaAws
                   size={25}
                   color={
                     theme.palette.mode === 'dark'
@@ -217,10 +195,35 @@ function TeamRow({ team, environment, fetchItems }) {
                   }
                 />
               </LoadingButton>
-            )}
-          </Box>
-        </TableCell>
-      )}
+              <LoadingButton
+                loading={loadingCreds}
+                onClick={() => generateCredentials(team.groupUri)}
+              >
+                <CopyAllOutlined
+                  sx={{
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? theme.palette.primary.contrastText
+                        : theme.palette.primary.main
+                  }}
+                />
+              </LoadingButton>
+            </>
+          )}
+          {team.groupUri !== environment.SamlGroupName && (
+            <LoadingButton onClick={() => removeGroup(team.groupUri)}>
+              <HiUserRemove
+                size={25}
+                color={
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.primary.main
+                }
+              />
+            </LoadingButton>
+          )}
+        </Box>
+      </TableCell>
     </TableRow>
   );
 }
@@ -448,9 +451,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     <TableCell>IAM Role</TableCell>
                     <TableCell>Athena WorkGroup</TableCell>
                     <TableCell>Permissions</TableCell>
-                    {isFeatureEnabled('core', 'env_aws_actions') && (
-                      <TableCell>Actions</TableCell>
-                    )}
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 {loading ? (
