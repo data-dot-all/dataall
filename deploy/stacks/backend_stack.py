@@ -87,7 +87,7 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
-            reauth_apis=reauth_config.get("reauth_apis", None),
+            reauth_apis=reauth_config.get("reauth_apis", None) if reauth_config else None,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -148,7 +148,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
-            reauth_ttl=reauth_config.get("ttl", 5),
+            reauth_ttl=reauth_config.get("ttl", 5) if reauth_config else 5,
             **kwargs,
         )
 
