@@ -5,7 +5,6 @@ from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import Stack
-from hamcrest import none
 
 from .aurora import AuroraServerlessStack
 from .cognito import IdpStack
