@@ -97,7 +97,7 @@ class ShareNotificationService:
             - share.groupUri
         """
         notifications = []
-        for user in self.targeted_users:
+        for user in self.notification_target_users:
             log.info(f"Creating notification for {user}, msg {msg}")
             notifications.append(
                 NotificationRepository.create_notification(
@@ -113,6 +113,7 @@ class ShareNotificationService:
 
     def _create_notification_task(self, subject, msg):
         """
+        At the moment just for notification_config_type = email, but designed for additional notification types
         Emails sent to:
             - dataset.SamlAdminGroupName
             - dataset.stewards

@@ -1,5 +1,4 @@
 import logging
-import os
 
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.tasks.db.task_models import Task
@@ -14,10 +13,6 @@ class NotificationHandler:
     @staticmethod
     @Worker.handler(path='notification.service')
     def notification_service(engine, task: Task):
-        envname = os.getenv('envname', 'local')
-        if envname in ['local', 'dkrcompose']:
-            log.info('Email notifications are not supported in local dev environment')
-            return True
         if task.payload.get('notificationType') == 'email':
             return NotificationHandler.send_email_notification(task)
 

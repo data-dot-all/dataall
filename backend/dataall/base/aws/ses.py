@@ -23,6 +23,10 @@ class Ses:
     def send_email(self, toList, message, subject):
         # Get the SES client
         # Send the email
+        envname = os.getenv('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+            log.info('Email notifications are not supported in local dev environment')
+            return True
         try:
             ses_client = self.client
             destination_dict = {
