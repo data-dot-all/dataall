@@ -15,7 +15,7 @@
                 "file_uploads": false,
                 "file_actions": false,
                 "aws_actions": false,
-                "preview_data": false,
+                "preview_data": true,
                 "glue_crawler": false
             },
             "share_notifications": {
@@ -31,7 +31,7 @@
             "active": true
         },
         "dashboards": {
-            "active": true
+            "active": false
         }
     },
     "core": {
