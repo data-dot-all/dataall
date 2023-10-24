@@ -158,7 +158,7 @@ class AlbFrontStack(Stack):
                 validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
             )
         else:
-            raise ValueError("Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED if internet_facing=false")
+            raise ValueError("Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED when internet_facing=false")
 
         frontend_sg = ec2.SecurityGroup(
             self,
