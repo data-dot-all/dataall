@@ -149,7 +149,7 @@ class AlbFrontStack(Stack):
         if custom_domain and custom_domain.get('certificate_arn'):
             certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
                                                                custom_domain.get('certificate_arn'))
-        else:
+        elif custom_domain and custom_domain.get('hosted_zone_name'):
             certificate = acm.Certificate(
                 self,
                 'CustomDomainCertificate',
@@ -157,6 +157,8 @@ class AlbFrontStack(Stack):
                 subject_alternative_names=[f'*.{custom_domain["hosted_zone_name"]}'],
                 validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
             )
+        else:
+            raise ValueError("Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED if internet_facing=false")
 
         frontend_sg = ec2.SecurityGroup(
             self,
