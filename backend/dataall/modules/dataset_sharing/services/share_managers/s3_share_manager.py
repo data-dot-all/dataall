@@ -7,7 +7,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.base.aws.kms import KmsClient
 from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -281,7 +281,7 @@ class S3ShareManager:
             'Updating dataset Bucket KMS key policy...'
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
+        kms_client = KmsClient(account_id=self.source_account_id, region=self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
@@ -392,7 +392,7 @@ class S3ShareManager:
             'Deleting dataset bucket KMS key policy...'
         )
         key_alias = f"alias/{dataset.KmsAlias}"
-        kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
+        kms_client = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)

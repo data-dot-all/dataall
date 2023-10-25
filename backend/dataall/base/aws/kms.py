@@ -8,8 +8,8 @@ log = logging.getLogger(__name__)
 class KmsClient:
     _DEFAULT_POLICY_NAME = "default"
 
-    def __init__(self, account_id: str, region: str):
-        session = SessionHelper.remote_session(accountid=account_id)
+    def __init__(self, account_id: str, region: str, role=None):
+        session = SessionHelper.remote_session(accountid=account_id, role=role)
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 
@@ -69,3 +69,15 @@ class KmsClient:
             return None
         else:
             return key_exist
+
+    def list_kms_alias(self, key_alias_prefix: str):
+        try:
+            paginator = self._client.get_paginator('list_aliases')
+            for page in paginator.paginate():
+                prefix_aliases = [alias["AliasName"] for alias in page['Aliases'] if alias.startswith(key_alias_prefix)]
+        except Exception as e:
+            log.error(
+                f'Failed to list kms key aliases in account {self._account_id}: {e}'
+            )
+            return None
+        return prefix_aliases

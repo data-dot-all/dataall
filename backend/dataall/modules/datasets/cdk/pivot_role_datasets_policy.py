@@ -1,6 +1,8 @@
 import os
 from dataall.base import db
 from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
+from dataall.base.aws.kms import KmsClient
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -126,7 +128,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 }
             )
         ]
-        allowed_buckets = []
+        # Adding permissions for Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
+        # Adding permissions for Imported KMS keys
+        imported_buckets = []
+        imported_kms_keys = []
+
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
             datasets = DatasetRepository.query_environment_imported_datasets(
@@ -134,11 +140,22 @@ class DatasetsPivotRole(PivotRoleStatementSet):
             )
             if datasets:
                 dataset: Dataset
+                kms_client = KmsClient(
+                    account_id=self.account,
+                    region=self.region,
+                    role=SessionHelper.get_cdk_look_up_role_arn(accountid=self.account, region=self.region)
+                )
                 for dataset in datasets:
-                    allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+                    imported_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+                    if dataset.importedKmsKey:
+                        key_id = kms_client.get_key_id(
+                            key_alias=f"alias/{dataset.KmsAlias}"
+                        )
+                        if key_id:
+                            imported_kms_keys.append(
+                                f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
 
-        if allowed_buckets:
-            # Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
+        if imported_buckets:
             dataset_statement = split_policy_with_resources_in_statements(
                 base_sid='ImportedDatasetBuckets',
                 effect=iam.Effect.ALLOW,
@@ -152,7 +169,24 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     's3:PutObjectAcl',
                     's3:PutBucketOwnershipControls',
                 ],
-                resources=allowed_buckets
+                resources=imported_buckets
             )
             statements.extend(dataset_statement)
+        if imported_kms_keys:
+            kms_statement = split_policy_with_resources_in_statements(
+                base_sid='KMSDatasetAccess',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey*',
+                    'kms:PutKeyPolicy',
+                    'kms:ReEncrypt*',
+                    'kms:TagResource',
+                    'kms:UntagResource',
+                ],
+                resources=imported_kms_keys
+            )
+            statements.extend(kms_statement)
+
         return statements

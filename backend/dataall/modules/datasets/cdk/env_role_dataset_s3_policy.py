@@ -2,7 +2,7 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.base.aws.kms import KmsClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
@@ -75,7 +75,7 @@ class DatasetS3Policy(S3Policy):
             dataset: Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
-                    key_id = KmsClient(dataset.AwsAccountId, dataset.region).get_key_id(
+                    key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
                         key_alias=f"alias/{dataset.KmsAlias}"
                     )
                     if key_id:
