@@ -18,7 +18,7 @@
             },
             "share_notifications": {
                 "email": {
-                    "active": true,
+                    "active": false,
                     "features": {
                         "group_notifications": true
                     }

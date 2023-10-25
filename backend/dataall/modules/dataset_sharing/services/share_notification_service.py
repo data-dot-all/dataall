@@ -124,13 +124,13 @@ class ShareNotificationService:
         notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
         notification_recipient_email_ids = []
 
-        if share_notification_config['email']['features']['group_notifications'] == True:
-            notification_recipient_groups_list.append(self.share.groupUri)
-        else:
-            notification_recipient_email_ids = [self.share.owner]
-
         for share_notification_config_type in share_notification_config.keys():
-            if share_notification_config_type == 'email' and share_notification_config[share_notification_config_type]['active'] == True:
+            n_config = share_notification_config[share_notification_config_type]
+            if share_notification_config_type == 'email' and n_config.get('active', False) == True:
+                if n_config.get('features') and n_config.get('features').get('group_notifications', False) == True:
+                    notification_recipient_groups_list.append(self.share.groupUri)
+                else:
+                    notification_recipient_email_ids = [self.share.owner]
 
                 notification_task: Task = Task(
                     action='notification.service',
