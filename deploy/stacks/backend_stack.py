@@ -361,7 +361,7 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(["modules.datasets.share_notifications.email.active"])
+    @run_if(["modules.datasets.features.share_notifications.email.active"])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
         if None in [custom_domain, custom_domain.get('hosted_zone_name'), custom_domain.get('hosted_zone_id')]:
             raise Exception("Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain")

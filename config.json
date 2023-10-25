@@ -14,13 +14,13 @@
             "features": {
                 "file_uploads": true,
                 "file_actions": true,
-                "aws_actions": true
-            },
-            "share_notifications": {
-                "email": {
-                    "active": false,
-                    "features": {
-                        "group_notifications": true
+                "aws_actions": true,
+                "share_notifications": {
+                    "email": {
+                        "active": false,
+                        "parameters": {
+                            "group_notifications": true
+                        }
                     }
                 }
             }

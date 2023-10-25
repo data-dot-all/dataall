@@ -85,7 +85,7 @@ class ShareNotificationService:
     def _get_share_object_targeted_users(self):
         targeted_users = list()
         targeted_users.append(self.dataset.SamlAdminGroupName)
-        if self.dataset.stewards == self.dataset.SamlAdminGroupName:
+        if self.dataset.stewards != self.dataset.SamlAdminGroupName:
             targeted_users.append(self.dataset.stewards)
         targeted_users.append(self.share.owner)
         return targeted_users
@@ -120,33 +120,37 @@ class ShareNotificationService:
             - dataset.stewards
             - share.owner (person that opened the request) OR share.groupUri (if group_notifications=true)
         """
-        share_notification_config = config.get_property('modules.datasets.share_notifications')
+        share_notification_config = config.get_property('modules.datasets.features.share_notifications', default=None)
+        if share_notification_config:
+            for share_notification_config_type in share_notification_config.keys():
+                n_config = share_notification_config[share_notification_config_type]
+                if n_config.get('active', False) == True:
+                    params = n_config.get('parameters', {})
+                    notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
+                    notification_recipient_email_ids = []
 
-        notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
-        notification_recipient_email_ids = []
+                    if share_notification_config_type == "email":
+                        if params.get("group_notifications", False) == True:
+                            notification_recipient_groups_list.append(self.share.groupUri)
+                        else:
+                            notification_recipient_email_ids = [self.share.owner]
 
-        for share_notification_config_type in share_notification_config.keys():
-            n_config = share_notification_config[share_notification_config_type]
-            if share_notification_config_type == 'email' and n_config.get('active', False) == True:
-                if n_config.get('features') and n_config.get('features').get('group_notifications', False) == True:
-                    notification_recipient_groups_list.append(self.share.groupUri)
+                        notification_task: Task = Task(
+                            action='notification.service',
+                            targetUri=self.share.shareUri,
+                            payload={
+                                'notificationType' : share_notification_config_type,
+                                'subject': subject,
+                                'message': msg,
+                                'recipientGroupsList' : notification_recipient_groups_list,
+                                'recipientEmailList' : notification_recipient_email_ids
+                            },
+                        )
+                        self.session.add(notification_task)
+                        self.session.commit()
+
+                        Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
                 else:
-                    notification_recipient_email_ids = [self.share.owner]
-
-                notification_task: Task = Task(
-                    action='notification.service',
-                    targetUri=self.share.shareUri,
-                    payload={
-                        'notificationType' : share_notification_config_type,
-                        'subject': subject,
-                        'message': msg,
-                        'recipientGroupsList' : notification_recipient_groups_list,
-                        'recipientEmailList' : notification_recipient_email_ids
-                    },
-                )
-                self.session.add(notification_task)
-                self.session.commit()
-
-                Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
-            else:
-                log.info(f'Notification type : {share_notification_config_type} is not active')
+                    log.info(f'Notification type : {share_notification_config_type} is not active')
+        else:
+            log.info('Notifications are not active')
