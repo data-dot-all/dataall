@@ -85,7 +85,8 @@ class ShareNotificationService:
     def _get_share_object_targeted_users(self):
         targeted_users = list()
         targeted_users.append(self.dataset.SamlAdminGroupName)
-        targeted_users.append(self.dataset.stewards)
+        if self.dataset.stewards == self.dataset.SamlAdminGroupName:
+            targeted_users.append(self.dataset.stewards)
         targeted_users.append(self.share.owner)
         return targeted_users
 
