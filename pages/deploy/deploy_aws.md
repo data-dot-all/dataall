@@ -143,7 +143,8 @@ of our repository. Open it, you should be seen something like:
         "custom_domain": {
           "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
           "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false",
-          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false"
+          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false",
+          "email_notification_sender_email_id":"string_EMAIL_NOTIFICATION_SENDER_EMAIL_ID|DEFAULT=None"
         },
         "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
         "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
@@ -189,7 +190,7 @@ and find 2 examples of cdk.json files.
 | vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                  |
 | vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)                                                                                                                            |
 | internet_facing                               | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                                                         |
-| custom_domain                                 | Optional*             | Custom domain configuration: hosted_zone_name, hosted_zone_id, and certificate_arn. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                 |
+| custom_domain                                 | Optional*             | Custom domain configuration: `hosted_zone_name`, `hosted_zone_id`, `certificate_arn`, and email_notification_sender_email_id. If internet_facing parameteris **false** or `share_notifications.email` is active in `config.json` then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                 |
 | ip_ranges                                     | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                                             |
 | apig_vpce                                     | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                                             |
 | prod_sizing                                   | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                                                      |
@@ -201,7 +202,7 @@ and find 2 examples of cdk.json files.
 | enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                               |
 | enable_opensearch_serverless                  | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                                           |
 | cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                             |
-| reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (reauth_apis) and a time to live (ttl) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again        |
+| reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again        |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -299,16 +300,18 @@ the different configuration options.
             "features": {
                 "file_uploads": false,
                 "file_actions": true,
-                "aws_actions": true
-            },
-            "share_notifications": {
-                "email": {
-                    "active": false,
-                    "features": {
-                        "group_notifications": false
+                "aws_actions": true,
+                "preview_data": true,
+                "glue_crawler": true,
+                "share_notifications": {
+                    "email": {
+                        "active": false,
+                        "parameters": {
+                            "group_notifications": true
+                        }
                     }
-                }
-            }
+                },
+            },
         },
         "mlstudio": {
             "active": true
@@ -375,7 +378,15 @@ In the example config.json, the feature that enables file upload from data.all U
             "file_actions": true,
             "aws_actions": true,
             "preview_data": true,
-            "glue_crawler": true
+            "glue_crawler": true,
+            "share_notifications": {
+                "email": {
+                    "active": false,
+                    "parameters": {
+                        "group_notifications": true
+                    }
+                }
+            },
         }
     },
 ```
@@ -386,6 +397,7 @@ In the example config.json, the feature that enables file upload from data.all U
 | aws_actions       | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                 |
 | preview_data      | datasets   | Enable previews of dataset tables for users in data.all UI                                         |
 | glue_crawler      | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI          |
+| share_notifications      | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`)         |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
