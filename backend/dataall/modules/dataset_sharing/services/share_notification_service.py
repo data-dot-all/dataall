@@ -85,7 +85,8 @@ class ShareNotificationService:
     def _get_share_object_targeted_users(self):
         targeted_users = list()
         targeted_users.append(self.dataset.SamlAdminGroupName)
-        targeted_users.append(self.dataset.stewards)
+        if self.dataset.stewards == self.dataset.SamlAdminGroupName:
+            targeted_users.append(self.dataset.stewards)
         targeted_users.append(self.share.owner)
         return targeted_users
 
@@ -97,12 +98,12 @@ class ShareNotificationService:
             - share.groupUri
         """
         notifications = []
-        for user in self.notification_target_users:
-            log.info(f"Creating notification for {user}, msg {msg}")
+        for recipient in self.notification_target_users:
+            log.info(f"Creating notification for {recipient}, msg {msg}")
             notifications.append(
                 NotificationRepository.create_notification(
                     session=self.session,
-                    username=user,
+                    recipient=recipient,
                     notification_type=notification_type,
                     target_uri=f'{self.share.shareUri}|{self.dataset.datasetUri}',
                     message=msg,
@@ -124,13 +125,13 @@ class ShareNotificationService:
         notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
         notification_recipient_email_ids = []
 
-        if share_notification_config['email']['features']['group_notifications'] == True:
-            notification_recipient_groups_list.append(self.share.groupUri)
-        else:
-            notification_recipient_email_ids = [self.share.owner]
-
         for share_notification_config_type in share_notification_config.keys():
-            if share_notification_config_type == 'email' and share_notification_config[share_notification_config_type]['active'] == True:
+            n_config = share_notification_config[share_notification_config_type]
+            if share_notification_config_type == 'email' and n_config.get('active', False) == True:
+                if n_config.get('features') and n_config.get('features').get('group_notifications', False) == True:
+                    notification_recipient_groups_list.append(self.share.groupUri)
+                else:
+                    notification_recipient_email_ids = [self.share.owner]
 
                 notification_task: Task = Task(
                     action='notification.service',
