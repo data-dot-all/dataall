@@ -23,6 +23,8 @@
                         }
                     }
                 }
+                "preview_data": true,
+                "glue_crawler": true
             }
         },
         "worksheets": {
