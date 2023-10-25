@@ -18,14 +18,21 @@ depends_on = None
 
 def upgrade():
     """
-    Define column type as:
-    type = Column(String, nullable=True)
+    Define column "type" as: type = Column(String, nullable=True)
+    Rename column " " to " " both of type String
     """
     op.alter_column(
         'notification',
         'type',
-        existing_type=sa.VARCHAR(),
+        existing_type=sa.String(),
         nullable=True
+    )
+    op.alter_column(
+        'notification',
+        'username',
+        new_column_name='recipient',
+        nullable=False,
+        existing_type=sa.String()
     )
 
 
@@ -33,6 +40,7 @@ def downgrade():
     """
     Revert back column type to
     type = Column(Enum(NotificationType), nullable=True)
+    and column name to username
     """
     op.alter_column(
         'notification',
@@ -47,4 +55,11 @@ def downgrade():
             name='notificationtype',
         ),
         nullable=True
+    )
+    op.alter_column(
+        'notification',
+        'recipient',
+        new_column_name='username',
+        nullable=False,
+        existing_type=sa.String()
     )

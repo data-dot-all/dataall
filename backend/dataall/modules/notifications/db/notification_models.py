@@ -13,7 +13,7 @@ class Notification(Base):
     )
     type = Column(String, nullable=True)
     message = Column(String, nullable=False)
-    username = Column(String, nullable=False)
+    recipient = Column(String, nullable=False)  # recipients can be groups or individual users
     is_read = Column(Boolean, nullable=False, default=False)
     target_uri = Column(String)
     created = Column(DateTime, default=datetime.now)

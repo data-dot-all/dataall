@@ -97,12 +97,12 @@ class ShareNotificationService:
             - share.groupUri
         """
         notifications = []
-        for user in self.notification_target_users:
-            log.info(f"Creating notification for {user}, msg {msg}")
+        for recipient in self.notification_target_users:
+            log.info(f"Creating notification for {recipient}, msg {msg}")
             notifications.append(
                 NotificationRepository.create_notification(
                     session=self.session,
-                    username=user,
+                    recipient=recipient,
                     notification_type=notification_type,
                     target_uri=f'{self.share.shareUri}|{self.dataset.datasetUri}',
                     message=msg,
