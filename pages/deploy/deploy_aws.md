@@ -143,7 +143,8 @@ of our repository. Open it, you should be seen something like:
         "custom_domain": {
           "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
           "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false",
-          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false"
+          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false",
+          "email_notification_sender_email_id":"string_EMAIL_NOTIFICATION_SENDER_EMAIL_ID|DEFAULT=None"
         },
         "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
         "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
@@ -153,8 +154,13 @@ of our repository. Open it, you should be seen something like:
         "enable_quicksight_monitoring": "boolean_ENABLE_CONNECTION_QUICKSIGHT_RDS|DEFAULT=false",
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
-        "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false"
-        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false"
+        "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false",
+        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
+        "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200",
+        "reauth_config": {
+          "reauth_apis": "list_of_strings_OPERATION_NAMES_TO_REQUIRE_REAUTH_ON|DEFAULT=None",
+          "ttl": "int_TIME_IN_MINUTES_TO_ALLOW_USER_TO_PERFORM_SENSITIVE_APIS_BEFORE_FORCING_REAUTH|DEFAULT=5"
+        }
       }
     ]
   }
@@ -169,7 +175,7 @@ and find 2 examples of cdk.json files.
 |-----------------------------------------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tooling_vpc_id                                | Optional              | The VPC ID for the tooling account. If not provided, **a new VPC** will be created.                                                                                                                                                                                   |
 | tooling_region                                | Optional              | The AWS region for the tooling account where the AWS CodePipeline pipeline will be created. (default: eu-west-1)                                                                                                                                                      |
-| tooling_vpc_restricted_nacl                   | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned tooling VPC (default: false)
+| tooling_vpc_restricted_nacl                   | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned tooling VPC (default: false)                                                                                                                               |
 | git_branch                                    | Optional              | The git branch name can be leveraged to deploy multiple AWS CodePipeline pipelines to the same tooling account. (default: main)                                                                                                                                       |
 | git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                |
 | quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                     |
@@ -182,9 +188,9 @@ and find 2 examples of cdk.json files.
 | with_approval                                 | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                                           |
 | vpc_id                                        | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                                                |
 | vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                  |
-| vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)
+| vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)                                                                                                                            |
 | internet_facing                               | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                                                         |
-| custom_domain                                 | Optional*             | Custom domain configuration: hosted_zone_name, hosted_zone_id, and certificate_arn. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                 |
+| custom_domain                                 | Optional*             | Custom domain configuration: `hosted_zone_name`, `hosted_zone_id`, `certificate_arn`, and `email_notification_sender_email_id`. If internet_facing parameteris **false** or `share_notifications.email` is active in `config.json` then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                 |
 | ip_ranges                                     | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                                             |
 | apig_vpce                                     | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                                             |
 | prod_sizing                                   | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                                                      |
@@ -193,8 +199,10 @@ and find 2 examples of cdk.json files.
 | enable_quicksight_monitoring                  | Optional              | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                                               |
 | shared_dashboard_sessions                     | Optional              | Either 'anonymous' or 'reader'. It indicates the type of Quicksight session used for Shared Dashboards (default: 'anonymous')                                                                                                                                         |
 | enable_pivot_role_auto_create                 | Optional              | If set to **true**, data.all creates the pivot IAM role as part of the environment stack. If false, a CloudFormation template is provided in the UI and AWS account admins need to deploy this stack as pre-requisite to link a data.all environment (default: false) |
-| enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                               |                                                                                                                      |
-| enable_opensearch_serverless           | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                          |
+| enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                               |
+| enable_opensearch_serverless                  | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                                           |
+| cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                             |
+| reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again        |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -266,7 +274,13 @@ deploy to 2 deployments accounts.
             "ip_ranges": ["IP_RANGE1", "IP_RANGE2"],
             "apig_vpce": "vpc-xxxxxxxxxxxxxx",
             "enable_pivot_role_auto_create": true,
-            "enable_update_dataall_stacks_in_cicd_pipeline": true
+            "enable_update_dataall_stacks_in_cicd_pipeline": true,
+            "enable_opensearch_serverless": true,
+            "cognito_user_session_timeout_inmins": 240,
+            "reauth_config": {
+              "reauth_apis": ["CreateDataset", "ImportDataset", "deleteDataset"],
+              "ttl": 10
+            }
         }
     ]
   }
@@ -286,8 +300,18 @@ the different configuration options.
             "features": {
                 "file_uploads": false,
                 "file_actions": true,
-                "aws_actions": true
-            }
+                "aws_actions": true,
+                "preview_data": true,
+                "glue_crawler": true,
+                "share_notifications": {
+                    "email": {
+                        "active": false,
+                        "parameters": {
+                            "group_notifications": true
+                        }
+                    }
+                },
+            },
         },
         "mlstudio": {
             "active": true
@@ -331,13 +355,14 @@ check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide
 | feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
 | vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
 | datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
-| dataset_sharing | datasets_base                                       | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
+| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
 | datasets_base   | None                                                | Shared code related to Datasets.                                                      |
-| worksheets      | None                                                | Athena query editor integrated in data.all UI                                         |
+| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                         |
 | datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
 | dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
+| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                      |
 
 
 ### Disable module features
@@ -351,15 +376,28 @@ In the example config.json, the feature that enables file upload from data.all U
         "features": {
             "file_uploads": false,
             "file_actions": true,
-            "aws_actions": true
+            "aws_actions": true,
+            "preview_data": true,
+            "glue_crawler": true,
+            "share_notifications": {
+                "email": {
+                    "active": false,
+                    "parameters": {
+                        "group_notifications": true
+                    }
+                }
+            },
         }
     },
 ```
-| **Feature**   | **Module** | **Description**                      |   
-|---------------|------------|--------------------------------------|
-| file_uploads  | datasets   | Upload files in a Dataset in the Upload tab |
-| file_actions  | datasets   | Create, Read, Update, Delete on Dataset Folders                                     |
-| aws_actions   | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                     |
+| **Feature**       | **Module** | **Description**                                                                                    |   
+|-------------------|------------|----------------------------------------------------------------------------------------------------|
+| file_uploads      | datasets   | Upload files in a Dataset in the Upload tab                                                        |
+| file_actions      | datasets   | Create, Read, Update, Delete on Dataset Folders                                                    |
+| aws_actions       | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                 |
+| preview_data      | datasets   | Enable previews of dataset tables for users in data.all UI                                         |
+| glue_crawler      | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI          |
+| share_notifications      | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`)         |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
@@ -375,9 +413,9 @@ a particular feature in the core is to add it to the core section of the `config
 This is the list of core features that can be switched on/off at the moment. Take it as an example if you need to 
 disable any other core feature.
 
-| **Feature**   | **Module** | **Description**                      |   
-|---------------|------------|--------------------------------------|
-| env_aws_actions   | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI   |
+| **Feature**           | **Module**     | **Description**                                                                  |   
+|-----------------------|----------------|----------------------------------------------------------------------------------|
+| env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
 
 
 
@@ -491,13 +529,13 @@ When setting the value to `false`, backend resources become smaller but you save
 These are the resources affected:
 
 | Backend Service |prod_sizing| Configuration
-|----|----|----|
-|Aurora |true| - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU |
-|Aurora |false| - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU |
-|OpenSearch |true| - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it |
-|OpenSearch |false| - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it |
-|Lambda function |true| - Lambda functions are configured with more memory|
-|Lambda function |false| - Lambda functions are configured with less memory|
+|-----------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Aurora           |true       | - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU                                              |
+|Aurora           |false      | - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU                                                  |
+|OpenSearch       |true       | - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it         |
+|OpenSearch       |false      | - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it    |
+|Lambda function  |true       | - Lambda functions are configured with more memory                                                                                                                                                                                 |
+|Lambda function  |false      | - Lambda functions are configured with less memory                                                                                                                                                                                 |
 
 ### I used the wrong accounts or made another mistake in the deployment. How do I un-deploy data.all?
 In the above steps we are only deploying data.all tooling resources. Hence, if the CI/CD CodePipeline pipeline has not 
