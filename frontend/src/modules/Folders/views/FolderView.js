@@ -38,6 +38,7 @@ import { getDatasetStorageLocation } from '../services';
 
 import { FeedComments } from 'modules/Shared';
 import { FolderOverview } from '../components';
+import { isFeatureEnabled } from 'utils';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
 
@@ -123,16 +124,18 @@ function FolderPageHeader(props) {
               Chat
             </Button>
           )}
-          <LoadingButton
-            loading={isLoadingUI}
-            startIcon={<FaExternalLinkAlt size={15} />}
-            variant="outlined"
-            color="primary"
-            sx={{ m: 1 }}
-            onClick={goToS3Console}
-          >
-            S3 Bucket
-          </LoadingButton>
+          {isFeatureEnabled('datasets', 'aws_actions') && (
+            <LoadingButton
+              loading={isLoadingUI}
+              startIcon={<FaExternalLinkAlt size={15} />}
+              variant="outlined"
+              color="primary"
+              sx={{ m: 1 }}
+              onClick={goToS3Console}
+            >
+              S3 Bucket
+            </LoadingButton>
+          )}
           {isAdmin && (
             <Button
               color="primary"
