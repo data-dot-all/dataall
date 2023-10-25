@@ -31,28 +31,35 @@ class KMSPivotRole(PivotRoleStatementSet):
             region=self.region,
             role=SessionHelper.get_cdk_look_up_role_arn(accountid=self.account, region=self.region)
         )
+        print("heeeeeereeee-----")
+        print("deploying")
         key_aliases = kms_client.list_kms_alias(key_alias_prefix=self.env_resource_prefix)
-        for alias in key_aliases:
-            key_id = kms_client.get_key_id(
-                key_alias=f"alias/{alias}"
-            )
-            if key_id:
-                dataall_kms_keys.append(
-                    f"arn:aws:kms:{self.region}:{self.account}:key/{key_id}")
+        print(key_aliases)
+        if key_aliases:
+            for alias in key_aliases:
+                print(alias)
+                key_id = kms_client.get_key_id(
+                    key_alias=alias
+                )
+                print(key_id)
+                if key_id:
+                    dataall_kms_keys.append(
+                        f"arn:aws:kms:{self.region}:{self.account}:key/{key_id}")
 
-        kms_statement = split_policy_with_resources_in_statements(
-            base_sid='KMSDataallAccess',
-            effect=iam.Effect.ALLOW,
-            actions=[
-                'kms:Decrypt',
-                'kms:Encrypt',
-                'kms:GenerateDataKey*',
-                'kms:PutKeyPolicy',
-                'kms:ReEncrypt*',
-                'kms:TagResource',
-                'kms:UntagResource',
-            ],
-            resources=dataall_kms_keys
-        )
-        statements.extend(kms_statement)
+        if dataall_kms_keys:
+            kms_statement = split_policy_with_resources_in_statements(
+                base_sid='KMSDataallAccess',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey*',
+                    'kms:PutKeyPolicy',
+                    'kms:ReEncrypt*',
+                    'kms:TagResource',
+                    'kms:UntagResource',
+                ],
+                resources=dataall_kms_keys
+            )
+            statements.extend(kms_statement)
         return statements
