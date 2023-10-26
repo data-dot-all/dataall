@@ -25,10 +25,12 @@ class PipelineStack(Stack):
         self,
         id,
         scope,
+        repo_connection_arn,
         target_envs: List = None,
         git_branch='main',
         resource_prefix='dataall',
         source='codecommit',
+        repo_string='awslabs/aws-dataall',
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
@@ -37,6 +39,8 @@ class PipelineStack(Stack):
         self.source = source
         self.resource_prefix = resource_prefix
         self.target_envs = target_envs
+        self.repo_string = repo_string
+        self.repo_connection_arn = repo_connection_arn
 
         self.vpc_stack = VpcStack(
             self,
@@ -112,10 +116,10 @@ class PipelineStack(Stack):
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
         if self.source == 'github':
-            source = CodePipelineSource.git_hub(
-                repo_string='awslabs/aws-dataall',
+            source = CodePipelineSource.connection(
+                repo_string=repo_string,
                 branch=self.git_branch,
-                authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
+                connection_arn=repo_connection_arn
             )
 
         else:
