@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { AuthGuard, GuestGuard } from 'authentication';
+import { ReAuthModal } from 'reauthentication';
 import { DefaultLayout, LoadingScreen } from 'design';
 import { ModuleNames, isModuleEnabled } from 'utils';
 
@@ -174,6 +175,7 @@ const routes = [
     element: (
       <AuthGuard>
         <DefaultLayout />
+        <ReAuthModal />
       </AuthGuard>
     ),
     children: [

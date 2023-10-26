@@ -13,6 +13,8 @@ import { SettingsProvider } from './design';
 import { store } from './globalErrors';
 import { reportWebVitals } from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
+import { SnackbarProvider } from 'notistack';
+import { RequestContextProvider } from './reauthentication';
 
 ReactDOM.render(
   <StrictMode>
@@ -22,9 +24,13 @@ ReactDOM.render(
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <SettingsProvider>
               <BrowserRouter>
-                <AuthProvider>
-                  <App />
-                </AuthProvider>
+                <SnackbarProvider dense maxSnack={3} hideIconVariant>
+                  <RequestContextProvider>
+                    <AuthProvider>
+                      <App />
+                    </AuthProvider>
+                  </RequestContextProvider>
+                </SnackbarProvider>
               </BrowserRouter>
             </SettingsProvider>
           </LocalizationProvider>
