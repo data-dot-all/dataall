@@ -87,7 +87,7 @@ class ShareNotificationService:
         targeted_users.append(self.dataset.SamlAdminGroupName)
         if self.dataset.stewards != self.dataset.SamlAdminGroupName:
             targeted_users.append(self.dataset.stewards)
-        targeted_users.append(self.share.owner)
+        targeted_users.append(self.share.groupUri)
         return targeted_users
 
     def _register_notifications(self, notification_type, msg):

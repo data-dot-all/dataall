@@ -27,6 +27,10 @@ class Cognito(IdentityProvider):
             group_email_ids.extend([x['Value'] for x in attributes if x['Name'] == 'email'])
 
         except Exception as e:
+            envname = os.getenv('envname', 'local')
+            if envname in ['local', 'dkrcompose']:
+                log.error('Local development environment does not support Cognito')
+                return ['anonymous@amazon.com']
             log.error(
                 f'Failed to get email ids for Cognito group {groupName} due to {e}'
             )
