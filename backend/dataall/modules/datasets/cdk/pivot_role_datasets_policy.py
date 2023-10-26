@@ -173,6 +173,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'kms:Decrypt',
                     'kms:Encrypt',
                     'kms:GenerateDataKey*',
+                    'kms:GetKeyPolicy',
                     'kms:PutKeyPolicy',
                     'kms:ReEncrypt*',
                     'kms:TagResource',
