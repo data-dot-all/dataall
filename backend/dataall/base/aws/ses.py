@@ -51,5 +51,9 @@ class Ses:
                 }
             )
         except Exception as e:
+            envname = os.getenv('envname', 'local')
+            if envname in ['local', 'dkrcompose']:
+                log.error('Local development environment does not support SES notifications')
+                return True
             log.error(f'Error while sending email {e})')
             raise e

@@ -61,7 +61,7 @@ def create_app(db):
         emailId = request.headers.get('Username', 'email@email.com')
         groups = json.loads(request.headers.get('Groups', '[]'))
 
-        set_context(RequestContext(db, username, emailId, groups))
+        set_context(RequestContext(db, username, groups))
 
         success, result = graphql_sync(
             schema,

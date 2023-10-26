@@ -117,7 +117,7 @@ class LambdaApiStack(pyNestedClass):
             ),
             environment={
                 'envname': envname, 'LOG_LEVEL': 'INFO',
-                'email_sender_id': email_notification_sender_email_id if email_custom_domain != None else 'none'
+                'email_sender_id': email_notification_sender_email_id
             },
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),

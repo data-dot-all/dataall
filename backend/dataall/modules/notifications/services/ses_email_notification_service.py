@@ -3,8 +3,7 @@ import logging
 
 from dataall.base.aws.cognito import Cognito
 from dataall.base.aws.ses import Ses
-from dataall.base.config import config
-from dataall.core.notifications.services.base_email_notification_service import BaseEmailNotificationService
+from dataall.modules.notifications.services.base_email_notification_service import BaseEmailNotificationService
 
 log = logging.getLogger(__name__)
 

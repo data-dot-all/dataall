@@ -55,7 +55,6 @@ class BackendStack(Stack):
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
         cognito_user_session_timeout_inmins=43200,
-        email_notification_sender_email_id=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -133,11 +132,15 @@ class BackendStack(Stack):
         )
 
         # Create the SES Stack
-        ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix, email_notification_sender_email_id)
+        ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix)
 
         repo = ecr.Repository.from_repository_arn(
             self, 'ECRREPO', repository_arn=ecr_repository
         )
+        if None not in [custom_domain, ses_stack]:
+            email_sender = custom_domain.get('email_notification_sender_email_id', None) if custom_domain.get('email_notification_sender_email_id', None) != None else f'noreply@{custom_domain.get("hosted_zone_name")}'
+        else:
+            email_sender = 'none'
 
         self.lambda_api_stack = LambdaApiStack(
             self,
@@ -155,9 +158,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
-            email_notification_sender_email_id=email_notification_sender_email_id if email_notification_sender_email_id != None
-                                                                                  else 'none' if custom_domain == None
-                                                                                  else f'noreply@{custom_domain.get("hosted_zone_name")}',
+            email_notification_sender_email_id=email_sender,
             email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
             ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
             **kwargs,
@@ -361,10 +362,10 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(["core.share_notifications.email.active"])
-    def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix, email_notification_sender_email_id):
-        if custom_domain == None and email_notification_sender_email_id == None and deploy_config.get_property("core.share_notifications.email.active") == True:
-            raise Exception("Cannot Create SES Stack For email notification as Custom Domain and Sender Email Id are not present. Either Disable Email Notification Config or add Custom Domain")
+    @run_if(["modules.datasets.features.share_notifications.email.active"])
+    def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
+        if None in [custom_domain, custom_domain.get('hosted_zone_name'), custom_domain.get('hosted_zone_id')]:
+            raise Exception("Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain")
 
         return SesStack(
             self,

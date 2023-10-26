@@ -1,5 +1,4 @@
 from aws_cdk import (
-    aws_ssm as ssm,
     aws_kms as kms,
     aws_sns as sns,
     aws_ses as ses,
@@ -42,13 +41,6 @@ class SesStack(pyNestedClass):
 
         self.sns.apply_removal_policy(RemovalPolicy.DESTROY)
 
-        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
-            self,
-            'data-all-hosted-zone',
-            zone_name=custom_domain.get('hosted_zone_name'),
-            hosted_zone_id=custom_domain.get('hosted_zone_id')
-        )
-
         self.configuration_set = ses.ConfigurationSet(
             self,
             f'{resource_prefix}-{envname}-SES-Configuration-Set',
@@ -71,7 +63,7 @@ class SesStack(pyNestedClass):
                     "kms:GenerateDataKey*"
                 ],
                 principals=[
-                    iam.AnyPrincipal()
+                    iam.AccountPrincipal(self.account)
                 ],
                 resources=['*'],
                 conditions={
@@ -80,6 +72,13 @@ class SesStack(pyNestedClass):
                     }
                 }
             )
+        )
+
+        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+            self,
+            'data-all-hosted-zone',
+            zone_name=custom_domain.get('hosted_zone_name'),
+            hosted_zone_id=custom_domain.get('hosted_zone_id')
         )
 
         self.ses_identity = ses.EmailIdentity(

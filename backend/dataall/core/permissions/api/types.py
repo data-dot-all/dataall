@@ -1,9 +1,8 @@
 from dataall.base.api import gql
-from dataall.core.notifications.db.notification_models import Notification
 from dataall.core.permissions.db.permission_models import PermissionType
 
 
-def resolve_enum(context, source: Notification):
+def resolve_enum(context, source: PermissionType):
     return source.type.name if source.type else PermissionType.TENANT.name
 
 
