@@ -7,7 +7,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
-from dataall.base.aws.kms import KmsClient
+from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService

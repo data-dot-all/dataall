@@ -2,7 +2,7 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
-from dataall.base.aws.kms import KmsClient
+from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
