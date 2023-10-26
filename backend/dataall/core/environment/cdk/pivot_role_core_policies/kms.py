@@ -1,8 +1,5 @@
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
-from dataall.base.aws.kms import KmsClient
-from dataall.base.aws.sts import SessionHelper
-from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
 
 
 class KMSPivotRole(PivotRoleStatementSet):
@@ -10,7 +7,7 @@ class KMSPivotRole(PivotRoleStatementSet):
     Class including all permissions needed  by the pivot role to work with AWS KMS.
     It allows pivot role to:
     list and Describe KMS keys
-    manage data.all created KMS keys
+    manage data.all alias KMS keys
     - ....
     """
     def get_statements(self):
@@ -24,31 +21,8 @@ class KMSPivotRole(PivotRoleStatementSet):
                 ],
                 resources=['*'],
             ),
-        ]
-        dataall_kms_keys = []
-        kms_client = KmsClient(
-            account_id=self.account,
-            region=self.region,
-            role=SessionHelper.get_cdk_look_up_role_arn(accountid=self.account, region=self.region)
-        )
-        print("heeeeeereeee-----")
-        print("deploying")
-        key_aliases = kms_client.list_kms_alias(key_alias_prefix=self.env_resource_prefix)
-        print(key_aliases)
-        if key_aliases:
-            for alias in key_aliases:
-                print(alias)
-                key_id = kms_client.get_key_id(
-                    key_alias=alias
-                )
-                print(key_id)
-                if key_id:
-                    dataall_kms_keys.append(
-                        f"arn:aws:kms:{self.region}:{self.account}:key/{key_id}")
-
-        if dataall_kms_keys:
-            kms_statement = split_policy_with_resources_in_statements(
-                base_sid='KMSDataallAccess',
+            iam.PolicyStatement(
+                sid='KMSDataAllAlias',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'kms:Decrypt',
@@ -59,7 +33,12 @@ class KMSPivotRole(PivotRoleStatementSet):
                     'kms:TagResource',
                     'kms:UntagResource',
                 ],
-                resources=dataall_kms_keys
+                resources=[f"arn:aws:kms:{self.region}:{self.account}:key/*"],
+                conditions={
+                    'ForAnyValue:StringLike': {
+                        'kms:ResourceAliases': [f"alias/{self.env_resource_prefix}*"]
+                    }
+                },
             )
-            statements.extend(kms_statement)
+        ]
         return statements
