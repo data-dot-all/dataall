@@ -69,17 +69,3 @@ class KmsClient:
             return None
         else:
             return key_exist
-
-    def list_kms_alias(self, key_alias_prefix: str):
-        try:
-            paginator = self._client.get_paginator('list_aliases')
-            for page in paginator.paginate():
-                print(str(page['Aliases']))
-                prefix_aliases = [alias["AliasName"] for alias in page['Aliases'] if alias["AliasName"].startswith(f"alias/{key_alias_prefix}")]
-                print(prefix_aliases)
-        except Exception as e:
-            log.error(
-                f'Failed to list kms key aliases in account {self._account_id}: {e}'
-            )
-            return None
-        return prefix_aliases
