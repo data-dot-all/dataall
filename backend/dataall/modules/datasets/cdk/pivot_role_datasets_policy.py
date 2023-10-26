@@ -147,9 +147,6 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     imported_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
                     if dataset.importedKmsKey:
                         imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
-        for i in range(500):
-            imported_buckets.append(f'arn:aws:s3:::randon_bucket{i}')
-            imported_kms_alias.append(f'alias/randon_alias{i}')
 
         if imported_buckets:
             dataset_statement = split_policy_with_resources_in_statements(
