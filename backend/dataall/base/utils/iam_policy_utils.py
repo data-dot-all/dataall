@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 import logging
 from aws_cdk import aws_iam as iam
 
@@ -43,11 +43,10 @@ def split_policy_statements_in_chunks(statements: List):
     return chunks
 
 
-def split_policy_with_resources_in_statements(base_sid, effect, actions, resources):
+def split_policy_with_resources_in_statements(base_sid: str, effect: iam.Effect, actions: List[str], resources: List[str]):
     """
     The variable part of the policy is in the resources parameter of the PolicyStatement
     """
-
     def _build_statement(split, subset):
         return iam.PolicyStatement(
             sid=base_sid + str(split),
@@ -65,11 +64,11 @@ def split_policy_with_resources_in_statements(base_sid, effect, actions, resourc
         return [resulting_statement]
     else:
         logger.info("Exceeding policy limit, splitting statement ...")
-        resulting_statements = _policy_splitter(base_length=base_length, values=resources, extra_chars=extra_chars, statement_builder=_build_statement)
+        resulting_statements = _policy_splitter(base_length=base_length, resources=resources, extra_chars=extra_chars, statement_builder=_build_statement)
     return resulting_statements
 
 
-def split_policy_with_mutiple_value_condition_in_statements(base_sid, effect, actions, resources, condition_dict):
+def split_policy_with_mutiple_value_condition_in_statements(base_sid: str, effect: iam.Effect, actions: List[str], resources: List[str], condition_dict: dict):
     """
     The variable part of the policy is in the conditions parameter of the PolicyStatement
     conditions_dict passes the different components of the condition mapping
@@ -87,7 +86,7 @@ def split_policy_with_mutiple_value_condition_in_statements(base_sid, effect, ac
             }
         )
 
-    total_length, base_length = _policy_analyzer(resources, _build_statement)
+    total_length, base_length = _policy_analyzer(condition_dict.get('values'), _build_statement)
     extra_chars = len(str(f'"Condition":  {{ "{condition_dict.get("key")}": {{"{condition_dict.get("resource")}": }} }}'))
 
     if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
@@ -101,7 +100,7 @@ def split_policy_with_mutiple_value_condition_in_statements(base_sid, effect, ac
     return resulting_statements
 
 
-def _policy_analyzer(resources, statement_builder):
+def _policy_analyzer(resources: List[str], statement_builder: Callable[[int, List[str]], iam.PolicyStatement]):
     """
     Calculates the policy size with the resources (total_length) and without resources (base_length)
     """
@@ -116,7 +115,7 @@ def _policy_analyzer(resources, statement_builder):
     return total_length, base_length
 
 
-def _policy_splitter(base_length, resources, extra_chars, statement_builder):
+def _policy_splitter(base_length: int, resources: List[str], extra_chars: int, statement_builder: Callable[[int, List[str]], iam.PolicyStatement]):
     """
     Splitter used for IAM policy statements with an undefined number of resources one of the parameters of the policy.
     - Ensures that the size of the IAM statement is below the POLICY LIMIT
