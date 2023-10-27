@@ -54,6 +54,7 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        reauth_config=None,
         cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
@@ -91,6 +92,7 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
+            reauth_apis=reauth_config.get("reauth_apis", None) if reauth_config else None,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -118,6 +120,7 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
+            vpc=vpc,
             cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             **kwargs,
         )
@@ -158,6 +161,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
+            reauth_ttl=reauth_config.get("ttl", 5) if reauth_config else 5,
             email_notification_sender_email_id=email_sender,
             email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
             ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,

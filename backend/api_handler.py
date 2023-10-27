@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import datetime
 from argparse import Namespace
 from time import perf_counter
 
@@ -12,6 +13,7 @@ from ariadne import (
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
+from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
@@ -30,6 +32,7 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
+REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
@@ -114,9 +117,15 @@ def handler(event, context):
         }
 
     if 'authorizer' in event['requestContext']:
-        username = event['requestContext']['authorizer']['claims']['email']
+        if 'claims' not in event['requestContext']['authorizer']:
+            claims = event['requestContext']['authorizer']
+        else:
+            claims = event['requestContext']['authorizer']['claims']
+        username = claims['email']
+        log.debug('username is %s', username)
         try:
-            groups = get_groups(event['requestContext']['authorizer']['claims'])
+            groups = get_groups(claims)
+            log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
                     policy = TenantPolicy.find_tenant_policy(
@@ -146,10 +155,50 @@ def handler(event, context):
             'schema': SCHEMA
         }
 
+        # Determine if there are any Operations that Require ReAuth From SSM Parameter
+        try:
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
+        except Exception as e:
+            log.info("No ReAuth APIs Found in SSM")
+            reauth_apis = None
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
+
+    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
+    if reauth_apis and query.get('operationName', None) in reauth_apis:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        try:
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims["auth_time"]), tz=datetime.timezone.utc)
+            if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
+                raise Exception("ReAuth")
+        except Exception as e:
+            log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
+            response = {
+                "data": {query.get('operationName', 'operation') : None},
+                "errors": [
+                    {
+                        "message": f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                        "locations": None,
+                        "path": [query.get('operationName', '')],
+                        "extensions": {
+                            "code": "REAUTH"
+                        }
+                    }
+                ]
+            }
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'content-type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Methods': '*',
+                },
+                'body': json.dumps(response)
+            }
+
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )

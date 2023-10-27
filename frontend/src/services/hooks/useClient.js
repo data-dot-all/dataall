@@ -7,7 +7,7 @@ import {
   InMemoryCache
 } from 'apollo-boost';
 import { useEffect, useState } from 'react';
-import { useToken } from 'authentication';
+import { useToken, useAuth } from 'authentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 const defaultOptions = {
@@ -29,6 +29,17 @@ export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
+  const auth = useAuth();
+
+  const setReAuth = async (requestInfo) => {
+    auth.dispatch({
+      type: 'REAUTH',
+      payload: {
+        reAuthStatus: true,
+        requestInfo: requestInfo
+      }
+    });
+  };
 
   useEffect(() => {
     const initClient = async () => {
@@ -36,6 +47,7 @@ export const useClient = () => {
       const httpLink = new HttpLink({
         uri: process.env.REACT_APP_GRAPHQL_API
       });
+
       const authLink = new ApolloLink((operation, forward) => {
         operation.setContext({
           headers: {
@@ -49,20 +61,27 @@ export const useClient = () => {
         });
         return forward(operation);
       });
-      const errorLink = onError(({ graphQLErrors, networkError }) => {
-        if (graphQLErrors) {
-          graphQLErrors.forEach(({ message, locations, path }) => {
-            console.error(
-              `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+      const errorLink = onError(
+        ({ graphQLErrors, networkError, operation, forward }) => {
+          if (graphQLErrors) {
+            graphQLErrors.forEach(
+              ({ message, locations, path, extensions }) => {
+                console.error(
+                  `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+                );
+                if (extensions?.code === 'REAUTH') {
+                  setReAuth(operation);
+                }
+              }
             );
-          });
-        }
+          }
 
-        if (networkError) {
-          console.error(`[Network error]: ${networkError}`);
-          dispatch({ type: SET_ERROR, error: 'Network error occurred' });
+          if (networkError) {
+            console.error(`[Network error]: ${networkError}`);
+            dispatch({ type: SET_ERROR, error: 'Network error occurred' });
+          }
         }
-      });
+      );
 
       const apolloClient = new ApolloClient({
         link: from([errorLink, authLink, httpLink]),

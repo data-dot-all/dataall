@@ -635,6 +635,7 @@ class PipelineStack(Stack):
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
+                reauth_config = target_env.get('reauth_config', None),
                 cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200)
             )
         )
@@ -732,6 +733,7 @@ class PipelineStack(Stack):
                     f'export deployment_region={target_env.get("region", self.region)}',
                     f'export enable_cw_rum={target_env.get("enable_cw_rum", False)}',
                     f'export resource_prefix={self.resource_prefix}',
+                    f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                     'mkdir ~/.aws/ && touch ~/.aws/config',
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole" >> ~/.aws/config',

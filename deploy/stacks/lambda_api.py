@@ -47,6 +47,7 @@ class LambdaApiStack(pyNestedClass):
         prod_sizing=False,
         user_pool=None,
         pivot_role_name=None,
+        reauth_ttl=5,
         email_notification_sender_email_id=None,
         email_custom_domain=None,
         ses_configuration_set=None,
@@ -97,7 +98,7 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[api_handler_sg],
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment={'envname': envname, 'LOG_LEVEL': 'INFO', 'REAUTH_TTL': str(reauth_ttl)},
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -544,6 +545,7 @@ class LambdaApiStack(pyNestedClass):
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
+
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')
         search_validation_model = apigw.Model(
