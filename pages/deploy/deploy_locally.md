@@ -80,9 +80,6 @@ aws ssm put-parameter \
     --type String \
 ```
 
-After that, you can go ahead and use the CloudFormation YAML template for the pivotRole and introduce the parameters (externalId and pivotRoleName)
-that you can copy from the UI.
-
 
 ## 4. Linking environments
 
