@@ -101,6 +101,42 @@ the fields of a newly created dataset you have to specify the S3 bucket and opti
 is left empty, data.all will create a Glue database pointing at the S3 Bucket. As for the KMS key Alias, data.all assumes that if nothing is specified
 the S3 Bucket is encrypted with SSE-S3 encryption.
 
+!!! danger "Imported KMS key and S3 Bucket policies requirements"
+    Data.all pivot role will handle data sharing on the imported Bucket and KMS key (if imported). Make sure that
+    the resource policies allow the pivot role to manage them. For the KMS key policy, explicit permissions are needed. See an example below.
+
+
+### KMS key policy
+In the KMS key policy we need to grant explicit permission to the pivot role. Note that this block is needed even if
+permissions for the principal `"AWS": "arn:aws:iam::111122223333:root"` are given.
+
+```
+{
+  "Sid": "Enable Pivot Role Permissions",
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::111122223333:role/dataallPivotRole-cdk"
+   },
+  "Action": [
+    "kms:Decrypt",
+    "kms:Encrypt",
+    "kms:GenerateDataKey*",
+    "kms:PutKeyPolicy",
+    "kms:GetKeyPolicy",
+    "kms:ReEncrypt*",
+    "kms:TagResource",
+    "kms:UntagResource"
+   ],
+  "Resource": "*"
+}
+
+```
+
+
+
+
+
+
 | Field                  | Description                                                                                     | Required | Editable |Example
 |------------------------|-------------------------------------------------------------------------------------------------|----------|----------|-------------
 | Amazon S3 bucket name  | Name of the S3 bucket you want to import                                                        | Yes      | No    |DOC-EXAMPLE-BUCKET

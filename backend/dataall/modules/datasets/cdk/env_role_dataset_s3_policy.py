@@ -75,7 +75,7 @@ class DatasetS3Policy(S3Policy):
             dataset: Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
-                    key_id = KmsClient(dataset.AwsAccountId, dataset.region).get_key_id(
+                    key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
                         key_alias=f"alias/{dataset.KmsAlias}"
                     )
                     if key_id:

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 import logging
 from aws_cdk import aws_iam as iam
 
@@ -43,61 +43,101 @@ def split_policy_statements_in_chunks(statements: List):
     return chunks
 
 
-def split_policy_with_resources_in_statements(base_sid, effect, actions, resources):
+def split_policy_with_resources_in_statements(base_sid: str, effect: iam.Effect, actions: List[str], resources: List[str]):
     """
-    Splitter used for IAM policy statements with an undefined number of resources.
+    The variable part of the policy is in the resources parameter of the PolicyStatement
+    """
+    def _build_statement(split, subset):
+        return iam.PolicyStatement(
+            sid=base_sid + str(split),
+            effect=effect,
+            actions=actions,
+            resources=subset
+        )
+
+    total_length, base_length = _policy_analyzer(resources, _build_statement)
+    extra_chars = len('" ," ')
+
+    if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+        logger.info("Not exceeding policy limit, returning statement ...")
+        resulting_statement = _build_statement(1, resources)
+        return [resulting_statement]
+    else:
+        logger.info("Exceeding policy limit, splitting statement ...")
+        resulting_statements = _policy_splitter(base_length=base_length, resources=resources, extra_chars=extra_chars, statement_builder=_build_statement)
+    return resulting_statements
+
+
+def split_policy_with_mutiple_value_condition_in_statements(base_sid: str, effect: iam.Effect, actions: List[str], resources: List[str], condition_dict: dict):
+    """
+    The variable part of the policy is in the conditions parameter of the PolicyStatement
+    conditions_dict passes the different components of the condition mapping
+    """
+    def _build_statement(split, subset):
+        return iam.PolicyStatement(
+            sid=base_sid + str(split),
+            effect=effect,
+            actions=actions,
+            resources=resources,
+            conditions={
+                condition_dict.get('key'): {
+                    condition_dict.get('resource'): subset
+                }
+            }
+        )
+
+    total_length, base_length = _policy_analyzer(condition_dict.get('values'), _build_statement)
+    extra_chars = len(str(f'"Condition":  {{ "{condition_dict.get("key")}": {{"{condition_dict.get("resource")}": }} }}'))
+
+    if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+        logger.info("Not exceeding policy limit, returning statement ...")
+        resulting_statement = _build_statement(1, condition_dict.get("values"))
+        return [resulting_statement]
+    else:
+        logger.info("Exceeding policy limit, splitting values ...")
+        resulting_statements = _policy_splitter(base_length=base_length, resources=condition_dict.get("values"), extra_chars=extra_chars, statement_builder=_build_statement)
+
+    return resulting_statements
+
+
+def _policy_analyzer(resources: List[str], statement_builder: Callable[[int, List[str]], iam.PolicyStatement]):
+    """
+    Calculates the policy size with the resources (total_length) and without resources (base_length)
+    """
+    statement_without_resources = statement_builder(1, ["*"])
+    resources_str = '" ," '.join(r for r in resources)
+    base_length = len(str(statement_without_resources.to_json()))
+    total_length = base_length + len(resources_str)
+    logger.info(f"Policy base length = {base_length}")
+    logger.info(f"Resources as string length = {len(resources_str)}")
+    logger.info(f"Total length approximated as base length + resources string length = {total_length}")
+
+    return total_length, base_length
+
+
+def _policy_splitter(base_length: int, resources: List[str], extra_chars: int, statement_builder: Callable[[int, List[str]], iam.PolicyStatement]):
+    """
+    Splitter used for IAM policy statements with an undefined number of resources one of the parameters of the policy.
     - Ensures that the size of the IAM statement is below the POLICY LIMIT
     - If it exceeds the POLICY LIMIT, it breaks the statement in multiple statements with a subset of resources
     - Note the POLICY_HEADERS_BUFFER to account for the headers of the policy which usually take around ~60chars
     """
-    statement_without_resources = iam.PolicyStatement(
-        sid=base_sid,
-        effect=effect,
-        actions=actions,
-        resources=["*"]
-    )
-    resources_str = '" ," '.join(r for r in resources)
-    number_resources = len(resources)
-    max_length = len(max(resources, key=len))
-    base_length = len(str(statement_without_resources.to_json()))
-    total_length = base_length + len(resources_str)
-    logger.info(f"Policy base length = {base_length}")
-    logger.info(f"Number of resources = {number_resources}, resource maximum length = {max_length}")
-    logger.info(f"Resources as string length = {len(resources_str)}")
-    logger.info(f"Total length approximated as base length + resources string length = {total_length}")
-
-    if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
-        logger.info("Not exceeding policy limit, returning statement ...")
-        resulting_statement = iam.PolicyStatement(
-            sid=base_sid,
-            effect=effect,
-            actions=actions,
-            resources=resources
-        )
-        return [resulting_statement]
-    else:
-        logger.info("Exceeding policy limit, splitting statement ...")
-        index = 0
-        split = 0
-        resulting_statements = []
-        while index < len(resources):
-            #  Iterating until all resources are defined in a policy statement.
-            #  "index" represents the position of the resource in the resources list
-            size = 0
-            res = []
-            while index < len(resources) and (size + len(resources[index]) + 5) < POLICY_LIMIT - POLICY_HEADERS_BUFFER - base_length:
-                #  Appending a resource to the "res" list until we reach the maximum size for the resources section
-                #  It compares: current size of resources versus the allowed size of the resource section in a statement
-                res.append(resources[index])
-                size += (len(resources[index]) + 5)  # +5 for the 4 extra characters (", ") around each resource, plus additional ones []
-                index += 1
-            resulting_statement = iam.PolicyStatement(
-                sid=base_sid + str(split),
-                effect=effect,
-                actions=actions,
-                resources=res
-            )
-            split += 1
-            resulting_statements.append(resulting_statement)
-        logger.info(f"Statement divided into {split+1} smaller statements")
+    index = 0
+    split = 0
+    resulting_statements = []
+    while index < len(resources):
+        #  Iterating until all values are defined in a policy statement.
+        #  "index" represents the position of the value in the values list
+        size = 0
+        subset = []
+        while index < len(resources) and (size + len(resources[index]) + extra_chars) < POLICY_LIMIT - POLICY_HEADERS_BUFFER - base_length:
+            #  Appending a resource to the subset list until we reach the maximum size for the condition section
+            #  It compares: current size of subset versus the allowed size of the condition section in a statement
+            subset.append(resources[index])
+            size += (len(resources[index]) + extra_chars)
+            index += 1
+        resulting_statement = statement_builder(split=split, subset=subset)
+        split += 1
+        resulting_statements.append(resulting_statement)
+    logger.info(f"Statement divided into {split+1} smaller statements")
     return resulting_statements
