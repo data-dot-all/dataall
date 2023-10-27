@@ -6,24 +6,12 @@ class KMSPivotRole(PivotRoleStatementSet):
     """
     Class including all permissions needed  by the pivot role to work with AWS KMS.
     It allows pivot role to:
+    list and Describe KMS keys
+    manage data.all alias KMS keys
     - ....
     """
     def get_statements(self):
         statements = [
-            iam.PolicyStatement(
-                sid='KMS',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'kms:Decrypt',
-                    'kms:Encrypt',
-                    'kms:GenerateDataKey*',
-                    'kms:PutKeyPolicy',
-                    'kms:ReEncrypt*',
-                    'kms:TagResource',
-                    'kms:UntagResource',
-                ],
-                resources=['*'],
-            ),
             iam.PolicyStatement(
                 sid='KMSList',
                 effect=iam.Effect.ALLOW,
@@ -33,5 +21,25 @@ class KMSPivotRole(PivotRoleStatementSet):
                 ],
                 resources=['*'],
             ),
+            iam.PolicyStatement(
+                sid='KMSDataAllAlias',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey*',
+                    'kms:GetKeyPolicy',
+                    'kms:PutKeyPolicy',
+                    'kms:ReEncrypt*',
+                    'kms:TagResource',
+                    'kms:UntagResource',
+                ],
+                resources=[f"arn:aws:kms:{self.region}:{self.account}:key/*"],
+                conditions={
+                    'ForAnyValue:StringLike': {
+                        'kms:ResourceAliases': [f"alias/{self.env_resource_prefix}*"]
+                    }
+                },
+            )
         ]
         return statements
