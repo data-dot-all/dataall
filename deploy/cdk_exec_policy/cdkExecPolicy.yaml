@@ -113,6 +113,7 @@ Resources:
               - 'lambda:PutFunctionEventInvokeConfig'
               - 'lambda:InvokeFunction'
               - 'lambda:RemovePermission'
+              - 'lambda:Update*'
             Resource:
               - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
               - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${EnvironmentResourcePrefix}*'
