@@ -63,7 +63,8 @@ pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
 ```
 
-## 3. Mirror the code to a CodeCommit repository
+## 3. Mirror the code to a CodeCommit or GitHub repository
+### Using CodeCommit:
 Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
 and push your changes:
 Run the following to check your credentials:
@@ -79,6 +80,27 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
+### Using GitHub:
+If you choose to use a GitHub repository, it's important to note that you need to set up an AWS CodeStar connection to your GitHub repository for seamless integration. 
+This connection allows AWS CodePipeline to interact securely with your GitHub repository. 
+Before mirroring the data.all code and pushing any changes, make sure to set up the CodeStar connection by following these steps:
+1. Log in to the AWS Management Console.
+2. Navigate to the AWS CodeStar service.
+3. Choose the option to "Create a connection" and select GitHub as the source provider.
+4. Follow the on-screen instructions to authenticate and authorize AWS to access your GitHub repository.
+5. Once the connection is established, you can use the provided connection ARN in the "repo_connection_arn" parameter to ensure that the AWS CodePipeline can securely interact with your GitHub repository.
+
+If you choose to use GitHub, ensure that you have the necessary permissions and authentication set up for the repository. 
+To mirror the data.all code and push your changes, follow the standard Git commands for GitHub repositories:
+```bash
+git remote rm origin
+git remote add origin <GitHub-repository-URL>
+git init
+git add .
+git commit -m "First commit"
+git push --set-upstream origin main
+```
+
 ## 4. Bootstrap tooling account
 The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
 It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
@@ -130,6 +152,9 @@ of our repository. Open it, you should be seen something like:
     "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
     "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
+    "repository_source": "string_VERSION_CONTROL_SERVICE|(github, codecommit) DEFAULT=codecommit",
+    "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=github",
+    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=github",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
@@ -180,6 +205,9 @@ and find 2 examples of cdk.json files.
 | git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                |
 | quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                     |
 | resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                 |
+| repository_source                             | Optional              | The source of the repository. It can be either "github" or "codecommit". (default: codecommit)                                                                                                                                                                        |
+| repo_string                                   | Optional              | The string that specifies the repository in GitHub in the format "owner/repository". This parameter is required if the repository source is "github". (default: awslabs/aws-dataall)                                                                                  |
+| repo_connection_arn                           | Optional              | The ARN (Amazon Resource Name) for the AWS CodeStar connection in the format "arn:aws:codestar-connections:region:account-id:connection/connection-id". This parameter is required if the repository source is "github". (default: None)                              |
 | **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                        |
 | ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                           |
 | envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                               |
