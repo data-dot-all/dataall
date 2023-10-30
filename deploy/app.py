@@ -72,6 +72,9 @@ source = app.node.try_get_context('repository_source') or 'codecommit'
 repo_string = app.node.try_get_context('repo_string') or 'awslabs/aws-dataall'
 repo_connection_arn = app.node.try_get_context('repo_connection_arn')
 
+if (source == "github" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
+    raise ValueError("Error: When the source is 'github', 'repo_connection_arn' cannot be None. Please define the ARN of the CodeStar ConnectionArn")
+
 env = Environment(account=account_id, region=cdk_pipeline_region)
 
 pipeline = PipelineStack(
