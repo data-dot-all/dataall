@@ -1,7 +1,7 @@
 import logging
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from ..share_managers import S3ShareManager
+from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -10,7 +10,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import ShareOb
 log = logging.getLogger(__name__)
 
 
-class ProcessS3Share(S3ShareManager):
+class ProcessS3AccessPointShare(S3AccessPointShareManager):
     def __init__(
         self,
         session,
@@ -21,6 +21,7 @@ class ProcessS3Share(S3ShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
+        existing_shared_buckets: bool = False
     ):
 
         super().__init__(
@@ -164,11 +165,18 @@ class ProcessS3Share(S3ShareManager):
 
         return success
 
-    @staticmethod
+    @classmethod
     def clean_up_share(
+            cls,
+            session,
             dataset: Dataset,
             share: ShareObject,
-            target_environment: Environment
+            folder: DatasetStorageLocation,
+            source_environment: Environment,
+            target_environment: Environment,
+            source_env_group: EnvironmentGroup,
+            env_group: EnvironmentGroup,
+            existing_shared_buckets: bool = False
     ):
         """
         1) deletes S3 access point for this share in this Dataset S3 Bucket
@@ -179,21 +187,33 @@ class ProcessS3Share(S3ShareManager):
         -------
         True if share is cleaned-up successfully
         """
-
-        clean_up = S3ShareManager.delete_access_point(
+        clean_up_folder = cls(
+            session,
+            dataset,
+            share,
+            folder,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group,
+            existing_shared_buckets
+        )
+        clean_up = clean_up_folder.delete_access_point(
             share=share,
             dataset=dataset
         )
+
         if clean_up:
-            S3ShareManager.delete_target_role_access_policy(
+            clean_up_folder.delete_target_role_access_policy(
                 share=share,
                 dataset=dataset,
                 target_environment=target_environment
             )
-            S3ShareManager.delete_dataset_bucket_key_policy(
-                share=share,
-                dataset=dataset,
-                target_environment=target_environment
-            )
+            if not existing_shared_buckets:
+                clean_up_folder.delete_dataset_bucket_key_policy(
+                    share=share,
+                    dataset=dataset,
+                    target_environment=target_environment
+                )
 
         return True

@@ -121,6 +121,50 @@ class S3ControlClient:
         }
         return policy
 
+    @staticmethod
+    def generate_default_bucket_policy(
+            s3_bucket_name: str,
+            owner_roleId: list
+    ):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "AllowAllToAdmin",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:*",
+                    "Resource": [
+                        f"arn:aws:s3:::{s3_bucket_name}",
+                        f"arn:aws:s3:::{s3_bucket_name}/*"
+                    ],
+                    "Condition": {
+                        "StringLike": {
+                            "aws:userId": owner_roleId
+                        }
+                    }
+                },
+                {
+                    "Effect": "Deny",
+                    "Principal": {
+                        "AWS": "*"
+                    },
+                    "Sid": "RequiredSecureTransport",
+                    "Action": "s3:*",
+                    "Resource": [
+                        f"arn:aws:s3:::{s3_bucket_name}",
+                        f"arn:aws:s3:::{s3_bucket_name}/*"
+                    ],
+                    "Condition": {
+                        "Bool": {
+                            "aws:SecureTransport": "false"
+                        }
+                    }
+                }
+            ]
+        }
+        return policy
+
 
 class S3Client:
     def __init__(self, account_id, region):

@@ -10,6 +10,7 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { getShareObject, revokeItemsShareObject } from '../services';
+import { generateShareItemLabel } from '../../../utils/share';
 
 export const RevokeShareItemsModal = (props) => {
   const client = useClient();
@@ -40,7 +41,7 @@ export const RevokeShareItemsModal = (props) => {
         response.data.getShareObject.items.nodes.map((item) => ({
           id: item.shareItemUri,
           name: item.itemName,
-          type: item.itemType === 'StorageLocation' ? 'Folder' : 'Table',
+          type: generateShareItemLabel(item.itemType),
           status: item.status
         }))
       );

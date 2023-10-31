@@ -5,7 +5,6 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -16,8 +15,10 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
+from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
@@ -54,22 +55,13 @@ class DatasetService:
     def check_imported_resources(environment, data):
         kms_alias = data.get('KmsKeyAlias')
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
-            key_exists = KmsClient(account_id=environment.AwsAccountId, region=environment.region).check_key_exists(
-                key_alias=f"alias/{kms_alias}"
-            )
-            if not key_exists:
-                raise exceptions.AWSResourceNotFound(
-                    action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {environment.AwsAccountId}',
-                )
-
-            key_id = KmsClient(account_id=environment.AwsAccountId, region=environment.region).get_key_id(
+            key_id = KmsClient(environment.AwsAccountId, environment.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_id:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
+                    message=f'KMS key with alias={kms_alias} cannot be found',
                 )
         return True
 
@@ -91,6 +83,8 @@ class DatasetService:
                 uri=uri,
                 data=data,
             )
+
+            DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
@@ -380,6 +374,7 @@ class DatasetService:
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
+            DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 

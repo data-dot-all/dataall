@@ -25,8 +25,6 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
-# TODO: review this task usage and remove if not needed
-
 
 class DatasetSubscriptionService:
     def __init__(self, engine):
@@ -148,12 +146,12 @@ class DatasetSubscriptionService:
                         response = sns_client.publish_dataset_message(message)
                         log.info(f'SNS update publish response {response}')
 
-                        notifications = ShareNotificationService(
+                        notifications = ShareNotificationService.notify_new_data_available_from_owners(
                             session=session,
                             dataset=dataset,
-                            share=share_object
-                        ).notify_new_data_available_from_owners(s3_prefix=prefix)
-
+                            share=share_object,
+                            s3_prefix=prefix,
+                        )
                         log.info(f'Notifications for share owners {notifications}')
 
                     except ClientError as e:

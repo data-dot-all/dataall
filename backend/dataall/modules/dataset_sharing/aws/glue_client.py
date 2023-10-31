@@ -130,3 +130,43 @@ class GlueClient:
                 f'due to: {e}'
             )
             raise e
+
+    def remove_create_table_default_permissions(self):
+        """
+        When upgrading to LF tables and database can still have Create Table Default Permissions turned on.
+        Unless this setting is removed, the table or database
+        can not be shared using LakeFormation.
+        :return:
+        """
+        try:
+            account_id = self._account_id
+            database = self._database
+
+            log.info(
+                f'Removing CreateTableDefaultPermissions in database {database}'
+            )
+
+            response = self._client.get_database(CatalogId=account_id, Name=database)
+            existing_database_parameters = response['Database']
+            existing_database_parameters['CreateTableDefaultPermissions'] = []
+
+            if 'CreateTime' in existing_database_parameters:
+                del existing_database_parameters['CreateTime']
+            if 'CatalogId' in existing_database_parameters:
+                del existing_database_parameters['CatalogId']
+
+            response = self._client.update_database(
+                CatalogId=account_id,
+                Name=database,
+                DatabaseInput=existing_database_parameters
+            )
+
+            log.info(
+                f'Successfully removed  Create Table Default Permissions and Create Database Default Permissions '
+                f'| {response}')
+
+        except ClientError as e:
+            log.error(
+                f'Could not remove CreateDatabaseDefaultPermissions and/or CreateTableDefaultPermissions '
+                f'permission on database in {database} due to {e}'
+            )

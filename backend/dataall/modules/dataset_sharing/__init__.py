@@ -17,8 +17,7 @@ class SharingApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.notifications import NotificationsModuleInterface
-        return [DatasetBaseModuleInterface, NotificationsModuleInterface]
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
@@ -36,8 +35,7 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.notifications import NotificationsModuleInterface
-        return [DatasetBaseModuleInterface, NotificationsModuleInterface]
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         import dataall.modules.dataset_sharing.handlers

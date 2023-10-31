@@ -53,19 +53,21 @@ class KmsClient:
         else:
             return response['KeyMetadata']['KeyId']
 
-    def check_key_exists(self, key_alias: str):
+    def add_tags_to_key(self, key_id: str, tags: list):
+        """
+        Add tags to an existing AWS KMS key.
+        :param key_id: The ID of the KMS key to add tags to.
+        :param tags: A list of dictionaries containing the tags to be added. For example:
+        [{'TagKey': 'Purpose', 'TagValue': 'Test'}]
+        :return: None
+        """
         try:
-            key_exist = False
-            paginator = self._client.get_paginator('list_aliases')
-            for page in paginator.paginate():
-                key_aliases = [alias["AliasName"] for alias in page['Aliases']]
-                if key_alias in key_aliases:
-                    key_exist = True
-                    break
+            self._client.tag_resource(
+                KeyId=key_id,
+                Tags=tags,
+            )
         except Exception as e:
             log.error(
-                f'Failed to list kms key aliases in account {self._account_id}: {e}'
+                f'Failed to add tags to kms key {key_id} : {e}'
             )
-            return None
-        else:
-            return key_exist
+            raise e
