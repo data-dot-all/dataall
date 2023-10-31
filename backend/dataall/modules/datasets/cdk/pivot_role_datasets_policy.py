@@ -20,6 +20,23 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     """
     def get_statements(self):
         statements = [
+            # S3 Imported Buckets - restrict resources via bucket policies
+            iam.PolicyStatement(
+                sid='ImportedBuckets',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:List*',
+                    's3:GetBucket*',
+                    's3:GetLifecycleConfiguration',
+                    's3:GetObject',
+                    's3:PutBucketPolicy',
+                    's3:PutBucketTagging',
+                    's3:PutObject',
+                    's3:PutObjectAcl',
+                    's3:PutBucketOwnershipControls',
+                ],
+                resources=['arn:aws:s3:::*'],
+            ),
             # For dataset preview
             iam.PolicyStatement(
                 sid='AthenaWorkgroupsDataset',

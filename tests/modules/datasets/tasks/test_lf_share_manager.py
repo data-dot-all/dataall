@@ -660,7 +660,7 @@ def test_revoke_external_account_access_on_source_account(
         return_value=boto3.Session(),
     )
 
-    processor_cross_account.revoke_external_account_access_on_source_account(table1.GlueDatabaseName, table1.GlueTableName)
+    processor_cross_account.revoke_external_account_access_on_source_account()
     # Then
     lf_mock.assert_called_once()
 

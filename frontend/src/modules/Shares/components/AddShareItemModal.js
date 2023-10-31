@@ -20,6 +20,7 @@ import { Defaults, Pager, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { addSharedItem, getShareObject } from '../services';
+import { generateShareItemLabel } from '../../../utils/share';
 
 export const AddShareItemModal = (props) => {
   const client = useClient();
@@ -144,7 +145,7 @@ export const AddShareItemModal = (props) => {
                       sharedItems.nodes.map((item) => (
                         <TableRow hover key={item.itemUri}>
                           <TableCell>
-                            {item.itemType === 'Table' ? 'Table' : 'Folder'}
+                            {generateShareItemLabel(item.itemType)}
                           </TableCell>
                           <TableCell>{item.itemName}</TableCell>
                           <TableCell>

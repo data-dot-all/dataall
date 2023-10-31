@@ -5,6 +5,7 @@ class ShareableType(GraphQLEnumMapper):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
     View = 'View'
+    S3Bucket = 'S3Bucket'
 
 
 class ShareObjectPermission(GraphQLEnumMapper):

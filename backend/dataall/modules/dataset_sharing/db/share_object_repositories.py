@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareOb
     ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 logger = logging.getLogger(__name__)
 
@@ -356,6 +356,8 @@ class ShareObjectRepository:
             return session.query(DatasetTable).get(item_uri)
         if item_type == ShareableType.StorageLocation.value:
             return session.query(DatasetStorageLocation).get(item_uri)
+        if item_type == ShareableType.S3Bucket.value:
+            return session.query(DatasetBucket).get(item_uri)
 
     @staticmethod
     def get_share_by_uri(session, uri):
@@ -525,7 +527,33 @@ class ShareObjectRepository:
         if states:
             locations = locations.filter(ShareObjectItem.status.in_(states))
 
-        shareable_objects = tables.union(locations).subquery('shareable_objects')
+        s3_buckets = (
+            session.query(
+                DatasetBucket.bucketUri.label('itemUri'),
+                func.coalesce('S3Bucket').label('itemType'),
+                DatasetBucket.S3BucketName.label('itemName'),
+                DatasetBucket.description.label('description'),
+                ShareObjectItem.shareItemUri.label('shareItemUri'),
+                ShareObjectItem.status.label('status'),
+                case(
+                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
+                    else_=False,
+                ).label('isShared'),
+            )
+            .outerjoin(
+                ShareObjectItem,
+                and_(
+                    ShareObjectItem.shareUri == share.shareUri,
+                    DatasetBucket.bucketUri
+                    == ShareObjectItem.itemUri,
+                ),
+            )
+            .filter(DatasetBucket.datasetUri == share.datasetUri)
+        )
+        if states:
+            s3_buckets = s3_buckets.filter(ShareObjectItem.status.in_(states))
+
+        shareable_objects = tables.union(locations, s3_buckets).subquery('shareable_objects')
         query = session.query(shareable_objects)
 
         if data:
@@ -732,9 +760,14 @@ class ShareObjectRepository:
             session, share, status, DatasetStorageLocation, DatasetStorageLocation.locationUri
         )
 
+        s3_buckets = ShareObjectRepository._find_all_share_item(
+            session, share, status, DatasetBucket, DatasetBucket.bucketUri
+        )
+
         return (
             tables,
             folders,
+            s3_buckets,
         )
 
     @staticmethod
@@ -774,23 +807,17 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+    def other_approved_share_object_exists(session, environment_uri, dataset_uri):
         return (
             session.query(ShareObject)
-            .join(
-                ShareObjectItem,
-                ShareObject.shareUri == ShareObjectItem.shareUri,
-            )
             .filter(
                 and_(
-                    ShareObject.environmentUri == environment_uri,
-                    ShareObjectItem.itemUri == item_uri,
-                    ShareObjectItem.shareItemUri != share_item_uri,
-                    ShareObjectItem.status.in_(share_item_shared_states),
+                    Environment.environmentUri == environment_uri,
+                    ShareObject.status == ShareObjectStatus.Approved.value,
+                    ShareObject.datasetUri == dataset_uri,
                 )
             )
-            .first()
+            .all()
         )
 
     @staticmethod
