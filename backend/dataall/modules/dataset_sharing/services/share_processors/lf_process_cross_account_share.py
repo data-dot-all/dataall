@@ -159,10 +159,10 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                 other_table_shares_in_env = False
                 if ShareObjectRepository.other_approved_share_item_table_exists(
-                        self.session,
-                        self.target_environment.environmentUri,
-                        share_item.itemUri,
-                        share_item.shareItemUri
+                    self.session,
+                    self.target_environment.environmentUri,
+                    share_item.itemUri,
+                    share_item.shareItemUri
                 ):
                     other_table_shares_in_env = True
                     principals = [p for p in principals if "arn:aws:quicksight" not in p]
@@ -183,4 +183,4 @@ class ProcessLFCrossAccountShare(LFShareManager):
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
                 success = False
 
-            return success
+        return success
