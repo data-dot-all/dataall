@@ -5,6 +5,7 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
+from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -18,7 +19,6 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
@@ -55,7 +55,16 @@ class DatasetService:
     def check_imported_resources(environment, data):
         kms_alias = data.get('KmsKeyAlias')
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
-            key_id = KmsClient(environment.AwsAccountId, environment.region).get_key_id(
+            key_exists = KmsClient(account_id=environment.AwsAccountId, region=environment.region).check_key_exists(
+                key_alias=f"alias/{kms_alias}"
+            )
+            if not key_exists:
+                raise exceptions.AWSResourceNotFound(
+                    action=IMPORT_DATASET,
+                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {environment.AwsAccountId}',
+                )
+
+            key_id = KmsClient(account_id=environment.AwsAccountId, region=environment.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_id:
