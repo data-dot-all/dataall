@@ -124,7 +124,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             a) update its status to REVOKE_IN_PROGRESS with Action Start
             b) check if item exists on glue catalog raise error if not and flag item status to failed
             c) revoke table resource link: undo grant permission to resource link table for team role in target account
-            d) revoke source table access: undo grant permission to table for team role in source account
+            d) revoke source table access: undo grant permission to table for team role in source account (and for QS Group if no other shares present for table)
             e) delete resource link table
             h) update share item status to REVOKE_SUCCESSFUL with Action Success
 
@@ -157,9 +157,22 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                 self.revoke_table_resource_link_access(table, principals)
 
+                other_table_shares_in_env = False
+                if ShareObjectRepository.other_approved_share_item_table_exists(
+                        self.session,
+                        self.target_environment.environmentUri,
+                        share_item.itemUri,
+                        share_item.shareItemUri
+                ):
+                    other_table_shares_in_env = True
+                    principals = [p for p in principals if "arn:aws:quicksight" not in p]
+
                 self.revoke_source_table_access(table, principals)
 
                 self.delete_resource_link_table(table)
+
+                if not other_table_shares_in_env:
+                    self.revoke_external_account_access_on_source_account(table.GlueDatabaseName, table.GlueTableName)
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
@@ -170,25 +183,4 @@ class ProcessLFCrossAccountShare(LFShareManager):
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
                 success = False
 
-        return success
-
-    def clean_up_share(self) -> bool:
-        """"
-        1) deletes deprecated shared db in target account
-        2) checks if there are other share objects from this source account to this target account.
-        If not, it revokes external account access of the target account to the source account.
-        Returns
-        -------
-        True if clean-up succeeds
-        """
-
-        self.delete_shared_database()
-
-        if not ShareObjectRepository.other_approved_share_object_exists(
-                self.session,
-                self.target_environment.environmentUri,
-                self.dataset.datasetUri,
-        ):
-            self.revoke_external_account_access_on_source_account()
-
-        return True
+            return success
