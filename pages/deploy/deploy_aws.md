@@ -520,7 +520,7 @@ in the tooling account and check the status of your pipeline.
 
 ## 12. Setting SES for Email Notifications
 
-Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module. 
+Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module.
 
 ### Moving AWS SES out of Sandbox
 If you have specified `custom_domain`, after the deployment you should see a SES identity which is formed in your AWS Account. 
@@ -532,8 +532,7 @@ Once your AWS SES account is out of sandbox you can send email to any recipient 
 ### Monitoring for Email Bounces
 When SES Stack is deployed during the pipeline stage, it will setup a <a href="https://docs.aws.amazon.com/ses/latest/dg/using-configuration-sets.html">configuration set</a>
 which will send any email bounces, delivery failures, rejects & complaints to an SNS topic. In this step, you can add subscriptions to this SNS topic to monitor email delivery problems
-
-In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to 
+In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to
 this SNS topic and monitor and take actions in case of any delivery failure.
 
 
