@@ -31,12 +31,12 @@
             "active": true
         },
         "dashboards": {
-            "active": false
+            "active": true
         }
     },
     "core": {
         "features": {
-            "env_aws_actions": false
+            "env_aws_actions": true
         }
     }
 }
