@@ -70,7 +70,7 @@ class DatasetService:
             if not key_id:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found',
+                    message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
                 )
         return True
 
