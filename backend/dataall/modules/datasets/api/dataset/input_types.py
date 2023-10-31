@@ -20,7 +20,7 @@ NewDatasetInput = gql.InputType(
             name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
-        gql.Argument(name='stewards', type=gql.String)
+        gql.Argument(name='stewards', type=gql.String),
     ],
 )
 
@@ -102,6 +102,6 @@ ImportDatasetInput = gql.InputType(
             name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
-        gql.Argument(name='stewards', type=gql.String)
+        gql.Argument(name='stewards', type=gql.String),
     ],
 )
