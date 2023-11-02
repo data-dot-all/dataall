@@ -65,6 +65,7 @@ import {
   UpdateRejectReason,
   UpdateRequestReason
 } from '../components';
+import { generateShareItemLabel } from '../../../utils/share';
 
 function ShareViewHeader(props) {
   const {
@@ -360,7 +361,7 @@ function SharedItem(props) {
 
   return (
     <TableRow hover>
-      <TableCell>{item.itemType === 'Table' ? 'Table' : 'Folder'}</TableCell>
+      <TableCell>{generateShareItemLabel(item.itemType)}</TableCell>
       <TableCell>{item.itemName}</TableCell>
       <TableCell>
         <ShareStatus status={item.status} />
@@ -796,6 +797,40 @@ const ShareView = () => {
                   <CardContent>
                     <Box>
                       <Box>
+                        <Typography
+                          display="inline"
+                          color="textSecondary"
+                          variant="subtitle2"
+                        >
+                          S3 Bucket name (Bucket sharing):
+                        </Typography>
+                        <Typography
+                          display="inline"
+                          color="textPrimary"
+                          variant="subtitle2"
+                        >
+                          {` ${share.consumptionData.s3bucketName || '-'}`}
+                        </Typography>
+                        <Typography color="textPrimary" variant="subtitle2">
+                          <CopyToClipboard
+                            onCopy={() => copyNotification()}
+                            text={`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                          >
+                            <IconButton>
+                              <CopyAllOutlined
+                                sx={{
+                                  color:
+                                    theme.palette.mode === 'dark'
+                                      ? theme.palette.primary.contrastText
+                                      : theme.palette.primary.main
+                                }}
+                              />
+                            </IconButton>
+                          </CopyToClipboard>
+                          {`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ mt: 3 }}>
                         <Typography
                           display="inline"
                           color="textSecondary"

@@ -9,7 +9,8 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_p
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
 from dataall.base.db import Engine
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemStatus, ShareableType
+from dataall.modules.dataset_sharing.db.enums import (ShareObjectActions, ShareItemStatus, ShareableType,
+                                                      ShareItemActions)
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
     ShareItemSM
 
@@ -181,18 +182,30 @@ class DataSharingService:
                 env_group,
             )
             log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
+            existing_shared_folders = ShareObjectRepository.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 ShareableType.StorageLocation.value
             )
+            existing_shared_buckets = ShareObjectRepository.check_existing_shared_items_of_type(
+                session,
+                share_uri,
+                ShareableType.S3Bucket.value
+            )
+            existing_shared_items = existing_shared_folders or existing_shared_buckets
             log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
-            if not existing_shared_items and revoked_folders:
+            if not existing_shared_folders and revoked_folders:
                 log.info("Clean up S3 access points...")
                 clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
+                    session,
                     dataset=dataset,
                     share=share,
-                    target_environment=target_environment
+                    folder=revoked_folders[0],
+                    source_environment=source_environment,
+                    target_environment=target_environment,
+                    source_env_group=source_env_group,
+                    env_group=env_group,
+                    existing_shared_buckets=existing_shared_buckets
                 )
                 log.info(f"Clean up S3 successful = {clean_up_folders}")
 
@@ -207,6 +220,7 @@ class DataSharingService:
                 target_environment,
                 source_env_group,
                 env_group,
+                existing_shared_folders
             )
             log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
@@ -244,7 +258,7 @@ class DataSharingService:
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_tables:
                 log.info("Clean up LF remaining resources...")
-                clean_up_tables = processor.delete_shared_database()
+                clean_up_tables = processor.clean_up_share() and processor.delete_shared_database()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
             existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
@@ -255,3 +269,16 @@ class DataSharingService:
             share_sm.update_state(session, share, new_share_state)
 
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+
+    @staticmethod
+    def _handle_table_share_failure(session, share, table, share_item_status):
+        """ Mark the share item as failed for the approved/revoked tables """
+        log.error(f'Marking share item as failed for table {table.GlueTableName}')
+        share_item = ShareObjectRepository.find_sharable_item(
+            session, share.shareUri, table.tableUri
+        )
+        share_item_sm = ShareItemSM(share_item_status)
+        new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
+        share_item_sm.update_state_single_item(session, share_item, new_state)
+        new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
+        share_item_sm.update_state_single_item(session, share_item, new_state)
