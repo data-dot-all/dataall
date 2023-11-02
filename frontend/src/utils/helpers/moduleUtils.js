@@ -1,35 +1,12 @@
 /* eslint-disable no-restricted-properties */
+import * as modules from 'modules';
 import config from '../../generated/config.json';
 
-const ModuleNames = {
-  CATALOG: 'catalog',
-  DATASETS: 'datasets',
-  SHARES: 'shares',
-  GLOSSARIES: 'glossaries',
-  WORKSHEETS: 'worksheets',
-  NOTEBOOKS: 'notebooks',
-  MLSTUDIO: 'mlstudio',
-  PIPELINES: 'datapipelines',
-  DASHBOARDS: 'dashboards'
-};
-
 function isModuleEnabled(module) {
-  if (module === ModuleNames.CATALOG || module === ModuleNames.GLOSSARIES) {
-    return (
-      getModuleActiveStatus(ModuleNames.DATASETS) ||
-      getModuleActiveStatus(ModuleNames.DASHBOARDS)
-    );
+  if (hasDependencyModule(module)) {
+    const resolvedModule = resolveModuleName(module);
+    return resolvedModule.resolve_dependency();
   }
-  if (module === ModuleNames.SHARES) {
-    return getModuleActiveStatus(ModuleNames.DATASETS);
-  }
-  if (module === ModuleNames.WORKSHEETS) {
-    return (
-      getModuleActiveStatus(ModuleNames.DATASETS) &&
-      getModuleActiveStatus(ModuleNames.WORKSHEETS)
-    );
-  }
-
   return getModuleActiveStatus(module);
 }
 
@@ -44,4 +21,25 @@ function getModuleActiveStatus(moduleKey) {
   return false;
 }
 
-export { ModuleNames, isModuleEnabled };
+function resolveModuleName(module) {
+  return Object.values(modules).find((_module) => _module.name === module);
+}
+
+function hasDependencyModule(module) {
+  const resolvedModule = resolveModuleName(module);
+  return typeof resolvedModule?.resolve_dependency === 'function';
+}
+
+function configKeysMap(obj) {
+  const map = {};
+  const otherModules = ['catalog', 'shares', 'glossaries'];
+  for (const module of [...Object.keys(obj), ...otherModules]) {
+    const upperCaseModule = module.toUpperCase();
+    map[upperCaseModule] = module;
+  }
+  return map;
+}
+
+const ModuleNames = configKeysMap(config.modules);
+
+export { ModuleNames, isModuleEnabled, getModuleActiveStatus };
