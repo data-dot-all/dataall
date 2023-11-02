@@ -141,7 +141,7 @@ class BackendStack(Stack):
             self, 'ECRREPO', repository_arn=ecr_repository
         )
         if None not in [custom_domain, ses_stack]:
-            email_sender = custom_domain.get('email_notification_sender_email_id', None) if custom_domain.get('email_notification_sender_email_id', None) != None else f'noreply@{custom_domain.get("hosted_zone_name")}'
+            email_sender = custom_domain.get('email_notification_sender_email_id', "noreply") + "@" + custom_domain.get("hosted_zone_name")
         else:
             email_sender = 'none'
 
