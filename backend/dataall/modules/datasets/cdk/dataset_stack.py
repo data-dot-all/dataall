@@ -432,7 +432,7 @@ class DatasetStack(Stack):
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
             'GlueDatabaseProviderServiceToken',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
+            string_parameter_name=f'/{env.resourcePrefix}/{dataset.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
         glue_db = CustomResource(
