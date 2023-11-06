@@ -31,15 +31,18 @@ export const useClient = () => {
   const token = useToken();
   const auth = useAuth();
 
-  const setReAuth = useCallback(async (requestInfo) => {
-    auth.dispatch({
-      type: 'REAUTH',
-      payload: {
-        reAuthStatus: true,
-        requestInfo: requestInfo
-      }
-    });
-  }, []);
+  const setReAuth = useCallback(
+    async (requestInfo) => {
+      auth.dispatch({
+        type: 'REAUTH',
+        payload: {
+          reAuthStatus: true,
+          requestInfo: requestInfo
+        }
+      });
+    },
+    [auth]
+  );
 
   useEffect(() => {
     const initClient = async () => {
