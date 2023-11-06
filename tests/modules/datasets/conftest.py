@@ -206,6 +206,16 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
         group=group.name,
     )
 
+@pytest.fixture(scope='module')
+def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
+    yield dataset(
+        org=org_fixture,
+        env=env_fixture,
+        name='dataset2',
+        owner=env_fixture.owner,
+        group=group.name,
+        confidentiality=ConfidentialityClassification.Secret.value
+    )
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
@@ -220,6 +230,20 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
+
+@pytest.fixture(scope='module')
+def table_confidential_fixture(db, dataset_confidential_fixture, table, group, user):
+    table2 = table(dataset=dataset_confidential_fixture, name="table2", username=user.username)
+
+    with db.scoped_session() as session:
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=group.groupUri,
+            permissions=DATASET_TABLE_READ,
+            resource_uri=table2.tableUri,
+            resource_type=DatasetTable.__name__,
+        )
+    yield table2
 
 
 @pytest.fixture(scope='module')
