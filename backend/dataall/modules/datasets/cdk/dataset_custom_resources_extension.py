@@ -88,14 +88,14 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             setup,
             'LakeformationDefaultSettingsCustomeResourceFunctionArn',
             string_value=lf_default_settings_custom_resource.function_arn,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/arn',
+            parameter_name=f'/{setup.environment().resourcePrefix}/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/arn',
         )
 
         ssm.StringParameter(
             setup,
             'LakeformationDefaultSettingsCustomeResourceFunctionName',
             string_value=lf_default_settings_custom_resource.function_name,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/name',
+            parameter_name=f'/{setup.environment().resourcePrefix}/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/name',
         )
         # Glue database custom resource
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
@@ -142,21 +142,21 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             setup,
             'GlueLFCustomResourceFunctionArn',
             string_value=gluedb_lf_custom_resource.function_arn,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
+            parameter_name=f'/{setup.environment().resourcePrefix}/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
         )
 
         ssm.StringParameter(
             setup,
             'GlueLFCustomResourceFunctionName',
             string_value=gluedb_lf_custom_resource.function_name,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
+            parameter_name=f'/{setup.environment().resourcePrefix}/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
         )
 
         ssm.StringParameter(
             setup,
             'GlueLFCustomResourceProviderServiceToken',
             string_value=glue_db_provider.service_token,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
+            parameter_name=f'/{setup.environment().resourcePrefix}/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
     @staticmethod
