@@ -479,10 +479,10 @@ const EnvironmentCreateForm = (props) => {
                 AwsAccountId: '',
                 region: '',
                 tags: [],
-                dashboardsEnabled: true,
-                notebooksEnabled: true,
-                mlStudiosEnabled: true,
-                pipelinesEnabled: true,
+                dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
+                notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
+                mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
                 resourcePrefix: 'dataall'
               }}
