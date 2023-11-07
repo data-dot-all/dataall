@@ -196,7 +196,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             setup,
             'SagemakerStudioDomainId',
             string_value=sagemaker_domain.attr_domain_id,
-            parameter_name=f'/dataall/{_environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
         )
         return sagemaker_domain
 
@@ -210,7 +210,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             )
             dataall_created_domain = ParameterStoreManager.client(
                 AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
-            ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
+            ).get_parameter(Name=f'/{environment.resourcePrefix}/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
             return False
         except ClientError as e:
             logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
