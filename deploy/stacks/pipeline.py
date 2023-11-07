@@ -426,7 +426,6 @@ class PipelineStack(Stack):
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
-                        f'export schema_name=validation',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make drop-tables',
