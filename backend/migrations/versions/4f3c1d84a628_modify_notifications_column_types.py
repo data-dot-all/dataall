@@ -34,6 +34,7 @@ def upgrade():
         nullable=False,
         existing_type=sa.String()
     )
+    print("Notification columns updated")
 
 
 def downgrade():
