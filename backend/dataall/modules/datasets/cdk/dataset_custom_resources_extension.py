@@ -24,9 +24,10 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
 
     @staticmethod
     def extent(setup: EnvironmentSetup):
+        _environment = setup.environment()
         kms_key = DatasetCustomResourcesExtension.set_cr_kms_key(
             setup=setup,
-            environment=setup.environment(),
+            environment=_environment,
             group_roles=setup.group_roles,
             default_role=setup.default_role
         )
@@ -40,13 +41,13 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
 
         lakeformation_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
             setup=setup,
-            queue_name=f'{setup.environment().resourcePrefix}-lfcr-{setup.environment().environmentUri}',
+            queue_name=f'{_environment.resourcePrefix}-lfcr-{_environment.environmentUri}',
             kms_key=kms_key
         )
         lf_default_settings_custom_resource = _lambda.Function(
             setup,
             'LakeformationDefaultSettingsHandler',
-            function_name=f'{setup.environment().resourcePrefix}-lf-settings-handler-{setup.environment().environmentUri}',
+            function_name=f'{_environment.resourcePrefix}-lf-settings-handler-{_environment.environmentUri}',
             role=setup.pivot_role,
             handler='index.on_event',
             code=_lambda.Code.from_asset(entry_point),
@@ -54,11 +55,11 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             description='This Lambda function is a cloudformation custom resource provider for Lakeformation default settings',
             timeout=Duration.seconds(5 * 60),
             environment={
-                'envname': setup.environment().name,
+                'envname': _environment.name,
                 'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': setup.environment().AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': setup.environment().EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': setup.environment().CDKRoleArn,
+                'AWS_ACCOUNT': _environment.AwsAccountId,
+                'DEFAULT_ENV_ROLE_ARN': _environment.EnvironmentDefaultIAMRoleArn,
+                'DEFAULT_CDK_ROLE_ARN': _environment.CDKRoleArn,
             },
             dead_letter_queue_enabled=True,
             dead_letter_queue=lakeformation_cr_dlq,
@@ -67,18 +68,18 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         )
         LakeformationDefaultSettingsProvider = cr.Provider(
             setup,
-            f'{setup.environment().resourcePrefix}LakeformationDefaultSettingsProvider',
+            f'{_environment.resourcePrefix}LakeformationDefaultSettingsProvider',
             on_event_handler=lf_default_settings_custom_resource,
         )
 
         default_lf_settings = CustomResource(
             setup,
-            f'{setup.environment().resourcePrefix}DefaultLakeFormationSettings',
+            f'{_environment.resourcePrefix}DefaultLakeFormationSettings',
             service_token=LakeformationDefaultSettingsProvider.service_token,
             resource_type='Custom::LakeformationDefaultSettings',
             properties={
                 'DataLakeAdmins': [
-                    f'arn:aws:iam::{setup.environment().AwsAccountId}:role/{setup.pivot_role_name}',
+                    f'arn:aws:iam::{_environment.AwsAccountId}:role/{setup.pivot_role_name}',
                 ],
                 'Version': "data.all V2"
             },
@@ -88,14 +89,14 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             setup,
             'LakeformationDefaultSettingsCustomeResourceFunctionArn',
             string_value=lf_default_settings_custom_resource.function_arn,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/arn',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/cfn/lf/defaultsettings/lambda/arn',
         )
 
         ssm.StringParameter(
             setup,
             'LakeformationDefaultSettingsCustomeResourceFunctionName',
             string_value=lf_default_settings_custom_resource.function_name,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/lf/defaultsettings/lambda/name',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/cfn/lf/defaultsettings/lambda/name',
         )
         # Glue database custom resource
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
@@ -105,13 +106,13 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
 
         gluedb_lf_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
             setup=setup,
-            queue_name=f'{setup.environment().resourcePrefix}-gluedb-lf-cr-{setup.environment().environmentUri}',
+            queue_name=f'{_environment.resourcePrefix}-gluedb-lf-cr-{_environment.environmentUri}',
             kms_key=kms_key
         )
         gluedb_lf_custom_resource = _lambda.Function(
             setup,
             'GlueDatabaseLFCustomResourceHandler',
-            function_name=f'{setup.environment().resourcePrefix}-gluedb-lf-handler-{setup.environment().environmentUri}',
+            function_name=f'{_environment.resourcePrefix}-gluedb-lf-handler-{_environment.environmentUri}',
             role=setup.pivot_role,
             handler='index.on_event',
             code=_lambda.Code.from_asset(entry_point),
@@ -120,11 +121,11 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
             timeout=Duration.seconds(5 * 60),
             environment={
-                'envname': setup.environment().name,
+                'envname': _environment.name,
                 'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': setup.environment().AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': setup.environment().EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': setup.environment().CDKRoleArn,
+                'AWS_ACCOUNT': _environment.AwsAccountId,
+                'DEFAULT_ENV_ROLE_ARN': _environment.EnvironmentDefaultIAMRoleArn,
+                'DEFAULT_CDK_ROLE_ARN': _environment.CDKRoleArn,
             },
             dead_letter_queue_enabled=True,
             dead_letter_queue=gluedb_lf_cr_dlq,
@@ -135,28 +136,28 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
 
         glue_db_provider = cr.Provider(
             setup,
-            f'{setup.environment().resourcePrefix}GlueDbCustomResourceProvider',
+            f'{_environment.resourcePrefix}GlueDbCustomResourceProvider',
             on_event_handler=gluedb_lf_custom_resource
         )
         ssm.StringParameter(
             setup,
             'GlueLFCustomResourceFunctionArn',
             string_value=gluedb_lf_custom_resource.function_arn,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
         )
 
         ssm.StringParameter(
             setup,
             'GlueLFCustomResourceFunctionName',
             string_value=gluedb_lf_custom_resource.function_name,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
         )
 
         ssm.StringParameter(
             setup,
             'GlueLFCustomResourceProviderServiceToken',
             string_value=glue_db_provider.service_token,
-            parameter_name=f'/dataall/{setup.environment().environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
+            parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
     @staticmethod
