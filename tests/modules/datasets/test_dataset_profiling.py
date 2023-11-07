@@ -78,7 +78,7 @@ def test_get_table_profiling_run_authorized(
 
 
 def test_get_table_profiling_run_unauthorized(
-    client, dataset_fixture, table_fixture, db, user2, group2
+    client, dataset_fixture, table_confidential_fixture, db, user2, group2
 ):
     response = client.query(
         """
@@ -90,7 +90,7 @@ def test_get_table_profiling_run_unauthorized(
             }
         }
         """,
-        tableUri=table_fixture.tableUri,
+        tableUri=table_confidential_fixture.tableUri,
         groups=[group2.name],
         username=user2.username,
     )
@@ -130,7 +130,7 @@ def test_list_table_profiling_runs_authorized(
 
 
 def test_list_table_profiling_runs_unauthorized(
-    client, dataset_fixture, table_fixture, db, user2, group2
+    client, dataset_fixture, table_confidential_fixture, db, user2, group2
 ):
     response = client.query(
         """
@@ -146,7 +146,7 @@ def test_list_table_profiling_runs_unauthorized(
             }
         }
         """,
-        tableUri=table_fixture.tableUri,
+        tableUri=table_confidential_fixture.tableUri,
         groups=[group2.name],
         username=user2.username,
     )
