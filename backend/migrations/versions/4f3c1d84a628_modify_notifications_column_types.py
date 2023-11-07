@@ -24,7 +24,10 @@ def upgrade():
     Rename column " " to " " both of type String
     """
     envname = os.getenv('envname', 'local')
-    op.execute(f'ALTER TABLE {envname}.notification ALTER COLUMN "type" TYPE VARCHAR(100);')
+    op.execute(f'ALTER TABLE {envname}.notification ALTER COLUMN "type" TYPE VARCHAR(100);')  # nosemgrep
+    # semgrep finding ignored as no upstream user input is passed to the statement function
+    # Only code admins will have access to the envname parameter of the f-string
+
     op.alter_column(
         'notification',
         'username',
@@ -32,6 +35,7 @@ def upgrade():
         nullable=False,
         existing_type=sa.String()
     )
+    print("Notification columns updated")
 
 
 def downgrade():
