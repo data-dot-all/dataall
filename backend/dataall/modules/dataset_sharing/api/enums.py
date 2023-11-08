@@ -9,6 +9,7 @@ class ShareableType(GraphQLEnumMapper):
 
 class ShareObjectPermission(GraphQLEnumMapper):
     Approvers = '999'
+    ApproversAndRequesters = '900'
     Requesters = '800'
     DatasetAdmins = '700'
     NoPermission = '000'

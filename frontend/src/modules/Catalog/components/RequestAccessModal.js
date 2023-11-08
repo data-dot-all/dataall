@@ -21,14 +21,16 @@ import {
   createShareObject,
   listEnvironmentConsumptionRoles,
   listEnvironmentGroups,
-  listEnvironments,
+  listValidEnvironments,
   requestDashboardShare,
   useClient
 } from 'services';
+import { useNavigate } from 'react-router-dom';
 
 export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const client = useClient();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
@@ -39,13 +41,13 @@ export const RequestAccessModal = (props) => {
 
   const fetchEnvironments = useCallback(async () => {
     const response = await client.query(
-      listEnvironments({
+      listValidEnvironments({
         filter: Defaults.selectListFilter
       })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label
@@ -185,7 +187,7 @@ export const RequestAccessModal = (props) => {
       if (response && !response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('Request sent', {
+        enqueueSnackbar('Draft share request created', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -195,6 +197,7 @@ export const RequestAccessModal = (props) => {
         if (onApply) {
           onApply();
         }
+        navigate(`/console/shares/${response.data.createShareObject.shareUri}`);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }

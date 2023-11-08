@@ -844,7 +844,7 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     assert 'Unauthorized' in create_share_object_response.errors[0].message
 
 
-def test_create_share_object_authorized(client, user2, group2, env2group, env2, dataset1):
+def test_create_share_object_as_requester(client, user2, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
     # When a user that belongs to environment and group creates request
@@ -860,6 +860,24 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+
+def test_create_share_object_as_approver_and_requester(client, user, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # When a user that belongs to environment and group creates request
+    create_share_object_response = create_share_object(
+        client=client,
+        username=user.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'ApproversAndRequesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):

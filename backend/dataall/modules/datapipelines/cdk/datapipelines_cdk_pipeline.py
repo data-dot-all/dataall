@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 
 from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.utils.shell_utils import CommandSanitizer
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 
@@ -71,6 +72,10 @@ class CDKPipelineStack:
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://app.py --file-path app.py --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
+                CommandSanitizer(args=[self.pipeline.repo])
+
+                # This command is too complex to be executed as a list of commands. We need to run it with shell=True
+                # However, the input arguments have be sanitized with the CommandSanitizer
 
                 process = subprocess.run(  # nosemgrep
                     "; ".join(update_cmds),  # nosemgrep
@@ -98,6 +103,11 @@ class CDKPipelineStack:
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
+
+        CommandSanitizer(args=[self.pipeline.repo, self.pipeline.SamlGroupName])
+
+        # This command is too complex to be executed as a list of commands. We need to run it with shell=True
+        # However, the input arguments have be sanitized with the CommandSanitizer
 
         process = subprocess.run(  # nosemgrep
             '; '.join(cmd_init),  # nosemgrep
@@ -201,6 +211,9 @@ app.synth()
 
         logger.info(f"Running Commands: {'; '.join(git_cmds)}")
 
+        # This command does not include any customer upstream input
+        # no sanitization is needed and shell=true does not impose a risk
+
         process = subprocess.run(  # nosemgrep
             '; '.join(git_cmds),  # nosemgrep
             text=True,  # nosemgrep
@@ -215,23 +228,17 @@ app.synth()
     @staticmethod
     def clean_up_repo(path):
         if path:
-            precmd = [
-                'deactivate;',
-                'rm',
-                '-rf',
-                f"{path}"
-            ]
-
+            cmd = ['rm', '-rf', f"{path}"]
             cwd = os.path.dirname(os.path.abspath(__file__))
-            logger.info(f"Running command : \n {' '.join(precmd)}")
+            logger.info(f"Running command : \n {' '.join(cmd)}")
 
-            process = subprocess.run(  # nosemgrep
-                ' '.join(precmd),  # nosemgrep
-                text=True,  # nosemgrep
-                shell=True,  # nosec  # nosemgrep
-                encoding='utf-8',  # nosemgrep
-                capture_output=True,  # nosemgrep
-                cwd=cwd  # nosemgrep
+            process = subprocess.run(
+                cmd,
+                text=True,
+                shell=False,
+                encoding='utf-8',
+                capture_output=True,
+                cwd=cwd
             )
 
             if process.returncode == 0:

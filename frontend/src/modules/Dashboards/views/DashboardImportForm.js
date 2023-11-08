@@ -33,7 +33,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listEnvironmentGroups,
-  listEnvironments,
+  listValidEnvironments,
   searchGlossary,
   useClient
 } from 'services';
@@ -53,13 +53,13 @@ const DashboardImportForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments({
+      listValidEnvironments({
         filter: Defaults.selectListFilter
       })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label

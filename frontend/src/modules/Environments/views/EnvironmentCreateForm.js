@@ -51,7 +51,12 @@ import {
   getPivotRolePresignedUrl,
   getCDKExecPolicyPresignedUrl
 } from '../services';
-import { AwsRegions } from 'utils';
+import {
+  AwsRegions,
+  isAnyFeatureModuleEnabled,
+  isModuleEnabled,
+  ModuleNames
+} from 'utils';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -172,7 +177,7 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
+          EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
           resourcePrefix: values.resourcePrefix,
           parameters: [
             {
@@ -474,11 +479,11 @@ const EnvironmentCreateForm = (props) => {
                 AwsAccountId: '',
                 region: '',
                 tags: [],
-                dashboardsEnabled: true,
-                notebooksEnabled: true,
-                mlStudiosEnabled: true,
-                pipelinesEnabled: true,
-                EnvironmentDefaultIAMRoleName: '',
+                dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
+                notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
+                mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
+                EnvironmentDefaultIAMRoleArn: '',
                 resourcePrefix: 'dataall'
               }}
               validationSchema={Yup.object().shape({
@@ -506,7 +511,7 @@ const EnvironmentCreateForm = (props) => {
                 privateSubnetIds: Yup.array().nullable(),
                 publicSubnetIds: Yup.array().nullable(),
                 vpcId: Yup.string().nullable(),
-                EnvironmentDefaultIAMRoleName: Yup.string().nullable(),
+                EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
                   .matches(
@@ -599,136 +604,146 @@ const EnvironmentCreateForm = (props) => {
                         </CardContent>
                       </Card>
                       <Box sx={{ mt: 3 }}>
-                        <Card>
-                          <CardHeader title="Features management" />
-                          <CardContent>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                        {isAnyFeatureModuleEnabled() && (
+                          <Card>
+                            <CardHeader title="Features management" />
+                            <CardContent>
+                              {isModuleEnabled(ModuleNames.DASHBOARDS) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="dashboardsEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="dashboardsEnabled"
+                                          value={values.dashboardsEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Dashboards{' '}
+                                          <small>
+                                            (Requires Amazon QuickSight
+                                            Enterprise Subscription)
+                                          </small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                       value={values.dashboardsEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Dashboards{' '}
-                                      <small>
-                                        (Requires Amazon QuickSight Enterprise
-                                        Subscription)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.dashboardsEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.NOTEBOOKS) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="notebooksEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="notebooksEnabled"
+                                          value={values.notebooksEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Box>
+                                          <Typography
+                                            color="textSecondary"
+                                            gutterBottom
+                                            variant="subtitle2"
+                                          >
+                                            Notebooks{' '}
+                                            <small>
+                                              (Requires Amazon Sagemaker
+                                              notebook instances)
+                                            </small>
+                                          </Typography>
+                                        </Box>
+                                      }
+                                      labelPlacement="end"
                                       value={values.notebooksEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Box>
-                                      <Typography
-                                        color="textSecondary"
-                                        gutterBottom
-                                        variant="subtitle2"
-                                      >
-                                        Notebooks{' '}
-                                        <small>
-                                          (Requires Amazon Sagemaker notebook
-                                          instances)
-                                        </small>
-                                      </Typography>
-                                    </Box>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.notebooksEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.MLSTUDIO) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="mlStudiosEnabled"
-                                      value={values.mlStudiosEnabled}
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="mlStudiosEnabled"
+                                          value={values.mlStudiosEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          ML Studio{' '}
+                                          <small>
+                                            (Requires Amazon Sagemaker Studio)
+                                          </small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      ML Studio{' '}
-                                      <small>
-                                        (Requires Amazon Sagemaker Studio)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.PIPELINES) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="pipelinesEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="pipelinesEnabled"
+                                          value={values.pipelinesEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Pipelines{' '}
+                                          <small>(Requires AWS DevTools)</small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                       value={values.pipelinesEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Pipelines{' '}
-                                      <small>(Requires AWS DevTools)</small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.pipelinesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                          </CardContent>
-                        </Card>
+                                  </FormGroup>
+                                </Box>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
                       </Box>
                     </Grid>
                     <Grid item lg={7} md={6} xs={12}>
@@ -828,20 +843,20 @@ const EnvironmentCreateForm = (props) => {
                           <CardContent>
                             <TextField
                               error={Boolean(
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                  errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                  errors.EnvironmentDefaultIAMRoleArn
                               )}
                               fullWidth
                               helperText={
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                errors.EnvironmentDefaultIAMRoleArn
                               }
-                              label="IAM Role Name"
-                              placeholder="Bring your own IAM role (Optional)"
-                              name="EnvironmentDefaultIAMRoleName"
+                              label="(Optional) IAM Role ARN"
+                              placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
+                              name="EnvironmentDefaultIAMRoleArn"
                               onBlur={handleBlur}
                               onChange={handleChange}
-                              value={values.EnvironmentDefaultIAMRoleName}
+                              value={values.EnvironmentDefaultIAMRoleArn}
                               variant="outlined"
                             />
                           </CardContent>

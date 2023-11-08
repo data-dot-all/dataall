@@ -372,7 +372,7 @@ class PipelineStack(Stack):
                         resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
                     )
                 ],
-            )   
+            )
 
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
@@ -426,7 +426,6 @@ class PipelineStack(Stack):
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
-                        f'export schema_name=validation',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make drop-tables',
@@ -636,6 +635,7 @@ class PipelineStack(Stack):
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
                 reauth_config = target_env.get('reauth_config', None),
+                cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200)
             )
         )
         return backend_stage

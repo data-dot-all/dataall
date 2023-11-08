@@ -71,7 +71,6 @@ class DatasetProfilingService:
             return DatasetProfilingRepository.list_profiling_runs(session, uri)
 
     @classmethod
-    @has_resource_permission(GET_DATASET_TABLE)
     def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session, table_uri=uri)
@@ -99,7 +98,6 @@ class DatasetProfilingService:
             return run
 
     @classmethod
-    @has_resource_permission(GET_DATASET_TABLE)
     def list_table_profiling_runs(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session=session, table_uri=uri)

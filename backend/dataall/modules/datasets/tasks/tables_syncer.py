@@ -56,7 +56,7 @@ def sync_tables(engine):
                     )
                 else:
 
-                    tables = DatasetCrawler(dataset).list_glue_database_tables()
+                    tables = DatasetCrawler(dataset).list_glue_database_tables(dataset.S3BucketName)
 
                     log.info(
                         f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'

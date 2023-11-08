@@ -29,6 +29,22 @@ class IAM:
             return response["Role"]
 
     @staticmethod
+    def get_role_arn_by_name(account_id: str, role_name: str, role=None):
+        log.info(f"Getting IAM role name= {role_name}")
+        try:
+            iamcli = IAM.client(account_id=account_id, role=role)
+            response = iamcli.get_role(
+                RoleName=role_name
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to get role {role_name} due to: {e}'
+            )
+            return None
+        else:
+            return response["Role"]["Arn"]
+
+    @staticmethod
     def update_role_policy(
         account_id: str,
         role_name: str,

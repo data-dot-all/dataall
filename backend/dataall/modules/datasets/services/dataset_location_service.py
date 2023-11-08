@@ -36,7 +36,7 @@ class DatasetLocationService:
             if 'terms' in data.keys():
                 DatasetLocationService._create_glossary_links(session, location, data['terms'])
 
-            S3LocationClient(location).create_bucket_prefix()
+            S3LocationClient(location, dataset).create_bucket_prefix()
 
         DatasetLocationIndexer.upsert(session=session, folder_uri=location.locationUri)
         return location

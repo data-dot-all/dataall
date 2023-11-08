@@ -1,15 +1,20 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 log = logging.getLogger(__name__)
 
 
 class S3LocationClient:
 
-    def __init__(self, location: DatasetStorageLocation):
-        session = SessionHelper.remote_session(accountid=location.AWSAccountId)
+    def __init__(self, location: DatasetStorageLocation, dataset: Dataset):
+        """
+        It first starts a session assuming the pivot role,
+        then we define another session assuming the dataset role from the pivot role
+        """
+        pivot_role_session = SessionHelper.remote_session(accountid=location.AWSAccountId)
+        session = SessionHelper.get_session(base_session=pivot_role_session, role_arn=dataset.IAMDatasetAdminRoleArn)
         self._client = session.client('s3', region_name=location.region)
         self._location = location
 
