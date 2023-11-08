@@ -143,8 +143,8 @@ of our repository. Open it, you should be seen something like:
         "custom_domain": {
           "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
           "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None",
-          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false"
-          "email_notification_sender_email_id":"string_EMAIL_NOTIFICATION_SENDER_EMAIL_ID|DEFAULT=None"
+          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false",
+          "email_notification_sender_email_id":"string_EMAIL_NOTIFICATION_SENDER_EMAIL_ID|DEFAULT=noreply"
         },
         "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
         "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
@@ -525,7 +525,7 @@ in the tooling account and check the status of your pipeline.
 Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module.
 
 ### Moving AWS SES out of Sandbox
-If you have specified `custom_domain`, after the deployment you should see a SES identity which is formed in your AWS Account. 
+If you have specified `custom_domain` in `cdk.json` and set `modules.datasets.features.share_notifications.email.active` to `active` in `config.json`, after the deployment you should see a SES identity which is formed in your AWS Account. 
 You can check it by going to the AWS Console -> AWS SES -> Identities. At this time you have successfully deployed infrastructure to 
 send email notifications via SES, but your AWS account is in the Sandbox mode. When in Sandbox mode, you will have to verify each 
 recipient email id manually. In order to get your SES account out of Sandbox, please follow the instructions in <a href="https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html">Moving out of Sandbox</a> .
