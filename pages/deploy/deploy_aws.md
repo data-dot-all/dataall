@@ -390,14 +390,14 @@ In the example config.json, the feature that enables file upload from data.all U
         }
     },
 ```
-| **Feature**       | **Module** | **Description**                                                                                    |   
-|-------------------|------------|----------------------------------------------------------------------------------------------------|
-| file_uploads      | datasets   | Upload files in a Dataset in the Upload tab                                                        |
-| file_actions      | datasets   | Create, Read, Update, Delete on Dataset Folders                                                    |
-| aws_actions       | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                 |
-| preview_data      | datasets   | Enable previews of dataset tables for users in data.all UI                                         |
-| glue_crawler      | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI          |
-| share_notifications      | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`)         |
+| **Feature**         | **Module** | **Description**                                                                                                                                                                                                                                                                              |   
+|---------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| file_uploads        | datasets   | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
+| file_actions        | datasets   | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
+| aws_actions         | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
+| preview_data        | datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
+| glue_crawler        | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
+| share_notifications | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
