@@ -19,7 +19,7 @@ permalink: /architecture/
 
 ## End-to-end architecture <a name="end"></a>
 
-![archi](img/architecture_complete.drawio.png#zoom#shadow)
+![archi](img/architecture_complete_2023new.drawio.png#zoom#shadow)
 
 ## CICD in tooling account <a name="tooling"></a>
 
@@ -75,7 +75,7 @@ from the AWS logic and processing. To achieve this decoupling, the web applicati
 data.all infrastructure runs <span style="color:#2074d5">**90% on serverless**</span> services in a private VPC, 
 the remaining 10% is for the OpenSearch cluster. Since data.all release v1.5.0 you have the ability to deploy an OpenSearch Serverless cluster instead by specifying the `enable_opensearch_serverless` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
-![archi](img/architecture_infrastructure.drawio.png#zoom#shadow)
+![archi](img/architecture_infrastructure_2023new.drawio.png#zoom#shadow)
 
 ## Frontend Components <a name="frontend"></a>
 
@@ -161,7 +161,7 @@ and vulnerabilities scanning.
 
 ## Backend Components <a name="backend"></a>
 
-![Screenshot](img/architecture_backend.drawio.png#zoom#shadow)
+![Screenshot](img/architecture_backend_2023new.drawio.png#zoom#shadow)
 
 ### Backend VPC
 
