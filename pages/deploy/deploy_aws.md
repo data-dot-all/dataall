@@ -434,7 +434,9 @@ cdk synth
 ```bash
 cdk synth
 ```
-Here is an example of a generated cdk.context.json file:
+Here is an example of a generated cdk.context.json file. Data.all requires one subnet per 
+Availability Zone. In case more than one subnet per availability zone is returned in the cdk.context.json file, remove 
+the subnets that won't be used in the deployment. 
 ````json
 {
   "vpc-provider:account=XXX:filter.vpc-id=vpc-XXX:region=eu-west-1:returnAsymmetricSubnets=true": {
