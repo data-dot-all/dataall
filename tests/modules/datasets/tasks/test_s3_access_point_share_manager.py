@@ -199,8 +199,7 @@ def target_dataset_access_control_policy(request):
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112",
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*"
+                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112"
                 ]
             }
         ],
@@ -460,8 +459,7 @@ def test_grant_target_role_access_policy_test_no_policy(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key/*"
+                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
                 ]
             }
         ],
@@ -1097,8 +1095,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key/*"
+                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
                 ]
             }
         ],
@@ -1178,9 +1175,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
                 ],
                 "Resource": [
                     f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112",
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*",
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key/*"
+                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
                 ]
             }
         ],
@@ -1200,8 +1195,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112",
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*",
+                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112"
                 ]
             }
         ],

@@ -101,17 +101,17 @@ class S3BucketShareManager:
                 iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
             )
 
-            kms_target_resources = [
-                f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}",
-                f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}/*"
-            ]
+            if kms_key_id:
+                kms_target_resources = [
+                    f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
+                ]
 
-            share_manager.add_missing_resources_to_policy_statement(
-                resource_type=kms_key_id,
-                target_resources=kms_target_resources,
-                existing_policy_statement=existing_policy["Statement"][1],
-                iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
-            )
+                share_manager.add_missing_resources_to_policy_statement(
+                    resource_type=kms_key_id,
+                    target_resources=kms_target_resources,
+                    existing_policy_statement=existing_policy["Statement"][1],
+                    iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+                )
 
             policy = existing_policy
         else:
@@ -137,8 +137,7 @@ class S3BucketShareManager:
                             "kms:*"
                         ],
                         "Resource": [
-                            f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}",
-                            f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}/*"
+                            f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
                         ]
                     }
                 ]
@@ -167,7 +166,11 @@ class S3BucketShareManager:
                 f'Bucket policy for {self.bucket_name} does not exist, generating default policy...'
             )
             exceptions_roleId = self.get_bucket_owner_roleid()
-            bucket_policy = S3ControlClient.generate_default_bucket_policy(self.bucket_name, exceptions_roleId)
+            bucket_policy = S3ControlClient.generate_default_bucket_policy(
+                self.bucket_name,
+                exceptions_roleId,
+                DATAALL_ALLOW_OWNER_SID
+            )
         return bucket_policy
 
     def get_bucket_owner_roleid(self):
@@ -221,7 +224,7 @@ class S3BucketShareManager:
     @staticmethod
     def generate_owner_access_statement(s3_bucket_name, owner_roleId):
         owner_policy_statement = {
-            "Sid": "AllowAllToAdmin",
+            "Sid": DATAALL_ALLOW_OWNER_SID,
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:*",
@@ -335,12 +338,11 @@ class S3BucketShareManager:
                 self.env_group
             )
             share_manager.remove_resource_from_statement(existing_policy["Statement"][0], s3_target_resources)
-
-            kms_target_resources = [
-                f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}",
-                f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}/*",
-            ]
-            share_manager.remove_resource_from_statement(existing_policy["Statement"][1], kms_target_resources)
+            if kms_key_id:
+                kms_target_resources = [
+                    f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}"
+                ]
+                share_manager.remove_resource_from_statement(existing_policy["Statement"][1], kms_target_resources)
 
             policy_statements = []
             for statement in existing_policy["Statement"]:

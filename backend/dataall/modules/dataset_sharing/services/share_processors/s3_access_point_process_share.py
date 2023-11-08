@@ -21,7 +21,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
-        existing_shared_buckets: bool = False
     ):
 
         super().__init__(
@@ -112,7 +111,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             source_environment: Environment,
             target_environment: Environment,
             source_env_group: EnvironmentGroup,
-            env_group: EnvironmentGroup
+            env_group: EnvironmentGroup,
     ) -> bool:
         """
         1) update_share_item_status with Start action

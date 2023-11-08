@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
 IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
+DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 
 
 class S3AccessPointShareManager:
@@ -100,7 +101,7 @@ class S3AccessPointShareManager:
             [self.dataset_admin, self.source_env_admin, SessionHelper.get_delegation_role_arn(self.source_account_id)]
         )]
         allow_owner_access = {
-            "Sid": "AllowAllToAdmin",
+            "Sid": DATAALL_ALLOW_OWNER_SID,
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:*",
@@ -153,11 +154,11 @@ class S3AccessPointShareManager:
         )
         if existing_policy:  # type dict
             s3_target_resources = [
-                    f"arn:aws:s3:::{self.bucket_name}",
-                    f"arn:aws:s3:::{self.bucket_name}/*",
-                    f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                    f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
-                ]
+                f"arn:aws:s3:::{self.bucket_name}",
+                f"arn:aws:s3:::{self.bucket_name}/*",
+                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
+                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+            ]
             share_manager = ShareManagerUtils(
                 self.session,
                 self.dataset,
@@ -173,17 +174,16 @@ class S3AccessPointShareManager:
                 existing_policy["Statement"][0],
                 IAM_ACCESS_POINT_ROLE_POLICY
             )
-
-            kms_target_resources = [
-                f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}",
-                f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}/*"
-            ]
-            share_manager.add_missing_resources_to_policy_statement(
-                kms_key_id,
-                kms_target_resources,
-                existing_policy["Statement"][1],
-                IAM_ACCESS_POINT_ROLE_POLICY
-            )
+            if kms_key_id:
+                kms_target_resources = [
+                    f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
+                ]
+                share_manager.add_missing_resources_to_policy_statement(
+                    kms_key_id,
+                    kms_target_resources,
+                    existing_policy["Statement"][1],
+                    IAM_ACCESS_POINT_ROLE_POLICY
+                )
 
             policy = existing_policy
         else:
@@ -211,8 +211,7 @@ class S3AccessPointShareManager:
                             "kms:*"
                         ],
                         "Resource": [
-                            f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}",
-                            f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}/*"
+                            f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
                         ]
                     }
                 ]
@@ -291,7 +290,7 @@ class S3AccessPointShareManager:
                 [self.dataset_admin, self.source_env_admin, SessionHelper.get_delegation_role_arn(self.source_account_id)]
             )]
             admin_statement = {
-                "Sid": "AllowAllToAdmin",
+                "Sid": DATAALL_ALLOW_OWNER_SID,
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": "s3:*",
@@ -407,15 +406,15 @@ class S3AccessPointShareManager:
                 existing_policy["Statement"][0],
                 s3_target_resources
             )
+            if kms_key_id:
+                kms_target_resources = [
+                    f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
+                ]
+                ShareManagerUtils.remove_resource_from_statement(
+                    existing_policy["Statement"][1],
+                    kms_target_resources
+                )
 
-            kms_target_resources = [
-                f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}",
-                f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}/*"
-            ]
-            ShareManagerUtils.remove_resource_from_statement(
-                existing_policy["Statement"][1],
-                kms_target_resources
-            )
             policy_statements = []
             for statement in existing_policy["Statement"]:
                 if len(statement["Resource"]) != 0:

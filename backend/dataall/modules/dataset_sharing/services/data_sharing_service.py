@@ -258,7 +258,7 @@ class DataSharingService:
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_tables:
                 log.info("Clean up LF remaining resources...")
-                clean_up_tables = processor.clean_up_share() and processor.delete_shared_database()
+                clean_up_tables = processor.delete_shared_database()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
             existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
@@ -269,16 +269,3 @@ class DataSharingService:
             share_sm.update_state(session, share, new_share_state)
 
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
-
-    @staticmethod
-    def _handle_table_share_failure(session, share, table, share_item_status):
-        """ Mark the share item as failed for the approved/revoked tables """
-        log.error(f'Marking share item as failed for table {table.GlueTableName}')
-        share_item = ShareObjectRepository.find_sharable_item(
-            session, share.shareUri, table.tableUri
-        )
-        share_item_sm = ShareItemSM(share_item_status)
-        new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
-        share_item_sm.update_state_single_item(session, share_item, new_state)
-        new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
-        share_item_sm.update_state_single_item(session, share_item, new_state)

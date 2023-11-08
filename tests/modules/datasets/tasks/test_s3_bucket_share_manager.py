@@ -496,7 +496,7 @@ def test_grant_s3_iam_access_with_no_policy(
         # Assert if the IAM role policy with S3 and KMS permissions was created
         assert len(iam_policy["Statement"]) == 2
         assert len(iam_policy["Statement"][0]["Resource"]) == 2
-        assert len(iam_policy["Statement"][1]["Resource"]) == 2
+        assert len(iam_policy["Statement"][1]["Resource"]) == 1
         assert f"arn:aws:s3:::{dataset2.S3BucketName}" in iam_policy["Statement"][0]["Resource"] and "s3:*" in iam_policy["Statement"][0]["Action"]
         assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" in \
                iam_policy["Statement"][1]["Resource"] \
@@ -536,8 +536,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:us-east-1:12121121121:key/some-kms-key",
-                    f"arn:aws:kms:us-east-1:12121121121:key/some-kms-key/*"
+                    f"arn:aws:kms:us-east-1:12121121121:key/some-kms-key"
                 ]
             }
         ]
@@ -547,7 +546,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
 
     assert len(policy["Statement"]) == 2
     assert len(policy["Statement"][0]["Resource"]) == 2
-    assert len(policy["Statement"][1]["Resource"]) == 2
+    assert len(policy["Statement"][1]["Resource"]) == 1
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -576,7 +575,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
         assert len(policy["Statement"]) == 2
         assert len(iam_policy["Statement"][0]["Resource"]) == 4
         assert f'arn:aws:s3:::{dataset2.S3BucketName}' in iam_policy["Statement"][0]["Resource"]
-        assert len(iam_policy["Statement"][1]["Resource"]) == 4
+        assert len(iam_policy["Statement"][1]["Resource"]) == 2
         assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" in iam_policy["Statement"][1]["Resource"]
 
 
@@ -614,8 +613,7 @@ def test_grant_s3_iam_access_with_complete_policy_present(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key/*"
+                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key"
                 ]
             }
         ]
@@ -1065,8 +1063,7 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112",
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*"
+                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112"
                 ]
             }
         ]
@@ -1109,7 +1106,7 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
         assert len(updated_iam_policy["Statement"]) == 2
         assert "arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*" == ",".join(updated_iam_policy["Statement"][0]["Resource"])
-        assert "arn:aws:kms:us-east-1:121231131212:key/some-key-2112,arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*" == ",".join(
+        assert "arn:aws:kms:us-east-1:121231131212:key/some-key-2112" == ",".join(
             updated_iam_policy["Statement"][1]["Resource"])
 
 
@@ -1150,9 +1147,7 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
                 ],
                 "Resource": [
                     f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112",
-                    f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*",
                     f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key/*"
                 ]
             }
         ]
@@ -1199,9 +1194,7 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
         assert f"arn:aws:s3:::someOtherBucket/*" in updated_iam_policy["Statement"][0]["Resource"]
 
         assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" not in updated_iam_policy["Statement"][1]["Resource"]
-        assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key/*" not in updated_iam_policy["Statement"][1]["Resource"]
         assert f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112" in updated_iam_policy["Statement"][1]["Resource"]
-        assert f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112/*" in updated_iam_policy["Statement"][1]["Resource"]
 
 
 def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resource_in_policy(
@@ -1238,8 +1231,7 @@ def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resourc
                     "kms:*"
                 ],
                 "Resource": [
-                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key",
-                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key/*"
+                    f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key"
                 ]
             }
         ]

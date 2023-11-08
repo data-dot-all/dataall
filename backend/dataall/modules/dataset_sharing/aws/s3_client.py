@@ -124,13 +124,14 @@ class S3ControlClient:
     @staticmethod
     def generate_default_bucket_policy(
             s3_bucket_name: str,
-            owner_roleId: list
+            owner_roleId: list,
+            allow_owner_sid: str,
     ):
         policy = {
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": "AllowAllToAdmin",
+                    "Sid": allow_owner_sid,
                     "Effect": "Allow",
                     "Principal": "*",
                     "Action": "s3:*",
