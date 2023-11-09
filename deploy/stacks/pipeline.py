@@ -34,7 +34,7 @@ class PipelineStack(Stack):
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
-        self.validate_deployment_params(git_branch, resource_prefix, target_envs)
+        self.validate_deployment_params(source, repo_connection_arn, git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
         self.resource_prefix = resource_prefix
@@ -378,7 +378,12 @@ class PipelineStack(Stack):
                 ],
             )   
 
-    def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
+    def validate_deployment_params(self, source, repo_connection_arn, git_branch, resource_prefix, target_envs):
+        if (source == "github" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
+            raise ValueError(
+                f'Error: When the source is github, {repo_connection_arn} cannot be None.'
+                f'Please define the ARN of the CodeStar ConnectionArn'
+            )
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
             raise ValueError(
                 f'Git branch {git_branch} name is created to use AWS resources.'
