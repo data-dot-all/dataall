@@ -128,6 +128,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
 
+@is_feature_enabled('modules.datasets.features.glue_crawler')
 def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 

@@ -207,7 +207,7 @@ class DataSharingService:
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_tables:
                 log.info("Clean up LF remaining resources...")
-                clean_up_tables = processor.clean_up_share()
+                clean_up_tables = processor.delete_shared_database()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
             existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)

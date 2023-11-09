@@ -9,8 +9,7 @@ from dataall.base.db.connection import (
 
 if __name__ == '__main__':
     engine = get_engine(envname=ENVNAME).engine
-    schema = os.getenv('schema_name', ENVNAME)
-    print(f'Dropping schema {schema}...')
-    drop_schema_if_exists(get_engine(envname=ENVNAME).engine, envname=schema)
-    create_schema_if_not_exists(get_engine(envname=ENVNAME).engine, envname=schema)
-    print(f'Clean schema {schema} recreated')
+    print(f'Dropping schema {ENVNAME}...')
+    drop_schema_if_exists(get_engine(envname=ENVNAME).engine, envname=ENVNAME)
+    create_schema_if_not_exists(get_engine(envname=ENVNAME).engine, envname=ENVNAME)
+    print(f'Clean schema {ENVNAME} recreated')

@@ -157,6 +157,25 @@ For example:
  aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/folder2/
 ```
 
+## **Email Notification on share requests**
+
+In data.all, you can enable email notification to send emails to requesters and approvers of a share request. Email notifications 
+are triggered during all share workflows - Share Submitted, Approved, Rejected, Revoked. 
+
+The content sent in email notification is similar to the UI based notification. 
+
+For example the email body will look like, 
+```text
+User <USERNAME> <SHARE_ACTION> share request for dataset <DATASET_NAME>
+
+where <SHARE_ACTION> corresponds to "submitted", "approved", "revoked", "rejected"
+```
+
+**Note** - In order to enable email notification, you need to configure it in `config.json` and setup the AWS services 
+needed for during the deployment phase. Please review steps for setting up email notification on <a href="https://awslabs.github.io/aws-dataall/">data.all</a> webpage
+in the `Deploy to AWS` section
+
+
 [//]: # (### **Use data subscriptions**)
 
 [//]: # (data.all helps data owners publish notification updates to all their data consumers.)

@@ -30,7 +30,11 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listEnvironmentGroups, listEnvironments, useClient } from 'services';
+import {
+  listEnvironmentGroups,
+  listValidEnvironments,
+  useClient
+} from 'services';
 import { createSagemakerNotebook } from '../services';
 
 const NotebookCreateForm = (props) => {
@@ -71,11 +75,11 @@ const NotebookCreateForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.selectListFilter })
+      listValidEnvironments({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label

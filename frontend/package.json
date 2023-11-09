@@ -103,6 +103,10 @@
               "./src/authentication"
             ],
             [
+              "reauthentication",
+              "./src/reauthentication"
+            ],
+            [
               "design",
               "./src/design"
             ],

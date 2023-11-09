@@ -1,32 +1,25 @@
+import os
+from dataall.base import db
+from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements, split_policy_with_mutiple_value_condition_in_statements
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import Dataset
 from aws_cdk import aws_iam as iam
 
 
 class DatasetsPivotRole(PivotRoleStatementSet):
     """
     Class including all permissions needed  by the pivot role to work with Datasets based in S3 and Glue databases
-    It allows pivot role to:
-    - ....
+    It allows pivot role access to:
+    - Athena workgroups for the environment teams
+    - All Glue catalog resources (governed by Lake Formation)
+    - Lake Formation
+    - Glue ETL for environment resources
+    - Imported Datasets' buckets
+    - Imported KMS keys alias
     """
     def get_statements(self):
         statements = [
-            # S3 Imported Buckets - restrict resources via bucket policies
-            iam.PolicyStatement(
-                sid='ImportedBuckets',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:List*',
-                    's3:GetBucket*',
-                    's3:GetLifecycleConfiguration',
-                    's3:GetObject',
-                    's3:PutBucketPolicy',
-                    's3:PutBucketTagging',
-                    's3:PutObject',
-                    's3:PutObjectAcl',
-                    's3:PutBucketOwnershipControls',
-                ],
-                resources=['arn:aws:s3:::*'],
-            ),
             # For dataset preview
             iam.PolicyStatement(
                 sid='AthenaWorkgroupsDataset',
@@ -138,4 +131,61 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 }
             )
         ]
+        # Adding permissions for Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
+        # Adding permissions for Imported KMS keys
+        imported_buckets = []
+        imported_kms_alias = []
+
+        engine = db.get_engine(envname=os.environ.get('envname', 'local'))
+        with engine.scoped_session() as session:
+            datasets = DatasetRepository.query_environment_imported_datasets(
+                session, uri=self.environmentUri, filter=None
+            )
+            if datasets:
+                dataset: Dataset
+                for dataset in datasets:
+                    imported_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+                    if dataset.importedKmsKey:
+                        imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
+
+        if imported_buckets:
+            dataset_statement = split_policy_with_resources_in_statements(
+                base_sid='ImportedDatasetBuckets',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:List*',
+                    's3:GetBucket*',
+                    's3:GetLifecycleConfiguration',
+                    's3:GetObject',
+                    's3:PutBucketPolicy',
+                    's3:PutBucketTagging',
+                    's3:PutObjectAcl',
+                    's3:PutBucketOwnershipControls',
+                ],
+                resources=imported_buckets
+            )
+            statements.extend(dataset_statement)
+        if imported_kms_alias:
+            kms_statement = split_policy_with_mutiple_value_condition_in_statements(
+                base_sid='KMSImportedDataset',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey*',
+                    'kms:GetKeyPolicy',
+                    'kms:PutKeyPolicy',
+                    'kms:ReEncrypt*',
+                    'kms:TagResource',
+                    'kms:UntagResource',
+                ],
+                resources=[f"arn:aws:kms:{self.region}:{self.account}:key/*"],
+                condition_dict={
+                    "key": 'ForAnyValue:StringLike',
+                    "resource": 'kms:ResourceAliases',
+                    "values": imported_kms_alias
+                },
+            )
+            statements.extend(kms_statement)
+
         return statements

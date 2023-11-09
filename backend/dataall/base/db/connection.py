@@ -105,7 +105,6 @@ def drop_schema_if_exists(engine, envname):
 
 
 def get_engine(envname=ENVNAME):
-    schema = os.getenv('schema_name', envname)
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
@@ -120,7 +119,7 @@ def get_engine(envname=ENVNAME):
             'db': database,
             'user': user,
             'pwd': pwd,
-            'schema': schema,
+            'schema': envname,
         }
     else:
         hostname = 'db' if envname == 'dkrcompose' else 'localhost'
@@ -129,7 +128,7 @@ def get_engine(envname=ENVNAME):
             'db': 'dataall',
             'user': 'postgres',
             'pwd': 'docker',
-            'schema': schema,
+            'schema': envname,
         }
     return Engine(DbConfig(**db_params))
 

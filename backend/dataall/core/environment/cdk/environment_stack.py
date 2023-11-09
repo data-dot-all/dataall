@@ -1,11 +1,9 @@
 import logging
 import os
-import pathlib
 from abc import abstractmethod
 from typing import List, Type
 
 from aws_cdk import (
-    custom_resources as cr,
     aws_s3 as s3,
     aws_iam as iam,
     aws_sns as sns,
@@ -148,6 +146,7 @@ class EnvironmentSetup(Stack):
                 'accountId': self.dataall_central_account,
                 'externalId': self.external_id,
                 'resourcePrefix': self._environment.resourcePrefix,
+                'environmentUri': self._environment.environmentUri
             }
             pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
             self.pivot_role = iam.Role.from_role_arn(
@@ -408,7 +407,7 @@ class EnvironmentSetup(Stack):
                 iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
-                    role_arn=f'arn:aws:iam::{self._environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
+                    role_arn=group.environmentIAMRoleArn,
                 )
         return group_roles
 

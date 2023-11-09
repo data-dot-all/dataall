@@ -34,7 +34,7 @@ import {
   listDatasetTableColumns,
   listDatasetsOwnedByEnvGroup,
   listEnvironmentGroups,
-  listEnvironments,
+  listValidEnvironments,
   searchEnvironmentDataItems,
   useClient
 } from 'services';
@@ -94,11 +94,11 @@ const WorksheetView = () => {
   const fetchEnvironments = useCallback(async () => {
     setLoadingEnvs(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.filter })
+      listValidEnvironments({ filter: Defaults.filter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label

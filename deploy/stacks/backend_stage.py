@@ -32,6 +32,8 @@ class BackendStage(Stage):
         enable_pivot_role_auto_create=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        reauth_config=None,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -61,6 +63,8 @@ class BackendStage(Stage):
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             codeartifact_domain_name=codeartifact_domain_name,
             codeartifact_pip_repo_name=codeartifact_pip_repo_name,
+            reauth_config=reauth_config,
+            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             **kwargs,
         )
 

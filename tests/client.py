@@ -58,6 +58,7 @@ def create_app(db):
         data = request.get_json()
 
         username = request.headers.get('Username', 'anonym')
+        emailId = request.headers.get('Username', 'email@email.com')
         groups = json.loads(request.headers.get('Groups', '[]'))
 
         set_context(RequestContext(db, username, groups))

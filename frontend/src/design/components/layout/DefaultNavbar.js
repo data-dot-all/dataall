@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { AccountPopover, NotificationsPopover } from '../popovers';
 import { Logo } from '../Logo';
 import { SettingsDrawer } from '../SettingsDrawer';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -46,9 +47,13 @@ export const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
         <Box sx={{ ml: 1 }}>
           <SettingsDrawer />
         </Box>
-        <Box sx={{ ml: 1 }}>
-          <NotificationsPopover />
-        </Box>
+        {isModuleEnabled(ModuleNames.NOTIFICATIONS) ? (
+          <Box sx={{ ml: 1 }}>
+            <NotificationsPopover />
+          </Box>
+        ) : (
+          <Box sx={{ ml: 1 }}></Box>
+        )}
         <Box sx={{ ml: 2 }}>
           <AccountPopover />
         </Box>

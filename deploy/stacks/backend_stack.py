@@ -17,10 +17,14 @@ from .monitoring import MonitoringStack
 from .opensearch import OpenSearchStack
 from .opensearch_serverless import OpenSearchServerlessStack
 from .param_store_stack import ParamStoreStack
+from .run_if import run_if
 from .s3_resources import S3ResourcesStack
 from .secrets_stack import SecretsManagerStack
+from .ses_stack import SesStack
 from .sqs import SqsStack
 from .vpc import VpcStack
+from .deploy_config import deploy_config
+
 
 
 class BackendStack(Stack):
@@ -50,6 +54,8 @@ class BackendStack(Stack):
         enable_opensearch_serverless=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        reauth_config=None,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -86,6 +92,7 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
+            reauth_apis=reauth_config.get("reauth_apis", None) if reauth_config else None,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -113,6 +120,8 @@ class BackendStack(Stack):
             internet_facing=internet_facing,
             tooling_account_id=tooling_account_id,
             enable_cw_rum=enable_cw_rum,
+            vpc=vpc,
+            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             **kwargs,
         )
 
@@ -125,9 +134,16 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        # Create the SES Stack
+        ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix)
+
         repo = ecr.Repository.from_repository_arn(
             self, 'ECRREPO', repository_arn=ecr_repository
         )
+        if None not in [custom_domain, ses_stack]:
+            email_sender = custom_domain.get('email_notification_sender_email_id', "noreply") + "@" + custom_domain.get("hosted_zone_name")
+        else:
+            email_sender = 'none'
 
         self.lambda_api_stack = LambdaApiStack(
             self,
@@ -145,6 +161,10 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
             pivot_role_name=self.pivot_role_name,
+            reauth_ttl=reauth_config.get("ttl", 5) if reauth_config else 5,
+            email_notification_sender_email_id=email_sender,
+            email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
+            ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
             **kwargs,
         )
 
@@ -345,6 +365,21 @@ class BackendStack(Stack):
                 cw_alarm_action=self.monitoring_stack.cw_alarm_action,
                 internet_facing=internet_facing,
             )
+
+    @run_if(["modules.datasets.features.share_notifications.email.active"])
+    def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
+        if custom_domain is None or None in [custom_domain.get('hosted_zone_name', None), custom_domain.get('hosted_zone_id', None)]:
+            raise Exception("Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain")
+
+        return SesStack(
+            self,
+            'SesStack',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            custom_domain=custom_domain,
+            **kwargs,
+        )
+
 
     def create_opensearch_stack(self):
         os_stack = OpenSearchStack(self, 'OpenSearch', **self.opensearch_args)

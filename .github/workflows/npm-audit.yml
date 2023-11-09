@@ -10,6 +10,7 @@ on:
     - main
     - release/*
     - main-v2
+    - v2m*
 
 permissions:
   contents: read

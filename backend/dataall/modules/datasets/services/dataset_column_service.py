@@ -3,12 +3,15 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, DatasetTableColumn
-from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE
 
 
 class DatasetColumnService:
@@ -24,9 +27,21 @@ class DatasetColumnService:
         return table.datasetUri
 
     @staticmethod
-    @has_resource_permission(GET_DATASET_TABLE)
     def paginate_active_columns_for_table(uri: str, filter=None):
-        with get_context().db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            if (
+                    dataset.confidentiality != ConfidentialityClassification.Unclassified.value
+            ):
+                ResourcePolicy.check_user_resource_permission(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    resource_uri=table.tableUri,
+                    permission_name=PREVIEW_DATASET_TABLE,
+                )
             return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
 
     @classmethod

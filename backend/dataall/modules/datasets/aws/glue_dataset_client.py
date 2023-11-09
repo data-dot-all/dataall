@@ -65,7 +65,7 @@ class DatasetCrawler:
             else:
                 raise e
 
-    def list_glue_database_tables(self):
+    def list_glue_database_tables(self, dataset_s3_bucket_name):
         dataset = self._dataset
         database = dataset.GlueDatabaseName
         account_id = dataset.AwsAccountId
@@ -76,15 +76,14 @@ class DatasetCrawler:
             if not self.database_exists():
                 return found_tables
 
-            paginator = self._client.get_paginator('get_tables')
-
-            pages = paginator.paginate(
-                DatabaseName=database,
-                CatalogId=account_id,
-            )
-            for page in pages:
-                found_tables.extend(page['TableList'])
-
+            pages = self.get_pages(database, account_id)
+            dataset_s3_bucket = f"s3://{dataset_s3_bucket_name}/"
+            found_tables = [
+                table
+                for page in pages
+                for table in page['TableList']
+                if table.get('StorageDescriptor', {}).get('Location', '').startswith(dataset_s3_bucket)
+            ]
             log.debug(f'Retrieved all database {database} tables: {found_tables}')
 
         except ClientError as e:
@@ -102,3 +101,19 @@ class DatasetCrawler:
         except ClientError:
             log.info(f'Database {dataset.GlueDatabaseName} does not exist on account {dataset.AwsAccountId}...')
             return False
+
+    def get_pages(self, database, account_id):
+        pages = []
+        try:
+            paginator = self._client.get_paginator('get_tables')
+
+            pages = paginator.paginate(
+                DatabaseName=database,
+                CatalogId=account_id,
+            )
+        except ClientError as e:
+            log.error(
+                f'Failed to retrieve pages for database {account_id}|{database}: {e}',
+                exc_info=True,
+            )
+        return pages

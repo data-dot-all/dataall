@@ -48,6 +48,7 @@ import {
   DatasetOverview,
   DatasetUpload
 } from '../components';
+import { isFeatureEnabled } from 'utils';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -81,11 +82,13 @@ const DatasetView = () => {
         value: 'shares',
         icon: <ShareOutlined fontSize="small" />
       });
-      tabs.push({
-        label: 'Upload',
-        value: 'upload',
-        icon: <Upload fontSize="small" />
-      });
+      if (isFeatureEnabled('datasets', 'file_uploads')) {
+        tabs.push({
+          label: 'Upload',
+          value: 'upload',
+          icon: <Upload fontSize="small" />
+        });
+      }
       if (settings.isAdvancedMode) {
         tabs.push({
           label: 'Tags',
@@ -278,7 +281,9 @@ const DatasetView = () => {
                   >
                     Chat
                   </Button>
-                  <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                  {isFeatureEnabled('datasets', 'aws_actions') && (
+                    <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                  )}
                   <Button
                     color="primary"
                     component={RouterLink}

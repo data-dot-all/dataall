@@ -6,6 +6,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
+from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -28,6 +29,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.stacks.db.enums import StackStatus
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +56,8 @@ class EnvironmentService:
             validated=False,
             isOrganizationDefaultEnvironment=False,
             userRoleInEnvironment=EnvironmentPermission.Owner.value,
-            EnvironmentDefaultIAMRoleName=data.get(
-                'EnvironmentDefaultIAMRoleName', 'unknown'
-            ),
-            EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
+            EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split("/")[-1],
+            EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             resourcePrefix=data.get('resourcePrefix'),
         )
@@ -81,7 +81,7 @@ class EnvironmentService:
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
 
-        if not data.get('EnvironmentDefaultIAMRoleName'):
+        if not data.get('EnvironmentDefaultIAMRoleArn'):
             env_role_name = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,
@@ -94,8 +94,8 @@ class EnvironmentService:
             )
             env.EnvironmentDefaultIAMRoleImported = False
         else:
-            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleName']
-            env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env.EnvironmentDefaultIAMRoleName}'
+            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split("/")[-1]
+            env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
         if data.get('vpcId'):
@@ -234,8 +234,9 @@ class EnvironmentService:
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
 
-        if data.get('environmentIAMRoleName'):
-            env_group_iam_role_name = data['environmentIAMRoleName']
+        if data.get('environmentIAMRoleArn'):
+            env_group_iam_role_arn = data['environmentIAMRoleArn']
+            env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
             env_role_imported = True
         else:
             env_group_iam_role_name = NamingConventionService(
@@ -244,6 +245,7 @@ class EnvironmentService:
                 pattern=NamingConventionPattern.IAM,
                 resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
+            env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
 
         athena_workgroup = NamingConventionService(
@@ -258,7 +260,7 @@ class EnvironmentService:
             groupUri=group,
             invitedBy=get_context().username,
             environmentIAMRoleName=env_group_iam_role_name,
-            environmentIAMRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}',
+            environmentIAMRoleArn=env_group_iam_role_arn,
             environmentIAMRoleImported=env_role_imported,
             environmentAthenaWorkGroup=athena_workgroup,
         )
@@ -515,6 +517,28 @@ class EnvironmentService:
             page=data.get('page', 1),
             page_size=data.get('pageSize', 5),
         ).to_dict()
+
+    @staticmethod
+    def list_valid_user_environments(session, data=None) -> dict:
+        context = get_context()
+        query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
+        valid_environments = []
+        for env in query:
+            stack = stack_helper.get_stack_with_cfn_resources(
+                targetUri=env.environmentUri,
+                environmentUri=env.environmentUri,
+            )
+            if stack.status in [
+                StackStatus.CREATE_COMPLETE.value,
+                StackStatus.UPDATE_COMPLETE.value,
+                StackStatus.UPDATE_ROLLBACK_COMPLETE.value
+            ]:
+                valid_environments.append(env)
+
+        return {
+            'count': len(valid_environments),
+            'nodes': valid_environments,
+        }
 
     @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
