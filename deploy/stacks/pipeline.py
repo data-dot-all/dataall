@@ -115,7 +115,7 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
-        if self.source == 'github':
+        if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
                 repo_string=repo_string,
                 branch=self.git_branch,
@@ -379,10 +379,10 @@ class PipelineStack(Stack):
             )   
 
     def validate_deployment_params(self, source, repo_connection_arn, git_branch, resource_prefix, target_envs):
-        if (source == "github" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
+        if (source == "codestar_connection" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
             raise ValueError(
-                f'Error: When the source is github, {repo_connection_arn} cannot be None.'
-                f'Please define the ARN of the CodeStar ConnectionArn'
+                f'Error: When the source is a CodeStar Connection, {repo_connection_arn} cannot be None.'
+                f'Please define the ARN of the CodeStar Connection'
             )
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
             raise ValueError(
