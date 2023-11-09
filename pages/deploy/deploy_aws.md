@@ -63,7 +63,7 @@ pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
 ```
 
-## 3. Mirror the code to a CodeCommit or GitHub repository
+## 3. Mirror the code to a CodeCommit or CodeStar Connections repository
 ### Using CodeCommit:
 Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
 and push your changes:
@@ -80,18 +80,19 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
-### Using GitHub:
-If you choose to use a GitHub repository, it's important to note that you need to set up an AWS CodeStar connection to your GitHub repository for seamless integration. 
-This connection allows AWS CodePipeline to interact securely with your GitHub repository. 
-Before mirroring the data.all code and pushing any changes, make sure to set up the CodeStar connection by following these steps:
+### Using CodeStar Connection to GitHub, GitHub Enterprise, GitLab or Bitbucket:
+If you choose to use a GitHub, GitLab or Bitbucket repository, it's important to note that you need to set up an AWS CodeStar connection to your repository for seamless integration. 
+This connection allows AWS CodePipeline to interact securely with GitHub, GitHub Enterprise, GitLab or Bitbucket. 
+Before mirroring the data.all code and pushing any changes, make sure to set up the CodeStar connection by following 
+the steps detailed in the [documentation](https://docs.aws.amazon.com/dtconsole/latest/userguide/connections-create.html):
 1. Log in to the AWS Management Console.
-2. Navigate to the AWS CodeStar service.
-3. Choose the option to "Create a connection" and select GitHub as the source provider.
-4. Follow the on-screen instructions to authenticate and authorize AWS to access your GitHub repository.
-5. Once the connection is established, you can use the provided connection ARN in the "repo_connection_arn" parameter to ensure that the AWS CodePipeline can securely interact with your GitHub repository.
+2. Navigate to the AWS Developer tools > Settings > Connections.
+3. Choose the option to "Create a connection" and select the source provider.
+4. Follow the on-screen instructions to authenticate and authorize AWS to access the selected source.
+5. Once the connection is established, copy the provided connection ARN. We will use it in step 6 as value for the `repo_connection_arn` parameter of the `cdk.json` file. 
 
-If you choose to use GitHub, ensure that you have the necessary permissions and authentication set up for the repository. 
-To mirror the data.all code and push your changes, follow the standard Git commands for GitHub repositories:
+Make sure that you have the necessary permissions and authentication set up for the repository. 
+To mirror the data.all code and push your changes, follow the standard Git commands:
 ```bash
 git remote rm origin
 git remote add origin <GitHub-repository-URL>
@@ -152,9 +153,9 @@ of our repository. Open it, you should be seen something like:
     "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
     "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
-    "repository_source": "string_VERSION_CONTROL_SERVICE|(github, codecommit) DEFAULT=codecommit",
-    "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=github",
-    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=github",
+    "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
+    "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
+    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
@@ -205,6 +206,9 @@ and find 2 examples of cdk.json files.
 | git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                                                                                                      |
 | quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                                                                                                           |
 | resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                                                                                                       |
+| source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                          |
+| repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                    |
+| repo_connection_arn                           | Optional              | The arn of the CodeStar connection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                           |
 | **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                              |
 | ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                 |
 | envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                     |
