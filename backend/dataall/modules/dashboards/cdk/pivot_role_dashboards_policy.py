@@ -23,6 +23,7 @@ class DashboardsPivotRole(PivotRoleStatementSet):
                     'quicksight:SearchDashboards',
                     'quicksight:GetDashboardEmbedUrl',
                     'quicksight:GenerateEmbedUrlForAnonymousUser',
+                    'quicksight:GenerateEmbedUrlForRegisteredUser',
                     'quicksight:UpdateUser',
                     'quicksight:ListUserGroups',
                     'quicksight:RegisterUser',

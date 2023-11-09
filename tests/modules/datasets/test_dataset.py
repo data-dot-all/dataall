@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
@@ -152,7 +153,7 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
     assert response.data.updateDataset.stewards == dataset1.SamlAdminGroupName
     assert response.data.updateDataset.confidentiality == 'Official'
 
-
+@pytest.mark.skipif(not config.get_property("modules.datasets.features.glue_crawler"), reason="Feature Disabled by Config")
 def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):
     module_mocker.patch(
         'dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock()

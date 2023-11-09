@@ -41,46 +41,50 @@ export const EnvironmentFeatures = (props) => {
   // Filter the features based on the 'active' attribute
   const activeFeatures = features.filter((feature) => feature.active);
 
-  return (
-    <Card {...other}>
-      <CardHeader title="Features" />
-      <Divider />
-      <CardContent sx={{ pt: 0 }}>
-        <List>
-          {activeFeatures.map((feature) => (
-            <ListItem
-              key={feature.title}
-              disableGutters
-              divider
-              sx={{
-                justifyContent: 'space-between',
-                padding: 2
-              }}
-            >
-              <Typography color="textSecondary" variant="subtitle2">
-                {feature.title}
-              </Typography>
-              <Typography color="textPrimary" variant="body2">
-                <Label
-                  color={
-                    environment.parameters[feature.enabledEnvVariableName] ===
+  if (activeFeatures.length === 0) {
+    return <></>;
+  } else {
+    return (
+      <Card {...other}>
+        <CardHeader title="Features" />
+        <Divider />
+        <CardContent sx={{ pt: 0 }}>
+          <List>
+            {activeFeatures.map((feature) => (
+              <ListItem
+                key={feature.title}
+                disableGutters
+                divider
+                sx={{
+                  justifyContent: 'space-between',
+                  padding: 2
+                }}
+              >
+                <Typography color="textSecondary" variant="subtitle2">
+                  {feature.title}
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  <Label
+                    color={
+                      environment.parameters[feature.enabledEnvVariableName] ===
+                      'true'
+                        ? 'success'
+                        : 'error'
+                    }
+                  >
+                    {environment.parameters[feature.enabledEnvVariableName] ===
                     'true'
-                      ? 'success'
-                      : 'error'
-                  }
-                >
-                  {environment.parameters[feature.enabledEnvVariableName] ===
-                  'true'
-                    ? 'Enabled'
-                    : 'Disabled'}
-                </Label>
-              </Typography>
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
-  );
+                      ? 'Enabled'
+                      : 'Disabled'}
+                  </Label>
+                </Typography>
+              </ListItem>
+            ))}
+          </List>
+        </CardContent>
+      </Card>
+    );
+  }
 };
 
 EnvironmentFeatures.propTypes = {

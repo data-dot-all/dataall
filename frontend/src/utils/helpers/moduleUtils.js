@@ -10,7 +10,8 @@ const ModuleNames = {
   NOTEBOOKS: 'notebooks',
   MLSTUDIO: 'mlstudio',
   PIPELINES: 'datapipelines',
-  DASHBOARDS: 'dashboards'
+  DASHBOARDS: 'dashboards',
+  NOTIFICATIONS: 'notifications'
 };
 
 function isModuleEnabled(module) {
@@ -20,7 +21,7 @@ function isModuleEnabled(module) {
       getModuleActiveStatus(ModuleNames.DASHBOARDS)
     );
   }
-  if (module === ModuleNames.SHARES) {
+  if (module === ModuleNames.SHARES || module === ModuleNames.NOTIFICATIONS) {
     return getModuleActiveStatus(ModuleNames.DATASETS);
   }
   if (module === ModuleNames.WORKSHEETS) {
@@ -31,6 +32,15 @@ function isModuleEnabled(module) {
   }
 
   return getModuleActiveStatus(module);
+}
+
+function isAnyFeatureModuleEnabled() {
+  return !!(
+    isModuleEnabled(ModuleNames.PIPELINES) ||
+    isModuleEnabled(ModuleNames.DASHBOARDS) ||
+    isModuleEnabled(ModuleNames.MLSTUDIO) ||
+    isModuleEnabled(ModuleNames.NOTEBOOKS)
+  );
 }
 
 function getModuleActiveStatus(moduleKey) {
@@ -44,4 +54,26 @@ function getModuleActiveStatus(moduleKey) {
   return false;
 }
 
-export { ModuleNames, isModuleEnabled };
+function isFeatureEnabled(moduleKey, featureKey) {
+  if (
+    moduleKey === 'core' &&
+    config.core.features !== undefined &&
+    config.core.features[featureKey] !== undefined
+  ) {
+    return config.core.features[featureKey];
+  } else if (
+    getModuleActiveStatus(moduleKey) &&
+    config.modules[moduleKey]['features'] !== undefined &&
+    config.modules[moduleKey]['features'][featureKey] !== undefined
+  ) {
+    return config.modules[moduleKey]['features'][featureKey];
+  }
+  return false;
+}
+
+export {
+  ModuleNames,
+  isModuleEnabled,
+  isAnyFeatureModuleEnabled,
+  isFeatureEnabled
+};

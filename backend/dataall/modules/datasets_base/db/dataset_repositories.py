@@ -291,6 +291,27 @@ class DatasetRepository(EnvironmentResource):
         return query
 
     @staticmethod
+    def query_environment_imported_datasets(session, uri, filter) -> Query:
+        query = session.query(Dataset).filter(
+            and_(
+                Dataset.environmentUri == uri,
+                Dataset.deleted.is_(None),
+                Dataset.imported.is_(True)
+            )
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    Dataset.label.ilike('%' + term + '%'),
+                    Dataset.description.ilike('%' + term + '%'),
+                    Dataset.tags.contains(f'{{{term}}}'),
+                    Dataset.region.ilike('%' + term + '%'),
+                )
+            )
+        return query
+
+    @staticmethod
     def paginated_environment_datasets(
             session, uri, data=None,
     ) -> dict:

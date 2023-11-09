@@ -17,12 +17,14 @@ countUnreadNotifications = gql.QueryField(
     resolver=count_unread_notifications,
 )
 
+# Not used in frontend
 countReadNotifications = gql.QueryField(
     name='countReadNotifications',
     type=gql.Integer,
     resolver=count_read_notifications,
 )
 
+# Not used in frontend
 countDeletedNotifications = gql.QueryField(
     name='countDeletedNotifications',
     type=gql.Integer,

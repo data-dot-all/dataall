@@ -32,7 +32,11 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { createDataset } from '../services';
-import { useClient, listEnvironmentGroups, listEnvironments } from 'services';
+import {
+  useClient,
+  listEnvironmentGroups,
+  listValidEnvironments
+} from 'services';
 import { Topics } from '../../constants';
 
 const DatasetCreateForm = (props) => {
@@ -55,11 +59,11 @@ const DatasetCreateForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.selectListFilter })
+      listValidEnvironments({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label

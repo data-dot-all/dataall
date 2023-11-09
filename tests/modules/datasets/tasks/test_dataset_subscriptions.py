@@ -23,7 +23,7 @@ def otherenv(org_fixture, db):
             description='desc',
             SamlGroupName='admins',
             EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
+            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole',
             CDKRoleArn='arn:aws::123456789012:role/EnvRole',
             userRoleInEnvironment='999',
         )

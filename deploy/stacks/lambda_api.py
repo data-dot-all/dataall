@@ -48,6 +48,9 @@ class LambdaApiStack(pyNestedClass):
         user_pool=None,
         pivot_role_name=None,
         reauth_ttl=5,
+        email_notification_sender_email_id=None,
+        email_custom_domain=None,
+        ses_configuration_set=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -113,7 +116,10 @@ class LambdaApiStack(pyNestedClass):
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment={
+                'envname': envname, 'LOG_LEVEL': 'INFO',
+                'email_sender_id': email_notification_sender_email_id
+            },
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
@@ -129,6 +135,20 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
+
+        #Add the SES Sendemail policy
+        if email_custom_domain != None:
+            self.aws_handler.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        'ses:SendEmail'
+                    ],
+                    resources=[
+                        f'arn:aws:ses:{self.region}:{self.account}:identity/{email_custom_domain}',
+                        f'arn:aws:ses:{self.region}:{self.account}:configuration-set/{ses_configuration_set}'
+                    ]
+                )
+            )
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
@@ -290,6 +310,7 @@ class LambdaApiStack(pyNestedClass):
                         'xray:GetSamplingTargets',
                         'xray:GetSamplingStatisticSummaries',
                         'cognito-idp:ListGroups',
+                        'cognito-idp:ListUsersInGroup'
                     ],
                     resources=['*'],
                 ),

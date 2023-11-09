@@ -1,19 +1,9 @@
-import enum
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, Enum, DateTime
+from sqlalchemy import Column, String, Boolean, DateTime
 
 from dataall.base.db import Base
 from dataall.base.db import utils
-
-
-class NotificationType(enum.Enum):
-    SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
-    SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
-    SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
-    SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
-    SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
-    DATASET_VERSION = 'DATASET_VERSION'
 
 
 class Notification(Base):
@@ -21,9 +11,9 @@ class Notification(Base):
     notificationUri = Column(
         String, primary_key=True, default=utils.uuid('notificationtype')
     )
-    type = Column(Enum(NotificationType), nullable=True)
+    type = Column(String, nullable=True)
     message = Column(String, nullable=False)
-    username = Column(String, nullable=False)
+    recipient = Column(String, nullable=False)  # recipients can be groups or individual users
     is_read = Column(Boolean, nullable=False, default=False)
     target_uri = Column(String)
     created = Column(DateTime, default=datetime.now)

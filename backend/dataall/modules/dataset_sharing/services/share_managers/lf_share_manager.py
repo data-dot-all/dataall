@@ -10,6 +10,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.base.aws.quicksight import QuicksightClient
+from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -50,10 +51,6 @@ class LFShareManager:
     def process_revoked_shares(self) -> [str]:
         return NotImplementedError
 
-    @abc.abstractmethod
-    def clean_up_share(self):
-        return NotImplementedError
-
     def get_share_principals(self) -> [str]:
         """
         Builds list of principals of the share request
@@ -61,7 +58,11 @@ class LFShareManager:
         -------
         List of principals
         """
-        principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
+        principal_iam_role_arn = IAM.get_role_arn_by_name(
+            account_id=self.target_environment.AwsAccountId,
+            role_name=self.share.principalIAMRoleName
+        )
+        principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
 
         if dashboard_enabled:
@@ -416,7 +417,7 @@ class LFShareManager:
             )
             raise e
 
-    def revoke_external_account_access_on_source_account(self) -> [dict]:
+    def revoke_external_account_access_on_source_account(self, db_name, table_name) -> [dict]:
         """
         1) Revokes access to external account
         if dataset is not shared with any other team from the same workspace
@@ -435,29 +436,28 @@ class LFShareManager:
         client = aws_session.client(
             'lakeformation', region_name=self.source_environment.region
         )
-        revoke_entries = []
-        for table in self.revoked_tables:
-            revoke_entries.append(
-                {
-                    'Id': str(uuid.uuid4()),
-                    'Principal': {
-                        'DataLakePrincipalIdentifier': self.target_environment.AwsAccountId
-                    },
-                    'Resource': {
-                        'TableWithColumns': {
-                            'DatabaseName': table.GlueDatabaseName,
-                            'Name': table.GlueTableName,
-                            'ColumnWildcard': {},
-                            'CatalogId': self.source_environment.AwsAccountId,
-                        }
-                    },
-                    'Permissions': ['DESCRIBE', 'SELECT'],
-                    'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
-                }
-            )
-            LakeFormationClient.batch_revoke_permissions(
-                client, self.source_environment.AwsAccountId, revoke_entries
-            )
+        revoke_entries = [
+            {
+                'Id': str(uuid.uuid4()),
+                'Principal': {
+                    'DataLakePrincipalIdentifier': self.target_environment.AwsAccountId
+                },
+                'Resource': {
+                    'TableWithColumns': {
+                        'DatabaseName': db_name,
+                        'Name': table_name,
+                        'ColumnWildcard': {},
+                        'CatalogId': self.source_environment.AwsAccountId,
+                    }
+                },
+                'Permissions': ['DESCRIBE', 'SELECT'],
+                'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
+            }
+        ]
+
+        LakeFormationClient.batch_revoke_permissions(
+            client, self.source_environment.AwsAccountId, revoke_entries
+        )
         return revoke_entries
 
     def handle_share_failure(
