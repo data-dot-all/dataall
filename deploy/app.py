@@ -69,6 +69,8 @@ target_envs = app.node.try_get_context('DeploymentEnvironments') or [
 resource_prefix = app.node.try_get_context('resource_prefix') or 'dataall'
 
 source = app.node.try_get_context('repository_source') or 'codecommit'
+repo_string = app.node.try_get_context('repo_string') or 'awslabs/aws-dataall'
+repo_connection_arn = app.node.try_get_context('repo_connection_arn')
 
 env = Environment(account=account_id, region=cdk_pipeline_region)
 
@@ -79,7 +81,9 @@ pipeline = PipelineStack(
     target_envs=target_envs,
     git_branch=git_branch,
     resource_prefix=resource_prefix,
-    source=source
+    source=source,
+    repo_string=repo_string,
+    repo_connection_arn=repo_connection_arn
 )
 
 Aspects.of(app).add(AwsSolutionsChecks(reports=True, verbose=False))
