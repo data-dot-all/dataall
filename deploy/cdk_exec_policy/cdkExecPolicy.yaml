@@ -113,6 +113,7 @@ Resources:
               - 'lambda:PutFunctionEventInvokeConfig'
               - 'lambda:InvokeFunction'
               - 'lambda:RemovePermission'
+              - 'lambda:Update*'
             Resource:
               - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
               - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${EnvironmentResourcePrefix}*'
@@ -176,6 +177,7 @@ Resources:
               - 'ssm:DeleteParameter'
             Resource:
               - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dataall*'
               - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk*'
               - !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
 
