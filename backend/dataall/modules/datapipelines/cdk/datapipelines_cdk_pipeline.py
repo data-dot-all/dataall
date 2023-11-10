@@ -196,7 +196,7 @@ cicd_pipeline = (
 
         stages = ""
         for env in sorted(development_environments, key=lambda env: env.order):
-            stage = f""".add_stage(stage_id="{env.stage}", stage=ApplicationStage(app, "{env.stage}", ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="{env.stage}")))"""
+            stage = f""".add_stage(stage_id="{env.stage}", stage=ApplicationStage(app, "{env.stage}", env=ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="{env.stage}")))"""
             stages = stages + stage
         footer = """
         .synth()
