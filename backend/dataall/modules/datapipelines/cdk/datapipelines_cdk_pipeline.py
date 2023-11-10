@@ -47,13 +47,19 @@ class CDKPipelineStack:
 
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
 
-        self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
-
+        self.code_dir_path = os.path.realpath(
+            os.path.abspath(
+                os.path.join(
+                    __file__, "..", "..", "blueprints"
+                )
+            )
+        )
+        self.is_create = True
         try:
             codecommit_client = aws.client('codecommit', region_name=self.pipeline.region)
             repository = CDKPipelineStack._check_repository(codecommit_client, self.pipeline.repo)
             if repository:
-                self.venv_name = None
+                self.is_create = False
                 self.code_dir_path = os.path.realpath(
                     os.path.abspath(
                         os.path.join(
@@ -61,16 +67,16 @@ class CDKPipelineStack:
                         )
                     )
                 )
-                CDKPipelineStack.write_ddk_json_multienvironment(path=self.code_dir_path, output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments)
-                CDKPipelineStack.write_ddk_app_multienvironment(path=self.code_dir_path, output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
+                CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
+                CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
 
                 logger.info(f"Pipeline Repo {self.pipeline.repo} Exists...Handling Update")
                 update_cmds = [
                     f'REPO_NAME={self.pipeline.repo}',
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
-                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
+                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://${REPO_NAME}/ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
-                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://app.py --file-path app.py --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
+                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://${REPO_NAME}/app.py --file-path app.py --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
                 CommandSanitizer(args=[self.pipeline.repo])
 
@@ -88,18 +94,19 @@ class CDKPipelineStack:
             else:
                 raise Exception
         except Exception as e:
-            self.venv_name = self.initialize_repo()
+            self.initialize_repo()
             CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
-            CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments)
+            CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
             self.git_push_repo()
 
     def initialize_repo(self):
-        venv_name = ".venv"
         cmd_init = [
-            f"ddk init {self.pipeline.repo} --generate-only",
+            f"mkdir {self.pipeline.repo}",
+            f"cp -R data_pipeline_blueprint/* {self.pipeline.repo}/",
             f"cd {self.pipeline.repo}",
             "git init --initial-branch main",
-            f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
+            f"REPO_URL=$(aws codecommit create-repository --repository-name {self.pipeline.repo} --tags application=dataall,team={self.pipeline.SamlGroupName} --query 'repositoryMetadata.cloneUrlHttp' --output text)",
+            "git remote add origin ${REPO_URL}",
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
@@ -120,31 +127,35 @@ class CDKPipelineStack:
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
 
-            return venv_name
-
     @staticmethod
-    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
+    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments, pipeline_name):
         json_envs = ""
         for env in development_environments:
             json_env = f""",
         "{env.stage}": {{
             "account": "{env.AwsAccountId}",
             "region": "{env.region}",
-            "resources": {{
-                "ddk-bucket": {{"versioned": false, "removal_policy": "destroy"}}
+            "stage": "{env.stage}",
+            "tags": {{
+                "Team": "{env.samlGroupName}"
             }}
         }}"""
             json_envs = json_envs + json_env
 
         json = f"""{{
+    "tags": {{
+        "dataall": "true",
+        "Target": "{pipeline_name}"
+    }},
     "environments": {{
         "cicd": {{
             "account": "{pipeline_environment.AwsAccountId}",
-            "region": "{pipeline_environment.region}"
+            "region": "{pipeline_environment.region}",
+            "stage": "cicd"
         }}{json_envs}
     }}
 }}"""
-
+        os.makedirs(path, exist_ok=True)
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
@@ -154,9 +165,8 @@ class CDKPipelineStack:
 # !/usr/bin/env python3
 
 import aws_cdk as cdk
-from aws_ddk_core.cicd import CICDPipelineStack
-from ddk_app.ddk_app_stack import DdkApplicationStack
-from aws_ddk_core.config import Config
+import aws_ddk_core as ddk
+from dataall_pipeline_app.dataall_pipeline_app_stack import DataallPipelineStack
 
 app = cdk.App()
 
@@ -168,24 +178,25 @@ class ApplicationStage(cdk.Stage):
             **kwargs,
     ) -> None:
         super().__init__(scope, f"dataall-{{environment_id.title()}}", **kwargs)
-        DdkApplicationStack(self, "DataPipeline-{pipeline.label}-{pipeline.DataPipelineUri}", environment_id)
+        DataallPipelineStack(self, "DataPipeline-{pipeline.label}-{pipeline.DataPipelineUri}", environment_id)
 
 id = f"dataall-cdkpipeline-{pipeline.DataPipelineUri}"
-config = Config()
-(
-    CICDPipelineStack(
+cicd_pipeline = (
+    ddk.CICDPipelineStack(
         app,
         id=id,
-        environment_id="cicd",
         pipeline_name="{pipeline.label}",
+        env=ddk.Configurator.get_environment(
+            config_path="./ddk.json", environment_id="cicd"
+        ),
     )
         .add_source_action(repository_name="{pipeline.repo}")
         .add_synth_action()
-        .build()"""
+        .build_pipeline()"""
 
         stages = ""
         for env in sorted(development_environments, key=lambda env: env.order):
-            stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
+            stage = f""".add_stage(stage_id="{env.stage}", stage=ApplicationStage(app, "{env.stage}", ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="{env.stage}")))"""
             stages = stages + stage
         footer = """
         .synth()
@@ -194,7 +205,7 @@ config = Config()
 app.synth()
 """
         app = header + stages + footer
-
+        os.makedirs(path, exist_ok=True)
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(app, file=text_file)
 
@@ -226,10 +237,17 @@ app.synth()
             logger.info("Successfully Pushed DDK App Code")
 
     @staticmethod
-    def clean_up_repo(path):
-        if path:
-            cmd = ['rm', '-rf', f"{path}"]
-            cwd = os.path.dirname(os.path.abspath(__file__))
+    def clean_up_repo(pipeline_dir):
+        if pipeline_dir:
+            code_dir_path = os.path.realpath(
+                os.path.abspath(
+                    os.path.join(
+                        __file__, "..", "..", "blueprints"
+                    )
+                )
+            )
+
+            cmd = ['rm', '-rf', f"./{pipeline_dir}"]
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
@@ -238,17 +256,17 @@ app.synth()
                 shell=False,
                 encoding='utf-8',
                 capture_output=True,
-                cwd=cwd
+                cwd=code_dir_path
             )
 
             if process.returncode == 0:
-                print(f"Successfully cleaned cloned repo: {path}. {str(process.stdout)}")
+                print(f"Successfully cleaned cloned repo: {pipeline_dir}. {str(process.stdout)}")
             else:
                 logger.error(
-                    f'Failed clean cloned repo: {path} due to {str(process.stderr)}'
+                    f'Failed clean cloned repo: {pipeline_dir} due to {str(process.stderr)}'
                 )
         else:
-            logger.info(f"Info:Path {path} not found")
+            logger.info(f"Info:Path {pipeline_dir} not found")
         return
 
     @staticmethod
@@ -278,7 +296,6 @@ app.synth()
             'PYTHONPATH': python_path,
             'PATH': python_path,
             'envname': os.environ.get('envname', 'local'),
-            'COOKIECUTTER_CONFIG': "/dataall/modules/datapipelines/blueprints/cookiecutter_config.yaml",
         }
         if env_creds:
             env.update(

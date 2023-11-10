@@ -16,11 +16,11 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
 
     def extend_deployment(self, stack, session, env):
         cdkpipeline = CDKPipelineStack(stack.targetUri)
-        venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
+        is_create = cdkpipeline.is_create if cdkpipeline.is_create else None
         self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, stack.targetUri)
-        path = f'/dataall/modules/datapipelines/cdk/{self.pipeline.repo}/'
+        path = f'/dataall/modules/datapipelines/blueprints/{self.pipeline.repo}/'
         app_path = './app.py'
-        if not venv_name:
+        if not is_create:
             logger.info('Successfully Updated CDK Pipeline')
             meta = describe_stack(stack)
             stack.stackid = meta['StackId']
@@ -45,4 +45,4 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
         return False, path, app_path
 
     def post_deployment(self):
-        CDKPipelineStack.clean_up_repo(path=f'./{self.pipeline.repo}')
+        CDKPipelineStack.clean_up_repo(pipeline_dir=self.pipeline.repo)
