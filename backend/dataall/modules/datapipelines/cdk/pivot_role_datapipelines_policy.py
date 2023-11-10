@@ -37,7 +37,7 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=['sts:AssumeRole'],
                 resources=[
-                    f'arn:aws:iam::{self.account}:role/ddk-*',
+                    f'arn:aws:iam::{self.account}:role/cdk-*',
                 ],
             ),
             iam.PolicyStatement(
@@ -54,11 +54,11 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                 ],
             ),
             iam.PolicyStatement(
-                sid='ParameterStoreDDK',
+                sid='ParameterStorePipelines',
                 effect=iam.Effect.ALLOW,
                 actions=['ssm:GetParameter'],
                 resources=[
-                    f'arn:aws:ssm:*:{self.account}:parameter/ddk/*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/cdk*',
                 ],
             ),
         ]

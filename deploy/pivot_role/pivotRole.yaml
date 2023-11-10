@@ -430,7 +430,7 @@ Resources:
             Resource:
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
-              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/ddk/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/cdk*'
           - Sid: IAMListGet
             Action:
               - 'iam:Get*'
@@ -464,7 +464,7 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/ddk-*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
           - Sid: CodeCommit
             Action:
               - 'codecommit:GetFile'
