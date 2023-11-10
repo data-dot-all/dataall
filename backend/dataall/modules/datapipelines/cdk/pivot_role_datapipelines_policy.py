@@ -4,7 +4,7 @@ from aws_cdk import aws_iam as iam
 
 class PipelinesPivotRole(PivotRoleStatementSet):
     """
-    Class including all permissions needed  by the pivot role to work with AWS CodeCommit and STS assume for DDK pipelines
+    Class including all permissions needed by the pivot role to work with AWS CodeCommit and STS assume for CDK Pipelines
     It allows pivot role to:
     - ....
     """
