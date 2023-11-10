@@ -186,8 +186,6 @@ def upgrade():
                 shared_bucket_object.itemUri = dataset_bucket.bucketUri
                 shared_bucket_object.itemName = dataset_bucket.S3BucketName
 
-        if column_exists('dataset', 'dataSharingModel'):
-            op.drop_column('dataset', 'dataSharingModel')
         session.commit()
 
     except Exception as exception:

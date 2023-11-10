@@ -65,7 +65,7 @@ import {
   UpdateRejectReason,
   UpdateRequestReason
 } from '../components';
-import { generateShareItemLabel } from '../../../utils/share';
+import { generateShareItemLabel } from '../../../utils';
 
 function ShareViewHeader(props) {
   const {

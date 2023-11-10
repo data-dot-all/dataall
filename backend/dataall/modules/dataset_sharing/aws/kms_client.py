@@ -69,22 +69,3 @@ class KmsClient:
             return None
         else:
             return key_exist
-
-    def add_tags_to_key(self, key_id: str, tags: list):
-        """
-        Add tags to an existing AWS KMS key.
-        :param key_id: The ID of the KMS key to add tags to.
-        :param tags: A list of dictionaries containing the tags to be added. For example:
-        [{'TagKey': 'Purpose', 'TagValue': 'Test'}]
-        :return: None
-        """
-        try:
-            self._client.tag_resource(
-                KeyId=key_id,
-                Tags=tags,
-            )
-        except Exception as e:
-            log.error(
-                f'Failed to add tags to kms key {key_id} : {e}'
-            )
-            raise e
