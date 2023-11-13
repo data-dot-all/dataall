@@ -26,7 +26,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
             stack.stackid = meta['StackId']
             stack.status = meta['StackStatus']
             update_stack_output(session, stack)
-            return True, path
+            return True, path, app_path
 
         aws = SessionHelper.remote_session(stack.accountid)
         creds = aws.get_credentials()
