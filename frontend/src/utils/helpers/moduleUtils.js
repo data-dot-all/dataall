@@ -67,9 +67,6 @@ function _modulesNameMap() {
 }
 
 const ModuleNames = _modulesNameMap();
-/* eslint-disable no-console */
-console.log(ModuleNames); //no-console
-/* eslint-enable no-console */
 export {
   ModuleNames,
   isModuleEnabled,
