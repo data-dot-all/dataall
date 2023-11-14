@@ -62,7 +62,7 @@ def environment(db):
         label: str,
         owner: str,
         samlGroupName: str,
-        environmentDefaultIAMRoleName: str,
+        environmentDefaultIAMRoleArn: str,
     ) -> Environment:
         with db.scoped_session() as session:
             env = Environment(
@@ -74,8 +74,8 @@ def environment(db):
                 tags=[],
                 description="desc",
                 SamlGroupName=samlGroupName,
-                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleName,
-                EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{awsAccountId}:role/{environmentDefaultIAMRoleName}",
+                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleArn.split("/")[-1],
+                EnvironmentDefaultIAMRoleArn=environmentDefaultIAMRoleArn,
                 CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
             )
             session.add(env)

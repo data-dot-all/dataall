@@ -2,7 +2,7 @@ import logging
 
 from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
-from dataall.core.feature_toggle_checker import is_feature_enabled
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
@@ -128,6 +128,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
 
+@is_feature_enabled('modules.datasets.features.glue_crawler')
 def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 

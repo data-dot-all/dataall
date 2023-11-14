@@ -63,7 +63,11 @@ class ShareItemService:
                 resource_uri=dataset.datasetUri,
             )
 
-            ShareNotificationService.notify_share_object_rejection(session, context.username, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_rejection(email_id=context.username)
 
             revoke_share_task: Task = Task(
                 action='ecs.share.revoke',

@@ -774,17 +774,23 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def other_approved_share_object_exists(session, environment_uri, dataset_uri):
+    def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         return (
             session.query(ShareObject)
+            .join(
+                ShareObjectItem,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
             .filter(
                 and_(
-                    Environment.environmentUri == environment_uri,
-                    ShareObject.status == ShareObjectStatus.Approved.value,
-                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.environmentUri == environment_uri,
+                    ShareObjectItem.itemUri == item_uri,
+                    ShareObjectItem.shareItemUri != share_item_uri,
+                    ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
-            .all()
+            .first()
         )
 
     @staticmethod

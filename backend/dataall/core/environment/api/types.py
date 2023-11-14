@@ -125,6 +125,28 @@ EnvironmentSearchResult = gql.ObjectType(
     ],
 )
 
+EnvironmentSimplified = gql.ObjectType(
+    name='EnvironmentSimplified',
+    fields=[
+        gql.Field(name='environmentUri', type=gql.ID),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(
+            name='organization',
+            type=gql.Ref('Organization'),
+            resolver=get_parent_organization,
+        ),
+    ],
+)
+
+EnvironmentSimplifiedSearchResult = gql.ObjectType(
+    name='EnvironmentSimplifiedSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='nodes', type=gql.ArrayType(EnvironmentSimplified)),
+    ],
+)
+
 
 ConsumptionRole = gql.ObjectType(
     name='ConsumptionRole',

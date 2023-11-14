@@ -40,6 +40,7 @@ import { listDatasetTables, deleteDatasetTable, useClient } from 'services';
 import { syncTables } from '../services';
 
 import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
+import { isFeatureEnabled } from 'utils';
 
 export const DatasetTables = (props) => {
   const { dataset, isAdmin } = props;
@@ -216,15 +217,17 @@ export const DatasetTables = (props) => {
                 Synchronize
               </LoadingButton>
 
-              <LoadingButton
-                color="primary"
-                onClick={handleStartCrawlerModalOpen}
-                startIcon={<SearchIcon fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-              >
-                Start Crawler
-              </LoadingButton>
+              {isFeatureEnabled('datasets', 'glue_crawler') && (
+                <LoadingButton
+                  color="primary"
+                  onClick={handleStartCrawlerModalOpen}
+                  startIcon={<SearchIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                >
+                  Start Crawler
+                </LoadingButton>
+              )}
             </Grid>
           )}
         </Box>

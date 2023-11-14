@@ -22,7 +22,7 @@ from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.db.vpc_repositories import Vpc
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
-from dataall.core.feature_toggle_checker import is_feature_enabled
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -286,6 +286,13 @@ def list_environments(context: Context, source, filter=None):
         filter = {}
     with context.engine.scoped_session() as session:
         return EnvironmentService.paginated_user_environments(session, filter)
+
+
+def list_valid_environments(context: Context, source, filter=None):
+    if filter is None:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return EnvironmentService.list_valid_user_environments(session, filter)
 
 
 def list_environment_networks(
