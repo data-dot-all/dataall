@@ -135,7 +135,6 @@ class CDKPipelineStack:
         "{env.stage}": {{
             "account": "{env.AwsAccountId}",
             "region": "{env.region}",
-            "stage": "{env.stage}",
             "tags": {{
                 "Team": "{env.samlGroupName}"
             }}
@@ -150,8 +149,7 @@ class CDKPipelineStack:
     "environments": {{
         "cicd": {{
             "account": "{pipeline_environment.AwsAccountId}",
-            "region": "{pipeline_environment.region}",
-            "stage": "cicd"
+            "region": "{pipeline_environment.region}"
         }}{json_envs}
     }}
 }}"""
