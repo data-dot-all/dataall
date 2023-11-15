@@ -1,16 +1,7 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardHeader,
-  Divider,
-  Grid,
-  Link,
-  Typography
-} from '@mui/material';
+import { Box, Button, Card, Grid, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
-import { ShareStatus, TextAvatar, useCardStyle } from 'design';
+import { ShareStatus, useCardStyle } from 'design';
 
 export const ShareInboxListItem = ({ share }) => {
   const classes = useCardStyle();
@@ -23,136 +14,78 @@ export const ShareInboxListItem = ({ share }) => {
         mt: 2
       }}
     >
-      <Grid container spacing={2} alignItems="center">
-        <Grid item md={9} xs={6}>
-          <CardHeader
-            avatar={<TextAvatar name={share.owner} />}
-            disableTypography
-            subheader={
-              <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  mt: 1
-                }}
-              >
-                <Box
-                  sx={{
-                    alignItems: 'center',
-                    display: 'flex',
-                    mr: 1
-                  }}
-                >
-                  <ShareStatus status={share.status} />
-                </Box>
-                <Typography color="textSecondary" variant="body2">
-                  | For{' '}
-                  <Link
-                    underline="hover"
-                    component={RouterLink}
-                    color="textPrimary"
-                    variant="subtitle2"
-                    to={`/console/datasets/${share.dataset.datasetUri}`}
-                  >
-                    {share.dataset.datasetName}
-                  </Link>{' '}
-                  | {share.created}
-                </Typography>
-              </Box>
-            }
-            title={
-              <Link underline="hover" color="textPrimary" variant="subtitle2">
-                {share.owner}
-              </Link>
-            }
-          />
+      <Grid container spacing={1} alignItems="center">
+        <Grid item justifyContent="center" md={0.5} xs={0.5}>
           <Box
             sx={{
+              pt: 2,
               pb: 2,
               px: 3
             }}
           >
+            <ShareStatus status={share.status} />
+          </Box>
+        </Grid>
+        <Grid item justifyContent="flex-end" md={4} xs={4}>
+          <Box
+            sx={{
+              pt: 2,
+              pb: 2,
+              px: 3
+            }}
+          >
+            <Typography color="textPrimary" variant="body1">
+              {`Request owner [principal]`}
+            </Typography>
             <Typography color="textSecondary" variant="body1">
-              {`Read access to Dataset: ${share.dataset.datasetName} 
-                for Principal: ${share.principal.principalName} 
-                from Environment: ${share.principal.environmentName}`}
+              {`${share.principal.principalName}`}
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={3} xs={6} spacing={2}>
+        <Grid item justifyContent="center" md={3} xs={3}>
           <Box
             sx={{
-              alignItems: 'center',
-              display: 'flex',
-              pt: 3,
-              pb: 0.5
+              pt: 2,
+              pb: 2,
+              px: 3
             }}
           >
-            <Typography color="textPrimary" variant="body2">
-              {`Currently shared items: ${share.statistics.sharedItems}`}
+            <Typography color="textPrimary" variant="body1">
+              {`Dataset`}
             </Typography>
-          </Box>
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex',
-              py: 0.5
-            }}
-          >
-            <Typography color="textPrimary" variant="body2">
-              {`Revoked items: ${share.statistics.revokedItems}`}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex',
-              py: 0.5
-            }}
-          >
-            <Typography color="textPrimary" variant="body2">
-              {`Failed items: ${share.statistics.failedItems}`}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex',
-              py: 0.5
-            }}
-          >
-            <Typography color="textPrimary" variant="body2">
-              {`Pending items: ${share.statistics.pendingItems}`}
+            <Typography color="textSecondary" variant="body1">
+              {`${share.dataset.datasetName}`}
             </Typography>
           </Box>
         </Grid>
-      </Grid>
-      <Divider />
-      <Box
-        sx={{
-          alignItems: 'center',
-          display: 'flex',
-          pl: 1,
-          pr: 3,
-          py: 0.5
-        }}
-      >
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex'
-          }}
-        >
+        <Grid item justifyContent="center" md={3} xs={3}>
+          <Box
+            sx={{
+              pt: 2,
+              pb: 2,
+              px: 3
+            }}
+          >
+            <Typography color="textPrimary" variant="body1">
+              {`Dataset Owner`}
+            </Typography>
+            <Typography color="textSecondary" variant="body1">
+              {`${share.dataset.SamlAdminGroupName}`}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item justifyContent="flex-end" md={1.5} xs={1.5}>
           <Button
             color="primary"
+            type="button"
             component={RouterLink}
             to={`/console/shares/${share.shareUri}`}
+            variant="contained"
           >
-            Learn More
+            Open Share Request
           </Button>
-        </Box>
-      </Box>
+        </Grid>
+      </Grid>
     </Card>
   );
 };
