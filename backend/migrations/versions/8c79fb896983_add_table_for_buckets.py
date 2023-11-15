@@ -171,21 +171,6 @@ def upgrade():
                 )
                 session.add(dataset_bucket)
             session.flush()  # flush to get the bucketUri
-
-        for dataset in datasets:
-            shared_bucket_object: ShareObjectItem = session.query(ShareObjectItem).filter(
-                and_(
-                    ShareObjectItem.itemType == ShareableType.S3Bucket.value,
-                    ShareObjectItem.itemUri == dataset.datasetUri,
-                )
-            ).first()
-            dataset_bucket: DatasetBucket = session.query(DatasetBucket).filter(
-                DatasetBucket.datasetUri == dataset.datasetUri
-            ).first()
-            if shared_bucket_object is not None:
-                shared_bucket_object.itemUri = dataset_bucket.bucketUri
-                shared_bucket_object.itemName = dataset_bucket.S3BucketName
-
         session.commit()
 
     except Exception as exception:

@@ -178,12 +178,22 @@ class S3AccessPointShareManager:
                 kms_target_resources = [
                     f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
                 ]
-                share_manager.add_missing_resources_to_policy_statement(
-                    kms_key_id,
-                    kms_target_resources,
-                    existing_policy["Statement"][1],
-                    IAM_ACCESS_POINT_ROLE_POLICY
-                )
+                if len(existing_policy["Statement"]) > 1:
+                    share_manager.add_missing_resources_to_policy_statement(
+                        kms_key_id,
+                        kms_target_resources,
+                        existing_policy["Statement"][1],
+                        IAM_ACCESS_POINT_ROLE_POLICY
+                    )
+                else:
+                    additional_policy = {
+                        "Effect": "Allow",
+                        "Action": [
+                            "kms:*"
+                        ],
+                        "Resource": kms_target_resources
+                    }
+                    existing_policy["Statement"].append(additional_policy)
 
             policy = existing_policy
         else:

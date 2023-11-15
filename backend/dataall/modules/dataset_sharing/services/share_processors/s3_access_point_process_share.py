@@ -21,6 +21,8 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
+        existing_shared_buckets: bool = False
+
     ):
 
         super().__init__(

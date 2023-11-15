@@ -105,13 +105,22 @@ class S3BucketShareManager:
                 kms_target_resources = [
                     f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
                 ]
-
-                share_manager.add_missing_resources_to_policy_statement(
-                    resource_type=kms_key_id,
-                    target_resources=kms_target_resources,
-                    existing_policy_statement=existing_policy["Statement"][1],
-                    iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
-                )
+                if len(existing_policy["Statement"]) > 1:
+                    share_manager.add_missing_resources_to_policy_statement(
+                        resource_type=kms_key_id,
+                        target_resources=kms_target_resources,
+                        existing_policy_statement=existing_policy["Statement"][1],
+                        iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+                    )
+                else:
+                    additional_policy = {
+                        "Effect": "Allow",
+                        "Action": [
+                            "kms:*"
+                        ],
+                        "Resource": kms_target_resources
+                    }
+                    existing_policy["Statement"].append(additional_policy)
 
             policy = existing_policy
         else:
