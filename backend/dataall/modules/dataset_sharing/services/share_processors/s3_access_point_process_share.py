@@ -197,7 +197,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             target_environment,
             source_env_group,
             env_group,
-            existing_shared_buckets
         )
         clean_up = clean_up_folder.delete_access_point(
             share=share,
