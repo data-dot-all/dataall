@@ -17,7 +17,8 @@ class CloudformationPivotRole(PivotRoleStatementSet):
                     "cloudformation:DeleteStack",
                     "cloudformation:DescribeStacks",
                     "cloudformation:DescribeStackEvents",
-                    "cloudformation:DescribeStackResources"
+                    "cloudformation:DescribeStackResources",
+                    "cloudformation:ContinueUpdateRollback"
                 ],
                 resources=[
                     f'arn:aws:cloudformation:*:{self.account}:stack/{self.env_resource_prefix}*/*',

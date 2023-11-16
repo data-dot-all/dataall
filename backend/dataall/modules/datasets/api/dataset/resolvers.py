@@ -2,7 +2,7 @@ import logging
 
 from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
-from dataall.core.feature_toggle_checker import is_feature_enabled
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization

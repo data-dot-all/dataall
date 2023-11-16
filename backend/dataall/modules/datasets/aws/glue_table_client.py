@@ -34,7 +34,7 @@ class GlueTableClient:
     def update_table_for_column(self, column_name, table_input):
         try:
             response = self._client.update_table(
-                DatabaseName=self._table.name,
+                DatabaseName=self._table.GlueDatabaseName,
                 TableInput=table_input,
             )
             log.info(

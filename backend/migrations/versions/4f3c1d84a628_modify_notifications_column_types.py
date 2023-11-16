@@ -5,6 +5,8 @@ Revises: 917b923f74bd
 Create Date: 2023-10-20 15:04:15.061516
 
 """
+import os
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -21,12 +23,11 @@ def upgrade():
     Define column "type" as: type = Column(String, nullable=True)
     Rename column " " to " " both of type String
     """
-    op.alter_column(
-        'notification',
-        'type',
-        existing_type=sa.String(),
-        nullable=True
-    )
+    envname = os.getenv('envname', 'local')
+    op.execute(f'ALTER TABLE {envname}.notification ALTER COLUMN "type" TYPE VARCHAR(100);')  # nosemgrep
+    # semgrep finding ignored as no upstream user input is passed to the statement function
+    # Only code admins will have access to the envname parameter of the f-string
+
     op.alter_column(
         'notification',
         'username',
@@ -34,6 +35,7 @@ def upgrade():
         nullable=False,
         existing_type=sa.String()
     )
+    print("Notification columns updated")
 
 
 def downgrade():

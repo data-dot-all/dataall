@@ -25,18 +25,22 @@ class PipelineStack(Stack):
         self,
         id,
         scope,
+        repo_connection_arn,
         target_envs: List = None,
         git_branch='main',
         resource_prefix='dataall',
         source='codecommit',
+        repo_string='awslabs/aws-dataall',
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
-        self.validate_deployment_params(git_branch, resource_prefix, target_envs)
+        self.validate_deployment_params(source, repo_connection_arn, git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
         self.resource_prefix = resource_prefix
         self.target_envs = target_envs
+        self.repo_string = repo_string
+        self.repo_connection_arn = repo_connection_arn
 
         self.vpc_stack = VpcStack(
             self,
@@ -111,11 +115,11 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
-        if self.source == 'github':
-            source = CodePipelineSource.git_hub(
-                repo_string='awslabs/aws-dataall',
+        if self.source == 'codestar_connection':
+            source = CodePipelineSource.connection(
+                repo_string=repo_string,
                 branch=self.git_branch,
-                authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
+                connection_arn=repo_connection_arn
             )
 
         else:
@@ -374,7 +378,12 @@ class PipelineStack(Stack):
                 ],
             )
 
-    def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
+    def validate_deployment_params(self, source, repo_connection_arn, git_branch, resource_prefix, target_envs):
+        if (source == "codestar_connection" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
+            raise ValueError(
+                f'Error: When the source is a CodeStar Connection, {repo_connection_arn} cannot be None.'
+                f'Please define the ARN of the CodeStar Connection'
+            )
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
             raise ValueError(
                 f'Git branch {git_branch} name is created to use AWS resources.'
@@ -426,7 +435,6 @@ class PipelineStack(Stack):
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
-                        f'export schema_name=validation',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make drop-tables',
