@@ -17,6 +17,7 @@ from dataall.modules.dataset_sharing.services.share_notification_service import 
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
     GET_SHARE_OBJECT
+from dataall.modules.datasets_base.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -46,6 +47,15 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+
+            if dataset.AwsAccountId != environment.AwsAccountId:
+                s3_encryption, key_id = S3DatasetClient(dataset).get_bucket_encryption()
+                if s3_encryption == 'AES256':
+                    raise UnauthorizedOperation(
+                        action=CREATE_SHARE_OBJECT,
+                        message=f'Cross account sharing is not allowed for dataset {dataset.S3BucketName} '
+                                f'encrypted with amazon managed key'
+                    )
 
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(

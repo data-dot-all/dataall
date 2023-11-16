@@ -16,13 +16,13 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+from dataall.modules.datasets_base.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
@@ -111,7 +111,7 @@ class DatasetService:
             if data.get('imported', False):
                 DatasetService.check_imported_resources(dataset)
 
-            dataset = DatasetRepository.create_dataset(
+            DatasetRepository.create_dataset(
                 session=session,
                 env=environment,
                 dataset=dataset,
