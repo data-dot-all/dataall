@@ -6,7 +6,7 @@ import {
   HttpLink,
   InMemoryCache
 } from 'apollo-boost';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useToken, useAuth } from 'authentication';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
@@ -31,15 +31,18 @@ export const useClient = () => {
   const token = useToken();
   const auth = useAuth();
 
-  const setReAuth = async (requestInfo) => {
-    auth.dispatch({
-      type: 'REAUTH',
-      payload: {
-        reAuthStatus: true,
-        requestInfo: requestInfo
-      }
-    });
-  };
+  const setReAuth = useCallback(
+    async (requestInfo) => {
+      auth.dispatch({
+        type: 'REAUTH',
+        payload: {
+          reAuthStatus: true,
+          requestInfo: requestInfo
+        }
+      });
+    },
+    [auth]
+  );
 
   useEffect(() => {
     const initClient = async () => {
@@ -93,6 +96,6 @@ export const useClient = () => {
     if (token) {
       initClient().catch((e) => console.error(e));
     }
-  }, [token, dispatch]);
+  }, [token, dispatch, setReAuth]);
   return client;
 };
