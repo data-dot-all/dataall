@@ -137,6 +137,19 @@ class AWSResourceNotFound(Exception):
         return f'{self.message}'
 
 
+class AWSInsufficientPrivileges(Exception):
+    def __init__(self, action, message):
+        self.action = action
+        self.message = f"""
+                    An error occurred (AWSInsufficientPrivileges) when calling {self.action} operation. 
+                    Insufficient privileges for the pivot role: {message}
+                """
+
+    def __str__(self):
+        return f'{self.message}'
+
+
+
 class AWSResourceNotAvailable(Exception):
     def __init__(self, action, message):
         self.action = action

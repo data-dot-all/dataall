@@ -51,26 +51,46 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(environment, data):
-        kms_alias = data.get('KmsKeyAlias')
+    def check_imported_resources(dataset: Dataset):
+        kms_alias = dataset.KmsAlias
+
+        s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
+        if not s3_encryption:
+            raise exceptions.AWSInsufficientPrivileges(
+                action=IMPORT_DATASET,
+                message=f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission '
+                        f'to retrieve information on bucket encryption type for {dataset.S3BucketName} bucket',
+            )
+
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
-            key_exists = KmsClient(account_id=environment.AwsAccountId, region=environment.region).check_key_exists(
+            key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_exists:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {environment.AwsAccountId}',
+                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_id = KmsClient(account_id=environment.AwsAccountId, region=environment.region).get_key_id(
+            key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_id:
-                raise exceptions.AWSResourceNotFound(
+                raise exceptions.AWSInsufficientPrivileges(
                     action=IMPORT_DATASET,
                     message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
                 )
+            if key_id != kms_id:
+                raise exceptions.InvalidInput(
+                    param_name='KmsAlias',
+                    param_value=dataset.KmsAlias,
+                    constraint=' is wrong. The bucket is encrypted with a different key'
+                )
+
+        else:
+            if s3_encryption != 'AES256':  # S3 managed encryption
+                raise exceptions.RequiredParameter(param_name='KmsAlias')
+
         return True
 
     @staticmethod
@@ -82,14 +102,19 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
+            dataset = DatasetRepository.build_dataset(
+                username=context.username,
+                env=environment,
+                data=data
+            )
+
             if data.get('imported', False):
-                DatasetService.check_imported_resources(environment=environment, data=data)
+                DatasetService.check_imported_resources(dataset)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
-                username=context.username,
-                uri=uri,
-                data=data,
+                env=environment,
+                dataset=dataset,
             )
 
             ResourcePolicy.attach_resource_policy(
@@ -184,8 +209,6 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            if data.get('imported', False):
-                DatasetService.check_imported_resources(environment=environment, data=data)
 
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -196,6 +219,10 @@ class DatasetService:
                 if data.get('KmsAlias') not in ["Undefined"]:
                     dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
                     dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
+
+                if data.get('imported', False):
+                    DatasetService.check_imported_resources(dataset)
+
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
                         DatasetService._transfer_stewardship_to_new_stewards(

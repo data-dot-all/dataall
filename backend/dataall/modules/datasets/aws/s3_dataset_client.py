@@ -42,6 +42,22 @@ class S3DatasetClient:
         except ClientError as e:
             raise e
 
+    def get_bucket_encryption(self) -> (str, str):
+        dataset = self._dataset
+        try:
+            response = self._client.get_bucket_encryption(
+                Bucket=dataset.S3BucketName,
+                ExpectedBucketOwner=dataset.AwsAccountId
+            )
+            rule = response['ServerSideEncryptionConfiguration']['Rules'][0]
+            encryption = rule['ApplyServerSideEncryptionByDefault']
+            s3_encryption = encryption['SSEAlgorithm']
+            kms_id = encryption.get('KMSMasterKeyID')
+            return s3_encryption, kms_id
+        except ClientError as e:
+            log.error(f'Cannot fetch the bucket encryption configuration for {dataset.S3BucketName}')
+            return None, None
+
 
 class S3DatasetBucketPolicyClient:
     def __init__(self, dataset: Dataset):
