@@ -1,5 +1,7 @@
 import random
 import typing
+from unittest.mock import MagicMock
+
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -424,6 +426,18 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
     # Print response
     print('Create share request response: ', response)
     return response
+
+
+@pytest.fixture(scope='module', autouse=True)
+def mock_s3_client(module_mocker):
+    s3_client = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_object_service.S3DatasetClient',
+        s3_client
+    )
+
+    s3_client().get_bucket_encryption.return_value = ('aws:kms', 'some_key')
+    yield s3_client
 
 
 def get_share_object(client, user, group, shareUri, filter):
