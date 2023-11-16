@@ -139,18 +139,21 @@ class S3BucketShareManager:
                             f"arn:aws:s3:::{self.bucket_name}",
                             f"arn:aws:s3:::{self.bucket_name}/*"
                         ]
-                    },
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "kms:*"
-                        ],
-                        "Resource": [
-                            f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
-                        ]
                     }
                 ]
             }
+            if kms_key_id:
+                additional_policy = {
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:*"
+                    ],
+                    "Resource": [
+                        f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
+                    ]
+                }
+                policy["Statement"].append(additional_policy)
+
         IAM.update_role_policy(
             self.target_account_id,
             self.target_requester_IAMRoleName,
@@ -351,7 +354,8 @@ class S3BucketShareManager:
                 kms_target_resources = [
                     f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}"
                 ]
-                share_manager.remove_resource_from_statement(existing_policy["Statement"][1], kms_target_resources)
+                if len(existing_policy["Statement"]) > 1:
+                    share_manager.remove_resource_from_statement(existing_policy["Statement"][1], kms_target_resources)
 
             policy_statements = []
             for statement in existing_policy["Statement"]:

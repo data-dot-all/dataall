@@ -214,18 +214,21 @@ class S3AccessPointShareManager:
                             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
                             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
                         ]
-                    },
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "kms:*"
-                        ],
-                        "Resource": [
-                            f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                        ]
                     }
                 ]
             }
+            if kms_key_id:
+                additional_policy = {
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:*"
+                    ],
+                    "Resource": [
+                        f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
+                    ]
+                }
+                policy["Statement"].append(additional_policy)
+
         IAM.update_role_policy(
             self.target_account_id,
             self.target_requester_IAMRoleName,
@@ -420,10 +423,11 @@ class S3AccessPointShareManager:
                 kms_target_resources = [
                     f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
                 ]
-                ShareManagerUtils.remove_resource_from_statement(
-                    existing_policy["Statement"][1],
-                    kms_target_resources
-                )
+                if len(existing_policy["Statement"]) > 1:
+                    ShareManagerUtils.remove_resource_from_statement(
+                        existing_policy["Statement"][1],
+                        kms_target_resources
+                    )
 
             policy_statements = []
             for statement in existing_policy["Statement"]:
