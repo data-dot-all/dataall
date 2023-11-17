@@ -482,7 +482,7 @@ const EnvironmentCreateForm = (props) => {
                 dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
                 notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
                 mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
-                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
                 resourcePrefix: 'dataall'
               }}
