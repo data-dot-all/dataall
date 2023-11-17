@@ -1,17 +1,19 @@
 import {
   Autocomplete,
   Box,
+  Checkbox,
   Container,
-  Divider,
   Grid,
   TextField,
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager, useSettings } from 'design';
+import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listDatasetShareObjects,
@@ -19,8 +21,11 @@ import {
   useClient
 } from 'services';
 
-import { ShareInboxListItem } from './ShareInboxListItem';
+import { ShareInOutBoxListItem } from './ShareBoxListItem';
 import { listDatasets } from '../../Datasets/services'; //TODO MANAGE DEPENDENCY
+
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 export const ShareInboxList = (props) => {
   const { dataset } = props;
@@ -206,11 +211,23 @@ export const ShareInboxList = (props) => {
                   id={'Status'}
                   multiple
                   fullWidth
+                  disableCloseOnSelect
                   loading={loading}
                   options={statusOptions}
                   onChange={(event, value) =>
                     handleFilterChange('Status', value)
                   }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      <ShareStatus status={option} />
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -226,12 +243,24 @@ export const ShareInboxList = (props) => {
                   id={'Datasets'}
                   multiple
                   fullWidth
+                  disableCloseOnSelect
                   loading={loading}
                   options={myDatasets}
                   getOptionLabel={(option) => option.label}
                   onChange={(event, value) =>
                     handleFilterChange('Datasets', value)
                   }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option.label}
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -247,11 +276,23 @@ export const ShareInboxList = (props) => {
                   id={'Datasets Owners'}
                   multiple
                   fullWidth
+                  disableCloseOnSelect
                   loading={loading}
                   options={myGroupOptions}
                   onChange={(event, value) =>
                     handleFilterChange('Datasets Owners', value)
                   }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -272,6 +313,17 @@ export const ShareInboxList = (props) => {
                   onChange={(event, value) =>
                     handleFilterChange('Request Owners', value)
                   }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -284,7 +336,6 @@ export const ShareInboxList = (props) => {
               </Grid>
             </Grid>
           </Box>
-          <Divider />
           <Box
             sx={{
               mt: 3
@@ -297,7 +348,7 @@ export const ShareInboxList = (props) => {
             ) : (
               <Box>
                 {items.nodes.map((node) => (
-                  <ShareInboxListItem share={node} reload={fetchItems} />
+                  <ShareInOutBoxListItem share={node} reload={fetchItems} />
                 ))}
 
                 <Pager items={items} onChange={handlePageChange} />

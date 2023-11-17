@@ -15,7 +15,7 @@ import { FiSend } from 'react-icons/fi';
 import { RiInboxArchiveLine } from 'react-icons/ri';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import { ShareInboxList, ShareOutboxList } from '../components';
+import { ShareBoxList } from '../components';
 
 const tabs = [
   { label: 'Received', value: 'inbox', icon: <RiInboxArchiveLine size={20} /> },
@@ -90,8 +90,7 @@ const ShareList = () => {
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'inbox' && <ShareInboxList />}
-            {currentTab === 'outbox' && <ShareOutboxList />}
+            <ShareBoxList tab={currentTab} />
           </Box>
         </Container>
       </Box>

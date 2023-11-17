@@ -6,7 +6,7 @@ import { Defaults, Pager, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { getShareRequestsFromMe } from '../services';
-import { ShareOutboxListItem } from '../components';
+import { ShareInOutBoxListItem } from '../components';
 
 export const ShareOutboxList = () => {
   const dispatch = useDispatch();
@@ -76,7 +76,7 @@ export const ShareOutboxList = () => {
             ) : (
               <Box>
                 {items.nodes.map((node) => (
-                  <ShareOutboxListItem share={node} reload={fetchItems} />
+                  <ShareInOutBoxListItem share={node} reload={fetchItems} />
                 ))}
 
                 <Pager items={items} onChange={handlePageChange} />

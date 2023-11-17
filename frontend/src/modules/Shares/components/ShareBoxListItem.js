@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, useCardStyle } from 'design';
 
-export const ShareInboxListItem = ({ share }) => {
+export const ShareBoxListItem = ({ share }) => {
   const classes = useCardStyle();
 
   return (
@@ -15,7 +15,7 @@ export const ShareInboxListItem = ({ share }) => {
       }}
     >
       <Grid container spacing={1} alignItems="center">
-        <Grid item justifyContent="center" md={0.5} xs={0.5}>
+        <Grid item justifyContent="center" md={1} xs={1}>
           <Box
             sx={{
               pt: 2,
@@ -26,7 +26,7 @@ export const ShareInboxListItem = ({ share }) => {
             <ShareStatus status={share.status} />
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={4} xs={4}>
+        <Grid item justifyContent="flex-end" md={5} xs={5}>
           <Box
             sx={{
               pt: 2,
@@ -42,7 +42,7 @@ export const ShareInboxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="center" md={3} xs={3}>
+        <Grid item justifyContent="center" md={2} xs={2}>
           <Box
             sx={{
               pt: 2,
@@ -58,7 +58,7 @@ export const ShareInboxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="center" md={3} xs={3}>
+        <Grid item justifyContent="center" md={2} xs={2}>
           <Box
             sx={{
               pt: 2,
@@ -89,7 +89,7 @@ export const ShareInboxListItem = ({ share }) => {
     </Card>
   );
 };
-ShareInboxListItem.propTypes = {
+ShareBoxListItem.propTypes = {
   share: PropTypes.object.isRequired,
   reload: PropTypes.func.isRequired
 };
