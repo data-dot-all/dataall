@@ -29,6 +29,9 @@ class SesStack(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             alias=f'{resource_prefix}-{envname}-SNS-key',
             enable_key_rotation=True,
+        )
+
+        self.KMS_SNS.add_to_resource_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=[
@@ -48,6 +51,7 @@ class SesStack(pyNestedClass):
         )
 
         self.sns = sns.Topic(
+            self,
             f'{resource_prefix}-{envname}-SNS-Email-Bounce-Topic',
             display_name="SNS-Email-Bounce-Topic",
             topic_name=f'{resource_prefix}-{envname}-SNS-Email-Bounce-Topic',
