@@ -63,6 +63,13 @@ class DatasetService:
             )
 
         if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
+            if s3_encryption == 'AES256':
+                raise exceptions.UnauthorizedOperation(
+                    action=IMPORT_DATASET,
+                    message=f'Bucket {dataset.S3BucketName} is encrypted with aws managed key. '
+                            f'KmsAlias {kms_alias} should not be provided'
+                )
+
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
                 key_alias=f"alias/{kms_alias}"
             )
@@ -84,7 +91,7 @@ class DatasetService:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,
-                    constraint=' is wrong. The bucket is encrypted with a different key'
+                    constraint='  wrong. The bucket is encrypted with a different key'
                 )
 
         else:
@@ -108,10 +115,10 @@ class DatasetService:
                 data=data
             )
 
-            if data.get('imported', False):
+            if dataset.imported:
                 DatasetService.check_imported_resources(dataset)
 
-            DatasetRepository.create_dataset(
+            dataset = DatasetRepository.create_dataset(
                 session=session,
                 env=environment,
                 dataset=dataset,

@@ -93,6 +93,7 @@ class DatasetRepository(EnvironmentResource):
             targetType='dataset',
         )
         session.add(activity)
+        return dataset
 
     @staticmethod
     def _set_dataset_aws_resources(dataset: Dataset, data, environment):

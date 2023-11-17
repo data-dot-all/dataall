@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
 import pytest
 from dataall.base.db import get_engine, create_schema_and_tables, Engine
@@ -176,3 +177,27 @@ def patch_check_env(module_mocker):
     module_mocker.patch(
         'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
+
+
+@pytest.fixture(scope='function')
+def mock_aws_client(module_mocker):
+    aws_client = MagicMock()
+    session_helper = MagicMock()
+    session = MagicMock()
+
+    # there can be other mocker clients
+    module_mocker.patch(
+        'dataall.modules.datasets_base.aws.s3_dataset_client.SessionHelper',
+        session_helper
+    )
+
+    module_mocker.patch(
+        'dataall.modules.dataset_sharing.aws.kms_client.SessionHelper',
+        session_helper
+    )
+
+    session_helper.get_session.return_value = session
+    session_helper.remote_session.return_value = session
+    session.client.return_value = aws_client
+
+    yield aws_client
