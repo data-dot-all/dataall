@@ -14,6 +14,7 @@ class BackendStage(Stage):
         resource_prefix='dataall',
         ecr_repository=None,
         commit_id=None,
+        tooling_region=None,
         tooling_account_id=None,
         pipeline_bucket=None,
         vpc_id=None,
@@ -32,8 +33,8 @@ class BackendStage(Stage):
         enable_pivot_role_auto_create=False,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
-        cognito_user_session_timeout_inmins=43200,
         reauth_config=None,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -43,6 +44,7 @@ class BackendStage(Stage):
             f'backend-stack',
             envname=envname,
             resource_prefix=resource_prefix,
+            tooling_region=tooling_region,
             tooling_account_id=tooling_account_id,
             ecr_repository=ecr_repository,
             pipeline_bucket=pipeline_bucket,
@@ -63,8 +65,8 @@ class BackendStage(Stage):
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             codeartifact_domain_name=codeartifact_domain_name,
             codeartifact_pip_repo_name=codeartifact_pip_repo_name,
-            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             reauth_config=reauth_config,
+            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             **kwargs,
         )
 

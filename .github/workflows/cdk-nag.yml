@@ -12,6 +12,7 @@ on:
     - "deploy/**"
     branches:
     - main
+    - v2m*
 
 permissions:
   contents: read

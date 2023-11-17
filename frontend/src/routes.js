@@ -327,7 +327,7 @@ const routes = [
           }
         ]
       },
-      isModuleEnabled(ModuleNames.PIPELINES) && {
+      isModuleEnabled(ModuleNames.DATAPIPELINES) && {
         children: [
           {
             path: 'pipelines',

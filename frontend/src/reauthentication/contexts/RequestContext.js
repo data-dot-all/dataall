@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useClient } from 'services';
-// import { useAuth } from 'authentication';
 import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
@@ -53,7 +52,6 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
-  // const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);

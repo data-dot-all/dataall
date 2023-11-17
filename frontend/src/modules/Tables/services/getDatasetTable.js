@@ -40,7 +40,6 @@ export const getDatasetTable = (tableUri) => ({
         label
         name
         S3Prefix
-        GlueTableProperties
         terms {
           count
           nodes {

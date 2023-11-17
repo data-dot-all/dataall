@@ -1,36 +1,21 @@
 /* eslint-disable no-restricted-properties */
+import * as modules from 'modules';
 import config from '../../generated/config.json';
 
-const ModuleNames = {
-  CATALOG: 'catalog',
-  DATASETS: 'datasets',
-  SHARES: 'shares',
-  GLOSSARIES: 'glossaries',
-  WORKSHEETS: 'worksheets',
-  NOTEBOOKS: 'notebooks',
-  MLSTUDIO: 'mlstudio',
-  PIPELINES: 'datapipelines',
-  DASHBOARDS: 'dashboards',
-  NOTIFICATIONS: 'notifications'
-};
+function _resolveModuleName(module) {
+  return Object.values(modules).find((_module) => _module.name === module);
+}
+
+function _hasDependencyModule(module) {
+  const resolvedModule = _resolveModuleName(module);
+  return typeof resolvedModule?.resolve_dependency === 'function';
+}
 
 function isModuleEnabled(module) {
-  if (module === ModuleNames.CATALOG || module === ModuleNames.GLOSSARIES) {
-    return (
-      getModuleActiveStatus(ModuleNames.DATASETS) ||
-      getModuleActiveStatus(ModuleNames.DASHBOARDS)
-    );
+  if (_hasDependencyModule(module)) {
+    const resolvedModule = _resolveModuleName(module);
+    return resolvedModule.resolve_dependency();
   }
-  if (module === ModuleNames.SHARES || module === ModuleNames.NOTIFICATIONS) {
-    return getModuleActiveStatus(ModuleNames.DATASETS);
-  }
-  if (module === ModuleNames.WORKSHEETS) {
-    return (
-      getModuleActiveStatus(ModuleNames.DATASETS) &&
-      getModuleActiveStatus(ModuleNames.WORKSHEETS)
-    );
-  }
-
   return getModuleActiveStatus(module);
 }
 
@@ -71,9 +56,30 @@ function isFeatureEnabled(moduleKey, featureKey) {
   return false;
 }
 
+function isAnyEnvironmentModuleEnabled() {
+  const env_modules = Object.values(modules).filter(
+    (_module) =>
+      _module.isEnvironmentModule === true && isModuleEnabled(_module.name)
+  );
+  return env_modules.length > 0 ? true : false;
+}
+
+function _modulesNameMap() {
+  const map = {};
+  for (const module of Object.values(modules).filter(
+    (_module) => _module.moduleDefinition === true
+  )) {
+    const upperCaseModule = module.name.toUpperCase();
+    map[upperCaseModule] = module.name;
+  }
+  return map;
+}
+
+const ModuleNames = _modulesNameMap();
 export {
   ModuleNames,
   isModuleEnabled,
-  isAnyFeatureModuleEnabled,
-  isFeatureEnabled
+  getModuleActiveStatus,
+  isFeatureEnabled,
+  isAnyEnvironmentModuleEnabled
 };

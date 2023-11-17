@@ -34,6 +34,7 @@ class BackendStack(Stack):
         id,
         envname: str = 'dev',
         resource_prefix='dataall',
+        tooling_region=None,
         tooling_account_id=None,
         ecr_repository=None,
         image_tag=None,
@@ -140,9 +141,8 @@ class BackendStack(Stack):
         repo = ecr.Repository.from_repository_arn(
             self, 'ECRREPO', repository_arn=ecr_repository
         )
-        
         if None not in [custom_domain, ses_stack]:
-            email_sender = custom_domain.get('email_notification_sender_email_id', None) if custom_domain.get('email_notification_sender_email_id', None) != None else f'noreply@{custom_domain.get("hosted_zone_name")}'
+            email_sender = custom_domain.get('email_notification_sender_email_id', "noreply") + "@" + custom_domain.get("hosted_zone_name")
         else:
             email_sender = 'none'
 
@@ -369,7 +369,7 @@ class BackendStack(Stack):
 
     @run_if(["modules.datasets.features.share_notifications.email.active"])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
-        if None in [custom_domain, custom_domain.get('hosted_zone_name'), custom_domain.get('hosted_zone_id')]:
+        if custom_domain is None or None in [custom_domain.get('hosted_zone_name', None), custom_domain.get('hosted_zone_id', None)]:
             raise Exception("Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain")
 
         return SesStack(

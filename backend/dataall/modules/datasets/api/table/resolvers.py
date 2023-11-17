@@ -1,6 +1,6 @@
 import logging
 
-from dataall.core.feature_toggle_checker import is_feature_enabled
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context

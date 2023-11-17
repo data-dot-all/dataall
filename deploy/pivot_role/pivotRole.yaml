@@ -87,6 +87,7 @@ Resources:
               - 'kms:Decrypt'
               - 'kms:Encrypt'
               - 'kms:GenerateDataKey*'
+              - 'kms:GetKeyPolicy'
               - 'kms:PutKeyPolicy'
               - 'kms:ReEncrypt*'
               - 'kms:TagResource'
@@ -320,6 +321,7 @@ Resources:
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
+              - 'cloudformation:ContinueUpdateRollback'
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
