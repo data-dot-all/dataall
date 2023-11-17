@@ -23,7 +23,7 @@ import {
   Typography
 } from '@mui/material';
 import { useTheme } from '@mui/styles';
-
+import config from '../../../generated/config.json';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';

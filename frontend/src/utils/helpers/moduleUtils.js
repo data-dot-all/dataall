@@ -19,15 +19,6 @@ function isModuleEnabled(module) {
   return getModuleActiveStatus(module);
 }
 
-function isAnyFeatureModuleEnabled() {
-  return !!(
-    isModuleEnabled(ModuleNames.PIPELINES) ||
-    isModuleEnabled(ModuleNames.DASHBOARDS) ||
-    isModuleEnabled(ModuleNames.MLSTUDIO) ||
-    isModuleEnabled(ModuleNames.NOTEBOOKS)
-  );
-}
-
 function getModuleActiveStatus(moduleKey) {
   if (
     config.modules &&
