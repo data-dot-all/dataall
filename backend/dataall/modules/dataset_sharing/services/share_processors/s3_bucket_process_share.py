@@ -155,9 +155,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 )
                 if not existing_shared_folders:
                     removing_bucket.delete_target_role_bucket_key_policy(
-                        share=share,
                         target_bucket=revoked_bucket,
-                        target_environment=target_environment
                     )
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)

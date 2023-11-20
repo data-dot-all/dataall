@@ -211,9 +211,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             )
             if not existing_shared_buckets:
                 clean_up_folder.delete_dataset_bucket_key_policy(
-                    share=share,
-                    dataset=dataset,
-                    target_environment=target_environment
+                    dataset=dataset
                 )
 
         return True
