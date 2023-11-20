@@ -1,11 +1,10 @@
 import pytest
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 
 @pytest.fixture(scope="module")
@@ -14,6 +13,7 @@ def create_dataset(db):
         organization: Organization,
         environment: Environment,
         label: str,
+        imported: bool = False
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -31,6 +31,8 @@ def create_dataset(db):
                 region=environment.region,
                 IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
                 IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
+                imported=imported,
+                importedKmsKey=imported
             )
             session.add(dataset)
             session.commit()
@@ -83,6 +85,35 @@ def table(db):
     yield factory
 
 
+@pytest.fixture(scope='module', autouse=True)
+def bucket(db):
+    cache = {}
+
+    def factory(dataset: Dataset, name) -> DatasetBucket:
+        key = f'{dataset.datasetUri}-{name}'
+        if cache.get(key):
+            return cache.get(key)
+        with db.scoped_session() as session:
+            bucket = DatasetBucket(
+                name=name,
+                label=name,
+                owner=dataset.owner,
+                datasetUri=dataset.datasetUri,
+                region=dataset.region,
+                AwsAccountId=dataset.AwsAccountId,
+                S3BucketName=dataset.S3BucketName,
+                KmsAlias=dataset.KmsAlias,
+                imported=dataset.imported,
+                importedKmsKey=dataset.importedKmsKey,
+            )
+            session.add(bucket)
+            session.commit()
+
+        return bucket
+
+    yield factory
+
+
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
@@ -99,6 +130,7 @@ def share(db):
                 principalType=PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
                 status=ShareObjectStatus.Approved.value,
+                groupUri=env_group.groupUri,
             )
             session.add(share)
             session.commit()
@@ -144,6 +176,28 @@ def share_item_table(db):
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
+            )
+            session.add(share_item)
+            session.commit()
+            return share_item
+
+    yield factory
+
+
+@pytest.fixture(scope="module")
+def share_item_bucket(db):
+    def factory(
+            share: ShareObject,
+            bucket: DatasetBucket,
+    ) -> ShareObjectItem:
+        with db.scoped_session() as session:
+            share_item = ShareObjectItem(
+                shareUri=share.shareUri,
+                owner="alice",
+                itemUri=bucket.bucketUri,
+                itemType=ShareableType.StorageLocation.value,
+                itemName=bucket.name,
+                status=ShareItemStatus.Share_Approved.value,
             )
             session.add(share_item)
             session.commit()

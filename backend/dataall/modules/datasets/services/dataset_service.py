@@ -16,6 +16,7 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -91,6 +92,8 @@ class DatasetService:
                 uri=uri,
                 data=data,
             )
+
+            DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
@@ -380,6 +383,7 @@ class DatasetService:
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
+            DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
