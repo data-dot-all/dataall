@@ -15,6 +15,7 @@ export * from './getCDKExecPolicyPresignedUrl.js';
 export * from './inviteGroup';
 export * from './listAllEnvironmentConsumptionRoles';
 export * from './listAllEnvironmentGroups';
+export * from './listAllGroups';
 export * from './listDatasetsCreatedInEnvironment';
 export * from './listEnvironmentNetworks';
 export * from './listEnvironmentPermissions';

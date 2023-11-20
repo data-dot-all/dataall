@@ -541,6 +541,30 @@ class EnvironmentService:
         }
 
     @staticmethod
+    def query_user_groups(session, username, groups, filter) -> Query:
+        query = (
+            session.query(EnvironmentGroup)
+            .filter(EnvironmentGroup.groupUri.in_(groups))
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_groups(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_groups(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
         query = (
             session.query(EnvironmentGroup)
@@ -586,6 +610,16 @@ class EnvironmentService:
     def paginated_all_environment_groups(session, uri, data=None) -> dict:
         return paginate(
             query=EnvironmentService.query_all_environment_groups(
+                session, uri, data
+            ),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def paginated_all_groups(session, uri, data=None) -> dict:
+        return paginate(
+            query=EnvironmentService.query_all_groups(
                 session, uri, data
             ),
             page=data.get('page', 1),

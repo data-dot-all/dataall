@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
-
+from dataall.base.config import config
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
@@ -53,9 +53,12 @@ class DatasetRepository(EnvironmentResource):
         organization = Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
+        suffix_prop = config.get_property('modules.datasets.features.dataset_suffix_tag', default=None)
+        suffix = 'created' if suffix_prop == 'origin' else None
+        print(f"---------------> SUFFIX = {suffix}")
 
         dataset = Dataset(
-            label=data.get('label'),
+            label=data.get('label') if suffix is None else f"{data.get('label')}-{suffix}",
             owner=username,
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),
