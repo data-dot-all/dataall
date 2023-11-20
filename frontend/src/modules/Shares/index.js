@@ -1,1 +1,1 @@
-export { ShareInboxList } from './components';
+export { ShareBoxList } from './components';
