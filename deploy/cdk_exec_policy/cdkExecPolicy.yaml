@@ -53,7 +53,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
               - 'iam:*Role*'
-            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
+            Resource: !Sub 'arn:${AWS::Partition}:iam::*:role/cdk-*'
 
           - Sid: Quicksight
             Effect: Allow
