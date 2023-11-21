@@ -151,7 +151,6 @@ class Organization:
         return query
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_permission(permissions.GET_ORGANIZATION)
     def paginated_organization_environments(session, uri, data=None) -> dict:
         return paginate(
