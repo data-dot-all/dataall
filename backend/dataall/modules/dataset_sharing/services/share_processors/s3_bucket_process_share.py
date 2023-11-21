@@ -107,7 +107,6 @@ class ProcessS3BucketShare(S3BucketShareManager):
             target_environment: Environment,
             source_env_group: EnvironmentGroup,
             env_group: EnvironmentGroup,
-            existing_shared_folders: bool = False
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -153,10 +152,9 @@ class ProcessS3BucketShare(S3BucketShareManager):
                     target_bucket=revoked_bucket,
                     target_environment=target_environment
                 )
-                if not existing_shared_folders:
-                    removing_bucket.delete_target_role_bucket_key_policy(
-                        target_bucket=revoked_bucket,
-                    )
+                removing_bucket.delete_target_role_bucket_key_policy(
+                    target_bucket=revoked_bucket,
+                )
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 

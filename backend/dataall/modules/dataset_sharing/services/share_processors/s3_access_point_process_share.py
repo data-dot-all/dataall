@@ -177,7 +177,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             target_environment: Environment,
             source_env_group: EnvironmentGroup,
             env_group: EnvironmentGroup,
-            existing_shared_buckets: bool = False
     ):
         """
         1) deletes S3 access point for this share in this Dataset S3 Bucket
@@ -209,9 +208,8 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 dataset=dataset,
                 target_environment=target_environment
             )
-            if not existing_shared_buckets:
-                clean_up_folder.delete_dataset_bucket_key_policy(
-                    dataset=dataset
-                )
+            clean_up_folder.delete_dataset_bucket_key_policy(
+                dataset=dataset
+            )
 
         return True

@@ -272,17 +272,25 @@ class S3BucketShareManager:
             target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
-            if existing_policy and DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
-                logger.info(
-                    f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
-                statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
-                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID], target_requester_arn)
+            if existing_policy:
+                if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
+                    logger.info(f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
+                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
+                        statements[DATAALL_BUCKET_KMS_DECRYPT_SID], target_requester_arn)
+                else:
+                    logger.info(
+                        f'KMS key does not contain share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, generating a new one')
+                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
+                        target_requester_arn)
+                existing_policy["Statement"] = list(statements.values())
             else:
-                logger.info(
-                    f'KMS key does not contain share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, generating a new one')
-                statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
-                    target_requester_arn)
-            existing_policy["Statement"] = list(statements.values())
+                logger.info('KMS key policy does not contain any statements, generating a new one')
+                existing_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        self.generate_default_kms_decrypt_policy_statement(target_requester_arn)
+                    ]
+                }
             kms_client.put_key_policy(
                 kms_key_id,
                 json.dumps(existing_policy)

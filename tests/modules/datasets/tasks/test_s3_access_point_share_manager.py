@@ -1264,7 +1264,14 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    target_requester_arn = f"arn:aws:iam::{TARGET_ACCOUNT_ENV}:role/{TARGET_ACCOUNT_ENV_ROLE_NAME}"
+    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock())
+    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
+        TARGET_ACCOUNT_ENV,
+        TARGET_ACCOUNT_ENV_ROLE_NAME
+    )
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1339,7 +1346,14 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    target_requester_arn = f"arn:aws:iam::{TARGET_ACCOUNT_ENV}:role/{TARGET_ACCOUNT_ENV_ROLE_NAME}"
+    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock())
+    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
+        TARGET_ACCOUNT_ENV,
+        TARGET_ACCOUNT_ENV_ROLE_NAME
+    )
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
