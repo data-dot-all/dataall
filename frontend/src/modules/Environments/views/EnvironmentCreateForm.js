@@ -482,9 +482,11 @@ const EnvironmentCreateForm = (props) => {
                 dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
                 notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
                 mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
-                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
-                resourcePrefix: 'dataall'
+                resourcePrefix: 'dataall',
+                mlStudioVPCId: '',
+                mlStudioSubnetId: ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -508,9 +510,8 @@ const EnvironmentCreateForm = (props) => {
                       ).length >= 1
                   ),
                 tags: Yup.array().nullable(),
-                privateSubnetIds: Yup.array().nullable(),
-                publicSubnetIds: Yup.array().nullable(),
-                vpcId: Yup.string().nullable(),
+                mlStudioSubnetId: Yup.array().nullable(),
+                mlStudioVPCId: Yup.string().nullable(),
                 EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
@@ -860,6 +861,50 @@ const EnvironmentCreateForm = (props) => {
                               variant="outlined"
                             />
                           </CardContent>
+                          {values.mlStudiosEnabled && (
+                            <>
+                              <CardContent>
+                                <TextField
+                                  {...params}
+                                  label="(Optional) ML Studio VPC ID"
+                                  placeholder="(Optional) Bring your own VPC - Specify VPC ID"
+                                  name="mlStudioVPCId"
+                                  fullWidth
+                                  error={Boolean(
+                                    touched.mlStudioVPCId && errors.mlStudioVPCId
+                                  )}
+                                  helperText={
+                                    touched.mlStudioVPCId && errors.mlStudioVPCId
+                                  }
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  value={values.mlStudioVPCId}
+                                  variant="outlined"
+                                />
+                              </CardContent>
+                              <CardContent>
+                                <TextField
+                                  {...params}
+                                  label="(Optional) ML Studio Subnet ID"
+                                  placeholder="(Optional) Bring your own VPC - Specify Subnet ID"
+                                  name="mlStudioSubnetId"
+                                  fullWidth
+                                  error={Boolean(
+                                    touched.mlStudioSubnetId &&
+                                      errors.mlStudioSubnetId
+                                  )}
+                                  helperText={
+                                    touched.mlStudioSubnetId &&
+                                    errors.mlStudioSubnetId
+                                  }
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  value={values.mlStudioSubnetId}
+                                  variant="outlined"
+                                />
+                              </CardContent>
+                            </>
+                          )}
                         </Card>
                       </Box>
                       {errors.submit && (
