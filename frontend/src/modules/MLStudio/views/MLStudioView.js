@@ -149,7 +149,7 @@ const MLStudioView = () => {
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
               <Typography color="textPrimary" variant="h5">
-                MLStudio User {mlstudio.label}
+                ML Studio User {mlstudio.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -190,7 +190,7 @@ const MLStudioView = () => {
                   type="button"
                   variant="outlined"
                 >
-                  Open JupyterLab
+                  Open ML Studio
                 </LoadingButton>
                 <Button
                   color="primary"
