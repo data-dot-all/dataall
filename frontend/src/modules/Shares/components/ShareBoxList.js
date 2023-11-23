@@ -16,6 +16,8 @@ import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  listAllGroups,
+  listDatasets,
   listDatasetShareObjects,
   getShareRequestsToMe,
   useClient
@@ -23,9 +25,6 @@ import {
 import { getShareRequestsFromMe } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
-import { listDatasets } from '../../Datasets/services';
-import { listAllGroups } from '../../Environments/services';
-//TODO MANAGE DEPENDENCY
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;

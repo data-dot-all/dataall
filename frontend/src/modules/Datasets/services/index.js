@@ -4,7 +4,6 @@ export * from './generateDatasetAccessToken';
 export * from './getDatasetPresignedUrl';
 export * from './importDataset';
 export * from './listDatasetStorageLocations';
-export * from './listDatasets';
 export * from './startGlueCrawler';
 export * from './syncTables';
 export * from './updateDataset';
