@@ -590,13 +590,7 @@ class ShareObjectRepository:
                 )
             )
         )
-        # TODO: search functionality
-        # if filter and filter.get('term'):
-        #     query = query.filter(
-        #         or_(
-        #             Dataset.label.ilike(filter.get('term') + '%%'),
-        #         )
-        #     )
+
         if data and data.get('status'):
             if len(data.get('status')) > 0:
                 query = query.filter(

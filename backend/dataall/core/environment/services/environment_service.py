@@ -545,6 +545,7 @@ class EnvironmentService:
         query = (
             session.query(EnvironmentGroup)
             .filter(EnvironmentGroup.groupUri.in_(groups))
+            .distinct(EnvironmentGroup.groupUri)
         )
         if filter and filter.get('term'):
             term = filter['term']
@@ -610,16 +611,6 @@ class EnvironmentService:
     def paginated_all_environment_groups(session, uri, data=None) -> dict:
         return paginate(
             query=EnvironmentService.query_all_environment_groups(
-                session, uri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def paginated_all_groups(session, uri, data=None) -> dict:
-        return paginate(
-            query=EnvironmentService.query_all_groups(
                 session, uri, data
             ),
             page=data.get('page', 1),
