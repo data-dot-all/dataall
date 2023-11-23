@@ -143,6 +143,7 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'aws s3 cp s3://dpp-dp-data-all-configuration-bucket/cdk.context.json . --recursive',
+                    'cdk context' ##view information in cdk.context.json file
                     'cdk synth',
                     'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
