@@ -324,7 +324,7 @@ export const ShareBoxList = (props) => {
             }}
           >
             <Grid container spacing={2} xs={12}>
-              <Grid item md={3} xs={12}>
+              <Grid item md={2} xs={12}>
                 <Autocomplete
                   id={'Status-' + tab}
                   multiple
@@ -350,6 +350,37 @@ export const ShareBoxList = (props) => {
                     <TextField
                       {...params}
                       label={'Status'}
+                      fullWidth
+                      variant="outlined"
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item md={4} xs={12}>
+                <Autocomplete
+                  id={'RequestOwners-' + tab}
+                  multiple
+                  fullWidth
+                  loading={loading}
+                  options={requestGroupOptions}
+                  onChange={(event, value) =>
+                    handleFilterChange('RequestOwners', value)
+                  }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={'Request Owners'}
                       fullWidth
                       variant="outlined"
                     />
@@ -417,7 +448,7 @@ export const ShareBoxList = (props) => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={'DatasetOwners'}
+                        label={'Dataset Owners'}
                         fullWidth
                         variant="outlined"
                       />
@@ -425,37 +456,6 @@ export const ShareBoxList = (props) => {
                   />
                 </Grid>
               )}
-              <Grid item md={3} xs={12}>
-                <Autocomplete
-                  id={'RequestOwners-' + tab}
-                  multiple
-                  fullWidth
-                  loading={loading}
-                  options={requestGroupOptions}
-                  onChange={(event, value) =>
-                    handleFilterChange('RequestOwners', value)
-                  }
-                  renderOption={(props, option, { selected }) => (
-                    <li {...props}>
-                      <Checkbox
-                        icon={icon}
-                        checkedIcon={checkedIcon}
-                        style={{ marginRight: 8 }}
-                        checked={selected}
-                      />
-                      {option}
-                    </li>
-                  )}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={'RequestOwners'}
-                      fullWidth
-                      variant="outlined"
-                    />
-                  )}
-                />
-              </Grid>
             </Grid>
           </Box>
           <Box

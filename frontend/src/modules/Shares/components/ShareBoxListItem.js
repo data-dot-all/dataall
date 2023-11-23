@@ -1,7 +1,9 @@
-import { Box, Button, Card, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, Grid, Tooltip, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, useCardStyle } from 'design';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 
 export const ShareBoxListItem = ({ share }) => {
   const classes = useCardStyle();
@@ -14,8 +16,8 @@ export const ShareBoxListItem = ({ share }) => {
         mt: 2
       }}
     >
-      <Grid container spacing={1} alignItems="center">
-        <Grid item justifyContent="center" md={1} xs={1}>
+      <Grid container spacing={0.5} alignItems="center">
+        <Grid item justifyContent="center" md={2} xs={2}>
           <Box
             sx={{
               pt: 2,
@@ -26,7 +28,7 @@ export const ShareBoxListItem = ({ share }) => {
             <ShareStatus status={share.status} />
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={5} xs={5}>
+        <Grid item justifyContent="flex-end" md={4} xs={4}>
           <Box
             sx={{
               pt: 2,
@@ -35,10 +37,10 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              {`Request owner [principal]`}
+              Request owner [IAM role name]
             </Typography>
             <Typography color="textSecondary" variant="body1">
-              {`${share.principal.principalName}`}
+              {`${share.principal.SamlGroupName} [${share.principal.principalIAMRoleName}]`}
             </Typography>
           </Box>
         </Grid>
@@ -51,7 +53,7 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              {`Dataset`}
+              Dataset
             </Typography>
             <Typography color="textSecondary" variant="body1">
               {`${share.dataset.datasetName}`}
@@ -67,14 +69,14 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              {`Dataset Owner`}
+              Dataset Owner
             </Typography>
             <Typography color="textSecondary" variant="body1">
               {`${share.dataset.SamlAdminGroupName}`}
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={1.5} xs={1.5}>
+        <Grid item justifyContent="flex-end" md={1.3} xs={1.3}>
           <Button
             color="primary"
             type="button"
@@ -84,6 +86,24 @@ export const ShareBoxListItem = ({ share }) => {
           >
             Open Share Request
           </Button>
+        </Grid>
+        <Grid item justifyContent="flex-end" md={0.2} xs={0.2}>
+          {share.statistics.sharedItems > 0 && (
+            <Tooltip
+              title={share.statistics.sharedItems + ' shared items'}
+              placement="right"
+            >
+              <CheckCircleIcon color={'success'} />
+            </Tooltip>
+          )}
+          {share.statistics.failedItems > 0 && (
+            <Tooltip
+              title={share.statistics.failedItems + ' failed items'}
+              placement="right"
+            >
+              <ErrorIcon color={'error'} />
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
     </Card>
