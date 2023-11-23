@@ -141,7 +141,7 @@ class DBMigrationStack(pyNestedClass):
             id=f'DBMigrationCBProject{envname}',
             project_name=f'{resource_prefix}-{envname}-dbmigration',
             environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
             ),
             role=self.build_project_role,
             build_spec=codebuild.BuildSpec.from_object(
