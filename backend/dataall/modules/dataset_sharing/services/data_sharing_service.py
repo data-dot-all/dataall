@@ -1,12 +1,18 @@
 import logging
 
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
-from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import \
+    ProcessLFCrossAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import \
+    ProcessLFSameAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_process_share import \
+    ProcessS3AccessPointShare
+from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
 from dataall.base.db import Engine
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemStatus, ShareableType
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, ShareItemSM
+from dataall.modules.dataset_sharing.db.enums import (ShareObjectActions, ShareItemStatus, ShareableType,
+                                                      ShareItemActions)
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
+    ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -21,8 +27,9 @@ class DataSharingService:
         1) Updates share object State Machine with the Action: Start
         2) Retrieves share data and items in Share_Approved state
         3) Calls sharing folders processor to grant share
-        4) Calls sharing tables processor for same or cross account sharing to grant share
-        5) Updates share object State Machine with the Action: Finish
+        4) Calls sharing buckets processor to grant share
+        5) Calls sharing tables processor for same or cross account sharing to grant share
+        6) Updates share object State Machine with the Action: Finish
 
         Parameters
         ----------
@@ -50,12 +57,13 @@ class DataSharingService:
 
             (
                 shared_tables,
-                shared_folders
+                shared_folders,
+                shared_buckets
             ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
-        approved_folders_succeed = ProcessS3Share.process_approved_shares(
+        approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
             session,
             dataset,
             share,
@@ -66,6 +74,20 @@ class DataSharingService:
             env_group
         )
         log.info(f'sharing folders succeeded = {approved_folders_succeed}')
+
+        log.info('Granting permissions to S3 buckets')
+
+        approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+            session,
+            dataset,
+            share,
+            shared_buckets,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group
+        )
+        log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
         if source_environment.AwsAccountId != target_environment.AwsAccountId:
             processor = ProcessLFCrossAccountShare(
@@ -97,7 +119,7 @@ class DataSharingService:
         new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
         share_sm.update_state(session, share, new_share_state)
 
-        return approved_tables_succeed if approved_folders_succeed else False
+        return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str):
@@ -108,7 +130,8 @@ class DataSharingService:
         4) Checks if remaining folders are shared and effectuates clean up with folders processor
         5) Calls sharing tables processor for same or cross account sharing to revoke share
         6) Checks if remaining tables are shared and effectuates clean up with tables processor
-        7) Updates share object State Machine with the Action: Finish
+        7) Calls sharing buckets processor to revoke share
+        8) Updates share object State Machine with the Action: Finish
 
         Parameters
         ----------
@@ -139,7 +162,8 @@ class DataSharingService:
 
             (
                 revoked_tables,
-                revoked_folders
+                revoked_folders,
+                revoked_buckets
             ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
 
             new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
@@ -147,7 +171,7 @@ class DataSharingService:
 
             log.info(f'Revoking permissions to folders: {revoked_folders}')
 
-            revoked_folders_succeed = ProcessS3Share.process_revoked_shares(
+            revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(
                 session,
                 dataset,
                 share,
@@ -158,20 +182,47 @@ class DataSharingService:
                 env_group,
             )
             log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
+            existing_shared_folders = ShareObjectRepository.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 ShareableType.StorageLocation.value
             )
+            existing_shared_buckets = ShareObjectRepository.check_existing_shared_items_of_type(
+                session,
+                share_uri,
+                ShareableType.S3Bucket.value
+            )
+            existing_shared_items = existing_shared_folders or existing_shared_buckets
             log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
-            if not existing_shared_items and revoked_folders:
+            if not existing_shared_folders and revoked_folders:
                 log.info("Clean up S3 access points...")
-                clean_up_folders = ProcessS3Share.clean_up_share(
+                clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
+                    session,
                     dataset=dataset,
                     share=share,
-                    target_environment=target_environment
+                    folder=revoked_folders[0],
+                    source_environment=source_environment,
+                    target_environment=target_environment,
+                    source_env_group=source_env_group,
+                    env_group=env_group,
+                    existing_shared_buckets=existing_shared_buckets
                 )
                 log.info(f"Clean up S3 successful = {clean_up_folders}")
+
+            log.info('Revoking permissions to S3 buckets')
+
+            revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(
+                session,
+                dataset,
+                share,
+                revoked_buckets,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group,
+                existing_shared_folders
+            )
+            log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
             if source_environment.AwsAccountId != target_environment.AwsAccountId:
                 processor = ProcessLFCrossAccountShare(
@@ -217,4 +268,4 @@ class DataSharingService:
                 new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
             share_sm.update_state(session, share, new_share_state)
 
-            return revoked_tables_succeed and revoked_folders_succeed
+            return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed

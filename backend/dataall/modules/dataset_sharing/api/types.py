@@ -107,6 +107,7 @@ ConsumptionData = gql.ObjectType(
     fields=[
         gql.Field(name='s3AccessPointName', type=gql.String),
         gql.Field(name='sharedGlueDatabase', type=gql.String),
+        gql.Field(name='s3bucketName', type=gql.String),
     ],
 )
 
