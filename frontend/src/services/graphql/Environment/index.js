@@ -1,5 +1,6 @@
 export * from './getTrustAccount';
 export * from './listAllGroups';
+export * from './listAllConsumptionRoles';
 export * from './listDatasetsOwnedByEnvGroup';
 export * from './listEnvironmentConsumptionRoles';
 export * from './listEnvironmentGroups';

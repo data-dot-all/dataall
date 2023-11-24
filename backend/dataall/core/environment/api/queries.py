@@ -114,6 +114,15 @@ listAllGroups = gql.QueryField(
     resolver=list_groups,
 )
 
+listAllConsumptionRoles = gql.QueryField(
+    name='listAllConsumptionRoles',
+    type=gql.Ref('ConsumptionRoleSearchResult'),
+    args=[
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+    ],
+    resolver=list_consumption_roles,
+)
+
 listEnvironmentConsumptionRoles = gql.QueryField(
     name='listEnvironmentConsumptionRoles',
     type=gql.Ref('ConsumptionRoleSearchResult'),

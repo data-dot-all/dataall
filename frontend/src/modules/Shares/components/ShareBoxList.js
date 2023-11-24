@@ -17,6 +17,7 @@ import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listAllGroups,
+  listAllConsumptionRoles,
   listDatasetShareObjects,
   getShareRequestsToMe,
   useClient
@@ -38,6 +39,7 @@ export const ShareBoxList = (props) => {
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [requestGroupOptions, setRequestGroupOptions] = useState([]);
+  const [roleOptions, setRoleOptions] = useState([]);
   const [datasetGroupOptions, setDatasetGroupOptions] = useState([]);
   const [datasets, setDatasets] = useState([]);
   const statusOptions = ShareStatusList;
@@ -132,27 +134,47 @@ export const ShareBoxList = (props) => {
   }
 
   const fetchMyGroupsOptions = useCallback(async () => {
-    await client
-      .query(
-        listAllGroups({
-          filter: Defaults.selectListFilter
-        })
-      )
-      .then((response) => {
-        if (tab === 'inbox') {
-          setDatasetGroupOptions(
-            response.data.listAllGroups.nodes.map((node) => node.groupUri)
+    const response = await client.query(
+      listAllGroups({
+        filter: Defaults.selectListFilter
+      })
+    );
+    if (!response.errors) {
+      if (tab === 'inbox') {
+        setDatasetGroupOptions(
+          response.data.listAllGroups.nodes.map((node) => node.groupUri)
+        );
+      } else {
+        setRequestGroupOptions(
+          response.data.listAllGroups.nodes.map((node) => node.groupUri)
+        );
+        const groupRoleOptions = response.data.listAllGroups.nodes.map(
+          (node) => node.environmentIAMRoleName
+        );
+        const response2 = await client.query(
+          listAllConsumptionRoles({
+            filter: Defaults.selectListFilter
+          })
+        );
+        if (!response2.errors) {
+          /* eslint-disable no-console */
+          console.log('good');
+          console.log(groupRoleOptions);
+          setRoleOptions(
+            groupRoleOptions.concat(
+              response2.data.listAllConsumptionRoles.nodes.map(
+                (node) => node.IAMRoleName
+              )
+            )
           );
         } else {
-          setRequestGroupOptions(
-            response.data.listAllGroups.nodes.map((node) => node.groupUri)
-          );
+          dispatch({ type: SET_ERROR, error: response2.errors[0].message });
         }
-      })
-      .catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.Error });
-      })
-      .finally(() => setLoading(false));
+      }
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
   }, [client, dispatch, tab]);
 
   const fetchInboxGroupOptions = useCallback(async () => {
@@ -172,6 +194,15 @@ export const ShareBoxList = (props) => {
             )
           )
         );
+        setRoleOptions(
+          Array.from(
+            new Set(
+              response.data.getShareRequestsToMe.nodes.map(
+                (node) => node.principal.principalIAMRoleName
+              )
+            )
+          )
+        );
       })
       .catch((error) => {
         dispatch({ type: SET_ERROR, error: error.Error });
@@ -186,7 +217,7 @@ export const ShareBoxList = (props) => {
     );
     if (!response.errors) {
       setDatasets(
-        response.data.listDatasets.nodes.map((node) => ({
+        response.data.listOwnedDatasets.nodes.map((node) => ({
           label: node.label,
           value: node.datasetUri
         }))
@@ -247,6 +278,7 @@ export const ShareBoxList = (props) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
       } else {
+        setRoleOptions([]);
         fetchOutboxGroupAndDatasetOptions().catch((error) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
@@ -385,7 +417,7 @@ export const ShareBoxList = (props) => {
                   multiple
                   fullWidth
                   loading={loading}
-                  options={requestGroupOptions}
+                  options={roleOptions}
                   onChange={(event, value) =>
                     handleFilterChange('RequestIAMRole', value)
                   }
@@ -419,7 +451,7 @@ export const ShareBoxList = (props) => {
                     disableCloseOnSelect
                     loading={loading}
                     options={datasets}
-                    getOptionLabel={(option) => option.label}
+                    getOptionLabel={(option) => option.label || ''}
                     onChange={(event, value) =>
                       handleFilterChange('Datasets', value)
                     }
