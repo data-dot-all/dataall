@@ -25,6 +25,7 @@ import {
 import { getShareRequestsFromMe } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
+import { ShareStatusList } from '../constants';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -40,16 +41,7 @@ export const ShareBoxList = (props) => {
   const [requestGroupOptions, setRequestGroupOptions] = useState([]);
   const [datasetGroupOptions, setDatasetGroupOptions] = useState([]);
   const [datasets, setDatasets] = useState([]);
-  const statusOptions = [
-    'Draft',
-    'Submitted',
-    'Approved',
-    'Rejected',
-    'Revoked',
-    'Share_In_Progress',
-    'Revoke_In_Progress',
-    'Processed'
-  ];
+  const statusOptions = ShareStatusList;
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
@@ -67,6 +59,8 @@ export const ShareBoxList = (props) => {
       setFilter({ ...filter, dataset_owners: values });
     } else if (filterLabel === 'RequestOwners') {
       setFilter({ ...filter, share_requesters: values });
+    } else if (filterLabel === 'RequestIAMRole') {
+      setFilter({ ...filter, share_iam_roles: values });
     }
   };
 
@@ -189,7 +183,7 @@ export const ShareBoxList = (props) => {
   const fetchInboxDatasetsOptions = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listDatasets(Defaults.selectListFilter)
+      listDatasets({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setDatasets(
@@ -355,7 +349,7 @@ export const ShareBoxList = (props) => {
                   )}
                 />
               </Grid>
-              <Grid item md={4} xs={12}>
+              <Grid item md={2.5} xs={12}>
                 <Autocomplete
                   id={'RequestOwners-' + tab}
                   multiple
@@ -386,8 +380,39 @@ export const ShareBoxList = (props) => {
                   )}
                 />
               </Grid>
+              <Grid item md={2.5} xs={12}>
+                <Autocomplete
+                  id={'RequestIAMRole-' + tab}
+                  multiple
+                  fullWidth
+                  loading={loading}
+                  options={requestGroupOptions}
+                  onChange={(event, value) =>
+                    handleFilterChange('RequestIAMRole', value)
+                  }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={'Request IAM role name'}
+                      fullWidth
+                      variant="outlined"
+                    />
+                  )}
+                />
+              </Grid>
               {!dataset && (
-                <Grid item md={3} xs={12}>
+                <Grid item md={2.5} xs={12}>
                   <Autocomplete
                     id={'Datasets-' + tab}
                     multiple
@@ -422,7 +447,7 @@ export const ShareBoxList = (props) => {
                 </Grid>
               )}
               {!dataset && (
-                <Grid item md={3} xs={12}>
+                <Grid item md={2.5} xs={12}>
                   <Autocomplete
                     id={'DatasetOwners-' + tab}
                     multiple

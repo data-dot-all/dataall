@@ -57,6 +57,7 @@ ShareObjectFilter = gql.InputType(
         gql.Argument('dataset_owners', gql.ArrayType(gql.String)),
         gql.Argument('datasets_uris', gql.ArrayType(gql.String)),
         gql.Argument('share_requesters', gql.ArrayType(gql.String)),
+        gql.Argument('share_iam_roles', gql.ArrayType(gql.String)),
     ],
 )
 

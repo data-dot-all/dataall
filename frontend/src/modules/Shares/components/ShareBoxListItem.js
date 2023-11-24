@@ -28,7 +28,7 @@ export const ShareBoxListItem = ({ share }) => {
             <ShareStatus status={share.status} />
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={4} xs={4}>
+        <Grid item justifyContent="flex-end" md={2} xs={2}>
           <Box
             sx={{
               pt: 2,
@@ -37,10 +37,26 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              Request owner [IAM role name]
+              Request owner
             </Typography>
             <Typography color="textSecondary" variant="body1">
-              {`${share.principal.SamlGroupName} [${share.principal.principalIAMRoleName}]`}
+              {`${share.principal.SamlGroupName}`}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item justifyContent="flex-end" md={2} xs={2}>
+          <Box
+            sx={{
+              pt: 2,
+              pb: 2,
+              px: 3
+            }}
+          >
+            <Typography color="textPrimary" variant="body1">
+              IAM role name
+            </Typography>
+            <Typography color="textSecondary" variant="body1">
+              {`${share.principal.principalIAMRoleName}`}
             </Typography>
           </Box>
         </Grid>

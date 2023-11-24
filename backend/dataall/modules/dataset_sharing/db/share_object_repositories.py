@@ -611,6 +611,11 @@ class ShareObjectRepository:
                 query = query.filter(
                     ShareObject.groupUri.in_(data.get('share_requesters'))
                 )
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(
+                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
+                )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -654,6 +659,11 @@ class ShareObjectRepository:
             if len(data.get('share_requesters')) > 0:
                 query = query.filter(
                     ShareObject.groupUri.in_(data.get('share_requesters'))
+                )
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(
+                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
                 )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
