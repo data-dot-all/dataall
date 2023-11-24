@@ -75,7 +75,7 @@ def check_environment(context: Context, source, account_id, region):
     return cdk_role_name
 
 
-def create_environment(context: Context, source, input=None):
+def create_environment(context: Context, source, input={}):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
             action=permissions.LINK_ENVIRONMENT,
@@ -99,6 +99,10 @@ def create_environment(context: Context, source, input=None):
             target_type='environment',
             target_uri=env.environmentUri,
             target_label=env.label,
+            payload={
+                'mlstudio_vpc_id': input.get('mlStudioVPCId', None),
+                'mlstudio_vpc_id': input.get('mlStudioSubnetId', None),
+            },
         )
     stack_helper.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value

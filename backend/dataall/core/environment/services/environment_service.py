@@ -98,29 +98,6 @@ class EnvironmentService:
             env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
-        if data.get('vpcId'):
-            vpc = Vpc(
-                environmentUri=env.environmentUri,
-                region=env.region,
-                AwsAccountId=env.AwsAccountId,
-                VpcId=data.get('vpcId'),
-                privateSubnetIds=data.get('privateSubnetIds', []),
-                publicSubnetIds=data.get('publicSubnetIds', []),
-                SamlGroupName=data['SamlGroupName'],
-                owner=context.username,
-                label=f"{env.name}-{data.get('vpcId')}",
-                name=f"{env.name}-{data.get('vpcId')}",
-                default=True,
-            )
-            session.add(vpc)
-            session.commit()
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=data['SamlGroupName'],
-                permissions=permissions.NETWORK_ALL,
-                resource_uri=vpc.vpcUri,
-                resource_type=Vpc.__name__,
-            )
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],

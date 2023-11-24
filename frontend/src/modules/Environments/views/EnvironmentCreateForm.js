@@ -863,6 +863,7 @@ const EnvironmentCreateForm = (props) => {
                           </CardContent>
                           {values.mlStudiosEnabled && (
                             <>
+                              <Divider />
                               <CardContent>
                                 <TextField
                                   {...params}
