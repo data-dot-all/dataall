@@ -17,12 +17,11 @@ import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listAllGroups,
-  listDatasets,
   listDatasetShareObjects,
   getShareRequestsToMe,
   useClient
 } from 'services';
-import { getShareRequestsFromMe } from '../services';
+import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareStatusList } from '../constants';
@@ -183,7 +182,7 @@ export const ShareBoxList = (props) => {
   const fetchInboxDatasetsOptions = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listDatasets({ filter: Defaults.selectListFilter })
+      listOwnedDatasets({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setDatasets(

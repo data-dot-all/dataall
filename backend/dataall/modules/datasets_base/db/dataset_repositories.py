@@ -348,6 +348,38 @@ class DatasetRepository(EnvironmentResource):
         )
 
     @staticmethod
+    def paginated_user_datasets(
+            session, username, groups, data=None
+    ) -> dict:
+        return paginate(
+            query=DatasetRepository._query_user_datasets(session, username, groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def _query_user_datasets(session, username, groups, filter) -> Query:
+        query = (
+            session.query(Dataset)
+            .filter(
+                or_(
+                    Dataset.owner == username,
+                    Dataset.SamlAdminGroupName.in_(groups),
+                    Dataset.stewards.in_(groups),
+                )
+            )
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    Dataset.description.ilike(filter.get('term') + '%%'),
+                    Dataset.label.ilike(filter.get('term') + '%%'),
+                )
+            )
+        return query.distinct(Dataset.datasetUri)
+
+
+    @staticmethod
     def _set_import_data(dataset, data):
         dataset.imported = True if data.get('imported') else False
         dataset.importedS3Bucket = True if data.get('bucketName') else False

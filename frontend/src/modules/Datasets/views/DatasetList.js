@@ -21,7 +21,8 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listDatasets, useClient } from 'services';
+import { useClient } from 'services';
+import { listDatasets } from '../services';
 import { DatasetListItem } from '../components';
 
 function DatasetsPageHeader() {

@@ -65,10 +65,15 @@ def get_file_upload_presigned_url(
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
-def list_datasets(context: Context, source, filter: dict = None):
+def list_owned_shared_datasets(context: Context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_datasets(filter)
+    return DatasetService.list_owned_shared_datasets(filter)
+
+def list_owned_datasets(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetService.list_owned_datasets(filter)
 
 
 def list_locations(context, source: Dataset, filter: dict = None):
