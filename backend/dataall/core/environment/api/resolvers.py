@@ -301,6 +301,7 @@ def list_groups(context: Context, source, filter=None):
     with context.engine.scoped_session() as session:
         return EnvironmentService.paginated_user_groups(session, filter)
 
+
 def list_consumption_roles(
     context: Context, source, environmentUri=None, filter=None
 ):
@@ -311,6 +312,7 @@ def list_consumption_roles(
             session=session,
             data=filter,
         )
+
 
 def list_environment_networks(
     context: Context, source, environmentUri=None, filter=None

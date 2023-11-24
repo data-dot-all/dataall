@@ -378,7 +378,6 @@ class DatasetRepository(EnvironmentResource):
             )
         return query.distinct(Dataset.datasetUri)
 
-
     @staticmethod
     def _set_import_data(dataset, data):
         dataset.imported = True if data.get('imported') else False
