@@ -18,7 +18,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
         cdkpipeline = CDKPipelineStack(stack.targetUri)
         is_create = cdkpipeline.is_create if cdkpipeline.is_create else None
         self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, stack.targetUri)
-        path = f'/dataall/modules/datapipelines/blueprints/{self.pipeline.repo}/'
+        path = f'/dataall/modules/datapipelines/cdk/blueprints/{self.pipeline.repo}/'
         app_path = './app.py'
         if not is_create:
             logger.info('Successfully Updated CDK Pipeline')
