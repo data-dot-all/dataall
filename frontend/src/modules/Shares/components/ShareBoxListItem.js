@@ -126,6 +126,5 @@ export const ShareBoxListItem = ({ share }) => {
   );
 };
 ShareBoxListItem.propTypes = {
-  share: PropTypes.object.isRequired,
-  reload: PropTypes.func.isRequired
+  share: PropTypes.object.isRequired
 };

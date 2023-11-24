@@ -115,25 +115,7 @@ export const ShareBoxList = (props) => {
       .finally(() => setLoading(false));
   }, [client, dispatch, filter]);
 
-  function fetchItems() {
-    if (tab === 'inbox') {
-      if (dataset) {
-        fetchDatasetItems().catch((error) => {
-          dispatch({ type: SET_ERROR, error: error.message });
-        });
-      } else {
-        fetchInboxItems().catch((error) => {
-          dispatch({ type: SET_ERROR, error: error.message });
-        });
-      }
-    } else {
-      fetchOutboxItems().catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.message });
-      });
-    }
-  }
-
-  const fetchMyGroupsOptions = useCallback(async () => {
+  const fetchMyGroupsAndRolesOptions = useCallback(async () => {
     const response = await client.query(
       listAllGroups({
         filter: Defaults.selectListFilter
@@ -157,9 +139,6 @@ export const ShareBoxList = (props) => {
           })
         );
         if (!response2.errors) {
-          /* eslint-disable no-console */
-          console.log('good');
-          console.log(groupRoleOptions);
           setRoleOptions(
             groupRoleOptions.concat(
               response2.data.listAllConsumptionRoles.nodes.map(
@@ -177,7 +156,7 @@ export const ShareBoxList = (props) => {
     setLoading(false);
   }, [client, dispatch, tab]);
 
-  const fetchInboxGroupOptions = useCallback(async () => {
+  const fetchInboxRequestOptions = useCallback(async () => {
     await client
       .query(
         getShareRequestsToMe({
@@ -210,7 +189,7 @@ export const ShareBoxList = (props) => {
       .finally(() => setLoading(false));
   }, [client, dispatch]);
 
-  const fetchInboxDatasetsOptions = useCallback(async () => {
+  const fetchOwnedDatasetsOptions = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listOwnedDatasets({ filter: Defaults.selectListFilter })
@@ -228,7 +207,7 @@ export const ShareBoxList = (props) => {
     setLoading(false);
   }, [client, dispatch]);
 
-  const fetchOutboxGroupAndDatasetOptions = useCallback(async () => {
+  const fetchOutboxRequestOptions = useCallback(async () => {
     await client
       .query(
         getShareRequestsFromMe({
@@ -265,21 +244,20 @@ export const ShareBoxList = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchMyGroupsOptions().catch((error) => {
+      fetchMyGroupsAndRolesOptions().catch((error) => {
         dispatch({ type: SET_ERROR, error: error.message });
       });
       if (tab === 'inbox') {
         if (!dataset) {
-          fetchInboxDatasetsOptions().catch((error) => {
+          fetchOwnedDatasetsOptions().catch((error) => {
             dispatch({ type: SET_ERROR, error: error.message });
           });
         }
-        fetchInboxGroupOptions().catch((error) => {
+        fetchInboxRequestOptions().catch((error) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
       } else {
-        setRoleOptions([]);
-        fetchOutboxGroupAndDatasetOptions().catch((error) => {
+        fetchOutboxRequestOptions().catch((error) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
       }
@@ -290,10 +268,10 @@ export const ShareBoxList = (props) => {
     dispatch,
     tab,
     dataset,
-    fetchInboxDatasetsOptions,
-    fetchInboxGroupOptions,
-    fetchOutboxGroupAndDatasetOptions,
-    fetchMyGroupsOptions
+    fetchMyGroupsAndRolesOptions,
+    fetchOwnedDatasetsOptions,
+    fetchInboxRequestOptions,
+    fetchOutboxRequestOptions
   ]);
 
   useEffect(() => {
@@ -525,7 +503,7 @@ export const ShareBoxList = (props) => {
             ) : (
               <Box>
                 {items.nodes.map((node) => (
-                  <ShareBoxListItem share={node} reload={fetchItems} />
+                  <ShareBoxListItem share={node} />
                 ))}
 
                 <Pager items={items} onChange={handlePageChange} />
