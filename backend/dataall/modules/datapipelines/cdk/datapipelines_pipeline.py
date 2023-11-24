@@ -168,8 +168,8 @@ class PipelineStack(Stack):
         # Create CodeCommit repository and mirror blueprint code
         code_dir_path = os.path.realpath(
             os.path.join(
-              os.path.dirname(os.path.abspath(__file__)),
-              "blueprints"
+                os.path.dirname(os.path.abspath(__file__)),
+                "blueprints"
             )
         )
         logger.info(f"code directory path = {code_dir_path}")

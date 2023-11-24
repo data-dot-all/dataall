@@ -49,8 +49,8 @@ class CDKPipelineStack:
 
         self.code_dir_path = os.path.realpath(
             os.path.join(
-              os.path.dirname(os.path.abspath(__file__)),
-              "blueprints"
+                os.path.dirname(os.path.abspath(__file__)),
+                "blueprints"
             )
         )
         self.is_create = True
@@ -61,9 +61,9 @@ class CDKPipelineStack:
                 self.is_create = False
                 self.code_dir_path = os.path.realpath(
                     os.path.join(
-                      os.path.dirname(os.path.abspath(__file__)),
-                      "blueprints",
-                      "data_pipeline_blueprint"
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "blueprints",
+                        "data_pipeline_blueprint"
                     )
                 )
                 CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
@@ -239,8 +239,8 @@ app.synth()
         if pipeline_dir:
             code_dir_path = os.path.realpath(
                 os.path.join(
-                  os.path.dirname(os.path.abspath(__file__)),
-                  "blueprints"
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "blueprints"
                 )
             )
 
