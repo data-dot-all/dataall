@@ -50,8 +50,7 @@ class Cognito(IdentityProvider):
             paginator = cognito.get_paginator('list_groups')
             pages = paginator.paginate(UserPoolId=user_pool_id)
             for page in pages:
-                group_names = [gr['GroupName'] for gr in page['Groups']]
-                groups += group_names
+                groups += [gr['GroupName'] for gr in page['Groups']]
         except Exception as e:
             log.error(
                 f'Failed to list groups of user pool {user_pool_id} due to {e}'
