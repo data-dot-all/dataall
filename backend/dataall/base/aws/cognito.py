@@ -18,7 +18,14 @@ class Cognito(IdentityProvider):
             parameter_path = f'/dataall/{envname}/cognito/userpool'
             ssm = boto3.client('ssm', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
             user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
-            cognito_user_list = self.client.list_users_in_group(UserPoolId=user_pool_id, GroupName=groupName)["Users"]
+            paginator = self.client.get_paginator('list_users_in_group')
+            pages = paginator.paginate(
+                UserPoolId=user_pool_id,
+                GroupName=groupName
+            )
+            cognito_user_list = []
+            for page in pages:
+                cognito_user_list += page['Users']
             group_email_ids = []
             attributes = []
             # Make a flat list
