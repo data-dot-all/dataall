@@ -23,15 +23,6 @@ listOrganizations = gql.QueryField(
     test_scope='Organization',
 )
 
-listOrganizationInvitedGroups = gql.QueryField(
-    name='listOrganizationInvitedGroups',
-    type=gql.Ref('GroupSearchResult'),
-    args=[
-        gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
-    ],
-    resolver=list_organization_invited_groups,
-)
 
 listOrganizationGroups = gql.QueryField(
     name='listOrganizationGroups',

@@ -287,45 +287,10 @@ class Organization:
         return query
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_permission(permissions.GET_ORGANIZATION)
     def paginated_organization_groups(session, uri, data=None) -> dict:
         return paginate(
             query=Organization.query_organization_groups(session, uri, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def query_organization_invited_groups(session, organization, filter) -> Query:
-        query = (
-            session.query(models.OrganizationGroup)
-            .join(
-                models.Organization,
-                models.OrganizationGroup.organizationUri == models.Organization.organizationUri,
-            )
-            .filter(
-                and_(
-                    models.Organization.organizationUri == organization.organizationUri,
-                    models.OrganizationGroup.groupUri != models.Organization.SamlGroupName,
-                )
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.GET_ORGANIZATION)
-    def paginated_organization_invited_groups(session, uri, data=None) -> dict:
-        organization = Organization.get_organization_by_uri(session, uri)
-        return paginate(
-            query=Organization.query_organization_invited_groups(session, organization, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
