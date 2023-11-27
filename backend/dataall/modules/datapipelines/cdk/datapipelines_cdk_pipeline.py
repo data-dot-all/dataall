@@ -183,6 +183,7 @@ cicd_pipeline = (
         app,
         id=id,
         pipeline_name="{pipeline.name}",
+        description="Cloud formation stack of PIPELINE: {pipeline.label}; URI: {pipeline.DataPipelineUri}; DESCRIPTION: {pipeline.description}",
         cdk_language="python",
         env=ddk.Configurator.get_environment(
             config_path="./ddk.json", environment_id="cicd"

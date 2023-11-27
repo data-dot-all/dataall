@@ -10,7 +10,7 @@ app = cdk.App()
 
 DataallPipelineStack(
   app,
-  f"{pipeline_name}-DataallPipelineStack",
+  f"{pipeline_name}-{environment_id}-DataallPipelineStack",
   environment_id
 )
 
