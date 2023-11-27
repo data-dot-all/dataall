@@ -18,7 +18,6 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listAllGroups,
   listAllConsumptionRoles,
-  listDatasetShareObjects,
   getShareRequestsToMe,
   useClient
 } from 'services';
@@ -37,7 +36,11 @@ export const ShareBoxList = (props) => {
   const [loading, setLoading] = useState(true);
   const client = useClient();
   const [items, setItems] = useState(Defaults.pagedResponse);
-  const [filter, setFilter] = useState(Defaults.filter);
+  const [filter, setFilter] = useState({ page: 1, pageSize: 10, term: '' });
+  if (dataset) {
+    filter.datasets_uris = [dataset.datasetUri];
+    filter.dataset_owners = [dataset.SamlAdminGroupName];
+  }
   const [requestGroupOptions, setRequestGroupOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
   const [datasetGroupOptions, setDatasetGroupOptions] = useState([]);
@@ -64,20 +67,6 @@ export const ShareBoxList = (props) => {
       setFilter({ ...filter, share_iam_roles: values });
     }
   };
-
-  const fetchDatasetItems = useCallback(async () => {
-    await client
-      .query(
-        listDatasetShareObjects({ datasetUri: dataset.datasetUri, filter })
-      )
-      .then((response) => {
-        setItems(response.data.getDataset.shares);
-      })
-      .catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.Error });
-      })
-      .finally(() => setLoading(false));
-  }, [client, dispatch, dataset, filter]);
 
   const fetchOutboxItems = useCallback(async () => {
     await client
@@ -153,14 +142,18 @@ export const ShareBoxList = (props) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setLoading(false);
   }, [client, dispatch, tab]);
 
   const fetchInboxRequestOptions = useCallback(async () => {
+    const filter_options = { page: 1, pageSize: 10000, term: '' };
+    if (dataset) {
+      filter_options.datasets_uris = [dataset.datasetUri];
+      filter_options.dataset_owners = [dataset.SamlAdminGroupName];
+    }
     await client
       .query(
         getShareRequestsToMe({
-          filter: Defaults.selectListFilter
+          filter: filter_options
         })
       )
       .then((response) => {
@@ -204,7 +197,6 @@ export const ShareBoxList = (props) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setLoading(false);
   }, [client, dispatch]);
 
   const fetchOutboxRequestOptions = useCallback(async () => {
@@ -243,6 +235,12 @@ export const ShareBoxList = (props) => {
   }, [client, dispatch]);
 
   useEffect(() => {
+    setLoading(true);
+    setFilter({ page: 1, pageSize: 10, term: '' });
+    if (dataset) {
+      filter.datasets_uris = [dataset.datasetUri];
+      filter.dataset_owners = [dataset.SamlAdminGroupName];
+    }
     if (client) {
       fetchMyGroupsAndRolesOptions().catch((error) => {
         dispatch({ type: SET_ERROR, error: error.message });
@@ -261,7 +259,6 @@ export const ShareBoxList = (props) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
       }
-      setFilter(Defaults.filter);
     }
   }, [
     client,
@@ -277,31 +274,16 @@ export const ShareBoxList = (props) => {
   useEffect(() => {
     if (client) {
       if (tab === 'inbox') {
-        if (dataset) {
-          fetchDatasetItems().catch((error) => {
-            dispatch({ type: SET_ERROR, error: error.message });
-          });
-        } else {
-          fetchInboxItems().catch((error) => {
-            dispatch({ type: SET_ERROR, error: error.message });
-          });
-        }
+        fetchInboxItems().catch((error) => {
+          dispatch({ type: SET_ERROR, error: error.message });
+        });
       } else {
         fetchOutboxItems().catch((error) => {
           dispatch({ type: SET_ERROR, error: error.message });
         });
       }
     }
-  }, [
-    client,
-    dispatch,
-    filter,
-    tab,
-    dataset,
-    fetchDatasetItems,
-    fetchInboxItems,
-    fetchOutboxItems
-  ]);
+  }, [client, dispatch, filter, fetchInboxItems, fetchOutboxItems]);
 
   if (loading) {
     return <CircularProgress />;
@@ -421,73 +403,73 @@ export const ShareBoxList = (props) => {
                 />
               </Grid>
               {!dataset && (
-                <Grid item md={2.5} xs={12}>
-                  <Autocomplete
-                    id={'Datasets-' + tab}
-                    multiple
-                    fullWidth
-                    disableCloseOnSelect
-                    loading={loading}
-                    options={datasets}
-                    getOptionLabel={(option) => option.label || ''}
-                    onChange={(event, value) =>
-                      handleFilterChange('Datasets', value)
-                    }
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox
-                          icon={icon}
-                          checkedIcon={checkedIcon}
-                          style={{ marginRight: 8 }}
-                          checked={selected}
+                <>
+                  <Grid item md={2.5} xs={12}>
+                    <Autocomplete
+                      id={'Datasets-' + tab}
+                      multiple
+                      fullWidth
+                      disableCloseOnSelect
+                      loading={loading}
+                      options={datasets}
+                      getOptionLabel={(option) => option.label || ''}
+                      onChange={(event, value) =>
+                        handleFilterChange('Datasets', value)
+                      }
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox
+                            icon={icon}
+                            checkedIcon={checkedIcon}
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option.label}
+                        </li>
+                      )}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={'Datasets'}
+                          fullWidth
+                          variant="outlined"
                         />
-                        {option.label}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={'Datasets'}
-                        fullWidth
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
-              {!dataset && (
-                <Grid item md={2.5} xs={12}>
-                  <Autocomplete
-                    id={'DatasetOwners-' + tab}
-                    multiple
-                    fullWidth
-                    disableCloseOnSelect
-                    loading={loading}
-                    options={datasetGroupOptions}
-                    onChange={(event, value) =>
-                      handleFilterChange('DatasetOwners', value)
-                    }
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox
-                          icon={icon}
-                          checkedIcon={checkedIcon}
-                          style={{ marginRight: 8 }}
-                          checked={selected}
+                      )}
+                    />
+                  </Grid>
+                  <Grid item md={2.5} xs={12}>
+                    <Autocomplete
+                      id={'DatasetOwners-' + tab}
+                      multiple
+                      fullWidth
+                      disableCloseOnSelect
+                      loading={loading}
+                      options={datasetGroupOptions}
+                      onChange={(event, value) =>
+                        handleFilterChange('DatasetOwners', value)
+                      }
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox
+                            icon={icon}
+                            checkedIcon={checkedIcon}
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option}
+                        </li>
+                      )}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={'Dataset Owners'}
+                          fullWidth
+                          variant="outlined"
                         />
-                        {option}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={'Dataset Owners'}
-                        fullWidth
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </Grid>
+                      )}
+                    />
+                  </Grid>
+                </>
               )}
             </Grid>
           </Box>
