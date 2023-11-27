@@ -68,6 +68,6 @@ def list_cognito_groups(context, source, filter: dict = None):
     invited_group_uris = [item.groupUri for item in invited_groups]
     res = []
     for group in groups:
-        if group['GroupName'] not in invited_group_uris:
-            res.append({"groupName": group['GroupName']})
+        if group not in invited_group_uris:
+            res.append({"groupName": group})
     return res
