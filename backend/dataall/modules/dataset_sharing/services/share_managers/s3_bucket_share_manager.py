@@ -268,11 +268,12 @@ class S3BucketShareManager:
             key_alias = f"alias/{self.target_bucket.KmsAlias}"
             kms_client = KmsClient(self.source_account_id, self.source_environment.region)
             kms_key_id = kms_client.get_key_id(key_alias)
-            existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
+            existing_policy = kms_client.get_key_policy(kms_key_id)
             target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
-            counter = count()
-            statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
             if existing_policy:
+                existing_policy = json.loads(existing_policy)
+                counter = count()
+                statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
                 if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
                     logger.info(f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
                     statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
