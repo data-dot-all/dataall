@@ -2,7 +2,8 @@ from dataall.base.api import gql
 from dataall.modules.datasets.api.dataset.input_types import DatasetFilter
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset,
-    list_datasets,
+    list_owned_shared_datasets,
+    list_owned_datasets,
     get_dataset_assume_role_url,
     get_file_upload_presigned_url,
     list_dataset_share_objects,
@@ -24,7 +25,15 @@ listDatasets = gql.QueryField(
     name='listDatasets',
     args=[gql.Argument('filter', DatasetFilter)],
     type=DatasetSearchResult,
-    resolver=list_datasets,
+    resolver=list_owned_shared_datasets,
+    test_scope='Dataset',
+)
+
+listOwnedDatasets = gql.QueryField(
+    name='listOwnedDatasets',
+    args=[gql.Argument('filter', DatasetFilter)],
+    type=DatasetSearchResult,
+    resolver=list_owned_datasets,
     test_scope='Dataset',
 )
 

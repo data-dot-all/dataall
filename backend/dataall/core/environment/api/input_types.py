@@ -118,6 +118,6 @@ ConsumptionRoleFilter = gql.InputType(
         gql.Argument('term', gql.String),
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
-        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument(name='groupUri', type=gql.String),
     ],
 )
