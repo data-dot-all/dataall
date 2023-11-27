@@ -24,6 +24,7 @@ Resources:
               - 'athena:*Tag*'
               - 'athena:GetWorkGroup'
               - 'athena:DeleteWorkGroup'
+              - 'athena:UpdateWorkGroup'
             Resource:
               - !Sub 'arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
 
