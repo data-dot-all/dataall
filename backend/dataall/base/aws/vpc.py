@@ -17,7 +17,7 @@ class VPCManager:
         return session.client('ec2', region_name=region)
 
     @staticmethod
-    def check_vpc_exists( AwsAccountId, region, vpc_id, role=None, subnet_ids=[]):
+    def check_vpc_exists(AwsAccountId, region, vpc_id, role=None, subnet_ids=[]):
         try:
             ec2 = VPCManager.client(AwsAccountId=AwsAccountId, region=region, role=role)
             response = ec2.describe_vpcs(VpcIds=[vpc_id])
@@ -42,5 +42,3 @@ class VPCManager:
 
         if not subnet_ids or len(response['Subnets']) != len(subnet_ids):
             raise Exception(f'Not All Subnets: {subnet_ids} Are Within the Specified VPC Id {vpc_id}')
-
-      

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CircularProgress,
   Container,
+  Divider,
   FormControlLabel,
   FormGroup,
   FormHelperText,
@@ -230,9 +231,13 @@ const EnvironmentEditForm = (props) => {
                   .required('*Environment name is required'),
                 description: Yup.string().max(5000),
                 tags: Yup.array().nullable(),
-                mlStudioSubnetIds: Yup.array().when('mlStudioVPCId',{
+                mlStudioSubnetIds: Yup.array().when('mlStudioVPCId', {
                   is: (value) => !!value,
-                  then: Yup.array().min(1).required('At least 1 Subnet Id required if VPC Id specified')
+                  then: Yup.array()
+                    .min(1)
+                    .required(
+                      'At least 1 Subnet Id required if VPC Id specified'
+                    )
                 }),
                 mlStudioVPCId: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
@@ -401,10 +406,12 @@ const EnvironmentEditForm = (props) => {
                                   name="mlStudioVPCId"
                                   fullWidth
                                   error={Boolean(
-                                    touched.mlStudioVPCId && errors.mlStudioVPCId
+                                    touched.mlStudioVPCId &&
+                                      errors.mlStudioVPCId
                                   )}
                                   helperText={
-                                    touched.mlStudioVPCId && errors.mlStudioVPCId
+                                    touched.mlStudioVPCId &&
+                                    errors.mlStudioVPCId
                                   }
                                   onBlur={handleBlur}
                                   onChange={handleChange}
@@ -427,7 +434,9 @@ const EnvironmentEditForm = (props) => {
                                   label="(Optional) ML Studio Subnet ID(s)"
                                   placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
                                   onChange={(chip) => {
-                                    setFieldValue('mlStudioSubnetIds', [...chip]);
+                                    setFieldValue('mlStudioSubnetIds', [
+                                      ...chip
+                                    ]);
                                   }}
                                 />
                               </CardContent>

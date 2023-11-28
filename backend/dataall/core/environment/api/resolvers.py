@@ -84,7 +84,7 @@ def check_environment(context: Context, source, account_id, region, data):
             AwsAccountId=account_id,
             region=region,
             role=cdk_look_up_role_arn,
-            vpc_id=data.get("mlStudioVPCId", None), 
+            vpc_id=data.get("mlStudioVPCId", None),
             subnet_ids=data.get('mlStudioSubnetIds', []),
         )
 
