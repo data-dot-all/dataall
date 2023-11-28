@@ -105,7 +105,7 @@ class EnvironmentSetup(Stack):
                 group_uri=environment.SamlGroupName,
             )
 
-    def __init__(self, scope, id, target_uri: str = None, **kwargs):
+    def __init__(self, scope, id, target_uri: str = None, payload: dict = {}, **kwargs):
         super().__init__(
             scope,
             id,
@@ -117,6 +117,7 @@ class EnvironmentSetup(Stack):
             **kwargs,
         )
         # Read input
+        self.payload = payload
         self.target_uri = target_uri
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()

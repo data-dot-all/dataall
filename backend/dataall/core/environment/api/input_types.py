@@ -29,7 +29,7 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('AwsAccountId', gql.NonNullableType(gql.String)),
         gql.Argument('region', gql.NonNullableType(gql.String)),
         gql.Argument('mlStudioVPCId', gql.String),
-        gql.Argument('mlStudioSubnetId', gql.ArrayType(gql.String)),
+        gql.Argument('mlStudioSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
@@ -45,7 +45,7 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('SamlGroupName', gql.String),
         gql.Argument('mlStudioVPCId', gql.String),
-        gql.Argument('mlStudioSubnetId', gql.ArrayType(gql.String)),
+        gql.Argument('mlStudioSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
     ],

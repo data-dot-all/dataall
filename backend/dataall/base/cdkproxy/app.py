@@ -48,10 +48,10 @@ class CdkRunner:
         logger.info(f'   **kwargs: {_data}')
         if _data:
             data = json.loads(_data)
-            # logger.info(f"  Kwargs: {_data}")
+            logger.info(f"  Kwargs: {_data}")
         else:
             data = {}
-            # logger.info(f"  Kwargs: None provided")
+            logger.info(f"  Kwargs: None provided")
 
         # Creating CDK target environment
         env = Environment(account=account, region=region)
@@ -60,7 +60,7 @@ class CdkRunner:
         tbl = tabulate(table, headers=['Setting', 'Value'])  # , tablefmt="fancy_grid")
         logger.info(tbl)
 
-        instanciate_stack(stack_name, app, appid, env=env, target_uri=target_uri)
+        instanciate_stack(stack_name, app, appid, env=env, target_uri=target_uri, payload=data)
         app.synth()
 
 
