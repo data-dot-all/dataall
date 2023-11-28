@@ -74,7 +74,7 @@ env = Environment(account=account_id, region=cdk_pipeline_region)
 
 # Central ECR repository - DPP Changes
 central_ecr = app.node.try_get_context('EcrConfiguration')
-
+logger.info("Calling pipeline stack")
 pipeline = PipelineStack(
     app,
     "{resource_prefix}-{git_branch}-cicd-stack".format(resource_prefix=resource_prefix, git_branch=git_branch),
