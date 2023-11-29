@@ -90,7 +90,8 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 sharing_folder.manage_bucket_policy()
                 sharing_folder.grant_target_role_access_policy()
                 sharing_folder.manage_access_point_and_policy()
-                sharing_folder.update_dataset_bucket_key_policy()
+                if not dataset.imported or dataset.importedKmsKey:
+                    sharing_folder.update_dataset_bucket_key_policy()
 
                 new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
@@ -177,7 +178,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             target_environment: Environment,
             source_env_group: EnvironmentGroup,
             env_group: EnvironmentGroup,
-            existing_shared_buckets: bool = False
     ):
         """
         1) deletes S3 access point for this share in this Dataset S3 Bucket
@@ -209,11 +209,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 dataset=dataset,
                 target_environment=target_environment
             )
-            if not existing_shared_buckets:
-                clean_up_folder.delete_dataset_bucket_key_policy(
-                    share=share,
-                    dataset=dataset,
-                    target_environment=target_environment
-                )
+            if not dataset.imported or dataset.importedKmsKey:
+                clean_up_folder.delete_dataset_bucket_key_policy(dataset=dataset)
 
         return True
