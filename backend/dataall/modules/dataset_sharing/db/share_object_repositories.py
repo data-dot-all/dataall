@@ -590,6 +590,32 @@ class ShareObjectRepository:
                 )
             )
         )
+
+        if data and data.get('status'):
+            if len(data.get('status')) > 0:
+                query = query.filter(
+                    ShareObject.status.in_(data.get('status'))
+                )
+        if data and data.get('dataset_owners'):
+            if len(data.get('dataset_owners')) > 0:
+                query = query.filter(
+                    Dataset.SamlAdminGroupName.in_(data.get('dataset_owners'))
+                )
+        if data and data.get('datasets_uris'):
+            if len(data.get('datasets_uris')) > 0:
+                query = query.filter(
+                    ShareObject.datasetUri.in_(data.get('datasets_uris'))
+                )
+        if data and data.get('share_requesters'):
+            if len(data.get('share_requesters')) > 0:
+                query = query.filter(
+                    ShareObject.groupUri.in_(data.get('share_requesters'))
+                )
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(
+                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
+                )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -599,6 +625,10 @@ class ShareObjectRepository:
             .join(
                 Environment,
                 Environment.environmentUri == ShareObject.environmentUri,
+            )
+            .join(
+                Dataset,
+                Dataset.datasetUri == ShareObject.datasetUri,
             )
             .filter(
                 or_(
@@ -610,6 +640,31 @@ class ShareObjectRepository:
                 )
             )
         )
+        if data and data.get('status'):
+            if len(data.get('status')) > 0:
+                query = query.filter(
+                    ShareObject.status.in_(data.get('status'))
+                )
+        if data and data.get('dataset_owners'):
+            if len(data.get('dataset_owners')) > 0:
+                query = query.filter(
+                    Dataset.SamlAdminGroupName.in_(data.get('dataset_owners'))
+                )
+        if data and data.get('datasets_uris'):
+            if len(data.get('datasets_uris')) > 0:
+                query = query.filter(
+                    ShareObject.datasetUri.in_(data.get('datasets_uris'))
+                )
+        if data and data.get('share_requesters'):
+            if len(data.get('share_requesters')) > 0:
+                query = query.filter(
+                    ShareObject.groupUri.in_(data.get('share_requesters'))
+                )
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(
+                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
+                )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
