@@ -3,6 +3,7 @@ import logging
 
 from dataall.base.aws.cognito import Cognito
 from dataall.base.aws.ses import Ses
+from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.modules.notifications.services.base_email_notification_service import BaseEmailNotificationService
 
 log = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         # Get instance of the email provider
         email_provider = SESEmailNotificationService.get_email_provider_instance(recipient_groups_list, recipient_email_list)
         try:
-            identityProvider = Cognito()
+            identityProvider = ServiceProviderFactory.get_service_provider_instance()
 
             email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(email_provider.recipient_group_list, identityProvider)
 

@@ -1,1 +1,1 @@
-export * from './listCognitoGroups';
+export * from './listGroups';

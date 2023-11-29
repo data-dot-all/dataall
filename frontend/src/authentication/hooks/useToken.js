@@ -15,9 +15,21 @@ export const useToken = () => {
       setToken('localToken');
     } else {
       try {
-        const session = await Auth.currentSession();
-        const t = await session.getIdToken().getJwtToken();
-        setToken(t);
+        if (process.env.REACT_APP_CUSTOM_AUTH) {
+          try {
+            if (!auth.user) {
+              await auth.signinSilent();
+            }
+            const t = auth.user.id_token;
+            setToken(t);
+          } catch (error) {
+            if (!auth) throw Error('User Token Not Found !');
+          }
+        } else {
+          const session = await Auth.currentSession();
+          const t = await session.getIdToken().getJwtToken();
+          setToken(t);
+        }
       } catch (error) {
         auth.dispatch({
           type: 'LOGOUT'

@@ -6,6 +6,7 @@ import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
 import { Auth } from 'aws-amplify';
+import { useAuth, useToken } from '../../authentication';
 
 // Create a context for API request headers
 const RequestContext = createContext();
@@ -52,6 +53,8 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
+  const token = useToken();
+  const auth = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {
     setRequestInfo(info);
@@ -67,7 +70,11 @@ export const RequestContextProvider = (props) => {
     if (client) {
       const restoredRequestInfo = restoreRetryRequest();
       // If request info is restored from previous user session
-      if (restoredRequestInfo && restoredRequestInfo.timestamp) {
+      if (
+        restoredRequestInfo &&
+        restoredRequestInfo.timestamp &&
+        token !== restoredRequestInfo.id_token
+      ) {
         const currentTime = new Date();
         const reauthTime = new Date(
           restoredRequestInfo.timestamp.replace(/\s/g, '')
@@ -127,8 +134,9 @@ export const RequestContextProvider = (props) => {
 
   const retryRequest = async (restoredInfo) => {
     const gqlTemplateLiteral = gql(print(restoredInfo.requestInfo.query));
-    const username = await retrieveCurrentUsername();
-    console.error(username);
+    const username = process.env.REACT_APP_CUSTOM_AUTH
+      ? auth.user.email
+      : await retrieveCurrentUsername();
     if (username !== restoredInfo.username) {
       return null;
     } else if (

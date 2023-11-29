@@ -1,8 +1,8 @@
 import { Box, Card, CardContent, Container, Typography } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoginAmplify } from '../components';
-import { useAuth } from '../hooks';
+import { LoginButton } from '../components';
 import { Logo } from 'design';
+import { useAuth } from '../hooks';
 
 const platformIcons = {
   Amplify: '/static/icons/amplify.svg'
@@ -72,7 +72,11 @@ export const Login = () => {
                     }
                   }}
                 >
-                  <img alt="Auth platform" src={platformIcons[platform]} />
+                  {!process.env.REACT_APP_CUSTOM_AUTH ? (
+                    <img alt="Auth platform" src={platformIcons[platform]} />
+                  ) : (
+                    <></>
+                  )}
                 </Box>
               </Box>
               <Box
@@ -81,7 +85,7 @@ export const Login = () => {
                   mt: 3
                 }}
               >
-                {platform === 'Amplify' && <LoginAmplify />}
+                <LoginButton />
               </Box>
             </CardContent>
           </Card>

@@ -637,14 +637,15 @@ class PipelineStack(Stack):
                 prod_sizing=target_env.get('prod_sizing', True),
                 quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
-                enable_cw_canaries=target_env.get('enable_cw_canaries', False),
+                enable_cw_canaries=target_env.get('enable_cw_canaries', False) and target_env.get("custom_auth", None) == None,
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
-                reauth_config = target_env.get('reauth_config', None),
-                cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200)
+                reauth_config =target_env.get('reauth_config', None),
+                cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
+                custom_auth=target_env.get('custom_auth', None)
             )
         )
         return backend_stage
@@ -724,6 +725,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 tooling_account_id=self.account,
                 custom_domain=target_env.get('custom_domain'),
+                custom_auth=target_env.get('custom_auth', None)
             )
         )
         front_stage_actions = (
@@ -742,6 +744,13 @@ class PipelineStack(Stack):
                     f'export enable_cw_rum={target_env.get("enable_cw_rum", False)}',
                     f'export resource_prefix={self.resource_prefix}',
                     f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
+                    f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
+                    f'export custom_auth_url={str(target_env.get("custom_auth", {}).get("url", "None"))}',
+                    f'export custom_auth_client_id={str(target_env.get("custom_auth", {}).get("client_id", "None"))}',
+                    f'export custom_auth_response_types={str(target_env.get("custom_auth", {}).get("response_types", "None"))}',
+                    f'export custom_auth_scopes={str(target_env.get("custom_auth", {}).get("scopes", "None"))}',
+                    f'export custom_auth_claims_mapping_email={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("email", "None"))}',
+                    f'export custom_auth_claims_mapping_user_id={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("user_id", "None"))}',
                     'mkdir ~/.aws/ && touch ~/.aws/config',
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole" >> ~/.aws/config',
@@ -765,7 +774,11 @@ class PipelineStack(Stack):
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
-            self.cognito_config_action(target_env),
+        )
+        if target_env.get('custom_auth', None) is None:
+            front_stage_actions = (
+                *front_stage_actions,
+                self.cognito_config_action(target_env),
         )
         if target_env.get('enable_cw_rum', False):
             front_stage_actions = (
@@ -775,32 +788,33 @@ class PipelineStack(Stack):
         self.pipeline.add_wave(
             f"{self.resource_prefix}-{target_env['envname']}-frontend-stage"
         ).add_post(*front_stage_actions)
-        self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-docs-stage"
-        ).add_post(
-            pipelines.CodeBuildStep(
-                id='UpdateDocumentation',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+        if target_env.get('custom_auth', None) is None:
+            self.pipeline.add_wave(
+                f"{self.resource_prefix}-{target_env['envname']}-docs-stage"
+            ).add_post(
+                pipelines.CodeBuildStep(
+                    id='UpdateDocumentation',
+                    build_environment=codebuild.BuildEnvironment(
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    ),
+                    commands=[
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
+                        '. ./.env.assumed_role',
+                        'aws sts get-caller-identity',
+                        'export AWS_DEFAULT_REGION=us-east-1',
+                        f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
+                        f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
+                        'cd documentation/userguide',
+                        'pip install -r requirements.txt',
+                        'mkdocs build',
+                        'aws s3 sync site/ s3://$bucket',
+                        "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
+                    ],
+                    role=self.expanded_codebuild_role,
+                    vpc=self.vpc,
                 ),
-                commands=[
-                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                    f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
-                    '. ./.env.assumed_role',
-                    'aws sts get-caller-identity',
-                    'export AWS_DEFAULT_REGION=us-east-1',
-                    f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
-                    f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                    'cd documentation/userguide',
-                    'pip install -r requirements.txt',
-                    'mkdocs build',
-                    'aws s3 sync site/ s3://$bucket',
-                    "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
-                ],
-                role=self.expanded_codebuild_role.without_policy_updates(),
-                vpc=self.vpc,
-            ),
-        )
+            )
 
     def cw_rum_config_action(self, target_env):
         return pipelines.CodeBuildStep(
@@ -941,15 +955,18 @@ class PipelineStack(Stack):
         )
 
     def evaluate_post_albfront_stage(self, target_env):
-        if target_env.get("enable_cw_rum", False):
-            post=[
-                self.cognito_config_action(target_env),
-                self.cw_rum_config_action(target_env),
-            ]
-        else:
-            post=[
-                self.cognito_config_action(target_env),
-            ]
+        post = []
+        if target_env.get('custom_auth') is None:
+            post.append(self.cognito_config_action(target_env))
+
+        if target_env.get('enable_cw_rum', False):
+            post.append(self.cw_rum_config_action(target_env))
+
+        if len(post) == 0:
+            post.append(pipelines.CodeBuildStep(
+                id='CodeBuildPlaceHolder',
+                commands=['echo "Skipping Cognito Config Setup as using Custom Auth" ']
+            ))
         return post
 
     def set_release_stage(

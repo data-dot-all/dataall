@@ -10,7 +10,7 @@ import pytest
 
 from typing import Callable
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.groups.db.group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.api.enums import ShareItemStatus

@@ -32,6 +32,7 @@ class CloudfrontDistro(pyNestedClass):
         custom_domain=None,
         custom_waf_rules=None,
         tooling_account_id=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -329,20 +330,6 @@ class CloudfrontDistro(pyNestedClass):
             string_value=cloudfront_bucket.bucket_name,
         )
 
-        # Lambda@edge for http_header_redirection
-        docs_http_headers = os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                'custom_resources',
-                'docs_http_headers',
-            )
-        )
-        (
-            self.http_header_func,
-            self.http_header_func_version,
-        ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
-
         userguide_docs_distribution, user_docs_bucket = self.build_static_site(
             f'userguide',
             acl,
@@ -354,7 +341,8 @@ class CloudfrontDistro(pyNestedClass):
             ssl_support_method,
             security_policy,
             logging_bucket,
-        )
+            custom_auth
+        ) if custom_auth is None else (None, None)
         if frontend_alternate_domain:
             frontend_record = route53.ARecord(
                 self,
@@ -365,7 +353,7 @@ class CloudfrontDistro(pyNestedClass):
                     route53_targets.CloudFrontTarget(cloudfront_distribution)
                 ),
             )
-        if userguide_alternate_domain:
+        if userguide_alternate_domain and custom_auth != None:
             userguide_record = route53.ARecord(
                 self,
                 'CloudFrontUserguideDomain',
@@ -383,16 +371,17 @@ class CloudfrontDistro(pyNestedClass):
                 role_name=f'{resource_prefix}-{envname}-S3DeploymentRole',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
             )
+            resources_for_cross_account = []
+            resources_for_cross_account.append(f'{cloudfront_bucket.bucket_arn}/*')
+            if custom_auth is None:
+                resources_for_cross_account.append(f'{user_docs_bucket.bucket_arn}/*')
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[
                         's3:Get*',
                         's3:Put*',
                     ],
-                    resources=[
-                        f'{cloudfront_bucket.bucket_arn}/*',
-                        f'{user_docs_bucket.bucket_arn}/*',
-                    ],
+                    resources=resources_for_cross_account,
                 )
             )
             cross_account_deployment_role.add_to_policy(
@@ -447,8 +436,8 @@ class CloudfrontDistro(pyNestedClass):
 
         self.frontend_distribution = cloudfront_distribution
         self.frontend_bucket = cloudfront_bucket
-        self.user_docs_bucket = user_docs_bucket
-        self.user_docs_distribution = userguide_docs_distribution
+        self.user_docs_bucket = user_docs_bucket if custom_auth is not None else None
+        self.user_docs_distribution = userguide_docs_distribution if custom_auth is not None else None
         self.cross_account_deployment_role = (
             cross_account_deployment_role.role_name
             if cross_account_deployment_role
@@ -506,18 +495,30 @@ class CloudfrontDistro(pyNestedClass):
         ssl_support_method,
         security_policy,
         logging_bucket,
+        custom_auth
     ):
 
+        # Lambda@edge for http_header_redirection
+        docs_http_headers = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'custom_resources',
+                'docs_http_headers',
+            )
+        )
+        (
+            self.http_header_func,
+            self.http_header_func_version,
+        ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
+
         parse = auth_at_edge.devdoc_app.get_att('Outputs.ParseAuthHandler').to_string()
-        refresh = auth_at_edge.devdoc_app.get_att(
-            'Outputs.RefreshAuthHandler'
-        ).to_string()
+        refresh = auth_at_edge.devdoc_app.get_att('Outputs.RefreshAuthHandler').to_string()
         signout = auth_at_edge.devdoc_app.get_att('Outputs.SignOutHandler').to_string()
         check = auth_at_edge.devdoc_app.get_att('Outputs.CheckAuthHandler').to_string()
         httpheaders = auth_at_edge.devdoc_app.get_att(
             'Outputs.HttpHeadersHandler'
         ).to_string()
-
         if not (parse or refresh or signout or check or httpheaders):
             raise Exception('Edge functions not found !')
 
