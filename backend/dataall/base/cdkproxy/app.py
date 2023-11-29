@@ -51,7 +51,7 @@ class CdkRunner:
             # logger.info(f"  Kwargs: {_data}")
         else:
             data = {}
-            # logger.info("  Kwargs: None provided")
+            # logger.info(f"  Kwargs: None provided")
 
         # Creating CDK target environment
         env = Environment(account=account, region=region)
