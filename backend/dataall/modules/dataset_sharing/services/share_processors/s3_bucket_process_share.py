@@ -85,7 +85,8 @@ class ProcessS3BucketShare(S3BucketShareManager):
             try:
                 sharing_bucket.grant_role_bucket_policy()
                 sharing_bucket.grant_s3_iam_access()
-                sharing_bucket.grant_dataset_bucket_key_policy()
+                if not dataset.imported or dataset.importedKmsKey:
+                    sharing_bucket.grant_dataset_bucket_key_policy()
                 new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
@@ -152,9 +153,10 @@ class ProcessS3BucketShare(S3BucketShareManager):
                     target_bucket=revoked_bucket,
                     target_environment=target_environment
                 )
-                removing_bucket.delete_target_role_bucket_key_policy(
-                    target_bucket=revoked_bucket,
-                )
+                if not dataset.imported or dataset.importedKmsKey:
+                    removing_bucket.delete_target_role_bucket_key_policy(
+                        target_bucket=revoked_bucket,
+                    )
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
