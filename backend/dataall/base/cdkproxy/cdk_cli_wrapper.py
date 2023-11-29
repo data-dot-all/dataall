@@ -6,7 +6,6 @@
 import ast
 import logging
 import os
-import json
 import subprocess
 import sys
 from abc import abstractmethod
@@ -165,7 +164,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 '-c',
                 f"target_uri='{stack.targetUri}'",
                 '-c',
-                f"data='{json.dumps(stack.payload)}'",
+                "data='{}'",
                 # skips synth step when no changes apply
                 '--app',
                 f'"{sys.executable} {app_path}"',

@@ -8,7 +8,6 @@ import {
   CardHeader,
   CircularProgress,
   Container,
-  Divider,
   FormControlLabel,
   FormGroup,
   FormHelperText,
@@ -82,8 +81,6 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             resourcePrefix: values.resourcePrefix,
-            mlStudioVPCId: values.mlStudioVPCId,
-            mlStudioSubnetIds: values.mlStudioSubnetIds,
             parameters: [
               {
                 key: 'notebooksEnabled',
@@ -216,8 +213,6 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                mlStudioVPCId: '',
-                mlStudioSubnetIds: [],
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
@@ -231,15 +226,6 @@ const EnvironmentEditForm = (props) => {
                   .required('*Environment name is required'),
                 description: Yup.string().max(5000),
                 tags: Yup.array().nullable(),
-                mlStudioSubnetIds: Yup.array().when('mlStudioVPCId', {
-                  is: (value) => !!value,
-                  then: Yup.array()
-                    .min(1)
-                    .required(
-                      'At least 1 Subnet Id required if VPC Id specified'
-                    )
-                }),
-                mlStudioVPCId: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
                   .matches(
@@ -395,53 +381,6 @@ const EnvironmentEditForm = (props) => {
                               variant="outlined"
                             />
                           </CardContent>
-                          {values.mlStudiosEnabled && (
-                            <>
-                              <Divider />
-                              <CardContent>
-                                <TextField
-                                  {...params}
-                                  label="(Optional) ML Studio VPC ID"
-                                  placeholder="(Optional) Bring your own VPC - Specify VPC ID"
-                                  name="mlStudioVPCId"
-                                  fullWidth
-                                  error={Boolean(
-                                    touched.mlStudioVPCId &&
-                                      errors.mlStudioVPCId
-                                  )}
-                                  helperText={
-                                    touched.mlStudioVPCId &&
-                                    errors.mlStudioVPCId
-                                  }
-                                  onBlur={handleBlur}
-                                  onChange={handleChange}
-                                  value={values.mlStudioVPCId}
-                                  variant="outlined"
-                                />
-                              </CardContent>
-                              <CardContent>
-                                <ChipInput
-                                  fullWidth
-                                  error={Boolean(
-                                    touched.mlStudioSubnetIds &&
-                                      errors.mlStudioSubnetIds
-                                  )}
-                                  helperText={
-                                    touched.mlStudioSubnetIds &&
-                                    errors.mlStudioSubnetIds
-                                  }
-                                  variant="outlined"
-                                  label="(Optional) ML Studio Subnet ID(s)"
-                                  placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
-                                  onChange={(chip) => {
-                                    setFieldValue('mlStudioSubnetIds', [
-                                      ...chip
-                                    ]);
-                                  }}
-                                />
-                              </CardContent>
-                            </>
-                          )}
                         </Card>
                       </Box>
                       {isAnyEnvironmentModuleEnabled() && (

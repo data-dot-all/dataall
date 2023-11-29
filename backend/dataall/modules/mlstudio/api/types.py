@@ -79,3 +79,33 @@ SagemakerStudioUserSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioUser)),
     ],
 )
+
+SagemakerStudioDomain = gql.ObjectType(
+    name='SagemakerStudioDomain',
+    fields=[
+        gql.Field(name='sagemakerStudioUri', type=gql.ID),
+        gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='SamlAdminGroupName', type=gql.String),
+        gql.Field(
+            name='environment',
+            type=gql.Ref('Environment'),
+            resolver=resolve_environment,
+        )
+    ],
+)
+
+SagemakerStudioDomainSearchResult = gql.ObjectType(
+    name='SagemakerStudioDomainSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioDomain)),
+    ],
+)

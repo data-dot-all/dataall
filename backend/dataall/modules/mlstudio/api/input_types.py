@@ -33,3 +33,22 @@ SagemakerStudioUserFilter = gql.InputType(
         gql.Argument('offset', gql.Integer),
     ],
 )
+
+SagemakerStudioDomainFilter = gql.InputType(
+    name='SagemakerStudioDomainFilter',
+    arguments=[
+        gql.Argument('term', gql.String),
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+    ],
+)
+
+NewStudioDomainInput = gql.InputType(
+    name='NewStudioDomainInput',
+    arguments=[
+        gql.Argument('label', gql.NonNullableType(gql.String)),
+        gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String)),
+        gql.Argument('vpcId', gql.String),
+    ],
+)

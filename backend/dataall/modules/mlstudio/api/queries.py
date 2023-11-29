@@ -34,3 +34,13 @@ getSagemakerStudioUserPresignedUrl = gql.QueryField(
     type=gql.String,
     resolver=get_sagemaker_studio_user_presigned_url,
 )
+
+listEnvironmentMLStudioDomains = gql.QueryField(
+    name='listEnvironmentMLStudioDomains',
+    args=[
+      gql.Argument('filter', gql.Ref('SagemakerStudioDomainFilter')),
+      gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Ref('SagemakerStudioUserSearchResult'),
+    resolver=list_environment_sagemaker_studio_domains,
+)

@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
+from sqlalchemy.dialects.postgresql import ARRAY
 
 from dataall.base.db import Base
 from dataall.base.db import Resource, utils
@@ -10,16 +11,20 @@ from dataall.base.db import Resource, utils
 class SagemakerStudioDomain(Resource, Base):
     """Describes ORM model for sagemaker ML Studio domain"""
     __tablename__ = 'sagemaker_studio_domain'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"))
     sagemakerStudioUri = Column(
         String, primary_key=True, default=utils.uuid('sagemakerstudio')
     )
-    sagemakerStudioDomainID = Column(String, nullable=False)
-    SagemakerStudioStatus = Column(String, nullable=False)
+    sagemakerStudioDomainID = Column(String, nullable=True)
+    SagemakerStudioStatus = Column(String, nullable=True)
+    sagemakerStudioDomainName = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
     RoleArn = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
-    userRoleForSagemakerStudio = query_expression()
+    vpcType = Column(String, nullable=False)
+    vpcId = Column(String, nullable=False)
+    subnetIds = Column(ARRAY(String), nullable=False)
+
 
 
 class SagemakerStudioUser(Resource, Base):
