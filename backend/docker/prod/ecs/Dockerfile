@@ -1,6 +1,6 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
-ARG NODE_VERSION=16
+ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.0-spark-3.1
 ARG PYTHON_VERSION=python3.8
