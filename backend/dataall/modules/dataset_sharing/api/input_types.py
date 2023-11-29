@@ -1,5 +1,4 @@
 from dataall.base.api.constants import *
-from dataall.core.organizations.api.enums import OrganisationUserRole
 from dataall.modules.dataset_sharing.api.enums import ShareableType, ShareSortField
 
 
@@ -54,8 +53,11 @@ ShareObjectFilter = gql.InputType(
         gql.Argument('sort', gql.ArrayType(ShareSortCriteria)),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
-        gql.Argument('roles', gql.ArrayType(OrganisationUserRole.toGraphQLEnum())),
-        gql.Argument('tags', gql.ArrayType(gql.String)),
+        gql.Argument('status', gql.ArrayType(gql.String)),
+        gql.Argument('dataset_owners', gql.ArrayType(gql.String)),
+        gql.Argument('datasets_uris', gql.ArrayType(gql.String)),
+        gql.Argument('share_requesters', gql.ArrayType(gql.String)),
+        gql.Argument('share_iam_roles', gql.ArrayType(gql.String)),
     ],
 )
 

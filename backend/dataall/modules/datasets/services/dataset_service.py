@@ -16,6 +16,7 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -92,6 +93,8 @@ class DatasetService:
                 data=data,
             )
 
+            DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
+
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=data['SamlAdminGroupName'],
@@ -150,10 +153,18 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_datasets(data: dict):
+    def list_owned_shared_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return ShareObjectRepository.paginated_user_datasets(
+                session, context.username, context.groups, data=data
+            )
+
+    @staticmethod
+    def list_owned_datasets(data: dict):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetRepository.paginated_user_datasets(
                 session, context.username, context.groups, data=data
             )
 
@@ -380,6 +391,7 @@ class DatasetService:
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
+            DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 

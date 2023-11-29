@@ -9,4 +9,4 @@ export const SharesModule = {
   }
 };
 
-export { ShareInboxList } from './components';
+export { ShareBoxList } from './components';

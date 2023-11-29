@@ -496,7 +496,7 @@ class EnvironmentSetup(Stack):
                 requester_pays_enabled=False,
                 publish_cloud_watch_metrics_enabled=False,
                 engine_version=aws_athena.CfnWorkGroup.EngineVersionProperty(
-                    selected_engine_version='Athena engine version 2',
+                    selected_engine_version='Athena engine version 3',
                 ),
             ),
         )

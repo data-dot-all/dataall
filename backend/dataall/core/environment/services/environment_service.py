@@ -518,6 +518,64 @@ class EnvironmentService:
         }
 
     @staticmethod
+    def query_user_groups(session, username, groups, filter) -> Query:
+        query = (
+            session.query(EnvironmentGroup)
+            .filter(EnvironmentGroup.groupUri.in_(groups))
+            .distinct(EnvironmentGroup.groupUri)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_groups(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_groups(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
+    def query_user_consumption_roles(session, username, groups, filter) -> Query:
+        query = (
+            session.query(ConsumptionRole)
+            .filter(ConsumptionRole.groupUri.in_(groups))
+            .distinct(ConsumptionRole.consumptionRoleName)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                )
+            )
+        if filter and filter.get('groupUri'):
+            print("filter group")
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.groupUri == group,
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_consumption_roles(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_consumption_roles(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
         query = (
             session.query(EnvironmentGroup)

@@ -3,6 +3,7 @@ export * from './approveShareObject';
 export * from './deleteShareObject';
 export * from './getShareObject';
 export * from './getShareRequestsFromMe';
+export * from './listOwnedDatasets';
 export * from './rejectShareObject';
 export * from './removeSharedItem';
 export * from './revokeItemsShareObject';

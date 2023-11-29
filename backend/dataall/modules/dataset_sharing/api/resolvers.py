@@ -191,6 +191,7 @@ def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
             return {
                 's3AccessPointName': S3AccessPointName,
                 'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
+                's3bucketName': ds.S3BucketName,
             }
 
 

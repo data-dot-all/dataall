@@ -24,13 +24,25 @@ in the Research-CICD account. The actual data pipeline is deployed in 2 data acc
 
 
 ### Pre-requisites
-As a pre-requisite, Research-DEV and Research-PROD accounts need to be bootstrapped trusting the CICD account (`-a` parameter) and setting the stage of the AWS account, the environment id, with the  `e` parameter. Assuming 111111111111 = CICD account the commands are as follows:
+As a pre-requisite, Research-DEV and Research-PROD accounts need to be bootstrapped using AWS CDK, trusting the CICD account (`--trust` parameter).  Assuming 111111111111 = CICD account the commands are as follows:
 
-- In Research-CICD (111111111111): `ddk bootstrap -e cicd`
-- In Research-DEV (222222222222): `ddk bootstrap -e dev -a 111111111111`
-- In Research-PROD (333333333333): `ddk bootstrap -e prod -a 111111111111`
+- In Research-CICD (111111111111): `cdk bootstrap`
+- In Research-DEV (222222222222): `cdk bootstrap --trust 111111111111`
+- In Research-PROD (333333333333): `cdk bootstrap --trust 111111111111`
 
 In data.all we need to link the AWS accounts to the platform by creating 3 data.all Environments: Research-CICD Environment, Research-DEV Environment and Research-PROD Environment.
+
+NOTE: In practice, the cdk bootstrap command would already be run once when linking an environment. For example, if bootstrapping an environment with the default AdministratorAccess CDK execution policy, the command run before linking a new environment would look similar to:
+
+```
+cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_ENVIRONMENT_AWS_ACCOUNT_NUMBER/ENVIRONMENT_REGION
+```
+
+In order for the DEV and PROD accounts to also trust the CICD account without impacting the initial bootstrap requirements, the Research-DEV and Research-PROD accounts need to edit the aforementioned bootstrap command similar to the following:  
+
+```
+cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER --trust Research-CICD_AWS_ACCOUNT_NUMBER -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_ENVIRONMENT_AWS_ACCOUNT_NUMBER/ENVIRONMENT_REGION
+```
 
 ### Creating a pipeline
 data.all pipelines are created from the UI, under Pipelines. We need to fill the creation form with the following information:
@@ -45,11 +57,6 @@ data.all pipelines are created from the UI, under Pipelines. We need to fill the
 
 Finally, we need to add **Development environments**. These are the AWS accounts and regions where the infrastructure defined in the CICD pipeline
 is deployed. 
-
-!!! warning "environment ID = data.all environment stage"
-      When creating the pipeline and adding development environments, you define the stage of the environment. The ddk bootstrap `-e` parameter needs to match the one that you define in the data.all UI.
-      In our example, we bootstraped with the parameters "dev" and "prod" and then we defined the stages as "dev" and "prod" correspondingly.
-
 
 ![create_pipeline](pictures/pipelines/pip_create_form.png#zoom#shadow)
 
@@ -66,6 +73,10 @@ In the deployed repository, data.all pushes a `ddk.json` file with the details o
 
 ```json
 {
+    "tags": {
+        "dataall": "true",
+        "Target": "PIPELINE_NAME"
+    },
     "environments": {
         "cicd": {
             "account": "111111111111",
@@ -74,15 +85,15 @@ In the deployed repository, data.all pushes a `ddk.json` file with the details o
         "dev": {
             "account": "222222222222",
             "region": "eu-west-1",
-            "resources": {
-                "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
+            "tags": {
+                "Team": "DATAALL_GROUP"
             }
         },
         "prod": {
             "account": "333333333333",
             "region": "eu-west-1",
-            "resources": {
-                "ddk-bucket": {"versioned": true, "removal_policy": "retain"}
+            "tags": {
+                "Team": "DATAALL_GROUP"
             }
         }
     }
@@ -95,9 +106,8 @@ In addition, the `app.py` file is also written accordingly to the development en
 # !/usr/bin/env python3
 
 import aws_cdk as cdk
-from aws_ddk_core.cicd import CICDPipelineStack
-from ddk_app.ddk_app_stack import DDKApplicationStack
-from aws_ddk_core.config import Config
+import aws_ddk_core as ddk
+from dataall_pipeline_app.dataall_pipeline_app_stack import DataallPipelineStack
 
 app = cdk.App()
 
@@ -111,17 +121,37 @@ class ApplicationStage(cdk.Stage):
         super().__init__(scope, f"dataall-{environment_id.title()}", **kwargs)
         DDKApplicationStack(self, "DataPipeline-PIPELINENAME-PIPELINEURI", environment_id)
 
-config = Config()
-(
-    CICDPipelineStack(
+id = f"dataall-cdkpipeline-PIPELINEURI"
+cicd_pipeline = (
+    ddk.CICDPipelineStack(
         app,
         id="dataall-pipeline-PIPELINENAME-PIPELINEURI",
         environment_id="cicd",
         pipeline_name="PIPELINENAME",
+        cdk_language="python",
+        env=ddk.Configurator.get_environment(
+            config_path="./ddk.json", environment_id="cicd"
+        ),
     )
         .add_source_action(repository_name="dataall-PIPELINENAME-PIPELINEURI")
         .add_synth_action()
-        .build().add_stage("dev", ApplicationStage(app, "dev", env=config.get_env("dev"))).add_stage("prod", ApplicationStage(app, "prod", env=config.get_env("prod")))
+        .build_pipeline()
+        .add_stage(
+          stage_id="dev", 
+          stage=ApplicationStage(
+            app, 
+            "dev", 
+            env=ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="dev")
+          )
+        )
+        .add_stage(
+          stage_id="prod", 
+          stage=ApplicationStage(
+            app, 
+            "prod", 
+            env=ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="prod")
+          )
+        )
         .synth()
 )
 
@@ -145,15 +175,12 @@ use CodePipeline CICD Strategy which leverages the [aws-codepipeline](https://do
 #### CodeCommit repository and CICD deployment
 When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. It contains:
 
-- an AWS CodeCommit repository with the code of an AWS DDK application (by running `ddk init`) with some modifications to allow cross-account deployments.
+- an AWS CodeCommit repository with the code of an AWS CDK application (by running `cdk init`) with some modifications to allow cross-account deployments.
 - CICD CodePipeline(s) pipeline that deploy(s) the application
 
 The repository structure will look similar to:
 
 ![created_pipeline](pictures/pipelines/pip_cp_init2.png#zoom#shadow)
-
-The added `Multiaccount` configuration class allows us to define the deployment environment based on the `ddk.json`. 
-Go ahead and customize this configuration further, for example you can set additional `env_vars`.
 
 Trunk-based pipelines append one stage after the other and read from the main branch of our repository:
 
@@ -163,7 +190,7 @@ Gitflow strategy uses multiple CodePipeline pipelines for each of the stages. Fo
 
 ![created_pipeline](pictures/pipelines/pip_cp_gitflow.png#zoom#shadow)
 
-The `dev` pipeline reads from the `dev` branch of the repository:
+Using the Gitflow strategy, the `dev` pipeline reads from the `dev` branch of the repository:
 
 ![created_pipeline](pictures/pipelines/pip_cp_gitflow2.png#zoom#shadow)
 
