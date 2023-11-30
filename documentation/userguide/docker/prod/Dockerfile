@@ -5,8 +5,8 @@ ARG PYTHON_VERSION=3.8
 ARG NGINX_VERSION=1.12
 ARG ENVSUBST_VERSION=v1.1.0
 
-RUN yum -y install shadow-utils wget
-RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
+RUN dnf -y install shadow-utils wget
+RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install python$PYTHON_VERSION
 RUN amazon-linux-extras install nginx$NGINX_VERSION
 

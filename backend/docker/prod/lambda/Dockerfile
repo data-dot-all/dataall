@@ -3,16 +3,16 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG FUNCTION_DIR="/home/app/"
 ARG PYTHON_VERSION=python3.8
 
-RUN yum upgrade -y;\
+RUN dnf upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
     find /tmp -name "*.rpm" -print -delete ;\
-    yum autoremove -y; \
-    yum clean packages; yum clean headers; yum clean metadata; yum clean all; rm -rfv /var/cache/yum
+    dnf autoremove -y; \
+    dnf clean packages; dnf clean headers; dnf clean metadata; dnf clean all; rm -rfv /var/cache/dnf
 
-RUN yum -y install shadow-utils wget
-RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
+RUN dnf -y install shadow-utils wget
+RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION
-RUN yum -y install python38-devel
+RUN dnf -y install python38-devel
 
 ## Add your source
 WORKDIR ${FUNCTION_DIR}

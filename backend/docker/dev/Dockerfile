@@ -4,12 +4,12 @@ ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG PYTHON_VERSION=python3.8
 
-RUN yum clean all
-RUN yum -y install shadow-utils wget
-RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
+RUN dnf clean all
+RUN dnf -y install shadow-utils wget
+RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION
-RUN yum -y install python38-devel
-RUN yum -y install git
+RUN dnf -y install python38-devel
+RUN dnf -y install git
 
 RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"
 

@@ -6,17 +6,17 @@ ARG DEEQU_VERSION=2.0.0-spark-3.1
 ARG PYTHON_VERSION=python3.8
 
 # Installing libraries
-RUN yum upgrade -y \
+RUN dnf upgrade -y \
     && find /var/tmp -name "*.rpm" -print -delete \
     && find /tmp -name "*.rpm" -print -delete \
-    && yum autoremove -y \
-    && yum clean all \
-    && rm -rfv /var/cache/yum \
-    && yum install -y \
+    && dnf autoremove -y \
+    && dnf clean all \
+    && rm -rfv /var/cache/dnf \
+    && dnf install -y \
     shadow-utils wget openssl-devel bzip2-devel libffi-devel \
     postgresql-devel gcc unzip tar gzip \
     && amazon-linux-extras install $PYTHON_VERSION \
-    && yum install -y python38-devel git \
+    && dnf install -y python38-devel git \
     && /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3" \
     && curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
     && unzip -q /tmp/awscliv2.zip -d /opt \

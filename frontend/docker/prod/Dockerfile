@@ -6,9 +6,9 @@ ARG NODE_VERSION=18
 ARG NGINX_VERSION=1.12
 ARG NVM_VERSION=v0.37.0
 
-RUN yum update -y && \
-    yum install -y tar gzip openssl && \
-    yum clean all -y
+RUN dnf update -y && \
+    dnf install -y tar gzip openssl && \
+    dnf clean all -y
 RUN amazon-linux-extras install nginx$NGINX_VERSION
 
 RUN touch ~/.bashrc
