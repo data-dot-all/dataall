@@ -23,7 +23,7 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
-    
+
 
 def upgrade():
     """
@@ -33,7 +33,7 @@ def upgrade():
     try:
         envname = os.getenv('envname', 'local')
         engine = get_engine(envname=envname).engine
-        
+
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
@@ -60,7 +60,7 @@ def upgrade():
             op.add_column("sagemaker_studio_domain", Column("subnetIds", postgresql.ARRAY(sa.String()), default=True))
 
             op.create_foreign_key(
-                f"fk_sagemaker_studio_domain_env_uri",
+                "fk_sagemaker_studio_domain_env_uri",
                 "sagemaker_studio_domain", "environment",
                 ["environmentUri"], ["environmentUri"],
             )
@@ -104,11 +104,10 @@ def downgrade():
             op.drop_column("sagemaker_studio_domain", "subnetIds")
 
             op.drop_constraint("fk_sagemaker_studio_domain_env_uri", "sagemaker_studio_domain")
-            
+
             session.commit()
             print("Update of sagemaker_studio_domain table is done")
 
     except Exception as exception:
         print('Failed to downgrade due to:', exception)
         raise exception
-

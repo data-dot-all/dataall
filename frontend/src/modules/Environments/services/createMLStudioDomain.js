@@ -7,15 +7,12 @@ export const createMLStudioDomain = (input) => ({
   mutation: gql`
     mutation createMLStudioDomain($input: NewStudioDomainInput) {
       createMLStudioDomain(input: $input) {
-        vpcUri
-        VpcId
+        sagemakerStudioUri
+        environmentUri
         label
-        description
-        tags
-        owner
-        SamlGroupName
-        privateSubnetIds
-        privateSubnetIds
+        vpcType
+        vpcId
+        subnetIds
       }
     }
   `

@@ -7,7 +7,7 @@ export const listEnvironmentMLStudioDomains = ({ filter, environmentUri }) => ({
   },
   query: gql`
     query listEnvironmentMLStudioDomains(
-      $filter: VpcFilter
+      $filter: SagemakerStudioDomainFilter
       $environmentUri: String!
     ) {
       listEnvironmentMLStudioDomains(
@@ -20,15 +20,12 @@ export const listEnvironmentMLStudioDomains = ({ filter, environmentUri }) => ({
         hasNext
         hasPrevious
         nodes {
-          VpcId
-          vpcUri
+          sagemakerStudioUri
+          environmentUri
           label
-          name
-          default
-          SamlGroupName
-          publicSubnetIds
-          privateSubnetIds
-          region
+          vpcType
+          vpcId
+          subnetIds
         }
       }
     }

@@ -4,6 +4,7 @@ from dataall.modules.mlstudio.api.resolvers import (
     get_sagemaker_studio_user,
     list_sagemaker_studio_users,
     get_sagemaker_studio_user_presigned_url,
+    list_environment_sagemaker_studio_domains
 )
 
 getSagemakerStudioUser = gql.QueryField(
@@ -38,9 +39,9 @@ getSagemakerStudioUserPresignedUrl = gql.QueryField(
 listEnvironmentMLStudioDomains = gql.QueryField(
     name='listEnvironmentMLStudioDomains',
     args=[
-      gql.Argument('filter', gql.Ref('SagemakerStudioDomainFilter')),
-      gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('filter', gql.Ref('SagemakerStudioDomainFilter')),
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
     ],
-    type=gql.Ref('SagemakerStudioUserSearchResult'),
+    type=gql.Ref('SagemakerStudioDomainSearchResult'),
     resolver=list_environment_sagemaker_studio_domains,
 )

@@ -26,7 +26,6 @@ class SagemakerStudioDomain(Resource, Base):
     subnetIds = Column(ARRAY(String), nullable=False)
 
 
-
 class SagemakerStudioUser(Resource, Base):
     """Describes ORM model for sagemaker ML Studio user"""
     __tablename__ = 'sagemaker_studio_user_profile'

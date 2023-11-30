@@ -2,14 +2,15 @@
 DAO layer that encapsulates the logic and interaction with the database for ML Studio
 Provides the API to retrieve / update / delete ml studio
 """
+from typing import Optional
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import paginate
-from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioDomain, SagemakerStudioUser
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-
+from dataall.base.db.exceptions import ObjectNotFound
 
 class SageMakerStudioRepository(EnvironmentResource):
     """DAO layer for ML Studio"""
@@ -44,7 +45,7 @@ class SageMakerStudioRepository(EnvironmentResource):
             )
         return query
 
-    def paginated_sagemaker_studio_users(self, username, groups, filter=None) -> dict:
+    def paginated_sagemaker_studio_users(self, username, groups, filter={}) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
             query=self._query_user_sagemaker_studio_users(username, groups, filter),
@@ -67,3 +68,56 @@ class SageMakerStudioRepository(EnvironmentResource):
             )
             .count()
         )
+
+    def create_sagemaker_studio_domain(self, username, environment, data):
+        # TODO: BUILD ROLE ARN
+        domain = SagemakerStudioDomain(
+            label=data.get('label'),
+            owner=username,
+            description=data.get('description', 'No description provided'),
+            tags=data.get('tags', []),
+            environmentUri=environment.environmentUri,
+            AwsAccountId=environment.AwsAccountId,
+            region=environment.region,
+            SagemakerStudioStatus="PENDING",
+            RoleArn="TODO",
+            vpcType=data.get('vpcType'),
+            vpcId=data.get('vpcId'),
+            subnetIds=data.get('subnetIds', [])
+        )
+        self._session.add(domain)
+        self._session.commit()
+
+    def paginated_environment_sagemaker_studio_domains(self, uri, filter={}) -> dict:
+        """Returns a page of sagemaker studio users for a data.all user"""
+        return paginate(
+            query=self._query_environment_sagemaker_studio_domains(uri, filter),
+            page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),
+            page_size=filter.get('pageSize', SageMakerStudioRepository._DEFAULT_PAGE_SIZE),
+        ).to_dict()
+
+    def _query_environment_sagemaker_studio_domains(self, uri, filter) -> Query:
+        query = self._session.query(SagemakerStudioDomain).filter(
+            SagemakerStudioDomain.environmentUri == uri,
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    SagemakerStudioDomain.description.ilike(
+                        filter.get('term') + '%%'
+                    ),
+                    SagemakerStudioDomain.label.ilike(
+                        filter.get('term') + '%%'
+                    ),
+                )
+            )
+        return query
+
+    @staticmethod
+    def get_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:
+        domain: SagemakerStudioDomain = session.query(SagemakerStudioDomain).filter(
+            SagemakerStudioDomain.environmentUri == env_uri,
+        ).first()
+        if not domain:
+            return None
+        return domain

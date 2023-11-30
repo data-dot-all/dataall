@@ -11,6 +11,7 @@ from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions import permissions
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -18,6 +19,9 @@ from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
+from dataall.modules.mlstudio.aws.ec2_client import EC2
+from dataall.base.aws.sts import SessionHelper
+
 from dataall.modules.mlstudio.services.mlstudio_permissions import (
     MANAGE_SGMSTUDIO_USERS,
     CREATE_SGMSTUDIO_USER,
@@ -77,10 +81,16 @@ class SagemakerStudioService:
                     action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
+            # FOR OLD ONES
             response = get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region
             )
+
+            # FOR NEW ONES (default, created, imported)
+            # - CHECK RDS FIRST
+            # - IF NOT BOTO3
+
             existing_domain = response.get('DomainId', False)
 
             if not existing_domain:
@@ -134,6 +144,78 @@ class SagemakerStudioService:
         stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
 
         return sagemaker_studio_user
+
+    @staticmethod
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT)
+    def create_sagemaker_studio_domain(*, uri: str, data: dict):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            if not enabled:
+                raise exceptions.UnauthorizedOperation(
+                    action=permissions.UPDATE_ENVIRONMENT,
+                    message=f'ML Studio feature is disabled for the environment {environment.label}',
+                )
+            cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
+                accountid=environment.AwsAccountId, region=environment.region
+            )
+            if data.get("vpcId", None):
+                SagemakerStudioService.check_mlstudio_domain_vpc(
+                    account_id=environment.AwsAccountId,
+                    region=environment.region,
+                    cdk_look_up_role_arn=cdk_look_up_role_arn,
+                    data=data
+                )
+                data["vpcType"] = "imported"
+            elif EC2.check_default_vpc_exists(
+                AwsAccountId=environment.AwsAccountId,
+                region=environment.region,
+                role=cdk_look_up_role_arn,
+            ):
+                data["vpcType"] = "default"
+            else:
+                data["vpcType"] = "created"
+
+            domain = SageMakerStudioRepository(session).create_sagemaker_studio_domain(
+                username=get_context().username,
+                environment=environment,
+                data=data,
+            )
+            # TODO: DEPLOY ENV STACK
+        return domain
+
+    @staticmethod
+    def check_mlstudio_domain_vpc(account_id: str, region: str, cdk_look_up_role_arn: str, data: dict):
+        if data.get("mlStudioVPCId", None) and data.get("mlStudioVPCId", None):
+            EC2.check_vpc_exists(
+                AwsAccountId=account_id,
+                region=region,
+                role=cdk_look_up_role_arn,
+                vpc_id=data.get("vpcId", None),
+                subnet_ids=data.get('subnetIds', []),
+            )
+            data["vpcType"] = "imported"
+            return True
+
+    @staticmethod
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT)
+    def delete_sagemaker_studio_domain(*, uri: str):
+        with _session() as session:
+            domain = SageMakerStudioRepository.get_sagemaker_studio_domain(session, uri)
+            # TODO: CHECK NUMBER OF USERS BEFORE DELETE
+            session.delete(domain)
+            # TODO: DEPLOY ENV STACK
+            return domain
+
+    @staticmethod
+    def list_environment_sagemaker_studio_domains(*, filter: dict, environment_uri: str) -> dict:
+        with _session() as session:
+            return SageMakerStudioRepository(session).paginated_environment_sagemaker_studio_domains(
+                uri=environment_uri,
+                filter=filter,
+            )
 
     @staticmethod
     def list_sagemaker_studio_users(*, filter: dict) -> dict:

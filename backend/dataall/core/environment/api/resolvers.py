@@ -8,7 +8,6 @@ from botocore.exceptions import ClientError
 from sqlalchemy import and_, exc
 
 from dataall.base.aws.iam import IAM
-from dataall.base.aws.vpc import VPCManager
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
@@ -44,7 +43,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region, data):
+def check_environment(context: Context, source, account_id, region):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account assuming cdk_look_up_role
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
@@ -72,21 +71,6 @@ def check_environment(context: Context, source, account_id, region, data):
                 action='CHECK_PIVOT_ROLE',
                 message='Pivot Role has not been created in the Environment AWS Account',
             )
-    mlStudioEnabled = None
-    for parameter in data.get("parameters", []):
-        if parameter['key'] == 'mlStudiosEnabled':
-            mlStudioEnabled = parameter['value']
-
-    if mlStudioEnabled == 'true' and data.get("mlStudioVPCId", None):
-        log.info("Check if ML Studio VPC Exists in the Account")
-
-        VPCManager.check_vpc_exists(
-            AwsAccountId=account_id,
-            region=region,
-            role=cdk_look_up_role_arn,
-            vpc_id=data.get("mlStudioVPCId", None),
-            subnet_ids=data.get('mlStudioSubnetIds', []),
-        )
 
     return cdk_role_name
 
@@ -101,8 +85,7 @@ def create_environment(context: Context, source, input={}):
     with context.engine.scoped_session() as session:
         cdk_role_name = check_environment(context, source,
                                           account_id=input.get('AwsAccountId'),
-                                          region=input.get('region'),
-                                          data=input
+                                          region=input.get('region')
                                           )
 
         input['cdk_role_name'] = cdk_role_name
@@ -117,10 +100,6 @@ def create_environment(context: Context, source, input={}):
             target_type='environment',
             target_uri=env.environmentUri,
             target_label=env.label,
-            payload={
-                'mlstudio_vpc_id': input.get('mlStudioVPCId', None),
-                'mlstudio_subnet_ids': input.get('mlStudioSubnetIds', []),
-            },
         )
     stack_helper.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value

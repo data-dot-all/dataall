@@ -18,7 +18,7 @@ class RequestValidator:
             raise exceptions.RequiredParameter('URI')
 
     @staticmethod
-    def validate_creation_request(data):
+    def validate_user_creation_request(data):
         required = RequestValidator._required
         if not data:
             raise exceptions.RequiredParameter('data')
@@ -29,6 +29,16 @@ class RequestValidator:
         required(data, "SamlAdminGroupName")
 
     @staticmethod
+    def validate_domain_creation_request(data):
+        required = RequestValidator._required
+        if not data:
+            raise exceptions.RequiredParameter('data')
+        if not data.get('label'):
+            raise exceptions.RequiredParameter('name')
+
+        required(data, "environmentUri")
+
+    @staticmethod
     def _required(data: dict, name: str):
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
@@ -36,7 +46,7 @@ class RequestValidator:
 
 def create_sagemaker_studio_user(context: Context, source, input: dict = None):
     """Creates a SageMaker Studio user. Deploys the SageMaker Studio user stack into AWS"""
-    RequestValidator.validate_creation_request(input)
+    RequestValidator.validate_user_creation_request(input)
     request = SagemakerStudioCreationRequest.from_dict(input)
     return SagemakerStudioService.create_sagemaker_studio_user(
         uri=input["environmentUri"],
@@ -88,6 +98,33 @@ def delete_sagemaker_studio_user(
         uri=sagemakerStudioUserUri,
         delete_from_aws=deleteFromAWS
     )
+
+
+def create_sagemaker_studio_domain(context: Context, source, input: dict = None):
+    """Creates a SageMaker Studio user. Deploys the SageMaker Studio user stack into AWS"""
+    RequestValidator.validate_domain_creation_request(input)
+    return SagemakerStudioService.create_sagemaker_studio_domain(
+        uri=input["environmentUri"],
+        data=input
+    )
+
+
+def delete_sagemaker_studio_domain(
+    context,
+    source: SagemakerStudioUser,
+    sagemakerStudioUri: str = None
+):
+    RequestValidator.required_uri(sagemakerStudioUri)
+    return SagemakerStudioService.delete_sagemaker_studio_domain(
+        uri=sagemakerStudioUri
+    )
+
+
+def list_environment_sagemaker_studio_domains(context, source, filter: dict = None, environment_uri: str = None):
+    RequestValidator.required_uri(environment_uri)
+    if not filter:
+        filter = {}
+    return SagemakerStudioService.list_environment_sagemaker_studio_domains(filter=filter, environment_uri=environment_uri)
 
 
 def resolve_user_role(context: Context, source: SagemakerStudioUser):

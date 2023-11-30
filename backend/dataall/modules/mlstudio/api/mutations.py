@@ -3,6 +3,8 @@ from dataall.base.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     create_sagemaker_studio_user,
     delete_sagemaker_studio_user,
+    create_sagemaker_studio_domain,
+    delete_sagemaker_studio_domain
 )
 
 createSagemakerStudioUser = gql.MutationField(

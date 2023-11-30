@@ -31,7 +31,7 @@ function DomainRow({ domain }) {
     <TableRow hover>
       <TableCell>{domain.label}</TableCell>
       <TableCell>{domain.sagemakerStudioDomainName}</TableCell>
-      <TableCell>{domain.VpcId}</TableCell>
+      <TableCell>{domain.vpcId}</TableCell>
       <TableCell>
         {domain.subnetIds && (
           <Box

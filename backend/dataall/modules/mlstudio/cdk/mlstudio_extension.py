@@ -13,6 +13,7 @@ from aws_cdk import (
     RemovalPolicy,
 )
 from botocore.exceptions import ClientError
+from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
@@ -31,7 +32,8 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         _environment = setup.environment()
         with setup.get_engine().scoped_session() as session:
             enabled = EnvironmentService.get_boolean_env_param(session, _environment, "mlStudiosEnabled")
-            if not enabled:
+            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, _environment.environmentUri)
+            if not enabled or not domain:
                 return
 
         sagemaker_principals = [setup.default_role] + setup.group_roles
