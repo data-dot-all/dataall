@@ -4,6 +4,10 @@ ARG NODE_VERSION=16
 ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.0-spark-3.1
 ARG PYTHON_VERSION=python3.8
+ARG CONTAINER_USER=cuser
+ARG CONTAINER_USER_GROUP=cuser
+
+
 
 # Installing libraries
 RUN yum upgrade -y \
@@ -25,6 +29,11 @@ RUN yum upgrade -y \
     && rm -rf /opt/aws \
     && aws --version
 
+RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
+RUN chown -R ${CONTAINER_USER}:root /usr/local
+
+USER ${CONTAINER_USER}
+
 # Configuring path
 RUN touch ~/.bashrc
 
@@ -45,22 +54,23 @@ RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/insta
 RUN $PYTHON_VERSION -m pip install -U pip
 
 # App specific
-ADD backend/requirements.txt /dh.requirements.txt
-ADD backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
+ADD --chown=${CONTAINER_USER}:root backend/requirements.txt /dh.requirements.txt
+ADD --chown=${CONTAINER_USER}:root backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
 
-RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt" \
-    && /bin/bash -c "pip3.8 install -r /cdk.requirements.txt"
+RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt --prefix /usr/local" \
+    && /bin/bash -c "pip3.8 install -r /cdk.requirements.txt --prefix /usr/local"
 
-ADD backend/dataall /dataall
+ADD --chown=${CONTAINER_USER}:root backend/dataall /dataall
 VOLUME ["/dataall"]
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
 ENV config_location="/config.json"
-COPY config.json /config.json
+COPY --chown=${CONTAINER_USER}:root config.json /config.json
 
 RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
-ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
+ADD --chown=${CONTAINER_USER}:root https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 
 WORKDIR /
 
 CMD [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
+
