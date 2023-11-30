@@ -104,6 +104,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                     "SecurityGroup",
                     vpc=vpc,
                     description="Security Group for SageMaker Studio",
+                    security_group_name=domain.sagemakerStudioDomainName,
                 )
 
                 sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
@@ -114,9 +115,9 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
 
         sagemaker_domain_role = iam.Role(
             setup,
-            domain.RoleArn,
+            'RoleForSagemakerStudioUsers',
             assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-            role_name=domain.RoleArn,
+            role_name=domain.DefaultDomainRoleName,
             managed_policies=[
                 iam.ManagedPolicy.from_managed_policy_arn(
                     setup,
@@ -132,7 +133,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         sagemaker_domain_key = kms.Key(
             setup,
             'SagemakerDomainKmsKey',
-            alias='SagemakerStudioDomain',
+            alias=domain.sagemakerStudioDomainName,
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(_environment.CDKRoleArn)
@@ -183,7 +184,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
 
         sagemaker_domain = sagemaker.CfnDomain(
             setup,
-            domain.sagemakerStudioDomainName,
+            'SagemakerStudioDomain',
             domain_name=domain.sagemakerStudioDomainName,
             auth_mode='IAM',
             default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
@@ -208,4 +209,3 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             parameter_name=f'/{_environment.resourcePrefix}/{_environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
         )
         return sagemaker_domain
-

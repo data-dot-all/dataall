@@ -289,11 +289,10 @@ class SagemakerStudioService:
         if not user:
             raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
         return user
-    
+
     @staticmethod
     def _get_sagemaker_studio_domain(session, uri):
         domain = SageMakerStudioRepository(session).find_sagemaker_studio_domain(uri=uri)
         if not domain:
             raise exceptions.ObjectNotFound('SagemakerStudioDomain', uri)
         return domain
-

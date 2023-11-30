@@ -15,15 +15,15 @@ class SagemakerStudioDomain(Resource, Base):
     sagemakerStudioUri = Column(
         String, primary_key=True, default=utils.uuid('sagemakerstudio')
     )
-    sagemakerStudioDomainID = Column(String, nullable=True)
+    sagemakerStudioDomainID = Column(String, nullable=False)
     SagemakerStudioStatus = Column(String, nullable=True)
     sagemakerStudioDomainName = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
     RoleArn = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
-    vpcType = Column(String, nullable=False)
-    vpcId = Column(String, nullable=False)
-    subnetIds = Column(ARRAY(String), nullable=False)
+    vpcType = Column(String, nullable=True)
+    vpcId = Column(String, nullable=True)
+    subnetIds = Column(ARRAY(String), nullable=True)
 
 
 class SagemakerStudioUser(Resource, Base):

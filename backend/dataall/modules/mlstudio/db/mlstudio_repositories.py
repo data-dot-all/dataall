@@ -16,6 +16,7 @@ from dataall.base.utils.naming_convention import (
     NamingConventionPattern,
 )
 
+
 class SageMakerStudioRepository(EnvironmentResource):
     """DAO layer for ML Studio"""
     _DEFAULT_PAGE = 1
@@ -84,7 +85,7 @@ class SageMakerStudioRepository(EnvironmentResource):
             AWSAccountId=environment.AwsAccountId,
             region=environment.region,
             SagemakerStudioStatus="PENDING",
-            RoleArn="DefaultMLStudioRole",
+            DefaultDomainRoleName="DefaultMLStudioRole",
             sagemakerStudioDomainName=slugify(data.get('label'), separator=''),
             vpcType=data.get('vpcType'),
             vpcId=data.get('vpcId'),
@@ -100,9 +101,9 @@ class SageMakerStudioRepository(EnvironmentResource):
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
 
-        domain.RoleArn = NamingConventionService(
+        domain.DefaultDomainRoleName = NamingConventionService(
             target_uri=domain.sagemakerStudioUri,
-            target_label=f"DefaultMLStudioRole-{domain.label}",
+            target_label=domain.label,
             pattern=NamingConventionPattern.IAM,
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()

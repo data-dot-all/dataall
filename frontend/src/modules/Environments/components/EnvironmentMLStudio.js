@@ -1,4 +1,5 @@
 import { LoadingButton } from '@mui/lab';
+import { DeleteOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -6,6 +7,7 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -16,14 +18,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Defaults,
-  MinusIcon,
-  Pager,
-  PlusIcon,
-  RefreshTableMenu,
-  Scrollbar
-} from 'design';
+import { Defaults, Pager, PlusIcon, RefreshTableMenu, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import {
@@ -32,7 +27,7 @@ import {
 } from '../services';
 import { MLStudioDomainCreateModal } from './MLStudioDomainCreateModal';
 
-function DomainRow({ domain }) {
+function DomainRow({ domain, deleteEnvironmentMLStudioDomain }) {
   return (
     <TableRow hover>
       <TableCell>{domain.label}</TableCell>
@@ -58,12 +53,22 @@ function DomainRow({ domain }) {
           </Box>
         )}
       </TableCell>
+      <TableCell>
+        <IconButton
+          onClick={() => {
+            deleteEnvironmentMLStudioDomain(domain.sagemakerStudioUri);
+          }}
+        >
+          <DeleteOutlined fontSize="small" />
+        </IconButton>
+      </TableCell>
     </TableRow>
   );
 }
 
 DomainRow.propTypes = {
-  domain: PropTypes.any
+  domain: PropTypes.any,
+  deleteEnvironmentMLStudioDomain: PropTypes.func
 };
 export const EnvironmentMLStudio = ({ environment }) => {
   const client = useClient();
@@ -143,7 +148,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
           title={
             <Box>
               ML Studio Domains
-              {items.nodes.length === 0 ? (
+              {items.nodes.length === 0 && (
                 <LoadingButton
                   color="primary"
                   onClick={handleStudioDomainCreateModalOpen}
@@ -152,20 +157,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
                   variant="outlined"
                 >
                   Add ML Studio Domain
-                </LoadingButton>
-              ) : (
-                <LoadingButton
-                  color="primary"
-                  onClick={() => {
-                    deleteEnvironmentMLStudioDomain(
-                      items.nodes[0].sagemakerStudioUri
-                    );
-                  }}
-                  startIcon={<MinusIcon fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                >
-                  Delete ML Studio Domain
                 </LoadingButton>
               )}
             </Box>
@@ -192,6 +183,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
                   <TableCell>Domain Name</TableCell>
                   <TableCell>VPC</TableCell>
                   <TableCell>Subnets</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
@@ -204,6 +196,9 @@ export const EnvironmentMLStudio = ({ environment }) => {
                         domain={domain}
                         environment={environment}
                         fetchItems={fetchItems}
+                        deleteEnvironmentMLStudioDomain={
+                          deleteEnvironmentMLStudioDomain
+                        }
                       />
                     ))
                   ) : (

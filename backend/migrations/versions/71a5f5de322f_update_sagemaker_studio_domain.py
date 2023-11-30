@@ -6,8 +6,7 @@ Create Date: 2023-11-29 09:44:04.160286
 
 """
 import os
-from sqlalchemy import orm, Column, String, Boolean, ForeignKey, DateTime, and_, inspect
-from sqlalchemy.orm import query_expression
+from sqlalchemy import orm, Column, String, Boolean, ForeignKey, and_
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as sa
 from alembic import op
@@ -23,6 +22,35 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
+
+
+class Environment(Resource, Base):
+    __tablename__ = "environment"
+    environmentUri = Column(String, primary_key=True)
+    AwsAccountId = Column(Boolean)
+    region = Column(Boolean)
+
+
+class EnvironmentParameter(Base):
+    __tablename__ = 'environment_parameters'
+    environmentUri = Column(String, primary_key=True)
+    key = Column('paramKey', String, primary_key=True)
+    value = Column('paramValue', String, nullable=True)
+
+
+class SagemakerStudioDomain(Resource, Base):
+    __tablename__ = 'sagemaker_studio_domain'
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"))
+    sagemakerStudioUri = Column(
+        String, primary_key=True, default=utils.uuid('sagemakerstudio')
+    )
+    sagemakerStudioDomainID = Column(String, nullable=True)
+    SagemakerStudioStatus = Column(String, nullable=True)
+    sagemakerStudioDomainName = Column(String, nullable=False)
+    AWSAccountId = Column(String, nullable=False)
+    DefaultDomainRoleName = Column(String, nullable=False)
+    region = Column(String, default='eu-west-1')
+    vpcType = Column(String, nullable=True)
 
 
 def upgrade():
@@ -42,22 +70,27 @@ def upgrade():
             op.alter_column(
                 'sagemaker_studio_domain',
                 'sagemakerStudioDomainID',
-                new_column_name='sagemakerStudioDomainID',
                 nullable=True,
                 existing_type=sa.String()
             )
             op.alter_column(
                 'sagemaker_studio_domain',
                 'SagemakerStudioStatus',
-                new_column_name='SagemakerStudioStatus',
                 nullable=True,
                 existing_type=sa.String()
             )
+            op.alter_column(
+                'sagemaker_studio_domain',
+                'RoleArn',
+                new_column_name='DefaultDomainRoleName',
+                nullable=False,
+                existing_type=sa.String()
+            )
 
-            op.add_column("sagemaker_studio_domain", Column("sagemakerStudioDomainName", sa.String(), default=True))
-            op.add_column("sagemaker_studio_domain", Column("vpcType", sa.String(), default=True))
-            op.add_column("sagemaker_studio_domain", Column("vpcId", sa.String(), default=True))
-            op.add_column("sagemaker_studio_domain", Column("subnetIds", postgresql.ARRAY(sa.String()), default=True))
+            op.add_column("sagemaker_studio_domain", Column("sagemakerStudioDomainName", sa.String(), nullable=False))
+            op.add_column("sagemaker_studio_domain", Column("vpcType", sa.String(), nullable=True))
+            op.add_column("sagemaker_studio_domain", Column("vpcId", sa.String(), nullable=True))
+            op.add_column("sagemaker_studio_domain", Column("subnetIds", postgresql.ARRAY(sa.String()), nullable=True))
 
             op.create_foreign_key(
                 "fk_sagemaker_studio_domain_env_uri",
@@ -65,8 +98,35 @@ def upgrade():
                 ["environmentUri"], ["environmentUri"],
             )
 
-            session.commit()
-            print("Update of sagemaker_studio_domain table is done")
+            print("Update sagemaker_studio_domain table done.")
+            print("Filling sagemaker_studio_domain table with environments with mlstudio enabled...")
+
+            env_mlstudio_parameters: [EnvironmentParameter] = session.query(EnvironmentParameter).filter(
+                and_(
+                    EnvironmentParameter.key == "mlStudiosEnabled",
+                    EnvironmentParameter.value == "true"
+                )
+            ).all()
+            for param in env_mlstudio_parameters:
+                env: Environment = session.query(Environment).filter(
+                    Environment.environmentUri == param.environmentUri
+                ).first()
+
+                domain = SagemakerStudioDomain(
+                    label=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                    owner=env.owner,
+                    description='No description provided',
+                    environmentUri=env.environmentUri,
+                    AWSAccountId=env.AwsAccountId,
+                    region=env.region,
+                    DefaultDomainRoleName="RoleSagemakerStudioUsers",
+                    sagemakerStudioDomainName=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                    vpcType="unknown"
+                )
+                session.add(domain)
+            session.flush()
+        session.commit()
+        print("Fill of sagemaker_studio_domain table is done")
 
     except Exception as exception:
         print('Failed to upgrade due to:', exception)
@@ -86,14 +146,19 @@ def downgrade():
             op.alter_column(
                 'sagemaker_studio_domain',
                 'sagemakerStudioDomainID',
-                new_column_name='sagemakerStudioDomainID',
                 nullable=False,
                 existing_type=sa.String()
             )
             op.alter_column(
                 'sagemaker_studio_domain',
                 'SagemakerStudioStatus',
-                new_column_name='SagemakerStudioStatus',
+                nullable=False,
+                existing_type=sa.String()
+            )
+            op.alter_column(
+                'sagemaker_studio_domain',
+                'DefaultDomainRoleName',
+                new_column_name='RoleArn',
                 nullable=False,
                 existing_type=sa.String()
             )
