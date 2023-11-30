@@ -28,7 +28,7 @@ def test_s3_managed_bucket_but_alias_provided(mock_aws_client):
     dataset = Dataset(KmsAlias='Key')
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
-    with pytest.raises(UnauthorizedOperation):
+    with pytest.raises(InvalidInput):
         DatasetService.check_imported_resources(dataset)
 
 

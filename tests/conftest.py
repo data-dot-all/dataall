@@ -187,7 +187,7 @@ def mock_aws_client(module_mocker):
 
     # there can be other mocker clients
     module_mocker.patch(
-        'dataall.modules.datasets_base.aws.s3_dataset_client.SessionHelper',
+        'dataall.modules.datasets.aws.s3_dataset_client.SessionHelper',
         session_helper
     )
 
