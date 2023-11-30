@@ -2,7 +2,6 @@ import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
-
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -345,6 +344,37 @@ class DatasetRepository(EnvironmentResource):
             )
             .all()
         )
+
+    @staticmethod
+    def paginated_user_datasets(
+            session, username, groups, data=None
+    ) -> dict:
+        return paginate(
+            query=DatasetRepository._query_user_datasets(session, username, groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def _query_user_datasets(session, username, groups, filter) -> Query:
+        query = (
+            session.query(Dataset)
+            .filter(
+                or_(
+                    Dataset.owner == username,
+                    Dataset.SamlAdminGroupName.in_(groups),
+                    Dataset.stewards.in_(groups),
+                )
+            )
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    Dataset.description.ilike(filter.get('term') + '%%'),
+                    Dataset.label.ilike(filter.get('term') + '%%'),
+                )
+            )
+        return query.distinct(Dataset.datasetUri)
 
     @staticmethod
     def _set_import_data(dataset, data):

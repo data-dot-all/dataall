@@ -32,7 +32,11 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { getEnvironment, updateEnvironment } from '../services';
-import { isAnyFeatureModuleEnabled, isModuleEnabled, ModuleNames } from 'utils';
+import {
+  isAnyEnvironmentModuleEnabled,
+  isModuleEnabled,
+  ModuleNames
+} from 'utils';
 
 const EnvironmentEditForm = (props) => {
   const dispatch = useDispatch();
@@ -379,11 +383,10 @@ const EnvironmentEditForm = (props) => {
                           </CardContent>
                         </Card>
                       </Box>
-                      {isAnyFeatureModuleEnabled() && (
+                      {isAnyEnvironmentModuleEnabled() && (
                         <Box sx={{ mt: 3 }}>
                           <Card>
                             <CardHeader title="Features management" />
-
                             <CardContent>
                               {isModuleEnabled(ModuleNames.DASHBOARDS) && (
                                 <Box sx={{ ml: 2 }}>
@@ -494,7 +497,7 @@ const EnvironmentEditForm = (props) => {
                                   </FormGroup>
                                 </Box>
                               )}
-                              {isModuleEnabled(ModuleNames.PIPELINES) && (
+                              {isModuleEnabled(ModuleNames.DATAPIPELINES) && (
                                 <Box sx={{ ml: 2 }}>
                                   <FormGroup>
                                     <FormControlLabel

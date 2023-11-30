@@ -53,7 +53,7 @@ import {
 } from '../services';
 import {
   AwsRegions,
-  isAnyFeatureModuleEnabled,
+  isAnyEnvironmentModuleEnabled,
   isModuleEnabled,
   ModuleNames
 } from 'utils';
@@ -482,7 +482,7 @@ const EnvironmentCreateForm = (props) => {
                 dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
                 notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
                 mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
-                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
                 resourcePrefix: 'dataall'
               }}
@@ -604,7 +604,7 @@ const EnvironmentCreateForm = (props) => {
                         </CardContent>
                       </Card>
                       <Box sx={{ mt: 3 }}>
-                        {isAnyFeatureModuleEnabled() && (
+                        {isAnyEnvironmentModuleEnabled() && (
                           <Card>
                             <CardHeader title="Features management" />
                             <CardContent>
@@ -710,7 +710,7 @@ const EnvironmentCreateForm = (props) => {
                                   </FormGroup>
                                 </Box>
                               )}
-                              {isModuleEnabled(ModuleNames.PIPELINES) && (
+                              {isModuleEnabled(ModuleNames.DATAPIPELINES) && (
                                 <Box sx={{ ml: 2 }}>
                                   <FormGroup>
                                     <FormControlLabel

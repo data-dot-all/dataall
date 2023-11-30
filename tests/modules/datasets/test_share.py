@@ -403,6 +403,10 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
           userRoleForShareObject
           requestPurpose
           rejectPurpose
+          dataset {
+            datasetUri
+            datasetName
+          }
         }
       }
     """
