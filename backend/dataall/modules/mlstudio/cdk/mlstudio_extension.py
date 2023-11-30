@@ -39,18 +39,10 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         sagemaker_principals = [setup.default_role] + setup.group_roles
         logger.info(f'Creating SageMaker base resources for sagemaker_principals = {sagemaker_principals}..')
 
-        existing_vpc_id = None
-        existing_subnet_ids = None
-        if setup.payload:
-            existing_vpc_id = setup.payload.get('mlstudio_vpc_id', None)
-            existing_subnet_ids = setup.payload.get('mlstudio_subnet_ids', [])
-            logger.info(f'VPC ID = {existing_vpc_id}')
-            logger.info(f'Subnet IDs = {existing_subnet_ids}')
-
-        if existing_vpc_id and existing_subnet_ids:
-            logger.info(f'Using VPC {existing_vpc_id} and subnets {existing_subnet_ids} for SageMaker Studio domain')
-            vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', vpc_id=existing_vpc_id)
-            subnet_ids = existing_subnet_ids
+        if domain.vpcId and domain.subnetIds:
+            logger.info(f'Using VPC {domain.vpcId} and subnets {domain.subnetIds} for SageMaker Studio domain')
+            vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', vpc_id=domain.vpcId)
+            subnet_ids = domain.subnetIds
             security_groups = []
         else:
             cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
@@ -122,9 +114,9 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
 
         sagemaker_domain_role = iam.Role(
             setup,
-            'RoleForSagemakerStudioUsers',
+            domain.RoleArn,
             assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-            role_name='RoleSagemakerStudioUsers',
+            role_name=domain.RoleArn,
             managed_policies=[
                 iam.ManagedPolicy.from_managed_policy_arn(
                     setup,
@@ -191,8 +183,8 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
 
         sagemaker_domain = sagemaker.CfnDomain(
             setup,
-            'SagemakerStudioDomain',
-            domain_name=f'SagemakerStudioDomain-{_environment.region}-{_environment.AwsAccountId}',
+            domain.sagemakerStudioDomainName,
+            domain_name=domain.sagemakerStudioDomainName,
             auth_mode='IAM',
             default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
                 execution_role=sagemaker_domain_role.role_arn,
@@ -217,21 +209,3 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         )
         return sagemaker_domain
 
-    @staticmethod
-    def check_existing_sagemaker_studio_domain(environment):
-        logger.info('Check if there is an existing sagemaker studio domain in the account')
-        try:
-            logger.info('check sagemaker studio domain created as part of data.all environment stack.')
-            cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
-                accountid=environment.AwsAccountId, region=environment.region
-            )
-            dataall_created_domain = ParameterStoreManager.client(
-                AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
-            ).get_parameter(Name=f'/{environment.resourcePrefix}/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
-            return False
-        except ClientError as e:
-            logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
-            existing_domain = get_sagemaker_studio_domain(
-                AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
-            )
-            return existing_domain.get('DomainId', False)

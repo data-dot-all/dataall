@@ -7,10 +7,14 @@ from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
+from dataall.base.utils import slugify
 from dataall.base.db import paginate
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioDomain, SagemakerStudioUser
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.base.db.exceptions import ObjectNotFound
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 class SageMakerStudioRepository(EnvironmentResource):
     """DAO layer for ML Studio"""
@@ -80,14 +84,30 @@ class SageMakerStudioRepository(EnvironmentResource):
             AWSAccountId=environment.AwsAccountId,
             region=environment.region,
             SagemakerStudioStatus="PENDING",
-            sagemakerStudioDomainName=data.get('label'),
-            RoleArn="TODO",
+            RoleArn="DefaultMLStudioRole",
+            sagemakerStudioDomainName=slugify(data.get('label'), separator=''),
             vpcType=data.get('vpcType'),
             vpcId=data.get('vpcId'),
             subnetIds=data.get('subnetIds', [])
         )
         self._session.add(domain)
         self._session.commit()
+
+        domain.sagemakerStudioDomainName = NamingConventionService(
+            target_uri=domain.sagemakerStudioUri,
+            target_label=domain.label,
+            pattern=NamingConventionPattern.MLSTUDIO_DOMAIN,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        domain.RoleArn = NamingConventionService(
+            target_uri=domain.sagemakerStudioUri,
+            target_label=f"DefaultMLStudioRole-{domain.label}",
+            pattern=NamingConventionPattern.IAM,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        return domain
 
     def paginated_environment_sagemaker_studio_domains(self, uri, filter={}) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""

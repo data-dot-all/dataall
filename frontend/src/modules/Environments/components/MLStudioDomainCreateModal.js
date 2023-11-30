@@ -38,7 +38,7 @@ export const MLStudioDomainCreateModal = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('Network added', {
+        enqueueSnackbar('ML Studio Domain Added', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'

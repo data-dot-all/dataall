@@ -183,7 +183,7 @@ class SagemakerStudioService:
                 environment=environment,
                 data=data,
             )
-            # TODO: DEPLOY ENV STACK
+            stack_helper.deploy_stack(domain.environmentUri)
         return domain
 
     @staticmethod
@@ -212,7 +212,7 @@ class SagemakerStudioService:
             domain = SagemakerStudioService._get_sagemaker_studio_domain(session, uri)
             # TODO: CHECK NUMBER OF USERS BEFORE DELETE
             session.delete(domain)
-            # TODO: DEPLOY ENV STACK
+            stack_helper.deploy_stack(domain.environmentUri)
             return True
 
     @staticmethod
