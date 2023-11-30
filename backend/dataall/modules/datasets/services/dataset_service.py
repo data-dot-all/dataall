@@ -55,13 +55,12 @@ class DatasetService:
         kms_alias = dataset.KmsAlias
 
         s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
-        if kms_alias not in [None, "Undefined", "", "SSE-S3"]: # user-defined KMS encryption
+        if kms_alias not in [None, "Undefined", "", "SSE-S3"]:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,
-                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). '
-                            f'KmsAlias {kms_alias} should NOT be provided as input parameter.'
+                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.'
                 )
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
@@ -81,11 +80,10 @@ class DatasetService:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,
-                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with a KMS key different from the key with'
-                            f'KmsAlias {kms_alias}. Provide the correct KMS Alias as input parameter.'
+                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with a KMS key different from the key with KmsAlias {kms_alias}. Provide the correct KMS Alias as input parameter.'
                 )
 
-        else: # user-defined S3 encryption
+        else:  # user-defined S3 encryption
             if s3_encryption != 'AES256':
                 raise exceptions.RequiredParameter(param_name='KmsAlias')
 
