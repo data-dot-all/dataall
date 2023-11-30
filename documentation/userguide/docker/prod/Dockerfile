@@ -4,25 +4,32 @@ ARG NODE_VERSION=16
 ARG PYTHON_VERSION=3.8
 ARG NGINX_VERSION=1.12
 ARG ENVSUBST_VERSION=v1.1.0
+ARG CONTAINER_USER=cuser
+ARG CONTAINER_USER_GROUP=cuser
+
 
 RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install python$PYTHON_VERSION
 RUN amazon-linux-extras install nginx$NGINX_VERSION
 
+RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -r -m -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
+RUN chown -R ${CONTAINER_USER_GROUP}:root /usr/local/
+
+USER ${CONTAINER_USER}
+
 RUN touch ~/.bashrc
 
-COPY . ./
+COPY --chown=${CONTAINER_USER}:root . ./
 
 RUN python$PYTHON_VERSION -m pip install -U pip
-RUN python$PYTHON_VERSION -m pip install -r requirements.txt
+RUN python$PYTHON_VERSION -m pip install -r documentation/userguide/requirements.txt
 RUN python$PYTHON_VERSION -m mkdocs build
 
 
-RUN curl -L https://github.com/a8m/envsubst/releases/download/$ENVSUBST_VERSION/envsubst-`uname -s`-`uname -m` -o envsubst && \
-    chmod +x envsubst && \
-    mv envsubst /usr/local/bin
-COPY ./docker/prod/nginx.config /etc/nginx/nginx.template
+RUN curl -L https://github.com/a8m/envsubst/releases/download/$ENVSUBST_VERSION/envsubst-`uname -s`-`uname -m` -o /usr/local/bin/envsubst && \
+    chmod +x /usr/local/bin/envsubst
+COPY --chown=${CONTAINER_USER}:root ./documentation/userguide/docker/prod/nginx.config /etc/nginx/nginx.template
 
 CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.template > /etc/nginx/conf.d/default.conf"]
 
