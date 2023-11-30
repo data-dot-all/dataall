@@ -120,11 +120,11 @@ def delete_sagemaker_studio_domain(
     )
 
 
-def list_environment_sagemaker_studio_domains(context, source, filter: dict = None, environment_uri: str = None):
-    RequestValidator.required_uri(environment_uri)
+def list_environment_sagemaker_studio_domains(context, source, filter: dict = None, environmentUri: str = None):
+    RequestValidator.required_uri(environmentUri)
     if not filter:
         filter = {}
-    return SagemakerStudioService.list_environment_sagemaker_studio_domains(filter=filter, environment_uri=environment_uri)
+    return SagemakerStudioService.list_environment_sagemaker_studio_domains(filter=filter, environment_uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: SagemakerStudioUser):

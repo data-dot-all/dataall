@@ -16,8 +16,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FaNetworkWired } from 'react-icons/fa';
-import { Defaults, Pager, PlusIcon, RefreshTableMenu, Scrollbar } from 'design';
+import {
+  Defaults,
+  MinusIcon,
+  Pager,
+  PlusIcon,
+  RefreshTableMenu,
+  Scrollbar
+} from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import {
@@ -97,7 +103,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
 
   const deleteEnvironmentMLStudioDomain = async (sagemakerStudioUri) => {
     const response = await client.mutate(
-      deleteMLStudioDomain({ sagemakerStudioUri: sagemakerStudioUri })
+      deleteMLStudioDomain({ sagemakerStudioUri })
     );
     if (!response.errors) {
       enqueueSnackbar('ML Studio Domain deleted', {
@@ -136,8 +142,32 @@ export const EnvironmentMLStudio = ({ environment }) => {
           action={<RefreshTableMenu refresh={fetchItems} />}
           title={
             <Box>
-              <FaNetworkWired style={{ marginRight: '10px' }} /> ML Studio
-              Domains
+              ML Studio Domains
+              {items.nodes.length === 0 ? (
+                <LoadingButton
+                  color="primary"
+                  onClick={handleStudioDomainCreateModalOpen}
+                  startIcon={<PlusIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                >
+                  Add ML Studio Domain
+                </LoadingButton>
+              ) : (
+                <LoadingButton
+                  color="primary"
+                  onClick={() => {
+                    deleteEnvironmentMLStudioDomain(
+                      items.nodes[0].sagemakerStudioUri
+                    );
+                  }}
+                  startIcon={<MinusIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                >
+                  Delete ML Studio Domain
+                </LoadingButton>
+              )}
             </Box>
           }
         />
@@ -151,29 +181,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
             p: 2
           }}
         >
-          <Grid item md={2} sm={6} xs={12}>
-            {items.nodes.length === 0 ? (
-              <LoadingButton
-                color="primary"
-                onClick={handleStudioDomainCreateModalOpen}
-                startIcon={<PlusIcon fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-              >
-                Add ML Studio Domain
-              </LoadingButton>
-            ) : (
-              <LoadingButton
-                color="primary"
-                onClick={deleteEnvironmentMLStudioDomain}
-                startIcon={<PlusIcon fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-              >
-                Delete ML Studio Domain
-              </LoadingButton>
-            )}
-          </Grid>
+          <Grid item md={2} sm={6} xs={12}></Grid>
         </Box>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>

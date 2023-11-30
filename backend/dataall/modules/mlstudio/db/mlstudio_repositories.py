@@ -70,16 +70,17 @@ class SageMakerStudioRepository(EnvironmentResource):
         )
 
     def create_sagemaker_studio_domain(self, username, environment, data):
-        # TODO: BUILD ROLE ARN
+        # TODO: BUILD ROLE ARN Domain Name
         domain = SagemakerStudioDomain(
             label=data.get('label'),
             owner=username,
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),
             environmentUri=environment.environmentUri,
-            AwsAccountId=environment.AwsAccountId,
+            AWSAccountId=environment.AwsAccountId,
             region=environment.region,
             SagemakerStudioStatus="PENDING",
+            sagemakerStudioDomainName=data.get('label'),
             RoleArn="TODO",
             vpcType=data.get('vpcType'),
             vpcId=data.get('vpcId'),
@@ -112,6 +113,9 @@ class SageMakerStudioRepository(EnvironmentResource):
                 )
             )
         return query
+
+    def find_sagemaker_studio_domain(self, uri) -> Optional[SagemakerStudioDomain]:
+        return self._session.query(SagemakerStudioDomain).get(uri)
 
     @staticmethod
     def get_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:

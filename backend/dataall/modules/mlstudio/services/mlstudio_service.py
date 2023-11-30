@@ -152,7 +152,7 @@ class SagemakerStudioService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
                     action=permissions.UPDATE_ENVIRONMENT,
@@ -188,7 +188,7 @@ class SagemakerStudioService:
 
     @staticmethod
     def check_mlstudio_domain_vpc(account_id: str, region: str, cdk_look_up_role_arn: str, data: dict):
-        if data.get("mlStudioVPCId", None) and data.get("mlStudioVPCId", None):
+        if data.get("vpcId", None) and data.get("subnetIds", None):
             EC2.check_vpc_exists(
                 AwsAccountId=account_id,
                 region=region,
@@ -200,14 +200,20 @@ class SagemakerStudioService:
             return True
 
     @staticmethod
-    @has_resource_permission(permissions.UPDATE_ENVIRONMENT)
+    def _get_domain_env_uri(session, uri):
+        domain = SagemakerStudioService._get_sagemaker_studio_domain(session, uri)
+        return domain.environmentUri
+
+    @staticmethod
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT, parent_resource=_get_domain_env_uri)
     def delete_sagemaker_studio_domain(*, uri: str):
         with _session() as session:
-            domain = SageMakerStudioRepository.get_sagemaker_studio_domain(session, uri)
+            domain = SagemakerStudioService._get_sagemaker_studio_domain(session, uri)
             # TODO: CHECK NUMBER OF USERS BEFORE DELETE
             session.delete(domain)
             # TODO: DEPLOY ENV STACK
-            return domain
+            return True
 
     @staticmethod
     def list_environment_sagemaker_studio_domains(*, filter: dict, environment_uri: str) -> dict:
@@ -283,3 +289,11 @@ class SagemakerStudioService:
         if not user:
             raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
         return user
+    
+    @staticmethod
+    def _get_sagemaker_studio_domain(session, uri):
+        domain = SageMakerStudioRepository(session).find_sagemaker_studio_domain(uri=uri)
+        if not domain:
+            raise exceptions.ObjectNotFound('SagemakerStudioDomain', uri)
+        return domain
+

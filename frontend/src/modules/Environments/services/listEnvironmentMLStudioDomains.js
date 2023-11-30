@@ -26,6 +26,7 @@ export const listEnvironmentMLStudioDomains = ({ filter, environmentUri }) => ({
           vpcType
           vpcId
           subnetIds
+          sagemakerStudioDomainName
         }
       }
     }
