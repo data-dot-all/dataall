@@ -9,7 +9,7 @@ ARG NVM_VERSION=v0.37.0
 RUN dnf update -y && \
     dnf install -y tar gzip openssl && \
     dnf clean all -y
-RUN amazon-linux-extras install nginx$NGINX_VERSION
+RUN dnf install nginx$NGINX_VERSION
 
 RUN touch ~/.bashrc
 

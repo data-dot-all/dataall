@@ -11,7 +11,7 @@ RUN dnf upgrade -y;\
 
 RUN dnf -y install shadow-utils wget
 RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN amazon-linux-extras install $PYTHON_VERSION
+RUN dnf install $PYTHON_VERSION
 RUN dnf -y install python38-devel
 
 ## Add your source

@@ -7,8 +7,8 @@ ARG ENVSUBST_VERSION=v1.1.0
 
 RUN dnf -y install shadow-utils wget
 RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN amazon-linux-extras install python$PYTHON_VERSION
-RUN amazon-linux-extras install nginx$NGINX_VERSION
+RUN dnf install python$PYTHON_VERSION
+RUN dnf install nginx$NGINX_VERSION
 
 RUN touch ~/.bashrc
 

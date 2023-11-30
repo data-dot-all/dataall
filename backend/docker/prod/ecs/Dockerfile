@@ -7,6 +7,7 @@ ARG PYTHON_VERSION=python3.8
 
 # Installing libraries
 RUN dnf upgrade -y \
+    && dnf install -y findutils \
     && find /var/tmp -name "*.rpm" -print -delete \
     && find /tmp -name "*.rpm" -print -delete \
     && dnf autoremove -y \
@@ -15,7 +16,7 @@ RUN dnf upgrade -y \
     && dnf install -y \
     shadow-utils wget openssl-devel bzip2-devel libffi-devel \
     postgresql-devel gcc unzip tar gzip \
-    && amazon-linux-extras install $PYTHON_VERSION \
+    && dnf install $PYTHON_VERSION \
     && dnf install -y python38-devel git \
     && /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3" \
     && curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
