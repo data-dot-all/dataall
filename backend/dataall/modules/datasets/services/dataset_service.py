@@ -18,7 +18,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
@@ -56,19 +55,13 @@ class DatasetService:
         kms_alias = dataset.KmsAlias
 
         s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
-        if not s3_encryption:
-            raise exceptions.AWSInsufficientPrivileges(
-                action=IMPORT_DATASET,
-                message=f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission '
-                        f'to retrieve information on bucket encryption type for {dataset.S3BucketName} bucket',
-            )
-
-        if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
+        if kms_alias not in [None, "Undefined", "", "SSE-S3"]: # user-defined KMS encryption
             if s3_encryption == 'AES256':
-                raise exceptions.UnauthorizedOperation(
-                    action=IMPORT_DATASET,
-                    message=f'Bucket {dataset.S3BucketName} is encrypted with aws managed key. '
-                            f'KmsAlias {kms_alias} should not be provided'
+                raise exceptions.InvalidInput(
+                    param_name='KmsAlias',
+                    param_value=dataset.KmsAlias,
+                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). '
+                            f'KmsAlias {kms_alias} should NOT be provided as input parameter.'
                 )
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
@@ -83,20 +76,17 @@ class DatasetService:
             key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
-            if not key_id:
-                raise exceptions.AWSInsufficientPrivileges(
-                    action=IMPORT_DATASET,
-                    message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
-                )
+
             if key_id != kms_id:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,
-                    constraint='  wrong. The bucket is encrypted with a different key'
+                    constraint=f'Bucket {dataset.S3BucketName} is encrypted with a KMS key different from the key with'
+                            f'KmsAlias {kms_alias}. Provide the correct KMS Alias as input parameter.'
                 )
 
-        else:
-            if s3_encryption != 'AES256':  # S3 managed encryption
+        else: # user-defined S3 encryption
+            if s3_encryption != 'AES256':
                 raise exceptions.RequiredParameter(param_name='KmsAlias')
 
         return True
@@ -337,7 +327,7 @@ class DatasetService:
 
             crawler = DatasetCrawler(dataset).get_crawler()
             if not crawler:
-                raise AWSResourceNotFound(
+                raise exceptions.AWSResourceNotFound(
                     action=CRAWL_DATASET,
                     message=f'Crawler {dataset.GlueCrawlerName} can not be found',
                 )
@@ -405,7 +395,7 @@ class DatasetService:
             )
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
             if shares:
-                raise UnauthorizedOperation(
+                raise exceptions.UnauthorizedOperation(
                     action=DELETE_DATASET,
                     message=f'Dataset {dataset.name} is shared with other teams. '
                             'Revoke all dataset shares before deletion.',

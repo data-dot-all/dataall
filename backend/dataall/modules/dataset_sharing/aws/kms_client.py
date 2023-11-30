@@ -22,7 +22,7 @@ class KmsClient:
             )
         except Exception as e:
             log.error(
-                f'Failed to attach policy to KMS key {key_id} on {self._account_id} : {e} '
+                f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} '
             )
             raise e
 
@@ -32,9 +32,12 @@ class KmsClient:
                 KeyId=key_id,
                 PolicyName=self._DEFAULT_POLICY_NAME,
             )
+        except self._client.exceptions.AccessDeniedException as e:
+            raise Exception(
+                f'Data.all Environment Pivot Role does not have kms:GetKeyPolicy Permission for key id {key_id}: {e}')
         except Exception as e:
             log.error(
-                f'Failed to get kms key policy of key {key_id} : {e}'
+                f'Failed to get kms key policy of key {key_id}: {e}'
             )
             return None
         else:
@@ -45,9 +48,12 @@ class KmsClient:
             response = self._client.describe_key(
                 KeyId=key_alias,
             )
+        except self._client.exceptions.AccessDeniedException as e:
+            raise Exception(
+                f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission for key alias {key_alias}: {e}')
         except Exception as e:
             log.error(
-                f'Failed to get kms key id of {key_alias} : {e}'
+                f'Failed to get kms key id of {key_alias}: {e}'
             )
             return None
         else:
@@ -62,10 +68,10 @@ class KmsClient:
                 if key_alias in key_aliases:
                     key_exist = True
                     break
+        except self._client.exceptions.AccessDeniedException as e:
+            raise Exception(f'Data.all Environment Pivot Role does not have kms:ListAliases Permission in account {self._account_id}: {e}')
         except Exception as e:
-            log.error(
-                f'Failed to list kms key aliases in account {self._account_id}: {e}'
-            )
+            log.error(f'Failed to list KMS key aliases in account {self._account_id}: {e}')
             return None
         else:
             return key_exist
