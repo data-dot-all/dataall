@@ -15,7 +15,7 @@ class SagemakerStudioDomain(Resource, Base):
     sagemakerStudioUri = Column(
         String, primary_key=True, default=utils.uuid('sagemakerstudio')
     )
-    sagemakerStudioDomainID = Column(String, nullable=False)
+    sagemakerStudioDomainID = Column(String, nullable=True)
     SagemakerStudioStatus = Column(String, nullable=True)
     sagemakerStudioDomainName = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
