@@ -501,7 +501,6 @@ class ContainerStack(pyNestedClass):
                     resources=[
                         f'arn:aws:iam::*:role/{pivot_role_name}',
                         f'arn:aws:iam::*:role/cdk*',
-                        'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
                     ],
                 ),

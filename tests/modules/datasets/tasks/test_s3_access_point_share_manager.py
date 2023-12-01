@@ -22,6 +22,9 @@ TARGET_ACCOUNT_ENV = "222222222222"
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
+DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
+
+
 @pytest.fixture(scope="module")
 def source_environment(env: Callable, org_fixture: Organization, group: Group):
     source_environment = env(
@@ -510,22 +513,20 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{target_environment.SamlGroupName}",
+                "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
                 "Effect": "Allow",
-                "Principal": {"AWS": "*"},
+                "Principal": {
+                    "AWS": [
+                        "env_admin_arn"
+                    ]
+                },
                 "Action": "kms:Decrypt",
                 "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": f"{target_environment.SamlGroupName}:*"}},
             }
         ],
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.get_role_id",
-        return_value=target_environment.SamlGroupName,
-    )
 
     with db.scoped_session() as session:
         manager = S3AccessPointShareManager(
@@ -543,7 +544,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
         manager.update_dataset_bucket_key_policy()
 
         # Then
-        kms_client().put_key_policy.assert_not_called()
+        kms_client().put_key_policy.assert_called()
 
 
 def _generate_ap_policy_object(
@@ -617,31 +618,20 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "different_env_admin_id",
+                "Sid": DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
                 "Effect": "Allow",
-                "Principal": {"AWS": "*"},
+                "Principal": {
+                    "AWS": [
+                        "different_env_admin_id"
+                    ]
+                },
                 "Action": "kms:Decrypt",
-                "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": "different_env_admin_id:*"}},
+                "Resource": "*"
             }
         ],
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.get_role_id",
-        return_value=target_environment.SamlGroupName,
-    )
-
-    new_key_policy = {
-        "Sid": f"{target_environment.SamlGroupName}",
-        "Effect": "Allow",
-        "Principal": {"AWS": "*"},
-        "Action": "kms:Decrypt",
-        "Resource": "*",
-        "Condition": {"StringLike": {"aws:userId": f"{target_environment.SamlGroupName}:*"}},
-    }
 
     with db.scoped_session() as session:
         manager = S3AccessPointShareManager(
@@ -658,12 +648,23 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         # When
         manager.update_dataset_bucket_key_policy()
 
-        existing_key_policy["Statement"].append(new_key_policy)
+        kms_client().put_key_policy.assert_called()
 
-        expected_complete_key_policy = existing_key_policy
+        # Check the modified KMS key policy
+        kms_key_policy = json.loads(kms_client().put_key_policy.call_args[0][1])
 
         # Then
-        kms_client().put_key_policy.assert_called_with("kms-key", json.dumps(expected_complete_key_policy))
+        assert len(kms_key_policy["Statement"]) == 1
+        assert kms_key_policy["Statement"][0]["Sid"] == DATAALL_ACCESS_POINT_KMS_DECRYPT_SID
+        assert kms_key_policy["Statement"][0]["Action"] == "kms:Decrypt"
+
+        # Check if the "Principal" contains the added target_requester_arn
+        assert "Principal" in kms_key_policy["Statement"][0]
+        assert "AWS" in kms_key_policy["Statement"][0]["Principal"]
+        assert "different_env_admin_id" in kms_key_policy["Statement"][0]["Principal"]["AWS"]
+        assert kms_key_policy["Statement"][0]["Resource"] == "*"  # Resource should be "*"
+        assert f"arn:aws:iam::{target_environment.AwsAccountId}:role/{target_environment.EnvironmentDefaultIAMRoleName}" in \
+               kms_key_policy["Statement"][0]["Principal"]["AWS"]
 
 
 # NO existing Access point and ap policy
@@ -1263,27 +1264,29 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
+    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock())
+    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
+        TARGET_ACCOUNT_ENV,
+        TARGET_ACCOUNT_ENV_ROLE_NAME
+    )
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{target_environment.SamlGroupName}",
+                "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
                 "Effect": "Allow",
-                "Principal": {"AWS": "*"},
+                "Principal": {"AWS": [
+                    "SomeTargetResourceArn",
+                    f"{target_requester_arn}"
+                ]},
                 "Action": "kms:Decrypt",
-                "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": f"{target_environment.SamlGroupName}:*"}},
-            },
-            {
-                "Sid": "REMAINING_TARGET_ENV_ADMIN_ID",
-                "Effect": "Allow",
-                "Principal": {"AWS": "*"},
-                "Action": "kms:Decrypt",
-                "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": "REMAINING_TARGET_ENV_ADMIN_ID:*"}},
-            },
+                "Resource": "*"
+            }
         ],
     }
 
@@ -1291,22 +1294,18 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "REMAINING_TARGET_ENV_ADMIN_ID",
+                "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
                 "Effect": "Allow",
-                "Principal": {"AWS": "*"},
+                "Principal": {"AWS": [
+                    "SomeTargetResourceArn"
+                ]},
                 "Action": "kms:Decrypt",
-                "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": "REMAINING_TARGET_ENV_ADMIN_ID:*"}},
+                "Resource": "*"
             }
         ],
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.get_role_id",
-        return_value=target_environment.SamlGroupName,
-    )
 
     with db.scoped_session() as session:
         manager = S3AccessPointShareManager(
@@ -1321,7 +1320,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
         )
 
         # When
-        manager.delete_dataset_bucket_key_policy(share1, dataset1, target_environment)
+        manager.delete_dataset_bucket_key_policy(dataset1)
 
         # Then
         kms_client().put_key_policy.assert_called()
@@ -1347,18 +1346,27 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
+    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock(),
+                                                                     mocker.MagicMock(), mocker.MagicMock())
+    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
+        TARGET_ACCOUNT_ENV,
+        TARGET_ACCOUNT_ENV_ROLE_NAME
+    )
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{target_environment.SamlGroupName}",
+                "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
                 "Effect": "Allow",
-                "Principal": {"AWS": "*"},
+                "Principal": {"AWS": [
+                    f"{target_requester_arn}"
+                ]},
                 "Action": "kms:Decrypt",
-                "Resource": "*",
-                "Condition": {"StringLike": {"aws:userId": f"{target_environment.SamlGroupName}:*"}},
+                "Resource": "*"
             }
         ],
     }
@@ -1369,11 +1377,6 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.get_role_id",
-        return_value=target_environment.SamlGroupName,
-    )
 
     with db.scoped_session() as session:
         manager = S3AccessPointShareManager(
@@ -1388,7 +1391,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
         )
 
         # When
-        manager.delete_dataset_bucket_key_policy(share1, dataset1, target_environment)
+        manager.delete_dataset_bucket_key_policy(dataset1)
 
         # Then
         kms_client().put_key_policy.assert_called()
