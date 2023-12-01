@@ -4,21 +4,27 @@ ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG PYTHON_VERSION=python3.9
 
+# Clean cache
 RUN dnf clean all
-RUN dnf -y install shadow-utils wget
-RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python39-devel
-RUN dnf -y install git
 
-RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"
+# Installing libraries
+RUN dnf -y install -y \
+    shadow-utils wget openssl-devel bzip2-devel libffi-devel \
+    postgresql-devel gcc unzip tar gzip
+
+# Install Python
+RUN dnf install $PYTHON_VERSION
+RUN dnf -y install python3-pip python3-devel git
 
 RUN useradd -m app
 
+## Add source
 WORKDIR /build
 
+# Configuring path
 RUN touch ~/.bashrc
 
+# Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
@@ -27,9 +33,11 @@ COPY ./docker/dev/wait-for-it.sh /build/wait-for-it.sh
 RUN chmod +x /build/wait-for-it.sh
 RUN chown -R app:root /build/wait-for-it.sh
 
+## Add source
 WORKDIR /dataall
 RUN touch ~/.bashrc
 
+# Configuring Node and CDK
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh | bash
 RUN /bin/bash -c ". ~/.nvm/nvm.sh && \
 	nvm install $NODE_VERSION && nvm use $NODE_VERSION && \
@@ -46,16 +54,19 @@ $PATH" >> ~/.bashrc && \
 
 RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
-COPY ./requirements.txt dh.requirements.txt
+# App specific requirements
+COPY ./requirements.txt requirements.txt
 COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
-COPY ./dataall /dataall
 
+# Install App requirements
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
+
+# App code
+COPY ./dataall /dataall
 ADD ./cdkproxymain.py /cdkproxymain.py
 ADD ./local_graphql_server.py /local_graphql_server.py
-
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
 WORKDIR /
 

@@ -5,21 +5,24 @@ ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.0-spark-3.1
 ARG PYTHON_VERSION=python3.9
 
+# Clean cache
+RUN dnf upgrade -y;\
+    find /var/tmp -name "*.rpm" -print -delete ;\
+    find /tmp -name "*.rpm" -print -delete ;\
+    dnf autoremove -y; \
+    dnf clean all; rm -rfv /var/cache/dnf
+
 # Installing libraries
-RUN dnf upgrade -y \
-    && dnf install -y findutils \
-    && find /var/tmp -name "*.rpm" -print -delete \
-    && find /tmp -name "*.rpm" -print -delete \
-    && dnf autoremove -y \
-    && dnf clean all \
-    && rm -rfv /var/cache/dnf \
-    && dnf install -y \
+RUN dnf -y install -y \
     shadow-utils wget openssl-devel bzip2-devel libffi-devel \
-    postgresql-devel gcc unzip tar gzip \
-    && dnf install $PYTHON_VERSION \
-    && dnf install -y python39-devel git \
-    && /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3" \
-    && curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
+    postgresql-devel gcc unzip tar gzip
+
+# Install Python
+RUN dnf install $PYTHON_VERSION
+RUN dnf -y install python3-pip python3-devel git
+
+# Install AWS CLI
+RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
     && unzip -q /tmp/awscliv2.zip -d /opt \
     && /opt/aws/install --update -i /usr/local/aws-cli -b /usr/local/bin \
     && rm /tmp/awscliv2.zip \
@@ -34,8 +37,9 @@ RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/insta
     && /bin/bash -c ". ~/.nvm/nvm.sh && \
     nvm install $NODE_VERSION && nvm use $NODE_VERSION && \
     npm install -g aws-cdk && \
-    nvm alias default node && nvm cache clear" \
-    && echo export PATH="\
+    nvm alias default node && nvm cache clear"
+
+RUN echo export PATH="\
     /root/.nvm/versions/node/${NODE_VERSION}/bin:\
     $(${PYTHON_VERSION} -m site --user-base)/bin:\
     $(python3 -m site --user-base)/bin:\
@@ -43,22 +47,25 @@ RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/insta
      echo "nvm use ${NODE_VERSION} 1> /dev/null" >> ~/.bashrc \
     && /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
-RUN $PYTHON_VERSION -m pip install -U pip
-
-# App specific
-ADD backend/requirements.txt /dh.requirements.txt
+# App specific requirements
+ADD backend/requirements.txt /requirements.txt
 ADD backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
 
-RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt" \
-    && /bin/bash -c "pip3.8 install -r /cdk.requirements.txt"
+# Install App requirements
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
+# App code
 ADD backend/dataall /dataall
 VOLUME ["/dataall"]
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
+# App configuration file
 ENV config_location="/config.json"
 COPY config.json /config.json
 
+# Glue profiling jobs jars
 RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 

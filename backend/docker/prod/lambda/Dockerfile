@@ -3,26 +3,36 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG FUNCTION_DIR="/home/app/"
 ARG PYTHON_VERSION=python3.9
 
+# Clean cache
 RUN dnf upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
     find /tmp -name "*.rpm" -print -delete ;\
     dnf autoremove -y; \
     dnf clean all; rm -rfv /var/cache/dnf
 
-RUN dnf -y install shadow-utils wget
-RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python39-devel
+# Install libraries
+RUN dnf -y install -y \
+    shadow-utils wget openssl-devel bzip2-devel libffi-devel \
+    postgresql-devel gcc unzip tar gzip
 
-## Add your source
+# Install Python
+RUN dnf install $PYTHON_VERSION
+RUN dnf -y install python3-pip python3-devel
+
+## Add source
 WORKDIR ${FUNCTION_DIR}
 
+# App specific requirements
 COPY backend/requirements.txt ./requirements.txt
-RUN $PYTHON_VERSION -m pip install -U pip
-RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
+# Install App requirements
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
+
+# App code
 COPY backend/. ./
 
+# App configuration file
 ENV config_location="config.json"
 COPY config.json ./config.json
 
