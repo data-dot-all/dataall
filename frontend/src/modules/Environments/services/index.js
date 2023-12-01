@@ -24,5 +24,4 @@ export * from './updateEnvironment';
 export * from './updateGroupEnvironmentPermissions';
 export * from './createMLStudioDomain';
 export * from './deleteEnvironmentMLStudioDomain';
-export * from './listEnvironmentMLStudioDomains';
 export * from './getEnvironmentMLStudioDomain';

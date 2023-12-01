@@ -151,47 +151,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
             </Grid>
           </Grid>
         )}
-        {/* <Scrollbar>
-          <Box sx={{ minWidth: 600 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Domain Name</TableCell>
-                  <TableCell>VPC</TableCell>
-                  <TableCell>Subnets</TableCell>
-                </TableRow>
-              </TableHead>
-              {loading ? (
-                <CircularProgress sx={{ mt: 1 }} />
-              ) : (
-                <TableBody>
-                  {items.nodes.length > 0 ? (
-                    items.nodes.map((domain) => (
-                      <DomainRow
-                        domain={domain}
-                        environment={environment}
-                        fetchItems={fetchItems}
-                      />
-                    ))
-                  ) : (
-                    <TableRow hover>
-                      <TableCell>No SageMaker Studio Domain Found</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              )}
-            </Table>
-            {!loading && items.nodes.length > 0 && (
-              <Pager
-                mgTop={2}
-                mgBottom={2}
-                items={items}
-                onChange={handlePageChange}
-              />
-            )}
-          </Box>
-        </Scrollbar> */}
       </Card>
     </Box>
   );

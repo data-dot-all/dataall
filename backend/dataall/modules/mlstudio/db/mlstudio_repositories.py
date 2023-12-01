@@ -122,15 +122,6 @@ class SageMakerStudioRepository(EnvironmentResource):
         return domain
 
     @staticmethod
-    def paginated_environment_sagemaker_studio_domains(session, uri, filter={}) -> dict:
-        """Returns a page of sagemaker studio users for a data.all user"""
-        return paginate(
-            query=SageMakerStudioRepository._query_environment_sagemaker_studio_domains(session, uri, filter),
-            page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),
-            page_size=filter.get('pageSize', SageMakerStudioRepository._DEFAULT_PAGE_SIZE),
-        ).to_dict()
-
-    @staticmethod
     def _query_environment_sagemaker_studio_domains(session, uri, filter) -> Query:
         query = session.query(SagemakerStudioDomain).filter(
             SagemakerStudioDomain.environmentUri == uri,

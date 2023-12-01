@@ -214,15 +214,6 @@ class SagemakerStudioService:
             return SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment_uri)
 
     @staticmethod
-    def list_environment_sagemaker_studio_domains(*, filter: dict, environment_uri: str) -> dict:
-        with _session() as session:
-            return SageMakerStudioRepository.paginated_environment_sagemaker_studio_domains(
-                session=session,
-                uri=environment_uri,
-                filter=filter,
-            )
-
-    @staticmethod
     def list_sagemaker_studio_users(*, filter: dict) -> dict:
         with _session() as session:
             return SageMakerStudioRepository.paginated_sagemaker_studio_users(
@@ -289,4 +280,3 @@ class SagemakerStudioService:
         if not user:
             raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
         return user
-

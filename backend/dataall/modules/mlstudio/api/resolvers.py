@@ -125,13 +125,6 @@ def get_environment_sagemaker_studio_domain(context, source, environmentUri: str
     return SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=environmentUri)
 
 
-def list_environment_sagemaker_studio_domains(context, source, filter: dict = None, environmentUri: str = None):
-    RequestValidator.required_uri(environmentUri)
-    if not filter:
-        filter = {}
-    return SagemakerStudioService.list_environment_sagemaker_studio_domains(filter=filter, environment_uri=environmentUri)
-
-
 def resolve_user_role(context: Context, source: SagemakerStudioUser):
     """
     Resolves the role of the current user in reference with the SageMaker Studio User
