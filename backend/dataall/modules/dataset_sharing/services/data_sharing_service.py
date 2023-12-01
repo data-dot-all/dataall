@@ -204,8 +204,7 @@ class DataSharingService:
                     source_environment=source_environment,
                     target_environment=target_environment,
                     source_env_group=source_env_group,
-                    env_group=env_group,
-                    existing_shared_buckets=existing_shared_buckets
+                    env_group=env_group
                 )
                 log.info(f"Clean up S3 successful = {clean_up_folders}")
 
@@ -219,8 +218,7 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 source_env_group,
-                env_group,
-                existing_shared_folders
+                env_group
             )
             log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 

@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
+DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 
 
 class S3BucketShareManager:
@@ -268,29 +269,33 @@ class S3BucketShareManager:
             kms_client = KmsClient(self.source_account_id, self.source_environment.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = kms_client.get_key_policy(kms_key_id)
-            target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
-            if existing_policy and f'{target_requester_id}:*' not in existing_policy:
-                policy = json.loads(existing_policy)
-                policy["Statement"].append(
-                    {
-                        "Sid": f"{target_requester_id}",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "AWS": "*"
-                        },
-                        "Action": "kms:Decrypt",
-                        "Resource": "*",
-                        "Condition": {
-                            "StringLike": {
-                                "aws:userId": f"{target_requester_id}:*"
-                            }
-                        }
-                    }
-                )
-                kms_client.put_key_policy(
-                    kms_key_id,
-                    json.dumps(policy)
-                )
+            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            if existing_policy:
+                existing_policy = json.loads(existing_policy)
+                counter = count()
+                statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+                if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
+                    logger.info(f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
+                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
+                        statements[DATAALL_BUCKET_KMS_DECRYPT_SID], target_requester_arn)
+                else:
+                    logger.info(
+                        f'KMS key does not contain share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, generating a new one')
+                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
+                        target_requester_arn)
+                existing_policy["Statement"] = list(statements.values())
+            else:
+                logger.info('KMS key policy does not contain any statements, generating a new one')
+                existing_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        self.generate_default_kms_decrypt_policy_statement(target_requester_arn)
+                    ]
+                }
+            kms_client.put_key_policy(
+                kms_key_id,
+                json.dumps(existing_policy)
+            )
 
     def delete_target_role_bucket_policy(self):
         logger.info(
@@ -374,11 +379,9 @@ class S3BucketShareManager:
                     json.dumps(existing_policy),
                 )
 
-    @staticmethod
     def delete_target_role_bucket_key_policy(
-            share: ShareObject,
+            self,
             target_bucket: DatasetBucket,
-            target_environment: Environment,
     ):
         if (target_bucket.imported and target_bucket.importedKmsKey) or not target_bucket.imported:
             logger.info(
@@ -387,15 +390,23 @@ class S3BucketShareManager:
             key_alias = f"alias/{target_bucket.KmsAlias}"
             kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
             kms_key_id = kms_client.get_key_id(key_alias)
-            existing_policy = kms_client.get_key_policy(kms_key_id)
-            target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
-            if existing_policy and f'{target_requester_id}:*' in existing_policy:
-                policy = json.loads(existing_policy)
-                policy["Statement"] = [item for item in policy["Statement"] if item.get("Sid", None) != f"{target_requester_id}"]
-                kms_client.put_key_policy(
-                    kms_key_id,
-                    json.dumps(policy)
-                )
+            existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
+            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            counter = count()
+            statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+            if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
+                principal_list = self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID])
+                if f"{target_requester_arn}" in principal_list:
+                    principal_list.remove(f"{target_requester_arn}")
+                    if len(principal_list) == 0:
+                        statements.pop(DATAALL_BUCKET_KMS_DECRYPT_SID)
+                    else:
+                        statements[DATAALL_BUCKET_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
+                    existing_policy["Statement"] = list(statements.values())
+                    kms_client.put_key_policy(
+                        kms_key_id,
+                        json.dumps(existing_policy)
+                    )
 
     def handle_share_failure(self, error: Exception) -> bool:
         """
@@ -455,4 +466,18 @@ class S3BucketShareManager:
                 f"arn:aws:s3:::{s3_bucket_name}",
                 f"arn:aws:s3:::{s3_bucket_name}/*"
             ]
+        }
+
+    @staticmethod
+    def generate_default_kms_decrypt_policy_statement(target_requester_arn):
+        return {
+            "Sid": f"{DATAALL_BUCKET_KMS_DECRYPT_SID}",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    f"{target_requester_arn}"
+                ]
+            },
+            "Action": "kms:Decrypt",
+            "Resource": "*"
         }
