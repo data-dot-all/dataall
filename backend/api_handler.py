@@ -133,7 +133,8 @@ def handler(event, context):
         try:
             groups = get_groups(claims)
             if (os.environ.get('custom_auth', None)):
-                groups.extend(get_custom_groups(event))
+                user_id = event['requestContext']['authorizer']['user_id']
+                groups.extend(get_custom_groups(user_id))
             log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:

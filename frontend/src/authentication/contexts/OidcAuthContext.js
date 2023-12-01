@@ -1,4 +1,4 @@
-import { AuthProvider, useAuth } from 'react-oidc-context';
+import { AuthProvider } from 'react-oidc-context';
 import PropTypes from 'prop-types';
 import { WebStorageStateStore } from 'oidc-client-ts';
 import { GenericAuthProvider } from './GenericAuthContext';
