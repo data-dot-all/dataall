@@ -7,7 +7,7 @@ def test_list_groups_env(client, env_fixture, group, module_mocker):
         'dataall.base.aws.cognito.Cognito',
         return_value=mock_client
     )
-    mock_client().list_groups.return_value = [{"GroupName": 'cognitos'}, {"GroupName": 'testadmins'}]
+    mock_client().list_groups.return_value = ['cognitos', 'testadmins']
     module_mocker.patch(
         'dataall.core.groups.api.resolvers.ServiceProviderFactory.get_service_provider_instance',
         return_value=mock_client()

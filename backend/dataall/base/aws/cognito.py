@@ -18,7 +18,14 @@ class Cognito(ServiceProvider):
             parameter_path = f'/dataall/{envname}/cognito/userpool'
             ssm = boto3.client('ssm', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
             user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
-            cognito_user_list = self.client.list_users_in_group(UserPoolId=user_pool_id, GroupName=groupName)["Users"]
+            paginator = self.client.get_paginator('list_users_in_group')
+            pages = paginator.paginate(
+                UserPoolId=user_pool_id,
+                GroupName=groupName
+            )
+            cognito_user_list = []
+            for page in pages:
+                cognito_user_list += page['Users']
             group_email_ids = []
             attributes = []
             # Make a flat list
@@ -39,18 +46,23 @@ class Cognito(ServiceProvider):
             return group_email_ids
 
     def list_groups(self, envname: str, region: str):
+        user_pool_id = None
+        groups = []
         try:
             parameter_path = f'/dataall/{envname}/cognito/userpool'
             ssm = boto3.client('ssm', region_name=region)
             user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
             cognito = boto3.client('cognito-idp', region_name=region)
-            groups = cognito.list_groups(UserPoolId=user_pool_id)['Groups']
+            paginator = cognito.get_paginator('list_groups')
+            pages = paginator.paginate(UserPoolId=user_pool_id)
+            for page in pages:
+                groups += [gr['GroupName'] for gr in page['Groups']]
         except Exception as e:
             log.error(
                 f'Failed to list groups of user pool {user_pool_id} due to {e}'
             )
-        else:
-            return groups
+            raise e
+        return groups
 
     def get_groups_for_user(self, user_id):
         return []
