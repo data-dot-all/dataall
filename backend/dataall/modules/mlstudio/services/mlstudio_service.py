@@ -19,7 +19,7 @@ from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
-from dataall.modules.mlstudio.aws.ec2_client import EC2
+from dataall.core.environment.aws.ec2_client import EC2
 from dataall.base.aws.sts import SessionHelper
 
 from dataall.modules.mlstudio.services.mlstudio_permissions import (
@@ -88,7 +88,7 @@ class SagemakerStudioService:
             )
 
             # FOR NEW ONES (default, created, imported)
-            # - CHECK RDS FIRST
+            # - CHECK RDS FIRST - ONLY GET DOMAIN NAME
             # - IF NOT BOTO3
 
             existing_domain = response.get('DomainId', False)
@@ -114,7 +114,7 @@ class SagemakerStudioService:
                 SamlAdminGroupName=admin_group,
                 tags=request.tags,
             )
-            SageMakerStudioRepository(session).save_sagemaker_studio_user(user=sagemaker_studio_user)
+            SageMakerStudioRepository.save_sagemaker_studio_user(session, sagemaker_studio_user)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
@@ -178,12 +178,12 @@ class SagemakerStudioService:
             else:
                 data["vpcType"] = "created"
 
-            domain = SageMakerStudioRepository(session).create_sagemaker_studio_domain(
+            domain = SageMakerStudioRepository.create_sagemaker_studio_domain(
+                session=session,
                 username=get_context().username,
                 environment=environment,
                 data=data,
             )
-            stack_helper.deploy_stack(domain.environmentUri)
         return domain
 
     @staticmethod
@@ -196,29 +196,28 @@ class SagemakerStudioService:
                 vpc_id=data.get("vpcId", None),
                 subnet_ids=data.get('subnetIds', []),
             )
-            data["vpcType"] = "imported"
             return True
-
-    @staticmethod
-    def _get_domain_env_uri(session, uri):
-        domain = SagemakerStudioService._get_sagemaker_studio_domain(session, uri)
-        return domain.environmentUri
 
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_permission(permissions.UPDATE_ENVIRONMENT, parent_resource=_get_domain_env_uri)
-    def delete_sagemaker_studio_domain(*, uri: str):
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT)
+    def delete_environment_sagemaker_studio_domain(*, uri: str):
         with _session() as session:
-            domain = SagemakerStudioService._get_sagemaker_studio_domain(session, uri)
+            domain = SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=uri)
             # TODO: CHECK NUMBER OF USERS BEFORE DELETE
             session.delete(domain)
-            stack_helper.deploy_stack(domain.environmentUri)
             return True
+
+    @staticmethod
+    def get_environment_sagemaker_studio_domain(*, environment_uri: str):
+        with _session() as session:
+            return SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment_uri)
 
     @staticmethod
     def list_environment_sagemaker_studio_domains(*, filter: dict, environment_uri: str) -> dict:
         with _session() as session:
-            return SageMakerStudioRepository(session).paginated_environment_sagemaker_studio_domains(
+            return SageMakerStudioRepository.paginated_environment_sagemaker_studio_domains(
+                session=session,
                 uri=environment_uri,
                 filter=filter,
             )
@@ -226,7 +225,8 @@ class SagemakerStudioService:
     @staticmethod
     def list_sagemaker_studio_users(*, filter: dict) -> dict:
         with _session() as session:
-            return SageMakerStudioRepository(session).paginated_sagemaker_studio_users(
+            return SageMakerStudioRepository.paginated_sagemaker_studio_users(
+                session=session,
                 username=get_context().username,
                 groups=get_context().groups,
                 filter=filter,
@@ -285,14 +285,8 @@ class SagemakerStudioService:
 
     @staticmethod
     def _get_sagemaker_studio_user(session, uri):
-        user = SageMakerStudioRepository(session).find_sagemaker_studio_user(uri=uri)
+        user = SageMakerStudioRepository.find_sagemaker_studio_user(session=session, uri=uri)
         if not user:
             raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
         return user
 
-    @staticmethod
-    def _get_sagemaker_studio_domain(session, uri):
-        domain = SageMakerStudioRepository(session).find_sagemaker_studio_domain(uri=uri)
-        if not domain:
-            raise exceptions.ObjectNotFound('SagemakerStudioDomain', uri)
-        return domain

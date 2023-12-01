@@ -1,101 +1,39 @@
-import { LoadingButton } from '@mui/lab';
-import { DeleteOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
   CardHeader,
-  Chip,
   Divider,
   Grid,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow
+  CardContent,
+  Typography,
+  CircularProgress
 } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
-import { useSnackbar } from 'notistack';
+
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Defaults, Pager, PlusIcon, RefreshTableMenu, Scrollbar } from 'design';
+import { RefreshTableMenu, ObjectMetadata } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import {
-  deleteMLStudioDomain,
-  listEnvironmentMLStudioDomains
-} from '../services';
-import { MLStudioDomainCreateModal } from './MLStudioDomainCreateModal';
+import { getEnvironmentMLStudioDomain } from '../services';
 
-function DomainRow({ domain, deleteEnvironmentMLStudioDomain }) {
-  return (
-    <TableRow hover>
-      <TableCell>{domain.label}</TableCell>
-      <TableCell>{domain.sagemakerStudioDomainName}</TableCell>
-      <TableCell>{domain.vpcId}</TableCell>
-      <TableCell>
-        {domain.subnetIds && (
-          <Box
-            sx={{
-              pb: 2,
-              px: 3
-            }}
-          >
-            {domain.subnetIds.map((subnet) => (
-              <Chip
-                size="small"
-                sx={{ mr: 0.5 }}
-                key={subnet}
-                label={subnet}
-                variant="outlined"
-              />
-            ))}
-          </Box>
-        )}
-      </TableCell>
-      <TableCell>
-        <IconButton
-          onClick={() => {
-            deleteEnvironmentMLStudioDomain(domain.sagemakerStudioUri);
-          }}
-        >
-          <DeleteOutlined fontSize="small" />
-        </IconButton>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-DomainRow.propTypes = {
-  domain: PropTypes.any,
-  deleteEnvironmentMLStudioDomain: PropTypes.func
-};
 export const EnvironmentMLStudio = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.pagedResponse);
-  const [filter, setFilter] = useState(Defaults.filter);
+  const [mlStudioDomain, setMLStudioDomain] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isStudioDomainCreateOpen, setStudioDomainCreateOpen] = useState(false);
-  const handleStudioDomainCreateModalOpen = () => {
-    setStudioDomainCreateOpen(true);
-  };
 
-  const handleStudioDomainCreateModalClose = () => {
-    setStudioDomainCreateOpen(false);
-  };
-
-  const fetchItems = useCallback(async () => {
+  const fetchMLStudioDomain = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await client.query(
-        listEnvironmentMLStudioDomains({
-          environmentUri: environment.environmentUri,
-          filter
+        getEnvironmentMLStudioDomain({
+          environmentUri: environment.environmentUri
         })
       );
       if (!response.errors) {
-        setItems({ ...response.data.listEnvironmentMLStudioDomains });
+        if (response.data.getEnvironmentMLStudioDomain) {
+          setMLStudioDomain(response.data.getEnvironmentMLStudioDomain);
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -104,63 +42,26 @@ export const EnvironmentMLStudio = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  }, [client, dispatch, filter, environment.environmentUri]);
-
-  const deleteEnvironmentMLStudioDomain = async (sagemakerStudioUri) => {
-    const response = await client.mutate(
-      deleteMLStudioDomain({ sagemakerStudioUri })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('ML Studio Domain deleted', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
+  }, [client, dispatch, environment.environmentUri]);
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) =>
+      fetchMLStudioDomain().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, fetchItems, dispatch]);
+  }, [client, fetchMLStudioDomain, dispatch]);
 
-  const handlePageChange = async (event, value) => {
-    if (value <= items.pages && value !== items.page) {
-      await setFilter({ ...filter, page: value });
-    }
-  };
+  if (loading) {
+    return <CircularProgress />;
+  }
 
   return (
     <Box>
       <Card>
         <CardHeader
-          action={<RefreshTableMenu refresh={fetchItems} />}
-          title={
-            <Box>
-              ML Studio Domains
-              {items.nodes.length === 0 && (
-                <LoadingButton
-                  color="primary"
-                  onClick={handleStudioDomainCreateModalOpen}
-                  startIcon={<PlusIcon fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                >
-                  Add ML Studio Domain
-                </LoadingButton>
-              )}
-            </Box>
-          }
+          action={<RefreshTableMenu refresh={fetchMLStudioDomain} />}
+          title={<Box>ML Studio Domain</Box>}
         />
         <Divider />
         <Box
@@ -174,7 +75,83 @@ export const EnvironmentMLStudio = ({ environment }) => {
         >
           <Grid item md={2} sm={6} xs={12}></Grid>
         </Box>
-        <Scrollbar>
+        {mlStudioDomain === null ? (
+          <Box sx={{ p: 3 }}>
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="subtitle2"
+            >
+              No ML Studio Domain - To Create a ML Studio Domain for this
+              Environment: `{environment.label}`, edit the Environment and
+              enable the ML Studio Environment Feature
+            </Typography>
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid item lg={8} xl={9} xs={12}>
+              <Card>
+                <CardHeader title="ML Studio Information" />
+                <Divider />
+                <CardContent>
+                  <Typography color="textSecondary" variant="subtitle2">
+                    SageMaker ML Studio Domain Name
+                  </Typography>
+                  <Typography color="textPrimary" variant="body2">
+                    {mlStudioDomain.sagemakerStudioDomainName}
+                  </Typography>
+                </CardContent>
+                <CardContent>
+                  <Typography color="textSecondary" variant="subtitle2">
+                    SageMaker ML Studio Default Execution Role
+                  </Typography>
+                  <Typography color="textPrimary" variant="body2">
+                    arn:aws:s3:::
+                    {mlStudioDomain.DefaultDomainRoleName}
+                  </Typography>
+                </CardContent>
+                <CardContent>
+                  <Typography color="textSecondary" variant="subtitle2">
+                    Domain VPC Type
+                  </Typography>
+                  <Typography color="textPrimary" variant="body2">
+                    {mlStudioDomain.vpcType}
+                  </Typography>
+                </CardContent>
+                {mlStudioDomain.vpcType === 'imported' && (
+                  <>
+                    <CardContent>
+                      <Typography color="textSecondary" variant="subtitle2">
+                        Domain VPC Id
+                      </Typography>
+                      <Typography color="textPrimary" variant="body2">
+                        {mlStudioDomain.vpcId}
+                      </Typography>
+                    </CardContent>
+                    <CardContent>
+                      <Typography color="textSecondary" variant="subtitle2">
+                        Domain Subnet Ids
+                      </Typography>
+                      <Typography color="textPrimary" variant="body2">
+                        {mlStudioDomain.subnetIds}
+                      </Typography>
+                    </CardContent>
+                  </>
+                )}
+              </Card>
+            </Grid>
+            <Grid item lg={4} xl={3} xs={12}>
+              <ObjectMetadata
+                accountId={environment.AwsAccountId}
+                region={environment.region}
+                environment={environment}
+                owner={mlStudioDomain.owner}
+                created={mlStudioDomain.created}
+              />
+            </Grid>
+          </Grid>
+        )}
+        {/* <Scrollbar>
           <Box sx={{ minWidth: 600 }}>
             <Table>
               <TableHead>
@@ -183,7 +160,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
                   <TableCell>Domain Name</TableCell>
                   <TableCell>VPC</TableCell>
                   <TableCell>Subnets</TableCell>
-                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
@@ -196,9 +172,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
                         domain={domain}
                         environment={environment}
                         fetchItems={fetchItems}
-                        deleteEnvironmentMLStudioDomain={
-                          deleteEnvironmentMLStudioDomain
-                        }
                       />
                     ))
                   ) : (
@@ -218,17 +191,8 @@ export const EnvironmentMLStudio = ({ environment }) => {
               />
             )}
           </Box>
-        </Scrollbar>
+        </Scrollbar> */}
       </Card>
-      {isStudioDomainCreateOpen && (
-        <MLStudioDomainCreateModal
-          environment={environment}
-          onApply={handleStudioDomainCreateModalClose}
-          onClose={handleStudioDomainCreateModalClose}
-          reloadStudioDomains={fetchItems}
-          open={isStudioDomainCreateOpen}
-        />
-      )}
     </Box>
   );
 };

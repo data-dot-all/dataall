@@ -32,6 +32,14 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
+  createMLStudioDomain,
+  createEnvironment,
+  getPivotRoleExternalId,
+  getPivotRoleName,
+  getPivotRolePresignedUrl,
+  getCDKExecPolicyPresignedUrl
+} from '../services';
+import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
@@ -44,13 +52,6 @@ import {
   useClient,
   useGroups
 } from 'services';
-import {
-  createEnvironment,
-  getPivotRoleExternalId,
-  getPivotRoleName,
-  getPivotRolePresignedUrl,
-  getCDKExecPolicyPresignedUrl
-} from '../services';
 import {
   AwsRegions,
   isAnyEnvironmentModuleEnabled,
@@ -179,6 +180,8 @@ const EnvironmentCreateForm = (props) => {
           region: values.region,
           EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
           resourcePrefix: values.resourcePrefix,
+          mlStudioVPCId: values.mlStudioVPCId,
+          mlStudioSubnetIds: values.mlStudioSubnetIds,
           parameters: [
             {
               key: 'notebooksEnabled',
@@ -200,6 +203,19 @@ const EnvironmentCreateForm = (props) => {
         })
       );
       if (!response.errors) {
+        if (values.mlStudiosEnabled === true) {
+          const response2 = await client.mutate(
+            createMLStudioDomain({
+              environmentUri: response.data.createEnvironment.environmentUri,
+              label: values.label,
+              vpcId: values.mlStudioVPCId,
+              subnetIds: values.mlStudioSubnetIds
+            })
+          );
+          if (response2.errors) {
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
+          }
+        }
         setStatus({ success: true });
         setSubmitting(false);
         enqueueSnackbar('Environment Created', {
@@ -484,7 +500,9 @@ const EnvironmentCreateForm = (props) => {
                 mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
                 pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
-                resourcePrefix: 'dataall'
+                resourcePrefix: 'dataall',
+                mlStudioVPCId: '',
+                mlStudioSubnetIds: []
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -508,6 +526,15 @@ const EnvironmentCreateForm = (props) => {
                       ).length >= 1
                   ),
                 tags: Yup.array().nullable(),
+                mlStudioSubnetIds: Yup.array().when('mlStudioVPCId', {
+                  is: (value) => !!value,
+                  then: Yup.array()
+                    .min(1)
+                    .required(
+                      'At least 1 Subnet Id required if VPC Id specified'
+                    )
+                }),
+                mlStudioVPCId: Yup.string().nullable(),
                 EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
@@ -859,6 +886,51 @@ const EnvironmentCreateForm = (props) => {
                           </CardContent>
                         </Card>
                       </Box>
+                      {values.mlStudiosEnabled && (
+                        <Box sx={{ mt: 3 }}>
+                          <Card>
+                            <CardHeader title="(Optional) ML Studio Configuration" />
+                            <CardContent>
+                              <TextField
+                                {...params}
+                                label="(Optional) ML Studio VPC ID"
+                                placeholder="(Optional) Bring your own VPC - Specify VPC ID"
+                                name="mlStudioVPCId"
+                                fullWidth
+                                error={Boolean(
+                                  touched.mlStudioVPCId && errors.mlStudioVPCId
+                                )}
+                                helperText={
+                                  touched.mlStudioVPCId && errors.mlStudioVPCId
+                                }
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.mlStudioVPCId}
+                                variant="outlined"
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <ChipInput
+                                fullWidth
+                                error={Boolean(
+                                  touched.mlStudioSubnetIds &&
+                                    errors.mlStudioSubnetIds
+                                )}
+                                helperText={
+                                  touched.mlStudioSubnetIds &&
+                                  errors.mlStudioSubnetIds
+                                }
+                                variant="outlined"
+                                label="(Optional) ML Studio Subnet ID(s)"
+                                placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
+                                onChange={(chip) => {
+                                  setFieldValue('mlStudioSubnetIds', [...chip]);
+                                }}
+                              />
+                            </CardContent>
+                          </Card>
+                        </Box>
+                      )}
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>

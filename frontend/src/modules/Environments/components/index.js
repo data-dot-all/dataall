@@ -13,4 +13,3 @@ export * from './EnvironmentTeamInviteForm';
 export * from './EnvironmentTeams';
 export * from './NetworkCreateModal';
 export * from './EnvironmentMLStudio';
-export * from './MLStudioDomainCreateModal';

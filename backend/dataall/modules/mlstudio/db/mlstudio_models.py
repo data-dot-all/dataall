@@ -19,7 +19,7 @@ class SagemakerStudioDomain(Resource, Base):
     SagemakerStudioStatus = Column(String, nullable=True)
     sagemakerStudioDomainName = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
-    RoleArn = Column(String, nullable=False)
+    DefaultDomainRoleName = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
     vpcType = Column(String, nullable=True)
     vpcId = Column(String, nullable=True)

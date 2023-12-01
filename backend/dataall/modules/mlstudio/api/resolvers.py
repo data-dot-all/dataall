@@ -109,15 +109,20 @@ def create_sagemaker_studio_domain(context: Context, source, input: dict = None)
     )
 
 
-def delete_sagemaker_studio_domain(
+def delete_environment_sagemaker_studio_domain(
     context,
     source: SagemakerStudioUser,
-    sagemakerStudioUri: str = None
+    environmentUri: str = None
 ):
-    RequestValidator.required_uri(sagemakerStudioUri)
-    return SagemakerStudioService.delete_sagemaker_studio_domain(
-        uri=sagemakerStudioUri
+    RequestValidator.required_uri(environmentUri)
+    return SagemakerStudioService.delete_environment_sagemaker_studio_domain(
+        uri=environmentUri
     )
+
+
+def get_environment_sagemaker_studio_domain(context, source, environmentUri: str = None):
+    RequestValidator.required_uri(environmentUri)
+    return SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=environmentUri)
 
 
 def list_environment_sagemaker_studio_domains(context, source, filter: dict = None, environmentUri: str = None):

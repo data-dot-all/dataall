@@ -4,7 +4,7 @@ from dataall.modules.mlstudio.api.resolvers import (
     create_sagemaker_studio_user,
     delete_sagemaker_studio_user,
     create_sagemaker_studio_domain,
-    delete_sagemaker_studio_domain
+    delete_environment_sagemaker_studio_domain
 )
 
 createSagemakerStudioUser = gql.MutationField(
@@ -44,14 +44,11 @@ createMLStudioDomain = gql.MutationField(
     resolver=create_sagemaker_studio_domain,
 )
 
-deleteMLStudioDomain = gql.MutationField(
-    name='deleteMLStudioDomain',
+deleteEnvironmentMLStudioDomain = gql.MutationField(
+    name='deleteEnvironmentMLStudioDomain',
     args=[
-        gql.Argument(
-            name='sagemakerStudioUri',
-            type=gql.NonNullableType(gql.String),
-        )
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
-    resolver=delete_sagemaker_studio_domain,
+    resolver=delete_environment_sagemaker_studio_domain,
 )

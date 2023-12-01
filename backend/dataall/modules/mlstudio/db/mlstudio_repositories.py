@@ -2,6 +2,7 @@
 DAO layer that encapsulates the logic and interaction with the database for ML Studio
 Provides the API to retrieve / update / delete ml studio
 """
+import stat
 from typing import Optional
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
@@ -11,6 +12,7 @@ from dataall.base.utils import slugify
 from dataall.base.db import paginate
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioDomain, SagemakerStudioUser
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -22,16 +24,22 @@ class SageMakerStudioRepository(EnvironmentResource):
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
-    def __init__(self, session):
-        self._session = session
+    @staticmethod
+    def update_env(session, environment):
+        current_mlstudio_enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
+        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, environment.environmentUri)
+        previous_mlstudio_enabled = True if domain else False
+        return current_mlstudio_enabled != previous_mlstudio_enabled
 
-    def save_sagemaker_studio_user(self, user):
+    @staticmethod
+    def save_sagemaker_studio_user(session, user):
         """Save SageMaker Studio user to the database"""
-        self._session.add(user)
-        self._session.commit()
+        session.add(user)
+        session.commit()
 
-    def _query_user_sagemaker_studio_users(self, username, groups, filter) -> Query:
-        query = self._session.query(SagemakerStudioUser).filter(
+    @staticmethod
+    def _query_user_sagemaker_studio_users(session, username, groups, filter) -> Query:
+        query = session.query(SagemakerStudioUser).filter(
             or_(
                 SagemakerStudioUser.owner == username,
                 SagemakerStudioUser.SamlAdminGroupName.in_(groups),
@@ -50,21 +58,24 @@ class SageMakerStudioRepository(EnvironmentResource):
             )
         return query
 
-    def paginated_sagemaker_studio_users(self, username, groups, filter={}) -> dict:
+    @staticmethod
+    def paginated_sagemaker_studio_users(session, username, groups, filter={}) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
-            query=self._query_user_sagemaker_studio_users(username, groups, filter),
+            query=SageMakerStudioRepository._query_user_sagemaker_studio_users(session, username, groups, filter),
             page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', SageMakerStudioRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
 
-    def find_sagemaker_studio_user(self, uri):
+    @staticmethod
+    def find_sagemaker_studio_user(session, uri):
         """Finds a sagemaker studio user. Returns None if it doesn't exist"""
-        return self._session.query(SagemakerStudioUser).get(uri)
+        return session.query(SagemakerStudioUser).get(uri)
 
-    def count_resources(self, environment, group_uri):
+    @staticmethod
+    def count_resources(session, environment, group_uri):
         return (
-            self._session.query(SagemakerStudioUser)
+            session.query(SagemakerStudioUser)
             .filter(
                 and_(
                     SagemakerStudioUser.environmentUri == environment.environmentUri,
@@ -74,10 +85,10 @@ class SageMakerStudioRepository(EnvironmentResource):
             .count()
         )
 
-    def create_sagemaker_studio_domain(self, username, environment, data):
-        # TODO: BUILD ROLE ARN Domain Name
+    @staticmethod
+    def create_sagemaker_studio_domain(session, username, environment, data):
         domain = SagemakerStudioDomain(
-            label=data.get('label'),
+            label=f"{data.get('label')}-domain",
             owner=username,
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),
@@ -91,8 +102,8 @@ class SageMakerStudioRepository(EnvironmentResource):
             vpcId=data.get('vpcId'),
             subnetIds=data.get('subnetIds', [])
         )
-        self._session.add(domain)
-        self._session.commit()
+        session.add(domain)
+        session.commit()
 
         domain.sagemakerStudioDomainName = NamingConventionService(
             target_uri=domain.sagemakerStudioUri,
@@ -110,16 +121,18 @@ class SageMakerStudioRepository(EnvironmentResource):
 
         return domain
 
-    def paginated_environment_sagemaker_studio_domains(self, uri, filter={}) -> dict:
+    @staticmethod
+    def paginated_environment_sagemaker_studio_domains(session, uri, filter={}) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
-            query=self._query_environment_sagemaker_studio_domains(uri, filter),
+            query=SageMakerStudioRepository._query_environment_sagemaker_studio_domains(session, uri, filter),
             page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', SageMakerStudioRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
 
-    def _query_environment_sagemaker_studio_domains(self, uri, filter) -> Query:
-        query = self._session.query(SagemakerStudioDomain).filter(
+    @staticmethod
+    def _query_environment_sagemaker_studio_domains(session, uri, filter) -> Query:
+        query = session.query(SagemakerStudioDomain).filter(
             SagemakerStudioDomain.environmentUri == uri,
         )
         if filter and filter.get('term'):
@@ -134,9 +147,6 @@ class SageMakerStudioRepository(EnvironmentResource):
                 )
             )
         return query
-
-    def find_sagemaker_studio_domain(self, uri) -> Optional[SagemakerStudioDomain]:
-        return self._session.query(SagemakerStudioDomain).get(uri)
 
     @staticmethod
     def get_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:
