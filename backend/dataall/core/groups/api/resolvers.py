@@ -82,4 +82,3 @@ def get_groups_for_user(context, source, userid):
     service_provider = ServiceProviderFactory.get_service_provider_instance()
     groups = service_provider.get_groups_for_user(userid)
     return groups
-

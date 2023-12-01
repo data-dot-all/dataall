@@ -24,4 +24,3 @@ getGroupsForUser = gql.QueryField(
     type=gql.ArrayType(gql.String),
     resolver=get_groups_for_user,
 )
-

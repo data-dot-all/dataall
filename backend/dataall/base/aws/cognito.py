@@ -54,4 +54,3 @@ class Cognito(ServiceProvider):
 
     def get_groups_for_user(self, user_id):
         return []
-
