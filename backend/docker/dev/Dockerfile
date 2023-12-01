@@ -2,13 +2,13 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
-ARG PYTHON_VERSION=python3.8
+ARG PYTHON_VERSION=python3.9
 
 RUN dnf clean all
 RUN dnf -y install shadow-utils wget
 RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python38-devel
+RUN dnf -y install python39-devel
 RUN dnf -y install git
 
 RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"

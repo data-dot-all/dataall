@@ -3,7 +3,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.0-spark-3.1
-ARG PYTHON_VERSION=python3.8
+ARG PYTHON_VERSION=python3.9
 
 # Installing libraries
 RUN dnf upgrade -y \
@@ -17,7 +17,7 @@ RUN dnf upgrade -y \
     shadow-utils wget openssl-devel bzip2-devel libffi-devel \
     postgresql-devel gcc unzip tar gzip \
     && dnf install $PYTHON_VERSION \
-    && dnf install -y python38-devel git \
+    && dnf install -y python39-devel git \
     && /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3" \
     && curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
     && unzip -q /tmp/awscliv2.zip -d /opt \

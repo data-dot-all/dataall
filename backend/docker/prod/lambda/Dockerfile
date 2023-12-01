@@ -1,18 +1,18 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG FUNCTION_DIR="/home/app/"
-ARG PYTHON_VERSION=python3.8
+ARG PYTHON_VERSION=python3.9
 
 RUN dnf upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
     find /tmp -name "*.rpm" -print -delete ;\
     dnf autoremove -y; \
-    dnf clean packages; dnf clean headers; dnf clean metadata; dnf clean all; rm -rfv /var/cache/dnf
+    dnf clean all; rm -rfv /var/cache/dnf
 
 RUN dnf -y install shadow-utils wget
 RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python38-devel
+RUN dnf -y install python39-devel
 
 ## Add your source
 WORKDIR ${FUNCTION_DIR}
@@ -30,5 +30,5 @@ COPY config.json ./config.json
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}
 
 # Command can be overwritten by providing a different command in the template directly.
-ENTRYPOINT [ "python3.8", "-m", "awslambdaric" ]
+ENTRYPOINT [ "python3.9", "-m", "awslambdaric" ]
 CMD ["auth_handler.handler"]
