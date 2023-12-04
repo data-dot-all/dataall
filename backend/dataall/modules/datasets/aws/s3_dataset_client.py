@@ -61,8 +61,7 @@ class S3DatasetClient:
 
             return s3_encryption, kms_id
 
-        except self._client.exceptions.AccessDeniedException as e:
-            raise Exception(f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission for {dataset.S3BucketName} bucket: {e}')
-
         except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission for {dataset.S3BucketName} bucket: {e}')
             raise Exception(f'Cannot fetch the bucket encryption configuration for {dataset.S3BucketName}: {e}')
