@@ -40,7 +40,60 @@ def check_vpc_exists(module_mocker):
 
 
 @pytest.fixture(scope='module')
-def sagemaker_studio_user(client, tenant, group, env_fixture) -> SagemakerStudioUser:
+def sagemaker_studio_domain(client, group, env_fixture) -> SagemakerStudioDomain:
+    response = client.query(
+        """
+            mutation createMLStudioDomain($input: NewStudioDomainInput) {
+              createMLStudioDomain(input: $input) {
+                sagemakerStudioUri
+                environmentUri
+                label
+                vpcType
+                vpcId
+                subnetIds
+              }
+            }
+            """,
+        input={
+            'label': 'testcreate',
+            'environmentUri': env_fixture.environmentUri,
+        },
+        username='alice',
+        groups=[group.name],
+    )
+    yield response.data.createMLStudioDomain
+
+
+@pytest.fixture(scope='module')
+def sagemaker_studio_domain_with_vpc(client, group, env_fixture) -> SagemakerStudioDomain:
+    response = client.query(
+        """
+            mutation createMLStudioDomain($input: NewStudioDomainInput) {
+              createMLStudioDomain(input: $input) {
+                sagemakerStudioUri
+                environmentUri
+                label
+                vpcType
+                vpcId
+                subnetIds
+              }
+            }
+            """,
+        input={
+            'label': 'testcreate',
+            'environmentUri': env_fixture.environmentUri,
+            'vpcId': 'vpc-12345',
+            'subnetIds': ['subnet-12345', 'subnet-67890']
+        },
+        username='alice',
+        groups=[group.name],
+    )
+
+    yield response.data.createMLStudioDomain
+
+
+@pytest.fixture(scope='module')
+def sagemaker_studio_user(client, tenant, group, env_fixture, sagemaker_studio_domain) -> SagemakerStudioUser:
     response = client.query(
         """
             mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput){
@@ -102,56 +155,3 @@ def multiple_sagemaker_studio_users(client, db, env_fixture, group):
                     response.data.createSagemakerStudioUser.environmentUri
                     == env_fixture.environmentUri
             )
-
-
-@pytest.fixture(scope='module')
-def sagemaker_studio_domain(client, group, env_fixture) -> SagemakerStudioDomain:
-    response = client.query(
-        """
-            mutation createMLStudioDomain($input: NewStudioDomainInput) {
-              createMLStudioDomain(input: $input) {
-                sagemakerStudioUri
-                environmentUri
-                label
-                vpcType
-                vpcId
-                subnetIds
-              }
-            }
-            """,
-        input={
-            'label': 'testcreate',
-            'environmentUri': env_fixture.environmentUri,
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createMLStudioDomain
-
-
-@pytest.fixture(scope='module')
-def sagemaker_studio_domain_with_vpc(client, group, env_fixture) -> SagemakerStudioDomain:
-    response = client.query(
-        """
-            mutation createMLStudioDomain($input: NewStudioDomainInput) {
-              createMLStudioDomain(input: $input) {
-                sagemakerStudioUri
-                environmentUri
-                label
-                vpcType
-                vpcId
-                subnetIds
-              }
-            }
-            """,
-        input={
-            'label': 'testcreate',
-            'environmentUri': env_fixture.environmentUri,
-            'vpcId': 'vpc-12345',
-            'subnetIds': ['subnet-12345', 'subnet-67890']
-        },
-        username='alice',
-        groups=[group.name],
-    )
-
-    yield response.data.createMLStudioDomain
