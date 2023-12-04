@@ -17,23 +17,27 @@ class S3DatasetClient:
         It first starts a session assuming the pivot role,
         then we define another session assuming the dataset role from the pivot role
         """
-        pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        self._client = pivot_role_session.client('s3')
-        session = SessionHelper.get_session(base_session=pivot_role_session, role_arn=dataset.IAMDatasetAdminRoleArn)
-        self._dataset_client = session.client(
+        self._pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        self._client = self._pivot_role_session.client('s3')
+        self._dataset = dataset
+
+    def _get_dataset_role_client(self):
+        session = SessionHelper.get_session(base_session=self.pivot_role_session, role_arn=self.dataset.IAMDatasetAdminRoleArn)
+        dataset_client = session.client(
             's3',
-            region_name=dataset.region,
+            region_name=self._dataset.region,
             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
         )
-        self._dataset = dataset
+        return dataset_client
 
     def get_file_upload_presigned_url(self, data):
         dataset = self._dataset
+        client = self._get_dataset_role_client()
         try:
-            self._dataset_client.get_bucket_acl(
+            client.get_bucket_acl(
                 Bucket=dataset.S3BucketName, ExpectedBucketOwner=dataset.AwsAccountId
             )
-            response = self._dataset_client.generate_presigned_post(
+            response = client.generate_presigned_post(
                 Bucket=dataset.S3BucketName,
                 Key=data.get('prefix', 'uploads') + '/' + data.get('fileName'),
                 ExpiresIn=15 * 60,
