@@ -56,32 +56,31 @@ class QuicksightClient:
         identity_region_rex = re.compile('Please use the (?P<region>.*) endpoint.')
         scp = 'with an explicit deny in a service control policy'
         index = 0
-        try:
-            while index < len(QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS):
-                try:
-                    identity_region = QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS[index].get("code")
-                    index += 1
-                    client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
-                    response = client.describe_group(
-                        AwsAccountId=AwsAccountId, GroupName=QuicksightClient.DEFAULT_GROUP_NAME, Namespace='default'
-                    )
-                    return identity_region
-                except client.exceptions.AccessDeniedException as e:
-                    if scp in str(e):
-                        logger.info(f'Quicksight SCP found in {identity_region} for account {AwsAccountId}. Trying next region...')
+        while index < len(QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS):
+            try:
+                identity_region = QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS[index].get("code")
+                index += 1
+                client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
+                response = client.describe_group(
+                    AwsAccountId=AwsAccountId, GroupName=QuicksightClient.DEFAULT_GROUP_NAME, Namespace='default'
+                )
+                logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
+                return identity_region
+            except client.exceptions.AccessDeniedException as e:
+                if scp in str(e):
+                    logger.info(f'Quicksight SCP found in {identity_region} for account {AwsAccountId}. Trying next region...')
+                else:
+                    logger.info(f'Quicksight identity region is not {identity_region}, selecting correct region endpoint...')
+                    match = identity_region_rex.findall(str(e))
+                    if match:
+                        identity_region = match[0]
+                        logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
+                        return identity_region
                     else:
-                        logger.info(f'Quicksight identity region is not {identity_region}, selecting correct region endpoint...')
-                        match = identity_region_rex.findall(str(e))
-                        if match:
-                            identity_region = match[0]
-                            logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
-                            return identity_region
-                        else:
-                            raise e
-                except client.exceptions.ResourceNotFoundException:
-                    pass
-        except client.exceptions.AccessDeniedException:
-            raise Exception(f'Quicksight subscription is inactive or the identity region has SCPs preventing access from data.all to account {AwsAccountId}')
+                        raise e
+            except client.exceptions.ResourceNotFoundException:
+                pass
+        raise Exception(f'Quicksight subscription is inactive or the identity region has SCPs preventing access from data.all to account {AwsAccountId}')
 
     @staticmethod
     def get_quicksight_client_in_identity_region(AwsAccountId):
