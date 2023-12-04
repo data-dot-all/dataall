@@ -84,8 +84,8 @@ export const EnvironmentMLStudio = ({ environment }) => {
               variant="subtitle2"
             >
               No ML Studio Domain - To Create a ML Studio Domain for this
-              Environment: `{environment.label}`, edit the Environment and
-              enable the ML Studio Environment Feature
+              Environment: {environment.label}, edit the Environment and enable
+              the ML Studio Environment Feature
             </Typography>
           </Box>
         ) : (
