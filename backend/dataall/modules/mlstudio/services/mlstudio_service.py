@@ -81,16 +81,13 @@ class SagemakerStudioService:
                     action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
-            # FOR OLD ONES
+
+            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=env.environmentUri)
             response = get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
-                region=env.region
+                region=env.region,
+                domain_name=domain.sagemakerStudioDomainName
             )
-
-            # FOR NEW ONES (default, created, imported)
-            # - CHECK RDS FIRST - ONLY GET DOMAIN NAME
-            # - IF NOT BOTO3
-
             existing_domain = response.get('DomainId', False)
 
             if not existing_domain:
@@ -204,7 +201,6 @@ class SagemakerStudioService:
     def delete_environment_sagemaker_studio_domain(*, uri: str):
         with _session() as session:
             domain = SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=uri)
-            # TODO: CHECK NUMBER OF USERS BEFORE DELETE
             session.delete(domain)
             return True
 

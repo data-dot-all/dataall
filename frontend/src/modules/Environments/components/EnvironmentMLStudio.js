@@ -6,7 +6,8 @@ import {
   Grid,
   CardContent,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Chip
 } from '@mui/material';
 
 import PropTypes from 'prop-types';
@@ -106,7 +107,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
                     SageMaker ML Studio Default Execution Role
                   </Typography>
                   <Typography color="textPrimary" variant="body2">
-                    arn:aws:s3:::
+                    arn:aws:iam::{environment.AwsAccountId}:role/
                     {mlStudioDomain.DefaultDomainRoleName}
                   </Typography>
                 </CardContent>
@@ -133,7 +134,14 @@ export const EnvironmentMLStudio = ({ environment }) => {
                         Domain Subnet Ids
                       </Typography>
                       <Typography color="textPrimary" variant="body2">
-                        {mlStudioDomain.subnetIds}
+                        {mlStudioDomain.subnetIds?.map((subnet) => (
+                          <Chip
+                            sx={{ mr: 0.5, mb: 0.5 }}
+                            key={subnet}
+                            label={subnet}
+                            variant="outlined"
+                          />
+                        ))}
                       </Typography>
                     </CardContent>
                   </>

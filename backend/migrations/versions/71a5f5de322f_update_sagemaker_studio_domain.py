@@ -97,34 +97,61 @@ def upgrade():
                 "sagemaker_studio_domain", "environment",
                 ["environmentUri"], ["environmentUri"],
             )
+        else:
+            print("No sagemaker_studio_domain table found, creating...")
+            op.create_table(
+                'sagemaker_studio_domain',
+                sa.Column('label', sa.String(), nullable=False),
+                sa.Column('name', sa.String(), nullable=False),
+                sa.Column('owner', sa.String(), nullable=False),
+                sa.Column('created', sa.DateTime(), nullable=True),
+                sa.Column('updated', sa.DateTime(), nullable=True),
+                sa.Column('deleted', sa.DateTime(), nullable=True),
+                sa.Column('description', sa.String(), nullable=True),
+                sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
+                sa.Column('environmentUri', sa.String(), nullable=False),
+                sa.Column('sagemakerStudioUri', sa.String(), nullable=False),
+                sa.Column('sagemakerStudioDomainID', sa.String(), nullable=True),
+                sa.Column('SagemakerStudioStatus', sa.String(), nullable=True),
+                sa.Column('AWSAccountId', sa.String(), nullable=False),
+                sa.Column('DefaultDomainRoleName', sa.String(), nullable=False),
+                sa.Column('sagemakerStudioDomainName', sa.String(), nullable=False),
+                sa.Column('vpcType', sa.String(), nullable=True),
+                sa.Column('vpcId', sa.String(), nullable=True),
+                sa.Column('subnetIds', postgresql.ARRAY(sa.String()), nullable=True),
+                sa.Column('region', sa.String(), nullable=True),
+                sa.PrimaryKeyConstraint('sagemakerStudioUri'),
+                sa.ForeignKeyConstraint(columns=['environmentUri'], refcolumns=['environment.environmentUri']),
+            )
 
-            print("Update sagemaker_studio_domain table done.")
-            print("Filling sagemaker_studio_domain table with environments with mlstudio enabled...")
+        print("Update sagemaker_studio_domain table done.")
+        print("Filling sagemaker_studio_domain table with environments with mlstudio enabled...")
 
-            env_mlstudio_parameters: [EnvironmentParameter] = session.query(EnvironmentParameter).filter(
-                and_(
-                    EnvironmentParameter.key == "mlStudiosEnabled",
-                    EnvironmentParameter.value == "true"
-                )
-            ).all()
-            for param in env_mlstudio_parameters:
-                env: Environment = session.query(Environment).filter(
-                    Environment.environmentUri == param.environmentUri
-                ).first()
+        env_mlstudio_parameters: [EnvironmentParameter] = session.query(EnvironmentParameter).filter(
+            and_(
+                EnvironmentParameter.key == "mlStudiosEnabled",
+                EnvironmentParameter.value == "true"
+            )
+        ).all()
+        for param in env_mlstudio_parameters:
+            env: Environment = session.query(Environment).filter(
+                Environment.environmentUri == param.environmentUri
+            ).first()
 
-                domain = SagemakerStudioDomain(
-                    label=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
-                    owner=env.owner,
-                    description='No description provided',
-                    environmentUri=env.environmentUri,
-                    AWSAccountId=env.AwsAccountId,
-                    region=env.region,
-                    DefaultDomainRoleName="RoleSagemakerStudioUsers",
-                    sagemakerStudioDomainName=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
-                    vpcType="unknown"
-                )
-                session.add(domain)
-            session.flush()
+            domain = SagemakerStudioDomain(
+                label=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                owner=env.owner,
+                description='No description provided',
+                environmentUri=env.environmentUri,
+                AWSAccountId=env.AwsAccountId,
+                region=env.region,
+                DefaultDomainRoleName="RoleSagemakerStudioUsers",
+                sagemakerStudioDomainName=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                vpcType="unknown"
+            )
+            session.add(domain)
+        session.flush()
+
         session.commit()
         print("Fill of sagemaker_studio_domain table is done")
 
@@ -142,36 +169,10 @@ def downgrade():
         session = orm.Session(bind=bind)
 
         if has_table('sagemaker_studio_domain', engine):
-            print("Updating of sagemaker_studio_domain table...")
-            op.alter_column(
-                'sagemaker_studio_domain',
-                'sagemakerStudioDomainID',
-                nullable=False,
-                existing_type=sa.String()
-            )
-            op.alter_column(
-                'sagemaker_studio_domain',
-                'SagemakerStudioStatus',
-                nullable=False,
-                existing_type=sa.String()
-            )
-            op.alter_column(
-                'sagemaker_studio_domain',
-                'DefaultDomainRoleName',
-                new_column_name='RoleArn',
-                nullable=False,
-                existing_type=sa.String()
-            )
-
-            op.drop_column("sagemaker_studio_domain", "sagemakerStudioDomainName")
-            op.drop_column("sagemaker_studio_domain", "vpcType")
-            op.drop_column("sagemaker_studio_domain", "vpcId")
-            op.drop_column("sagemaker_studio_domain", "subnetIds")
-
-            op.drop_constraint("fk_sagemaker_studio_domain_env_uri", "sagemaker_studio_domain")
-
+            print("Dropping sagemaker_studio_domain table...")
+            op.drop_table("sagemaker_studio_domain")
             session.commit()
-            print("Update of sagemaker_studio_domain table is done")
+            print("Dropped of sagemaker_studio_domain table")
 
     except Exception as exception:
         print('Failed to downgrade due to:', exception)

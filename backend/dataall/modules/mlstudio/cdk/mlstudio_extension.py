@@ -12,15 +12,12 @@ from aws_cdk import (
     aws_ssm as ssm,
     RemovalPolicy,
 )
-from botocore.exceptions import ClientError
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 
-from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.aws.ec2_client import EC2
-from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
 
 logger = logging.getLogger(__name__)
 
