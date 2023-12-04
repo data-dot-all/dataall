@@ -174,15 +174,15 @@ export const GenericAuthProvider = (props) => {
     if (CUSTOM_AUTH) {
       if (!auth.user) throw Error('User not initialized');
       return {
-        email: await getDataFromClaimsMapping(
-          process.env.REACT_APP_CUSTOM_AUTH_EMAIL_CLAIM_MAPPING,
-          auth.user.profile
-        ),
+        email:
+          auth.user.profile[
+            process.env.REACT_APP_CUSTOM_AUTH_EMAIL_CLAIM_MAPPING
+          ],
         id_token: auth.user.id_token,
-        short_id: await getDataFromClaimsMapping(
-          process.env.REACT_APP_CUSTOM_AUTH_USERID_CLAIM_MAPPING,
-          auth.user.profile
-        )
+        short_id:
+          auth.user.profile[
+            process.env.REACT_APP_CUSTOM_AUTH_USERID_CLAIM_MAPPING
+          ]
       };
     } else {
       const user = await Auth.currentAuthenticatedUser();
@@ -192,19 +192,6 @@ export const GenericAuthProvider = (props) => {
         short_id: 'none'
       };
     }
-  };
-
-  // Used to map custom profile claims sent from the IDP
-  // This mapping is provided in the cdk.json at the time of deployment
-  const getDataFromClaimsMapping = async (mappingStr, userProfile) => {
-    // mapping str consist of path to from the user object to the claim information
-    // For e.g. profile.email or profile.primary_email, etc
-    const claimsList = mappingStr.split('.');
-    let _userProfile = userProfile;
-    for (const claim of claimsList) {
-      _userProfile = _userProfile[claim];
-    }
-    return _userProfile;
   };
 
   // Function to process OIDC State when it transitions from false to true
