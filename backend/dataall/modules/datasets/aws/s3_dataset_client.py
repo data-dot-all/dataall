@@ -57,7 +57,8 @@ class S3DatasetClient:
             rule = response['ServerSideEncryptionConfiguration']['Rules'][0]
             encryption = rule['ApplyServerSideEncryptionByDefault']
             s3_encryption = encryption['SSEAlgorithm']
-            kms_id = encryption.get('KMSMasterKeyID')
+            kms_id = encryption.get('KMSMasterKeyID').split("/")[-1] if encryption.get('KMSMasterKeyID') else None
+
             return s3_encryption, kms_id
 
         except self._client.exceptions.AccessDeniedException as e:
