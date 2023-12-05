@@ -512,7 +512,7 @@ class CloudfrontDistro(pyNestedClass):
         )
 
         if not os.path.isdir(docs_http_headers):
-            raise Exception(f"Custom Authorizer Folder not found at {docs_http_headers}")
+            raise Exception(f"Http Docs Headers Folder not found at {docs_http_headers}")
 
         (
             self.http_header_func,
