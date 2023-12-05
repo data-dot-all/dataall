@@ -89,11 +89,13 @@ const EnvironmentEditForm = (props) => {
     }
     setLoading(false);
   }, [client, dispatch, params.uri]);
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
   }, [client, fetchItem, dispatch]);
+
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
@@ -148,7 +150,6 @@ const EnvironmentEditForm = (props) => {
           values.mlStudiosEnabled !== previousEnvMLStudioEnabled &&
           values.mlStudiosEnabled === false
         ) {
-          console.error(envMLStudioDomain.sagemakerStudioUri);
           const response2 = await client.mutate(
             deleteEnvironmentMLStudioDomain({
               environmentUri: envMLStudioDomain.environmentUri
@@ -268,8 +269,8 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                mlStudioVPCId: envMLStudioDomain.vpcId,
-                mlStudioSubnetIds: envMLStudioDomain.subnetIds,
+                mlStudioVPCId: envMLStudioDomain.vpcId || '',
+                mlStudioSubnetIds: envMLStudioDomain.subnetIds || [],
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
