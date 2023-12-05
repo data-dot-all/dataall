@@ -24,7 +24,7 @@ class DashboardQuicksightClient:
 
     def register_user_in_group(self, group_name, user_role='READER'):
         identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
-        QuicksightClient.create_quicksight_group(self._account_id, group_name)
+        QuicksightClient.create_quicksight_group(AwsAccountId=self._account_id, region=self._region, GroupName=group_name)
         user = self._describe_user()
 
         if user is not None:

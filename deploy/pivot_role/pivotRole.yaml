@@ -398,6 +398,7 @@ Resources:
               - "quicksight:GetAuthCode"
               - "quicksight:CreateGroupMembership"
               - "quicksight:DescribeAccountSubscription"
+              - "quicksight:DescribeAccountSettings"
             Resource:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"

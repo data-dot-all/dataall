@@ -45,9 +45,11 @@ class DatasetService:
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
-                AwsAccountId=environment.AwsAccountId)
+                AwsAccountId=environment.AwsAccountId, region=environment.region)
             if quicksight_subscription:
-                group = QuicksightClient.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
+                group = QuicksightClient.create_quicksight_group(
+                    AwsAccountId=environment.AwsAccountId, region=environment.region
+                )
                 return True if group else False
         return True
 

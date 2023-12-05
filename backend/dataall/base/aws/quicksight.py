@@ -124,10 +124,11 @@ class QuicksightClient:
         return False
 
     @staticmethod
-    def create_quicksight_group(AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
+    def create_quicksight_group(AwsAccountId, region, GroupName=DEFAULT_GROUP_NAME):
         """Creates a Quicksight group called GroupName
         Args:
             AwsAccountId(str):  aws account
+            region: aws region
             GroupName(str): name of the QS group
 
         Returns:dict
@@ -138,7 +139,7 @@ class QuicksightClient:
         if not group:
             if GroupName == QuicksightClient.DEFAULT_GROUP_NAME:
                 logger.info(f'Initializing data.all default group = {GroupName}')
-                QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId)
+                QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId, region)
 
             logger.info(f'Attempting to create Quicksight group `{GroupName}...')
             response = client.create_group(
