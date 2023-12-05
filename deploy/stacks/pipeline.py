@@ -746,6 +746,7 @@ class PipelineStack(Stack):
                     f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                     f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
                     f'export custom_auth_url={str(target_env.get("custom_auth", {}).get("url", "None"))}',
+                    f'export custom_auth_redirect_url={str(target_env.get("custom_auth", {}).get("redirect_url", "None"))}',
                     f'export custom_auth_client_id={str(target_env.get("custom_auth", {}).get("client_id", "None"))}',
                     f'export custom_auth_response_types={str(target_env.get("custom_auth", {}).get("response_types", "None"))}',
                     f'export custom_auth_scopes={str(target_env.get("custom_auth", {}).get("scopes", "None"))}',

@@ -7,7 +7,7 @@ import { RequestContextProvider } from '../../reauthentication';
 const oidcConfig = {
   authority: process.env.REACT_APP_CUSTOM_AUTH_URL,
   client_id: process.env.REACT_APP_CUSTOM_AUTH_CLIENT_ID,
-  redirect_uri: `${window.location.origin}`,
+  redirect_uri: process.env.REACT_APP_CUSTOM_AUTH_REDIRECT_URL,
   response_type: process.env.REACT_APP_CUSTOM_AUTH_RESP_TYPES,
   scope: process.env.REACT_APP_CUSTOM_AUTH_SCOPES,
   automaticSilentRenew: false,

@@ -74,6 +74,7 @@ REACT_APP_REAUTH_TTL={reauth_ttl}
         if custom_auth:
             file_content = file_content + f"""REACT_APP_CUSTOM_AUTH={custom_auth.get("provider", "none")}
 REACT_APP_CUSTOM_AUTH_URL={custom_auth.get("url", "none")}
+REACT_APP_CUSTOM_AUTH_REDIRECT_URL={custom_auth.get("redirect_url", "none")}
 REACT_APP_CUSTOM_AUTH_CLIENT_ID={custom_auth.get("client_id", "none")}
 REACT_APP_CUSTOM_AUTH_RESP_TYPES={custom_auth.get("response_types", "none")}
 REACT_APP_CUSTOM_AUTH_SCOPES={custom_auth.get("scopes", "none")}
@@ -148,6 +149,7 @@ if __name__ == '__main__':
     if os.environ.get("custom_auth_provider", "None") != "None":
         custom_auth_properties["provider"] = os.environ.get("custom_auth_provider", "None")
         custom_auth_properties["url"] = os.environ.get("custom_auth_url", "None")
+        custom_auth_properties["redirect_url"] = os.environ.get("custom_auth_redirect_url", "None")
         custom_auth_properties["client_id"] = os.environ.get("custom_auth_client_id", "None")
         custom_auth_properties["response_types"] = os.environ.get("custom_auth_response_types", "None")
         custom_auth_properties["scopes"] = os.environ.get("custom_auth_scopes", "None")

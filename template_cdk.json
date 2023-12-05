@@ -48,7 +48,8 @@
         "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200",
         "custom_auth": {
           "provider": "string_EXTERNAL_IDP_PROVIDER_NAME|DEFAULT=None",
-          "url" : "string_HTTPS_ISSUER_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "url" : "string_ISSUER_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "redirect_url" : "string_REDIRECT_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
           "client_id": "string_EXTERNAL_IDP_CLIENT_ID|DEFAULT=None",
           "response_types": "string_EXTERNAL_RESPONSE_TYPES_USED_IN_OIDC_FLOW|DEFAULT=None",
           "scopes": "string_EXTERNAL_IDP_SCOPES_SPACE_SEPARATED|DEFAULT=None",
