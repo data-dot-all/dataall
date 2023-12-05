@@ -67,7 +67,6 @@ def create_react_env_file(
         file_content = f"""GENERATE_SOURCEMAP=false
 REACT_APP_GRAPHQL_API={graphql_api_url}
 REACT_APP_SEARCH_API={search_api_url}
-REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
 REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE={pivot_role_auto_create}
 REACT_APP_REAUTH_TTL={reauth_ttl}
 """
@@ -87,6 +86,7 @@ REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
 REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
+REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
 """
 
         print('.env content: \n', file_content)

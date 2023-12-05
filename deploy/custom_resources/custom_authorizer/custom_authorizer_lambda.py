@@ -33,6 +33,7 @@ def lambda_handler(incoming_event, context):
     return policy
 
 
+# Below Code only used for testing on local development IDE
 # the following is useful to make this script executable in both
 # AWS Lambda and any other local environments
 if __name__ == '__main__':

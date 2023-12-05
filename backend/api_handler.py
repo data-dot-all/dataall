@@ -63,7 +63,7 @@ end = perf_counter()
 print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
 
 
-def get_groups(claims):
+def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
             'Received empty claims. ' 'Please verify authorizer configuration',
@@ -131,10 +131,12 @@ def handler(event, context):
         username = claims['email']
         log.debug('username is %s', username)
         try:
-            groups = get_groups(claims)
+            groups = []
             if (os.environ.get('custom_auth', None)):
                 user_id = event['requestContext']['authorizer']['user_id']
                 groups.extend(get_custom_groups(user_id))
+            else:
+                groups.extend(get_cognito_groups(claims))
             log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:

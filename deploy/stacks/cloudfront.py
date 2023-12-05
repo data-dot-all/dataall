@@ -330,19 +330,35 @@ class CloudfrontDistro(pyNestedClass):
             string_value=cloudfront_bucket.bucket_name,
         )
 
-        userguide_docs_distribution, user_docs_bucket = self.build_static_site(
-            f'userguide',
-            acl,
-            auth_at_edge,
-            envname,
-            resource_prefix,
-            userguide_domain_names,
-            certificate,
-            ssl_support_method,
-            security_policy,
-            logging_bucket,
-            custom_auth
-        ) if custom_auth is None else (None, None)
+        self.user_docs_bucket = None
+        if custom_auth is None:
+            userguide_docs_distribution, user_docs_bucket = self.build_static_site(
+                f'userguide',
+                acl,
+                auth_at_edge,
+                envname,
+                resource_prefix,
+                userguide_domain_names,
+                certificate,
+                ssl_support_method,
+                security_policy,
+                logging_bucket
+            )
+
+            self.userguide_docs_distribution = userguide_docs_distribution
+            self.user_docs_bucket = user_docs_bucket
+
+            if userguide_alternate_domain:
+                route53.ARecord(
+                    self,
+                    'CloudFrontUserguideDomain',
+                    record_name=userguide_alternate_domain,
+                    zone=hosted_zone,
+                    target=route53.RecordTarget.from_alias(
+                        route53_targets.CloudFrontTarget(userguide_docs_distribution)
+                    ),
+                )
+
         if frontend_alternate_domain:
             frontend_record = route53.ARecord(
                 self,
@@ -351,16 +367,6 @@ class CloudfrontDistro(pyNestedClass):
                 zone=hosted_zone,
                 target=route53.RecordTarget.from_alias(
                     route53_targets.CloudFrontTarget(cloudfront_distribution)
-                ),
-            )
-        if userguide_alternate_domain and custom_auth != None:
-            userguide_record = route53.ARecord(
-                self,
-                'CloudFrontUserguideDomain',
-                record_name=userguide_alternate_domain,
-                zone=hosted_zone,
-                target=route53.RecordTarget.from_alias(
-                    route53_targets.CloudFrontTarget(userguide_docs_distribution)
                 ),
             )
 
@@ -373,8 +379,8 @@ class CloudfrontDistro(pyNestedClass):
             )
             resources_for_cross_account = []
             resources_for_cross_account.append(f'{cloudfront_bucket.bucket_arn}/*')
-            if custom_auth is None:
-                resources_for_cross_account.append(f'{user_docs_bucket.bucket_arn}/*')
+            if self.user_docs_bucket is not None:
+                resources_for_cross_account.append(f'{self.user_docs_bucket.bucket_arn}/*')
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[
@@ -436,8 +442,6 @@ class CloudfrontDistro(pyNestedClass):
 
         self.frontend_distribution = cloudfront_distribution
         self.frontend_bucket = cloudfront_bucket
-        self.user_docs_bucket = user_docs_bucket if custom_auth is not None else None
-        self.user_docs_distribution = userguide_docs_distribution if custom_auth is not None else None
         self.cross_account_deployment_role = (
             cross_account_deployment_role.role_name
             if cross_account_deployment_role
@@ -494,8 +498,7 @@ class CloudfrontDistro(pyNestedClass):
         certificate,
         ssl_support_method,
         security_policy,
-        logging_bucket,
-        custom_auth
+        logging_bucket
     ):
 
         # Lambda@edge for http_header_redirection
@@ -507,6 +510,10 @@ class CloudfrontDistro(pyNestedClass):
                 'docs_http_headers',
             )
         )
+
+        if not os.path.isdir(docs_http_headers):
+            raise Exception(f"Custom Authorizer Folder not found at {docs_http_headers}")
+
         (
             self.http_header_func,
             self.http_header_func_version,

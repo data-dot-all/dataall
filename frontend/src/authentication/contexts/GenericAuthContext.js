@@ -164,7 +164,6 @@ export const GenericAuthProvider = (props) => {
               user: null
             }
           });
-          window.localStorage.removeItem('user_groups');
         });
       });
     }
@@ -240,7 +239,6 @@ export const GenericAuthProvider = (props) => {
             user: null
           }
         });
-        window.localStorage.removeItem('user_groups');
       } else {
         await Auth.signOut();
         dispatch({
@@ -267,7 +265,6 @@ export const GenericAuthProvider = (props) => {
               requestInfo: null
             }
           });
-          window.localStorage.removeItem('user_groups');
         });
       } catch (error) {
         console.error('Failed to ReAuth', error);

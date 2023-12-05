@@ -17,10 +17,6 @@ export const useGroups = () => {
     ) {
       setGroups(['Engineers', 'Scientists', 'DAAdministrators']);
     } else if (process.env.REACT_APP_CUSTOM_AUTH) {
-      if (window.localStorage.getItem('user_groups') != null) {
-        setGroups(window.localStorage.getItem('user_groups').split(','));
-        return;
-      }
       if (!auth.user) {
         dispatch({
           type: SET_ERROR,
@@ -32,10 +28,6 @@ export const useGroups = () => {
       const response = await client.query(getGroupsForUser(auth.user.short_id));
       if (!response.error) {
         setGroups(response.data.getGroupsForUser);
-        window.localStorage.setItem(
-          'user_groups',
-          response.data.getGroupsForUser.join(',')
-        );
       } else {
         dispatch({ type: SET_ERROR, error: response.error });
       }

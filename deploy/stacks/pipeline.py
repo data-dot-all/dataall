@@ -951,24 +951,13 @@ class PipelineStack(Stack):
                     role=self.expanded_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                 ),
-            ],
-            post=self.evaluate_post_albfront_stage(target_env)
+            ]
         )
-
-    def evaluate_post_albfront_stage(self, target_env):
-        post = []
         if target_env.get('custom_auth') is None:
-            post.append(self.cognito_config_action(target_env))
+            albfront_stage.add_post(self.cognito_config_action(target_env))
 
         if target_env.get('enable_cw_rum', False):
-            post.append(self.cw_rum_config_action(target_env))
-
-        if len(post) == 0:
-            post.append(pipelines.CodeBuildStep(
-                id='CodeBuildPlaceHolder',
-                commands=['echo "Skipping Cognito Config Setup as using Custom Auth" ']
-            ))
-        return post
+            albfront_stage.add_post(self.cw_rum_config_action(target_env))
 
     def set_release_stage(
         self,
