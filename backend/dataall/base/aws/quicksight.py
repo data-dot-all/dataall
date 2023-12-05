@@ -61,9 +61,7 @@ class QuicksightClient:
                 identity_region = QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS[index].get("code")
                 index += 1
                 client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
-                response = client.describe_group(
-                    AwsAccountId=AwsAccountId, GroupName=QuicksightClient.DEFAULT_GROUP_NAME, Namespace='default'
-                )
+                response = client.describe_account_settings(AwsAccountId=AwsAccountId)
                 logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
                 return identity_region
             except client.exceptions.AccessDeniedException as e:
@@ -78,8 +76,6 @@ class QuicksightClient:
                         return identity_region
                     else:
                         raise e
-            except client.exceptions.ResourceNotFoundException:
-                pass
         raise Exception(f'Quicksight subscription is inactive or the identity region has SCPs preventing access from data.all to account {AwsAccountId}')
 
     @staticmethod
