@@ -57,6 +57,7 @@ Resources:
               - 's3:ListAllMyBuckets'
               - 's3:GetBucketLocation'
               - 's3:PutBucketTagging'
+              - 's3:GetEncryptionConfiguration'
             Effect: Allow
             Resource: '*'
           - Sid: ManagedBuckets
