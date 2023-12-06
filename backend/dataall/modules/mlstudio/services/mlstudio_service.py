@@ -19,7 +19,7 @@ from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
-from dataall.backend.dataall.base.aws.ec2_client import EC2
+from dataall.base.aws.ec2_client import EC2
 from dataall.base.aws.sts import SessionHelper
 
 from dataall.modules.mlstudio.services.mlstudio_permissions import (

@@ -17,7 +17,7 @@ from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRep
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.backend.dataall.base.aws.ec2_client import EC2
+from dataall.base.aws.ec2_client import EC2
 
 logger = logging.getLogger(__name__)
 
