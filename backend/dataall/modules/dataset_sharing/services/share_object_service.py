@@ -185,7 +185,7 @@ class ShareObjectService:
             if dashboard_enabled:
                 share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
                 if share_table_items:
-                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId)
+                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId, region=env.region)
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 
