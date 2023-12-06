@@ -66,6 +66,7 @@ class EnvironmentService:
         session.commit()
 
         EnvironmentService._update_env_parameters(session, env, data)
+        EnvironmentResourceManager.create_env(session, env, data=data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,

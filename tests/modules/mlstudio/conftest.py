@@ -40,60 +40,7 @@ def check_vpc_exists(module_mocker):
 
 
 @pytest.fixture(scope='module')
-def sagemaker_studio_domain(client, group, env_fixture) -> SagemakerStudioDomain:
-    response = client.query(
-        """
-            mutation createMLStudioDomain($input: NewStudioDomainInput) {
-              createMLStudioDomain(input: $input) {
-                sagemakerStudioUri
-                environmentUri
-                label
-                vpcType
-                vpcId
-                subnetIds
-              }
-            }
-            """,
-        input={
-            'label': 'testcreate',
-            'environmentUri': env_fixture.environmentUri,
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createMLStudioDomain
-
-
-@pytest.fixture(scope='module')
-def sagemaker_studio_domain_with_vpc(client, group, env_fixture) -> SagemakerStudioDomain:
-    response = client.query(
-        """
-            mutation createMLStudioDomain($input: NewStudioDomainInput) {
-              createMLStudioDomain(input: $input) {
-                sagemakerStudioUri
-                environmentUri
-                label
-                vpcType
-                vpcId
-                subnetIds
-              }
-            }
-            """,
-        input={
-            'label': 'testcreate',
-            'environmentUri': env_fixture.environmentUri,
-            'vpcId': 'vpc-12345',
-            'subnetIds': ['subnet-12345', 'subnet-67890']
-        },
-        username='alice',
-        groups=[group.name],
-    )
-
-    yield response.data.createMLStudioDomain
-
-
-@pytest.fixture(scope='module')
-def sagemaker_studio_user(client, tenant, group, env_fixture, sagemaker_studio_domain) -> SagemakerStudioUser:
+def sagemaker_studio_user(client, tenant, group, env_with_mlstudio) -> SagemakerStudioUser:
     response = client.query(
         """
             mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput){
@@ -112,7 +59,7 @@ def sagemaker_studio_user(client, tenant, group, env_fixture, sagemaker_studio_d
         input={
             'label': 'testcreate',
             'SamlAdminGroupName': group.name,
-            'environmentUri': env_fixture.environmentUri,
+            'environmentUri': env_with_mlstudio.environmentUri,
         },
         username='alice',
         groups=[group.name],
@@ -121,7 +68,7 @@ def sagemaker_studio_user(client, tenant, group, env_fixture, sagemaker_studio_d
 
 
 @pytest.fixture(scope='module')
-def multiple_sagemaker_studio_users(client, db, env_fixture, group):
+def multiple_sagemaker_studio_users(client, db, env_with_mlstudio, group):
         for i in range(0, 10):
             response = client.query(
                 """
@@ -141,7 +88,7 @@ def multiple_sagemaker_studio_users(client, db, env_fixture, group):
                 input={
                     'label': f'test{i}',
                     'SamlAdminGroupName': group.name,
-                    'environmentUri': env_fixture.environmentUri,
+                    'environmentUri': env_with_mlstudio.environmentUri,
                 },
                 username='alice',
                 groups=[group.name],
@@ -153,5 +100,142 @@ def multiple_sagemaker_studio_users(client, db, env_fixture, group):
             )
             assert (
                     response.data.createSagemakerStudioUser.environmentUri
-                    == env_fixture.environmentUri
+                    == env_with_mlstudio.environmentUri
             )
+
+@pytest.fixture(scope='module')
+def env_with_mlstudio(client, org_fixture, user, group, parameters=None, vpcId='', subnetIds=[]):
+    if not parameters:
+        parameters = {'mlStudiosEnabled': 'True'}
+    response = client.query(
+        """mutation CreateEnv($input:NewEnvironmentInput){
+            createEnvironment(input:$input){
+                organization{
+                    organizationUri
+                }
+                environmentUri
+                label
+                AwsAccountId
+                SamlGroupName
+                region
+                name
+                owner
+                parameters {
+                    key
+                    value
+                }
+            }
+        }""",
+        username=f'{user.username}',
+        groups=['testadmins'],
+        input={
+            'label': f'dev',
+            'description': '',
+            'organizationUri': org_fixture.organizationUri,
+            'AwsAccountId': '111111111111',
+            'tags': [],
+            'region': 'us-east-1',
+            'SamlGroupName': 'testadmins',
+            'parameters': [{'key': k, 'value': v} for k, v in parameters.items()],
+            'vpcId': vpcId,
+            'subnetIds': subnetIds
+        },
+    )
+    yield response.data.createEnvironment
+
+
+# @pytest.fixture(scope='module')
+# def env(client):
+#     cache = {}
+
+#     def factory(org, envname, owner, group, account, region, vpcId='', subnetIds=[]):
+#         parameters = {"mlStudiosEnabled": "true"}
+
+#         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}{vpcId}"
+#         if cache.get(key):
+#             return cache[key]
+#         response = client.query(
+#             """mutation CreateEnv($input:NewEnvironmentInput){
+#                 createEnvironment(input:$input){
+#                     organization{
+#                         organizationUri
+#                     }
+#                     environmentUri
+#                     label
+#                     AwsAccountId
+#                     SamlGroupName
+#                     region
+#                     name
+#                     owner
+#                     parameters {
+#                         key
+#                         value
+#                     }
+#                 }
+#             }""",
+#             username=f'{owner}',
+#             groups=[group],
+#             input={
+#                 'label': f'{envname}',
+#                 'description': 'test',
+#                 'organizationUri': org.organizationUri,
+#                 'AwsAccountId': account,
+#                 'tags': ['a', 'b', 'c'],
+#                 'region': f'{region}',
+#                 'SamlGroupName': f'{group}',
+#                 'parameters': [{'key': k, 'value': v} for k, v in parameters.items()],
+#                 'vpcId': vpcId,
+#                 'subnetIds': subnetIds
+#             },
+#         )
+#         cache[key] = response.data.createEnvironment
+#         return cache[key]
+
+#     yield factory
+
+
+@pytest.fixture(scope='module', autouse=True)
+def org(client):
+    cache = {}
+
+    def factory(orgname, owner, group):
+        key = orgname + owner + group
+        if cache.get(key):
+            print(f'returning item from cached key {key}')
+            return cache.get(key)
+        response = client.query(
+            """mutation CreateOrganization($input:NewOrganizationInput){
+                createOrganization(input:$input){
+                    organizationUri
+                    label
+                    name
+                    owner
+                    SamlGroupName
+                }
+            }""",
+            username=f'{owner}',
+            groups=[group],
+            input={
+                'label': f'{orgname}',
+                'description': f'test',
+                'tags': ['a', 'b', 'c'],
+                'SamlGroupName': f'{group}',
+            },
+        )
+        cache[key] = response.data.createOrganization
+        return cache[key]
+
+    yield factory
+
+
+@pytest.fixture(scope='module')
+def org_fixture(org, user, group):
+    org1 = org('testorg', user.username, group.name)
+    yield org1
+
+
+@pytest.fixture(scope='module')
+def env_mlstudio_fixture(env, org_fixture, user, group, tenant):
+    env1 = env_with_mlstudio(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
+    yield env1
+

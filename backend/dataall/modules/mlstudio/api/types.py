@@ -103,15 +103,3 @@ SagemakerStudioDomain = gql.ObjectType(
         )
     ],
 )
-
-SagemakerStudioDomainSearchResult = gql.ObjectType(
-    name='SagemakerStudioDomainSearchResult',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioDomain)),
-    ],
-)

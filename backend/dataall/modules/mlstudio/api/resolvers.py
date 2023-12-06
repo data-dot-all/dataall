@@ -29,16 +29,6 @@ class RequestValidator:
         required(data, "SamlAdminGroupName")
 
     @staticmethod
-    def validate_domain_creation_request(data):
-        required = RequestValidator._required
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('name')
-
-        required(data, "environmentUri")
-
-    @staticmethod
     def _required(data: dict, name: str):
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
@@ -97,26 +87,6 @@ def delete_sagemaker_studio_user(
     return SagemakerStudioService.delete_sagemaker_studio_user(
         uri=sagemakerStudioUserUri,
         delete_from_aws=deleteFromAWS
-    )
-
-
-def create_sagemaker_studio_domain(context: Context, source, input: dict = None):
-    """Creates a SageMaker Studio user. Deploys the SageMaker Studio user stack into AWS"""
-    RequestValidator.validate_domain_creation_request(input)
-    return SagemakerStudioService.create_sagemaker_studio_domain(
-        uri=input["environmentUri"],
-        data=input
-    )
-
-
-def delete_environment_sagemaker_studio_domain(
-    context,
-    source: SagemakerStudioUser,
-    environmentUri: str = None
-):
-    RequestValidator.required_uri(environmentUri)
-    return SagemakerStudioService.delete_environment_sagemaker_studio_domain(
-        uri=environmentUri
     )
 
 

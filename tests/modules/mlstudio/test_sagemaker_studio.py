@@ -1,47 +1,43 @@
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 
 
-def test_create_sagemaker_studio_domain(sagemaker_studio_domain, env_fixture):
-    """Testing that the conftest sagemaker studio domain has been created correctly"""
-    assert sagemaker_studio_domain.label == 'testcreate-domain'
-    assert sagemaker_studio_domain.vpcType == 'created'
-    assert sagemaker_studio_domain.vpcId is None
-    assert len(sagemaker_studio_domain.subnetIds) == 0
-    assert sagemaker_studio_domain.environmentUri == env_fixture.environmentUri
-
-
-def test_create_sagemaker_studio_domain_unauthorized(client, env_fixture, group2):
+def test_create_sagemaker_studio_domain(db, client, org_fixture, env_with_mlstudio, user, group, vpcId="vpc-1234", subnetIds=["subnet"]):
     response = client.query(
         """
-            mutation createMLStudioDomain($input: NewStudioDomainInput) {
-              createMLStudioDomain(input: $input) {
-                sagemakerStudioUri
-                environmentUri
-                label
-                vpcType
-                vpcId
-                subnetIds
-              }
-            }
-            """,
-        input={
-            'label': 'testcreate',
-            'environmentUri': env_fixture.environmentUri,
-        },
-        username='anonymoususer',
-        groups=[group2.name],
+        query getEnvironmentMLStudioDomain($environmentUri: String) {
+          getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
+            sagemakerStudioUri
+            environmentUri
+            label
+            sagemakerStudioDomainName
+            DefaultDomainRoleName
+            vpcType
+            vpcId
+            subnetIds
+            owner
+            created
+          }
+        }
+        """,
+        environmentUri=env_with_mlstudio.environmentUri,
     )
-    assert 'Unauthorized' in response.errors[0].message
+
+    assert response.data.getEnvironmentMLStudioDomain.sagemakerStudioUri
+    assert response.data.getEnvironmentMLStudioDomain.label == f'{env_with_mlstudio.label}-domain'
+    assert response.data.getEnvironmentMLStudioDomain.vpcType == 'created'
+    assert len(response.data.getEnvironmentMLStudioDomain.vpcId) == 0
+    assert len(response.data.getEnvironmentMLStudioDomain.subnetIds) == 0
+    assert response.data.getEnvironmentMLStudioDomain.environmentUri == env_with_mlstudio.environmentUri
 
 
-def test_create_sagemaker_studio_user(sagemaker_studio_user, group, env_fixture):
+def test_create_sagemaker_studio_user(sagemaker_studio_user, group, env_with_mlstudio):
     """Testing that the conftest sagemaker studio user has been created correctly"""
     assert sagemaker_studio_user.label == 'testcreate'
     assert sagemaker_studio_user.SamlAdminGroupName == group.name
-    assert sagemaker_studio_user.environmentUri == env_fixture.environmentUri
+    assert sagemaker_studio_user.environmentUri == env_with_mlstudio.environmentUri
 
 
-def test_list_sagemaker_studio_users(client, env_fixture, db, group, multiple_sagemaker_studio_users):
+def test_list_sagemaker_studio_users(client, db, group, multiple_sagemaker_studio_users): 
     response = client.query(
         """
         query listSagemakerStudioUsers($filter:SagemakerStudioUserFilter!){
@@ -101,43 +97,46 @@ def test_delete_sagemaker_studio_user(
         )
         assert not n
 
-
-def test_get_sagemaker_studio_domain(client, env_fixture, sagemaker_studio_domain):
-    response = client.query(
-        """
-        query getEnvironmentMLStudioDomain($environmentUri: String) {
-          getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
-            sagemakerStudioUri
-            environmentUri
-            label
-            sagemakerStudioDomainName
-            DefaultDomainRoleName
-            vpcType
-            vpcId
-            subnetIds
-            owner
-            created
-          }
+def update_env_query():
+    query = """
+        mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
+            updateEnvironment(environmentUri:$environmentUri,input:$input){
+                organization{
+                    organizationUri
+                }
+                label
+                AwsAccountId
+                region
+                SamlGroupName
+                owner
+                tags
+                resourcePrefix
+                parameters {
+                    key
+                    value
+                }
+            }
         }
-        """,
-        environmentUri=env_fixture.environmentUri,
-    )
-    print(response.data)
-    assert response.data.getEnvironmentMLStudioDomain.sagemakerStudioUri == sagemaker_studio_domain.sagemakerStudioUri
+    """
+    return query
 
-
-def test_delete_sagemaker_studio_domain(client, env_fixture, group):
+def test_update_env_delete_domain(client, org_fixture, env_with_mlstudio, group, group2):
     response = client.query(
-        """
-        mutation deleteEnvironmentMLStudioDomain($environmentUri: String!) {
-          deleteEnvironmentMLStudioDomain(environmentUri: $environmentUri)
-        }
-        """,
-        environmentUri=env_fixture.environmentUri,
+        update_env_query(),
         username='alice',
+        environmentUri=env_with_mlstudio.environmentUri,
+        input={
+            'label': 'DEV',
+            'tags': [],
+            'parameters': [
+                {
+                    'key': 'mlStudiosEnabled',
+                    'value': 'False'
+                }
+            ],
+        },
         groups=[group.name],
     )
-    assert response.data.deleteEnvironmentMLStudioDomain
 
     response = client.query(
         """
@@ -156,30 +155,55 @@ def test_delete_sagemaker_studio_domain(client, env_fixture, group):
           }
         }
         """,
-        environmentUri=env_fixture.environmentUri
+        environmentUri=env_with_mlstudio.environmentUri,
     )
     assert response.data.getEnvironmentMLStudioDomain is None
 
 
-def test_create_sagemaker_studio_domain_with_vpc(sagemaker_studio_domain_with_vpc, env_fixture):
-    """Testing that the conftest sagemaker studio domain has been created correctly"""
-    assert sagemaker_studio_domain_with_vpc.label == 'testcreate-domain'
-    assert sagemaker_studio_domain_with_vpc.vpcType == 'imported'
-    assert sagemaker_studio_domain_with_vpc.vpcId == 'vpc-12345'
-    assert sagemaker_studio_domain_with_vpc.subnetIds == ['subnet-12345', 'subnet-67890']
-    assert sagemaker_studio_domain_with_vpc.environmentUri == env_fixture.environmentUri
-
-
-def test_delete_sagemaker_studio_domain_unauthorized(client, env_fixture, group2):
+def test_update_env_create_domain_with_vpc(db, client, org_fixture, env_with_mlstudio, user, group):
     response = client.query(
-        """
-        mutation deleteEnvironmentMLStudioDomain($environmentUri: String!) {
-          deleteEnvironmentMLStudioDomain(environmentUri: $environmentUri)
-        }
-        """,
-        environmentUri=env_fixture.environmentUri,
-        username='anonymoususer',
-        groups=[group2.name],
+        update_env_query(),
+        username='alice',
+        environmentUri=env_with_mlstudio.environmentUri,
+        input={
+            'label': 'dev',
+            'tags': [],
+            'vpcId': "vpc-12345",
+            'subnetIds': ['subnet-12345', 'subnet-67890'],
+            'parameters': [
+                {
+                    'key': 'mlStudiosEnabled',
+                    'value': 'True'
+                }
+            ],
+        },
+        groups=[group.name],
     )
 
-    assert 'Unauthorized' in response.errors[0].message
+    response = client.query(
+        """
+        query getEnvironmentMLStudioDomain($environmentUri: String) {
+          getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
+            sagemakerStudioUri
+            environmentUri
+            label
+            sagemakerStudioDomainName
+            DefaultDomainRoleName
+            vpcType
+            vpcId
+            subnetIds
+            owner
+            created
+          }
+        }
+        """,
+        environmentUri=env_with_mlstudio.environmentUri,
+    )
+
+    assert response.data.getEnvironmentMLStudioDomain.sagemakerStudioUri
+    assert response.data.getEnvironmentMLStudioDomain.label == f'{env_with_mlstudio.label}-domain'
+    assert response.data.getEnvironmentMLStudioDomain.vpcType == 'imported'
+    assert response.data.getEnvironmentMLStudioDomain.vpcId == 'vpc-12345'
+    assert len(response.data.getEnvironmentMLStudioDomain.subnetIds) == 2
+    assert response.data.getEnvironmentMLStudioDomain.environmentUri == env_with_mlstudio.environmentUri
+

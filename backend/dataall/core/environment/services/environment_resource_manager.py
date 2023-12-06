@@ -12,7 +12,11 @@ class EnvironmentResource(ABC):
         pass
 
     @staticmethod
-    def update_env(session, environment):
+    def create_env(session, environment, **kwargs):
+        pass
+
+    @staticmethod
+    def update_env(session, environment, **kwargs):
         return False
 
     @staticmethod
@@ -39,10 +43,10 @@ class EnvironmentResourceManager:
         return counter
 
     @classmethod
-    def deploy_updated_stack(cls, session, prev_prefix, environment):
+    def deploy_updated_stack(cls, session, prev_prefix, environment, **kwargs):
         deploy_stack = prev_prefix != environment.resourcePrefix
         for resource in cls._resources:
-            deploy_stack |= resource.update_env(session, environment)
+            deploy_stack |= resource.update_env(session, environment, **kwargs)
 
         return deploy_stack
 
@@ -50,6 +54,11 @@ class EnvironmentResourceManager:
     def delete_env(cls, session, environment):
         for resource in cls._resources:
             resource.delete_env(session, environment)
+
+    @classmethod
+    def create_env(cls, session, environment, **kwargs):
+        for resource in cls._resources:
+            resource.create_env(session, environment, **kwargs)
 
     @classmethod
     def count_consumption_role_resources(cls, session, role_uri):

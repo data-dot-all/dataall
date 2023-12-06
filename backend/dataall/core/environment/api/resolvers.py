@@ -77,14 +77,14 @@ def check_environment(context: Context, source, account_id, region, data):
         if parameter['key'] == 'mlStudiosEnabled':
             mlStudioEnabled = parameter['value']
 
-    if mlStudioEnabled and data.get("mlStudioVPCId", None) and data.get("mlStudioSubnetIds", []):
+    if mlStudioEnabled and data.get("vpcId", None) and data.get("subnetIds", []):
         log.info("Check if ML Studio VPC Exists in the Account")
         EC2.check_vpc_exists(
             AwsAccountId=account_id,
             region=region,
             role=cdk_look_up_role_arn,
-            vpc_id=data.get("mlStudioVPCId", None),
-            subnet_ids=data.get('mlStudioSubnetIds', []),
+            vpc_id=data.get("vpcId", None),
+            subnet_ids=data.get('subnetIds', []),
         )
 
     return cdk_role_name
@@ -148,7 +148,7 @@ def update_environment(
             data=input,
         )
 
-        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
+        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
             stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment

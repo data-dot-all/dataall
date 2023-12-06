@@ -31,8 +31,8 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
-        gql.Argument('mlStudioVPCId', gql.String),
-        gql.Argument('mlStudioSubnetIds', gql.ArrayType(gql.String))
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 
@@ -45,8 +45,8 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('SamlGroupName', gql.String),
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
-        gql.Argument('mlStudioVPCId', gql.String),
-        gql.Argument('mlStudioSubnetIds', gql.ArrayType(gql.String))
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 

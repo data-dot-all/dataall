@@ -10,32 +10,16 @@ from sqlalchemy.orm import Query
 from dataall.base.utils import slugify
 from dataall.base.db import paginate
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioDomain, SagemakerStudioUser
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
 
-class SageMakerStudioRepository(EnvironmentResource):
+class SageMakerStudioRepository:
     """DAO layer for ML Studio"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
-
-    @staticmethod
-    def update_env(session, environment):
-        current_mlstudio_enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
-        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, environment.environmentUri)
-        previous_mlstudio_enabled = True if domain else False
-        return current_mlstudio_enabled != previous_mlstudio_enabled
-
-    @staticmethod
-    def delete_env(session, environment):
-        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment.environmentUri)
-        if domain:
-            session.delete(domain)
-        return True
 
     @staticmethod
     def save_sagemaker_studio_user(session, user):
@@ -135,3 +119,11 @@ class SageMakerStudioRepository(EnvironmentResource):
         if not domain:
             return None
         return domain
+
+    @staticmethod
+    def delete_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:
+        domain: SagemakerStudioDomain = session.query(SagemakerStudioDomain).filter(
+            SagemakerStudioDomain.environmentUri == env_uri,
+        ).first()
+        if domain:
+            session.delete(domain)

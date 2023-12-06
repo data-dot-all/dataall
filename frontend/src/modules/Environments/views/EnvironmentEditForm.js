@@ -30,12 +30,7 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  getEnvironmentMLStudioDomain,
-  createMLStudioDomain,
-  deleteEnvironmentMLStudioDomain,
-  useClient
-} from 'services';
+import { getEnvironmentMLStudioDomain, useClient } from 'services';
 import { getEnvironment, updateEnvironment } from '../services';
 import {
   isAnyEnvironmentModuleEnabled,
@@ -105,8 +100,8 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             resourcePrefix: values.resourcePrefix,
-            mlStudioVPCId: values.mlStudioVPCId,
-            mlStudioSubnetIds: values.mlStudioSubnetIds,
+            vpcId: values.vpcId,
+            subnetIds: values.subnetIds,
             parameters: [
               {
                 key: 'notebooksEnabled',
@@ -129,35 +124,6 @@ const EnvironmentEditForm = (props) => {
         })
       );
       if (!response.errors) {
-        if (
-          values.mlStudiosEnabled !== previousEnvMLStudioEnabled &&
-          values.mlStudiosEnabled === true
-        ) {
-          const response2 = await client.mutate(
-            createMLStudioDomain({
-              environmentUri: env.environmentUri,
-              label: values.label,
-              vpcId: values.mlStudioVPCId,
-              subnetIds: values.mlStudioSubnetIds
-            })
-          );
-          if (response2.errors) {
-            dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          }
-        }
-        if (
-          values.mlStudiosEnabled !== previousEnvMLStudioEnabled &&
-          values.mlStudiosEnabled === false
-        ) {
-          const response2 = await client.mutate(
-            deleteEnvironmentMLStudioDomain({
-              environmentUri: envMLStudioDomain.environmentUri
-            })
-          );
-          if (response2.errors) {
-            dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          }
-        }
         setStatus({ success: true });
         setSubmitting(false);
         enqueueSnackbar('Environment updated', {
@@ -268,8 +234,8 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                mlStudioVPCId: envMLStudioDomain.vpcId || '',
-                mlStudioSubnetIds: envMLStudioDomain.subnetIds || [],
+                vpcId: envMLStudioDomain.vpcId || '',
+                subnetIds: envMLStudioDomain.subnetIds || [],
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
@@ -283,7 +249,7 @@ const EnvironmentEditForm = (props) => {
                   .required('*Environment name is required'),
                 description: Yup.string().max(5000),
                 tags: Yup.array().nullable(),
-                mlStudioSubnetIds: Yup.array().when('mlStudioVPCId', {
+                subnetIds: Yup.array().when('vpcId', {
                   is: (value) => !!value,
                   then: Yup.array()
                     .min(1)
@@ -291,7 +257,7 @@ const EnvironmentEditForm = (props) => {
                       'At least 1 Subnet Id required if VPC Id specified'
                     )
                 }),
-                mlStudioVPCId: Yup.string().nullable(),
+                vpcId: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
                   .matches(
@@ -460,19 +426,13 @@ const EnvironmentEditForm = (props) => {
                                   disabled={previousEnvMLStudioEnabled}
                                   label="(Optional) ML Studio VPC ID"
                                   placeholder="(Optional) Bring your own VPC - Specify VPC ID"
-                                  name="mlStudioVPCId"
+                                  name="vpcId"
                                   fullWidth
-                                  error={Boolean(
-                                    touched.mlStudioVPCId &&
-                                      errors.mlStudioVPCId
-                                  )}
-                                  helperText={
-                                    touched.mlStudioVPCId &&
-                                    errors.mlStudioVPCId
-                                  }
+                                  error={Boolean(touched.vpcId && errors.vpcId)}
+                                  helperText={touched.vpcId && errors.vpcId}
                                   onBlur={handleBlur}
                                   onChange={handleChange}
-                                  value={values.mlStudioVPCId}
+                                  value={values.vpcId}
                                   variant="outlined"
                                 />
                               </CardContent>
@@ -481,20 +441,16 @@ const EnvironmentEditForm = (props) => {
                                   disabled={previousEnvMLStudioEnabled}
                                   fullWidth
                                   error={Boolean(
-                                    touched.mlStudioSubnetIds &&
-                                      errors.mlStudioSubnetIds
+                                    touched.subnetIds && errors.subnetIds
                                   )}
                                   helperText={
-                                    touched.mlStudioSubnetIds &&
-                                    errors.mlStudioSubnetIds
+                                    touched.subnetIds && errors.subnetIds
                                   }
                                   variant="outlined"
                                   label="(Optional) ML Studio Subnet ID(s)"
                                   placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
                                   onChange={(chip) => {
-                                    setFieldValue('mlStudioSubnetIds', [
-                                      ...chip
-                                    ]);
+                                    setFieldValue('subnetIds', [...chip]);
                                   }}
                                 />
                               </CardContent>
