@@ -13,7 +13,7 @@ RUN dnf upgrade -y;\
     dnf clean all; rm -rfv /var/cache/dnf
 
 # Installing libraries
-RUN dnf -y install -y \
+RUN dnf -y install \
     shadow-utils wget openssl-devel bzip2-devel libffi-devel \
     postgresql-devel gcc unzip tar gzip
 
