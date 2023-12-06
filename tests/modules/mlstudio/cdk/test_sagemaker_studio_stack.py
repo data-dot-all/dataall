@@ -72,7 +72,7 @@ def patch_methods_sagemaker_studio_extension(mocker, sgm_studio_domain):
         return_value="arn:aws:iam::1111111111:role/cdk-hnb659fds-lookup-role-1111111111-eu-west-1",
     )
     mocker.patch(
-        'dataall.core.environment.aws.ec2_client.EC2.check_default_vpc_exists',
+        'dataall.base.aws.ec2_client.EC2.check_default_vpc_exists',
         return_value=False,
     )
     mocker.patch(

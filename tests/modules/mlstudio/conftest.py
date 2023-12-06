@@ -26,7 +26,7 @@ def get_cdk_look_up_role_arn(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def check_default_vpc(module_mocker):
     module_mocker.patch(
-        'dataall.core.environment.aws.ec2_client.EC2.check_default_vpc_exists',
+        'dataall.base.aws.ec2_client.EC2.check_default_vpc_exists',
         return_value=False,
     )
 
@@ -34,7 +34,7 @@ def check_default_vpc(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def check_vpc_exists(module_mocker):
     module_mocker.patch(
-        'dataall.core.environment.aws.ec2_client.EC2.check_vpc_exists',
+        'dataall.base.aws.ec2_client.EC2.check_vpc_exists',
         return_value=True,
     )
 
