@@ -104,6 +104,16 @@ const EnvironmentView = () => {
   };
 
   const archiveEnv = async () => {
+    if (isModuleEnabled(ModuleNames.MLSTUDIO)) {
+      const response2 = await client.mutate(
+        deleteEnvironmentMLStudioDomain({
+          environmentUri: env.environmentUri
+        })
+      );
+      if (response2.errors) {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    }
     const response = await client.mutate(
       archiveEnvironment({
         environmentUri: env.environmentUri,
@@ -111,16 +121,6 @@ const EnvironmentView = () => {
       })
     );
     if (!response.errors) {
-      if (isModuleEnabled(ModuleNames.MLSTUDIO)) {
-        const response2 = await client.mutate(
-          deleteEnvironmentMLStudioDomain({
-            environmentUri: env.environmentUri
-          })
-        );
-        if (response2.errors) {
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
-        }
-      }
       handleArchiveObjectModalClose();
       enqueueSnackbar('Environment deleted', {
         anchorOrigin: {
