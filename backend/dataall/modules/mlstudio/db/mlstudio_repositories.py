@@ -32,7 +32,7 @@ class SageMakerStudioRepository(EnvironmentResource):
 
     @staticmethod
     def delete_env(session, environment):
-        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment.environment_uri)
+        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment.environmentUri)
         if domain:
             session.delete(domain)
         return True
