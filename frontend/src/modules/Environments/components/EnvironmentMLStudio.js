@@ -14,8 +14,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshTableMenu, ObjectMetadata } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
-import { getEnvironmentMLStudioDomain } from '../services';
+import { getEnvironmentMLStudioDomain, useClient } from 'services';
 
 export const EnvironmentMLStudio = ({ environment }) => {
   const client = useClient();

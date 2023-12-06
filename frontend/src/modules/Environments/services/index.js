@@ -22,6 +22,3 @@ export * from './removeConsumptionRole';
 export * from './removeGroup';
 export * from './updateEnvironment';
 export * from './updateGroupEnvironmentPermissions';
-export * from './createMLStudioDomain';
-export * from './deleteEnvironmentMLStudioDomain';
-export * from './getEnvironmentMLStudioDomain';

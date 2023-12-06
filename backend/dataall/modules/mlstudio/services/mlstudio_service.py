@@ -19,7 +19,7 @@ from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
-from dataall.core.environment.aws.ec2_client import EC2
+from dataall.backend.dataall.base.aws.ec2_client import EC2
 from dataall.base.aws.sts import SessionHelper
 
 from dataall.modules.mlstudio.services.mlstudio_permissions import (
@@ -93,8 +93,7 @@ class SagemakerStudioService:
             if not existing_domain:
                 raise exceptions.AWSResourceNotAvailable(
                     action='Sagemaker Studio domain',
-                    message='Update the environment stack '
-                            'or create a Sagemaker studio domain on your AWS account.',
+                    message='Update the environment stack and enable ML Studio Environment Feature'
                 )
 
             sagemaker_studio_user = SagemakerStudioUser(
@@ -201,7 +200,8 @@ class SagemakerStudioService:
     def delete_environment_sagemaker_studio_domain(*, uri: str):
         with _session() as session:
             domain = SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=uri)
-            session.delete(domain)
+            if domain:
+                session.delete(domain)
             return True
 
     @staticmethod

@@ -32,7 +32,6 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
-  createMLStudioDomain,
   createEnvironment,
   getPivotRoleExternalId,
   getPivotRoleName,
@@ -47,6 +46,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  createMLStudioDomain,
   getOrganization,
   getTrustAccount,
   useClient,

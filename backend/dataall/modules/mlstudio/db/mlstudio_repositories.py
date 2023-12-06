@@ -2,7 +2,6 @@
 DAO layer that encapsulates the logic and interaction with the database for ML Studio
 Provides the API to retrieve / update / delete ml studio
 """
-import stat
 from typing import Optional
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
@@ -120,24 +119,6 @@ class SageMakerStudioRepository(EnvironmentResource):
         ).build_compliant_name()
 
         return domain
-
-    @staticmethod
-    def _query_environment_sagemaker_studio_domains(session, uri, filter) -> Query:
-        query = session.query(SagemakerStudioDomain).filter(
-            SagemakerStudioDomain.environmentUri == uri,
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    SagemakerStudioDomain.description.ilike(
-                        filter.get('term') + '%%'
-                    ),
-                    SagemakerStudioDomain.label.ilike(
-                        filter.get('term') + '%%'
-                    ),
-                )
-            )
-        return query
 
     @staticmethod
     def get_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:

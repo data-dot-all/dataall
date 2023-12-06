@@ -20,7 +20,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.db.vpc_repositories import Vpc
-from dataall.core.environment.aws.ec2_client import EC2
+from dataall.backend.dataall.base.aws.ec2_client import EC2
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled

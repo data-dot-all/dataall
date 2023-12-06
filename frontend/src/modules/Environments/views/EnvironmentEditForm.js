@@ -30,14 +30,13 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
 import {
-  getEnvironment,
-  updateEnvironment,
   getEnvironmentMLStudioDomain,
   createMLStudioDomain,
-  deleteEnvironmentMLStudioDomain
-} from '../services';
+  deleteEnvironmentMLStudioDomain,
+  useClient
+} from 'services';
+import { getEnvironment, updateEnvironment } from '../services';
 import {
   isAnyEnvironmentModuleEnabled,
   isModuleEnabled,
