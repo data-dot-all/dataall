@@ -31,6 +31,13 @@ class SageMakerStudioRepository(EnvironmentResource):
         return current_mlstudio_enabled != previous_mlstudio_enabled
 
     @staticmethod
+    def delete_env(session, environment):
+        domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=environment.environment_uri)
+        if domain:
+            session.delete(domain)
+        return True
+
+    @staticmethod
     def save_sagemaker_studio_user(session, user):
         """Save SageMaker Studio user to the database"""
         session.add(user)

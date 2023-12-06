@@ -34,7 +34,7 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { deleteEnvironmentMLStudioDomain, useClient } from 'services';
+import { useClient } from 'services';
 import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import {
@@ -104,16 +104,6 @@ const EnvironmentView = () => {
   };
 
   const archiveEnv = async () => {
-    if (isModuleEnabled(ModuleNames.MLSTUDIO)) {
-      const response2 = await client.mutate(
-        deleteEnvironmentMLStudioDomain({
-          environmentUri: env.environmentUri
-        })
-      );
-      if (response2.errors) {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    }
     const response = await client.mutate(
       archiveEnvironment({
         environmentUri: env.environmentUri,
