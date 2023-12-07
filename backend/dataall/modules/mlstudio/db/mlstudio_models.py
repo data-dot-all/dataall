@@ -21,6 +21,7 @@ class SagemakerStudioDomain(Resource, Base):
     AWSAccountId = Column(String, nullable=False)
     DefaultDomainRoleName = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
+    SamlGroupName = Column(String, nullable=False)
     vpcType = Column(String, nullable=True)
     vpcId = Column(String, nullable=True)
     subnetIds = Column(ARRAY(String), nullable=True)

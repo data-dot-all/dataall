@@ -151,18 +151,6 @@ def downgrade():
             print("Updating of sagemaker_studio_domain table...")
             op.alter_column(
                 'sagemaker_studio_domain',
-                'sagemakerStudioDomainID',
-                nullable=False,
-                existing_type=sa.String()
-            )
-            op.alter_column(
-                'sagemaker_studio_domain',
-                'SagemakerStudioStatus',
-                nullable=False,
-                existing_type=sa.String()
-            )
-            op.alter_column(
-                'sagemaker_studio_domain',
                 'DefaultDomainRoleName',
                 new_column_name='RoleArn',
                 nullable=False,
