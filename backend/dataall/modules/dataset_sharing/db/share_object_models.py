@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -58,3 +59,11 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
+
+
+@dataclass
+class Catalog:
+    """ Can be expanded to include other details once broader catalog support is added to data.all """
+    account_id: str
+    database_name: str
+    region: str

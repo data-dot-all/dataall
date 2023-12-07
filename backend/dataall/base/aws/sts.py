@@ -359,3 +359,13 @@ class SessionHelper:
 
         # Send final URL to stdout
         return request_url
+
+    @staticmethod
+    def is_assumable_pivot_role(accountid):
+        aws_session = SessionHelper.remote_session(accountid=accountid)
+        if aws_session is None:
+            log.error(
+                f'Failed to assume dataall pivot role in environment {accountid}'
+            )
+            return False
+        return True

@@ -3,6 +3,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
+from dataall.modules.dataset_sharing.db.share_object_models import Catalog
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class GlueClient:
         self._client = aws_session.client('glue', region_name=region)
         self._database = database
         self._account_id = account_id
+        self._region = region
 
     def create_database(self, location):
         try:
@@ -129,4 +131,39 @@ class GlueClient:
                 f'in account {account_id} '
                 f'due to: {e}'
             )
+            raise e
+
+    def get_source_catalog(self):
+        """ Get the source catalog account details """
+        try:
+            log.info(f'Fetching source catalog details for database {self._database}...')
+            response = self._client.get_database(CatalogId=self._account_id, Name=self._database)
+            linked_database = response.get('Database', {}).get('TargetDatabase', {})
+            log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}...')
+            if linked_database:
+                return Catalog(account_id=linked_database.get('CatalogId'),
+                               database_name=linked_database.get('DatabaseName'),
+                               region=linked_database.get('Region', self._region))
+        except Exception as e:
+            log.exception(f'Could not fetch source catalog details for database {self._database} due to {e}')
+            raise e
+        return None
+
+    def get_database_tags(self):
+        # Get tags from the glue database
+        account_id = self._account_id
+        database = self._database
+        region = self._region
+
+        try:
+            log.info(f'Getting tags for database {database}...')
+            resource_arn = f'arn:aws:glue:{region}:{account_id}:database/{database}'
+            response = self._client.get_tags(ResourceArn=resource_arn)
+            tags = response['Tags']
+
+            log.info(f'Successfully retrieved tags: {tags}')
+
+            return tags
+        except Exception as e:
+            log.exception(f'Could not get tags for database {database} due to {e}')
             raise e
