@@ -50,6 +50,7 @@ class SagemakerStudioDomain(Resource, Base):
     AWSAccountId = Column(String, nullable=False)
     DefaultDomainRoleName = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
+    SamlGroupName = Column(String, nullable=False)
     vpcType = Column(String, nullable=True)
 
 
@@ -148,6 +149,9 @@ def downgrade():
         session = orm.Session(bind=bind)
 
         if has_table('sagemaker_studio_domain', engine):
+            print("deleting sagemaker studio domain entries...")
+            session.query(SagemakerStudioDomain).delete()
+        
             print("Updating of sagemaker_studio_domain table...")
             op.alter_column(
                 'sagemaker_studio_domain',
