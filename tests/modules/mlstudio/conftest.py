@@ -144,56 +144,6 @@ def env_with_mlstudio(client, org_fixture, user, group, parameters=None, vpcId='
     yield response.data.createEnvironment
 
 
-# @pytest.fixture(scope='module')
-# def env(client):
-#     cache = {}
-
-#     def factory(org, envname, owner, group, account, region, vpcId='', subnetIds=[]):
-#         parameters = {"mlStudiosEnabled": "true"}
-
-#         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}{vpcId}"
-#         if cache.get(key):
-#             return cache[key]
-#         response = client.query(
-#             """mutation CreateEnv($input:NewEnvironmentInput){
-#                 createEnvironment(input:$input){
-#                     organization{
-#                         organizationUri
-#                     }
-#                     environmentUri
-#                     label
-#                     AwsAccountId
-#                     SamlGroupName
-#                     region
-#                     name
-#                     owner
-#                     parameters {
-#                         key
-#                         value
-#                     }
-#                 }
-#             }""",
-#             username=f'{owner}',
-#             groups=[group],
-#             input={
-#                 'label': f'{envname}',
-#                 'description': 'test',
-#                 'organizationUri': org.organizationUri,
-#                 'AwsAccountId': account,
-#                 'tags': ['a', 'b', 'c'],
-#                 'region': f'{region}',
-#                 'SamlGroupName': f'{group}',
-#                 'parameters': [{'key': k, 'value': v} for k, v in parameters.items()],
-#                 'vpcId': vpcId,
-#                 'subnetIds': subnetIds
-#             },
-#         )
-#         cache[key] = response.data.createEnvironment
-#         return cache[key]
-
-#     yield factory
-
-
 @pytest.fixture(scope='module', autouse=True)
 def org(client):
     cache = {}
