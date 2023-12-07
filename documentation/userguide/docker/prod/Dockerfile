@@ -1,14 +1,14 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
-ARG NODE_VERSION=16
-ARG PYTHON_VERSION=3.8
+ARG NODE_VERSION=18
+ARG PYTHON_VERSION=3.9
 ARG NGINX_VERSION=1.12
 ARG ENVSUBST_VERSION=v1.1.0
 
-RUN yum -y install shadow-utils wget
-RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN amazon-linux-extras install python$PYTHON_VERSION
-RUN amazon-linux-extras install nginx$NGINX_VERSION
+RUN dnf -y install shadow-utils wget
+RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
+RUN dnf install python$PYTHON_VERSION
+RUN dnf install nginx$NGINX_VERSION
 
 RUN touch ~/.bashrc
 
