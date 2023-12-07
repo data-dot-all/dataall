@@ -91,6 +91,7 @@ def upgrade():
             op.add_column("sagemaker_studio_domain", Column("vpcType", sa.String(), nullable=True))
             op.add_column("sagemaker_studio_domain", Column("vpcId", sa.String(), nullable=True))
             op.add_column("sagemaker_studio_domain", Column("subnetIds", postgresql.ARRAY(sa.String()), nullable=True))
+            op.add_column("sagemaker_studio_domain", Column("SamlGroupName", sa.String(), nullable=False))
 
             op.create_foreign_key(
                 "fk_sagemaker_studio_domain_env_uri",
@@ -112,18 +113,23 @@ def upgrade():
                     Environment.environmentUri == param.environmentUri
                 ).first()
 
-                domain = SagemakerStudioDomain(
-                    label=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
-                    owner=env.owner,
-                    description='No description provided',
-                    environmentUri=env.environmentUri,
-                    AWSAccountId=env.AwsAccountId,
-                    region=env.region,
-                    DefaultDomainRoleName="RoleSagemakerStudioUsers",
-                    sagemakerStudioDomainName=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
-                    vpcType="unknown"
-                )
-                session.add(domain)
+                domain: SagemakerStudioDomain = session.query(SagemakerStudioDomain).filter(
+                    SagemakerStudioDomain.environmentUri == env.environmentUri
+                ).first()
+                if not domain:
+                    domain = SagemakerStudioDomain(
+                        label=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                        owner=env.owner,
+                        description='No description provided',
+                        environmentUri=env.environmentUri,
+                        AWSAccountId=env.AwsAccountId,
+                        region=env.region,
+                        DefaultDomainRoleName="RoleSagemakerStudioUsers",
+                        sagemakerStudioDomainName=f"SagemakerStudioDomain-{env.region}-{env.AwsAccountId}",
+                        vpcType="unknown",
+                        SamlGroupName=env.SamlGroupName
+                    )
+                    session.add(domain)
             session.flush()
         session.commit()
         print("Fill of sagemaker_studio_domain table is done")
@@ -167,6 +173,7 @@ def downgrade():
             op.drop_column("sagemaker_studio_domain", "vpcType")
             op.drop_column("sagemaker_studio_domain", "vpcId")
             op.drop_column("sagemaker_studio_domain", "subnetIds")
+            op.drop_column("sagemaker_studio_domain", "SamlGroupName")
 
             op.drop_constraint("fk_sagemaker_studio_domain_env_uri", "sagemaker_studio_domain")
 

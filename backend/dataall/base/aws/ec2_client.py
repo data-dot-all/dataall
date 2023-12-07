@@ -23,8 +23,19 @@ class EC2:
         vpcs = response['Vpcs']
         log.info(f"Default VPCs response: {vpcs}")
         if vpcs:
-            return True
+            vpc_id = vpcs[0]['VpcId']
+            subnetIds = EC2._get_vpc_subnets(AwsAccountId=AwsAccountId, region=region, vpc_id=vpc_id, role=role)
+            if subnetIds:
+                return vpc_id, subnetIds
         return False
+
+    @staticmethod
+    def _get_vpc_subnets(AwsAccountId: str, region: str, vpc_id: str, role=None):
+        client = EC2.get_client(account_id=AwsAccountId, region=region, role=role)
+        response = client.describe_subnets(
+            Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+        )
+        return [subnet['SubnetId'] for subnet in response['Subnets']]
 
     @staticmethod
     def check_vpc_exists(AwsAccountId, region, vpc_id, role=None, subnet_ids=[]):

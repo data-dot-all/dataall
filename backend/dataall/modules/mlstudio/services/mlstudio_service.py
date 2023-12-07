@@ -81,6 +81,9 @@ class SagemakerStudioEnvironmentResource(EnvironmentResource):
         elif (current_mlstudio_enabled != previous_mlstudio_enabled and not previous_mlstudio_enabled):
             SagemakerStudioService.create_sagemaker_studio_domain(session, environment, **kwargs)
             return True
+        elif current_mlstudio_enabled:
+            SagemakerStudioService.update_sagemaker_studio_domain(environment, domain, **kwargs)
+            return True
         return False
 
     @staticmethod
@@ -172,20 +175,38 @@ class SagemakerStudioService:
         return sagemaker_studio_user
 
     @staticmethod
-    def create_sagemaker_studio_domain(session, environment, data: dict = {}):
+    def update_sagemaker_studio_domain(environment, domain, data):
+        SagemakerStudioService._update_sagemaker_studio_domain_vpc(environment.AwsAccountId, environment.region, data)
+        domain.vpcType = data.get('vpcType')
+        if data.get('vpcId'):
+            domain.vpcId = data.get('vpcId')
+        if data.get('subnetIds'):
+            domain.subnetIds = data.get('subnetIds')
+
+    @staticmethod
+    def _update_sagemaker_studio_domain_vpc(account_id, region, data={}):
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
-            accountid=environment.AwsAccountId, region=environment.region
+            accountid=account_id, region=region
         )
         if data.get("vpcId", None):
             data["vpcType"] = "imported"
-        elif EC2.check_default_vpc_exists(
-            AwsAccountId=environment.AwsAccountId,
-            region=environment.region,
-            role=cdk_look_up_role_arn,
-        ):
-            data["vpcType"] = "default"
         else:
-            data["vpcType"] = "created"
+            response = EC2.check_default_vpc_exists(
+                AwsAccountId=account_id,
+                region=region,
+                role=cdk_look_up_role_arn,
+            )
+            if response:
+                vpcId, subnetIds = response
+                data["vpcType"] = "default"
+                data["vpcId"] = vpcId
+                data["subnetIds"] = subnetIds
+            else:
+                data["vpcType"] = "created"
+
+    @staticmethod
+    def create_sagemaker_studio_domain(session, environment, data: dict = {}):
+        SagemakerStudioService._update_sagemaker_studio_domain_vpc(environment.AwsAccountId, environment.region, data)
 
         domain = SageMakerStudioRepository.create_sagemaker_studio_domain(
             session=session,

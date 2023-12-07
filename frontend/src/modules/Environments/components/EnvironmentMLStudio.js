@@ -12,7 +12,7 @@ import {
 
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshTableMenu, ObjectMetadata } from 'design';
+import { RefreshTableMenu } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getEnvironmentMLStudioDomain, useClient } from 'services';
 
@@ -92,7 +92,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
             <Grid item lg={8} xl={9} xs={12}>
               <Card>
                 <CardHeader title="ML Studio Information" />
-                <Divider />
                 <CardContent>
                   <Typography color="textSecondary" variant="subtitle2">
                     SageMaker ML Studio Domain Name
@@ -118,7 +117,8 @@ export const EnvironmentMLStudio = ({ environment }) => {
                     {mlStudioDomain.vpcType}
                   </Typography>
                 </CardContent>
-                {mlStudioDomain.vpcType === 'imported' && (
+                {(mlStudioDomain.vpcId === 'imported' ||
+                  mlStudioDomain.vpcId === 'default') && (
                   <>
                     <CardContent>
                       <Typography color="textSecondary" variant="subtitle2">
@@ -146,15 +146,6 @@ export const EnvironmentMLStudio = ({ environment }) => {
                   </>
                 )}
               </Card>
-            </Grid>
-            <Grid item lg={4} xl={3} xs={12}>
-              <ObjectMetadata
-                accountId={environment.AwsAccountId}
-                region={environment.region}
-                environment={environment}
-                owner={mlStudioDomain.owner}
-                created={mlStudioDomain.created}
-              />
             </Grid>
           </Grid>
         )}

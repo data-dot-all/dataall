@@ -82,6 +82,7 @@ class SageMakerStudioRepository:
             owner=username,
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),
+            SamlGroupName=environment.SamlGroupName,
             environmentUri=environment.environmentUri,
             AWSAccountId=environment.AwsAccountId,
             region=environment.region,
