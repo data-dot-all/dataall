@@ -14,11 +14,7 @@
         "region": "us-east-1",
         "prod_sizing": false,
         "vpc_restricted_nacl": true,
-        "enable_pivot_role_auto_create": true,
-        "reauth_config": {
-          "reauth_apis": ["CreateDataset"],
-          "ttl": 2
-        }
+        "enable_pivot_role_auto_create": true
       }
     ]
   }
