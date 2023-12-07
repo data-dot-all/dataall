@@ -29,6 +29,7 @@ class Environment(Resource, Base):
     environmentUri = Column(String, primary_key=True)
     AwsAccountId = Column(Boolean)
     region = Column(Boolean)
+    SamlGroupName = Column(String)
 
 
 class EnvironmentParameter(Base):

@@ -61,7 +61,7 @@ export const EnvironmentMLStudio = ({ environment }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchMLStudioDomain} />}
-          title={<Box>ML Studio Domain</Box>}
+          title={<Box>ML Studio Domain Information</Box>}
         />
         <Divider />
         <Box
@@ -90,62 +90,59 @@ export const EnvironmentMLStudio = ({ environment }) => {
         ) : (
           <Grid container spacing={3}>
             <Grid item lg={8} xl={9} xs={12}>
-              <Card>
-                <CardHeader title="ML Studio Information" />
-                <CardContent>
-                  <Typography color="textSecondary" variant="subtitle2">
-                    SageMaker ML Studio Domain Name
-                  </Typography>
-                  <Typography color="textPrimary" variant="body2">
-                    {mlStudioDomain.sagemakerStudioDomainName}
-                  </Typography>
-                </CardContent>
-                <CardContent>
-                  <Typography color="textSecondary" variant="subtitle2">
-                    SageMaker ML Studio Default Execution Role
-                  </Typography>
-                  <Typography color="textPrimary" variant="body2">
-                    arn:aws:iam::{environment.AwsAccountId}:role/
-                    {mlStudioDomain.DefaultDomainRoleName}
-                  </Typography>
-                </CardContent>
-                <CardContent>
-                  <Typography color="textSecondary" variant="subtitle2">
-                    Domain VPC Type
-                  </Typography>
-                  <Typography color="textPrimary" variant="body2">
-                    {mlStudioDomain.vpcType}
-                  </Typography>
-                </CardContent>
-                {(mlStudioDomain.vpcId === 'imported' ||
-                  mlStudioDomain.vpcId === 'default') && (
-                  <>
-                    <CardContent>
-                      <Typography color="textSecondary" variant="subtitle2">
-                        Domain VPC Id
-                      </Typography>
-                      <Typography color="textPrimary" variant="body2">
-                        {mlStudioDomain.vpcId}
-                      </Typography>
-                    </CardContent>
-                    <CardContent>
-                      <Typography color="textSecondary" variant="subtitle2">
-                        Domain Subnet Ids
-                      </Typography>
-                      <Typography color="textPrimary" variant="body2">
-                        {mlStudioDomain.subnetIds?.map((subnet) => (
-                          <Chip
-                            sx={{ mr: 0.5, mb: 0.5 }}
-                            key={subnet}
-                            label={subnet}
-                            variant="outlined"
-                          />
-                        ))}
-                      </Typography>
-                    </CardContent>
-                  </>
-                )}
-              </Card>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  SageMaker ML Studio Domain Name
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  {mlStudioDomain.sagemakerStudioDomainName}
+                </Typography>
+              </CardContent>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  SageMaker ML Studio Default Execution Role
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  arn:aws:iam::{environment.AwsAccountId}:role/
+                  {mlStudioDomain.DefaultDomainRoleName}
+                </Typography>
+              </CardContent>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Domain VPC Type
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  {mlStudioDomain.vpcType}
+                </Typography>
+              </CardContent>
+              {(mlStudioDomain.vpcType === 'imported' ||
+                mlStudioDomain.vpcType === 'default') && (
+                <>
+                  <CardContent>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      Domain VPC Id
+                    </Typography>
+                    <Typography color="textPrimary" variant="body2">
+                      {mlStudioDomain.vpcId}
+                    </Typography>
+                  </CardContent>
+                  <CardContent>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      Domain Subnet Ids
+                    </Typography>
+                    <Typography color="textPrimary" variant="body2">
+                      {mlStudioDomain.subnetIds?.map((subnet) => (
+                        <Chip
+                          sx={{ mr: 0.5, mb: 0.5 }}
+                          key={subnet}
+                          label={subnet}
+                          variant="outlined"
+                        />
+                      ))}
+                    </Typography>
+                  </CardContent>
+                </>
+              )}
             </Grid>
           </Grid>
         )}
