@@ -152,7 +152,7 @@ def downgrade():
         if has_table('sagemaker_studio_domain', engine):
             print("deleting sagemaker studio domain entries...")
             session.query(SagemakerStudioDomain).delete()
-        
+
             print("Updating of sagemaker_studio_domain table...")
             op.alter_column(
                 'sagemaker_studio_domain',
