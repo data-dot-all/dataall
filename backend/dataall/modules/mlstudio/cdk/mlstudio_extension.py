@@ -36,7 +36,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         sagemaker_principals = [setup.default_role] + setup.group_roles
         logger.info(f'Creating SageMaker base resources for sagemaker_principals = {sagemaker_principals}..')
 
-        if domain.vpcId and domain.subnetIds:
+        if domain.vpcId and domain.subnetIds and domain.vpcType == 'imported':
             logger.info(f'Using VPC {domain.vpcId} and subnets {domain.subnetIds} for SageMaker Studio domain')
             vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', vpc_id=domain.vpcId)
             subnet_ids = domain.subnetIds
