@@ -36,8 +36,8 @@ def sgm_studio_domain(db, env_fixture: Environment) -> SagemakerStudioDomain:
             SagemakerStudioStatus="PENDING",
             DefaultDomainRoleName="DefaultMLStudioRole",
             sagemakerStudioDomainName="DomainName",
-            vpcType="created"
+            vpcType="created",
+            SamlGroupName=env_fixture.SamlGroupName,
         )
         session.add(sm_domain)
     yield sm_domain
-    
