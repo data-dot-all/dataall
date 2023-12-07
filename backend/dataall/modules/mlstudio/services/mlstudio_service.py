@@ -75,14 +75,13 @@ class SagemakerStudioEnvironmentResource(EnvironmentResource):
         current_mlstudio_enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
         domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, environment.environmentUri)
         previous_mlstudio_enabled = True if domain else False
-        vpcType = domain.vpcType
         if (current_mlstudio_enabled != previous_mlstudio_enabled and previous_mlstudio_enabled):
             SageMakerStudioRepository.delete_sagemaker_studio_domain_by_env_uri(session=session, env_uri=environment.environmentUri)
             return True
         elif (current_mlstudio_enabled != previous_mlstudio_enabled and not previous_mlstudio_enabled):
             SagemakerStudioService.create_sagemaker_studio_domain(session, environment, **kwargs)
             return True
-        elif current_mlstudio_enabled and vpcType == "unknown":
+        elif current_mlstudio_enabled and domain and domain.vpcType == "unknown":
             SagemakerStudioService.update_sagemaker_studio_domain(environment, domain, **kwargs)
             return True
         return False
