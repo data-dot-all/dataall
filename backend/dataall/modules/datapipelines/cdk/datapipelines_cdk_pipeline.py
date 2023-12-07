@@ -48,10 +48,9 @@ class CDKPipelineStack:
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
 
         self.code_dir_path = os.path.realpath(
-            os.path.abspath(
-                os.path.join(
-                    __file__, "..", "..", "blueprints"
-                )
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "blueprints"
             )
         )
         self.is_create = True
@@ -61,10 +60,10 @@ class CDKPipelineStack:
             if repository:
                 self.is_create = False
                 self.code_dir_path = os.path.realpath(
-                    os.path.abspath(
-                        os.path.join(
-                            __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
-                        )
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "blueprints",
+                        "data_pipeline_blueprint"
                     )
                 )
                 CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
@@ -184,6 +183,7 @@ cicd_pipeline = (
         app,
         id=id,
         pipeline_name="{pipeline.name}",
+        description="Cloud formation stack of PIPELINE: {pipeline.label}; URI: {pipeline.DataPipelineUri}; DESCRIPTION: {pipeline.description}",
         cdk_language="python",
         env=ddk.Configurator.get_environment(
             config_path="./ddk.json", environment_id="cicd"
@@ -239,10 +239,9 @@ app.synth()
     def clean_up_repo(pipeline_dir):
         if pipeline_dir:
             code_dir_path = os.path.realpath(
-                os.path.abspath(
-                    os.path.join(
-                        __file__, "..", "..", "blueprints"
-                    )
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "blueprints"
                 )
             )
 

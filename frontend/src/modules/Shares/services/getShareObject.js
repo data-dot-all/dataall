@@ -18,6 +18,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         consumptionData {
           s3AccessPointName
           sharedGlueDatabase
+          s3bucketName
         }
         principal {
           principalId

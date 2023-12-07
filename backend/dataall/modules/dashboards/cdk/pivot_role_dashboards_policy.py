@@ -32,6 +32,7 @@ class DashboardsPivotRole(PivotRoleStatementSet):
                     'quicksight:GetAuthCode',
                     'quicksight:CreateGroupMembership',
                     'quicksight:DescribeAccountSubscription',
+                    'quicksight:DescribeAccountSettings',
                 ],
                 resources=[
                     f'arn:aws:quicksight:*:{self.account}:group/default/*',

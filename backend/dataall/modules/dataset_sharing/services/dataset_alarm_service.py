@@ -3,7 +3,7 @@ from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation, DatasetBucket
 from dataall.base.utils.alarm_service import AlarmService
 
 log = logging.getLogger(__name__)
@@ -144,6 +144,49 @@ Alarm Details:
     - Region:                            {folder.region}
     - S3 Bucket:                     {folder.S3BucketName}
     - S3 Folder:                     {folder.S3Prefix}
+    Share Target
+    - AWS Account:                {target_environment.AwsAccountId}
+    - Region:                            {target_environment.region}
+"""
+        return self.publish_message_to_alarms_topic(subject, message)
+
+    def trigger_s3_bucket_sharing_failure_alarm(
+            self,
+            bucket: DatasetBucket,
+            share: ShareObject,
+            target_environment: Environment,
+    ):
+        alarm_type = "Share"
+        return self.handle_bucket_sharing_failure(bucket, share, target_environment, alarm_type)
+
+    def trigger_revoke_s3_bucket_sharing_failure_alarm(
+            self,
+            bucket: DatasetBucket,
+            share: ShareObject,
+            target_environment: Environment,
+    ):
+        alarm_type = "Sharing Revoke"
+        return self.handle_bucket_sharing_failure(bucket, share, target_environment, alarm_type)
+
+    def handle_bucket_sharing_failure(self, bucket: DatasetBucket,
+                                      share: ShareObject,
+                                      target_environment: Environment,
+                                      alarm_type: str):
+        log.info(f'Triggering {alarm_type} failure alarm...')
+        subject = (
+            f'ALARM: DATAALL S3 Bucket {bucket.S3BucketName} {alarm_type} Failure Notification'
+        )
+        message = f"""
+You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to {alarm_type} the S3 Bucket {bucket.S3BucketName}.
+Alarm Details:
+    - State Change:               	OK -> ALARM
+    - Reason for State Change:      S3 Bucket {alarm_type} failure
+    - Timestamp:                              {datetime.now()}
+    Share Source
+    - Dataset URI:                   {share.datasetUri}
+    - AWS Account:                   {bucket.AwsAccountId}
+    - Region:                            {bucket.region}
+    - S3 Bucket:                     {bucket.S3BucketName}
     Share Target
     - AWS Account:                {target_environment.AwsAccountId}
     - Region:                            {target_environment.region}

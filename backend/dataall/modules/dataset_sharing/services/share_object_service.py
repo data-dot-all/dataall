@@ -7,6 +7,7 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
+from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus, PrincipalType
@@ -178,6 +179,13 @@ class ShareObjectService:
                     action='Submit Share Object',
                     message='The request is empty of pending items. Add items to share request.',
                 )
+
+            env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+            if dashboard_enabled:
+                share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
+                if share_table_items:
+                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId, region=env.region)
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 

@@ -3,7 +3,7 @@
 def test_list_cognito_groups_env(client, env_fixture, group, module_mocker):
     module_mocker.patch(
         'dataall.base.aws.cognito.Cognito.list_cognito_groups',
-        return_value=[{"GroupName": 'cognitos'}, {"GroupName": 'testadmins'}],
+        return_value=['cognitos', 'testadmins'],
     )
     response = client.query(
         """

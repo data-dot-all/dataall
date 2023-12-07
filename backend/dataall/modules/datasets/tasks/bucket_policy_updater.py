@@ -7,7 +7,7 @@ from sqlalchemy import and_
 
 from dataall.base.db import get_engine
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetBucketPolicyClient
+from dataall.modules.datasets.aws.s3_dataset_bucket_policy_client import S3DatasetBucketPolicyClient
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 root = logging.getLogger()

@@ -167,10 +167,9 @@ class PipelineStack(Stack):
 
         # Create CodeCommit repository and mirror blueprint code
         code_dir_path = os.path.realpath(
-            os.path.abspath(
-                os.path.join(
-                    __file__, "..", "..", "blueprints"
-                )
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "blueprints"
             )
         )
         logger.info(f"code directory path = {code_dir_path}")
@@ -265,7 +264,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,
@@ -336,7 +335,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,

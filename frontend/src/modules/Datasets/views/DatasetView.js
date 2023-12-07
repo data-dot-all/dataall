@@ -35,7 +35,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getDataset, countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteDataset } from '../services';
-import { ShareInboxList } from 'modules/Shares';
+import { ShareBoxList } from 'modules/Shares';
 import {
   FeedComments,
   KeyValueTagList,
@@ -66,7 +66,6 @@ const DatasetView = () => {
   const [upVotes, setUpvotes] = useState(null);
   const [stack, setStack] = useState(null);
   const [openFeed, setOpenFeed] = useState(false);
-
   const getTabs = () => {
     const tabs = [
       {
@@ -337,7 +336,7 @@ const DatasetView = () => {
               <DatasetOverview dataset={dataset} isAdmin={isAdmin} />
             )}
             {isAdmin && currentTab === 'shares' && (
-              <ShareInboxList dataset={dataset} />
+              <ShareBoxList tab={'inbox'} dataset={dataset} />
             )}
             {isAdmin && currentTab === 'upload' && (
               <DatasetUpload dataset={dataset} isAdmin={isAdmin} />

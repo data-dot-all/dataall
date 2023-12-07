@@ -1,15 +1,15 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG REACT_APP_STAGE
 ARG DOMAIN
-ARG NODE_VERSION=16
+ARG NODE_VERSION=18
 ARG NGINX_VERSION=1.12
 ARG NVM_VERSION=v0.37.0
 
-RUN yum update -y && \
-    yum install -y tar gzip openssl && \
-    yum clean all -y
-RUN amazon-linux-extras install nginx$NGINX_VERSION
+RUN dnf update -y && \
+    dnf install -y tar gzip openssl && \
+    dnf clean all -y
+RUN dnf install nginx$NGINX_VERSION
 
 RUN touch ~/.bashrc
 

@@ -141,3 +141,23 @@ class Dataset(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.datasetUri
+
+
+class DatasetBucket(Resource, Base):
+    __tablename__ = 'dataset_bucket'
+    datasetUri = Column(String, nullable=False)
+    bucketUri = Column(String, primary_key=True, default=utils.uuid('bucket'))
+    AwsAccountId = Column(String, nullable=False)
+    S3BucketName = Column(String, nullable=False)
+    region = Column(String, default='eu-west-1')
+    partition = Column(String, default='aws')
+    KmsAlias = Column(String, nullable=False)
+    imported = Column(Boolean, default=False)
+    importedKmsKey = Column(Boolean, default=False)
+    userRoleForStorageBucket = query_expression()
+    projectPermission = query_expression()
+    environmentEndPoint = query_expression()
+
+    @classmethod
+    def uri(cls):
+        return cls.bucketUri
