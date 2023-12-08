@@ -264,7 +264,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,
@@ -335,7 +335,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,

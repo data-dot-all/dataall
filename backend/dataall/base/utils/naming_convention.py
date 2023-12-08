@@ -10,6 +10,7 @@ class NamingConventionPattern(Enum):
     GLUE = {'regex': '[^a-zA-Z0-9_]', 'separator': '_', 'max_length': 63}
     GLUE_ETL = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 52}
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
+    MLSTUDIO_DOMAIN = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}

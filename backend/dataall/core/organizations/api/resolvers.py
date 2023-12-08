@@ -107,19 +107,6 @@ def remove_group(context: Context, source, organizationUri=None, groupUri=None):
         return organization
 
 
-def list_organization_invited_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return Organization.paginated_organization_invited_groups(
-            session=session,
-            uri=organizationUri,
-            data=filter,
-        )
-
-
 def list_organization_groups(
     context: Context, source, organizationUri=None, filter=None
 ):

@@ -18,7 +18,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.base.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
@@ -45,33 +44,51 @@ class DatasetService:
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
-                AwsAccountId=environment.AwsAccountId)
+                AwsAccountId=environment.AwsAccountId, region=environment.region)
             if quicksight_subscription:
-                group = QuicksightClient.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
+                group = QuicksightClient.create_quicksight_group(
+                    AwsAccountId=environment.AwsAccountId, region=environment.region
+                )
                 return True if group else False
         return True
 
     @staticmethod
-    def check_imported_resources(environment, data):
-        kms_alias = data.get('KmsKeyAlias')
-        if kms_alias not in [None, "Undefined", "", "SSE-S3"]:
-            key_exists = KmsClient(account_id=environment.AwsAccountId, region=environment.region).check_key_exists(
+    def check_imported_resources(dataset: Dataset):
+        kms_alias = dataset.KmsAlias
+
+        s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
+        if kms_alias not in [None, "Undefined", "", "SSE-S3"]:  # user-defined KMS encryption
+            if s3_encryption == 'AES256':
+                raise exceptions.InvalidInput(
+                    param_name='KmsAlias',
+                    param_value=dataset.KmsAlias,
+                    constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.'
+                )
+
+            key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
                 key_alias=f"alias/{kms_alias}"
             )
             if not key_exists:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {environment.AwsAccountId}',
+                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_id = KmsClient(account_id=environment.AwsAccountId, region=environment.region).get_key_id(
+            key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
                 key_alias=f"alias/{kms_alias}"
             )
-            if not key_id:
-                raise exceptions.AWSResourceNotFound(
-                    action=IMPORT_DATASET,
-                    message=f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission to KMS key with alias={kms_alias}',
+
+            if key_id != kms_id:
+                raise exceptions.InvalidInput(
+                    param_name='KmsAlias',
+                    param_value=dataset.KmsAlias,
+                    constraint=f'the KMS Alias of the KMS key used to encrypt the Bucket {dataset.S3BucketName}. Provide the correct KMS Alias as input parameter.'
                 )
+
+        else:  # user-defined S3 encryption
+            if s3_encryption != 'AES256':
+                raise exceptions.RequiredParameter(param_name='KmsAlias')
+
         return True
 
     @staticmethod
@@ -83,21 +100,26 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            if data.get('imported', False):
-                DatasetService.check_imported_resources(environment=environment, data=data)
+            dataset = DatasetRepository.build_dataset(
+                username=context.username,
+                env=environment,
+                data=data
+            )
+
+            if dataset.imported:
+                DatasetService.check_imported_resources(dataset)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
-                username=context.username,
-                uri=uri,
-                data=data,
+                env=environment,
+                dataset=dataset,
             )
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
-                group=data['SamlAdminGroupName'],
+                group=dataset.SamlAdminGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
                 resource_type=Dataset.__name__,
@@ -195,8 +217,6 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            if data.get('imported', False):
-                DatasetService.check_imported_resources(environment=environment, data=data)
 
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -207,6 +227,10 @@ class DatasetService:
                 if data.get('KmsAlias') not in ["Undefined"]:
                     dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
                     dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
+
+                if data.get('imported', False):
+                    DatasetService.check_imported_resources(dataset)
+
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
                         DatasetService._transfer_stewardship_to_new_stewards(
@@ -303,7 +327,7 @@ class DatasetService:
 
             crawler = DatasetCrawler(dataset).get_crawler()
             if not crawler:
-                raise AWSResourceNotFound(
+                raise exceptions.AWSResourceNotFound(
                     action=CRAWL_DATASET,
                     message=f'Crawler {dataset.GlueCrawlerName} can not be found',
                 )
@@ -371,7 +395,7 @@ class DatasetService:
             )
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
             if shares:
-                raise UnauthorizedOperation(
+                raise exceptions.UnauthorizedOperation(
                     action=DELETE_DATASET,
                     message=f'Dataset {dataset.name} is shared with other teams. '
                             'Revoke all dataset shares before deletion.',

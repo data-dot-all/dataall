@@ -137,7 +137,7 @@ class PipelineStack(Stack):
                 'Synth',
                 input=source,
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                 ),
                 commands=[
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -463,7 +463,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='ValidateDBMigrations',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -480,7 +480,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='SecurityChecks',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -495,7 +495,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='Lint',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -517,7 +517,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='IntegrationTests',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     partial_build_spec=codebuild.BuildSpec.from_object(
                         dict(
@@ -551,7 +551,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     commands=[
                         'mkdir -p source_build',
@@ -571,7 +571,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     ),
                     commands=[
                         'mkdir -p source_build',
@@ -609,7 +609,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='LambdaImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -627,7 +627,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='ECSImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -694,7 +694,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='MigrateDB',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                 ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
@@ -724,7 +724,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='StacksUpdater',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                 ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
@@ -765,7 +765,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='DeployFrontEnd',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
                 commands=[
@@ -795,6 +795,7 @@ class PipelineStack(Stack):
                     'pip install beautifulsoup4',
                     'python deploy/configs/frontend_config.py',
                     'export AWS_DEFAULT_REGION=us-east-1',
+                    'export AWS_REGION=us-east-1',
                     f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/CloudfrontDistributionId --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/CloudfrontDistributionBucket --profile buildprofile --output text --query 'Parameter.Value')",
                     'export NODE_OPTIONS="--max-old-space-size=6144"',
@@ -854,7 +855,7 @@ class PipelineStack(Stack):
         return pipelines.CodeBuildStep(
             id='ConfigureRUM',
             build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
             ),
             commands=[
                 f'export envname={target_env["envname"]}',
@@ -880,7 +881,7 @@ class PipelineStack(Stack):
         return pipelines.CodeBuildStep(
             id='ConfigureCognito',
             build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
             ),
             commands=[
                 f'export envname={target_env["envname"]}',
@@ -924,7 +925,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='FrontendImage',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         compute_type=codebuild.ComputeType.LARGE,
                         privileged=True,
                         environment_variables={
@@ -952,7 +953,6 @@ class PipelineStack(Stack):
                         f'export custom_auth_scopes={str(target_env.get("custom_auth", {}).get("scopes", "None"))}',
                         f'export custom_auth_claims_mapping_email={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("email", "None"))}',
                         f'export custom_auth_claims_mapping_user_id={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("user_id", "None"))}',
-                        ## Ask can we make the .aws file with a permission of 400
                         'mkdir ~/.aws/ && touch ~/.aws/config',
                         'echo "[profile buildprofile]" > ~/.aws/config',
                         f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
@@ -969,7 +969,7 @@ class PipelineStack(Stack):
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
                     role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc,
+                    vpc=self.vpc
                 )
             ]
         )
@@ -1017,7 +1017,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='GitRelease',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                 ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
