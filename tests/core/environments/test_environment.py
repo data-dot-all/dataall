@@ -221,26 +221,6 @@ def test_list_environments_no_filter(org_fixture, env_fixture, client, group):
 
     assert response.data.listEnvironments.count == 1
 
-    response = client.query(
-        """
-        query ListEnvironmentNetworks($environmentUri: String!,$filter:VpcFilter){
-            listEnvironmentNetworks(environmentUri:$environmentUri,filter:$filter){
-                count
-                nodes{
-                    VpcId
-                    SamlGroupName
-                }
-            }
-        }
-        """,
-        environmentUri=env_fixture.environmentUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(response)
-
-    assert response.data.listEnvironmentNetworks.count == 1
-
 
 def test_list_environment_role_filter_as_creator(org_fixture, env_fixture, client, group):
     response = client.query(
@@ -656,23 +636,16 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
             'tags': ['a', 'b', 'c'],
             'region': f'{env_fixture.region}',
             'SamlGroupName': group.name,
-            'vpcId': 'vpc-1234567',
-            'privateSubnetIds': 'subnet-1',
-            'publicSubnetIds': 'subnet-21',
             'resourcePrefix': 'customer-prefix',
         },
     )
 
     body = response.data.createEnvironment
 
-    assert body.networks
+    assert len(body.networks) == 0
     assert body.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
     assert body.EnvironmentDefaultIAMRoleImported
     assert body.resourcePrefix == 'customer-prefix'
-    for vpc in body.networks:
-        assert vpc.privateSubnetIds
-        assert vpc.publicSubnetIds
-        assert vpc.default
 
     with db.scoped_session() as session:
         env = EnvironmentService.get_environment_by_uri(

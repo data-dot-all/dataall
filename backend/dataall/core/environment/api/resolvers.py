@@ -20,6 +20,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.db.vpc_repositories import Vpc
+from dataall.base.aws.ec2_client import EC2
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
@@ -43,7 +44,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region):
+def check_environment(context: Context, source, account_id, region, data):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account assuming cdk_look_up_role
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
@@ -71,11 +72,25 @@ def check_environment(context: Context, source, account_id, region):
                 action='CHECK_PIVOT_ROLE',
                 message='Pivot Role has not been created in the Environment AWS Account',
             )
+    mlStudioEnabled = None
+    for parameter in data.get("parameters", []):
+        if parameter['key'] == 'mlStudiosEnabled':
+            mlStudioEnabled = parameter['value']
+
+    if mlStudioEnabled and data.get("vpcId", None) and data.get("subnetIds", []):
+        log.info("Check if ML Studio VPC Exists in the Account")
+        EC2.check_vpc_exists(
+            AwsAccountId=account_id,
+            region=region,
+            role=cdk_look_up_role_arn,
+            vpc_id=data.get("vpcId", None),
+            subnet_ids=data.get('subnetIds', []),
+        )
 
     return cdk_role_name
 
 
-def create_environment(context: Context, source, input=None):
+def create_environment(context: Context, source, input={}):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
             action=permissions.LINK_ENVIRONMENT,
@@ -85,8 +100,10 @@ def create_environment(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         cdk_role_name = check_environment(context, source,
                                           account_id=input.get('AwsAccountId'),
-                                          region=input.get('region')
+                                          region=input.get('region'),
+                                          data=input
                                           )
+
         input['cdk_role_name'] = cdk_role_name
         env = EnvironmentService.create_environment(
             session=session,
@@ -119,7 +136,8 @@ def update_environment(
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         cdk_role_name = check_environment(context, source,
                                           account_id=environment.AwsAccountId,
-                                          region=environment.region
+                                          region=environment.region,
+                                          data=input
                                           )
 
         previous_resource_prefix = environment.resourcePrefix
@@ -130,7 +148,7 @@ def update_environment(
             data=input,
         )
 
-        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
+        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
             stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
