@@ -183,7 +183,7 @@ class LambdaApiStack(pyNestedClass):
             for claims_map in custom_auth.get('claims_mapping', {}):
                 custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
 
-            authorizerfn_sg = self.create_lambda_sgs(envname, "customauthorizer", resource_prefix, vpc)
+            authorizer_fn_sg = self.create_lambda_sgs(envname, "customauthorizer", resource_prefix, vpc)
             self.authorizer_fn = _lambda.Function(
                 self,
                 f'CustomAuthorizerFunction-{envname}',
@@ -200,9 +200,9 @@ class LambdaApiStack(pyNestedClass):
                 description='dataall Custom authorizer replacing cognito authorizer',
                 timeout=Duration.seconds(20),
                 environment=custom_lambda_env,
-                security_groups=[authorizerfn_sg],
                 vpc=vpc,
-                runtime=_lambda.Runtime.PYTHON_3_9,
+                security_groups=[authorizer_fn_sg],
+                runtime=_lambda.Runtime.PYTHON_3_9
             )
 
             # Add NAT Connectivity For Custom Authorizer Lambda
@@ -513,6 +513,7 @@ class LambdaApiStack(pyNestedClass):
             #Create a custom Authorizer
             custom_authorizer_role = iam.Role(self,
                                               f'{resource_prefix}-{envname}-custom-authorizer-role',
+                                              role_name=f'{resource_prefix}-{envname}-custom-authorizer-role',
                                               assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
                                               description="Allow Custom Authorizer to call custom auth lambda"
                                             )
@@ -528,7 +529,8 @@ class LambdaApiStack(pyNestedClass):
                 handler=self.authorizer_fn,
                 identity_sources=[apigw.IdentitySource.header('Authorization')],
                 authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
-                assume_role=custom_authorizer_role
+                assume_role=custom_authorizer_role,
+                results_cache_ttl=Duration.minutes(60),
             )
         if not internet_facing:
             if apig_vpce:

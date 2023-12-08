@@ -1,7 +1,7 @@
 import { Auth } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useAuth } from './useAuth';
+import { useAuth } from 'authentication';
 
 export const useToken = () => {
   const dispatch = useDispatch();

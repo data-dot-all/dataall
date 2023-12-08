@@ -422,6 +422,39 @@ class PipelineStack(Stack):
                 f'must be less than 50 characters to avoid AWS resources naming limits'
             )
 
+        # Validate if all configs are present when deploying custom_auth
+        for env in target_envs:
+            if 'custom_auth' in env:
+                custom_auth_configs = env.get('custom_auth')
+                if ('url' not in custom_auth_configs or
+                    'provider' not in custom_auth_configs or
+                    'redirect_url' not in custom_auth_configs or
+                    'client_id' not in custom_auth_configs or
+                    'response_types' not in custom_auth_configs or
+                    'scopes' not in custom_auth_configs or
+                    'jwks_url' not in custom_auth_configs or
+                    'claims_mapping' not in custom_auth_configs or
+                    'user_id' not in custom_auth_configs['claims_mapping'] or
+                    'email' not in custom_auth_configs['claims_mapping']
+                ):
+                    raise ValueError(
+                        'Custom Auth Configuration Error : Missing some configurations in custom_auth section in Deployments. Please take a look at template_cdk.json for reference or visit the data.all webpage and checkout the Deploy to AWS section'
+                    )
+
+                if (not isinstance(custom_auth_configs['url'], str) or
+                        not isinstance(custom_auth_configs['provider'], str) or
+                        not isinstance(custom_auth_configs['redirect_url'], str) or
+                        not isinstance(custom_auth_configs['client_id'], str) or
+                        not isinstance(custom_auth_configs['response_types'], str) or
+                        not isinstance(custom_auth_configs['scopes'], str) or
+                        not isinstance(custom_auth_configs['jwks_url'], str) or
+                        not isinstance(custom_auth_configs['claims_mapping']['user_id'], str) or
+                        not isinstance(custom_auth_configs['claims_mapping']['email'], str)
+                ):
+                    raise TypeError(
+                        'Custom Auth Configuration Error : Type error: Configs type is not as required. Please take a look at template_cdk.json for reference or visit the data.all webpage and checkout the Deploy to AWS section'
+                    )
+
     def set_quality_gate_stage(self):
         quality_gate_param = self.node.try_get_context('quality_gate')
         if quality_gate_param is not False:
@@ -636,7 +669,7 @@ class PipelineStack(Stack):
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
                 quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
-                enable_cw_rum=target_env.get('enable_cw_rum', False),
+                enable_cw_rum=target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None,
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False) and target_env.get("custom_auth", None) == None,
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
@@ -741,7 +774,7 @@ class PipelineStack(Stack):
                     f'export internet_facing={target_env.get("internet_facing", True)}',
                     f'export custom_domain={str(True) if target_env.get("custom_domain") else str(False)}',
                     f'export deployment_region={target_env.get("region", self.region)}',
-                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False)}',
+                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) == None }',
                     f'export resource_prefix={self.resource_prefix}',
                     f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                     f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
@@ -781,7 +814,7 @@ class PipelineStack(Stack):
                 *front_stage_actions,
                 self.cognito_config_action(target_env),
         )
-        if target_env.get('enable_cw_rum', False):
+        if target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None:
             front_stage_actions = (
                 *front_stage_actions,
                 self.cw_rum_config_action(target_env),
@@ -885,6 +918,7 @@ class PipelineStack(Stack):
                 custom_domain=target_env['custom_domain'],
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
+                custom_auth=target_env.get('custom_auth', None)
             ),
             pre=[
                 pipelines.CodeBuildStep(
@@ -907,8 +941,18 @@ class PipelineStack(Stack):
                         f'export internet_facing={target_env.get("internet_facing", False)}',
                         f'export custom_domain=True',
                         f'export deployment_region={target_env.get("region", self.region)}',
-                        f'export enable_cw_rum={target_env.get("enable_cw_rum", False)}',
+                        f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) == None}',
                         f'export resource_prefix={self.resource_prefix}',
+                        f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
+                        f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
+                        f'export custom_auth_url={str(target_env.get("custom_auth", {}).get("url", "None"))}',
+                        f'export custom_auth_redirect_url={str(target_env.get("custom_auth", {}).get("redirect_url", "None"))}',
+                        f'export custom_auth_client_id={str(target_env.get("custom_auth", {}).get("client_id", "None"))}',
+                        f'export custom_auth_response_types={str(target_env.get("custom_auth", {}).get("response_types", "None"))}',
+                        f'export custom_auth_scopes={str(target_env.get("custom_auth", {}).get("scopes", "None"))}',
+                        f'export custom_auth_claims_mapping_email={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("email", "None"))}',
+                        f'export custom_auth_claims_mapping_user_id={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("user_id", "None"))}',
+                        ## Ask can we make the .aws file with a permission of 400
                         'mkdir ~/.aws/ && touch ~/.aws/config',
                         'echo "[profile buildprofile]" > ~/.aws/config',
                         f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
@@ -926,38 +970,43 @@ class PipelineStack(Stack):
                     ],
                     role=self.expanded_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
-                ),
-                pipelines.CodeBuildStep(
-                    id='UserGuideImage',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                        compute_type=codebuild.ComputeType.LARGE,
-                        privileged=True,
-                        environment_variables={
-                            'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                                value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
-                            ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
-                        },
-                    ),
-                    commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        'cd documentation/userguide',
-                        'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
-                        f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
-                        'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
-                        'docker push $REPOSITORY_URI:$IMAGE_TAG',
-                    ],
-                    role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc,
-                ),
+                )
             ]
         )
         if target_env.get('custom_auth') is None:
+            albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
+
+        if target_env.get('custom_auth') is None:
             albfront_stage.add_post(self.cognito_config_action(target_env))
 
-        if target_env.get('enable_cw_rum', False):
+        if target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))
+
+    def user_guide_pre_build_alb(self, repository_name):
+        return pipelines.CodeBuildStep(
+            id='UserGuideImage',
+            build_environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                compute_type=codebuild.ComputeType.LARGE,
+                privileged=True,
+                environment_variables={
+                    'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
+                        value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
+                    ),
+                    'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
+                },
+            ),
+            commands=[
+                f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                'cd documentation/userguide',
+                'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
+                f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
+                'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
+                'docker push $REPOSITORY_URI:$IMAGE_TAG',
+            ],
+            role=self.expanded_codebuild_role.without_policy_updates(),
+            vpc=self.vpc,
+        )
 
     def set_release_stage(
         self,

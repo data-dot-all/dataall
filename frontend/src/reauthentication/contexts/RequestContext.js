@@ -6,7 +6,7 @@ import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
 import { Auth } from 'aws-amplify';
-import { useAuth, useToken } from '../../authentication';
+import { useAuth, useToken } from 'authentication';
 
 // Create a context for API request headers
 const RequestContext = createContext();
