@@ -20,10 +20,12 @@ RUN yum -y install python38-devel
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER}:root /usr/local
 
-USER ${CONTAINER_USER}
-
 ## Add your source
 WORKDIR ${FUNCTION_DIR}
+RUN chown -R ${CONTAINER_USER}:root ${FUNCTION_DIR}
+
+USER ${CONTAINER_USER}
+
 
 COPY --chown=${CONTAINER_USER}:root backend/requirements.txt ./requirements.txt
 RUN $PYTHON_VERSION -m pip install -U pip
