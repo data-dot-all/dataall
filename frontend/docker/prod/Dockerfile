@@ -24,8 +24,7 @@ RUN mkdir -p /var/cache/nginx && chown -R ${CONTAINER_USER}:root /var/cache/ngin
     mkdir -p /var/lib/nginx  && chown -R ${CONTAINER_USER}:root /var/lib/nginx && \
     touch /run/nginx.pid && chown -R ${CONTAINER_USER}:root /run/nginx.pid && \
     mkdir -p /etc/nginx/templates /etc/nginx/ssl/certs && \
-    chown -R ${CONTAINER_USER}:root /etc/nginx && \
-    chmod -R 777 /etc/nginx/conf.d
+    chown -R ${CONTAINER_USER}:root /etc/nginx
 
 
 
