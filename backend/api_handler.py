@@ -129,11 +129,16 @@ def handler(event, context):
         else:
             claims = event['requestContext']['authorizer']['claims']
         username = claims['email']
+        # Defaulting user_id field to contain email
+        # When "authorizer" in the event contains the user_id field override with that value
+        # user_id is used when deploying data.all with custom_auth
+        user_id = claims['email']
+        if 'user_id' in event['requestContext']['authorizer']:
+            user_id = event['requestContext']['authorizer']['user_id']
         log.debug('username is %s', username)
         try:
             groups = []
             if (os.environ.get('custom_auth', None)):
-                user_id = event['requestContext']['authorizer']['user_id']
                 groups.extend(get_custom_groups(user_id))
             else:
                 groups.extend(get_cognito_groups(claims))
@@ -158,13 +163,14 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, groups))
+        set_context(RequestContext(ENGINE, username, groups, user_id))
 
         app_context = {
             'engine': ENGINE,
             'username': username,
             'groups': groups,
             'schema': SCHEMA,
+            'user_id': user_id
         }
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter

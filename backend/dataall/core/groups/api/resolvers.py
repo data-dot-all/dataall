@@ -75,6 +75,8 @@ def list_groups(context, source, filter: dict = None):
 
 
 def get_groups_for_user(context, source, userid):
+    if context.user_id != userid:
+        raise Exception("User Id doesn't match user id from context")
     envname = os.getenv('envname', 'local')
     if envname in ['local', 'dkrcompose']:
         return [{"groupName": 'Engineers'}, {"groupName": 'Scientists'}, {"groupName": 'Requesters'},
