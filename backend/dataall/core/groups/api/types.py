@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.cognito_groups.api.resolvers import *
+from dataall.core.groups.api.resolvers import *
 
 Group = gql.ObjectType(
     name='Group',
@@ -46,8 +46,8 @@ GroupSearchResult = gql.ObjectType(
     ],
 )
 
-CognitoGroup = gql.ObjectType(
-    name='CognitoGroup',
+GroupsInfo = gql.ObjectType(
+    name='GroupsInfo',
     fields=[
         gql.Field(name='groupName', type=gql.String),
     ],

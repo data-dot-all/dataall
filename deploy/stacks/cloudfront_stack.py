@@ -15,6 +15,7 @@ class CloudfrontStack(Stack):
         tooling_account_id=None,
         custom_domain=None,
         custom_waf_rules=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -25,7 +26,7 @@ class CloudfrontStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             **kwargs,
-        )
+        ) if custom_auth is None else None
 
         distro = CloudfrontDistro(
             self,
@@ -36,5 +37,6 @@ class CloudfrontStack(Stack):
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
+            custom_auth=custom_auth,
             **kwargs,
         )

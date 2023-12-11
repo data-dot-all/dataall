@@ -9,8 +9,8 @@ GroupFilter = gql.InputType(
     ],
 )
 
-CognitoGroupFilter = gql.InputType(
-    name='CognitoGroupFilter',
+ServiceProviderGroupFilter = gql.InputType(
+    name='ServiceProviderGroupFilter',
     arguments=[
         gql.Argument(name='type', type=gql.String),
         gql.Argument(name='uri', type=gql.String),
