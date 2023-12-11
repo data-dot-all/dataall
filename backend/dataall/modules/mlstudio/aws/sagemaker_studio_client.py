@@ -12,28 +12,22 @@ def get_client(AwsAccountId, region):
     return session.client('sagemaker', region_name=region)
 
 
-def get_sagemaker_studio_domain(AwsAccountId, region):
+def get_sagemaker_studio_domain(AwsAccountId, region, domain_name):
     """
     Sagemaker studio domain is limited to 5 per account/region
     RETURN: an existing domain or None if no domain is in the AWS account
     """
     client = get_client(AwsAccountId=AwsAccountId, region=region)
-    existing_domain = dict()
     try:
         domain_id_paginator = client.get_paginator('list_domains')
-        domains = domain_id_paginator.paginate()
-        for _domain in domains:
-            print(_domain)
-            for _domain in _domain.get('Domains'):
-                # Get the domain name created by dataall
-                if 'dataall' in _domain:
-                    return _domain
-                else:
-                    existing_domain = _domain
-        return existing_domain
+        for page in domain_id_paginator.paginate():
+            for domain in page.get('Domains', []):
+                if domain.get("DomainName") == domain_name:
+                    return domain
+        return dict()
     except ClientError as e:
         print(e)
-        return 'NotFound'
+        return dict()
 
 
 class SagemakerStudioClient:

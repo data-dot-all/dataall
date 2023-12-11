@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db import paginate
@@ -20,6 +21,39 @@ logger = logging.getLogger(__name__)
 
 class DatasetRepository(EnvironmentResource):
     """DAO layer for Datasets"""
+
+    @classmethod
+    def build_dataset(cls, username: str, env: Environment, data: dict) -> Dataset:
+        """Builds a datasets based on the request data, but doesn't save it in the database"""
+        dataset = Dataset(
+            label=data.get('label'),
+            owner=username,
+            description=data.get('description', 'No description provided'),
+            tags=data.get('tags', []),
+            AwsAccountId=env.AwsAccountId,
+            SamlAdminGroupName=data['SamlAdminGroupName'],
+            region=env.region,
+            S3BucketName='undefined',
+            GlueDatabaseName='undefined',
+            IAMDatasetAdminRoleArn='undefined',
+            IAMDatasetAdminUserArn='undefined',
+            KmsAlias='undefined',
+            environmentUri=env.environmentUri,
+            organizationUri=env.organizationUri,
+            language=data.get('language', Language.English.value),
+            confidentiality=data.get(
+                'confidentiality', ConfidentialityClassification.Unclassified.value
+            ),
+            topics=data.get('topics', []),
+            businessOwnerEmail=data.get('businessOwnerEmail'),
+            businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
+            stewards=data.get('stewards')
+            if data.get('stewards')
+            else data['SamlAdminGroupName'],
+        )
+        cls._set_dataset_aws_resources(dataset, data, env)
+        cls._set_import_data(dataset, data)
+        return dataset
 
     @staticmethod
     def get_dataset_by_uri(session, dataset_uri) -> Dataset:
@@ -41,55 +75,19 @@ class DatasetRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def create_dataset(
-        session,
-        username: str,
-        uri: str,
-        data: dict = None,
-    ) -> Dataset:
-        environment = EnvironmentService.get_environment_by_uri(session, uri)
-
+    def create_dataset(session, env: Environment, dataset: Dataset):
         organization = Organization.get_organization_by_uri(
-            session, environment.organizationUri
+            session, env.organizationUri
         )
 
-        dataset = Dataset(
-            label=data.get('label'),
-            owner=username,
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
-            AwsAccountId=environment.AwsAccountId,
-            SamlAdminGroupName=data['SamlAdminGroupName'],
-            region=environment.region,
-            S3BucketName='undefined',
-            GlueDatabaseName='undefined',
-            IAMDatasetAdminRoleArn='undefined',
-            IAMDatasetAdminUserArn='undefined',
-            KmsAlias='undefined',
-            environmentUri=environment.environmentUri,
-            organizationUri=environment.organizationUri,
-            language=data.get('language', Language.English.value),
-            confidentiality=data.get(
-                'confidentiality', ConfidentialityClassification.Unclassified.value
-            ),
-            topics=data.get('topics', []),
-            businessOwnerEmail=data.get('businessOwnerEmail'),
-            businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
-            stewards=data.get('stewards')
-            if data.get('stewards')
-            else data['SamlAdminGroupName'],
-        )
         session.add(dataset)
         session.commit()
-
-        DatasetRepository._set_dataset_aws_resources(dataset, data, environment)
-        DatasetRepository._set_import_data(dataset, data)
 
         activity = Activity(
             action='dataset:create',
             label='dataset:create',
-            owner=username,
-            summary=f'{username} created dataset {dataset.name} in {environment.name} on organization {organization.name}',
+            owner=dataset.owner,
+            summary=f'{dataset.owner} created dataset {dataset.name} in {env.name} on organization {organization.name}',
             targetUri=dataset.datasetUri,
             targetType='dataset',
         )

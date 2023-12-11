@@ -17,104 +17,51 @@ class S3DatasetClient:
         It first starts a session assuming the pivot role,
         then we define another session assuming the dataset role from the pivot role
         """
-        pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        session = SessionHelper.get_session(base_session=pivot_role_session, role_arn=dataset.IAMDatasetAdminRoleArn)
-        self._client = session.client(
+        self._pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        self._client = self._pivot_role_session.client('s3')
+        self._dataset = dataset
+
+    def _get_dataset_role_client(self):
+        session = SessionHelper.get_session(base_session=self.pivot_role_session, role_arn=self.dataset.IAMDatasetAdminRoleArn)
+        dataset_client = session.client(
             's3',
-            region_name=dataset.region,
+            region_name=self._dataset.region,
             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
         )
-        self._dataset = dataset
+        return dataset_client
 
     def get_file_upload_presigned_url(self, data):
         dataset = self._dataset
+        client = self._get_dataset_role_client()
         try:
-            self._client.get_bucket_acl(
+            client.get_bucket_acl(
                 Bucket=dataset.S3BucketName, ExpectedBucketOwner=dataset.AwsAccountId
             )
-            response = self._client.generate_presigned_post(
+            response = client.generate_presigned_post(
                 Bucket=dataset.S3BucketName,
                 Key=data.get('prefix', 'uploads') + '/' + data.get('fileName'),
                 ExpiresIn=15 * 60,
             )
-
             return json.dumps(response)
+
         except ClientError as e:
             raise e
 
-
-class S3DatasetBucketPolicyClient:
-    def __init__(self, dataset: Dataset):
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        self._client = session.client('s3')
-        self._dataset = dataset
-
-    def get_bucket_policy(self):
+    def get_bucket_encryption(self) -> (str, str):
         dataset = self._dataset
         try:
-            policy = self._client.get_bucket_policy(Bucket=dataset.S3BucketName)['Policy']
-            log.info(f'Current bucket policy---->:{policy}')
-            policy = json.loads(policy)
-        except ClientError as err:
-            if err.response['Error']['Code'] == 'NoSuchBucketPolicy':
-                log.info(f"No policy attached to '{dataset.S3BucketName}'")
-
-            elif err.response['Error']['Code'] == 'NoSuchBucket':
-                log.error(f'Bucket deleted {dataset.S3BucketName}')
-
-            elif err.response['Error']['Code'] == 'AccessDenied':
-                log.error(
-                    f'Access denied in {dataset.AwsAccountId} '
-                    f'(s3:{err.operation_name}, '
-                    f"resource='{dataset.S3BucketName}')"
-                )
-            else:
-                log.exception(
-                    f"Failed to get '{dataset.S3BucketName}' policy in {dataset.AwsAccountId}"
-                )
-            policy = {
-                'Version': '2012-10-17',
-                'Statement': [
-                    {
-                        'Sid': 'OwnerAccount',
-                        'Effect': 'Allow',
-                        'Action': ['s3:*'],
-                        'Resource': [
-                            f'arn:aws:s3:::{dataset.S3BucketName}',
-                            f'arn:aws:s3:::{dataset.S3BucketName}/*',
-                        ],
-                        'Principal': {
-                            'AWS': f'arn:aws:iam::{dataset.AwsAccountId}:root'
-                        },
-                    }
-                ],
-            }
-
-        return policy
-
-    def put_bucket_policy(self, policy):
-        dataset = self._dataset
-        update_policy_report = {
-            'datasetUri': dataset.datasetUri,
-            'bucketName': dataset.S3BucketName,
-            'accountId': dataset.AwsAccountId,
-        }
-        try:
-            policy_json = json.dumps(policy) if isinstance(policy, dict) else policy
-            log.info(
-                f"Putting new bucket policy on '{dataset.S3BucketName}' policy {policy_json}"
+            response = self._client.get_bucket_encryption(
+                Bucket=dataset.S3BucketName,
+                ExpectedBucketOwner=dataset.AwsAccountId
             )
-            response = self._client.put_bucket_policy(
-                Bucket=dataset.S3BucketName, Policy=policy_json
-            )
-            log.info(f'Bucket Policy updated: {response}')
-            update_policy_report.update({'status': 'SUCCEEDED'})
+            rule = response['ServerSideEncryptionConfiguration']['Rules'][0]
+            encryption = rule['ApplyServerSideEncryptionByDefault']
+            s3_encryption = encryption['SSEAlgorithm']
+            kms_id = encryption.get('KMSMasterKeyID').split("/")[-1] if encryption.get('KMSMasterKeyID') else None
+
+            return s3_encryption, kms_id
+
         except ClientError as e:
-            log.error(
-                f'Failed to update bucket policy '
-                f"on '{dataset.S3BucketName}' policy {policy} "
-                f'due to {e} '
-            )
-            update_policy_report.update({'status': 'FAILED'})
-
-        return update_policy_report
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission for {dataset.S3BucketName} bucket: {e}')
+            raise Exception(f'Cannot fetch the bucket encryption configuration for {dataset.S3BucketName}: {e}')

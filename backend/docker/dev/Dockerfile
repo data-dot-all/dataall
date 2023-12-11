@@ -1,21 +1,25 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
-ARG NODE_VERSION=16
+ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
-ARG PYTHON_VERSION=python3.8
+ARG PYTHON_VERSION=python3.9
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
 
 
-RUN yum clean all
-RUN yum -y install shadow-utils wget
-RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN amazon-linux-extras install $PYTHON_VERSION
-RUN yum -y install python38-devel
-RUN yum -y install git
+# Clean cache
+RUN dnf clean all
 
-RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"
+# Installing libraries
+RUN dnf -y install -y \
+    shadow-utils wget openssl-devel bzip2-devel libffi-devel \
+    postgresql-devel gcc unzip tar gzip
+
+# Install Python
+RUN dnf install $PYTHON_VERSION
+RUN dnf -y install python3-pip python3-devel git
+
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN useradd -m app
 RUN chown -R ${CONTAINER_USER}:root /usr/local
@@ -23,10 +27,13 @@ RUN chown -R ${CONTAINER_USER}:root /usr/local
 USER ${CONTAINER_USER}
 
 
+## Add source
 WORKDIR /build
 
+# Configuring path
 RUN touch ~/.bashrc
 
+# Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
@@ -35,10 +42,11 @@ COPY --chown=${CONTAINER_USER}:root ./docker/dev/wait-for-it.sh /build/wait-for-
 RUN chmod +x /build/wait-for-it.sh
 RUN chown -R ${CONTAINER_USER}:root /build/wait-for-it.sh
 
+## Add source
 WORKDIR /dataall
 RUN touch ~/.bashrc
 
-
+# Configuring Node and CDK
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh | bash
 RUN /bin/bash -c ". ~/.nvm/nvm.sh && \
 	nvm install $NODE_VERSION && nvm use $NODE_VERSION && \
@@ -56,16 +64,19 @@ $PATH" >> ~/.bashrc && \
 
 RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
-COPY ./requirements.txt dh.requirements.txt
+# App specific requirements
+COPY ./requirements.txt requirements.txt
 COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
-COPY ./dataall /dataall
 
+# Install App requirements
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix /usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix /usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
+
+# App code
+COPY ./dataall /dataall
 ADD ./cdkproxymain.py /cdkproxymain.py
 ADD ./local_graphql_server.py /local_graphql_server.py
-
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
 
 WORKDIR /
 

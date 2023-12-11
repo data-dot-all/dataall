@@ -66,7 +66,9 @@ class LFShareManager:
         dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
 
         if dashboard_enabled:
-            group = QuicksightClient.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
+            group = QuicksightClient.create_quicksight_group(
+                AwsAccountId=self.target_environment.AwsAccountId, region=self.target_environment.region
+            )
             if group and group.get('Group'):
                 group_arn = group.get('Group').get('Arn')
                 if group_arn:
