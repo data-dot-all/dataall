@@ -36,8 +36,8 @@ USER ${CONTAINER_USER}
 COPY --chown=${CONTAINER_USER}:root backend/requirements.txt ./requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix=/usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix=/usr/local"
 
 # App code
 COPY --chown=${CONTAINER_USER}:root backend/. ./
