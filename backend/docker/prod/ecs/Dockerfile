@@ -66,7 +66,7 @@ RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --pre
 # App code
 ADD --chown=${CONTAINER_USER}:root backend/dataall /dataall
 VOLUME ["/dataall"]
-ADD backend/cdkproxymain.py /cdkproxymain.py
+ADD --chown=${CONTAINER_USER}:root backend/cdkproxymain.py /cdkproxymain.py
 
 # App configuration file
 ENV config_location="/config.json"
