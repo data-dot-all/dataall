@@ -76,7 +76,7 @@ def list_groups(context, source, filter: dict = None):
 
 def get_groups_for_user(context, source, userid):
     envname = os.getenv('envname', 'local')
-    if envname in ['dkrcompose']:
+    if envname in ['local', 'dkrcompose']:
         return [{"groupName": 'Engineers'}, {"groupName": 'Scientists'}, {"groupName": 'Requesters'},
                 {"groupName": 'Producers'}, {"groupName": 'Consumers'}]
     service_provider = ServiceProviderFactory.get_service_provider_instance()

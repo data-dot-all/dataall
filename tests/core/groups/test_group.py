@@ -1,16 +1,19 @@
 from unittest.mock import MagicMock
 
-
-def test_list_groups_env(client, env_fixture, group, module_mocker):
-    mock_client = MagicMock()
+def mock_cognito_client(module_mocker):
+    mock_cognito_client = MagicMock()
     module_mocker.patch(
         'dataall.base.aws.cognito.Cognito',
-        return_value=mock_client
+        return_value=mock_cognito_client
     )
-    mock_client().list_groups.return_value = ['cognitos', 'testadmins']
+    mock_cognito_client().list_groups.return_value = ['cognitos', 'testadmins']
+    return mock_cognito_client
+
+def test_list_groups_env(client, env_fixture, group, module_mocker):
+    cognito_client = mock_cognito_client(module_mocker)
     module_mocker.patch(
         'dataall.core.groups.api.resolvers.ServiceProviderFactory.get_service_provider_instance',
-        return_value=mock_client()
+        return_value=cognito_client()
     )
     response = client.query(
         """

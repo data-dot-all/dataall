@@ -282,6 +282,20 @@ class AlbFrontStack(Stack):
             )
             self.allow_alb_access(userguide_alb, ip_ranges, vpc)
 
+            CfnOutput(
+                self,
+                f'UserGuideService{envname}Arn',
+                export_name=f'userguide-{envname}-arn',
+                value=userguide_alb.load_balancer.load_balancer_arn,
+            )
+
+            CfnOutput(
+                self,
+                f'UserGuideService{envname}HostedZoneId',
+                export_name=f'userguide-{envname}-hostedzoneid',
+                value=userguide_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
+            )
+
         CfnOutput(
             self,
             f'FrontEndService{envname}Arn',
@@ -296,19 +310,6 @@ class AlbFrontStack(Stack):
             value=frontend_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
         )
 
-        CfnOutput(
-            self,
-            f'UserGuideService{envname}Arn',
-            export_name=f'userguide-{envname}-arn',
-            value=userguide_alb.load_balancer.load_balancer_arn,
-        )
-
-        CfnOutput(
-            self,
-            f'UserGuideService{envname}HostedZoneId',
-            export_name=f'userguide-{envname}-hostedzoneid',
-            value=userguide_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
-        )
 
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(

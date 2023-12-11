@@ -39,9 +39,11 @@ def lambda_handler(incoming_event, context):
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
     token = ""
+    account_id = ""
+    api_gw_id = ""
     event = {
         "type": "TOKEN",
         "Authorization": token,
-        "methodArn": "arn:aws:execute-api:us-east-1:012356677990:abc1cv8nko/prod/POST/graphql/api"
+        "methodArn": f"arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api"
     }
     lambda_handler(event, None)
