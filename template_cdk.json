@@ -45,7 +45,20 @@
           "reauth_apis": "list_of_strings_OPERATION_NAMES_TO_REQUIRE_REAUTH_ON|DEFAULT=None",
           "ttl": "int_TIME_IN_MINUTES_TO_ALLOW_USER_TO_PERFORM_SENSITIVE_APIS_BEFORE_FORCING_REAUTH|DEFAULT=5"
         },
-        "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200"
+        "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200",
+        "custom_auth": {
+          "provider": "string_EXTERNAL_IDP_PROVIDER_NAME|DEFAULT=None",
+          "url" : "string_ISSUER_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "redirect_url" : "string_REDIRECT_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "client_id": "string_EXTERNAL_IDP_CLIENT_ID|DEFAULT=None",
+          "response_types": "string_EXTERNAL_RESPONSE_TYPES_USED_IN_OIDC_FLOW|DEFAULT=None",
+          "scopes": "string_EXTERNAL_IDP_SCOPES_SPACE_SEPARATED|DEFAULT=None",
+          "jwks_url" : "string_EXTERNAL_IDP_JWKS_URL|DEFAULT=None",
+          "claims_mapping": {
+            "user_id": "string_USER_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None",
+            "email": "string_EMAIL_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None"
+          }
+        }
       }
     ]
   }

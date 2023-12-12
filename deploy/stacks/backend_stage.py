@@ -34,6 +34,7 @@ class BackendStage(Stage):
         codeartifact_pip_repo_name=None,
         reauth_config=None,
         cognito_user_session_timeout_inmins=43200,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -65,6 +66,7 @@ class BackendStage(Stage):
             codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             reauth_config=reauth_config,
             cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
+            custom_auth=custom_auth,
             **kwargs,
         )
 

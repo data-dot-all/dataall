@@ -68,7 +68,7 @@ def test_unauthorized_resource_policy(
 
 def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
-        set_context(RequestContext(db, user.username, [group.name]))
+        set_context(RequestContext(db, user.username, [group.name], user_id=user.username))
 
         TenantPolicy.attach_group_tenant_policy(
             session=session,
