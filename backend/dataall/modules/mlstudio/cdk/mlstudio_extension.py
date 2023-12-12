@@ -93,6 +93,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                     resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
                     destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
                 )
+                subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
 
         # setup security group to be used for sagemaker studio domain
         sagemaker_sg = ec2.SecurityGroup(
@@ -105,7 +106,6 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
 
         sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
         security_groups = [sagemaker_sg.security_group_id]
-        subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
 
         vpc_id = vpc.vpc_id
 
