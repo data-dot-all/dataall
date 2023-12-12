@@ -22,7 +22,7 @@ class S3DatasetClient:
         self._dataset = dataset
 
     def _get_dataset_role_client(self):
-        session = SessionHelper.get_session(base_session=self.pivot_role_session, role_arn=self.dataset.IAMDatasetAdminRoleArn)
+        session = SessionHelper.get_session(base_session=self._pivot_role_session, role_arn=self._dataset.IAMDatasetAdminRoleArn)
         dataset_client = session.client(
             's3',
             region_name=self._dataset.region,
