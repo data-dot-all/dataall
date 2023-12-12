@@ -98,7 +98,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         # setup security group to be used for sagemaker studio domain
         sagemaker_sg = ec2.SecurityGroup(
             setup,
-            "SageMakerSecurityGroup",
+            "SecurityGroup",
             vpc=vpc,
             description="Security Group for SageMaker Studio",
             security_group_name=domain.sagemakerStudioDomainName,
