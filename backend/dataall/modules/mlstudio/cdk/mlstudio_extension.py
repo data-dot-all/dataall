@@ -107,7 +107,6 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
         sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
         security_groups = [sagemaker_sg.security_group_id]
 
-
         vpc_id = vpc.vpc_id
 
         sagemaker_domain_role = iam.Role(
