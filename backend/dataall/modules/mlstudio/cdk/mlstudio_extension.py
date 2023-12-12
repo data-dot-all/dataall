@@ -40,17 +40,6 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             logger.info(f'Using VPC {domain.vpcId} and subnets {domain.subnetIds} for SageMaker Studio domain')
             vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', vpc_id=domain.vpcId)
             subnet_ids = domain.subnetIds
-            # setup security group to be used for sagemaker studio domain
-            sagemaker_sg = ec2.SecurityGroup(
-                setup,
-                "SecurityGroup",
-                vpc=vpc,
-                description="Security Group for SageMaker Studio",
-                security_group_name=domain.sagemakerStudioDomainName,
-            )
-
-            sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
-            security_groups = [sagemaker_sg.security_group_id]
         else:
             cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
                 accountid=_environment.AwsAccountId, region=_environment.region
@@ -65,7 +54,6 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                 subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
                 subnet_ids += [public_subnet.subnet_id for public_subnet in vpc.public_subnets]
                 subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in vpc.isolated_subnets]
-                security_groups = []
             else:
                 logger.info("Default VPC not found, Exception. Creating a VPC for SageMaker resources...")
                 # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
@@ -105,18 +93,19 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                     resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
                     destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
                 )
-                # setup security group to be used for sagemaker studio domain
-                sagemaker_sg = ec2.SecurityGroup(
-                    setup,
-                    "SecurityGroup",
-                    vpc=vpc,
-                    description="Security Group for SageMaker Studio",
-                    security_group_name=domain.sagemakerStudioDomainName,
-                )
 
-                sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
-                security_groups = [sagemaker_sg.security_group_id]
-                subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
+        # setup security group to be used for sagemaker studio domain
+        sagemaker_sg = ec2.SecurityGroup(
+            setup,
+            "SageMakerSecurityGroup",
+            vpc=vpc,
+            description="Security Group for SageMaker Studio",
+            security_group_name=domain.sagemakerStudioDomainName,
+        )
+
+        sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
+        security_groups = [sagemaker_sg.security_group_id]
+        subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
 
         vpc_id = vpc.vpc_id
 
