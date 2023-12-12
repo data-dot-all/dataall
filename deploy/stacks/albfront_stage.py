@@ -16,6 +16,7 @@ class AlbFrontStage(Stage):
         image_tag=None,
         custom_domain=None,
         ip_ranges=None,
+        tooling_account_id=None,
         custom_auth=None,
         **kwargs,
     ):
@@ -30,6 +31,7 @@ class AlbFrontStage(Stage):
             image_tag=image_tag,
             custom_domain=custom_domain,
             ip_ranges=ip_ranges,
+            tooling_account_id=tooling_account_id,
             custom_auth=custom_auth
         )
 

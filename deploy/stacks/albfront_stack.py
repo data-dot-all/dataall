@@ -28,6 +28,7 @@ class AlbFrontStack(Stack):
         image_tag=None,
         custom_domain=None,
         ip_ranges=None,
+        tooling_account_id=None,
         custom_auth=None,
         **kwargs,
     ):
@@ -35,6 +36,28 @@ class AlbFrontStack(Stack):
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
+
+        cross_account_front_end_deployment_role = iam.Role(
+            self,
+            f'{resource_prefix}-{envname}-front_end_deployment_role',
+            role_name=f'{resource_prefix}-{envname}-front_end_deployment_role',
+            assumed_by=iam.AccountPrincipal(tooling_account_id),
+        )
+
+        cross_account_front_end_deployment_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'ssm:GetParameterHistory',
+                    'ssm:GetParameters',
+                    'ssm:GetParameter',
+                    'ssm:GetParametersByPath'
+                ],
+                resources=[
+                    f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*'
+                ],
+            ),
+        )
 
         frontend_image_tag = f'frontend-{image_tag}'
         userguide_image_tag = f'userguide-{image_tag}'
