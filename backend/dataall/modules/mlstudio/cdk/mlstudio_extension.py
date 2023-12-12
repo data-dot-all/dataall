@@ -40,7 +40,17 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             logger.info(f'Using VPC {domain.vpcId} and subnets {domain.subnetIds} for SageMaker Studio domain')
             vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', vpc_id=domain.vpcId)
             subnet_ids = domain.subnetIds
-            security_groups = []
+            # setup security group to be used for sagemaker studio domain
+            sagemaker_sg = ec2.SecurityGroup(
+                setup,
+                "SecurityGroup",
+                vpc=vpc,
+                description="Security Group for SageMaker Studio",
+                security_group_name=domain.sagemakerStudioDomainName,
+            )
+
+            sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
+            security_groups = [sagemaker_sg.security_group_id]
         else:
             cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
                 accountid=_environment.AwsAccountId, region=_environment.region
