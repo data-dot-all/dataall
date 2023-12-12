@@ -1,9 +1,8 @@
 import { Auth } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
+import { useClient, getGroupsForUser } from 'services';
 import { useAuth } from 'authentication';
-import { getGroupsForUser } from 'services';
 
 export const useGroups = () => {
   const dispatch = useDispatch();

@@ -170,7 +170,6 @@ def handler(event, context):
             'username': username,
             'groups': groups,
             'schema': SCHEMA,
-            'user_id': user_id
         }
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
