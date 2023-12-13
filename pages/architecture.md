@@ -105,6 +105,11 @@ abstracting the different IdP providers protocols.
 **Note**: data.all doesn't have a user store and does not create or manage groups.
 It relies only on information provided by the IdP; such as username, email, groups, etc...
 
+Data.all can also be configured to use any external Idp which uses OIDC. With this, data.all user will be authenticated
+with your Idp. With external Idp, data.all doesn't maintain the user groups information. In order for data.all modules to work seamlessly, you will have to implement methods provided in the
+dataall/base/services/ServiceProvider.py and provide an instance of your implementation in the dataall/base/services/ServiceProviderFactory.py.
+For more information on deploying with external Idp, please checkout the [Deploy to AWS](./deploy/deploy_aws.md) section.
+
 
 #### User Interface and User Guide
 data.all UI and user guide website follow static websites pattern on AWS with CloudFront used as the 
@@ -118,6 +123,8 @@ create-react-app utility, and saved to S3 as the Cloudfront distribution origin.
 - data.all user guide consists of static HTML documents generated from markdown
 files using Mkdocs library available to all users having access to
 the server hosting the documentation.
+
+**Note** - When using External IDP, the user guide will be disabled and stack associated with it would be removed. 
 
 
 ### VPC facing architecture
@@ -206,6 +213,9 @@ malicious attacks.
 As explained in the frontend section, Amazon Cognito is used for Authentication of users. 
 In Amazon API Gateway we again use [Cognito for Authorization](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html). 
 With an Amazon Cognito user pool, we control who can access our GraphQL API. 
+
+
+**Note** - If you already have an IDP to manage user pools, you can replace Cognito Authorizer with a Custom Authorizer using your own IDP. In order to do so, please follow instruction in ["Deploy to AWS"](./deploy/deploy_aws.md) section.
 
 ### AWS Lambda - Backend or "API Handler" Lambda
 This is the backend Lambda function that implements the business logic by processing the incoming GraphQL queries.

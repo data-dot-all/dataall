@@ -186,6 +186,19 @@ of our repository. Open it, you should be seen something like:
         "reauth_config": {
           "reauth_apis": "list_of_strings_OPERATION_NAMES_TO_REQUIRE_REAUTH_ON|DEFAULT=None",
           "ttl": "int_TIME_IN_MINUTES_TO_ALLOW_USER_TO_PERFORM_SENSITIVE_APIS_BEFORE_FORCING_REAUTH|DEFAULT=5"
+        },
+        "custom_auth": {
+          "provider": "string_EXTERNAL_IDP_PROVIDER_NAME|DEFAULT=None",
+          "url" : "string_ISSUER_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "redirect_url" : "string_REDIRECT_URL_OF_THE_EXTERNAL_IDP|DEFAULT=None",
+          "client_id": "string_EXTERNAL_IDP_CLIENT_ID|DEFAULT=None",
+          "response_types": "string_EXTERNAL_RESPONSE_TYPES_USED_IN_OIDC_FLOW|DEFAULT=None",
+          "scopes": "string_EXTERNAL_IDP_SCOPES_SPACE_SEPARATED|DEFAULT=None",
+          "jwks_url" : "string_EXTERNAL_IDP_JWKS_URL|DEFAULT=None",
+          "claims_mapping": {
+            "user_id": "string_USER_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None",
+            "email": "string_EMAIL_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None"
+          }
         }
       }
     ]
@@ -197,41 +210,42 @@ have listed and defined all the parameters of the cdk.json file. If you still ha
 and find 2 examples of cdk.json files.
 
 
-| **General Parameters**                        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                              |   
-|-----------------------------------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tooling_vpc_id                                | Optional              | The VPC ID for the tooling account. If not provided, **a new VPC** will be created.                                                                                                                                                                                                                                                                         |
-| tooling_region                                | Optional              | The AWS region for the tooling account where the AWS CodePipeline pipeline will be created. (default: eu-west-1)                                                                                                                                                                                                                                            |
-| tooling_vpc_restricted_nacl                   | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned tooling VPC (default: false)                                                                                                                                                                                                                     |
-| git_branch                                    | Optional              | The git branch name can be leveraged to deploy multiple AWS CodePipeline pipelines to the same tooling account. (default: main)                                                                                                                                                                                                                             |
-| git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                                                                                                      |
-| quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                                                                                                           |
-| resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                                                                                                       |
-| source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                          |
-| repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                    |
-| repo_connection_arn                           | Optional              | The arn of the CodeStar connection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                           |
-| **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                 |
-| envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                     |
-| account                                       | REQUIRED              | The AWS deployment account (deployment account N)                                                                                                                                                                                                                                                                                                           |
-| region                                        | REQUIRED              | The AWS deployment region                                                                                                                                                                                                                                                                                                                                   |
-| with_approval                                 | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                                                                                                                                 |
-| vpc_id                                        | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                                                                                                                                      |
-| vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                                                                                                        |
-| vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)                                                                                                                                                                                                                  |
-| internet_facing                               | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                                                                                                                                               |
-| custom_domain                                 | Optional*             | Custom domain configuration: `hosted_zone_name`, `hosted_zone_id`, `certificate_arn`, and `email_notification_sender_email_id`. If internet_facing parameter is **false** or `share_notifications.email` is active in `config.json` then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true. |
-| ip_ranges                                     | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                                                                                                                                   |
-| apig_vpce                                     | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                                                                                                                                   |
-| prod_sizing                                   | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                                                                                                                                            |
-| enable_cw_rum                                 | Optional              | If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                                                                                                                                         |
-| enable_cw_canaries                            | Optional              | If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                                                                                                                                           |
-| enable_quicksight_monitoring                  | Optional              | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                                                                                                                                     |
-| shared_dashboard_sessions                     | Optional              | Either 'anonymous' or 'reader'. It indicates the type of Quicksight session used for Shared Dashboards (default: 'anonymous')                                                                                                                                                                                                                               |
-| enable_pivot_role_auto_create                 | Optional              | If set to **true**, data.all creates the pivot IAM role as part of the environment stack. If false, a CloudFormation template is provided in the UI and AWS account admins need to deploy this stack as pre-requisite to link a data.all environment (default: false)                                                                                       |
-| enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                                                                                                                     |
-| enable_opensearch_serverless                  | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                                                                                                                                 |
-| cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                                                                                                                   |
-| reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again                                                                                          |
+| **General Parameters**                        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                                                                                       |   
+|-----------------------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tooling_vpc_id                                | Optional              | The VPC ID for the tooling account. If not provided, **a new VPC** will be created.                                                                                                                                                                                                                                                                                                                                  |
+| tooling_region                                | Optional              | The AWS region for the tooling account where the AWS CodePipeline pipeline will be created. (default: eu-west-1)                                                                                                                                                                                                                                                                                                     |
+| tooling_vpc_restricted_nacl                   | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned tooling VPC (default: false)                                                                                                                                                                                                                                                                              |
+| git_branch                                    | Optional              | The git branch name can be leveraged to deploy multiple AWS CodePipeline pipelines to the same tooling account. (default: main)                                                                                                                                                                                                                                                                                      |
+| git_release                                   | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                                                                                                                                                                                               |
+| quality_gate                                  | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                                                                                                                                                                                                    |
+| resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                                                                                                                                                                |
+| source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                                                                                   |
+| repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                                                                             |
+| repo_connection_arn                           | Optional              | The arn of the CodeStar connection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
+| **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                          |
+| envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                                                                              |
+| account                                       | REQUIRED              | The AWS deployment account (deployment account N)                                                                                                                                                                                                                                                                                                                                                                    |
+| region                                        | REQUIRED              | The AWS deployment region                                                                                                                                                                                                                                                                                                                                                                                            |
+| with_approval                                 | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                                                                                                                                                                                          |
+| vpc_id                                        | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                                                                                                                                                                                               |
+| vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                                                                                                                                                                 |
+| vpc_restricted_nacl                           | Optional              | If set to **true**, VPC NACLs added to restrict network traffic on the subnets of the data.all provisioned deployment VPC (default: false)                                                                                                                                                                                                                                                                           |
+| internet_facing                               | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                                                                                                                                                                                                        |
+| custom_domain                                 | Optional*             | Custom domain configuration: `hosted_zone_name`, `hosted_zone_id`, `certificate_arn`, and `email_notification_sender_email_id`. If internet_facing parameter is **false** or `share_notifications.email` is active in `config.json` then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.                                                          |
+| ip_ranges                                     | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                                                                                                                                                                                            |
+| apig_vpce                                     | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                                                                                                                                                                                            |
+| prod_sizing                                   | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                                                                                                                                                                                                     |
+| enable_cw_rum                                 | Optional              | If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                                                                                                                                                                                                  |
+| enable_cw_canaries                            | Optional              | If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                                                                                                                                                                                                    |
+| enable_quicksight_monitoring                  | Optional              | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                                                                                                                                                                                              |
+| shared_dashboard_sessions                     | Optional              | Either 'anonymous' or 'reader'. It indicates the type of Quicksight session used for Shared Dashboards (default: 'anonymous')                                                                                                                                                                                                                                                                                        |
+| enable_pivot_role_auto_create                 | Optional              | If set to **true**, data.all creates the pivot IAM role as part of the environment stack. If false, a CloudFormation template is provided in the UI and AWS account admins need to deploy this stack as pre-requisite to link a data.all environment (default: false)                                                                                                                                                |
+| enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                                                                                                                                                                              |
+| enable_opensearch_serverless                  | Optional              | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                                                                                                                                                                                          |
+| cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                                                                                                                                                                            |
+| reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again                                                                                                                                                   |
+| custom_auth                                   | Optional              | A dictionary containing set of parameters to setup external IDP ( Authentication and Authorization) in data.all. Custom Auth Configuration : `provider`, `url`, `redirect_url`, `client_id`, `response_types`, `scopes`, `jwks_url`, `claims_mapping` (Nested dictionary containing configuration : `user_id`, `email`). All the configurations are required if setting data.all with an external OIDC supported IDP |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -315,6 +329,101 @@ deploy to 2 deployments accounts.
   }
 }
 ```
+
+**Example 3** - Deployment with Custom Authentication 
+
+```json
+{
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_vpc_id": "vpc-1234567890EXAMPLE",
+    "tooling_region": "eu-west-2",
+    "tooling_vpc_restricted_nacl": true,
+    "git_branch": "master",
+    "git_release": true,
+    "quality_gate": false,
+    "resource_prefix": "da",
+    "DeploymentEnvironments": [
+        {
+            "envname": "dev",
+            "account": "000000000000",
+            "region": "eu-west-1",
+            "with_approval": false,
+            "internet_facing": true,
+            "prod_sizing": false,
+             "custom_auth": {
+               "provider": "okta",
+               "url": "https://ISSUER_URL",
+               "redirect_url": "https://REDIRECT_URL",
+               "client_id": "091sdz02308042",
+               "response_types": "code",
+               "scopes": "openid profile",
+               "jwks_url": "https://JWKSURL",
+               "claims_mapping": {
+                 "user_id": "id",
+                 "email": "user_email"
+               }
+             }
+        }
+    ]
+  }
+}
+```
+
+### 6.1 (Important) - Configure data.all to use external Idp
+Out of the box, data.all uses Cognito as the Idp and the user pool provider. If you have your own IDP, you can use Cognito as a proxy 
+and connect your IDP with Cognito using SAML. With this combination, data.all authentication essentially occurs with your external IDP. 
+Please note, the user pools is still managed by Cognito User Pool. 
+
+If you have own IDP and also manage your own user pool, you can configure data.all to directly use your IDP. Please read this section only if you want deploying data.all with an external IDP.
+
+Data.all can also be configured to use an external Idp
+which supports OIDC. In order to do so, please add `custom_auth` section into your `cdk.json` file as shown in **Example-3**. 
+
+This will take care of configuring data.all frontend to use the external IDP URL at the time of login. Also, it will setup a 
+custom authorizer lambda and attach it to the API gateway. This custom authorizer lambda will work in place of the cognito authorizer,
+which is deployed by default. 
+
+**Important** - 
+When setting up data.all, the user pool is managed by Cognito. Here you can make teams and group users in a team. This forms the data.all team.
+When using custom authentication, this information will have to be maintained by either your IDP or any other systems you use to maintain
+group information. 
+
+When using custom authentication, you will have to create a file and implement 3 functions from `dataall/base/services/ServiceProvider.py`
+For example, you can create a package like `dataall/base/custom_auth/MyProvider.py` and create your own class and implement the methods as shown below
+```python
+class MyProvider(ServiceProvider):
+    def get_user_emailids_from_group(self, group_name):
+        # Your implementation
+    
+    def get_groups_for_user(self, user_id):
+        # Your implementation
+    
+    def list_groups(self, envname: str, region: str):
+        # Your implementation
+```
+
+Once you implement these methods, return an instance of your provider in `dataall/base/service/ServiceProviderFactory.py` . Please follow the 
+instructions in the comments to create and return an instance of your custom service provider. Here's an example of an implementation for your reference, 
+```python
+    def get_service_provider_instance():
+        if (os.environ.get("custom_auth", None)):
+            # Return instance of your service provider which implements the ServiceProvider interface
+            # Please take a look at the "Deploy to AWS" , External IDP section for steps
+            try:
+                # Instantiate your instance of custom Service Provider
+                return MyProvider()
+            except Exception as e:
+                print(e)
+        else:
+            return Cognito()
+```
+
+
 ## 7. Configure the application modules in the config.json file
 In data.all V2 you can enable, disable, configure and add new modules to your data.all deployment in the `config.json` file
 located at the top level of the repository. Here is an example file, where you
