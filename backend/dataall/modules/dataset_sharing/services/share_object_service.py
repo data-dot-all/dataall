@@ -206,15 +206,18 @@ class ShareObjectService:
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-            share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
-            for table in share_table_items:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=share.principalId,
-                    permissions=DATASET_TABLE_READ,
-                    resource_uri=table.itemUri,
-                    resource_type=DatasetTable.__name__,
+            if share.groupUri != dataset.SamlAdminGroupName:
+                share_table_items = ShareObjectRepository.find_all_share_items(
+                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
                 )
+                for table in share_table_items:
+                    ResourcePolicy.attach_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        permissions=DATASET_TABLE_READ,
+                        resource_uri=table.itemUri,
+                        resource_type=DatasetTable.__name__,
+                    )
 
             share.rejectPurpose = ""
             session.commit()
@@ -261,12 +264,6 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Reject)
-            if share.groupUri != dataset.SamlAdminGroupName:
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=dataset.datasetUri,
-                )
 
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose
@@ -296,6 +293,28 @@ class ShareObjectService:
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
+                # Delete share resource policy permissions
+                # Deleting REQUESTER permissions
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=share.shareUri,
+                )
+
+                # Deleting APPROVER permissions
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    resource_uri=share.shareUri,
+                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.attach_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
+
+                # Delete share
                 session.delete(share)
 
             return True
