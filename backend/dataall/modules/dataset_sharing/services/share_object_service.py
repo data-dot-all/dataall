@@ -261,11 +261,12 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Reject)
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
+            if share.groupUri != dataset.SamlAdminGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=dataset.datasetUri,
+                )
 
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose

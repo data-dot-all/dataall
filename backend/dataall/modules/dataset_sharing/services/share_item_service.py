@@ -57,11 +57,12 @@ class ShareItemService:
 
             share_sm.update_state(session, share, new_share_state)
 
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
+            if share.groupUri != dataset.SamlAdminGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=dataset.datasetUri,
+                )
 
             ShareNotificationService(
                 session=session,
