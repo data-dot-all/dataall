@@ -858,11 +858,11 @@ class ShareObjectRepository:
                         ShareObjectItem.itemType == share_type
                     )
                 )
-            ).all()
+            )
         )
-        if status:
+        if status :
             query = query.filter(ShareObjectItem.status.in_(status))
-        return query
+        return query.all()
 
     @staticmethod
     def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):

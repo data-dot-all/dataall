@@ -61,11 +61,11 @@ class ShareItemService:
                 revoke_table_items = ShareObjectRepository.find_all_share_items(
                     session, uri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
                 )
-                for table in revoke_table_items:
+                for item in revoke_table_items:
                     ResourcePolicy.delete_resource_policy(
                         session=session,
                         group=share.groupUri,
-                        resource_uri=table.tableUri,
+                        resource_uri=item.itemUri,
                     )
 
             ShareNotificationService(

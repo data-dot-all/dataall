@@ -302,13 +302,13 @@ class ShareObjectService:
                 )
 
                 # Deleting APPROVER permissions
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.SamlAdminGroupName,
                     resource_uri=share.shareUri,
                 )
                 if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicy.attach_resource_policy(
+                    ResourcePolicy.delete_resource_policy(
                         session=session,
                         group=dataset.stewards,
                         resource_uri=share.shareUri,
