@@ -35,29 +35,37 @@ export const RequestAccessModal = (props) => {
   const client = useClient();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
+  const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
 
   const fetchEnvironments = useCallback(async () => {
-    const response = await client.query(
-      listValidEnvironments({
-        filter: Defaults.selectListFilter
-      })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
+    setLoadingEnvs(true);
+    try {
+      const response = await client.query(
+        listValidEnvironments({
+          filter: Defaults.selectListFilter
+        })
       );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    if (stopLoader) {
-      stopLoader();
+      if (!response.errors) {
+        setEnvironmentOptions(
+          response.data.listValidEnvironments.nodes.map((e) => ({
+            ...e,
+            value: e.environmentUri,
+            label: e.label
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      if (stopLoader) {
+        stopLoader();
+      }
+      setLoadingEnvs(false);
     }
   }, [client, dispatch, stopLoader]);
 
@@ -210,7 +218,7 @@ export const RequestAccessModal = (props) => {
     }
   }
 
-  if (!hit) {
+  if (!hit || loadingEnvs) {
     return null;
   }
 
