@@ -849,8 +849,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_all_share_items(session, share_uri, share_type):
-        return (
+    def find_all_share_items(session, share_uri, share_type, status=None):
+        query = (
             session.query(ShareObjectItem).filter(
                 (
                     and_(
@@ -858,8 +858,11 @@ class ShareObjectRepository:
                         ShareObjectItem.itemType == share_type
                     )
                 )
-            ).all()
+            )
         )
+        if status :
+            query = query.filter(ShareObjectItem.status.in_(status))
+        return query.all()
 
     @staticmethod
     def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):

@@ -1,6 +1,7 @@
 import os
 import logging
 
+from dataall.base.context import get_context
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -75,6 +76,9 @@ def list_groups(context, source, filter: dict = None):
 
 
 def get_groups_for_user(context, source, userid):
+    request_context = get_context()
+    if request_context.user_id != userid:
+        raise Exception("User Id doesn't match user id from context")
     envname = os.getenv('envname', 'local')
     if envname in ['local', 'dkrcompose']:
         return [{"groupName": 'Engineers'}, {"groupName": 'Scientists'}, {"groupName": 'Requesters'},

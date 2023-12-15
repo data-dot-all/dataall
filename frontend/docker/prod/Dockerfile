@@ -2,20 +2,25 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG REACT_APP_STAGE
 ARG DOMAIN
-ARG NODE_VERSION=18
-ARG NGINX_VERSION=1.12
-ARG NVM_VERSION=v0.37.0
+ARG NODE_VERSION=18.19.0
+ARG NGINX_VERSION=1.24.0
+ARG NVM_VERSION=v0.37.2
 
-RUN dnf update -y && \
-    dnf install -y tar gzip openssl && \
-    dnf clean all -y
-RUN dnf install nginx$NGINX_VERSION
+# Clean cache
+RUN dnf upgrade -y;\
+    find /var/tmp -name "*.rpm" -print -delete ;\
+    find /tmp -name "*.rpm" -print -delete ;\
+    dnf autoremove -y; \
+    dnf clean all; rm -rfv /var/cache/dnf
+
+# Installing libraries
+RUN dnf install -y tar gzip openssl nginx-$NGINX_VERSION
 
 RUN touch ~/.bashrc
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash
 RUN . ~/.nvm/nvm.sh && nvm install node
-RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
+RUN echo '. ~/.nvm/nvm.sh' >> ~/.bashrc
 
 RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 
