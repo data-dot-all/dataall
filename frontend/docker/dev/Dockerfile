@@ -7,6 +7,7 @@ WORKDIR /app
 
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER}:root /app
+RUN chown -R ${CONTAINER_USER}:root /tmp
 USER ${CONTAINER_USER}
 
 COPY --chown=${CONTAINER_USER}:root ./frontend/package.json ./
