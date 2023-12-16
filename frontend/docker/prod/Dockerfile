@@ -31,6 +31,7 @@ RUN mkdir -p /var/cache/nginx && chown -R ${CONTAINER_USER}:root /var/cache/ngin
 RUN chown -R ${CONTAINER_USER}:root /usr/local
 RUN chown -R ${CONTAINER_USER}:root /etc/nginx
 RUN chown -R ${CONTAINER_USER}:root /usr/share/nginx
+RUN chown -R ${CONTAINER_USER}:root /tmp
 USER ${CONTAINER_USER}
 
 
