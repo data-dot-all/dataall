@@ -25,6 +25,7 @@ RUN dnf -y install python3-pip python3-devel
 ## Add container user group
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER}:root /usr/local
+RUN chown -R ${CONTAINER_USER}:root /tmp
 
 ## Add your source
 WORKDIR ${FUNCTION_DIR}
