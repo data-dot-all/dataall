@@ -151,6 +151,7 @@ class PipelineStack(Stack):
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
+            enable_key_rotation=True,
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
