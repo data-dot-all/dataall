@@ -15,6 +15,7 @@ RUN dnf install nginx$NGINX_VERSION
 
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -r -m -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER_GROUP}:root /usr/local/
+RUN chown -R ${CONTAINER_USER}:root /tmp
 
 USER ${CONTAINER_USER}
 
