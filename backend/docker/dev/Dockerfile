@@ -23,6 +23,7 @@ RUN dnf -y install python3-pip python3-devel git
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN useradd -m app
 RUN chown -R ${CONTAINER_USER}:root /usr/local
+RUN chown -R ${CONTAINER_USER}:root /tmp
 
 USER ${CONTAINER_USER}
 
