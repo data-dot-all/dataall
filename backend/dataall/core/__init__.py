@@ -2,8 +2,7 @@
 from dataall.core import (
     permissions,
     stacks,
-    notifications,
-    cognito_groups,
+    groups,
     environment,
     organizations,
     tasks,

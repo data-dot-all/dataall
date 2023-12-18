@@ -24,7 +24,6 @@ logger = logging.getLogger('graphql')
 logger.propagate = False
 logger.setLevel(logging.INFO)
 
-sts = boto3.client('sts', region_name='eu-west-1')
 Worker.queue = Worker.process
 ENVNAME = os.getenv('envname', 'local')
 logger.warning(f'Connecting to database `{ENVNAME}`')
@@ -88,7 +87,7 @@ def request_context(headers, mock=False):
                 tenant_name='dataall',
             )
 
-    set_context(RequestContext(engine, username, groups))
+    set_context(RequestContext(db_engine=engine, username=username, groups=groups, user_id=username))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
     context = Context(
@@ -96,6 +95,7 @@ def request_context(headers, mock=False):
         schema=schema,
         username=username,
         groups=groups,
+        user_id=username
     )
     return context.__dict__
 

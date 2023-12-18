@@ -79,3 +79,27 @@ SagemakerStudioUserSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioUser)),
     ],
 )
+
+SagemakerStudioDomain = gql.ObjectType(
+    name='SagemakerStudioDomain',
+    fields=[
+        gql.Field(name='sagemakerStudioUri', type=gql.ID),
+        gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='sagemakerStudioDomainName', type=gql.String),
+        gql.Field(name='DefaultDomainRoleName', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='vpcType', type=gql.String),
+        gql.Field(name='vpcId', type=gql.String),
+        gql.Field(name='subnetIds', type=gql.ArrayType(gql.String)),
+        gql.Field(name='owner', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='deleted', type=gql.String),
+        gql.Field(
+            name='environment',
+            type=gql.Ref('Environment'),
+            resolver=resolve_environment,
+        )
+    ],
+)

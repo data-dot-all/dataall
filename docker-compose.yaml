@@ -32,7 +32,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 local_graphql_server.py"
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.9 local_graphql_server.py"
     expose:
       - 5000
     ports:
@@ -42,6 +42,7 @@ services:
       config_location: "/config.json"
       AWS_REGION: "${AWS_REGION:-eu-west-1}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
+      email_sender_id: "noreply@someawsdomain"
     volumes:
       - ./backend/dataall:/dataall
       - $HOME/.aws/credentials:/root/.aws/credentials:ro

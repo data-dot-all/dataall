@@ -18,7 +18,7 @@ class RequestValidator:
             raise exceptions.RequiredParameter('URI')
 
     @staticmethod
-    def validate_creation_request(data):
+    def validate_user_creation_request(data):
         required = RequestValidator._required
         if not data:
             raise exceptions.RequiredParameter('data')
@@ -36,7 +36,7 @@ class RequestValidator:
 
 def create_sagemaker_studio_user(context: Context, source, input: dict = None):
     """Creates a SageMaker Studio user. Deploys the SageMaker Studio user stack into AWS"""
-    RequestValidator.validate_creation_request(input)
+    RequestValidator.validate_user_creation_request(input)
     request = SagemakerStudioCreationRequest.from_dict(input)
     return SagemakerStudioService.create_sagemaker_studio_user(
         uri=input["environmentUri"],
@@ -88,6 +88,11 @@ def delete_sagemaker_studio_user(
         uri=sagemakerStudioUserUri,
         delete_from_aws=deleteFromAWS
     )
+
+
+def get_environment_sagemaker_studio_domain(context, source, environmentUri: str = None):
+    RequestValidator.required_uri(environmentUri)
+    return SagemakerStudioService.get_environment_sagemaker_studio_domain(environment_uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: SagemakerStudioUser):

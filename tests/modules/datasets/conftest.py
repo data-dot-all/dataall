@@ -6,13 +6,12 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.stacks.db.stack_models import Stack
 from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation, DatasetBucket
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -206,6 +205,16 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
         group=group.name,
     )
 
+@pytest.fixture(scope='module')
+def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
+    yield dataset(
+        org=org_fixture,
+        env=env_fixture,
+        name='dataset2',
+        owner=env_fixture.owner,
+        group=group.name,
+        confidentiality=ConfidentialityClassification.Secret.value
+    )
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
@@ -220,6 +229,20 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
+
+@pytest.fixture(scope='module')
+def table_confidential_fixture(db, dataset_confidential_fixture, table, group, user):
+    table2 = table(dataset=dataset_confidential_fixture, name="table2", username=user.username)
+
+    with db.scoped_session() as session:
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=group.groupUri,
+            permissions=DATASET_TABLE_READ,
+            resource_uri=table2.tableUri,
+            resource_type=DatasetTable.__name__,
+        )
+    yield table2
 
 
 @pytest.fixture(scope='module')
@@ -244,7 +267,7 @@ def dataset_model(db):
     def factory(
         organization: Organization,
         environment: Environment,
-        label: str,
+        label: str
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(

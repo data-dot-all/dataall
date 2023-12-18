@@ -222,25 +222,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     assert response.data.getOrganization.userRoleInOrganization == 'Invited'
     assert response.data.getOrganization.stats.groups == 1
 
-    response = client.query(
-        """
-        query listOrganizationInvitedGroups($organizationUri: String!, $filter:GroupFilter){
-            listOrganizationInvitedGroups(organizationUri:$organizationUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.username,
-        groups=[group.name, group2.name],
-        organizationUri=org1.organizationUri,
-        filter={},
-    )
-
-    assert response.data.listOrganizationInvitedGroups.count == 1
 
     response = client.query(
         """
@@ -302,26 +283,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     )
     print(response)
     assert response.data.removeGroupFromOrganization
-
-    response = client.query(
-        """
-        query listOrganizationInvitedGroups($organizationUri: String!, $filter:GroupFilter){
-            listOrganizationInvitedGroups(organizationUri:$organizationUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.username,
-        groups=[group.name, group2.name],
-        organizationUri=org1.organizationUri,
-        filter={},
-    )
-
-    assert response.data.listOrganizationInvitedGroups.count == 0
 
     response = client.query(
         """

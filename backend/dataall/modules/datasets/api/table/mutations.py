@@ -23,7 +23,9 @@ deleteDatasetTable = gql.MutationField(
 
 syncTables = gql.MutationField(
     name='syncTables',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
+    args=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))
+    ],
     type=gql.Ref('DatasetTableSearchResult'),
     resolver=sync_tables,
 )

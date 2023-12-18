@@ -2,7 +2,7 @@ import logging
 
 from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
-from dataall.core.feature_toggle_checker import is_feature_enabled
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import Organization
@@ -65,10 +65,16 @@ def get_file_upload_presigned_url(
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
-def list_datasets(context: Context, source, filter: dict = None):
+def list_owned_shared_datasets(context: Context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_datasets(filter)
+    return DatasetService.list_owned_shared_datasets(filter)
+
+
+def list_owned_datasets(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetService.list_owned_datasets(filter)
 
 
 def list_locations(context, source: Dataset, filter: dict = None):
@@ -128,6 +134,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
 
+@is_feature_enabled('modules.datasets.features.glue_crawler')
 def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 

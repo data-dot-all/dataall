@@ -121,8 +121,8 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-            tables = DatasetCrawler(dataset).list_glue_database_tables()
+            S3Prefix = dataset.S3BucketName
+            tables = DatasetCrawler(dataset).list_glue_database_tables(S3Prefix)
             cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
             DatasetTableIndexer.upsert_all(
                 session=session, dataset_uri=dataset.datasetUri

@@ -15,6 +15,7 @@ class ShareObjectStatus(Enum):
 
 class ShareObjectPermission(Enum):
     Approvers = '999'
+    ApproversAndRequesters = '900'
     Requesters = '800'
     DatasetAdmins = '700'
     NoPermission = '000'
@@ -56,6 +57,7 @@ class ShareableType(Enum):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
     View = 'View'
+    S3Bucket = 'S3Bucket'
 
 
 class PrincipalType(Enum):

@@ -28,13 +28,11 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('AwsAccountId', gql.NonNullableType(gql.String)),
         gql.Argument('region', gql.NonNullableType(gql.String)),
-        gql.Argument('vpcId', gql.String),
-        gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('EnvironmentDefaultIAMRoleName', gql.String),
+        gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
         gql.Argument('resourcePrefix', gql.String),
-        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
-
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 
@@ -45,11 +43,10 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('SamlGroupName', gql.String),
-        gql.Argument('vpcId', gql.String),
-        gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('resourcePrefix', gql.String),
-        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 
@@ -98,7 +95,7 @@ InviteGroupOnEnvironmentInput = gql.InputType(
         gql.Argument('permissions', gql.ArrayType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
-        gql.Argument('environmentIAMRoleName', gql.String),
+        gql.Argument('environmentIAMRoleArn', gql.String),
     ],
 )
 
@@ -118,6 +115,6 @@ ConsumptionRoleFilter = gql.InputType(
         gql.Argument('term', gql.String),
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
-        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument(name='groupUri', type=gql.String),
     ],
 )

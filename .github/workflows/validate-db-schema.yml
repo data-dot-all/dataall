@@ -7,10 +7,10 @@ on:
     - main
     - release/*
     - main-v2
+    - v2m*
 
 env:
   envname: local
-  schema_name: validation
 
 jobs:
   run-tests:

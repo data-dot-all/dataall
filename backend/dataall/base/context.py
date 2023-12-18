@@ -23,6 +23,7 @@ class RequestContext:
     db_engine: Engine
     username: str
     groups: List[str]
+    user_id: str
 
 
 def get_context() -> RequestContext:

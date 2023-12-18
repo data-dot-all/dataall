@@ -58,9 +58,10 @@ def create_app(db):
         data = request.get_json()
 
         username = request.headers.get('Username', 'anonym')
+        user_id = request.headers.get('Username', 'anonym_id')
         groups = json.loads(request.headers.get('Groups', '[]'))
 
-        set_context(RequestContext(db, username, groups))
+        set_context(RequestContext(db, username, groups, user_id))
 
         success, result = graphql_sync(
             schema,
@@ -70,6 +71,7 @@ def create_app(db):
                 'engine': db,
                 'username': username,
                 'groups': groups,
+                'user_id': user_id
             },
             debug=app.debug,
         )

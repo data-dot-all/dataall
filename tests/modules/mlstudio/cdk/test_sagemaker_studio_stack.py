@@ -66,16 +66,19 @@ def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env_fixture, org_fixt
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods_sagemaker_studio_extension(mocker):
+def patch_methods_sagemaker_studio_extension(mocker, sgm_studio_domain):
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_cdk_look_up_role_arn',
         return_value="arn:aws:iam::1111111111:role/cdk-hnb659fds-lookup-role-1111111111-eu-west-1",
     )
     mocker.patch(
-        'dataall.modules.mlstudio.aws.ec2_client.EC2.check_default_vpc_exists',
+        'dataall.base.aws.ec2_client.EC2.check_default_vpc_exists',
         return_value=False,
     )
-
+    mocker.patch(
+        'dataall.modules.mlstudio.db.mlstudio_repositories.SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri',
+        return_value=sgm_studio_domain,
+    )
 
 def test_resources_sgmstudio_stack_created(sgm_studio):
     app = App()

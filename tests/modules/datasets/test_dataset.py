@@ -3,11 +3,26 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 from tests.core.stacks.test_stack import update_stack_query
+
+mocked_key_id = 'some_key'
+
+
+@pytest.fixture(scope='module', autouse=True)
+def mock_s3_client(module_mocker):
+    s3_client = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.S3DatasetClient',
+        s3_client
+    )
+
+    s3_client().get_bucket_encryption.return_value = ('aws:kms', mocked_key_id)
+    yield s3_client
 
 
 @pytest.fixture(scope='module')
@@ -24,7 +39,7 @@ def dataset1(
         kms_client
     )
 
-    kms_client().get_key_id.return_value = {"some_key"}
+    kms_client().get_key_id.return_value = mocked_key_id
 
     d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
     print(d)
@@ -152,7 +167,7 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
     assert response.data.updateDataset.stewards == dataset1.SamlAdminGroupName
     assert response.data.updateDataset.confidentiality == 'Official'
 
-
+@pytest.mark.skipif(not config.get_property("modules.datasets.features.glue_crawler"), reason="Feature Disabled by Config")
 def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):
     module_mocker.patch(
         'dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock()

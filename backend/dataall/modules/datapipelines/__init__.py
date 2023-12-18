@@ -34,6 +34,7 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
         FeedRegistry.register(FeedDefinition("DataPipeline", DataPipeline))
 
         TargetType("pipeline", GET_PIPELINE, UPDATE_PIPELINE)
+        TargetType("cdkpipeline", GET_PIPELINE, UPDATE_PIPELINE)
 
         EnvironmentResourceManager.register(DatapipelinesRepository())
 

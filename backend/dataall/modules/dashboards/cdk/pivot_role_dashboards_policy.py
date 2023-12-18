@@ -23,6 +23,7 @@ class DashboardsPivotRole(PivotRoleStatementSet):
                     'quicksight:SearchDashboards',
                     'quicksight:GetDashboardEmbedUrl',
                     'quicksight:GenerateEmbedUrlForAnonymousUser',
+                    'quicksight:GenerateEmbedUrlForRegisteredUser',
                     'quicksight:UpdateUser',
                     'quicksight:ListUserGroups',
                     'quicksight:RegisterUser',
@@ -31,6 +32,7 @@ class DashboardsPivotRole(PivotRoleStatementSet):
                     'quicksight:GetAuthCode',
                     'quicksight:CreateGroupMembership',
                     'quicksight:DescribeAccountSubscription',
+                    'quicksight:DescribeAccountSettings',
                 ],
                 resources=[
                     f'arn:aws:quicksight:*:{self.account}:group/default/*',

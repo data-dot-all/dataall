@@ -6,6 +6,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
+from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -28,6 +29,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.stacks.db.enums import StackStatus
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +56,8 @@ class EnvironmentService:
             validated=False,
             isOrganizationDefaultEnvironment=False,
             userRoleInEnvironment=EnvironmentPermission.Owner.value,
-            EnvironmentDefaultIAMRoleName=data.get(
-                'EnvironmentDefaultIAMRoleName', 'unknown'
-            ),
-            EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
+            EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split("/")[-1],
+            EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             resourcePrefix=data.get('resourcePrefix'),
         )
@@ -66,6 +66,7 @@ class EnvironmentService:
         session.commit()
 
         EnvironmentService._update_env_parameters(session, env, data)
+        EnvironmentResourceManager.create_env(session, env, data=data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -81,7 +82,7 @@ class EnvironmentService:
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
 
-        if not data.get('EnvironmentDefaultIAMRoleName'):
+        if not data.get('EnvironmentDefaultIAMRoleArn'):
             env_role_name = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,
@@ -94,33 +95,10 @@ class EnvironmentService:
             )
             env.EnvironmentDefaultIAMRoleImported = False
         else:
-            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleName']
-            env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env.EnvironmentDefaultIAMRoleName}'
+            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split("/")[-1]
+            env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
-        if data.get('vpcId'):
-            vpc = Vpc(
-                environmentUri=env.environmentUri,
-                region=env.region,
-                AwsAccountId=env.AwsAccountId,
-                VpcId=data.get('vpcId'),
-                privateSubnetIds=data.get('privateSubnetIds', []),
-                publicSubnetIds=data.get('publicSubnetIds', []),
-                SamlGroupName=data['SamlGroupName'],
-                owner=context.username,
-                label=f"{env.name}-{data.get('vpcId')}",
-                name=f"{env.name}-{data.get('vpcId')}",
-                default=True,
-            )
-            session.add(vpc)
-            session.commit()
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=data['SamlGroupName'],
-                permissions=permissions.NETWORK_ALL,
-                resource_uri=vpc.vpcUri,
-                resource_type=Vpc.__name__,
-            )
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
@@ -234,8 +212,9 @@ class EnvironmentService:
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
 
-        if data.get('environmentIAMRoleName'):
-            env_group_iam_role_name = data['environmentIAMRoleName']
+        if data.get('environmentIAMRoleArn'):
+            env_group_iam_role_arn = data['environmentIAMRoleArn']
+            env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
             env_role_imported = True
         else:
             env_group_iam_role_name = NamingConventionService(
@@ -244,6 +223,7 @@ class EnvironmentService:
                 pattern=NamingConventionPattern.IAM,
                 resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
+            env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
 
         athena_workgroup = NamingConventionService(
@@ -258,7 +238,7 @@ class EnvironmentService:
             groupUri=group,
             invitedBy=get_context().username,
             environmentIAMRoleName=env_group_iam_role_name,
-            environmentIAMRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}',
+            environmentIAMRoleArn=env_group_iam_role_arn,
             environmentIAMRoleImported=env_role_imported,
             environmentAthenaWorkGroup=athena_workgroup,
         )
@@ -512,6 +492,86 @@ class EnvironmentService:
         context = get_context()
         return paginate(
             query=EnvironmentService.query_user_environments(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
+    def list_valid_user_environments(session, data=None) -> dict:
+        context = get_context()
+        query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
+        valid_environments = []
+        for env in query:
+            stack = stack_helper.get_stack_with_cfn_resources(
+                targetUri=env.environmentUri,
+                environmentUri=env.environmentUri,
+            )
+            if stack.status in [
+                StackStatus.CREATE_COMPLETE.value,
+                StackStatus.UPDATE_COMPLETE.value,
+                StackStatus.UPDATE_ROLLBACK_COMPLETE.value
+            ]:
+                valid_environments.append(env)
+
+        return {
+            'count': len(valid_environments),
+            'nodes': valid_environments,
+        }
+
+    @staticmethod
+    def query_user_groups(session, username, groups, filter) -> Query:
+        query = (
+            session.query(EnvironmentGroup)
+            .filter(EnvironmentGroup.groupUri.in_(groups))
+            .distinct(EnvironmentGroup.groupUri)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_groups(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_groups(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
+    def query_user_consumption_roles(session, username, groups, filter) -> Query:
+        query = (
+            session.query(ConsumptionRole)
+            .filter(ConsumptionRole.groupUri.in_(groups))
+            .distinct(ConsumptionRole.consumptionRoleName)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                )
+            )
+        if filter and filter.get('groupUri'):
+            print("filter group")
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.groupUri == group,
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_consumption_roles(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_consumption_roles(session, context.username, context.groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 5),
         ).to_dict()

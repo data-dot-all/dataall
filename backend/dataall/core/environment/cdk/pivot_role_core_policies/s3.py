@@ -17,7 +17,8 @@ class S3PivotRole(PivotRoleStatementSet):
                 actions=[
                     's3:ListAllMyBuckets',
                     's3:GetBucketLocation',
-                    's3:PutBucketTagging'
+                    's3:PutBucketTagging',
+                    's3:GetEncryptionConfiguration'
                 ],
                 resources=['*'],
             ),

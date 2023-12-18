@@ -1,6 +1,7 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
+from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
 
@@ -20,10 +21,10 @@ class KmsClient:
                 PolicyName=self._DEFAULT_POLICY_NAME,
                 Policy=policy,
             )
-        except Exception as e:
-            log.error(
-                f'Failed to attach policy to KMS key {key_id} on {self._account_id} : {e} '
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have kms:PutKeyPolicy Permission for key id {key_id}: {e}')
+            log.error(f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} ')
             raise e
 
     def get_key_policy(self, key_id: str):
@@ -32,10 +33,11 @@ class KmsClient:
                 KeyId=key_id,
                 PolicyName=self._DEFAULT_POLICY_NAME,
             )
-        except Exception as e:
-            log.error(
-                f'Failed to get kms key policy of key {key_id} : {e}'
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have kms:GetKeyPolicy Permission for key id {key_id}: {e}')
+            log.error(f'Failed to get kms key policy of key {key_id}: {e}')
             return None
         else:
             return response['Policy']
@@ -45,10 +47,27 @@ class KmsClient:
             response = self._client.describe_key(
                 KeyId=key_alias,
             )
-        except Exception as e:
-            log.error(
-                f'Failed to get kms key id of {key_alias} : {e}'
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have kms:DescribeKey Permission for key {key_alias}: {e}')
+            log.error(f'Failed to get kms key id of {key_alias}: {e}')
             return None
         else:
             return response['KeyMetadata']['KeyId']
+
+    def check_key_exists(self, key_alias: str):
+        try:
+            key_exist = False
+            paginator = self._client.get_paginator('list_aliases')
+            for page in paginator.paginate():
+                key_aliases = [alias["AliasName"] for alias in page['Aliases']]
+                if key_alias in key_aliases:
+                    key_exist = True
+                    break
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have kms:ListAliases Permission in account {self._account_id}: {e}')
+            log.error(f'Failed to list KMS key aliases in account {self._account_id}: {e}')
+            return None
+        else:
+            return key_exist

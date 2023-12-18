@@ -32,6 +32,13 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
+  createEnvironment,
+  getPivotRoleExternalId,
+  getPivotRoleName,
+  getPivotRolePresignedUrl,
+  getCDKExecPolicyPresignedUrl
+} from '../services';
+import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
@@ -45,13 +52,11 @@ import {
   useGroups
 } from 'services';
 import {
-  createEnvironment,
-  getPivotRoleExternalId,
-  getPivotRoleName,
-  getPivotRolePresignedUrl,
-  getCDKExecPolicyPresignedUrl
-} from '../services';
-import { AwsRegions } from 'utils';
+  AwsRegions,
+  isAnyEnvironmentModuleEnabled,
+  isModuleEnabled,
+  ModuleNames
+} from 'utils';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -172,8 +177,10 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
+          EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
           resourcePrefix: values.resourcePrefix,
+          vpcId: values.vpcId,
+          subnetIds: values.subnetIds,
           parameters: [
             {
               key: 'notebooksEnabled',
@@ -375,7 +382,7 @@ const EnvironmentCreateForm = (props) => {
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                            text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -388,7 +395,7 @@ const EnvironmentCreateForm = (props) => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                          {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -474,12 +481,14 @@ const EnvironmentCreateForm = (props) => {
                 AwsAccountId: '',
                 region: '',
                 tags: [],
-                dashboardsEnabled: true,
-                notebooksEnabled: true,
-                mlStudiosEnabled: true,
-                pipelinesEnabled: true,
-                EnvironmentDefaultIAMRoleName: '',
-                resourcePrefix: 'dataall'
+                dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
+                notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
+                mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
+                EnvironmentDefaultIAMRoleArn: '',
+                resourcePrefix: 'dataall',
+                vpcId: '',
+                subnetIds: []
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -503,10 +512,16 @@ const EnvironmentCreateForm = (props) => {
                       ).length >= 1
                   ),
                 tags: Yup.array().nullable(),
-                privateSubnetIds: Yup.array().nullable(),
-                publicSubnetIds: Yup.array().nullable(),
+                subnetIds: Yup.array().when('vpcId', {
+                  is: (value) => !!value,
+                  then: Yup.array()
+                    .min(1)
+                    .required(
+                      'At least 1 Subnet Id required if VPC Id specified'
+                    )
+                }),
                 vpcId: Yup.string().nullable(),
-                EnvironmentDefaultIAMRoleName: Yup.string().nullable(),
+                EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
                   .trim()
                   .matches(
@@ -599,136 +614,146 @@ const EnvironmentCreateForm = (props) => {
                         </CardContent>
                       </Card>
                       <Box sx={{ mt: 3 }}>
-                        <Card>
-                          <CardHeader title="Features management" />
-                          <CardContent>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                        {isAnyEnvironmentModuleEnabled() && (
+                          <Card>
+                            <CardHeader title="Features management" />
+                            <CardContent>
+                              {isModuleEnabled(ModuleNames.DASHBOARDS) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="dashboardsEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="dashboardsEnabled"
+                                          value={values.dashboardsEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Dashboards{' '}
+                                          <small>
+                                            (Requires Amazon QuickSight
+                                            Enterprise Subscription)
+                                          </small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                       value={values.dashboardsEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Dashboards{' '}
-                                      <small>
-                                        (Requires Amazon QuickSight Enterprise
-                                        Subscription)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.dashboardsEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.NOTEBOOKS) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="notebooksEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="notebooksEnabled"
+                                          value={values.notebooksEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Box>
+                                          <Typography
+                                            color="textSecondary"
+                                            gutterBottom
+                                            variant="subtitle2"
+                                          >
+                                            Notebooks{' '}
+                                            <small>
+                                              (Requires Amazon Sagemaker
+                                              notebook instances)
+                                            </small>
+                                          </Typography>
+                                        </Box>
+                                      }
+                                      labelPlacement="end"
                                       value={values.notebooksEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Box>
-                                      <Typography
-                                        color="textSecondary"
-                                        gutterBottom
-                                        variant="subtitle2"
-                                      >
-                                        Notebooks{' '}
-                                        <small>
-                                          (Requires Amazon Sagemaker notebook
-                                          instances)
-                                        </small>
-                                      </Typography>
-                                    </Box>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.notebooksEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.MLSTUDIO) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="mlStudiosEnabled"
-                                      value={values.mlStudiosEnabled}
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="mlStudiosEnabled"
+                                          value={values.mlStudiosEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          ML Studio{' '}
+                                          <small>
+                                            (Requires Amazon Sagemaker Studio)
+                                          </small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      ML Studio{' '}
-                                      <small>
-                                        (Requires Amazon Sagemaker Studio)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                />
-                              </FormGroup>
-                            </Box>
-                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.DATAPIPELINES) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
                                       color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="pipelinesEnabled"
+                                      control={
+                                        <Switch
+                                          defaultChecked
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="pipelinesEnabled"
+                                          value={values.pipelinesEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Pipelines{' '}
+                                          <small>(Requires AWS DevTools)</small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
                                       value={values.pipelinesEnabled}
                                     />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Pipelines{' '}
-                                      <small>(Requires AWS DevTools)</small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.pipelinesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>
-                          </CardContent>
-                        </Card>
+                                  </FormGroup>
+                                </Box>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
                       </Box>
                     </Grid>
                     <Grid item lg={7} md={6} xs={12}>
@@ -828,25 +853,64 @@ const EnvironmentCreateForm = (props) => {
                           <CardContent>
                             <TextField
                               error={Boolean(
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                  errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                  errors.EnvironmentDefaultIAMRoleArn
                               )}
                               fullWidth
                               helperText={
-                                touched.EnvironmentDefaultIAMRoleName &&
-                                errors.EnvironmentDefaultIAMRoleName
+                                touched.EnvironmentDefaultIAMRoleArn &&
+                                errors.EnvironmentDefaultIAMRoleArn
                               }
-                              label="IAM Role Name"
-                              placeholder="Bring your own IAM role (Optional)"
-                              name="EnvironmentDefaultIAMRoleName"
+                              label="(Optional) IAM Role ARN"
+                              placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
+                              name="EnvironmentDefaultIAMRoleArn"
                               onBlur={handleBlur}
                               onChange={handleChange}
-                              value={values.EnvironmentDefaultIAMRoleName}
+                              value={values.EnvironmentDefaultIAMRoleArn}
                               variant="outlined"
                             />
                           </CardContent>
                         </Card>
                       </Box>
+                      {values.mlStudiosEnabled && (
+                        <Box sx={{ mt: 3 }}>
+                          <Card>
+                            <CardHeader title="(Optional) ML Studio Configuration" />
+                            <CardContent>
+                              <TextField
+                                {...params}
+                                label="(Optional) ML Studio VPC ID"
+                                placeholder="(Optional) Bring your own VPC - Specify VPC ID"
+                                name="vpcId"
+                                fullWidth
+                                error={Boolean(touched.vpcId && errors.vpcId)}
+                                helperText={touched.vpcId && errors.vpcId}
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.vpcId}
+                                variant="outlined"
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <ChipInput
+                                fullWidth
+                                error={Boolean(
+                                  touched.subnetIds && errors.subnetIds
+                                )}
+                                helperText={
+                                  touched.subnetIds && errors.subnetIds
+                                }
+                                variant="outlined"
+                                label="(Optional) ML Studio Subnet ID(s)"
+                                placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
+                                onChange={(chip) => {
+                                  setFieldValue('subnetIds', [...chip]);
+                                }}
+                              />
+                            </CardContent>
+                          </Card>
+                        </Box>
+                      )}
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>

@@ -17,18 +17,18 @@ class DashboardQuicksightClient:
     _DEFAULT_GROUP_NAME = QuicksightClient.DEFAULT_GROUP_NAME
 
     def __init__(self, username, aws_account_id, region='eu-west-1'):
-        session = SessionHelper.remote_session(accountid=aws_account_id)
-        self._client = session.client('quicksight', region_name=region)
         self._account_id = aws_account_id
         self._region = region
         self._username = username
+        self._client = QuicksightClient.get_quicksight_client(aws_account_id, region)
 
     def register_user_in_group(self, group_name, user_role='READER'):
-        QuicksightClient.create_quicksight_group(self._account_id, group_name)
+        identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
+        QuicksightClient.create_quicksight_group(AwsAccountId=self._account_id, region=self._region, GroupName=group_name)
         user = self._describe_user()
 
         if user is not None:
-            self._client.update_user(
+            identity_region_client.update_user(
                 UserName=self._username,
                 AwsAccountId=self._account_id,
                 Namespace='default',
@@ -36,7 +36,7 @@ class DashboardQuicksightClient:
                 Role=user_role,
             )
         else:
-            self._client.register_user(
+            identity_region_client.register_user(
                 UserName=self._username,
                 Email=self._username,
                 AwsAccountId=self._account_id,
@@ -45,13 +45,13 @@ class DashboardQuicksightClient:
                 UserRole=user_role,
             )
 
-        response = self._client.list_user_groups(
+        response = identity_region_client.list_user_groups(
             UserName=self._username, AwsAccountId=self._account_id, Namespace='default'
         )
         log.info(f'list_user_groups for {self._username}: {response})')
         if group_name not in [g['GroupName'] for g in response['GroupList']]:
             log.warning(f'Adding {self._username} to Quicksight group {group_name} on {self._account_id}')
-            self._client.create_group_membership(
+            identity_region_client.create_group_membership(
                 MemberName=self._username,
                 GroupName=group_name,
                 AwsAccountId=self._account_id,

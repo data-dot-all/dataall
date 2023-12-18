@@ -84,7 +84,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       title: 'Pipelines',
       path: '/console/pipelines',
       icon: <BsIcons.BsGear size={15} />,
-      active: isModuleEnabled(ModuleNames.PIPELINES)
+      active: isModuleEnabled(ModuleNames.DATAPIPELINES)
     };
 
     const omicsSection = {
@@ -196,21 +196,25 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
         </Box>
       </Scrollbar>
       <Divider />
-      <Box sx={{ p: 2 }} style={{ position: 'relative' }}>
-        <Box sx={{ pb: 1 }}>
-          <Button
-            color="primary"
-            fullWidth
-            sx={{ mt: 3 }}
-            onClick={() => {
-              window.open(process.env.REACT_APP_USERGUIDE_LINK, '_blank');
-            }}
-            variant="contained"
-          >
-            User Guide
-          </Button>
+      {process.env.REACT_APP_CUSTOM_AUTH ? (
+        <div> </div>
+      ) : (
+        <Box sx={{ p: 2 }} style={{ position: 'relative' }}>
+          <Box sx={{ pb: 1 }}>
+            <Button
+              color="primary"
+              fullWidth
+              sx={{ mt: 3 }}
+              onClick={() => {
+                window.open(process.env.REACT_APP_USERGUIDE_LINK, '_blank');
+              }}
+              variant="contained"
+            >
+              User Guide
+            </Button>
+          </Box>
         </Box>
-      </Box>
+      )}
     </Box>
   );
 

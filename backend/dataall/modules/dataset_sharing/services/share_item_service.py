@@ -57,13 +57,22 @@ class ShareItemService:
 
             share_sm.update_state(session, share, new_share_state)
 
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
+            if share.groupUri != dataset.SamlAdminGroupName:
+                revoke_table_items = ShareObjectRepository.find_all_share_items(
+                    session, uri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
+                )
+                for item in revoke_table_items:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        resource_uri=item.itemUri,
+                    )
 
-            ShareNotificationService.notify_share_object_rejection(session, context.username, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_rejection(email_id=context.username)
 
             revoke_share_task: Task = Task(
                 action='ecs.share.revoke',
@@ -137,6 +146,13 @@ class ShareItemService:
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            if share_item.itemType == ShareableType.Table.value and share_item.status == ShareItemStatus.Share_Failed.value:
+                share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=share_item.itemUri,
+                )
 
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)

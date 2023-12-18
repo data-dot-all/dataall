@@ -10,6 +10,7 @@ from aws_cdk import (
     aws_elasticloadbalancing as elb,
     aws_s3 as s3,
     Stack,
+    CfnOutput,
     Duration,
     RemovalPolicy,
     Fn,
@@ -27,6 +28,7 @@ class AlbFrontStack(Stack):
         image_tag=None,
         custom_domain=None,
         ip_ranges=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -131,20 +133,24 @@ class AlbFrontStack(Stack):
         logs_bucket.grant_put(iam.ServicePrincipal('delivery.logs.amazonaws.com'))
         logs_bucket.grant_read(iam.ServicePrincipal('delivery.logs.amazonaws.com'))
 
-        frontend_alternate_domain = custom_domain['hosted_zone_name']
-        userguide_alternate_domain = 'userguide.' + custom_domain['hosted_zone_name']
-
-        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
-            self,
-            'CustomDomainHostedZone',
-            hosted_zone_id=custom_domain['hosted_zone_id'],
-            zone_name=custom_domain['hosted_zone_name'],
-        )
+        if custom_domain and custom_domain.get('hosted_zone_id'):
+            hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+                self,
+                'CustomDomainHostedZone',
+                hosted_zone_id=custom_domain['hosted_zone_id'],
+                zone_name=custom_domain['hosted_zone_name'],
+            )
+            frontend_alternate_domain = custom_domain['hosted_zone_name']
+            userguide_alternate_domain = 'userguide.' + custom_domain['hosted_zone_name']
+        else:
+            hosted_zone = None
+            frontend_alternate_domain = None
+            userguide_alternate_domain = None
 
         if custom_domain and custom_domain.get('certificate_arn'):
             certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
                                                                custom_domain.get('certificate_arn'))
-        else:
+        elif custom_domain and custom_domain.get('hosted_zone_name'):
             certificate = acm.Certificate(
                 self,
                 'CustomDomainCertificate',
@@ -152,6 +158,8 @@ class AlbFrontStack(Stack):
                 subject_alternative_names=[f'*.{custom_domain["hosted_zone_name"]}'],
                 validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
             )
+        else:
+            raise ValueError("Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED when internet_facing=false")
 
         frontend_sg = ec2.SecurityGroup(
             self,
@@ -213,65 +221,95 @@ class AlbFrontStack(Stack):
         )
         self.allow_alb_access(frontend_alb, ip_ranges, vpc)
 
-        userguide_sg = ec2.SecurityGroup(
-            self,
-            'FargateTaskUserGuideSG',
-            security_group_name=f'{resource_prefix}-{envname}-userguide-service-sg',
-            vpc=vpc,
-            allow_all_outbound=True,
-        )
-        userguide_alb = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self,
-            f'UserGuideService{envname}',
-            cluster=cluster,
-            cpu=1024,
-            memory_limit_mib=2048,
-            service_name=f'userguide-{envname}',
-            desired_count=1,
-            certificate=certificate if (custom_domain and custom_domain.get('certificate_arn')) else None,
-            domain_name=userguide_alternate_domain,
-            domain_zone=hosted_zone,
-            task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                container_port=80,
-                environment={
-                    'AWS_REGION': self.region,
-                    'envname': envname,
-                    'LOGLEVEL': 'DEBUG',
-                },
-                task_role=task_role,
-                image=ecs.ContainerImage.from_ecr_repository(
-                    repository=ecr_repository, tag=userguide_image_tag
-                ),
-                enable_logging=True,
-                log_driver=ecs.LogDriver.aws_logs(
-                    stream_prefix='service',
-                    log_group=self.create_log_group(
-                        envname, resource_prefix, log_group_name='userguide'
+        if custom_auth is None:
+            userguide_sg = ec2.SecurityGroup(
+                self,
+                'FargateTaskUserGuideSG',
+                security_group_name=f'{resource_prefix}-{envname}-userguide-service-sg',
+                vpc=vpc,
+                allow_all_outbound=True,
+            )
+            userguide_alb = ecs_patterns.ApplicationLoadBalancedFargateService(
+                self,
+                f'UserGuideService{envname}',
+                cluster=cluster,
+                cpu=1024,
+                memory_limit_mib=2048,
+                service_name=f'userguide-{envname}',
+                desired_count=1,
+                certificate=certificate if (custom_domain and custom_domain.get('certificate_arn')) else None,
+                domain_name=userguide_alternate_domain,
+                domain_zone=hosted_zone,
+                task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
+                    container_port=80,
+                    environment={
+                        'AWS_REGION': self.region,
+                        'envname': envname,
+                        'LOGLEVEL': 'DEBUG',
+                    },
+                    task_role=task_role,
+                    image=ecs.ContainerImage.from_ecr_repository(
+                        repository=ecr_repository, tag=userguide_image_tag
+                    ),
+                    enable_logging=True,
+                    log_driver=ecs.LogDriver.aws_logs(
+                        stream_prefix='service',
+                        log_group=self.create_log_group(
+                            envname, resource_prefix, log_group_name='userguide'
+                        ),
                     ),
                 ),
-            ),
-            public_load_balancer=False,
-            assign_public_ip=False,
-            open_listener=False,
-            max_healthy_percent=100,
-            min_healthy_percent=0,
-            security_groups=[userguide_sg],
+                public_load_balancer=False,
+                assign_public_ip=False,
+                open_listener=False,
+                max_healthy_percent=100,
+                min_healthy_percent=0,
+                security_groups=[userguide_sg],
+            )
+            ulb: elb.CfnLoadBalancer = userguide_alb.load_balancer.node.default_child
+            ulb.access_logging_policy = elb.CfnLoadBalancer.AccessLoggingPolicyProperty(
+                enabled=True,
+                s3_bucket_name=logs_bucket.bucket_name,
+                s3_bucket_prefix='userguide',
+            )
+            userguide_alb.target_group.configure_health_check(
+                port='80',
+                path='/',
+                timeout=Duration.seconds(10),
+                healthy_threshold_count=2,
+                unhealthy_threshold_count=2,
+                interval=Duration.seconds(15),
+            )
+            self.allow_alb_access(userguide_alb, ip_ranges, vpc)
+
+            CfnOutput(
+                self,
+                f'UserGuideService{envname}Arn',
+                export_name=f'userguide-{envname}-arn',
+                value=userguide_alb.load_balancer.load_balancer_arn,
+            )
+
+            CfnOutput(
+                self,
+                f'UserGuideService{envname}HostedZoneId',
+                export_name=f'userguide-{envname}-hostedzoneid',
+                value=userguide_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
+            )
+
+        CfnOutput(
+            self,
+            f'FrontEndService{envname}Arn',
+            export_name=f'frontend-{envname}-arn',
+            value=frontend_alb.load_balancer.load_balancer_arn,
         )
-        ulb: elb.CfnLoadBalancer = userguide_alb.load_balancer.node.default_child
-        ulb.access_logging_policy = elb.CfnLoadBalancer.AccessLoggingPolicyProperty(
-            enabled=True,
-            s3_bucket_name=logs_bucket.bucket_name,
-            s3_bucket_prefix='userguide',
+
+        CfnOutput(
+            self,
+            f'FrontEndService{envname}HostedZoneId',
+            export_name=f'frontend-{envname}-hostedzoneid',
+            value=frontend_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
         )
-        userguide_alb.target_group.configure_health_check(
-            port='80',
-            path='/',
-            timeout=Duration.seconds(10),
-            healthy_threshold_count=2,
-            unhealthy_threshold_count=2,
-            interval=Duration.seconds(15),
-        )
-        self.allow_alb_access(userguide_alb, ip_ranges, vpc)
+
 
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(

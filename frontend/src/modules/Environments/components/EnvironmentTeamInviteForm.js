@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient, listCognitoGroups } from 'services';
+import { useClient, listGroups } from 'services';
 import {
   inviteGroupOnEnvironment,
   listEnvironmentGroupInvitationPermissions
@@ -49,10 +49,10 @@ export const EnvironmentTeamInviteForm = (props) => {
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({ filter }));
+      const response = await client.query(listGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
-          response.data.listCognitoGroups.map((g) => ({
+          response.data.listGroups.map((g) => ({
             ...g,
             value: g.groupName,
             label: g.groupName
@@ -113,7 +113,7 @@ export const EnvironmentTeamInviteForm = (props) => {
           inviteGroupOnEnvironment({
             groupUri: values.groupUri,
             environmentUri: environment.environmentUri,
-            environmentIAMRoleName: values.environmentIAMRoleName,
+            environmentIAMRoleArn: values.environmentIAMRoleArn,
             permissions
           })
         );
@@ -231,19 +231,19 @@ export const EnvironmentTeamInviteForm = (props) => {
                   <CardContent>
                     <TextField
                       error={Boolean(
-                        touched.environmentIAMRoleName &&
-                          errors.environmentIAMRoleName
+                        touched.environmentIAMRoleArn &&
+                          errors.environmentIAMRoleArn
                       )}
                       fullWidth
                       helperText={
-                        touched.environmentIAMRoleName &&
-                        errors.environmentIAMRoleName
+                        touched.environmentIAMRoleArn &&
+                        errors.environmentIAMRoleArn
                       }
-                      label="IAM Role Name"
-                      placeholder="Bring your own IAM role (Optional)"
-                      name="environmentIAMRoleName"
+                      label="(Optional) IAM Role ARN"
+                      placeholder="(Optional) Bring your own IAM role - Specify Entire Role ARN"
+                      name="environmentIAMRoleArn"
                       onChange={handleChange}
-                      value={values.environmentIAMRoleName}
+                      value={values.environmentIAMRoleArn}
                       variant="outlined"
                     />
                   </CardContent>

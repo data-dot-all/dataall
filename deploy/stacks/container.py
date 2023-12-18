@@ -81,7 +81,7 @@ class ContainerStack(pyNestedClass):
             container_definitions=[ecs.CfnTaskDefinition.ContainerDefinitionProperty(
                 image=cdkproxy_image.image_name,
                 name=cdkproxy_container_name,
-                command=['python3.8', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
+                command=['python3.9', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
                 environment=[
                     ecs.CfnTaskDefinition.KeyValuePairProperty(
                         name="AWS_REGION",
@@ -156,7 +156,7 @@ class ContainerStack(pyNestedClass):
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
+            command=['python3.9', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
@@ -214,7 +214,7 @@ class ContainerStack(pyNestedClass):
     def add_catalog_indexer_task(self):
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.8', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
+            command=['python3.9', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
             container_id=f'container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
@@ -252,7 +252,7 @@ class ContainerStack(pyNestedClass):
                 repository=self._ecr_repository, tag=self._cdkproxy_image_tag
             ),
             environment=self._create_env('DEBUG'),
-            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(
@@ -282,7 +282,7 @@ class ContainerStack(pyNestedClass):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
-                'python3.8',
+                'python3.9',
                 '-m',
                 'dataall.modules.datasets.tasks.dataset_subscription_task',
             ],
@@ -307,7 +307,7 @@ class ContainerStack(pyNestedClass):
     def add_bucket_policy_updater_task(self):
         update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
+            command=['python3.9', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
             container_id=f'container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('DEBUG'),
@@ -329,7 +329,7 @@ class ContainerStack(pyNestedClass):
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
+            command=['python3.9', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
             container_id=f'container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
@@ -524,7 +524,6 @@ class ContainerStack(pyNestedClass):
                     resources=[
                         f'arn:aws:iam::*:role/{pivot_role_name}',
                         f'arn:aws:iam::*:role/cdk*',
-                        'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
                     ],
                 ),

@@ -28,6 +28,7 @@ class IdpStack(pyNestedClass):
         internet_facing=True,
         tooling_account_id=None,
         enable_cw_rum=False,
+        cognito_user_session_timeout_inmins=43200,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -63,6 +64,7 @@ class IdpStack(pyNestedClass):
             f'AppClient-{envname}',
             user_pool=self.user_pool,
             prevent_user_existence_errors=True,
+            refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
         )
 
         if enable_cw_rum:
@@ -156,13 +158,13 @@ class IdpStack(pyNestedClass):
             string_value=self.region,
         )
 
-        cross_account_cognito_config_role = iam.Role(
+        cross_account_frontend_config_role = iam.Role(
             self,
-            f'{resource_prefix}-{envname}-cognito-config-role',
-            role_name=f'{resource_prefix}-{envname}-cognito-config-role',
+            f'{resource_prefix}-{envname}-frontend-config-role',
+            role_name=f'{resource_prefix}-{envname}-frontend-config-role',
             assumed_by=iam.AccountPrincipal(tooling_account_id),
         )
-        cross_account_cognito_config_role.add_to_policy(
+        cross_account_frontend_config_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
                     'cognito-idp:AddCustomAttributes',
@@ -200,7 +202,7 @@ class IdpStack(pyNestedClass):
             self,
             'CognitoConfigRoleName',
             parameter_name=f'/dataall/{envname}/cognito/crossAccountRole',
-            string_value=cross_account_cognito_config_role.role_name,
+            string_value=cross_account_frontend_config_role.role_name,
         )
 
         if internet_facing:

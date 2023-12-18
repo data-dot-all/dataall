@@ -157,13 +157,3 @@ class ProcessLFSameAccountShare(LFShareManager):
                 success = False
 
         return success
-
-    def clean_up_share(self) -> bool:
-        """"
-        1) deletes deprecated shared db in target account
-        Returns
-        -------
-        True if clean-up succeeds
-        """
-        self.delete_shared_database()
-        return True

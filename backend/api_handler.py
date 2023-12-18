@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import datetime
 from argparse import Namespace
 from time import perf_counter
 
@@ -10,8 +11,10 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
+from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
+from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
@@ -30,6 +33,7 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
+REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
@@ -59,10 +63,10 @@ end = perf_counter()
 print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
 
 
-def get_groups(claims):
+def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
-            'Received empty claims. ' 'Please verify Cognito authorizer configuration',
+            'Received empty claims. ' 'Please verify authorizer configuration',
             claims,
         )
     groups = list()
@@ -71,9 +75,15 @@ def get_groups(claims):
         groups: list = (
             saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
         )
-    cognito_groups = claims.get('cognito:groups', '').split(',')
-    groups.extend(cognito_groups)
+    cognito_groups = claims.get('cognito:groups', '')
+    if len(cognito_groups):
+        groups.extend(cognito_groups.split(','))
     return groups
+
+
+def get_custom_groups(user_id):
+    service_provider = ServiceProviderFactory.get_service_provider_instance()
+    return service_provider.get_groups_for_user(user_id)
 
 
 def handler(event, context):
@@ -114,9 +124,25 @@ def handler(event, context):
         }
 
     if 'authorizer' in event['requestContext']:
-        username = event['requestContext']['authorizer']['claims']['email']
+        if 'claims' not in event['requestContext']['authorizer']:
+            claims = event['requestContext']['authorizer']
+        else:
+            claims = event['requestContext']['authorizer']['claims']
+        username = claims['email']
+        # Defaulting user_id field to contain email
+        # When "authorizer" in the event contains the user_id field override with that value
+        # user_id is used when deploying data.all with custom_auth
+        user_id = claims['email']
+        if 'user_id' in event['requestContext']['authorizer']:
+            user_id = event['requestContext']['authorizer']['user_id']
+        log.debug('username is %s', username)
         try:
-            groups = get_groups(event['requestContext']['authorizer']['claims'])
+            groups = []
+            if (os.environ.get('custom_auth', None)):
+                groups.extend(get_custom_groups(user_id))
+            else:
+                groups.extend(get_cognito_groups(claims))
+            log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
                     policy = TenantPolicy.find_tenant_policy(
@@ -137,7 +163,7 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, groups))
+        set_context(RequestContext(ENGINE, username, groups, user_id))
 
         app_context = {
             'engine': ENGINE,
@@ -146,10 +172,50 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
+        # Determine if there are any Operations that Require ReAuth From SSM Parameter
+        try:
+            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
+        except Exception as e:
+            log.info("No ReAuth APIs Found in SSM")
+            reauth_apis = None
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
     query = json.loads(event.get('body'))
+
+    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
+    if reauth_apis and query.get('operationName', None) in reauth_apis:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        try:
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims["auth_time"]), tz=datetime.timezone.utc)
+            if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
+                raise Exception("ReAuth")
+        except Exception as e:
+            log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
+            response = {
+                "data": {query.get('operationName', 'operation') : None},
+                "errors": [
+                    {
+                        "message": f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                        "locations": None,
+                        "path": [query.get('operationName', '')],
+                        "extensions": {
+                            "code": "REAUTH"
+                        }
+                    }
+                ]
+            }
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'content-type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Methods': '*',
+                },
+                'body': json.dumps(response)
+            }
+
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )

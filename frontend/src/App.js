@@ -1,15 +1,14 @@
 import { ThemeProvider } from '@mui/material';
-import { SnackbarProvider } from 'notistack';
 import { useRoutes } from 'react-router-dom';
-import { useAuth } from './authentication';
 import {
   GlobalStyles,
-  SplashScreen,
   createMaterialTheme,
   useScrollReset,
-  useSettings
+  useSettings,
+  LoadingScreen
 } from './design';
 import routes from './routes';
+import { useAuth } from './authentication';
 
 export const App = () => {
   const content = useRoutes(routes);
@@ -26,10 +25,8 @@ export const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider dense maxSnack={3} hideIconVariant>
-        <GlobalStyles />
-        {auth.isInitialized ? content : <SplashScreen />}
-      </SnackbarProvider>
+      <GlobalStyles />
+      {auth.isInitialized ? content : <LoadingScreen />}
     </ThemeProvider>
   );
 };

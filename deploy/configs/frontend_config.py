@@ -10,19 +10,21 @@ def create_react_env_file(
     resource_prefix,
     internet_facing='True',
     custom_domain='False',
-    cw_rum_enabled='False'
+    cw_rum_enabled='False',
+    reauth_ttl='5',
+    custom_auth=None
 ):
     ssm = boto3.client('ssm', region_name=region)
     user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')[
         'Parameter'
-    ]['Value']
+    ]['Value'] if not custom_auth else ''
     print(f'Cognito Pool ID: {user_pool_id}')
     app_client = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/appclient')[
         'Parameter'
-    ]['Value']
+    ]['Value'] if not custom_auth else ''
     domain = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/domain')['Parameter'][
         'Value'
-    ]
+    ] if not custom_auth else ''
     domain = f'{domain}.auth.{region}.amazoncognito.com'
     print(f'Cognito Domain: {domain}')
     api_url = ssm.get_parameter(Name=f'/dataall/{envname}/apiGateway/backendUrl')[
@@ -38,22 +40,25 @@ def create_react_env_file(
     ]
     print(f'PivotRole auto-create is enabled: {pivot_role_auto_create}')
 
+    user_guide_link = ''
     if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/CloudfrontDistributionDomainName'
         )['Parameter']['Value']
-        user_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
-        )['Parameter']['Value']
+        if not custom_auth:
+            user_guide_link = ssm.get_parameter(
+                Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
+            )['Parameter']['Value']
     else:
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/frontend/custom_domain_name'
         )['Parameter']['Value']
-        user_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/userguide/custom_domain_name'
-        )['Parameter']['Value']
+        if not custom_auth:
+            user_guide_link = ssm.get_parameter(
+                Name=f'/dataall/{envname}/userguide/custom_domain_name'
+            )['Parameter']['Value']
 
     print(f'UI: {signin_singout_link}')
     print(f'USERGUIDE: {user_guide_link}')
@@ -62,14 +67,28 @@ def create_react_env_file(
         file_content = f"""GENERATE_SOURCEMAP=false
 REACT_APP_GRAPHQL_API={graphql_api_url}
 REACT_APP_SEARCH_API={search_api_url}
-REACT_APP_COGNITO_USER_POOL_ID={user_pool_id}
+REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE={pivot_role_auto_create}
+REACT_APP_REAUTH_TTL={reauth_ttl}
+"""
+        if custom_auth:
+            file_content = file_content + f"""REACT_APP_CUSTOM_AUTH={custom_auth.get("provider", "none")}
+REACT_APP_CUSTOM_AUTH_URL={custom_auth.get("url", "none")}
+REACT_APP_CUSTOM_AUTH_REDIRECT_URL={custom_auth.get("redirect_url", "none")}
+REACT_APP_CUSTOM_AUTH_CLIENT_ID={custom_auth.get("client_id", "none")}
+REACT_APP_CUSTOM_AUTH_RESP_TYPES={custom_auth.get("response_types", "none")}
+REACT_APP_CUSTOM_AUTH_SCOPES={custom_auth.get("scopes", "none")}
+REACT_APP_CUSTOM_AUTH_EMAIL_CLAIM_MAPPING={custom_auth.get("claims_mapping_email", "none")}
+REACT_APP_CUSTOM_AUTH_USERID_CLAIM_MAPPING={custom_auth.get("claims_mapping_user_id", "none")}
+"""
+        else:
+            file_content = file_content + f"""REACT_APP_COGNITO_USER_POOL_ID={user_pool_id}
 REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
 REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
 REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
-REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE={pivot_role_auto_create}
 """
+
         print('.env content: \n', file_content)
         f.write(file_content)
 
@@ -125,6 +144,17 @@ if __name__ == '__main__':
     custom_domain = os.environ.get('custom_domain', 'False')
     region = os.environ.get('deployment_region', 'eu-west-1')
     enable_cw_rum = os.environ.get('enable_cw_rum', 'False')
+    reauth_ttl = os.environ.get('reauth_ttl', '5')
+    custom_auth_properties = {}
+    if os.environ.get("custom_auth_provider", "None") != "None":
+        custom_auth_properties["provider"] = os.environ.get("custom_auth_provider", "None")
+        custom_auth_properties["url"] = os.environ.get("custom_auth_url", "None")
+        custom_auth_properties["redirect_url"] = os.environ.get("custom_auth_redirect_url", "None")
+        custom_auth_properties["client_id"] = os.environ.get("custom_auth_client_id", "None")
+        custom_auth_properties["response_types"] = os.environ.get("custom_auth_response_types", "None")
+        custom_auth_properties["scopes"] = os.environ.get("custom_auth_scopes", "None")
+        custom_auth_properties["claims_mapping_email"] = os.environ.get("custom_auth_claims_mapping_email", "None")
+        custom_auth_properties["claims_mapping_user_id"] = os.environ.get("custom_auth_claims_mapping_user_id", "None")
     print(
         f'Creating React .env file with params: '
         f'(region={region},envname={envname},resource_prefix={resource_prefix}'
@@ -132,6 +162,13 @@ if __name__ == '__main__':
         f'cw_rum_enabled={enable_cw_rum})'
     )
     create_react_env_file(
-        region, envname, resource_prefix, internet_facing, custom_domain, enable_cw_rum
+        region,
+        envname,
+        resource_prefix,
+        internet_facing,
+        custom_domain,
+        enable_cw_rum,
+        reauth_ttl,
+        custom_auth_properties
     )
     print(f'React .env created successfully')

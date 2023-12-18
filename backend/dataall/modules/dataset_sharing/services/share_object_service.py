@@ -7,6 +7,7 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
+from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus, PrincipalType
@@ -179,10 +180,21 @@ class ShareObjectService:
                     message='The request is empty of pending items. Add items to share request.',
                 )
 
+            env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+            if dashboard_enabled:
+                share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
+                if share_table_items:
+                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId, region=env.region)
+
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
-            ShareNotificationService.notify_share_object_submission(
-                session, context.username, dataset, share
-            )
+
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_submission(email_id=context.username)
+
             return share
 
     @classmethod
@@ -194,20 +206,27 @@ class ShareObjectService:
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-            share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
-            for table in share_table_items:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=share.principalId,
-                    permissions=DATASET_TABLE_READ,
-                    resource_uri=table.itemUri,
-                    resource_type=DatasetTable.__name__,
+            if share.groupUri != dataset.SamlAdminGroupName:
+                share_table_items = ShareObjectRepository.find_all_share_items(
+                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
                 )
+                for table in share_table_items:
+                    ResourcePolicy.attach_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        permissions=DATASET_TABLE_READ,
+                        resource_uri=table.itemUri,
+                        resource_type=DatasetTable.__name__,
+                    )
 
             share.rejectPurpose = ""
             session.commit()
 
-            ShareNotificationService.notify_share_object_approval(session, context.username, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_approval(email_id=context.username)
 
             approve_share_task: Task = Task(
                 action='ecs.share.approve',
@@ -245,17 +264,17 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Reject)
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
 
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose
             session.commit()
 
-            ShareNotificationService.notify_share_object_rejection(session, context.username, dataset, share)
+            ShareNotificationService(
+                session=session,
+                dataset=dataset,
+                share=share
+            ).notify_share_object_rejection(email_id=context.username)
+
             return share
 
     @classmethod
@@ -274,6 +293,28 @@ class ShareObjectService:
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
+                # Delete share resource policy permissions
+                # Deleting REQUESTER permissions
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=share.shareUri,
+                )
+
+                # Deleting APPROVER permissions
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    resource_uri=share.shareUri,
+                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
+
+                # Delete share
                 session.delete(share)
 
             return True
