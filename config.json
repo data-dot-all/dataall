@@ -37,6 +37,7 @@
     "core": {
         "features": {
             "env_aws_actions": true
-        }
+        },
+        "custom_env_linking_text": "Custom Bootstrap Instructions"
     }
 }
