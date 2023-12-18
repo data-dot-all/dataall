@@ -3,17 +3,22 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG REACT_APP_STAGE
 ARG DOMAIN
-ARG NODE_VERSION=18
-ARG NGINX_VERSION=1.12
-ARG NVM_VERSION=v0.37.0
+ARG NODE_VERSION=18.19.0
+ARG NGINX_VERSION=1.24.0
+ARG NVM_VERSION=v0.37.2
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
 
-RUN dnf update -y && \
-    dnf install -y tar gzip openssl && \
-    dnf clean all -y
-RUN dnf install nginx$NGINX_VERSION
+# Clean cache
+RUN dnf upgrade -y;\
+    find /var/tmp -name "*.rpm" -print -delete ;\
+    find /tmp -name "*.rpm" -print -delete ;\
+    dnf autoremove -y; \
+    dnf clean all; rm -rfv /var/cache/dnf
+
+# Installing libraries
+RUN dnf install -y tar gzip openssl nginx-$NGINX_VERSION
 
 
 
@@ -32,6 +37,7 @@ RUN chown -R ${CONTAINER_USER}:root /usr/local
 RUN chown -R ${CONTAINER_USER}:root /etc/nginx
 RUN chown -R ${CONTAINER_USER}:root /usr/share/nginx
 RUN chown -R ${CONTAINER_USER}:root /tmp
+RUN chown -R ${CONTAINER_USER}:root /app
 USER ${CONTAINER_USER}
 
 
