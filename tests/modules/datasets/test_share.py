@@ -1,5 +1,7 @@
 import random
 import typing
+from unittest.mock import MagicMock
+
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -428,7 +430,6 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
     # Print response
     print('Create share request response: ', response)
     return response
-
 
 def get_share_object(client, user, group, shareUri, filter):
     q = """

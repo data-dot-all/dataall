@@ -57,6 +57,7 @@ Resources:
               - 's3:ListAllMyBuckets'
               - 's3:GetBucketLocation'
               - 's3:PutBucketTagging'
+              - 's3:GetEncryptionConfiguration'
             Effect: Allow
             Resource: '*'
           - Sid: ManagedBuckets
@@ -398,6 +399,7 @@ Resources:
               - "quicksight:GetAuthCode"
               - "quicksight:CreateGroupMembership"
               - "quicksight:DescribeAccountSubscription"
+              - "quicksight:DescribeAccountSettings"
             Resource:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"
@@ -430,7 +432,7 @@ Resources:
             Resource:
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
               - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
-              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/ddk/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/cdk*'
           - Sid: IAMListGet
             Action:
               - 'iam:Get*'
@@ -464,7 +466,7 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/ddk-*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
           - Sid: CodeCommit
             Action:
               - 'codecommit:GetFile'

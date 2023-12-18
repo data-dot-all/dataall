@@ -32,6 +32,13 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
+  createEnvironment,
+  getPivotRoleExternalId,
+  getPivotRoleName,
+  getPivotRolePresignedUrl,
+  getCDKExecPolicyPresignedUrl
+} from '../services';
+import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
@@ -45,15 +52,8 @@ import {
   useGroups
 } from 'services';
 import {
-  createEnvironment,
-  getPivotRoleExternalId,
-  getPivotRoleName,
-  getPivotRolePresignedUrl,
-  getCDKExecPolicyPresignedUrl
-} from '../services';
-import {
   AwsRegions,
-  isAnyFeatureModuleEnabled,
+  isAnyEnvironmentModuleEnabled,
   isModuleEnabled,
   ModuleNames
 } from 'utils';
@@ -179,6 +179,8 @@ const EnvironmentCreateForm = (props) => {
           region: values.region,
           EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
           resourcePrefix: values.resourcePrefix,
+          vpcId: values.vpcId,
+          subnetIds: values.subnetIds,
           parameters: [
             {
               key: 'notebooksEnabled',
@@ -482,9 +484,11 @@ const EnvironmentCreateForm = (props) => {
                 dashboardsEnabled: isModuleEnabled(ModuleNames.DASHBOARDS),
                 notebooksEnabled: isModuleEnabled(ModuleNames.NOTEBOOKS),
                 mlStudiosEnabled: isModuleEnabled(ModuleNames.MLSTUDIO),
-                pipelinesEnabled: isModuleEnabled(ModuleNames.PIPELINES),
+                pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 EnvironmentDefaultIAMRoleArn: '',
-                resourcePrefix: 'dataall'
+                resourcePrefix: 'dataall',
+                vpcId: '',
+                subnetIds: []
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -508,8 +512,14 @@ const EnvironmentCreateForm = (props) => {
                       ).length >= 1
                   ),
                 tags: Yup.array().nullable(),
-                privateSubnetIds: Yup.array().nullable(),
-                publicSubnetIds: Yup.array().nullable(),
+                subnetIds: Yup.array().when('vpcId', {
+                  is: (value) => !!value,
+                  then: Yup.array()
+                    .min(1)
+                    .required(
+                      'At least 1 Subnet Id required if VPC Id specified'
+                    )
+                }),
                 vpcId: Yup.string().nullable(),
                 EnvironmentDefaultIAMRoleArn: Yup.string().nullable(),
                 resourcePrefix: Yup.string()
@@ -604,7 +614,7 @@ const EnvironmentCreateForm = (props) => {
                         </CardContent>
                       </Card>
                       <Box sx={{ mt: 3 }}>
-                        {isAnyFeatureModuleEnabled() && (
+                        {isAnyEnvironmentModuleEnabled() && (
                           <Card>
                             <CardHeader title="Features management" />
                             <CardContent>
@@ -710,7 +720,7 @@ const EnvironmentCreateForm = (props) => {
                                   </FormGroup>
                                 </Box>
                               )}
-                              {isModuleEnabled(ModuleNames.PIPELINES) && (
+                              {isModuleEnabled(ModuleNames.DATAPIPELINES) && (
                                 <Box sx={{ ml: 2 }}>
                                   <FormGroup>
                                     <FormControlLabel
@@ -862,6 +872,45 @@ const EnvironmentCreateForm = (props) => {
                           </CardContent>
                         </Card>
                       </Box>
+                      {values.mlStudiosEnabled && (
+                        <Box sx={{ mt: 3 }}>
+                          <Card>
+                            <CardHeader title="(Optional) ML Studio Configuration" />
+                            <CardContent>
+                              <TextField
+                                {...params}
+                                label="(Optional) ML Studio VPC ID"
+                                placeholder="(Optional) Bring your own VPC - Specify VPC ID"
+                                name="vpcId"
+                                fullWidth
+                                error={Boolean(touched.vpcId && errors.vpcId)}
+                                helperText={touched.vpcId && errors.vpcId}
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.vpcId}
+                                variant="outlined"
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <ChipInput
+                                fullWidth
+                                error={Boolean(
+                                  touched.subnetIds && errors.subnetIds
+                                )}
+                                helperText={
+                                  touched.subnetIds && errors.subnetIds
+                                }
+                                variant="outlined"
+                                label="(Optional) ML Studio Subnet ID(s)"
+                                placeholder="(Optional) Bring your own VPC - Specify Subnet ID (Hit enter after typing value)"
+                                onChange={(chip) => {
+                                  setFieldValue('subnetIds', [...chip]);
+                                }}
+                              />
+                            </CardContent>
+                          </Card>
+                        </Box>
+                      )}
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>

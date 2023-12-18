@@ -39,6 +39,7 @@ import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import {
   EnvironmentDatasets,
+  EnvironmentMLStudio,
   EnvironmentOverview,
   EnvironmentSubscriptions,
   EnvironmentTeams,
@@ -58,6 +59,12 @@ const tabs = [
     value: 'datasets',
     icon: <FolderOpen fontSize="small" />,
     active: isModuleEnabled(ModuleNames.DATASETS)
+  },
+  {
+    label: 'ML Studio Domain',
+    value: 'mlstudio',
+    icon: <FolderOpen fontSize="small" />,
+    active: isModuleEnabled(ModuleNames.MLSTUDIO)
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
   {
@@ -266,6 +273,9 @@ const EnvironmentView = () => {
                 environment={env}
                 fetchItem={fetchItem}
               />
+            )}
+            {isAdmin && currentTab === 'mlstudio' && (
+              <EnvironmentMLStudio environment={env} />
             )}
             {isAdmin && currentTab === 'tags' && (
               <KeyValueTagList

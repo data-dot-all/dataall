@@ -8,6 +8,7 @@ export * from './Glossary';
 export * from './Groups';
 export * from './KeyValueTags';
 export * from './Metric';
+export * from './MLStudio';
 export * from './Notification';
 export * from './Organization';
 export * from './Principal';

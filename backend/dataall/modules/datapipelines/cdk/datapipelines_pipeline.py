@@ -167,10 +167,9 @@ class PipelineStack(Stack):
 
         # Create CodeCommit repository and mirror blueprint code
         code_dir_path = os.path.realpath(
-            os.path.abspath(
-                os.path.join(
-                    __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
-                )
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "blueprints"
             )
         )
         logger.info(f"code directory path = {code_dir_path}")
@@ -178,13 +177,13 @@ class PipelineStack(Stack):
         try:
             repository = PipelineStack._check_repository(aws, pipeline_environment.region, pipeline.repo)
             if repository:
-                PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+                PipelineStack.write_ddk_json_multienvironment(path=os.path.join(code_dir_path, pipeline.repo), output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments, pipeline_name=pipeline.name)
 
                 logger.info(f"Pipeline Repo {pipeline.repo} Exists...Handling Update")
                 update_cmds = [
                     f'REPO_NAME={pipeline.repo}',
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
-                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
+                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://${REPO_NAME}/ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
 
                 CommandSanitizer(args=[pipeline.repo])
@@ -207,7 +206,7 @@ class PipelineStack(Stack):
 
             PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
-            PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file=f"{pipeline.repo}/ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+            PipelineStack.write_ddk_json_multienvironment(path=os.path.join(code_dir_path, pipeline.repo), output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments, pipeline_name=pipeline.name)
 
             logger.info(f"Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository")
 
@@ -265,7 +264,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,
@@ -336,7 +335,7 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
                             pipeline_environment=env,
@@ -440,12 +439,11 @@ class PipelineStack(Stack):
                 commands:
                 - n 16.15.1
                 - npm install -g aws-cdk
-                - pip install aws-ddk
                 - pip install -r requirements.txt
               build:
                 commands:
                     - aws sts get-caller-identity
-                    - ddk deploy
+                    - cdk deploy
         """
         with open(f'{path}/{output_file}', 'x') as text_file:
             print(yaml, file=text_file)
@@ -485,7 +483,7 @@ class PipelineStack(Stack):
         ]
 
     @staticmethod
-    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
+    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments, pipeline_name):
         json_envs = ""
         for env in development_environments:
             json_env = f""",
@@ -493,14 +491,17 @@ class PipelineStack(Stack):
             "account": "{env.AwsAccountId}",
             "region": "{env.region}",
             "stage": "{env.stage}",
-            "env_vars": {{
-                "database": "example_database",
+            "tags": {{
                 "Team": "{env.samlGroupName}"
             }}
         }}"""
             json_envs = json_envs + json_env
 
         json = f"""{{
+    "tags": {{
+        "dataall": "true",
+        "Target": "{pipeline_name}"
+    }},
     "environments": {{
         "cicd": {{
             "account": "{pipeline_environment.AwsAccountId}",
@@ -509,21 +510,16 @@ class PipelineStack(Stack):
         }}{json_envs}
     }}
 }}"""
-
+        os.makedirs(path, exist_ok=True)
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
     @staticmethod
     def initialize_repo(pipeline, code_dir_path, env_vars):
 
-        venv_name = ".venv"
-
         cmd_init = [
-            f"ddk init {pipeline.repo} --generate-only",
-            f"cp app_multiaccount.py ./{pipeline.repo}/app.py",
-            f"cp ddk_app/ddk_app_stack_multiaccount.py ./{pipeline.repo}/ddk_app/ddk_app_stack.py",
-            f"mkdir ./{pipeline.repo}/utils",
-            f"cp -R utils/* ./{pipeline.repo}/utils/"
+            f"mkdir {pipeline.repo}",
+            f"cp -R data_pipeline_blueprint/* {pipeline.repo}/"
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
@@ -554,8 +550,7 @@ class PipelineStack(Stack):
             'AWS_REGION': pipeline_environment.region,
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
-            'envname': os.environ.get('envname', 'local'),
-            'COOKIECUTTER_CONFIG': "/dataall/modules/datapipelines/blueprints/cookiecutter_config.yaml",
+            'envname': os.environ.get('envname', 'local')
         }
         if env_creds:
             env.update(

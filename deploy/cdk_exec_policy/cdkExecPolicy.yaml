@@ -24,6 +24,7 @@ Resources:
               - 'athena:*Tag*'
               - 'athena:GetWorkGroup'
               - 'athena:DeleteWorkGroup'
+              - 'athena:UpdateWorkGroup'
             Resource:
               - !Sub 'arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
 
@@ -53,7 +54,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
               - 'iam:*Role*'
-            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
+            Resource: !Sub 'arn:${AWS::Partition}:iam::*:role/cdk-*'
 
           - Sid: Quicksight
             Effect: Allow
@@ -155,9 +156,7 @@ Resources:
             Effect: Allow
             Action:
               - 'sagemaker:*Tag*'
-              - 'sagemaker:CreateDomain'
-              - 'sagemaker:DeleteDomain'
-              - 'sagemaker:DescribeDomain'
+              - 'sagemaker:*Domain'
               - 'sagemaker:CreateApp'
               - 'sagemaker:CreateUserProfile'
               - 'sagemaker:DescribeUserProfile'

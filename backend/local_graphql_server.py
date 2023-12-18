@@ -87,7 +87,7 @@ def request_context(headers, mock=False):
                 tenant_name='dataall',
             )
 
-    set_context(RequestContext(db_engine=engine, username=username, groups=groups))
+    set_context(RequestContext(db_engine=engine, username=username, groups=groups, user_id=username))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
     context = Context(
@@ -95,6 +95,7 @@ def request_context(headers, mock=False):
         schema=schema,
         username=username,
         groups=groups,
+        user_id=username
     )
     return context.__dict__
 

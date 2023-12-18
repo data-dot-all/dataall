@@ -2,6 +2,7 @@ import abc
 import logging
 import json
 import time
+from itertools import count
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.base.db import utils
@@ -21,6 +22,7 @@ ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
 IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
+DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 
 
 class S3AccessPointShareManager:
@@ -214,18 +216,21 @@ class S3AccessPointShareManager:
                             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
                             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
                         ]
-                    },
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "kms:*"
-                        ],
-                        "Resource": [
-                            f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                        ]
                     }
                 ]
             }
+            if kms_key_id:
+                additional_policy = {
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:*"
+                    ],
+                    "Resource": [
+                        f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
+                    ]
+                }
+                policy["Statement"].append(additional_policy)
+
         IAM.update_role_policy(
             self.target_account_id,
             self.target_requester_IAMRoleName,
@@ -247,7 +252,8 @@ class S3AccessPointShareManager:
             access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
             # Access point creation is slow
             retries = 1
-            while not s3_client.get_bucket_access_point_arn(self.access_point_name) and retries < ACCESS_POINT_CREATION_RETRIES:
+            while (not s3_client.get_bucket_access_point_arn(self.access_point_name)
+                   and retries < ACCESS_POINT_CREATION_RETRIES):
                 logger.info(
                     'Waiting 30s for access point creation to complete..'
                 )
@@ -297,7 +303,10 @@ class S3AccessPointShareManager:
             )
             exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
                 self.source_account_id,
-                [self.dataset_admin, self.source_env_admin, SessionHelper.get_delegation_role_arn(self.source_account_id)]
+                [
+                    self.dataset_admin, self.source_env_admin,
+                    SessionHelper.get_delegation_role_arn(self.source_account_id)
+                ]
             )]
             admin_statement = {
                 "Sid": DATAALL_ALLOW_OWNER_SID,
@@ -321,29 +330,41 @@ class S3AccessPointShareManager:
             'Updating dataset Bucket KMS key policy...'
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_client = KmsClient(account_id=self.source_account_id, region=self.source_environment.region)
+        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
-        if existing_policy and f'{target_requester_id}:*' not in existing_policy:
-            policy = json.loads(existing_policy)
-            policy["Statement"].append(
-                {
-                    "Sid": f"{target_requester_id}",
-                    "Effect": "Allow",
-                    "Principal": {
-                        "AWS": "*"
-                    },
-                    "Action": "kms:Decrypt",
-                    "Resource": "*",
-                    "Condition": {
-                        "StringLike": {
-                            "aws:userId": f"{target_requester_id}:*"
-                        }
-                    }
-                }
-            )
-            kms_client.put_key_policy(kms_key_id, json.dumps(policy))
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+
+        if existing_policy:
+            existing_policy = json.loads(existing_policy)
+            counter = count()
+            statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+            if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
+                logger.info(
+                    f'KMS key policy contains share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
+                    f'updating the current one')
+                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = (self.add_target_arn_to_statement_principal
+                                                                    (statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID],
+                                                                     target_requester_arn))
+            else:
+                logger.info(
+                    f'KMS key does not contain share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
+                    f'generating a new one')
+                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = (self.generate_default_kms_decrypt_policy_statement
+                                                                    (target_requester_arn))
+            existing_policy["Statement"] = list(statements.values())
+        else:
+            logger.info('KMS key policy does not contain any statements, generating a new one')
+            existing_policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    self.generate_default_kms_decrypt_policy_statement(target_requester_arn)
+                ]
+            }
+        kms_client.put_key_policy(
+            kms_key_id,
+            json.dumps(existing_policy)
+        )
 
     def delete_access_point_policy(self):
         logger.info(
@@ -420,10 +441,11 @@ class S3AccessPointShareManager:
                 kms_target_resources = [
                     f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
                 ]
-                ShareManagerUtils.remove_resource_from_statement(
-                    existing_policy["Statement"][1],
-                    kms_target_resources
-                )
+                if len(existing_policy["Statement"]) > 1:
+                    ShareManagerUtils.remove_resource_from_statement(
+                        existing_policy["Statement"][1],
+                        kms_target_resources
+                    )
 
             policy_statements = []
             for statement in existing_policy["Statement"]:
@@ -443,24 +465,33 @@ class S3AccessPointShareManager:
                     json.dumps(existing_policy),
                 )
 
-    @staticmethod
     def delete_dataset_bucket_key_policy(
-            share: ShareObject,
+            self,
             dataset: Dataset,
-            target_environment: Environment,
     ):
         logger.info(
             'Deleting dataset bucket KMS key policy...'
         )
         key_alias = f"alias/{dataset.KmsAlias}"
-        kms_client = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region)
+        kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
-        if existing_policy and f'{target_requester_id}:*' in existing_policy:
-            policy = json.loads(existing_policy)
-            policy["Statement"] = [item for item in policy["Statement"] if item.get("Sid", None) != f"{target_requester_id}"]
-            kms_client.put_key_policy(kms_key_id, json.dumps(policy))
+        existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        counter = count()
+        statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+        if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
+            principal_list = self.get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID])
+            if f"{target_requester_arn}" in principal_list:
+                principal_list.remove(f"{target_requester_arn}")
+                if len(principal_list) == 0:
+                    statements.pop(DATAALL_ACCESS_POINT_KMS_DECRYPT_SID)
+                else:
+                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
+                existing_policy["Statement"] = list(statements.values())
+                kms_client.put_key_policy(
+                    kms_key_id,
+                    json.dumps(existing_policy)
+                )
 
     def handle_share_failure(self, error: Exception) -> None:
         """
@@ -495,3 +526,31 @@ class S3AccessPointShareManager:
         DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
+
+    @staticmethod
+    def generate_default_kms_decrypt_policy_statement(target_requester_arn):
+        return {
+            "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    f"{target_requester_arn}"
+                ]
+            },
+            "Action": "kms:Decrypt",
+            "Resource": "*"
+        }
+
+    def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
+        principal_list = self.get_principal_list(statement)
+        if f"{target_requester_arn}" not in principal_list:
+            principal_list.append(f"{target_requester_arn}")
+        statement["Principal"]["AWS"] = principal_list
+        return statement
+
+    @staticmethod
+    def get_principal_list(statement):
+        principal_list = statement["Principal"]["AWS"]
+        if isinstance(principal_list, str):
+            principal_list = [principal_list]
+        return principal_list

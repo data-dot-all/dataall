@@ -66,6 +66,7 @@ class EnvironmentService:
         session.commit()
 
         EnvironmentService._update_env_parameters(session, env, data)
+        EnvironmentResourceManager.create_env(session, env, data=data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -98,29 +99,6 @@ class EnvironmentService:
             env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
-        if data.get('vpcId'):
-            vpc = Vpc(
-                environmentUri=env.environmentUri,
-                region=env.region,
-                AwsAccountId=env.AwsAccountId,
-                VpcId=data.get('vpcId'),
-                privateSubnetIds=data.get('privateSubnetIds', []),
-                publicSubnetIds=data.get('publicSubnetIds', []),
-                SamlGroupName=data['SamlGroupName'],
-                owner=context.username,
-                label=f"{env.name}-{data.get('vpcId')}",
-                name=f"{env.name}-{data.get('vpcId')}",
-                default=True,
-            )
-            session.add(vpc)
-            session.commit()
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=data['SamlGroupName'],
-                permissions=permissions.NETWORK_ALL,
-                resource_uri=vpc.vpcUri,
-                resource_type=Vpc.__name__,
-            )
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
@@ -539,6 +517,64 @@ class EnvironmentService:
             'count': len(valid_environments),
             'nodes': valid_environments,
         }
+
+    @staticmethod
+    def query_user_groups(session, username, groups, filter) -> Query:
+        query = (
+            session.query(EnvironmentGroup)
+            .filter(EnvironmentGroup.groupUri.in_(groups))
+            .distinct(EnvironmentGroup.groupUri)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_groups(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_groups(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
+
+    @staticmethod
+    def query_user_consumption_roles(session, username, groups, filter) -> Query:
+        query = (
+            session.query(ConsumptionRole)
+            .filter(ConsumptionRole.groupUri.in_(groups))
+            .distinct(ConsumptionRole.consumptionRoleName)
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                )
+            )
+        if filter and filter.get('groupUri'):
+            print("filter group")
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    ConsumptionRole.groupUri == group,
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_consumption_roles(session, data=None) -> dict:
+        context = get_context()
+        return paginate(
+            query=EnvironmentService.query_user_consumption_roles(session, context.username, context.groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 5),
+        ).to_dict()
 
     @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:

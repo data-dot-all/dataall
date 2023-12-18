@@ -44,7 +44,6 @@ def env(client):
                 'tags': ['a', 'b', 'c'],
                 'region': f'{region}',
                 'SamlGroupName': f'{group}',
-                'vpcId': 'vpc-123456',
                 'parameters': [{'key': k, 'value': v} for k, v in parameters.items()]
             },
         )
