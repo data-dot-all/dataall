@@ -96,6 +96,6 @@ export const useClient = () => {
     if (token) {
       initClient().catch((e) => console.error(e));
     }
-  }, [token, dispatch, setReAuth]);
+  }, [token, dispatch]);
   return client;
 };
