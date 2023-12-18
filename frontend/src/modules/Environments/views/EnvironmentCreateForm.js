@@ -32,6 +32,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
+  SanitizedHTML,
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
@@ -306,13 +307,11 @@ const EnvironmentCreateForm = (props) => {
             <CardContent>
               {config.core.custom_env_linking_text !== undefined ? (
                 <Box>
-                  <Typography
-                    color="textSecondary"
-                    variant="subtitle2"
-                    dangerouslySetInnerHTML={{
-                      __html: config.core.custom_env_linking_text
-                    }}
-                  />
+                  <Typography color="textSecondary" variant="subtitle2">
+                    <SanitizedHTML
+                      dirtyHTML={config.core.custom_env_linking_text}
+                    />
+                  </Typography>
                 </Box>
               ) : (
                 <>
