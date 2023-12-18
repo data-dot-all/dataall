@@ -95,6 +95,8 @@ class OmicsRepository(EnvironmentResource):
             page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
 
+    # TODO: IMPLEMENT COUNT_RESOUCES
+
 
     # def count_resources(self, environment, group_uri):
     #     return (

@@ -2,13 +2,11 @@ import logging
 from dataall.base.api.context import Context
 from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
-from dataall.modules.omics.api.enums import OmicsRunRole
-from dataall.modules.omics.services.omics_service import OmicsService, OmicsRunCreationRequest
+from dataall.modules.omics.services.omics_service import OmicsService
 from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
 
 log = logging.getLogger(__name__)
 
-## TODO: it is very incomplete but can serve as starting point
 class RequestValidator:
     """Aggregates all validation logic for operating with omics"""
     @staticmethod
@@ -55,12 +53,10 @@ def list_omics_workflows(context: Context, source, filter: dict = None):
 
 
 def get_omics_workflow(context: Context, source, workflowId: str = None):
-    print('**** WorkflowId: ', workflowId)
     RequestValidator.required_uri(workflowId)
     return OmicsService.get_omics_workflow(workflowId)
 
 def run_omics_workflow(context: Context, source, workflowId: str = None, workflowType: str = 'READY2RUN', roleArn: str = None, parameters: str = None):
-    print('**** WorkflowId: ', workflowId)
     RequestValidator.required_uri(workflowId)
     return OmicsService.run_omics_workflow(workflowId,workflowType,roleArn,parameters)
 

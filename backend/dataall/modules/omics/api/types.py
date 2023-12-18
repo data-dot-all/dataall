@@ -1,6 +1,5 @@
 from dataall.base.api import gql
 from .resolvers import *
-from dataall.modules.omics.api.enums import OmicsRunRole
 from dataall.core.organizations.api.resolvers import resolve_organization_by_env
 from dataall.core.environment.api.resolvers import resolve_environment
 
@@ -30,20 +29,21 @@ OmicsWorkflows = gql.ObjectType(
     ],
 )
 
-OmicsRunStatus = gql.ObjectType(
-    name="OmicsRunStatus",
-    fields=[
-        gql.Field(name="arn", type=gql.String),
-        gql.Field(name="id", type=gql.String),
-        gql.Field(name="status", type=gql.String),
-        gql.Field(name="runId", type=gql.String),
-        gql.Field(name="roleArn", type=gql.String),
-        gql.Field(name="statusMessage", type=gql.String),
-        gql.Field(name="creationTime", type=gql.String),
-        gql.Field(name="startTime", type=gql.String),
-        gql.Field(name="stopTime", type=gql.String),
-    ],
-)
+# TODO: not used at the moment
+# OmicsRunStatus = gql.ObjectType(
+#     name="OmicsRunStatus",
+#     fields=[
+#         gql.Field(name="arn", type=gql.String),
+#         gql.Field(name="id", type=gql.String),
+#         gql.Field(name="status", type=gql.String),
+#         gql.Field(name="runId", type=gql.String),
+#         gql.Field(name="roleArn", type=gql.String),
+#         gql.Field(name="statusMessage", type=gql.String),
+#         gql.Field(name="creationTime", type=gql.String),
+#         gql.Field(name="startTime", type=gql.String),
+#         gql.Field(name="stopTime", type=gql.String),
+#     ],
+# )
 
 
 OmicsRun = gql.ObjectType(

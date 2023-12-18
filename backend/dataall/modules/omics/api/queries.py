@@ -1,4 +1,4 @@
-"""The module defines GraphQL queries for Omics uns"""
+"""The module defines GraphQL queries for Omics runs"""
 
 from dataall.base.api import gql
 from .resolvers import *
@@ -23,10 +23,3 @@ listOmicsWorkflows = gql.QueryField(
     type=gql.Ref("OmicsWorkflows"),
     resolver=list_omics_workflows,
 )
-
-# getWorkflowRun = gql.QueryField(
-#     name="getWorkflowRun",
-#     args=[gql.Argument(name="runId", type=gql.NonNullableType(gql.String))],
-#     type=gql.Ref("OmicsRunStatus"),
-#     resolver=get_workflow_run,
-# )

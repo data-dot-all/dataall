@@ -1,5 +1,6 @@
 import { gql } from 'apollo-boost';
 
+// TODO: not used at the moment! Needs to be implemented
 export const deleteOmicsRun = (runUri, deleteFromAWS) => ({
   variables: {
     runUri,

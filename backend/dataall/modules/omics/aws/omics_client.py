@@ -19,7 +19,6 @@ class OmicsClient:
 
     @staticmethod
     def client(awsAccountId: str, region: str):
-        # session = SessionHelper.remote_session(awsAccountId,'arn:aws:iam::545117064741:role/dataallPivotRole')
         session = SessionHelper.remote_session(awsAccountId)
         return session.client('omics', region_name=region)
         
@@ -61,11 +60,7 @@ class OmicsClient:
 
     @staticmethod
     def run_omics_workflow(omics_run: OmicsRun, session):
-        #workflow = OmicsRepository(session).get_workflow(id=omics_run.workflowId)
         group = EnvironmentService.get_environment_group(session, omics_run.SamlAdminGroupName, omics_run.environmentUri)
-        print("********",omics_run.workflowId, omics_run.parameterTemplate)
-        print(group)
-        print("******* AccountId: ",omics_run.AwsAccountId,"****** Region: ",omics_run.region, "role" , group.environmentIAMRoleArn)
         client = OmicsClient.client(awsAccountId=omics_run.AwsAccountId, region=omics_run.region)
         try:
             response = client.start_run(
