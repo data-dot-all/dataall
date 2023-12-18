@@ -8,10 +8,12 @@ ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
 
+# Installing libraries
 RUN dnf -y install shadow-utils wget
 RUN dnf -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
-RUN dnf install python$PYTHON_VERSION
-RUN dnf install nginx$NGINX_VERSION
+RUN dnf -y install nginx-$NGINX_VERSION
+RUN dnf -y install python$PYTHON_VERSION
+RUN dnf -y install python$PYTHON_VERSION-pip
 
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -r -m -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER_GROUP}:root /usr/local/
@@ -23,7 +25,6 @@ RUN touch ~/.bashrc
 
 COPY --chown=${CONTAINER_USER}:root . ./
 
-RUN python$PYTHON_VERSION -m pip install -U pip
 RUN python$PYTHON_VERSION -m pip install -r documentation/userguide/requirements.txt
 RUN python$PYTHON_VERSION -m mkdocs build
 
