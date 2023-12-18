@@ -1,27 +1,27 @@
 from datetime import datetime
 
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 
-from dataall.core.notifications.db import notification_models as models
+from dataall.modules.notifications.db import notification_models as models
 from dataall.base.db import paginate
 
 
-class Notification:
+class NotificationRepository:
     def __init__(self):
         pass
 
     @staticmethod
-    def create(
+    def create_notification(
         session,
-        username,
-        notification_type: models.NotificationType,
+        recipient,
+        notification_type,
         target_uri,
         message,
     ) -> models.Notification:
         notification = models.Notification(
             type=notification_type,
             message=message,
-            username=username,
+            recipient=recipient,
             target_uri=target_uri,
         )
         session.add(notification)
@@ -29,11 +29,12 @@ class Notification:
         return notification
 
     @staticmethod
-    def paginated_notifications(session, username, filter=None):
-        if not filter:
-            filter = {}
+    def paginated_notifications(session, username, groups, filter=None):
         q = session.query(models.Notification).filter(
-            models.Notification.username == username
+            or_(
+                models.Notification.recipient == username,
+                models.Notification.recipient.in_(groups)
+            )
         )
         if filter.get('read'):
             q = q.filter(
@@ -56,10 +57,15 @@ class Notification:
         ).to_dict()
 
     @staticmethod
-    def count_unread_notifications(session, username):
+    def count_unread_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(models.Notification.username == username)
+            .filter(
+                or_(
+                    models.Notification.recipient == username,
+                    models.Notification.recipient.in_(groups)
+                )
+            )
             .filter(models.Notification.is_read == False)
             .filter(models.Notification.deleted.is_(None))
             .scalar()
@@ -67,10 +73,15 @@ class Notification:
         return int(count)
 
     @staticmethod
-    def count_read_notifications(session, username):
+    def count_read_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(models.Notification.username == username)
+            .filter(
+                or_(
+                    models.Notification.recipient == username,
+                    models.Notification.recipient.in_(groups)
+                )
+            )
             .filter(models.Notification.is_read == True)
             .filter(models.Notification.deleted.is_(None))
             .scalar()
@@ -78,10 +89,15 @@ class Notification:
         return int(count)
 
     @staticmethod
-    def count_deleted_notifications(session, username):
+    def count_deleted_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(models.Notification.username == username)
+            .filter(
+                or_(
+                    models.Notification.recipient == username,
+                    models.Notification.recipient.in_(groups)
+                )
+            )
             .filter(models.Notification.deleted.isnot(None))
             .scalar()
         )

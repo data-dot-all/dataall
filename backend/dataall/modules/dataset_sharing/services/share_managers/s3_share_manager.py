@@ -281,7 +281,7 @@ class S3ShareManager:
             'Updating dataset Bucket KMS key policy...'
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
+        kms_client = KmsClient(account_id=self.source_account_id, region=self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
@@ -392,7 +392,7 @@ class S3ShareManager:
             'Deleting dataset bucket KMS key policy...'
         )
         key_alias = f"alias/{dataset.KmsAlias}"
-        kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
+        kms_client = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)

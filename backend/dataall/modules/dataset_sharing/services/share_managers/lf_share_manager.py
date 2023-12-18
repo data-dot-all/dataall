@@ -51,10 +51,6 @@ class LFShareManager:
     def process_revoked_shares(self) -> [str]:
         return NotImplementedError
 
-    @abc.abstractmethod
-    def clean_up_share(self):
-        return NotImplementedError
-
     def get_share_principals(self) -> [str]:
         """
         Builds list of principals of the share request
@@ -421,7 +417,7 @@ class LFShareManager:
             )
             raise e
 
-    def revoke_external_account_access_on_source_account(self) -> [dict]:
+    def revoke_external_account_access_on_source_account(self, db_name, table_name) -> [dict]:
         """
         1) Revokes access to external account
         if dataset is not shared with any other team from the same workspace
@@ -440,29 +436,28 @@ class LFShareManager:
         client = aws_session.client(
             'lakeformation', region_name=self.source_environment.region
         )
-        revoke_entries = []
-        for table in self.revoked_tables:
-            revoke_entries.append(
-                {
-                    'Id': str(uuid.uuid4()),
-                    'Principal': {
-                        'DataLakePrincipalIdentifier': self.target_environment.AwsAccountId
-                    },
-                    'Resource': {
-                        'TableWithColumns': {
-                            'DatabaseName': table.GlueDatabaseName,
-                            'Name': table.GlueTableName,
-                            'ColumnWildcard': {},
-                            'CatalogId': self.source_environment.AwsAccountId,
-                        }
-                    },
-                    'Permissions': ['DESCRIBE', 'SELECT'],
-                    'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
-                }
-            )
-            LakeFormationClient.batch_revoke_permissions(
-                client, self.source_environment.AwsAccountId, revoke_entries
-            )
+        revoke_entries = [
+            {
+                'Id': str(uuid.uuid4()),
+                'Principal': {
+                    'DataLakePrincipalIdentifier': self.target_environment.AwsAccountId
+                },
+                'Resource': {
+                    'TableWithColumns': {
+                        'DatabaseName': db_name,
+                        'Name': table_name,
+                        'ColumnWildcard': {},
+                        'CatalogId': self.source_environment.AwsAccountId,
+                    }
+                },
+                'Permissions': ['DESCRIBE', 'SELECT'],
+                'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
+            }
+        ]
+
+        LakeFormationClient.batch_revoke_permissions(
+            client, self.source_environment.AwsAccountId, revoke_entries
+        )
         return revoke_entries
 
     def handle_share_failure(
