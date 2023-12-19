@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient, listCognitoGroups } from 'services';
+import { useClient, listGroups } from 'services';
 import {
   inviteGroupOnEnvironment,
   listEnvironmentGroupInvitationPermissions
@@ -49,10 +49,10 @@ export const EnvironmentTeamInviteForm = (props) => {
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({ filter }));
+      const response = await client.query(listGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
-          response.data.listCognitoGroups.map((g) => ({
+          response.data.listGroups.map((g) => ({
             ...g,
             value: g.groupName,
             label: g.groupName

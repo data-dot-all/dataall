@@ -10,6 +10,7 @@ ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
 
+
 # Clean cache
 RUN dnf upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
@@ -47,7 +48,7 @@ RUN touch ~/.bashrc
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash
 RUN . ~/.nvm/nvm.sh && nvm install node
-RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
+RUN echo '. ~/.nvm/nvm.sh' >> ~/.bashrc
 
 RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 

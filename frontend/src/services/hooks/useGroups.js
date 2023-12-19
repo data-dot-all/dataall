@@ -1,16 +1,35 @@
 import { Auth } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient, getGroupsForUser } from 'services';
+import { useAuth } from 'authentication';
 
 export const useGroups = () => {
   const dispatch = useDispatch();
   const [groups, setGroups] = useState(null);
+  const client = useClient();
+  const auth = useAuth();
   const fetchGroups = async () => {
     if (
       !process.env.REACT_APP_COGNITO_USER_POOL_ID &&
       process.env.REACT_APP_GRAPHQL_API.includes('localhost')
     ) {
-      setGroups(['Engineers', 'Scientists']);
+      setGroups(['Engineers', 'Scientists', 'DAAdministrators']);
+    } else if (process.env.REACT_APP_CUSTOM_AUTH) {
+      if (!auth.user) {
+        dispatch({
+          type: SET_ERROR,
+          error: 'Cannot Set User Groups as the User is not defined'
+        });
+      }
+      // return if the client is null, and then trigger this when the client is present
+      if (client == null) return;
+      const response = await client.query(getGroupsForUser(auth.user.short_id));
+      if (!response.error) {
+        setGroups(response.data.getGroupsForUser);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.error });
+      }
     } else {
       const session = await Auth.currentSession();
       const cognitoGroups = session.getIdToken().payload['cognito:groups'];

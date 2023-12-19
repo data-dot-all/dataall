@@ -5,7 +5,7 @@ import json
 
 from typing import Callable
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
@@ -177,6 +177,16 @@ def mock_kms_client(mocker):
         mock_client
     )
     mock_client.put_key_policy.return_value = None
+    return mock_client
+
+
+def mock_iam_client(mocker, account_id, role_name):
+    mock_client = MagicMock()
+    mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_managers.s3_access_point_share_manager.IAM',
+        mock_client
+    )
+    mock_client.get_role_arn_by_name.return_value = f"arn:aws:iam::{account_id}:role/{role_name}"
     return mock_client
 
 
@@ -508,6 +518,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = None
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -613,6 +624,7 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -1264,14 +1276,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock())
-    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
-        TARGET_ACCOUNT_ENV,
-        TARGET_ACCOUNT_ENV_ROLE_NAME
-    )
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1282,7 +1287,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
                 "Effect": "Allow",
                 "Principal": {"AWS": [
                     "SomeTargetResourceArn",
-                    f"{target_requester_arn}"
+                    f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalIAMRoleName}"
                 ]},
                 "Action": "kms:Decrypt",
                 "Resource": "*"
@@ -1346,14 +1351,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    s3_access_point_share_manager_mocker = S3AccessPointShareManager(mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock(),
-                                                                     mocker.MagicMock(), mocker.MagicMock())
-    target_requester_arn = s3_access_point_share_manager_mocker.get_role_arn(
-        TARGET_ACCOUNT_ENV,
-        TARGET_ACCOUNT_ENV_ROLE_NAME
-    )
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1363,7 +1361,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
                 "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
                 "Effect": "Allow",
                 "Principal": {"AWS": [
-                    f"{target_requester_arn}"
+                    f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalIAMRoleName}"
                 ]},
                 "Action": "kms:Decrypt",
                 "Resource": "*"

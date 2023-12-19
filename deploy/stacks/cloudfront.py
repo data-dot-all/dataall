@@ -32,6 +32,7 @@ class CloudfrontDistro(pyNestedClass):
         custom_domain=None,
         custom_waf_rules=None,
         tooling_account_id=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -329,32 +330,35 @@ class CloudfrontDistro(pyNestedClass):
             string_value=cloudfront_bucket.bucket_name,
         )
 
-        # Lambda@edge for http_header_redirection
-        docs_http_headers = os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                'custom_resources',
-                'docs_http_headers',
+        self.user_docs_bucket = None
+        if custom_auth is None:
+            userguide_docs_distribution, user_docs_bucket = self.build_static_site(
+                f'userguide',
+                acl,
+                auth_at_edge,
+                envname,
+                resource_prefix,
+                userguide_domain_names,
+                certificate,
+                ssl_support_method,
+                security_policy,
+                logging_bucket
             )
-        )
-        (
-            self.http_header_func,
-            self.http_header_func_version,
-        ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
 
-        userguide_docs_distribution, user_docs_bucket = self.build_static_site(
-            f'userguide',
-            acl,
-            auth_at_edge,
-            envname,
-            resource_prefix,
-            userguide_domain_names,
-            certificate,
-            ssl_support_method,
-            security_policy,
-            logging_bucket,
-        )
+            self.userguide_docs_distribution = userguide_docs_distribution
+            self.user_docs_bucket = user_docs_bucket
+
+            if userguide_alternate_domain:
+                route53.ARecord(
+                    self,
+                    'CloudFrontUserguideDomain',
+                    record_name=userguide_alternate_domain,
+                    zone=hosted_zone,
+                    target=route53.RecordTarget.from_alias(
+                        route53_targets.CloudFrontTarget(userguide_docs_distribution)
+                    ),
+                )
+
         if frontend_alternate_domain:
             frontend_record = route53.ARecord(
                 self,
@@ -365,16 +369,6 @@ class CloudfrontDistro(pyNestedClass):
                     route53_targets.CloudFrontTarget(cloudfront_distribution)
                 ),
             )
-        if userguide_alternate_domain:
-            userguide_record = route53.ARecord(
-                self,
-                'CloudFrontUserguideDomain',
-                record_name=userguide_alternate_domain,
-                zone=hosted_zone,
-                target=route53.RecordTarget.from_alias(
-                    route53_targets.CloudFrontTarget(userguide_docs_distribution)
-                ),
-            )
 
         if tooling_account_id:
             cross_account_deployment_role = iam.Role(
@@ -383,16 +377,17 @@ class CloudfrontDistro(pyNestedClass):
                 role_name=f'{resource_prefix}-{envname}-S3DeploymentRole',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
             )
+            resources_for_cross_account = []
+            resources_for_cross_account.append(f'{cloudfront_bucket.bucket_arn}/*')
+            if self.user_docs_bucket is not None:
+                resources_for_cross_account.append(f'{self.user_docs_bucket.bucket_arn}/*')
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[
                         's3:Get*',
                         's3:Put*',
                     ],
-                    resources=[
-                        f'{cloudfront_bucket.bucket_arn}/*',
-                        f'{user_docs_bucket.bucket_arn}/*',
-                    ],
+                    resources=resources_for_cross_account,
                 )
             )
             cross_account_deployment_role.add_to_policy(
@@ -447,8 +442,6 @@ class CloudfrontDistro(pyNestedClass):
 
         self.frontend_distribution = cloudfront_distribution
         self.frontend_bucket = cloudfront_bucket
-        self.user_docs_bucket = user_docs_bucket
-        self.user_docs_distribution = userguide_docs_distribution
         self.cross_account_deployment_role = (
             cross_account_deployment_role.role_name
             if cross_account_deployment_role
@@ -505,19 +498,34 @@ class CloudfrontDistro(pyNestedClass):
         certificate,
         ssl_support_method,
         security_policy,
-        logging_bucket,
+        logging_bucket
     ):
 
+        # Lambda@edge for http_header_redirection
+        docs_http_headers = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'custom_resources',
+                'docs_http_headers',
+            )
+        )
+
+        if not os.path.isdir(docs_http_headers):
+            raise Exception(f"Http Docs Headers Folder not found at {docs_http_headers}")
+
+        (
+            self.http_header_func,
+            self.http_header_func_version,
+        ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
+
         parse = auth_at_edge.devdoc_app.get_att('Outputs.ParseAuthHandler').to_string()
-        refresh = auth_at_edge.devdoc_app.get_att(
-            'Outputs.RefreshAuthHandler'
-        ).to_string()
+        refresh = auth_at_edge.devdoc_app.get_att('Outputs.RefreshAuthHandler').to_string()
         signout = auth_at_edge.devdoc_app.get_att('Outputs.SignOutHandler').to_string()
         check = auth_at_edge.devdoc_app.get_att('Outputs.CheckAuthHandler').to_string()
         httpheaders = auth_at_edge.devdoc_app.get_att(
             'Outputs.HttpHeadersHandler'
         ).to_string()
-
         if not (parse or refresh or signout or check or httpheaders):
             raise Exception('Edge functions not found !')
 

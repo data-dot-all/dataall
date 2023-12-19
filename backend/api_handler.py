@@ -11,6 +11,7 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
+from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.aws.parameter_store import ParameterStoreManager
@@ -62,10 +63,10 @@ end = perf_counter()
 print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
 
 
-def get_groups(claims):
+def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
-            'Received empty claims. ' 'Please verify Cognito authorizer configuration',
+            'Received empty claims. ' 'Please verify authorizer configuration',
             claims,
         )
     groups = list()
@@ -74,9 +75,15 @@ def get_groups(claims):
         groups: list = (
             saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
         )
-    cognito_groups = claims.get('cognito:groups', '').split(',')
-    groups.extend(cognito_groups)
+    cognito_groups = claims.get('cognito:groups', '')
+    if len(cognito_groups):
+        groups.extend(cognito_groups.split(','))
     return groups
+
+
+def get_custom_groups(user_id):
+    service_provider = ServiceProviderFactory.get_service_provider_instance()
+    return service_provider.get_groups_for_user(user_id)
 
 
 def handler(event, context):
@@ -122,9 +129,19 @@ def handler(event, context):
         else:
             claims = event['requestContext']['authorizer']['claims']
         username = claims['email']
+        # Defaulting user_id field to contain email
+        # When "authorizer" in the event contains the user_id field override with that value
+        # user_id is used when deploying data.all with custom_auth
+        user_id = claims['email']
+        if 'user_id' in event['requestContext']['authorizer']:
+            user_id = event['requestContext']['authorizer']['user_id']
         log.debug('username is %s', username)
         try:
-            groups = get_groups(claims)
+            groups = []
+            if (os.environ.get('custom_auth', None)):
+                groups.extend(get_custom_groups(user_id))
+            else:
+                groups.extend(get_cognito_groups(claims))
             log.debug('groups are %s', ",".join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
@@ -146,7 +163,7 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, groups))
+        set_context(RequestContext(ENGINE, username, groups, user_id))
 
         app_context = {
             'engine': ENGINE,

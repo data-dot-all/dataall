@@ -22,7 +22,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listCognitoGroups, useClient } from 'services';
+import { listGroups, useClient } from 'services';
 import { inviteGroupToOrganization } from '../services';
 
 export const OrganizationTeamInviteForm = (props) => {
@@ -43,10 +43,10 @@ export const OrganizationTeamInviteForm = (props) => {
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({ filter }));
+      const response = await client.query(listGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
-          response.data.listCognitoGroups.map((g) => ({
+          response.data.listGroups.map((g) => ({
             ...g,
             value: g.groupName,
             label: g.groupName
