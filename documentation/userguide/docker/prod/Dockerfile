@@ -7,8 +7,6 @@ ARG ENVSUBST_VERSION=v1.1.0
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
-
-
 # Clean cache
 RUN dnf upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
