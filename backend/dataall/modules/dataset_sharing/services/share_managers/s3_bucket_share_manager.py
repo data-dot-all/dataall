@@ -444,7 +444,7 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+        DatasetAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True
