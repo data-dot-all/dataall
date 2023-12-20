@@ -4,8 +4,6 @@ ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.0-spark-3.1
 ARG PYTHON_VERSION=python3.9
-ARG CONTAINER_USER=cuser
-ARG CONTAINER_USER_GROUP=cuser
 
 # Clean cache
 RUN dnf upgrade -y;\
@@ -31,12 +29,6 @@ RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli
     && rm -rf /opt/aws \
     && aws --version
 
-RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
-RUN chown -R ${CONTAINER_USER}:root /usr/local
-RUN chown -R ${CONTAINER_USER}:root /tmp
-
-USER ${CONTAINER_USER}
-
 # Configuring path
 RUN touch ~/.bashrc
 
@@ -56,26 +48,26 @@ RUN echo export PATH="\
     && /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
 # App specific requirements
-ADD --chown=${CONTAINER_USER}:root backend/requirements.txt /requirements.txt
-ADD --chown=${CONTAINER_USER}:root backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
+ADD backend/requirements.txt /requirements.txt
+ADD backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
 # App code
-ADD --chown=${CONTAINER_USER}:root backend/dataall /dataall
+ADD backend/dataall /dataall
 VOLUME ["/dataall"]
-ADD --chown=${CONTAINER_USER}:root backend/cdkproxymain.py /cdkproxymain.py
+ADD backend/cdkproxymain.py /cdkproxymain.py
 
 # App configuration file
 ENV config_location="/config.json"
-COPY --chown=${CONTAINER_USER}:root config.json /config.json
+COPY config.json /config.json
 
 # Glue profiling jobs jars
 RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
-ADD --chown=${CONTAINER_USER}:root https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
+ADD https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
 
 WORKDIR /
 
