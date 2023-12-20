@@ -65,7 +65,7 @@ class AuroraServerlessStack(pyNestedClass):
         )
         
         db_credentials = rds.DatabaseSecret(
-            self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin', encryptionKey=key
+            self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin', encryption_key=key
         )
 
         database = rds.ServerlessCluster(
