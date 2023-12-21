@@ -13,7 +13,8 @@
         "envname": "fr",
         "account": "165741930873",
         "region": "eu-west-1",
-        "internet_facing": true
+        "internet_facing": true,
+        "enable_pivot_role_auto_create": true
       }
     ]
   }
