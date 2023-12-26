@@ -127,7 +127,27 @@ class BackendStack(Stack):
                 cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
                 **kwargs,
             )
-
+        else:
+            cross_account_frontend_config_role = iam.Role(
+                self,
+                f'{resource_prefix}-{envname}-frontend-config-role',
+                role_name=f'{resource_prefix}-{envname}-frontend-config-role',
+                assumed_by=iam.AccountPrincipal(tooling_account_id),
+            )
+            cross_account_frontend_config_role.add_to_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        'ssm:GetParameterHistory',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        'ssm:GetParametersByPath'
+                    ],
+                    resources=[
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*'
+                    ],
+                ),
+            )
 
         sqs_stack = SqsStack(
             self,

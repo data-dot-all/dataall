@@ -156,9 +156,7 @@ Resources:
             Effect: Allow
             Action:
               - 'sagemaker:*Tag*'
-              - 'sagemaker:CreateDomain'
-              - 'sagemaker:DeleteDomain'
-              - 'sagemaker:DescribeDomain'
+              - 'sagemaker:*Domain'
               - 'sagemaker:CreateApp'
               - 'sagemaker:CreateUserProfile'
               - 'sagemaker:DescribeUserProfile'
