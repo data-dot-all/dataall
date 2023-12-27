@@ -161,9 +161,9 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
-                removing_bucket.handle_revoke_failure(e)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False
+                removing_bucket.handle_revoke_failure(e)
 
         return success

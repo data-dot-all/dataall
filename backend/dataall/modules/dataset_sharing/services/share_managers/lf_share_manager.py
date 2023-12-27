@@ -480,17 +480,21 @@ class LFShareManager:
         -------
         True if alarm published successfully
         """
-        logging.error(
-            f'Failed to share table {table.GlueTableName} '
-            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
-            f'due to: {error}'
-        )
+        try:
+            logging.error(
+                f'Failed to share table {table.GlueTableName} '
+                f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
+                f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
+                f'due to: {error}'
+            )
 
-        DatasetAlarmService().trigger_table_sharing_failure_alarm(
-            table, self.share, self.target_environment
-        )
-        return True
+            DatasetAlarmService().trigger_table_sharing_failure_alarm(
+                table, self.share, self.target_environment
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Exception during handle_share_failure: {e}")
+            return False
 
     def handle_revoke_failure(
             self,
@@ -504,16 +508,20 @@ class LFShareManager:
         -------
         True if alarm published successfully
         """
-        logger.error(
-            f'Failed to revoke S3 permissions to table {table.GlueTableName} '
-            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
-            f'due to: {error}'
-        )
-        DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(
-            table, self.share, self.target_environment
-        )
-        return True
+        try:
+            logger.error(
+                f'Failed to revoke S3 permissions to table {table.GlueTableName} '
+                f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
+                f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
+                f'due to: {error}'
+            )
+            DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(
+                table, self.share, self.target_environment
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Exception during handle_revoke_failure: {e}")
+            return False
 
     def glue_client(self):
         return GlueClient(
