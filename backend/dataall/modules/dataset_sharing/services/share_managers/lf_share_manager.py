@@ -493,7 +493,7 @@ class LFShareManager:
             )
             return True
         except Exception as e:
-            logger.error(f"Exception during handle_share_failure: {e}")
+            logger.error("Could not process dataset alarms: ", exc_info=True)
             return False
 
     def handle_revoke_failure(
@@ -521,8 +521,7 @@ class LFShareManager:
             return True
         except Exception as e:
             logger.error(f"Exception during handle_revoke_failure: {e}")
-            return False
-
+            raise e
     def glue_client(self):
         return GlueClient(
             account_id=self.target_environment.AwsAccountId,

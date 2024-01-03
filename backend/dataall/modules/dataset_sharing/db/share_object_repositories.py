@@ -298,8 +298,8 @@ class ShareItemSM:
             self._state = new_state
             return True
         except Exception as e:
-            logger.error(f"Exception during update_state_single_item: {e}")
-            return False
+            logger.error("Could not update share item status: ", exc_info=True)
+            raise e
 
     @staticmethod
     def get_share_item_shared_states():

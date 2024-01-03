@@ -438,16 +438,20 @@ class S3BucketShareManager:
         -------
         True if alarm published successfully
         """
-        logger.error(
-            f'Failed to revoke S3 permissions to bucket {self.bucket_name} '
-            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
-            f'due to: {error}'
-        )
-        DatasetAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
-            self.target_bucket, self.share, self.target_environment
-        )
-        return True
+        try:
+            logger.error(
+                f'Failed to revoke S3 permissions to bucket {self.bucket_name} '
+                f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
+                f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
+                f'due to: {error}'
+            )
+            DatasetAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
+                self.target_bucket, self.share, self.target_environment
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to trigger revoke bucket sharing failure alarm due to: {e}")
+            raise e
 
     @staticmethod
     def generate_default_bucket_read_policy_statement(s3_bucket_name, target_requester_arn):
