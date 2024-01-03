@@ -49,7 +49,7 @@ class DatasetAlarmService(AlarmService):
             target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
-        subject = f'Data.all Revoke LF permissions Failure for Table {table.GlueTableName}'[:100]
+        subject = f'Data.all Revoke LF Permissions Failure for Table {table.GlueTableName}'[:100]
         message = f"""
     You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to revoke Lake Formation permissions for table {table.GlueTableName} with Lake Formation.
 
