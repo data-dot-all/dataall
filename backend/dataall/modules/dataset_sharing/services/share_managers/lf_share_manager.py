@@ -522,6 +522,7 @@ class LFShareManager:
         except Exception as e:
             logger.error(f"Exception during handle_revoke_failure: {e}")
             raise e
+
     def glue_client(self):
         return GlueClient(
             account_id=self.target_environment.AwsAccountId,
