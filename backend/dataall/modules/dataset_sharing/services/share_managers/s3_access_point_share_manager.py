@@ -529,8 +529,8 @@ class S3AccessPointShareManager:
             )
             return True
         except Exception as e:
-            logger.error(f"Failed to trigger revoke folder sharing failure alarm due to: {e}")
-            raise e
+            logger.error("Could not process dataset alarms: ", exc_info=True)
+            return False
 
     @staticmethod
     def generate_default_kms_decrypt_policy_statement(target_requester_arn):

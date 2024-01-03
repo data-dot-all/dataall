@@ -450,8 +450,8 @@ class S3BucketShareManager:
             )
             return True
         except Exception as e:
-            logger.error(f"Failed to trigger revoke bucket sharing failure alarm due to: {e}")
-            raise e
+            logger.error("Could not process dataset alarms: ", exc_info=True)
+            return False
 
     @staticmethod
     def generate_default_bucket_read_policy_statement(s3_bucket_name, target_requester_arn):

@@ -520,8 +520,8 @@ class LFShareManager:
             )
             return True
         except Exception as e:
-            logger.error(f"Exception during handle_revoke_failure: {e}")
-            raise e
+            logger.error("Could not process dataset alarms: ", exc_info=True)
+            return False
 
     def glue_client(self):
         return GlueClient(
