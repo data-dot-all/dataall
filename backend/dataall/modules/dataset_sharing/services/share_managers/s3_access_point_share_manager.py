@@ -517,20 +517,16 @@ class S3AccessPointShareManager:
         -------
         True if alarm published successfully
         """
-        try:
-            logger.error(
-                f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
-                f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-                f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
-                f'due to: {error}'
-            )
-            DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
-                self.target_folder, self.share, self.target_environment
-            )
-            return True
-        except Exception as e:
-            logger.error("Could not process dataset alarms: ", exc_info=True)
-            return False
+        logger.error(
+            f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
+            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
+            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
+            f'due to: {error}'
+        )
+        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+            self.target_folder, self.share, self.target_environment
+        )
+        return True
 
     @staticmethod
     def generate_default_kms_decrypt_policy_statement(target_requester_arn):

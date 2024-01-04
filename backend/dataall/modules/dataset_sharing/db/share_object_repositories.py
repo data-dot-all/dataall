@@ -288,18 +288,14 @@ class ShareItemSM:
             return True
 
     def update_state_single_item(self, session, share_item, new_state):
-        try:
-            logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
-            ShareObjectRepository.update_share_item_status(
-                session=session,
-                uri=share_item.shareItemUri,
-                status=new_state
-            )
-            self._state = new_state
-            return True
-        except Exception as e:
-            logger.error("Could not update share item status: ", exc_info=True)
-            raise e
+        logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
+        ShareObjectRepository.update_share_item_status(
+            session=session,
+            uri=share_item.shareItemUri,
+            status=new_state
+        )
+        self._state = new_state
+        return True
 
     @staticmethod
     def get_share_item_shared_states():
