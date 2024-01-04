@@ -97,10 +97,13 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             except Exception as e:
-                sharing_folder.handle_share_failure(e)
+                # must run first to ensure state transitions to failed
                 new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                sharing_folder.handle_share_failure(e)
 
         return success
 
@@ -160,10 +163,13 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
-                removing_folder.handle_revoke_failure(e)
+                # must run first to ensure state transitions to failed
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                removing_folder.handle_revoke_failure(e)
 
         return success
 

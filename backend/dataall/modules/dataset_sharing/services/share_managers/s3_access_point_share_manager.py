@@ -510,7 +510,7 @@ class S3AccessPointShareManager:
             self.target_folder, self.share, self.target_environment
         )
 
-    def handle_revoke_failure(self, error: Exception) -> None:
+    def handle_revoke_failure(self, error: Exception) -> bool:
         """
         Handles share failure by raising an alarm to alarmsTopic
         Returns
@@ -526,6 +526,7 @@ class S3AccessPointShareManager:
         DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
+        return True
 
     @staticmethod
     def generate_default_kms_decrypt_policy_statement(target_requester_arn):
