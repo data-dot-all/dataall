@@ -28,7 +28,7 @@
             }
         },
         "worksheets": {
-            "active": false
+            "active": true
         },
         "dashboards": {
             "active": true
