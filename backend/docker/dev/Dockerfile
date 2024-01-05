@@ -3,6 +3,10 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG NODE_VERSION=18
 ARG NVM_VERSION=v0.37.2
 ARG PYTHON_VERSION=python3.9
+ARG CONTAINER_USER=cuser
+ARG CONTAINER_USER_GROUP=cuser
+
+
 
 # Clean cache
 RUN dnf clean all
@@ -16,7 +20,13 @@ RUN dnf -y install -y \
 RUN dnf install $PYTHON_VERSION
 RUN dnf -y install python3-pip python3-devel git
 
+RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN useradd -m app
+RUN chown -R ${CONTAINER_USER}:root /usr/local
+RUN chown -R ${CONTAINER_USER}:root /tmp
+
+USER ${CONTAINER_USER}
+
 
 ## Add source
 WORKDIR /build
@@ -29,9 +39,9 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 RUN unzip awscliv2.zip
 RUN ./aws/install
 
-COPY ./docker/dev/wait-for-it.sh /build/wait-for-it.sh
+COPY --chown=${CONTAINER_USER}:root ./docker/dev/wait-for-it.sh /build/wait-for-it.sh
 RUN chmod +x /build/wait-for-it.sh
-RUN chown -R app:root /build/wait-for-it.sh
+RUN chown -R ${CONTAINER_USER}:root /build/wait-for-it.sh
 
 ## Add source
 WORKDIR /dataall
@@ -49,6 +59,7 @@ RUN echo export PATH="\
 $(${PYTHON_VERSION} -m site --user-base)/bin:\
 $(python3 -m site --user-base)/bin:\
 $(python -m site --user-base)/bin:\
+/home/${CONTAINER_USER}/.local/bin:\
 $PATH" >> ~/.bashrc && \
      echo "nvm use ${NODE_VERSION} 1> /dev/null" >> ~/.bashrc
 
@@ -59,9 +70,9 @@ COPY ./requirements.txt requirements.txt
 COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix /usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix /usr/local"
+RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
 
 # App code
 COPY ./dataall /dataall
