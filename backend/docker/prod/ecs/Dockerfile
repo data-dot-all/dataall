@@ -33,6 +33,8 @@ RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli
 
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER}:root /usr/local
+RUN mkdir -p /tmp
+VOLUME ["/tmp"]
 RUN chown -R ${CONTAINER_USER}:root /tmp
 
 USER ${CONTAINER_USER}
