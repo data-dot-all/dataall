@@ -49,8 +49,8 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/awslabs/aws-dataall.git
-cd aws-dataall
+git clone https://github.com/data-dot-all/dataall.git
+cd dataall
 ```
 ## 2. Setup Python virtualenv
 From your personal computer or from Cloud9 in the AWS Console, create a python virtual environment 
@@ -485,7 +485,7 @@ If a module depends on other modules we do not need to explicitly define it as a
 
 The following table contains a list of the available modules and their dependencies with a very brief explanation of the
 functionality. If you want to know more about each module, 
-check the [UserGuide](https://github.com/awslabs/aws-dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
+check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
 
 | **Module**      | **depends on**                                      | **Description**                                                                       |   
 |-----------------|-----------------------------------------------------|---------------------------------------------------------------------------------------|
