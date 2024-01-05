@@ -109,7 +109,6 @@ class Permission:
                 )
                 logger.error(f'Saved permission {name} successfully')
             logger.error(f'Saved {len(perms)} resource permissions successfully')
-            session.commit()
 
         count_tenant_permissions = (
             session.query(models.Permission)
