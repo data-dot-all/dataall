@@ -39,6 +39,7 @@ import {
   getCDKExecPolicyPresignedUrl
 } from '../services';
 import {
+  SanitizedHTML,
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
@@ -57,6 +58,7 @@ import {
   isModuleEnabled,
   ModuleNames
 } from 'utils';
+import config from '../../../generated/config.json';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -305,171 +307,190 @@ const EnvironmentCreateForm = (props) => {
             <CardHeader title="Prerequisite Steps" />
             <Divider />
             <CardContent>
-              <Box>
-                <Typography color="textSecondary" variant="subtitle2">
-                  1. (OPTIONAL) As part of setting up your AWS Environment with
-                  CDK you need to specify a IAM Policy that gives permission for
-                  CDK to create AWS Resources via CloudFormation (i.e. CDK
-                  Execution Policy). You optionally can use the below
-                  CloudFormation template to create the custom IAM policy that
-                  is more restrictive than the default{' '}
-                  <b>AdministratorAccess</b> policy.
-                </Typography>
-                <Button
-                  color="primary"
-                  startIcon={<CloudDownloadOutlined fontSize="small" />}
-                  sx={{ mt: 1, mb: 2, ml: 2 }}
-                  variant="outlined"
-                  onClick={() => {
-                    getCDKExecPolicyUrl().catch((e) =>
-                      dispatch({ type: SET_ERROR, error: e.message })
-                    );
-                  }}
-                >
-                  CloudFormation stack for CDK custom execution policy
-                </Button>
-              </Box>
-              <Box>
-                <Typography color="textSecondary" variant="subtitle2">
-                  2. Bootstrap your AWS account with AWS CDK
-                </Typography>
-                <Grid
-                  container
-                  rowSpacing={1}
-                  columnSpacing={{ xs: 1, sm: 2, md: 3 }}
-                >
-                  <Grid item xs={6}>
-                    <Card>
-                      <CardContent>
-                        <Typography
-                          sx={{ fontSize: 14 }}
-                          color="text.secondary"
-                          gutterBottom
-                        >
-                          If Using Default CDK Execution Policy:
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
-                          >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Card>
-                      <CardContent>
-                        <Typography
-                          sx={{ fontSize: 14 }}
-                          color="text.secondary"
-                          gutterBottom
-                        >
-                          If Using Custom CDK Execution Policy (From Step 1):
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
-                          >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </Grid>
-              </Box>
-              {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE ===
-              'True' ? (
+              {config.core.custom_env_linking_text !== undefined ? (
                 <Box>
                   <Typography color="textSecondary" variant="subtitle2">
-                    3. As part of the environment CloudFormation stack data.all
-                    will create an IAM role (Pivot Role) to manage AWS
-                    operations in the environment AWS Account.
+                    <SanitizedHTML
+                      dirtyHTML={config.core.custom_env_linking_text}
+                    />
                   </Typography>
                 </Box>
               ) : (
-                <Box>
+                <>
                   <Box>
                     <Typography color="textSecondary" variant="subtitle2">
-                      3. Create an IAM role named <b>{pivotRoleName}</b> using
-                      the AWS CloudFormation stack below
+                      1. (OPTIONAL) As part of setting up your AWS Environment
+                      with CDK you need to specify a IAM Policy that gives
+                      permission for CDK to create AWS Resources via
+                      CloudFormation (i.e. CDK Execution Policy). You optionally
+                      can use the below CloudFormation template to create the
+                      custom IAM policy that is more restrictive than the
+                      default <b>AdministratorAccess</b> policy.
+                    </Typography>
+                    <Button
+                      color="primary"
+                      startIcon={<CloudDownloadOutlined fontSize="small" />}
+                      sx={{ mt: 1, mb: 2, ml: 2 }}
+                      variant="outlined"
+                      onClick={() => {
+                        getCDKExecPolicyUrl().catch((e) =>
+                          dispatch({ type: SET_ERROR, error: e.message })
+                        );
+                      }}
+                    >
+                      CloudFormation stack for CDK custom execution policy
+                    </Button>
+                  </Box>
+                  <Box>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      2. Bootstrap your AWS account with AWS CDK
+                    </Typography>
+                    <Grid
+                      container
+                      rowSpacing={1}
+                      columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+                    >
+                      <Grid item xs={6}>
+                        <Card>
+                          <CardContent>
+                            <Typography
+                              sx={{ fontSize: 14 }}
+                              color="text.secondary"
+                              gutterBottom
+                            >
+                              If Using Default CDK Execution Policy:
+                            </Typography>
+                            <Typography color="textPrimary" variant="subtitle2">
+                              <CopyToClipboard
+                                onCopy={() => copyNotification()}
+                                text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
+                              >
+                                <IconButton>
+                                  <CopyAllOutlined
+                                    sx={{
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.primary.contrastText
+                                          : theme.palette.primary.main
+                                    }}
+                                  />
+                                </IconButton>
+                              </CopyToClipboard>
+                              {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Card>
+                          <CardContent>
+                            <Typography
+                              sx={{ fontSize: 14 }}
+                              color="text.secondary"
+                              gutterBottom
+                            >
+                              If Using Custom CDK Execution Policy (From Step
+                              1):
+                            </Typography>
+                            <Typography color="textPrimary" variant="subtitle2">
+                              <CopyToClipboard
+                                onCopy={() => copyNotification()}
+                                text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                              >
+                                <IconButton>
+                                  <CopyAllOutlined
+                                    sx={{
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.primary.contrastText
+                                          : theme.palette.primary.main
+                                    }}
+                                  />
+                                </IconButton>
+                              </CopyToClipboard>
+                              {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                  {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE ===
+                  'True' ? (
+                    <Box>
+                      <Typography color="textSecondary" variant="subtitle2">
+                        3. As part of the environment CloudFormation stack
+                        data.all will create an IAM role (Pivot Role) to manage
+                        AWS operations in the environment AWS Account.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Box>
+                        <Typography color="textSecondary" variant="subtitle2">
+                          3. Create an IAM role named <b>{pivotRoleName}</b>{' '}
+                          using the AWS CloudFormation stack below
+                        </Typography>
+                      </Box>
+                      <Grid
+                        container
+                        justifyContent="space-between"
+                        spacing={3}
+                      >
+                        <Grid item lg={6} xl={6} xs={6}>
+                          <Button
+                            color="primary"
+                            startIcon={
+                              <CloudDownloadOutlined fontSize="small" />
+                            }
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              getPivotRoleUrl().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            CloudFormation stack
+                          </Button>
+                          <Button
+                            color="primary"
+                            startIcon={<CopyAllOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              copyPivotRoleName().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            Pivot role name
+                          </Button>
+                          <Button
+                            color="primary"
+                            startIcon={<CopyAllOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              getExternalId().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            External Id
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  )}
+                  <Box>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      Make sure that the services needed for the selected
+                      environment features are available in your AWS Account.
                     </Typography>
                   </Box>
-                  <Grid container justifyContent="space-between" spacing={3}>
-                    <Grid item lg={6} xl={6} xs={6}>
-                      <Button
-                        color="primary"
-                        startIcon={<CloudDownloadOutlined fontSize="small" />}
-                        sx={{ mt: 1, mb: 2, ml: 2 }}
-                        variant="outlined"
-                        onClick={() => {
-                          getPivotRoleUrl().catch((e) =>
-                            dispatch({ type: SET_ERROR, error: e.message })
-                          );
-                        }}
-                      >
-                        CloudFormation stack
-                      </Button>
-                      <Button
-                        color="primary"
-                        startIcon={<CopyAllOutlined fontSize="small" />}
-                        sx={{ mt: 1, mb: 2, ml: 2 }}
-                        variant="outlined"
-                        onClick={() => {
-                          copyPivotRoleName().catch((e) =>
-                            dispatch({ type: SET_ERROR, error: e.message })
-                          );
-                        }}
-                      >
-                        Pivot role name
-                      </Button>
-                      <Button
-                        color="primary"
-                        startIcon={<CopyAllOutlined fontSize="small" />}
-                        sx={{ mt: 1, mb: 2, ml: 2 }}
-                        variant="outlined"
-                        onClick={() => {
-                          getExternalId().catch((e) =>
-                            dispatch({ type: SET_ERROR, error: e.message })
-                          );
-                        }}
-                      >
-                        External Id
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
+                </>
               )}
-              <Box>
-                <Typography color="textSecondary" variant="subtitle2">
-                  Make sure that the services needed for the selected
-                  environment features are available in your AWS Account.
-                </Typography>
-              </Box>
             </CardContent>
           </Card>
           <Box sx={{ mt: 3 }}>

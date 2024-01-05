@@ -95,10 +95,13 @@ class ProcessLFSameAccountShare(LFShareManager):
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             except Exception as e:
-                self.handle_share_failure(table, share_item, e)
+                # must run first to ensure state transitions to failed
                 new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                self.handle_share_failure(table, share_item, e)
 
         return success
 
@@ -151,9 +154,12 @@ class ProcessLFSameAccountShare(LFShareManager):
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             except Exception as e:
-                self.handle_revoke_failure(share_item, table, e)
+                # must run first to ensure state transitions to failed
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                self.handle_revoke_failure(share_item, table, e)
 
         return success
