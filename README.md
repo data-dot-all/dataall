@@ -18,5 +18,5 @@ relevant data and let them use the power of the AWS cloud to create data driven 
 
 ## **Want to know more?**
 
-Visit our [GitHub pages](https://awslabs.github.io/aws-dataall/) to get started and learn more about the architecture
+Visit our [GitHub pages](https://awslabs.github.io/dataall/) to get started and learn more about the architecture
 and the code of **data.all**
