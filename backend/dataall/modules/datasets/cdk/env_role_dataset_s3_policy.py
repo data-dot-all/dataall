@@ -71,9 +71,9 @@ class DatasetS3Policy(S3Policy):
     @staticmethod
     def _set_allowed_kms_keys_statements(datasets):
         imported_kms_alias = []
-        # Datasets belonging to a team and an environment are present in same region and aws account
-        imported_dataset_resources = [f"arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*"]
         if datasets:
+            # Datasets belonging to a team and an environment are present in same region and aws account
+            imported_dataset_resources = [f"arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*"]
             dataset: Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
