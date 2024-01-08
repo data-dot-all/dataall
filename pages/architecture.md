@@ -384,7 +384,7 @@ access to data.all can see and use the externalId.
 
 From the data.all UI we can download a CloudFormation template of the pivotRole and deploy it in our business account. 
 Alternatively, you can access this template directly from the 
-[Github repository/deploy](https://github.com/awslabs/aws-dataall/blob/main/deploy/pivot_role/pivotRole.yaml). 
+[Github repository/deploy](https://github.com/data-dot-all/dataall/blob/main/deploy/pivot_role/pivotRole.yaml). 
 
 
 ## data.all Resources <a name="resources"></a>
