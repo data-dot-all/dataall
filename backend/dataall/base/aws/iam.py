@@ -20,6 +20,7 @@ class IAM:
             response = iamcli.get_role(
                 RoleName=role_arn.split("/")[-1]
             )
+            assert response['Role']['Arn'] == role_arn, "Arn doesn't match the role name. Check Arn and try again."
         except Exception as e:
             log.error(
                 f'Failed to get role {role_arn} due to: {e}'
