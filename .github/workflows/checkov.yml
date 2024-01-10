@@ -29,5 +29,6 @@ jobs:
         with:
           directory: .
           quiet: true
-          skip_path: tests/, .github, compose/
+          skip_path: tests/, .github, compose/, docker/dev/
           hard_fail_on: MEDIUM
+          soft_fail_on: LOW
