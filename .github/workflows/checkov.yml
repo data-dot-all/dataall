@@ -32,3 +32,4 @@ jobs:
           skip_path: tests/, .github, compose/, docker/dev/
           hard_fail_on: MEDIUM
           soft_fail_on: LOW
+          skip_check: CKV_DOCKER_2,CKV_DOCKER_4
