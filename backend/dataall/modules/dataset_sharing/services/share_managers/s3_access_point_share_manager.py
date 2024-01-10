@@ -26,7 +26,6 @@ DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Access-Point-Enable-Pivot-Role-Permissions"
 
 
-
 class S3AccessPointShareManager:
     def __init__(
         self,

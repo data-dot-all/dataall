@@ -723,6 +723,11 @@ def test_grant_dataset_bucket_key_policy_with_complete_policy_present(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         kms_client().put_key_policy.assert_called()
@@ -759,6 +764,11 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
             target_environment,
             source_environment_group,
             target_environment_group,
+        )
+
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
         )
 
         manager.grant_dataset_bucket_key_policy()
@@ -821,6 +831,11 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
         bucket3.importedKmsKey = False
         session.add(bucket3)
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         # Assert that when a dataset is imported and doesn't have importedKey, kms policy function are not triggered
@@ -866,6 +881,11 @@ def test_grant_dataset_bucket_key_policy_with_imported(
             target_environment,
             source_environment_group,
             target_environment_group,
+        )
+
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
         )
 
         manager.grant_dataset_bucket_key_policy()

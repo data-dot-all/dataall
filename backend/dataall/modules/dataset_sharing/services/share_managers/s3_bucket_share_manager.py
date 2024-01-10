@@ -23,7 +23,6 @@ DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Bucket-Enable-Pivot-Role-Permissions"
 
 
-
 class S3BucketShareManager:
     def __init__(
             self,
@@ -519,6 +518,6 @@ class S3BucketShareManager:
                 "kms:ReEncrypt*",
                 "kms:TagResource",
                 "kms:UntagResource",
-               ],
+            ],
             "Resource": "*"
         }

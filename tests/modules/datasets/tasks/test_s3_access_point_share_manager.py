@@ -552,6 +552,11 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         # When
         manager.update_dataset_bucket_key_policy()
 
@@ -656,6 +661,11 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
             target_environment,
             source_environment_group,
             target_environment_group,
+        )
+
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
         )
 
         # When
