@@ -31,4 +31,3 @@ jobs:
           quiet: true
           skip_path: tests/, .github, compose/
           hard_fail_on: MEDIUM
-          soft_fail_on: LOW
