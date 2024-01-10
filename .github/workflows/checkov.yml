@@ -26,3 +26,7 @@ jobs:
       - name: Test with Checkov
         id: checkov
         uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          quiet: true
+          skip_path: tests/
