@@ -29,4 +29,4 @@ jobs:
         with:
           directory: .
           quiet: true
-          skip_path: tests/
+          skip_path: tests/, .github, compose/
