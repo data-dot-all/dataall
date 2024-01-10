@@ -23,6 +23,8 @@ ACCESS_POINT_CREATION_RETRIES = 5
 IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
+DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Access-Point-Enable-Pivot-Role-Permissions"
+
 
 
 class S3AccessPointShareManager:
@@ -331,7 +333,7 @@ class S3AccessPointShareManager:
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
-        kms_key_id = kms_client.get_key_id(key_alias)
+        kms_key_id = kms_client.get_key_id_using_list_aliases(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
 
@@ -339,6 +341,16 @@ class S3AccessPointShareManager:
             existing_policy = json.loads(existing_policy)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+
+            if DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
+                logger.info(
+                    f'KMS key policy already contains share statement {DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}')
+            else:
+                logger.info(
+                    f'KMS key policy does not contain statement {DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
+                statements[DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID] \
+                    = self.generate_enable_pivot_role_permissions_policy_statement(self.dataset_account_id)
+
             if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
                 logger.info(
                     f'KMS key policy contains share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
@@ -353,12 +365,14 @@ class S3AccessPointShareManager:
                 statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = (self.generate_default_kms_decrypt_policy_statement
                                                                     (target_requester_arn))
             existing_policy["Statement"] = list(statements.values())
+
         else:
             logger.info('KMS key policy does not contain any statements, generating a new one')
             existing_policy = {
                 "Version": "2012-10-17",
                 "Statement": [
-                    self.generate_default_kms_decrypt_policy_statement(target_requester_arn)
+                    self.generate_default_kms_decrypt_policy_statement(target_requester_arn),
+                    self.generate_enable_pivot_role_permissions_policy_statement(self.dataset_account_id)
                 ]
             }
         kms_client.put_key_policy(
@@ -474,7 +488,7 @@ class S3AccessPointShareManager:
         )
         key_alias = f"alias/{dataset.KmsAlias}"
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
-        kms_key_id = kms_client.get_key_id(key_alias)
+        kms_key_id = kms_client.get_key_id_using_list_aliases(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         counter = count()
@@ -485,6 +499,8 @@ class S3AccessPointShareManager:
                 principal_list.remove(f"{target_requester_arn}")
                 if len(principal_list) == 0:
                     statements.pop(DATAALL_ACCESS_POINT_KMS_DECRYPT_SID)
+                    if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID not in statements.keys():
+                        statements.pop(DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID)
                 else:
                     statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
                 existing_policy["Statement"] = list(statements.values())
@@ -539,6 +555,29 @@ class S3AccessPointShareManager:
                 ]
             },
             "Action": "kms:Decrypt",
+            "Resource": "*"
+        }
+
+    @staticmethod
+    def generate_enable_pivot_role_permissions_policy_statement(dataset_account_id):
+        return {
+            "Sid": f"{DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    f"arn:aws:iam::{dataset_account_id}:role/dataallPivotRole"
+                ]
+            },
+            "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:GenerateDataKey*",
+                "kms:PutKeyPolicy",
+                "kms:GetKeyPolicy",
+                "kms:ReEncrypt*",
+                "kms:TagResource",
+                "kms:UntagResource"
+            ],
             "Resource": "*"
         }
 
