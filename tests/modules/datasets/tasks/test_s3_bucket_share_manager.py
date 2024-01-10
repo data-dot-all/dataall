@@ -21,6 +21,7 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_ALL_ADMINS_SID = "AllowAllToAdmin"
 
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
+DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Bucket-Enable-Pivot-Role-Permissions"
 
 
 @pytest.fixture(scope="module")
@@ -130,6 +131,24 @@ def base_kms_key_policy(target_requester_arn=None):
                     f"{target_requester_arn}"
                 ]},
                 "Action": "kms:Decrypt",
+                "Resource": "*"
+            },
+            {
+                "Sid": f"{DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Effect": "Allow",
+                "Principal": {"AWS": [
+                    f"arn:aws:iam::{TARGET_ACCOUNT_ENV}:role/dataallPivotRole"
+                ]},
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey*",
+                    "kms:PutKeyPolicy",
+                    "kms:GetKeyPolicy",
+                    "kms:ReEncrypt*",
+                    "kms:TagResource",
+                    "kms:UntagResource",
+                   ],
                 "Resource": "*"
             }
         ],
@@ -704,6 +723,11 @@ def test_grant_dataset_bucket_key_policy_with_complete_policy_present(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         kms_client().put_key_policy.assert_called()
@@ -742,6 +766,11 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
     # Check if KMS.put_key_policy is called and check if the policy is modified
@@ -750,7 +779,7 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
     # Check the modified KMS key policy
     kms_key_policy = json.loads(kms_client().put_key_policy.call_args[0][1])
 
-    assert len(kms_key_policy["Statement"]) == 1
+    assert len(kms_key_policy["Statement"]) == 2
     assert kms_key_policy["Statement"][0]["Sid"] == DATAALL_BUCKET_KMS_DECRYPT_SID
     assert kms_key_policy["Statement"][0]["Action"] == "kms:Decrypt"
 
@@ -802,6 +831,11 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
         bucket3.importedKmsKey = False
         session.add(bucket3)
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         # Assert that when a dataset is imported and doesn't have importedKey, kms policy function are not triggered
@@ -849,6 +883,11 @@ def test_grant_dataset_bucket_key_policy_with_imported(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         # Assert that when a dataset is imported and has importedKey
@@ -857,7 +896,7 @@ def test_grant_dataset_bucket_key_policy_with_imported(
         kms_client().put_key_policy.assert_called()
         updated_bucket_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(updated_bucket_policy["Statement"]) == 1
+        assert len(updated_bucket_policy["Statement"]) == 2
         assert updated_bucket_policy["Statement"][0]["Sid"] == DATAALL_BUCKET_KMS_DECRYPT_SID
         assert "OtherTargetRequestorArn" in updated_bucket_policy["Statement"][0]["Principal"]["AWS"]
 
