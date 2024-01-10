@@ -2,6 +2,15 @@ name: ASH
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - release/*
+      - main-v2
+      - v2m*
 
 permissions:
   contents: read
