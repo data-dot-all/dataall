@@ -332,7 +332,7 @@ class S3AccessPointShareManager:
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
-        kms_key_id = kms_client.get_key_id_using_list_aliases(key_alias)
+        kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         pivot_role_name = SessionHelper.get_delegation_role_name()
@@ -488,7 +488,7 @@ class S3AccessPointShareManager:
         )
         key_alias = f"alias/{dataset.KmsAlias}"
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
-        kms_key_id = kms_client.get_key_id_using_list_aliases(key_alias)
+        kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         counter = count()

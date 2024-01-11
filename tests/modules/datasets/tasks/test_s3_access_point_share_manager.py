@@ -1341,7 +1341,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
         # Then
         kms_client().put_key_policy.assert_called()
         kms_client().put_key_policy.assert_called_with(
-            kms_client().get_key_id_using_list_aliases.return_value,
+            kms_client().get_key_id.return_value,
             json.dumps(remaining_policy)
         )
 
@@ -1442,6 +1442,6 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
         # Then
         kms_client().put_key_policy.assert_called()
         kms_client().put_key_policy.assert_called_with(
-            kms_client().get_key_id_using_list_aliases.return_value,
+            kms_client().get_key_id.return_value,
             json.dumps(remaining_policy)
         )
