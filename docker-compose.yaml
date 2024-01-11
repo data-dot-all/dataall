@@ -21,7 +21,8 @@ services:
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
+      - $HOME/.aws/config:/home/cuser/.aws/config
       - ./config.json:/config.json
     restart:
       on-failure:60
@@ -45,7 +46,7 @@ services:
       email_sender_id: "noreply@someawsdomain"
     volumes:
       - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
       - ./config.json:/config.json
     depends_on:
       - db
