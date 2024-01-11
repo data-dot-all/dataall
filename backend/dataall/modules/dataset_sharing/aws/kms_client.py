@@ -55,24 +55,6 @@ class KmsClient:
         else:
             return response['KeyMetadata']['KeyId']
 
-    def get_key_id_using_list_aliases(self, key_alias: str):
-        try:
-            key_id = None
-            paginator = self._client.get_paginator('list_aliases')
-            for page in paginator.paginate():
-                key_aliases = [alias["AliasName"] for alias in page['Aliases']]
-                if key_alias in key_aliases:
-                    # Retrieve the key_id corresponding to the matching key_alias
-                    key_id = [alias["TargetKeyId"] for alias in page['Aliases'] if alias["AliasName"] == key_alias][0]
-                    break
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(f'Data.all Environment Pivot Role does not have kms:ListAliases Permission for key {key_alias}: {e}')
-            log.error(f'Failed to get kms key id of {key_alias}: {e}')
-            return None
-        else:
-            return key_id
-
     def check_key_exists(self, key_alias: str):
         try:
             key_exist = False
