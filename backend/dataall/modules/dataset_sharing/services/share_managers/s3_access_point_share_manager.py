@@ -23,7 +23,7 @@ ACCESS_POINT_CREATION_RETRIES = 5
 IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
-DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Access-Point-Enable-Pivot-Role-Permissions"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 class S3AccessPointShareManager:
@@ -342,13 +342,13 @@ class S3AccessPointShareManager:
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
 
-            if DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
+            if DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
                 logger.info(
-                    f'KMS key policy already contains share statement {DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}')
+                    f'KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}')
             else:
                 logger.info(
-                    f'KMS key policy does not contain statement {DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
-                statements[DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID] \
+                    f'KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
+                statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] \
                     = self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
 
             if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
@@ -499,7 +499,6 @@ class S3AccessPointShareManager:
                 principal_list.remove(f"{target_requester_arn}")
                 if len(principal_list) == 0:
                     statements.pop(DATAALL_ACCESS_POINT_KMS_DECRYPT_SID)
-                    statements.pop(DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID)
                 else:
                     statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
                 existing_policy["Statement"] = list(statements.values())
@@ -560,7 +559,7 @@ class S3AccessPointShareManager:
     @staticmethod
     def generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, dataset_account_id):
         return {
-            "Sid": f"{DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+            "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
             "Effect": "Allow",
             "Principal": {
                 "AWS": [

@@ -23,7 +23,7 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
-DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Access-Point-Enable-Pivot-Role-Permissions"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 @pytest.fixture(scope="module")
@@ -1378,7 +1378,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
                 "Resource": "*"
             },
             {
-                "Sid": f"{DATAALL_ACCESS_POINT_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
                 "Effect": "Allow",
                 "Principal": {"AWS": [
                     f"arn:aws:iam::{target_environment.AwsAccountId}:role/dataallPivotRole"
@@ -1400,7 +1400,26 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
 
     remaining_policy = {
         "Version": "2012-10-17",
-        "Statement": [],
+        "Statement": [
+            {
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Effect": "Allow",
+                "Principal": {"AWS": [
+                    f"arn:aws:iam::{target_environment.AwsAccountId}:role/dataallPivotRole"
+                ]},
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey*",
+                    "kms:PutKeyPolicy",
+                    "kms:GetKeyPolicy",
+                    "kms:ReEncrypt*",
+                    "kms:TagResource",
+                    "kms:UntagResource"
+                ],
+                "Resource": "*"
+            }
+        ],
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
