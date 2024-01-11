@@ -21,7 +21,7 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_ALL_ADMINS_SID = "AllowAllToAdmin"
 
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
-DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Bucket-Enable-Pivot-Role-Permissions"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 @pytest.fixture(scope="module")
@@ -134,7 +134,7 @@ def base_kms_key_policy(target_requester_arn=None):
                 "Resource": "*"
             },
             {
-                "Sid": f"{DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
                 "Effect": "Allow",
                 "Principal": {"AWS": [
                     f"arn:aws:iam::{TARGET_ACCOUNT_ENV}:role/dataallPivotRole"
@@ -1407,7 +1407,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id(
 
         new_kms_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(new_kms_policy["Statement"]) == 0
+        assert len(new_kms_policy["Statement"]) == 1
 
 
 # Test for delete_target_role_bucket_key_policy when dataset is imported
@@ -1454,7 +1454,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
 
         new_kms_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(new_kms_policy["Statement"]) == 0
+        assert len(new_kms_policy["Statement"]) == 1
 
 
 # Test for delete_target_role_bucket_key_policy when dataset is imported and importedKMS key is missing

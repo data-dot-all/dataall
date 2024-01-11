@@ -20,7 +20,7 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
-DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID = "DataAll-Bucket-Enable-Pivot-Role-Permissions"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 class S3BucketShareManager:
@@ -282,13 +282,13 @@ class S3BucketShareManager:
                 counter = count()
                 statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
 
-                if DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
+                if DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
                     logger.info(
-                        f'KMS key policy already contains share statement {DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}')
+                        f'KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}')
                 else:
                     logger.info(
-                        f'KMS key policy does not contain statement {DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
-                    statements[DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID] \
+                        f'KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
+                    statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] \
                         = self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.source_account_id)
 
                 if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
@@ -420,7 +420,6 @@ class S3BucketShareManager:
                     principal_list.remove(f"{target_requester_arn}")
                     if len(principal_list) == 0:
                         statements.pop(DATAALL_BUCKET_KMS_DECRYPT_SID)
-                        statements.pop(DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID)
                     else:
                         statements[DATAALL_BUCKET_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
                     existing_policy["Statement"] = list(statements.values())
@@ -502,7 +501,7 @@ class S3BucketShareManager:
     @staticmethod
     def generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, source_account_id):
         return {
-            "Sid": f"{DATAALL_BUCKET_ENABLE_PIVOT_ROLE_PERMISSIONS_SID}",
+            "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
