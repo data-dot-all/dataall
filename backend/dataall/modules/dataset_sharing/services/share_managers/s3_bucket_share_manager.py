@@ -204,19 +204,23 @@ class S3BucketShareManager:
             f'Granting access via Bucket policy for {self.bucket_name}'
         )
         try:
-            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
                 logger.info(f'Bucket policy contains share statement {DATAALL_READ_ONLY_SID}, updating the current one')
-                statements[DATAALL_READ_ONLY_SID] = self.add_target_arn_to_statement_principal(statements[DATAALL_READ_ONLY_SID], target_requester_arn)
+                statements[DATAALL_READ_ONLY_SID] = self.add_target_arn_to_statement_principal(
+                    statements[DATAALL_READ_ONLY_SID], target_requester_arn)
             else:
-                logger.info(f'Bucket policy does not contain share statement {DATAALL_READ_ONLY_SID}, generating a new one')
-                statements[DATAALL_READ_ONLY_SID] = self.generate_default_bucket_read_policy_statement(self.bucket_name, target_requester_arn)
+                logger.info(
+                    f'Bucket policy does not contain share statement {DATAALL_READ_ONLY_SID}, generating a new one')
+                statements[DATAALL_READ_ONLY_SID] = self.generate_default_bucket_read_policy_statement(self.bucket_name,
+                                                                                                       target_requester_arn)
 
             if DATAALL_ALLOW_OWNER_SID not in statements.keys():
-                statements[DATAALL_ALLOW_OWNER_SID] = self.generate_owner_access_statement(self.bucket_name, self.get_bucket_owner_roleid())
+                statements[DATAALL_ALLOW_OWNER_SID] = self.generate_owner_access_statement(self.bucket_name,
+                                                                                           self.get_bucket_owner_roleid())
 
             bucket_policy["Statement"] = list(statements.values())
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
@@ -269,13 +273,14 @@ class S3BucketShareManager:
             kms_client = KmsClient(self.source_account_id, self.source_environment.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = kms_client.get_key_policy(kms_key_id)
-            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
             if existing_policy:
                 existing_policy = json.loads(existing_policy)
                 counter = count()
                 statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
                 if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
-                    logger.info(f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
+                    logger.info(
+                        f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one')
                     statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
                         statements[DATAALL_BUCKET_KMS_DECRYPT_SID], target_requester_arn)
                 else:
@@ -304,7 +309,7 @@ class S3BucketShareManager:
         try:
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
             bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
@@ -391,7 +396,7 @@ class S3BucketShareManager:
             kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-            target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
             if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
@@ -439,14 +444,10 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+        DatasetAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True
-
-    @staticmethod
-    def get_role_arn(target_account_id, target_requester_IAMRoleName):
-        return f"arn:aws:iam::{target_account_id}:role/{target_requester_IAMRoleName}"
 
     @staticmethod
     def generate_default_bucket_read_policy_statement(s3_bucket_name, target_requester_arn):

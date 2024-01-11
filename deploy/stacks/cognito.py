@@ -160,8 +160,8 @@ class IdpStack(pyNestedClass):
 
         cross_account_frontend_config_role = iam.Role(
             self,
-            f'{resource_prefix}-{envname}-frontend-config-role',
-            role_name=f'{resource_prefix}-{envname}-frontend-config-role',
+            f'{resource_prefix}-{envname}-cognito-config-role',
+            role_name=f'{resource_prefix}-{envname}-cognito-config-role',
             assumed_by=iam.AccountPrincipal(tooling_account_id),
         )
         cross_account_frontend_config_role.add_to_policy(

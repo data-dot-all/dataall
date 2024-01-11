@@ -151,6 +151,7 @@ class PipelineStack(Stack):
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
+            enable_key_rotation=True,
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
@@ -892,7 +893,7 @@ class PipelineStack(Stack):
                 f'export enable_cw_canaries={target_env.get("enable_cw_canaries", False)}',
                 'mkdir ~/.aws/ && touch ~/.aws/config',
                 'echo "[profile buildprofile]" > ~/.aws/config',
-                f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role" >> ~/.aws/config',
+                f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
                 'echo "credential_source = EcsContainer" >> ~/.aws/config',
                 'aws sts get-caller-identity --profile buildprofile',
                 'export AWS_PROFILE=buildprofile',
@@ -905,6 +906,10 @@ class PipelineStack(Stack):
         )
 
     def set_albfront_stage(self, target_env, repository_name):
+        if target_env.get('custom_auth', None) is None:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role'
+        else:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
         albfront_stage = self.pipeline.add_stage(
             AlbFrontStage(
                 self,
@@ -955,7 +960,7 @@ class PipelineStack(Stack):
                         f'export custom_auth_claims_mapping_user_id={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("user_id", "None"))}',
                         'mkdir ~/.aws/ && touch ~/.aws/config',
                         'echo "[profile buildprofile]" > ~/.aws/config',
-                        f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role" >> ~/.aws/config',
+                        f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                         'echo "credential_source = EcsContainer" >> ~/.aws/config',
                         'aws sts get-caller-identity --profile buildprofile',
                         'export AWS_PROFILE=buildprofile',

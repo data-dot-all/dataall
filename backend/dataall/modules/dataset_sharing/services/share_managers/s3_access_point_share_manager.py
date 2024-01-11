@@ -333,7 +333,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
 
         if existing_policy:
             existing_policy = json.loads(existing_policy)
@@ -476,7 +476,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-        target_requester_arn = self.get_role_arn(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
         if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
@@ -510,7 +510,7 @@ class S3AccessPointShareManager:
             self.target_folder, self.share, self.target_environment
         )
 
-    def handle_revoke_failure(self, error: Exception) -> None:
+    def handle_revoke_failure(self, error: Exception) -> bool:
         """
         Handles share failure by raising an alarm to alarmsTopic
         Returns
@@ -526,10 +526,7 @@ class S3AccessPointShareManager:
         DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
-
-    @staticmethod
-    def get_role_arn(target_account_id, target_requester_IAMRoleName):
-        return f"arn:aws:iam::{target_account_id}:role/{target_requester_IAMRoleName}"
+        return True
 
     @staticmethod
     def generate_default_kms_decrypt_policy_statement(target_requester_arn):
