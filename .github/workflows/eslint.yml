@@ -1,4 +1,4 @@
-name: Run eslint
+name: eslint
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Run Semgrep
+name: semgrep
 
 on:
   workflow_dispatch:
