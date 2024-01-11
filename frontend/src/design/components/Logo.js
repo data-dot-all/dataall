@@ -17,7 +17,7 @@ export const Logo = () => (
       </Grid>
       <Grid item>
         <Typography variant="h5" color="#fff">
-          &nbsp;Amazon ResearchZone
+          &nbsp;data.all
         </Typography>
       </Grid>
     </Grid>
