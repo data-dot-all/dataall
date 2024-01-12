@@ -21,28 +21,26 @@ RUN dnf upgrade -y;\
 # Installing libraries
 RUN dnf install -y tar gzip openssl nginx-$NGINX_VERSION
 
-
-
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 
-RUN mkdir -p /var/cache/nginx && chown -R ${CONTAINER_USER}:root /var/cache/nginx && \
-    mkdir -p /var/log/nginx  && chown -R ${CONTAINER_USER}:root /var/log/nginx && \
-    mkdir -p /var/lib/nginx  && chown -R ${CONTAINER_USER}:root /var/lib/nginx && \
-    touch /run/nginx.pid && chown -R ${CONTAINER_USER}:root /run/nginx.pid && \
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/lib/nginx /var/run/nginx /var/www/html && \
+    chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /var/cache/nginx /var/log/nginx /var/lib/nginx /var/run/nginx /var/www/html && \
+    touch /run/nginx.pid && chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /run/nginx.pid && \
     mkdir -p /etc/nginx/templates /etc/nginx/ssl/certs && \
-    chown -R ${CONTAINER_USER}:root /etc/nginx
+    chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /etc/nginx
 
-
-
-RUN chown -R ${CONTAINER_USER}:root /usr/local
-RUN chown -R ${CONTAINER_USER}:root /etc/nginx
-RUN chown -R ${CONTAINER_USER}:root /usr/share/nginx
-RUN chown -R ${CONTAINER_USER}:root /tmp
-RUN chown -R ${CONTAINER_USER}:root /app
-USER ${CONTAINER_USER}
-
+# Install necessary packages and grant permissions
+RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
 
 WORKDIR /app
+
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /usr/local
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /etc/nginx
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /usr/share/nginx
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /tmp
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /app
+
+USER ${CONTAINER_USER}
 
 RUN touch ~/.bashrc
 
@@ -53,14 +51,14 @@ RUN echo '. ~/.nvm/nvm.sh' >> ~/.bashrc
 RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 
 
-COPY --chown=${CONTAINER_USER}:root ./frontend/package.json ./frontend/yarn.lock ./
-COPY --chown=${CONTAINER_USER}:root ./config.json /
+COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend/package.json ./frontend/yarn.lock ./
+COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./config.json /
 
 RUN . ~/.nvm/nvm.sh && yarn install
 
 ENV PATH="./node_modules/.bin:$PATH"
 
-COPY --chown=${CONTAINER_USER}:root ./frontend/docker/prod/nginx.config /etc/nginx/nginx.template
+COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend/docker/prod/nginx.config /etc/nginx/nginx.template
 
 ENV SERVERNAME=$DOMAIN
 
@@ -77,7 +75,7 @@ RUN sed -i 's/user nginx;/#user nginx;/g' /etc/nginx/nginx.conf
 
 RUN cat /etc/nginx/nginx.conf
 
-COPY --chown=${CONTAINER_USER}:root ./frontend ./
+COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend ./
 
 RUN . ~/.nvm/nvm.sh && yarn build
 
