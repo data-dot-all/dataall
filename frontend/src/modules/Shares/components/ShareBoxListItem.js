@@ -39,7 +39,11 @@ export const ShareBoxListItem = ({ share }) => {
             <Typography color="textPrimary" variant="body1">
               Request owner
             </Typography>
-            <Typography color="textSecondary" variant="body1">
+            <Typography
+              color="textSecondary"
+              variant="body1"
+              style={{ wordWrap: 'break-word' }}
+            >
               {`${share.principal.SamlGroupName}`}
             </Typography>
           </Box>
@@ -55,7 +59,11 @@ export const ShareBoxListItem = ({ share }) => {
             <Typography color="textPrimary" variant="body1">
               IAM role name
             </Typography>
-            <Typography color="textSecondary" variant="body1">
+            <Typography
+              color="textSecondary"
+              variant="body1"
+              style={{ wordWrap: 'break-word' }}
+            >
               {`${share.principal.principalIAMRoleName}`}
             </Typography>
           </Box>
@@ -71,7 +79,11 @@ export const ShareBoxListItem = ({ share }) => {
             <Typography color="textPrimary" variant="body1">
               Dataset
             </Typography>
-            <Typography color="textSecondary" variant="body1">
+            <Typography
+              color="textSecondary"
+              variant="body1"
+              style={{ wordWrap: 'break-word' }}
+            >
               {`${share.dataset.datasetName}`}
             </Typography>
           </Box>
@@ -84,7 +96,11 @@ export const ShareBoxListItem = ({ share }) => {
               px: 3
             }}
           >
-            <Typography color="textPrimary" variant="body1">
+            <Typography
+              color="textPrimary"
+              variant="body1"
+              style={{ wordWrap: 'break-word' }}
+            >
               Dataset Owner
             </Typography>
             <Typography color="textSecondary" variant="body1">
