@@ -100,12 +100,7 @@ export const RequestAccessModal = (props) => {
     try {
       const response = await client.query(
         listEnvironmentConsumptionRoles({
-          filter: {
-            page: 1,
-            pageSize: 10,
-            term: '',
-            groupUri: groupUri
-          },
+          filter: { ...Defaults.selectListFilter, groupUri: groupUri },
           environmentUri
         })
       );
