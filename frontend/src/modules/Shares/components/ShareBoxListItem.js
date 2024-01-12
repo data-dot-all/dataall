@@ -17,7 +17,7 @@ export const ShareBoxListItem = ({ share }) => {
       }}
     >
       <Grid container spacing={0.5} alignItems="center">
-        <Grid item justifyContent="center" md={2} xs={2}>
+        <Grid item justifyContent="center" md={2.2} lg={1.5} xl={1.2}>
           <Box
             sx={{
               pt: 2,
@@ -28,7 +28,7 @@ export const ShareBoxListItem = ({ share }) => {
             <ShareStatus status={share.status} />
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={2} xs={2}>
+        <Grid item justifyContent="flex-end" md={2} lg={2.25} xl={2.25}>
           <Box
             sx={{
               pt: 2,
@@ -48,7 +48,7 @@ export const ShareBoxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={2} xs={2}>
+        <Grid item justifyContent="flex-end" md={2} lg={2.25} xl={2.25}>
           <Box
             sx={{
               pt: 2,
@@ -68,7 +68,7 @@ export const ShareBoxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="center" md={2} xs={2}>
+        <Grid item justifyContent="center" md={2} lg={2.25} xl={2.25}>
           <Box
             sx={{
               pt: 2,
@@ -88,7 +88,7 @@ export const ShareBoxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="center" md={2} xs={2}>
+        <Grid item justifyContent="center" md={2} lg={2.25} xl={2.25}>
           <Box
             sx={{
               pt: 2,
@@ -108,7 +108,7 @@ export const ShareBoxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={1.3} xs={1.3}>
+        <Grid item justifyContent="flex-end" md={1.3} lg={1.2} xl={1.4}>
           <Button
             color="primary"
             type="button"
@@ -119,7 +119,7 @@ export const ShareBoxListItem = ({ share }) => {
             Open Share Request
           </Button>
         </Grid>
-        <Grid item justifyContent="flex-end" md={0.2} xs={0.2}>
+        <Grid item justifyContent="flex-end" md={0.2} lg={0.2} xl={0.4}>
           {share.statistics.sharedItems > 0 && (
             <Tooltip
               title={share.statistics.sharedItems + ' shared items'}
