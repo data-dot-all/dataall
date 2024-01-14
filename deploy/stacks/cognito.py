@@ -503,7 +503,7 @@ class IdpStack(pyNestedClass):
         priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
-                name='APIGatewayRateLimit',
+                name='CognitoRateLimit',
                 statement=wafv2.CfnWebACL.StatementProperty(
                     rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(aggregate_key_type='IP', limit=1000)
                 ),
@@ -511,7 +511,7 @@ class IdpStack(pyNestedClass):
                 visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
                     sampled_requests_enabled=True,
                     cloud_watch_metrics_enabled=True,
-                    metric_name=f'WAFAPIGatewayRateLimit{envname}',
+                    metric_name=f'WAFCognitoRateLimit{envname}',
                 ),
                 priority=priority,
             )
