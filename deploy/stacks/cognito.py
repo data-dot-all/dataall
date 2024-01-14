@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_cognito as cognito,
     aws_ssm as ssm,
     aws_iam as iam,
+    aws_wafv2 as wafv2,
     aws_lambda as _lambda,
     CfnOutput,
     BundlingOptions,
@@ -26,6 +27,7 @@ class IdpStack(pyNestedClass):
         vpc=None,
         prod_sizing=False,
         internet_facing=True,
+        custom_waf_rules=None,
         tooling_account_id=None,
         enable_cw_rum=False,
         cognito_user_session_timeout_inmins=43200,
@@ -50,6 +52,41 @@ class IdpStack(pyNestedClass):
         cfn_user_pool.user_pool_add_ons = cognito.CfnUserPool.UserPoolAddOnsProperty(
             advanced_security_mode='ENFORCED'
         )
+
+        # Create IP set if IP filtering enabled in CDK.json
+        ip_set_regional = None
+        if custom_waf_rules and custom_waf_rules.get('allowed_ip_list'):
+            ip_set_regional = wafv2.CfnIPSet(
+                self,
+                'DataallRegionalIPSet-Cognito',
+                name=f'{resource_prefix}-{envname}-ipset-regional',
+                description=f'IP addresses allowed for Dataall {envname}',
+                addresses=custom_waf_rules.get('allowed_ip_list'),
+                ip_address_version='IPV4',
+                scope='REGIONAL',
+            )
+            
+
+        acl = wafv2.CfnWebACL(
+            self,
+            'ACL-Cognito',
+            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+            scope='REGIONAL',
+            visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                cloud_watch_metrics_enabled=True,
+                metric_name='waf-cognito',
+                sampled_requests_enabled=True,
+            ),
+            rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
+        )
+
+        wafv2.CfnWebACLAssociation(
+            self,
+            'WafCognito',
+            resource_arn=self.user_pool.user_pool_arn,
+            web_acl_arn=acl.get_att('Arn').to_string(),
+        )
+
         self.domain = cognito.UserPoolDomain(
             self,
             f'UserPool{envname}',
@@ -306,3 +343,177 @@ class IdpStack(pyNestedClass):
             export_name=f'CognitoAppCliendId{envname}',
             value=self.client.user_pool_client_id,
         )
+
+    @staticmethod
+    def get_waf_rules(envname, custom_waf_rules=None, ip_set_regional=None):
+        waf_rules = []
+        priority = 0
+        if custom_waf_rules:
+            if custom_waf_rules.get('allowed_geo_list'):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='GeoMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    geo_match_statement=wafv2.CfnWebACL.GeoMatchStatementProperty(
+                                        country_codes=custom_waf_rules.get('allowed_geo_list')
+                                    )
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='GeoMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
+            if custom_waf_rules.get('allowed_ip_list'):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='IPMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    ip_set_reference_statement={'arn': ip_set_regional.attr_arn}
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='IPMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesAdminProtectionRuleSet',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesAdminProtectionRuleSet'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesAmazonIpReputationList',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesAmazonIpReputationList'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesCommonRuleSet',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesCommonRuleSet'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesCommonRuleSet',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesKnownBadInputsRuleSet'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesLinuxRuleSet',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesLinuxRuleSet'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesLinuxRuleSet',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='AWS-AWSManagedRulesSQLiRuleSet',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name='AWS', name='AWSManagedRulesSQLiRuleSet'
+                    )
+                ),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='AWS-AWSManagedRulesSQLiRuleSet',
+                ),
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+            )
+        )
+        priority += 1
+        waf_rules.append(
+            wafv2.CfnWebACL.RuleProperty(
+                name='APIGatewayRateLimit',
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(aggregate_key_type='IP', limit=1000)
+                ),
+                action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    sampled_requests_enabled=True,
+                    cloud_watch_metrics_enabled=True,
+                    metric_name=f'WAFAPIGatewayRateLimit{envname}',
+                ),
+                priority=priority,
+            )
+        )
+        return waf_rules
