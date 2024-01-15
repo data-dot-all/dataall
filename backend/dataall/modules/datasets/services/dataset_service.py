@@ -30,7 +30,7 @@ from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DA
     DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ, IMPORT_DATASET
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.enums import DatasetRole
+from dataall.modules.datasets_base.constants.enums import DatasetRole
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 

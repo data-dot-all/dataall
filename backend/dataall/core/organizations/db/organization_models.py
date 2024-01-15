@@ -8,14 +8,6 @@ from dataall.base.db import Base
 from dataall.base.db import Resource, utils
 
 
-class OrganisationUserRole(Enum):
-    Owner = '999'
-    Admin = '900'
-    Member = '100'
-    NotMember = '000'
-    Invited = '800'
-
-
 class Organization(Resource, Base):
     __tablename__ = 'organization'
     organizationUri = Column(

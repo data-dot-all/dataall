@@ -1,7 +1,7 @@
 import logging
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.common.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset

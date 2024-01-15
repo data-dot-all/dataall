@@ -1,7 +1,23 @@
-from enum import Enum
+
+from dataall.base.api.constants import GraphQLEnumMapper
 
 
-class ShareObjectStatus(Enum):
+class ShareableType(GraphQLEnumMapper):
+    Table = 'DatasetTable'
+    StorageLocation = 'DatasetStorageLocation'
+    View = 'View'
+    S3Bucket = 'S3Bucket'
+
+
+class ShareObjectPermission(GraphQLEnumMapper):
+    Approvers = '999'
+    ApproversAndRequesters = '900'
+    Requesters = '800'
+    DatasetAdmins = '700'
+    NoPermission = '000'
+
+
+class ShareObjectStatus(GraphQLEnumMapper):
     Deleted = 'Deleted'
     Approved = 'Approved'
     Rejected = 'Rejected'
@@ -13,15 +29,7 @@ class ShareObjectStatus(Enum):
     Processed = 'Processed'
 
 
-class ShareObjectPermission(Enum):
-    Approvers = '999'
-    ApproversAndRequesters = '900'
-    Requesters = '800'
-    DatasetAdmins = '700'
-    NoPermission = '000'
-
-
-class ShareItemStatus(Enum):
+class ShareItemStatus(GraphQLEnumMapper):
     Deleted = 'Deleted'
     PendingApproval = 'PendingApproval'
     Share_Approved = 'Share_Approved'
@@ -35,7 +43,7 @@ class ShareItemStatus(Enum):
     Revoke_Succeeded = 'Revoke_Succeeded'
 
 
-class ShareObjectActions(Enum):
+class ShareObjectActions(GraphQLEnumMapper):
     Submit = 'Submit'
     Approve = 'Approve'
     Reject = 'Reject'
@@ -46,21 +54,14 @@ class ShareObjectActions(Enum):
     Delete = 'Delete'
 
 
-class ShareItemActions(Enum):
+class ShareItemActions(GraphQLEnumMapper):
     AddItem = 'AddItem'
     RemoveItem = 'RemoveItem'
     Failure = 'Failure'
     Success = 'Success'
 
 
-class ShareableType(Enum):
-    Table = 'DatasetTable'
-    StorageLocation = 'DatasetStorageLocation'
-    View = 'View'
-    S3Bucket = 'S3Bucket'
-
-
-class PrincipalType(Enum):
+class PrincipalType(GraphQLEnumMapper):
     Any = 'Any'
     Organization = 'Organization'
     Environment = 'Environment'
@@ -69,3 +70,9 @@ class PrincipalType(Enum):
     Public = 'Public'
     Group = 'Group'
     ConsumptionRole = 'ConsumptionRole'
+
+
+class ShareSortField(GraphQLEnumMapper):
+    created = 'created'
+    updated = 'updated'
+    label = 'label'

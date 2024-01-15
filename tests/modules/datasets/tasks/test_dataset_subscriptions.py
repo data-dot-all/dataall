@@ -4,7 +4,7 @@ import pytest
 
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService

@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 
 from dataall.base.db import get_engine, has_table
 from dataall.base.db import utils, Resource
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType
+from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus, ShareableType
 from datetime import datetime
 
 # revision identifiers, used by Alembic.
