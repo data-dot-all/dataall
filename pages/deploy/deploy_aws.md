@@ -685,21 +685,22 @@ this SNS topic and monitor and take actions in case of any delivery failure.
 Some of the deployment parameters in the `cdk.json` strenghten the security posture of the deployment. We encourage users
 to configure data.all with the following values.
 - Set `enable_pivot_role_auto_create` to `true`: it allows data.all to scope down permissions to the pivot role. 
-It also avoids manual management of pivot roles, which reduces errors significantly.
-- Set `cognito_user_session_timeout_inmins` to the minimum: which alleviates malicious users impersonating a cognito user.
+It also avoids manual management of pivot roles, which the subsequent reduction of manual errors.
+- Set `cognito_user_session_timeout_inmins` to the minimum: which constraints the impact of malicious actors impersonating a cognito user.
 
 
 ### Least privilege permissions
 Data.all strives to fulfill this principle for all roles and personas using the platform. There are some additional
-guidelines that could serve customers to follow this principle when setting up an AWS account to use data.all.
+guidelines that could serve customers to follow this principle when setting up AWS accounts to use data.all.
 
-- Use scoped-down CDK exec role policy that can be downloaded from the data.all UI. This CloudFormation 
-template can be used in the CDK bootstrap command.
-- Data personas should use the provided IAM team roles to produce and consume data. Other IAM roles in the Environment 
-AWS Account should have limited permissions.
 - Access to the deployment account(s) should be restricted to data.all maintainer teams. IAM roles with limited permissions will be provided to these teams only.
 - Access to the tooling account should be restricted to developer teams. IAM roles with access only to the CICD 
 necessary resources will be provided to these teams only.
+- Access in the environment account(s). Data personas should use the provided IAM team roles to produce and consume data. Other IAM roles in the Environment 
+AWS Account should have limited permissions. You might use imported-IAM roles to data.all or consumption roles to adjust to your particular requirements.
+- Access in the environment account(s) for CDK execution role, should use the scoped-down CDK exec role policy that can 
+be downloaded from the data.all UI. This CloudFormation template can be used in the CDK bootstrap command.
+
 
 
 ### Managing new releases and customizations
