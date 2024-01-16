@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
+from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
 
 
 class DatasetTableColumn(Resource, Base):
@@ -109,9 +110,9 @@ class Dataset(Resource, Base):
     userRoleInEnvironment = query_expression()
     isPublishedInEnvironment = query_expression()
     projectPermission = query_expression()
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default=Language.English.value)
     topics = Column(ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(ARRAY(String))
     inProject = query_expression()
 

@@ -12,6 +12,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.base.db import utils, Resource
+from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 
@@ -44,9 +45,9 @@ class Dataset(Resource, Base):
     IAMDatasetAdminRoleArn = Column(String, nullable=False)
     IAMDatasetAdminUserArn = Column(String, nullable=False)
     KmsAlias = Column(String, nullable=False)
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default=Language.English.value)
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(postgresql.ARRAY(String))
     bucketCreated = Column(Boolean, default=False)
     glueDatabaseCreated = Column(Boolean, default=False)

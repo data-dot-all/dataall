@@ -18,6 +18,9 @@ from dataall.base.db import utils, Resource
 from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus, ShareableType
 from datetime import datetime
 
+from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
+
+
 # revision identifiers, used by Alembic.
 revision = '8c79fb896983'
 down_revision = '4f3c1d84a628'
@@ -51,9 +54,9 @@ class Dataset(Resource, Base):
     userRoleInEnvironment = query_expression()
     isPublishedInEnvironment = query_expression()
     projectPermission = query_expression()
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default=Language.English.value)
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(postgresql.ARRAY(String))
     inProject = query_expression()
 

@@ -10,6 +10,9 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetReposit
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 from tests.core.stacks.test_stack import update_stack_query
 
+from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification
+
+
 mocked_key_id = 'some_key'
 
 
@@ -112,14 +115,14 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
         input={
             'label': 'dataset1updated',
             'stewards': group2.name,
-            'confidentiality': 'Secret',
+            'confidentiality': ConfidentialityClassification.Secret.value,
             'KmsAlias': ''
         },
         groups=[group.name],
     )
     assert response.data.updateDataset.label == 'dataset1updated'
     assert response.data.updateDataset.stewards == group2.name
-    assert response.data.updateDataset.confidentiality == 'Secret'
+    assert response.data.updateDataset.confidentiality == ConfidentialityClassification.Secret.value
 
     response = client.query(
         """
@@ -158,14 +161,14 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
         input={
             'label': 'dataset1updated2',
             'stewards': dataset1.SamlAdminGroupName,
-            'confidentiality': 'Official',
+            'confidentiality': ConfidentialityClassification.Official.value,
             'KmsAlias': ''
         },
         groups=[group.name],
     )
     assert response.data.updateDataset.label == 'dataset1updated2'
     assert response.data.updateDataset.stewards == dataset1.SamlAdminGroupName
-    assert response.data.updateDataset.confidentiality == 'Official'
+    assert response.data.updateDataset.confidentiality == ConfidentialityClassification.Official.value
 
 @pytest.mark.skipif(not config.get_property("modules.datasets.features.glue_crawler"), reason="Feature Disabled by Config")
 def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):

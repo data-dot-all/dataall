@@ -13,6 +13,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.base.db import utils, Resource
+from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
+
 
 revision = '5e5c84138af7'
 down_revision = '94697ee46c0c'
@@ -40,9 +42,9 @@ class Dataset(Resource, Base):
     IAMDatasetAdminRoleArn = Column(String, nullable=False)
     IAMDatasetAdminUserArn = Column(String, nullable=False)
     KmsAlias = Column(String, nullable=False)
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default=Language.English.value)
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(postgresql.ARRAY(String))
 
     bucketCreated = Column(Boolean, default=False)
@@ -74,8 +76,8 @@ def upgrade():
         print('Updating datasets...')
         datasets: [Dataset] = session.query(Dataset).all()
         for dataset in datasets:
-            if dataset.confidentiality not in ['Unclassified', 'Official', 'Secret']:
-                dataset.confidentiality = 'Unclassified'
+            if dataset.confidentiality not in ConfidentialityClassification:
+                dataset.confidentiality = ConfidentialityClassification.Unclassified.value
                 session.commit()
         print('Datasets updated successfully')
     except Exception as e:
