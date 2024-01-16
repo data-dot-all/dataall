@@ -21,6 +21,7 @@ NewDatasetInput = gql.InputType(
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
     ],
 )
 
