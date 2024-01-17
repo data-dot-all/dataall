@@ -5,9 +5,23 @@ permalink: /deploy-aws/
 ---
 
 # **Getting Started: Deploy to AWS**
-You can deploy data.all in your AWS accounts by following these steps:
+- [Pre-requisites](#pre-reqs)
+- [1. Clone data.all code](#clone)
+- [2. Setup Python virtualenv](#env)
+- [3. Mirror the code to a CodeCommit or CodeStar Connections repository](#code)
+- [4. Bootstrap tooling account](#boot)
+- [5. Bootstrap deployment account(s)](#boot2)
+- [6. Configure the deployment options in the cdk.json file](#cdkjson)
+- [7. Configure the application modules in the config.json file](#configjson)
+- [8. Run CDK synth and check cdk.context.json](#context)
+- [9. Add CDK context file](#context2)
+- [10. Run CDK deploy](#deploy)
+- [11. Configure Cloudwatch RUM (if enable_cw_rum=true)](#rum)
+- [12. Setting SES for Email Notifications](#ses)
+- [Best practices and recommendations](#best)
+- [FAQs](#faqs)
 
-## Pre-requisites
+## Pre-requisites <a name="pre-reqs"></a>
 You need to have the tools below up and running to proceed with the deployment:
 
 * python 3.8 or higher
@@ -44,15 +58,14 @@ and the Deployment account.
 Make sure that the AWS services used in data.all are available in the Regions you choose for tooling and deployment. 
 Check out the [Architecture](../architecture/). Moreover, data.all uses [CDK Pipelines](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html) in the Tooling account,
 which means that AWS services used by this construct need to be available in the tooling account (e.g. CodeArtifact).
-
-## 1. Clone data.all code
+## 1. Clone data.all code <a name="clone"></a>
 
 Clone the GitHub repository from:
 ```bash
 git clone https://github.com/data-dot-all/dataall.git
 cd dataall
 ```
-## 2. Setup Python virtualenv
+## 2. Setup Python virtualenv <a name="env"></a>
 From your personal computer or from Cloud9 in the AWS Console, create a python virtual environment 
 from the code using python 3.8, then install the necessary deploy requirements with the following commands:
 
@@ -62,8 +75,7 @@ source venv/bin/activate
 pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
 ```
-
-## 3. Mirror the code to a CodeCommit or CodeStar Connections repository
+## 3. Mirror the code to a CodeCommit or CodeStar Connections repository <a name="code"></a>
 ### Using CodeCommit:
 Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
 and push your changes:
@@ -101,8 +113,7 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
-
-## 4. Bootstrap tooling account
+## 4. Bootstrap tooling account <a name="boot"></a>
 The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
 It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
 
@@ -120,7 +131,7 @@ North Virginia region (needed to be able to deploy cross region to us-east-1)
 ```bash
 cdk bootstrap aws://<tooling-account-id>/us-east-1
 ```
-## 5. Bootstrap deployment account(s)
+## 5. Bootstrap deployment account(s) <a name="boot2"></a>
 
 Run the commands below with the AWS credentials of the deployment account:
 
@@ -133,9 +144,7 @@ If you plan to configure the deployment with internet-facing frontend, you also 
 ```bash
 cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east-1
 ```
-
-
-## 6. Configure the deployment options in the cdk.json file
+## 6. Configure the deployment options in the cdk.json file <a name="cdkjson"></a>
 We use a parameters cdk.json file to configure and customize your deployment of data.all. This file is at the root level
 of our repository. Open it, you should be seen something like:
 ```json
@@ -422,9 +431,7 @@ instructions in the comments to create and return an instance of your custom ser
         else:
             return Cognito()
 ```
-
-
-## 7. Configure the application modules in the config.json file
+## 7. Configure the application modules in the config.json file <a name="configjson"></a>
 In data.all V2 you can enable, disable, configure and add new modules to your data.all deployment in the `config.json` file
 located at the top level of the repository. Here is an example file, where you
 can distinguish 2 parts: `modules` and `core`. Read the following subsections to understand each of these parts and 
@@ -556,10 +563,7 @@ disable any other core feature.
 | **Feature**           | **Module**     | **Description**                                                                  |   
 |-----------------------|----------------|----------------------------------------------------------------------------------|
 | env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
-
-
-
-## 8. Run CDK synth and check cdk.context.json
+## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
 With this command, CDK will create a **cdk.context.json** file with key-value pairs that are checked at 
 synthesis time. Think of them as environment variables for the synthesis of CloudFormation stacks. 
@@ -612,8 +616,7 @@ the subnets that won't be used in the deployment.
   }
 }
 ````
-
-## 9. Add CDK context file
+## 9. Add CDK context file <a name="context2"></a>
 The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
 repository. Add the generated context file to the repo by running the commands below 
 (remember, with the tooling account credentials).
@@ -623,8 +626,7 @@ git add cdk.context.json
 git commit -m "CDK configuration"
 git push
 ```
-
-## 10. Run CDK deploy
+## 10. Run CDK deploy <a name="deploy"></a>
 You are all set to start the deployment, with the AWS credentials for the tooling account, run the command below. 
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
@@ -635,7 +637,7 @@ In case you used the default values, this is how the command would look like:
 ```bash
 cdk deploy dataall-main-cicd-stack
 ```
-## 11. Configure Cloudwatch RUM (enable_cw_rum=true)
+## 11. Configure Cloudwatch RUM (if enable_cw_rum=true) <a name="rum"></a>
 
 If you enabled CloudWatch RUM in the **cdk.json** file: 
 
@@ -651,7 +653,7 @@ If you enabled CloudWatch RUM in the **cdk.json** file:
 8. Commit and push your changes.
 
 
-## 🎉 Congratulations - What I have just done? 🎉
+## 🎉 Congratulations - What I have just done? 🎉 
 You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
 diagram.
 
@@ -660,7 +662,7 @@ diagram.
 With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
 in the tooling account and check the status of your pipeline.
 
-## 12. Setting SES for Email Notifications
+## 12. Setting SES for Email Notifications <a name="ses"></a>
 
 Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module.
 
@@ -677,8 +679,40 @@ which will send any email bounces, delivery failures, rejects & complaints to an
 In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to
 this SNS topic and monitor and take actions in case of any delivery failure.
 
+## Best practices and recommendations <a name="best"></a>
 
-## Additional resources - FAQs
+### Deployment parameters
+Some of the deployment parameters in the `cdk.json` strenghten the security posture of the deployment. We encourage users
+to configure data.all with the following values.
+- Set `enable_pivot_role_auto_create` to `true`: it allows data.all to scope down permissions to the pivot role. 
+It also avoids manual management of pivot roles, which the subsequent reduction of manual errors.
+- Set `cognito_user_session_timeout_inmins` to the minimum: which constraints the impact of malicious actors impersonating a cognito user.
+
+
+### Least privilege permissions
+Data.all strives to fulfill this principle for all roles and personas using the platform. There are some additional
+guidelines that could serve customers to follow this principle when setting up AWS accounts to use data.all.
+
+- Access to the deployment account(s) should be restricted to data.all maintainer teams. IAM roles with limited permissions will be provided to these teams only.
+- Access to the tooling account should be restricted to developer teams. IAM roles with access only to the CICD 
+necessary resources will be provided to these teams only.
+- Access in the environment account(s). Data personas should use the provided IAM team roles to produce and consume data. Other IAM roles in the Environment 
+AWS Account should have limited permissions. You might use imported-IAM roles to data.all or consumption roles to adjust to your particular requirements.
+- Access in the environment account(s) for CDK execution role, should use the scoped-down CDK exec role policy that can 
+be downloaded from the data.all UI when linking a new environment. This CloudFormation template can then be used in the CDK bootstrap command.
+
+
+
+### Managing new releases and customizations
+
+To get the latest features and fixes, customers are encouraged to **keep in sync** with the latest version of data.all.
+At the same time, customers often develop their own features and customizations on top of data.all. We recommend 
+customers to **contribute back** these features so that we can manage them and respond to issues. Moreover, contributing back
+makes it easier to keep in sync with the latest data.all releases. Please refer to the CONTRIBUTING.md file in 
+data.all's GitHub repository for more information on how to contribute back to data.all.
+
+
+## FAQs <a name="faqs"></a>
 
 ### How does the `prod_sizing` field in `cdk.json` affect the architecture ?
 
