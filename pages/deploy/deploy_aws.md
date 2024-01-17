@@ -699,7 +699,7 @@ necessary resources will be provided to these teams only.
 - Access in the environment account(s). Data personas should use the provided IAM team roles to produce and consume data. Other IAM roles in the Environment 
 AWS Account should have limited permissions. You might use imported-IAM roles to data.all or consumption roles to adjust to your particular requirements.
 - Access in the environment account(s) for CDK execution role, should use the scoped-down CDK exec role policy that can 
-be downloaded from the data.all UI. This CloudFormation template can be used in the CDK bootstrap command.
+be downloaded from the data.all UI when linking a new environment. This CloudFormation template can then be used in the CDK bootstrap command.
 
 
 
@@ -708,7 +708,8 @@ be downloaded from the data.all UI. This CloudFormation template can be used in 
 To get the latest features and fixes, customers are encouraged to **keep in sync** with the latest version of data.all.
 At the same time, customers often develop their own features and customizations on top of data.all. We recommend 
 customers to **contribute back** these features so that we can manage them and respond to issues. Moreover, contributing back
-makes it easier to keep in sync with the latest data.all releases.
+makes it easier to keep in sync with the latest data.all releases. Please refer to the CONTRIBUTING.md file in 
+data.all's GitHub repository for more information on how to contribute back to data.all.
 
 
 ## FAQs <a name="faqs"></a>
