@@ -60,8 +60,8 @@ class IdpStack(pyNestedClass):
             ip_set_regional = wafv2.CfnIPSet(
                 self,
                 'DataallRegionalIPSet-Cognito',
-                name=f'{resource_prefix}-{envname}-ipset-regional',
-                description=f'IP addresses allowed for Dataall {envname}',
+                name=f'{resource_prefix}-{envname}-ipset-regional-cognito',
+                description=f'IP addresses allowed for Dataall {envname} Cognito User Pool',
                 addresses=custom_waf_rules.get('allowed_ip_list'),
                 ip_address_version='IPV4',
                 scope='REGIONAL',
