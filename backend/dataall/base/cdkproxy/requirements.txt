@@ -16,4 +16,3 @@ werkzeug==3.0.1
 constructs>=10.0.0,<11.0.0
 git-remote-codecommit==1.16
 aws-ddk-core==1.3.0
-deprecated==1.2.13
