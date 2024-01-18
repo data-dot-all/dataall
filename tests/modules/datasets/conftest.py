@@ -9,7 +9,7 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.modules.dataset_sharing.common.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
-from dataall.modules.datasets_base.constants.enums  import ConfidentialityClassification
+from dataall.modules.datasets_base.common.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation, DatasetBucket
 
@@ -40,12 +40,12 @@ def dataset(client, patch_es, patch_dataset_methods):
     cache = {}
 
     def factory(
-        org: Organization,
-        env: Environment,
-        name: str,
-        owner: str,
-        group: str,
-        confidentiality: str = None
+            org: Organization,
+            env: Environment,
+            name: str,
+            owner: str,
+            group: str,
+            confidentiality: str = None
     ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -205,6 +205,7 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
         group=group.name,
     )
 
+
 @pytest.fixture(scope='module')
 def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
     yield dataset(
@@ -215,6 +216,7 @@ def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Da
         group=group.name,
         confidentiality=ConfidentialityClassification.Secret.value
     )
+
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
@@ -229,6 +231,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
+
 
 @pytest.fixture(scope='module')
 def table_confidential_fixture(db, dataset_confidential_fixture, table, group, user):
@@ -265,9 +268,9 @@ def folder_fixture(db, dataset_fixture):
 @pytest.fixture(scope="module")
 def dataset_model(db):
     def factory(
-        organization: Organization,
-        environment: Environment,
-        label: str
+            organization: Organization,
+            environment: Environment,
+            label: str
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -420,4 +423,3 @@ def random_tag():
 
 def random_tags():
     return [random_tag() for i in range(1, random.choice([2, 3, 4, 5]))]
-

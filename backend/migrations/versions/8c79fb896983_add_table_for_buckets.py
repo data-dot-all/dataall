@@ -18,7 +18,7 @@ from dataall.base.db import utils, Resource
 from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus, ShareableType
 from datetime import datetime
 
-from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.common.enums import ConfidentialityClassification, Language
 
 
 # revision identifiers, used by Alembic.

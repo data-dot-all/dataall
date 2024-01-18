@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_p
     ProcessS3AccessPointShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
-from dataall.modules.dataset_sharing.common.enums  import (ShareObjectActions, ShareItemStatus, ShareableType)
+from dataall.modules.dataset_sharing.common.enums import (ShareObjectActions, ShareItemStatus, ShareableType)
 
 log = logging.getLogger(__name__)
 

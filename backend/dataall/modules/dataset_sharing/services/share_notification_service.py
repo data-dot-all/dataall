@@ -6,7 +6,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.context import get_context
-from dataall.modules.dataset_sharing.common.enums  import ShareObjectStatus
+from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 log = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ class ShareNotificationService:
         - dataset.stewards
         - share.owner (person that opened the request) OR share.groupUri (if group_notifications=true)
     """
+
     def __init__(self, session, dataset: Dataset, share: ShareObject):
         self.dataset = dataset
         self.share = share
@@ -139,11 +140,11 @@ class ShareNotificationService:
                             action='notification.service',
                             targetUri=self.share.shareUri,
                             payload={
-                                'notificationType' : share_notification_config_type,
+                                'notificationType': share_notification_config_type,
                                 'subject': subject,
                                 'message': msg,
-                                'recipientGroupsList' : notification_recipient_groups_list,
-                                'recipientEmailList' : notification_recipient_email_ids
+                                'recipientGroupsList': notification_recipient_groups_list,
+                                'recipientEmailList': notification_recipient_email_ids
                             },
                         )
                         self.session.add(notification_task)

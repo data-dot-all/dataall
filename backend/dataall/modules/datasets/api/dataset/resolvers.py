@@ -9,7 +9,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.constants.enums import DatasetRole
+from dataall.modules.datasets_base.common.enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)

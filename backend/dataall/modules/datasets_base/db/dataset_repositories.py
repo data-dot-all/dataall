@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
-from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.common.enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.base.utils.naming_convention import (

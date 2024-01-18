@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
-from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.common.enums import ConfidentialityClassification, Language
 
 
 class DatasetTableColumn(Resource, Base):

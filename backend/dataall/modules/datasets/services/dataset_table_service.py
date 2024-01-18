@@ -14,7 +14,7 @@ from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, SYNC_DATASET
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.constants.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.common.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ, \
     GET_DATASET_TABLE
