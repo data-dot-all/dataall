@@ -78,14 +78,13 @@ class LFShareManager:
 
     def build_shared_db_name(self) -> str:
         """
-        Build Glue shared database name.
-        Unique per share Uri.
+        Build Glue shared database name with suffix "_shared"
 
         Returns
         -------
         Shared database name
         """
-        return (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
+        return self.dataset.GlueDatabaseName[:247] + '_shared'
 
     def build_share_data(self, table: DatasetTable) -> dict:
         """
@@ -146,7 +145,10 @@ class LFShareManager:
 
     def grant_pivot_role_all_database_permissions(self) -> bool:
         """
-        Grants 'ALL' database Lake Formation permissions to data.all PivotRole
+        Grants 'ALL' database Lake Formation permissions to data.all PivotRole in source account
+        Returns
+        -------
+        True if it is successful
         """
         LakeFormationClient.grant_pivot_role_all_database_permissions(
             self.source_environment.AwsAccountId,
@@ -155,15 +157,8 @@ class LFShareManager:
         )
         return True
 
-    @classmethod
-    def create_shared_database(
-        cls,
-        target_environment: Environment,
-        dataset: Dataset,
-        shared_db_name: str,
-        principals: [str],
-    ) -> dict:
 
+    def create_shared_database(self) -> dict:
         """
         Creates the shared database if does not exists.
         1) Grants pivot role ALL permission on shareddb
@@ -183,25 +178,25 @@ class LFShareManager:
 
         logger.info(
             f'Creating shared db ...'
-            f'{target_environment.AwsAccountId}://{shared_db_name}'
+            f'{self.target_environment.AwsAccountId}://{self.shared_db_name}'
         )
 
         database = GlueClient(
-            account_id=target_environment.AwsAccountId,
-            database=shared_db_name,
-            region=target_environment.region
-        ).create_database(f's3://{dataset.S3BucketName}')
+            account_id=self.target_environment.AwsAccountId,
+            database=self.shared_db_name,
+            region=self.target_environment.region
+        ).create_database(f's3://{self.dataset.S3BucketName}')
 
         LakeFormationClient.grant_pivot_role_all_database_permissions(
-            target_environment.AwsAccountId, target_environment.region, shared_db_name
+            self.target_environment.AwsAccountId, self.target_environment.region, self.shared_db_name
         )
 
         LakeFormationClient.grant_permissions_to_database(
             client=SessionHelper.remote_session(
-                accountid=target_environment.AwsAccountId
-            ).client('lakeformation', region_name=target_environment.region),
-            principals=principals,
-            database_name=shared_db_name,
+                accountid=self.target_environment.AwsAccountId
+            ).client('lakeformation', region_name=self.target_environment.region),
+            principals=self.principals,
+            database_name=self.shared_db_name,
             permissions=['DESCRIBE'],
         )
 
@@ -218,47 +213,44 @@ class LFShareManager:
         logger.info(f'Deleting shared database {self.shared_db_name}')
         return self.glue_client().delete_database()
 
-    @classmethod
-    def create_resource_link(cls, **data) -> dict:
+    def create_resource_link(self, table: DatasetTable) -> dict:
         """
         Creates a resource link to the source shared Glue table
         Parameters
         ----------
-        data : data of source and target accounts
+        table : DatasetTable
 
         Returns
         -------
         boto3 creation response
         """
-        source = data['source']
-        target = data['target']
-        target_session = SessionHelper.remote_session(accountid=target['accountid'])
+        target_session = SessionHelper.remote_session(accountid=self.target_environment.AwsAccountId)
         lakeformation_client = target_session.client(
-            'lakeformation', region_name=target['region']
+            'lakeformation', region_name=self.target_environment.region
         )
-        target_database = target['database']
+        target_database = self.shared_db_name
         resource_link_input = {
-            'Name': source['tablename'],
+            'Name': table.GlueTableName,
             'TargetTable': {
-                'CatalogId': data['source']['accountid'],
-                'DatabaseName': source['database'],
-                'Name': source['tablename'],
+                'CatalogId': self.source_environment.AwsAccountId,
+                'DatabaseName': table.GlueDatabaseName,
+                'Name': table.GlueTableName,
             },
         }
 
         try:
-            glue_client = GlueClient(target['accountid'], target['region'], target_database)
+            glue_client = GlueClient(self.target_environment.AwsAccountId, self.target_environment.region, target_database)
             resource_link = glue_client.create_resource_link(
-                resource_link_name=source['tablename'],
+                resource_link_name=table.GlueTableName,
                 resource_link_input=resource_link_input,
             )
 
             LakeFormationClient.grant_resource_link_permission(
-                lakeformation_client, source, target, target_database
+                lakeformation_client, table.GlueTableName, self.target_environment.AwsAccountId, self.principals, target_database
             )
 
             LakeFormationClient.grant_resource_link_permission_on_target(
-                lakeformation_client, source, target
+                lakeformation_client, self.source_environment.AwsAccountId, table.GlueDatabaseName, table.GlueTableName, self.principals
             )
 
             return resource_link
@@ -366,60 +358,54 @@ class LFShareManager:
         glue_client.delete_table(table.GlueTableName)
         return True
 
-    @classmethod
-    def share_table_with_target_account(cls, **data):
+    def share_table_with_target_account(self, table: DatasetTable):
         """
         Shares tables using Lake Formation
         Sharing feature may take some extra seconds
         :param data:
         :return:
         """
-        source_accountid = data['source']['accountid']
-        source_region = data['source']['region']
 
-        target_accountid = data['target']['accountid']
-        target_region = data['target']['region']
-
-        source_session = SessionHelper.remote_session(accountid=source_accountid)
+        source_session = SessionHelper.remote_session(accountid=self.source_environment.AwsAccountId)
         source_lf_client = source_session.client(
-            'lakeformation', region_name=source_region
+            'lakeformation', region_name=self.source_environment.region
         )
         try:
 
             LakeFormationClient.revoke_iamallowedgroups_super_permission_from_table(
                 source_lf_client,
-                source_accountid,
-                data['source']['database'],
-                data['source']['tablename'],
+                self.source_environment.AwsAccountId,
+                table.GlueDatabaseName,
+                table.GlueTableName,
             )
             time.sleep(1)
 
             LakeFormationClient.grant_permissions_to_table(
                 source_lf_client,
-                target_accountid,
-                data['source']['database'],
-                data['source']['tablename'],
+                self.target_environment.AwsAccountId, #TODO:replace it by target IAM role!
+                table.GlueDatabaseName,
+                table.GlueTableName,
                 ['DESCRIBE', 'SELECT'],
                 ['DESCRIBE', 'SELECT'],
             )
             time.sleep(2)
 
             logger.info(
-                f"Granted access to table {data['source']['tablename']} "
-                f'to external account {target_accountid} '
+                f"Granted access to table {table.GlueTableName} "
+                f'to external account {self.target_environment.AwsAccountId} '
             )
             return True
 
         except ClientError as e:
             logging.error(
-                f'Failed granting access to table {data["source"]["tablename"]} '
-                f'from {source_accountid} / {source_region} '
-                f'to external account{target_accountid}/{target_region}'
+                f'Failed granting access to table {table.GlueTableName} '
+                f'from {self.source_environment.AwsAccountId} / {self.source_environment.region} '
+                f'to external account{self.target_environment.AwsAccountId}/{self.target_environment.region}'
                 f'due to: {e}'
             )
             raise e
 
-    def revoke_external_account_access_on_source_account(self, db_name, table_name) -> [dict]:
+    def revoke_external_account_access_on_source_account(self, table: DatasetTable) -> [dict]:
         """
         1) Revokes access to external account
         if dataset is not shared with any other team from the same workspace
@@ -446,8 +432,8 @@ class LFShareManager:
                 },
                 'Resource': {
                     'TableWithColumns': {
-                        'DatabaseName': db_name,
-                        'Name': table_name,
+                        'DatabaseName': table.GlueDatabaseName,
+                        'Name': table.GlueTableName,
                         'ColumnWildcard': {},
                         'CatalogId': self.source_environment.AwsAccountId,
                     }
@@ -465,7 +451,6 @@ class LFShareManager:
     def handle_share_failure(
         self,
         table: DatasetTable,
-        share_item: ShareObjectItem,
         error: Exception,
     ) -> bool:
         """
@@ -495,7 +480,6 @@ class LFShareManager:
     def handle_revoke_failure(
             self,
             table: DatasetTable,
-            share_item: ShareObjectItem,
             error: Exception,
     ) -> bool:
         """

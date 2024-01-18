@@ -1,9 +1,7 @@
 import logging
 
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import \
-    ProcessLFCrossAccountShare
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import \
-    ProcessLFSameAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import \
+    ProcessLakeFormationShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_process_share import \
     ProcessS3AccessPointShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
@@ -89,8 +87,9 @@ class DataSharingService:
         )
         log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
-        if source_environment.AwsAccountId != target_environment.AwsAccountId:
-            processor = ProcessLFCrossAccountShare(
+
+        log.info(f'Granting permissions to tables: {shared_tables}')
+        approved_tables_succeed = ProcessLakeFormationShare(
                 session,
                 dataset,
                 share,
@@ -99,21 +98,7 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 env_group,
-            )
-        else:
-            processor = ProcessLFSameAccountShare(
-                session,
-                dataset,
-                share,
-                shared_tables,
-                [],
-                source_environment,
-                target_environment,
-                env_group
-            )
-
-        log.info(f'Granting permissions to tables: {shared_tables}')
-        approved_tables_succeed = processor.process_approved_shares()
+            ).process_approved_shares()
         log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
         new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)

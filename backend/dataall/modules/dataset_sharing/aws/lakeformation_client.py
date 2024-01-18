@@ -175,17 +175,17 @@ class LakeFormationClient:
             raise e
 
     @staticmethod
-    def grant_resource_link_permission_on_target(client, source, target):
-        for principal in target['principals']:
+    def grant_resource_link_permission_on_target(client, source_account_id, source_database, source_table, principals):
+        for principal in principals:
             try:
                 table_grant = dict(
                     Principal={'DataLakePrincipalIdentifier': principal},
                     Resource={
                         'TableWithColumns': {
-                            'DatabaseName': source['database'],
-                            'Name': source['tablename'],
+                            'DatabaseName': source_database,
+                            'Name': source_table,
                             'ColumnWildcard': {},
-                            'CatalogId': source['accountid'],
+                            'CatalogId': source_account_id,
                         }
                     },
                     Permissions=['DESCRIBE', 'SELECT'],
@@ -194,27 +194,27 @@ class LakeFormationClient:
                 client.grant_permissions(**table_grant)
                 log.info(
                     f'Successfully granted permissions DESCRIBE,SELECT to {principal} on target '
-                    f'{source["accountid"]}://{source["database"]}/{source["tablename"]}'
+                    f'{source_account_id}://{source_database}/{source_table}'
                 )
             except ClientError as e:
                 logging.error(
                     f'Failed granting principal {principal} '
                     'read access to resource link on target'
-                    f' {source["accountid"]}://{source["database"]}/{source["tablename"]} '
+                    f' {source_account_id}://{source_database}/{source_table} '
                     f'due to: {e}'
                 )
                 raise e
 
     @staticmethod
-    def grant_resource_link_permission(client, source, target, target_database):
-        for principal in target['principals']:
+    def grant_resource_link_permission(client, source_table, target_account, principals, target_database):
+        for principal in principals:
             resourcelink_grant = dict(
                 Principal={'DataLakePrincipalIdentifier': principal},
                 Resource={
                     'Table': {
                         'DatabaseName': target_database,
-                        'Name': source['tablename'],
-                        'CatalogId': target['accountid'],
+                        'Name': source_table,
+                        'CatalogId': target_account,
                     }
                 },
                 # Resource link only supports DESCRIBE and DROP permissions no SELECT
@@ -224,12 +224,12 @@ class LakeFormationClient:
                 client.grant_permissions(**resourcelink_grant)
                 log.info(
                     f'Granted resource link DESCRIBE access '
-                    f'to principal {principal} on {target["accountid"]}://{target_database}/{source["tablename"]}'
+                    f'to principal {principal} on {target_account}://{target_database}/{source_table}'
                 )
             except ClientError as e:
                 logging.error(
                     f'Failed granting principal {principal} '
-                    f'read access to resource link on {target["accountid"]}://{target_database}/{source["tablename"]} '
+                    f'read access to resource link on {target_account}://{target_database}/{source_table} '
                     f'due to: {e}'
                 )
                 raise e
