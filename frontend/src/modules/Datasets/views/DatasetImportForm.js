@@ -224,7 +224,7 @@ const DatasetImportForm = (props) => {
                 bucketName: '',
                 KmsKeyAlias: '',
                 confidentiality: '',
-                autoApprovalEnabled: false,
+                autoApprovalEnabled: false
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -245,8 +245,9 @@ const DatasetImportForm = (props) => {
                 confidentiality: Yup.string()
                   .max(255)
                   .required('*Confidentiality is required'),
-                autoApprovalEnabled: Yup.boolean()
-                  .required('*AutoApproval property is required'),
+                autoApprovalEnabled: Yup.boolean().required(
+                  '*AutoApproval property is required'
+                )
               })}
               onSubmit={async (
                 values,
@@ -394,14 +395,12 @@ const DatasetImportForm = (props) => {
                             value={values.autoApprovalEnabled}
                             variant="outlined"
                           >
-
                             <MenuItem key={'Enabled'} value={true}>
                               Enabled
                             </MenuItem>
                             <MenuItem key={'Enabled'} value={false}>
                               Disabled
                             </MenuItem>
-
                           </TextField>
                         </CardContent>
                       </Card>

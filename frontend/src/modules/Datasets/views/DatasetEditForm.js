@@ -157,7 +157,6 @@ const DatasetEditForm = (props) => {
             confidentiality: values.confidentiality,
             KmsAlias: values.KmsAlias,
             autoApprovalEnabled: values.autoApprovalEnabled
-
           }
         })
       );
@@ -265,7 +264,6 @@ const DatasetEditForm = (props) => {
                 confidentiality: dataset.confidentiality,
                 KmsAlias: dataset.KmsAlias,
                 autoApprovalEnabled: dataset.autoApprovalEnabled
-
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -278,8 +276,9 @@ const DatasetEditForm = (props) => {
                 confidentiality: Yup.string().required(
                   '*Confidentiality is required'
                 ),
-                autoApprovalEnabled: Yup.boolean()
-                  .required('*AutoApproval property is required'),
+                autoApprovalEnabled: Yup.boolean().required(
+                  '*AutoApproval property is required'
+                )
               })}
               onSubmit={async (
                 values,
@@ -469,14 +468,12 @@ const DatasetEditForm = (props) => {
                             value={values.autoApprovalEnabled}
                             variant="outlined"
                           >
-
                             <MenuItem key={'Enabled'} value={true}>
                               Enabled
                             </MenuItem>
                             <MenuItem key={'Enabled'} value={false}>
                               Disabled
                             </MenuItem>
-
                           </TextField>
                         </CardContent>
                       </Card>

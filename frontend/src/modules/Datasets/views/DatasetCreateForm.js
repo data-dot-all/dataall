@@ -14,7 +14,6 @@ import {
   Grid,
   Link,
   MenuItem,
-  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -54,7 +53,6 @@ const DatasetCreateForm = (props) => {
     'Official',
     'Secret'
   ]);
-
 
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
@@ -107,10 +105,6 @@ const DatasetCreateForm = (props) => {
       );
     }
   }, [client, fetchEnvironments, dispatch]);
-
-  function  test(x){
-    console.log(x);
-  }
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -239,8 +233,9 @@ const DatasetCreateForm = (props) => {
                 confidentiality: Yup.string()
                   .max(255)
                   .required('*Confidentiality is required'),
-                autoApprovalEnabled: Yup.boolean()
-                  .required('*AutoApproval property is required'),
+                autoApprovalEnabled: Yup.boolean().required(
+                  '*AutoApproval property is required'
+                )
               })}
               onSubmit={async (
                 values,
@@ -387,14 +382,12 @@ const DatasetCreateForm = (props) => {
                             value={values.autoApprovalEnabled}
                             variant="outlined"
                           >
-
-                              <MenuItem key={'Enabled'} value={true}>
-                                Enabled
-                              </MenuItem>
+                            <MenuItem key={'Enabled'} value={true}>
+                              Enabled
+                            </MenuItem>
                             <MenuItem key={'Enabled'} value={false}>
                               Disabled
                             </MenuItem>
-
                           </TextField>
                         </CardContent>
                       </Card>
