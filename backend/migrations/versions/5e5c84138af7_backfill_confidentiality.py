@@ -76,7 +76,7 @@ def upgrade():
         print('Updating datasets...')
         datasets: [Dataset] = session.query(Dataset).all()
         for dataset in datasets:
-            if dataset.confidentiality not in ConfidentialityClassification:
+            if dataset.confidentiality not in [c.value for c in ConfidentialityClassification]:
                 dataset.confidentiality = ConfidentialityClassification.Unclassified.value
                 session.commit()
         print('Datasets updated successfully')

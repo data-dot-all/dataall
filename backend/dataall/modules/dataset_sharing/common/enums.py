@@ -1,4 +1,3 @@
-
 from dataall.base.api.constants import GraphQLEnumMapper
 
 

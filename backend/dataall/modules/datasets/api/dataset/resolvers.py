@@ -52,7 +52,7 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
                 .first()
             )
             if share and (
-                    share.owner == context.username or share.principalId in context.groups
+                share.owner == context.username or share.principalId in context.groups
             ):
                 return DatasetRole.Shared.value
     return DatasetRole.NoPermission.value
