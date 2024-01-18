@@ -155,7 +155,9 @@ const DatasetEditForm = (props) => {
               ? values.terms.nodes.map((t) => t.nodeUri)
               : values.terms.map((t) => t.nodeUri),
             confidentiality: values.confidentiality,
-            KmsAlias: values.KmsAlias
+            KmsAlias: values.KmsAlias,
+            autoApprovalEnabled: values.autoApprovalEnabled
+
           }
         })
       );
@@ -261,7 +263,9 @@ const DatasetEditForm = (props) => {
                 terms: dataset.terms || [],
                 stewards: dataset.stewards,
                 confidentiality: dataset.confidentiality,
-                KmsAlias: dataset.KmsAlias
+                KmsAlias: dataset.KmsAlias,
+                autoApprovalEnabled: dataset.autoApprovalEnabled
+
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -273,7 +277,9 @@ const DatasetEditForm = (props) => {
                 tags: Yup.array().min(1).required('*Tags are required'),
                 confidentiality: Yup.string().required(
                   '*Confidentiality is required'
-                )
+                ),
+                autoApprovalEnabled: Yup.boolean()
+                  .required('*AutoApproval property is required'),
               })}
               onSubmit={async (
                 values,
@@ -452,6 +458,26 @@ const DatasetEditForm = (props) => {
                               }}
                             />
                           </Box>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            label="Auto Approval"
+                            name="autoApprovalEnabled"
+                            onChange={handleChange}
+                            select
+                            value={values.autoApprovalEnabled}
+                            variant="outlined"
+                          >
+
+                            <MenuItem key={'Enabled'} value={true}>
+                              Enabled
+                            </MenuItem>
+                            <MenuItem key={'Enabled'} value={false}>
+                              Disabled
+                            </MenuItem>
+
+                          </TextField>
                         </CardContent>
                       </Card>
                     </Grid>
