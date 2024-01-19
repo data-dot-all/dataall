@@ -247,7 +247,6 @@ class ShareObjectService:
             session.add(approve_share_task)
 
         Worker.queue(engine=context.db_engine, task_ids=[approve_share_task.taskUri])
-        print('Hurray!')
         return share
 
     @staticmethod
