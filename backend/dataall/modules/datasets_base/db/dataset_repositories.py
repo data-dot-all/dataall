@@ -50,6 +50,7 @@ class DatasetRepository(EnvironmentResource):
             stewards=data.get('stewards')
             if data.get('stewards')
             else data['SamlAdminGroupName'],
+            autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
         cls._set_dataset_aws_resources(dataset, data, env)
         cls._set_import_data(dataset, data)
@@ -177,7 +178,7 @@ class DatasetRepository(EnvironmentResource):
         ).to_dict()
 
     @staticmethod
-    def update_dataset_activity(session, dataset, username) :
+    def update_dataset_activity(session, dataset, username):
         activity = Activity(
             action='dataset:update',
             label='dataset:update',

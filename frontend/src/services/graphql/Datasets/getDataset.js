@@ -41,6 +41,7 @@ export const getDataset = (datasetUri) => ({
         topics
         language
         confidentiality
+        autoApprovalEnabled
         organization {
           organizationUri
           label
