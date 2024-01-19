@@ -1,4 +1,5 @@
 import { Box, CardMedia, Grid, Typography } from '@mui/material';
+import version from '../../generated/version.json';
 
 export const Logo = () => (
   <>
@@ -17,7 +18,7 @@ export const Logo = () => (
       </Grid>
       <Grid item>
         <Typography variant="h5" color="#fff">
-          &nbsp;data.all
+          &nbsp;data.all {version.version}
         </Typography>
       </Grid>
     </Grid>
