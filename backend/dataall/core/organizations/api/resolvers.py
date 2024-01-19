@@ -3,14 +3,15 @@ from dataall.base.db import exceptions
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.organizations.services.organization_service import OrganizationService
 
+
 def create_organization(context: Context, source, input=None):
     if not input:
-            raise exceptions.RequiredParameter(input)
+        raise exceptions.RequiredParameter(input)
     if not input.get('SamlGroupName'):
         raise exceptions.RequiredParameter('groupUri')
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
-    
+
     return OrganizationService.create_organization(data=input)
 
 
@@ -75,7 +76,7 @@ def list_organization_groups(
 ):
     if filter is None:
         filter = {}
-    
+
     return OrganizationService.list_organization_groups(
         filter=filter,
         uri=organizationUri
@@ -88,5 +89,5 @@ def resolve_organization_by_env(context, source, **kwargs):
     """
     if not source:
         return None
-    
+
     return OrganizationService.resolve_organization_by_env(uri=source.environmentUri)

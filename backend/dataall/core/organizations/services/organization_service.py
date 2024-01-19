@@ -91,7 +91,7 @@ class OrganizationService:
         with context.db_engine.scoped_session() as session:
             return OrganizationRepository.get_organization_by_uri(
                 session=session, uri=uri
-                )
+            )
 
     @staticmethod
     def list_organizations(filter):
@@ -164,7 +164,7 @@ class OrganizationService:
             )
 
             return True
-        
+
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
@@ -245,7 +245,7 @@ class OrganizationService:
                 uri=uri,
                 data=filter,
             )
-    
+
     @staticmethod
     def resolve_organization_by_env(uri):
         context = get_context()
