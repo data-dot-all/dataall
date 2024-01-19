@@ -1,6 +1,6 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
@@ -16,7 +16,7 @@ class DatasetLocationIndexer(BaseIndexer):
         if folder:
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            org = Organization.get_organization_by_uri(session, dataset.organizationUri)
+            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
             glossary = BaseIndexer._get_target_glossary_terms(session, folder_uri)
 
             BaseIndexer._index(
