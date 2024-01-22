@@ -1,4 +1,4 @@
-import { Box, CardMedia, Grid, Typography } from '@mui/material';
+import { Box, CardMedia, Grid, Tooltip, Typography } from '@mui/material';
 import version from '../../generated/version.json';
 
 export const Logo = () => (
@@ -17,9 +17,11 @@ export const Logo = () => (
         </Box>
       </Grid>
       <Grid item>
-        <Typography variant="h5" color="#fff">
-          &nbsp;data.all {version.version}
-        </Typography>
+        <Tooltip title={'version ' + version.version} placement="top-start">
+          <Typography variant="h5" color="#fff">
+            &nbsp;data.all
+          </Typography>
+        </Tooltip>
       </Grid>
     </Grid>
   </>
