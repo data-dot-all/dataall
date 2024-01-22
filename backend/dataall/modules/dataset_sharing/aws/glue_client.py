@@ -16,7 +16,7 @@ class GlueClient:
 
     def create_database(self, location):
         try:
-            existing_database = self.database_exists()
+            existing_database = self.get_glue_database()
             if existing_database:
                 glue_database_created = True
             else:
@@ -47,10 +47,10 @@ class GlueClient:
             log.debug(f'Failed to create database {database}', e)
             raise e
 
-    def database_exists(self):
+    def get_glue_database(self):
         try:
-            self._client.get_database(CatalogId=self._account_id, Name=self._database)
-            return True
+            database = self._client.get_database(CatalogId=self._account_id, Name=self._database)
+            return database
         except ClientError:
             log.info(f'Database {self._database} does not exist on account {self._account_id}...')
             return False

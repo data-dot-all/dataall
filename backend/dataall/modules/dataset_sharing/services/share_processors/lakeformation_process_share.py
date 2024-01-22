@@ -1,7 +1,7 @@
 import logging
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
 from ..share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -62,14 +62,10 @@ class ProcessLakeFormationShare(LFShareManager):
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
         else:
-            self.grant_pivot_role_all_database_permissions()
-
-            shared_db_name = self.build_shared_db_name()
-            principals = self.get_share_principals()
-
-            self.create_shared_database(
-                self.target_environment, self.dataset, shared_db_name, principals
-            )
+            self.grant_pivot_role_all_database_permissions_to_source_database()
+            self.check_if_exists_and_create_shared_database_in_target()
+            self.grant_pivot_role_all_database_permissions_to_shared_database()
+            self.grant_principals_database_permissions_to_shared_database()
 
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
@@ -90,22 +86,37 @@ class ProcessLakeFormationShare(LFShareManager):
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
+                    self.check_table_exists_in_source_database(share_item, table)
 
-                    self.check_share_item_exists_on_glue_catalog(share_item, table)
-
-                    if self.source_environment.AwsAccountId != self.target_environment.AwsAccountId:
+                    if self.cross_account:
                         log.info('Processing cross-account permissions...')
+                        # TODO: old shares, add if exists, use LFV3
                         self.share_table_with_target_account(table)
                         (
                             retry_share_table,
                             failed_invitations,
-                        ) = RamClient.accept_ram_invitation(**data)
+                        ) = RamClient.accept_ram_invitation(
+                            source_account_id=self.source_environment.AwsAccountId,
+                            source_region=self.source_environment.region,
+                            target_account_id=self.target_environment.AwsAccountId,
+                            target_region=self.target_environment.region,
+                            source_database=self.dataset.GlueDatabaseName,
+                            source_table=table
+                        )
 
                         if retry_share_table:
-                            self.share_table_with_target_account(**data)
-                            RamClient.accept_ram_invitation(**data)
-
-                    self.create_resource_link(table)
+                            self.share_table_with_target_account(table)
+                            RamClient.accept_ram_invitation(
+                                source_account_id=self.source_environment.AwsAccountId,
+                                source_region=self.source_environment.region,
+                                target_account_id=self.target_environment.AwsAccountId,
+                                target_region=self.target_environment.region,
+                                source_database=self.dataset.GlueDatabaseName,
+                                source_table=table
+                            )
+                    self.grant_principals_permissions_to_table_in_target(table) #TODO WITH LFV3 we might be able to remove this
+                    self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
+                    self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
@@ -152,30 +163,27 @@ class ProcessLakeFormationShare(LFShareManager):
             revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
-
-                self.check_share_item_exists_on_glue_catalog(share_item, table)
-
                 log.info(f'Starting revoke access for table: {table.GlueTableName} in database {shared_db_name} '
                          f'For principals {principals}')
 
-                self.revoke_table_resource_link_access(table, principals)
+                self.check_table_exists_in_source_database(share_item, table)
+                existing = self.check_resource_link_table_exists_in_target_database(table)
+                if existing:
+                    self.revoke_principals_permissions_to_resource_link_table(table)
+                    self.revoke_principals_permissions_to_table_in_target(table)
 
-                other_table_shares_in_env = False
-                if ShareObjectRepository.other_approved_share_item_table_exists(
+                other_table_shares_in_env = True if ShareObjectRepository.other_approved_share_item_table_exists(
                     self.session,
                     self.target_environment.environmentUri,
                     share_item.itemUri,
                     share_item.shareItemUri
-                ):
-                    other_table_shares_in_env = True
-                    principals = [p for p in principals if "arn:aws:quicksight" not in p]
-
-                self.revoke_source_table_access(table, principals)
-
-                self.delete_resource_link_table(table)
+                ) else False
 
                 if not other_table_shares_in_env:
                     self.revoke_external_account_access_on_source_account(table)
+
+                if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
+                    self.delete_resource_link_table_in_shared_database(table)
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
@@ -188,5 +196,20 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 # statements which can throw exceptions but are not critical
                 self.handle_revoke_failure(table=table, error=e)
+
+        try:
+            # TODO: logic to check all shares with table shares in environment
+            existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
+                self.session,
+                self.share.shareUri,
+                ShareableType.Table.value
+            )
+            log.info(f'Still remaining LF resources shared = {existing_shared_items}')
+            if not existing_shared_items and self.revoked_tables:
+                log.info("Clean up LF remaining resources...")
+                clean_up_tables = self.delete_shared_database_in_target()
+                log.info(f"Clean up LF successful = {clean_up_tables}")
+        except Exception as e:
+            success = False
 
         return success

@@ -40,8 +40,9 @@ class LFShareManager:
         self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.shared_db_name = self.build_shared_db_name()
+        self.shared_db_name, self.is_new_share = self.build_shared_db_name()
         self.principals = self.get_share_principals()
+        self.cross_account = True if self.target_environment.AwsAccountId != self.source_environment.AwsAccountId else False
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -78,47 +79,32 @@ class LFShareManager:
 
     def build_shared_db_name(self) -> str:
         """
-        Build Glue shared database name with suffix "_shared"
-
+        It checks if a share is prior to 2.3.0 and builds its suffix as "_shared + shareUri"
+        For shares after 2.3.0 the suffix returned is "_shared"
         Returns
         -------
         Shared database name
         """
-        return self.dataset.GlueDatabaseName[:247] + '_shared'
+        old_shared_db_name = (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
+        logger.info(
+            f'Checking shared db {old_shared_db_name} exists in {self.target_environment.AwsAccountId}...'
+        )
+        database = GlueClient(
+            account_id=self.target_environment.AwsAccountId,
+            database=old_shared_db_name,
+            region=self.target_environment.region
+        ).get_glue_database()
 
-    def build_share_data(self, table: DatasetTable) -> dict:
-        """
-        Build aws dict for boto3 operations on Glue and LF from share data
-        Parameters
-        ----------
-        table : dataset table
+        if database:
+            return old_shared_db_name, False
+        return self.dataset.GlueDatabaseName[:247] + '_shared', True
 
-        Returns
-        -------
-        dict for boto3 operations
-        """
-        data = {
-            'source': {
-                'accountid': self.source_environment.AwsAccountId,
-                'region': self.source_environment.region,
-                'database': table.GlueDatabaseName,
-                'tablename': table.GlueTableName,
-            },
-            'target': {
-                'accountid': self.target_environment.AwsAccountId,
-                'region': self.target_environment.region,
-                'principals': self.principals,
-                'database': self.shared_db_name,
-            },
-        }
-        return data
-
-    def check_share_item_exists_on_glue_catalog(
+    def check_table_exists_in_source_database(
         self, share_item: ShareObjectItem, table: DatasetTable
     ) -> None:
         """
         Checks if a table in the share request
-        still exists on the Glue catalog before sharing
+        still exists on the Glue catalog in the source account before sharing
 
         Parameters
         ----------
@@ -143,33 +129,57 @@ class LFShareManager:
                 ),
             )
 
-    def grant_pivot_role_all_database_permissions(self) -> bool:
+    def check_resource_link_table_exists_in_target_database(
+        self, table: DatasetTable
+    ) -> None:
+        """
+        Checks if a table in the share request
+        exists on the Glue catalog in the target account as resource link
+
+        Parameters
+        ----------
+        table : dataset table
+
+        Returns
+        -------
+        Boolean
+        """
+        glue_client = GlueClient(
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+        )
+        if glue_client.table_exists(table.GlueTableName):
+            return True
+        logger.info(
+            f'Resource link could not be found '
+            f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
+        )
+        return False
+
+
+    def grant_pivot_role_all_database_permissions_to_source_database(self) -> bool:
         """
         Grants 'ALL' database Lake Formation permissions to data.all PivotRole in source account
         Returns
         -------
         True if it is successful
         """
-        LakeFormationClient.grant_pivot_role_all_database_permissions(
-            self.source_environment.AwsAccountId,
-            self.source_environment.region,
-            self.dataset.GlueDatabaseName,
+        LakeFormationClient.grant_permissions_to_database(
+            client=SessionHelper.remote_session(accountid=self.source_environment.AwsAccountId).client(
+                'lakeformation', region_name=self.source_environment.region
+            ),
+            principals=[SessionHelper.get_delegation_role_arn(self.source_environment.AwsAccountId)],
+            database_name=self.dataset.GlueDatabaseName,
+            permissions=['ALL'],
         )
         return True
 
 
-    def create_shared_database(self) -> dict:
+    def check_if_exists_and_create_shared_database_in_target(self) -> dict:
         """
-        Creates the shared database if does not exists.
-        1) Grants pivot role ALL permission on shareddb
-        2) Grant principals DESCRIBE Only permission
-
-        Parameters
-        ----------
-        target_environment :
-        dataset :
-        shared_db_name :
-        principals :
+        Checks if shared database exists in target account
+        Creates the shared database if it does not exist
 
         Returns
         -------
@@ -180,17 +190,23 @@ class LFShareManager:
             f'Creating shared db ...'
             f'{self.target_environment.AwsAccountId}://{self.shared_db_name}'
         )
+        glue_client = self._glue_client_in_target()
+        database = glue_client.create_database(f's3://{self.dataset.S3BucketName}')
 
-        database = GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            database=self.shared_db_name,
-            region=self.target_environment.region
-        ).create_database(f's3://{self.dataset.S3BucketName}')
+        return database
 
-        LakeFormationClient.grant_pivot_role_all_database_permissions(
-            self.target_environment.AwsAccountId, self.target_environment.region, self.shared_db_name
+    def grant_pivot_role_all_database_permissions_to_shared_database(self):
+        LakeFormationClient.grant_permissions_to_database(
+            client=SessionHelper.remote_session(accountid=self.target_environment.AwsAccountId).client(
+                'lakeformation', region_name=self.target_environment.region
+            ),
+            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            database_name=self.shared_db_name,
+            permissions=['ALL'],
         )
+        return True
 
+    def grant_principals_database_permissions_to_shared_database(self):
         LakeFormationClient.grant_permissions_to_database(
             client=SessionHelper.remote_session(
                 accountid=self.target_environment.AwsAccountId
@@ -199,10 +215,9 @@ class LFShareManager:
             database_name=self.shared_db_name,
             permissions=['DESCRIBE'],
         )
+        return True
 
-        return database
-
-    def delete_shared_database(self) -> bool:
+    def delete_shared_database_in_target(self) -> bool:
         """
         Deletes shared database when share request is rejected
 
@@ -211,9 +226,9 @@ class LFShareManager:
         bool
         """
         logger.info(f'Deleting shared database {self.shared_db_name}')
-        return self.glue_client().delete_database()
+        return self._glue_client_in_target().delete_database()
 
-    def create_resource_link(self, table: DatasetTable) -> dict:
+    def check_if_exists_and_create_resource_link_table_in_shared_database(self, table: DatasetTable) -> dict:
         """
         Creates a resource link to the source shared Glue table
         Parameters
@@ -222,67 +237,74 @@ class LFShareManager:
 
         Returns
         -------
-        boto3 creation response
+        Boolean
         """
+
+        glue_client = self._glue_client_in_target()
+        if not self.check_resource_link_table_exists_in_target_database(table):
+            logger.info(
+                f'Creating resource link table ...'
+                f'in {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName}'
+            )
+            try:
+                resource_link_input = {
+                    'Name': table.GlueTableName,
+                    'TargetTable': {
+                        'CatalogId': self.source_environment.AwsAccountId,
+                        'DatabaseName': table.GlueDatabaseName,
+                        'Name': table.GlueTableName,
+                    },
+                }
+                glue_client.create_resource_link(
+                    resource_link_name=table.GlueTableName,
+                    resource_link_input=resource_link_input,
+                )
+                return True
+
+            except ClientError as e:
+                logger.warning(
+                    f'Resource Link {resource_link_input} was not created due to: {e}'
+                )
+                raise e
+
+    def grant_principals_permissions_to_resource_link_table(self, table: DatasetTable):
         target_session = SessionHelper.remote_session(accountid=self.target_environment.AwsAccountId)
         lakeformation_client = target_session.client(
             'lakeformation', region_name=self.target_environment.region
         )
-        target_database = self.shared_db_name
-        resource_link_input = {
-            'Name': table.GlueTableName,
-            'TargetTable': {
-                'CatalogId': self.source_environment.AwsAccountId,
-                'DatabaseName': table.GlueDatabaseName,
-                'Name': table.GlueTableName,
-            },
-        }
+        LakeFormationClient.grant_permissions_to_resource_link_table(
+            client=lakeformation_client,
+            table_name=table.GlueTableName,
+            target_database=self.shared_db_name,
+            target_account=self.target_environment.AwsAccountId,
+            principals=self.principals
+        )
 
-        try:
-            glue_client = GlueClient(self.target_environment.AwsAccountId, self.target_environment.region, target_database)
-            resource_link = glue_client.create_resource_link(
-                resource_link_name=table.GlueTableName,
-                resource_link_input=resource_link_input,
-            )
+    def grant_principals_permissions_to_table_in_target(self, table: DatasetTable):
+        target_session = SessionHelper.remote_session(accountid=self.target_environment.AwsAccountId)
+        lakeformation_client = target_session.client(
+            'lakeformation', region_name=self.target_environment.region
+        )
+        LakeFormationClient.grant_permissions_to_table(
+            client=lakeformation_client,
+            source_account_id=self.source_environment.AwsAccountId,
+            source_database=table.GlueDatabaseName,
+            table_name=table.GlueTableName,
+            principals=self.principals
+        )
 
-            LakeFormationClient.grant_resource_link_permission(
-                lakeformation_client, table.GlueTableName, self.target_environment.AwsAccountId, self.principals, target_database
-            )
-
-            LakeFormationClient.grant_resource_link_permission_on_target(
-                lakeformation_client, self.source_environment.AwsAccountId, table.GlueDatabaseName, table.GlueTableName, self.principals
-            )
-
-            return resource_link
-
-        except ClientError as e:
-            logger.warning(
-                f'Resource Link {resource_link_input} was not created due to: {e}'
-            )
-            raise e
-
-    def revoke_table_resource_link_access(self, table: DatasetTable, principals: [str]):
+    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable):
         """
         Revokes access to glue table resource link
         Parameters
         ----------
         table : DatasetTable
-        principals: List of strings. IAM role arn and Quicksight groups
 
         Returns
         -------
         True if revoke is successful
         """
-        glue_client = self.glue_client()
-        if not glue_client.table_exists(table.GlueTableName):
-            logger.info(
-                f'Resource link could not be found '
-                f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
-                f'skipping revoke actions...'
-            )
-            return True
-
-        for principal in principals:
+        for principal in self.principals:
             logger.info(
                 f'Revoking resource link access '
                 f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
@@ -313,7 +335,7 @@ class LFShareManager:
             )
         return True
 
-    def revoke_source_table_access(self, table, principals: [str]):
+    def revoke_principals_permissions_to_table_in_target(self, table):
         """
         Revokes access to the source glue table
         Parameters
@@ -324,14 +346,7 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        glue_client = self.glue_client()
-        if not glue_client.table_exists(table.GlueTableName):
-            logger.info(
-                f'Source table could not be found '
-                f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
-                f'skipping revoke actions...'
-            )
-            return True
+        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
 
         logger.info(
             f'Revoking source table access '
@@ -348,10 +363,9 @@ class LFShareManager:
         )
         return True
 
-    def delete_resource_link_table(self, table: DatasetTable):
+    def delete_resource_link_table_in_shared_database(self, table: DatasetTable):
         logger.info(f'Deleting shared table {table.GlueTableName}')
-        glue_client = self.glue_client()
-
+        glue_client = self._glue_client_in_target()
         if not glue_client.table_exists(table.GlueTableName):
             return True
 
@@ -371,7 +385,6 @@ class LFShareManager:
             'lakeformation', region_name=self.source_environment.region
         )
         try:
-
             LakeFormationClient.revoke_iamallowedgroups_super_permission_from_table(
                 source_lf_client,
                 self.source_environment.AwsAccountId,
@@ -499,7 +512,7 @@ class LFShareManager:
         )
         return True
 
-    def glue_client(self):
+    def _glue_client_in_target(self):
         return GlueClient(
             account_id=self.target_environment.AwsAccountId,
             region=self.target_environment.region,

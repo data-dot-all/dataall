@@ -13,17 +13,6 @@ class LakeFormationClient:
         pass
 
     @staticmethod
-    def grant_pivot_role_all_database_permissions(accountid, region, database):
-        LakeFormationClient.grant_permissions_to_database(
-            client=SessionHelper.remote_session(accountid=accountid).client(
-                'lakeformation', region_name=region
-            ),
-            principals=[SessionHelper.get_delegation_role_arn(accountid)],
-            database_name=database,
-            permissions=['ALL'],
-        )
-
-    @staticmethod
     def grant_permissions_to_database(
         client,
         principals,
@@ -175,7 +164,7 @@ class LakeFormationClient:
             raise e
 
     @staticmethod
-    def grant_resource_link_permission_on_target(client, source_account_id, source_database, source_table, principals):
+    def grant_permissions_to_table(client, source_account_id, source_database, table_name, principals):
         for principal in principals:
             try:
                 table_grant = dict(
@@ -183,7 +172,7 @@ class LakeFormationClient:
                     Resource={
                         'TableWithColumns': {
                             'DatabaseName': source_database,
-                            'Name': source_table,
+                            'Name': table_name,
                             'ColumnWildcard': {},
                             'CatalogId': source_account_id,
                         }
@@ -194,26 +183,26 @@ class LakeFormationClient:
                 client.grant_permissions(**table_grant)
                 log.info(
                     f'Successfully granted permissions DESCRIBE,SELECT to {principal} on target '
-                    f'{source_account_id}://{source_database}/{source_table}'
+                    f'{source_account_id}://{source_database}/{table_name}'
                 )
             except ClientError as e:
                 logging.error(
                     f'Failed granting principal {principal} '
                     'read access to resource link on target'
-                    f' {source_account_id}://{source_database}/{source_table} '
+                    f' {source_account_id}://{source_database}/{table_name} '
                     f'due to: {e}'
                 )
                 raise e
 
     @staticmethod
-    def grant_resource_link_permission(client, source_table, target_account, principals, target_database):
+    def grant_permissions_to_resource_link_table(client, table_name, target_database, target_account, principals):
         for principal in principals:
             resourcelink_grant = dict(
                 Principal={'DataLakePrincipalIdentifier': principal},
                 Resource={
                     'Table': {
                         'DatabaseName': target_database,
-                        'Name': source_table,
+                        'Name': table_name,
                         'CatalogId': target_account,
                     }
                 },
@@ -224,12 +213,12 @@ class LakeFormationClient:
                 client.grant_permissions(**resourcelink_grant)
                 log.info(
                     f'Granted resource link DESCRIBE access '
-                    f'to principal {principal} on {target_account}://{target_database}/{source_table}'
+                    f'to principal {principal} on {target_account}://{target_database}/{table_name}'
                 )
             except ClientError as e:
                 logging.error(
                     f'Failed granting principal {principal} '
-                    f'read access to resource link on {target_account}://{target_database}/{source_table} '
+                    f'read access to resource link on {target_account}://{target_database}/{table_name} '
                     f'due to: {e}'
                 )
                 raise e
