@@ -55,24 +55,6 @@ OrganizationFilter = gql.InputType(
     ],
 )
 
-
-OrganizationTopicFilter = gql.InputType(
-    name='OrganizationTopicFilter',
-    arguments=[
-        gql.Argument(name='term', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-    ],
-)
-
-OrganizationTopicInput = gql.InputType(
-    name='OrganizationTopicInput',
-    arguments=[
-        gql.Argument(name='label', type=gql.String),
-        gql.Argument(name='description', type=gql.String),
-    ],
-)
-
 InviteGroupToOrganizationInput = gql.InputType(
     name='InviteGroupToOrganizationInput',
     arguments=[

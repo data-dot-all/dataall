@@ -1,6 +1,6 @@
 from dataall.base.api.context import Context
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.dashboards.api.enums import DashboardRole
@@ -60,7 +60,7 @@ def resolve_user_role(context: Context, source: Dashboard):
 
 def get_dashboard_organization(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return Organization.get_organization_by_uri(session, source.organizationUri)
+        return OrganizationRepository.get_organization_by_uri(session, source.organizationUri)
 
 
 def request_dashboard_share(
