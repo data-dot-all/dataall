@@ -85,7 +85,7 @@ class OrganizationService:
             return organization
 
     @staticmethod
-    # TODO: resource permission check for permissions.GET_ORGANIZATION ?
+    @has_resource_permission(permissions.GET_ORGANIZATION)
     def get_organization(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
