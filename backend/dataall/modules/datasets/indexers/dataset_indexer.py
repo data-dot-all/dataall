@@ -1,6 +1,6 @@
 """Indexes Datasets in OpenSearch"""
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -13,7 +13,7 @@ class DatasetIndexer(BaseIndexer):
     def upsert(cls, session, dataset_uri: str):
         dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
         env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-        org = Organization.get_organization_by_uri(session, dataset.organizationUri)
+        org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
 
         count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
         count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
