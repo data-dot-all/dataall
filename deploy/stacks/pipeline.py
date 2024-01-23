@@ -508,6 +508,7 @@ class PipelineStack(Stack):
                         f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run copy-config',
+                        'npm run copy-version',
                         'npm run lint -- --quiet',
                     ],
                     role=self.baseline_codebuild_role.without_policy_updates(),
