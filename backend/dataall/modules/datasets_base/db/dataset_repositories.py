@@ -4,7 +4,8 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
@@ -49,6 +50,7 @@ class DatasetRepository(EnvironmentResource):
             stewards=data.get('stewards')
             if data.get('stewards')
             else data['SamlAdminGroupName'],
+            autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
         cls._set_dataset_aws_resources(dataset, data, env)
         cls._set_import_data(dataset, data)
@@ -75,7 +77,7 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def create_dataset(session, env: Environment, dataset: Dataset):
-        organization = Organization.get_organization_by_uri(
+        organization = OrganizationRepository.get_organization_by_uri(
             session, env.organizationUri
         )
 

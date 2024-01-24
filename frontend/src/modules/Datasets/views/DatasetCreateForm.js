@@ -119,7 +119,8 @@ const DatasetCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
-          confidentiality: values.confidentiality
+          confidentiality: values.confidentiality,
+          autoApprovalEnabled: values.autoApprovalEnabled
         })
       );
       if (!response.errors) {
@@ -214,7 +215,8 @@ const DatasetCreateForm = (props) => {
                 confidentiality: '',
                 SamlGroupName: '',
                 tags: [],
-                topics: []
+                topics: [],
+                autoApprovalEnabled: false
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -230,7 +232,10 @@ const DatasetCreateForm = (props) => {
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: Yup.string()
                   .max(255)
-                  .required('*Confidentiality is required')
+                  .required('*Confidentiality is required'),
+                autoApprovalEnabled: Yup.boolean().required(
+                  '*AutoApproval property is required'
+                )
               })}
               onSubmit={async (
                 values,
@@ -263,7 +268,6 @@ const DatasetCreateForm = (props) => {
                             name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.label}
                             variant="outlined"
                           />
                         </CardContent>
@@ -300,7 +304,7 @@ const DatasetCreateForm = (props) => {
                           )}
                         </CardContent>
                       </Card>
-                      <Card sx={{ mt: 3 }}>
+                      <Card sx={{ mt: 4 }}>
                         <CardHeader title="Classification" />
                         <CardContent>
                           <TextField
@@ -367,6 +371,24 @@ const DatasetCreateForm = (props) => {
                               }}
                             />
                           </Box>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            label="Auto Approval"
+                            name="autoApprovalEnabled"
+                            onChange={handleChange}
+                            select
+                            value={values.autoApprovalEnabled}
+                            variant="outlined"
+                          >
+                            <MenuItem key={'Enabled'} value={true}>
+                              Enabled
+                            </MenuItem>
+                            <MenuItem key={'Enabled'} value={false}>
+                              Disabled
+                            </MenuItem>
+                          </TextField>
                         </CardContent>
                       </Card>
                     </Grid>

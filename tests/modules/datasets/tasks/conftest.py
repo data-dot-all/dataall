@@ -13,7 +13,8 @@ def create_dataset(db):
         organization: Organization,
         environment: Environment,
         label: str,
-        imported: bool = False
+        imported: bool = False,
+        autoApprovalEnabled: bool = False,
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -32,7 +33,8 @@ def create_dataset(db):
                 IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
                 IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
                 imported=imported,
-                importedKmsKey=imported
+                importedKmsKey=imported,
+                autoApprovalEnabled=autoApprovalEnabled,
             )
             session.add(dataset)
             session.commit()

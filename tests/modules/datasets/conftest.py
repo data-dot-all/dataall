@@ -45,7 +45,8 @@ def dataset(client, patch_es, patch_dataset_methods):
         name: str,
         owner: str,
         group: str,
-        confidentiality: str = None
+        confidentiality: str = None,
+        autoApprovalEnabled: bool = False
     ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -95,6 +96,7 @@ def dataset(client, patch_es, patch_dataset_methods):
                     topics
                     language
                     confidentiality
+                    autoApprovalEnabled
                     organization{
                         organizationUri
                         label
@@ -149,7 +151,8 @@ def dataset(client, patch_es, patch_dataset_methods):
                 'environmentUri': env.environmentUri,
                 'SamlAdminGroupName': group or random_group(),
                 'organizationUri': org.organizationUri,
-                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value
+                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value,
+                'autoApprovalEnabled': autoApprovalEnabled
 
             },
         )
@@ -270,7 +273,8 @@ def dataset_model(db):
     def factory(
         organization: Organization,
         environment: Environment,
-        label: str
+        label: str,
+        autoApprovalEnabled: bool = False
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -289,6 +293,7 @@ def dataset_model(db):
                 region=environment.region,
                 IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
                 IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
+                autoApprovalEnabled = autoApprovalEnabled
             )
             session.add(dataset)
             session.commit()
