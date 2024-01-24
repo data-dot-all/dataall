@@ -10,7 +10,7 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetReposit
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 from tests.core.stacks.test_stack import update_stack_query
 
-from dataall.modules.datasets_base.common.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 
 
 mocked_key_id = 'some_key'

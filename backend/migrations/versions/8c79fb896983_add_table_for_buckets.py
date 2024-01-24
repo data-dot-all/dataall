@@ -6,7 +6,7 @@ Create Date: 2023-09-06 12:01:53.841149
 
 """
 import os
-from sqlalchemy import orm, Column, String, Boolean, ForeignKey, DateTime, and_, inspect
+from sqlalchemy import orm, Column, String, Boolean, ForeignKey, DateTime, inspect
 from sqlalchemy.orm import query_expression
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as sa
@@ -15,10 +15,10 @@ from sqlalchemy.dialects import postgresql
 
 from dataall.base.db import get_engine, has_table
 from dataall.base.db import utils, Resource
-from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus, ShareableType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
 from datetime import datetime
 
-from dataall.modules.datasets_base.common.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 
 
 # revision identifiers, used by Alembic.

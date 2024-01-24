@@ -1,13 +1,12 @@
 import random
 import typing
-from unittest.mock import MagicMock
 
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.dataset_sharing.common.enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.common.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM, ShareObjectSM

@@ -8,7 +8,7 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.modules.dataset_sharing.common.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM

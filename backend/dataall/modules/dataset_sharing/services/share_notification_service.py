@@ -6,7 +6,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.context import get_context
-from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 log = logging.getLogger(__name__)

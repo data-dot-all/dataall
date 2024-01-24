@@ -19,7 +19,7 @@ from dataall.base.db import utils
 from dataall.core.permissions import permissions
 from datetime import datetime
 
-from dataall.modules.dataset_sharing.common.enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'

@@ -6,18 +6,16 @@ Create Date: 2023-07-13 09:20:20.091639
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Boolean
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import query_expression
 
 from dataall.base.db import utils, Resource
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.modules.datasets_base.common.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 revision = 'e1cd4927482b'
