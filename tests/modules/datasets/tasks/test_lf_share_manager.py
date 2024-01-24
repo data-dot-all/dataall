@@ -17,9 +17,8 @@ from dataall.modules.dataset_sharing.api.enums import ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import ProcessLakeFormationShare
 
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 
 
 SOURCE_ENV_ACCOUNT = "1" *  12
@@ -172,7 +171,7 @@ def revoke_item_cross_account(share_item_table: Callable, share_cross_account: S
 def processor_cross_account(db, dataset1, share_cross_account, table1, table2, source_environment, target_environment,
                             target_environment_group):
     with db.scoped_session() as session:
-        processor = ProcessLFCrossAccountShare(
+        processor = ProcessLakeFormationShare(
             session,
             dataset1,
             share_cross_account,
@@ -189,7 +188,7 @@ def processor_cross_account(db, dataset1, share_cross_account, table1, table2, s
 def processor_same_account(db, dataset1, share_same_account, table1, source_environment,
                            source_environment_group_requesters):
     with db.scoped_session() as session:
-        processor = ProcessLFSameAccountShare(
+        processor = ProcessLakeFormationShare(
             session,
             dataset1,
             share_same_account,
@@ -206,17 +205,25 @@ def processor_same_account(db, dataset1, share_same_account, table1, source_envi
 def mock_glue_client(mocker):
     mock_client = MagicMock()
     mocker.patch(
-        "dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
+        return_value=boto3.Session(),
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.aws.glue_client.GlueClient",
         mock_client
     )
     yield mock_client
 
 
 @pytest.fixture(scope="function")
-def mock_iam_client(mocker):
+def mock_lf_client(mocker):
     mock_client = MagicMock()
     mocker.patch(
-        "dataall.base.aws.iam.IAM",
+        "dataall.base.aws.sts.SessionHelper.remote_session",
+        return_value=boto3.Session(),
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.aws.lakeformation_client.LakeFormationClient",
         mock_client
     )
     yield mock_client
@@ -228,22 +235,22 @@ def test_init(processor_same_account, processor_cross_account):
 
 
 def test_build_shared_db_name(
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         dataset1: Dataset,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
     # Then, it should return
-    assert processor_same_account.build_shared_db_name() == (dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254]
-    assert processor_cross_account.build_shared_db_name() == (dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254]
+    assert processor_same_account.build_shared_db_name() == dataset1.GlueDatabaseName[:247] + '_shared', True
+    assert processor_cross_account.build_shared_db_name() == dataset1.GlueDatabaseName[:247] + '_shared', True
 
 
 def test_get_share_principals(
         mocker,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         source_environment: Environment,
         target_environment: Environment,
         share_same_account: ShareObject,
@@ -266,30 +273,26 @@ def test_get_share_principals(
 
 def test_create_shared_database(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
         target_environment: Environment,
         dataset1: Dataset,
         mocker,
-        mock_glue_client
+        mock_glue_client,
+        mock_lf_client,
 ):
-    mock_glue_client().create_database.return_value = True
-
-    lf_mock_pr = mocker.patch(
-        f"{LF_CLIENT}.grant_pivot_role_all_database_permissions",
-        return_value=True,
-    )
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
-    lf_mock = mocker.patch(
-        f"{LF_CLIENT}.grant_permissions_to_database",
-        return_value=True,
-    )
+    mock_glue_client().get_glue_database.return_value = True  # If False then it means this is a new share
+    mock_glue_client().create_database.return_value = True
+    mock_lf_client().grant_pivot_role_all_database_permissions =True
+    mock_lf_client().grant_permissions_to_database = True
+
     # When
     processor_same_account.create_shared_database(
         target_environment=source_environment,
@@ -300,13 +303,13 @@ def test_create_shared_database(
 
     # Then
     mock_glue_client().create_database.assert_called_once()
-    lf_mock_pr.assert_called_once()
-    lf_mock.assert_called_once()
+    mock_lf_client().grant_pivot_role_all_database_permissions.assert_called_once()
+    mock_lf_client().grant_permissions_to_database.assert_called_once()
 
     # Reset mocks
     mock_glue_client().create_database.reset_mock()
-    lf_mock_pr.reset_mock()
-    lf_mock.reset_mock()
+    mock_lf_client().grant_pivot_role_all_database_permissions.reset_mock()
+    mock_lf_client().grant_permissions_to_database.reset_mock()
 
     # When
     processor_cross_account.create_shared_database(
@@ -318,14 +321,14 @@ def test_create_shared_database(
 
     # Then
     mock_glue_client().create_database.assert_called_once()
-    lf_mock_pr.assert_called_once()
-    lf_mock.assert_called_once()
+    mock_lf_client().grant_pivot_role_all_database_permissions.assert_called_once()
+    mock_lf_client().grant_permissions_to_database.assert_called_once()
 
 
 def test_check_share_item_exists_on_glue_catalog(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         table1: DatasetTable,
         share_item_same_account: ShareObjectItem,
         share_item_cross_account: ShareObjectItem,
@@ -355,8 +358,8 @@ def test_check_share_item_exists_on_glue_catalog(
 
 def test_build_share_data(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -403,8 +406,8 @@ def test_build_share_data(
 
 def test_create_resource_link(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -487,8 +490,8 @@ def test_create_resource_link(
 
 def test_revoke_table_resource_link_access(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -535,8 +538,8 @@ def test_revoke_table_resource_link_access(
 
 def test_revoke_source_table_access(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -577,8 +580,8 @@ def test_revoke_source_table_access(
 
 def test_delete_resource_link_table(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -615,8 +618,8 @@ def test_delete_resource_link_table(
 
 def test_delete_shared_database(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -642,8 +645,8 @@ def test_delete_shared_database(
 
 def test_revoke_external_account_access_on_source_account(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
         source_environment: Environment,
@@ -667,8 +670,8 @@ def test_revoke_external_account_access_on_source_account(
 
 def test_handle_share_failure(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         share_item_same_account: ShareObjectItem,
         share_item_cross_account: ShareObjectItem,
         table1: DatasetTable,
@@ -697,8 +700,8 @@ def test_handle_share_failure(
 
 def test_handle_revoke_failure(
         db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
+        processor_same_account: ProcessLakeFormationShare,
+        processor_cross_account: ProcessLakeFormationShare,
         revoke_item_same_account: ShareObjectItem,
         revoke_item_cross_account: ShareObjectItem,
         table1: DatasetTable,

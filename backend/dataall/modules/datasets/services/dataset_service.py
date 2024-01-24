@@ -393,7 +393,7 @@ class DatasetService:
             env = EnvironmentService.get_environment_by_uri(
                 session, dataset.environmentUri
             )
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
+            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session=session, dataset_uri=uri)
             if shares:
                 raise exceptions.UnauthorizedOperation(
                     action=DELETE_DATASET,

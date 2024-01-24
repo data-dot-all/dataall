@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 
 class GlueClient:
     def __init__(self, account_id, region, database):
+        log.info(f"########client:")
         aws_session = SessionHelper.remote_session(accountid=account_id)
         self._client = aws_session.client('glue', region_name=region)
         self._database = database
@@ -22,10 +23,16 @@ class GlueClient:
             else:
                 self._create_glue_database(location)
                 glue_database_created = True
+            log.info(
+                f'Successfully created database {self._database}'
+                f'in account {self._account_id}'
+            )
             return glue_database_created
         except ClientError as e:
             log.error(
-                f'Failed to create database {self._database} on account {self._account_id} due to {e}'
+                f'Failed to create database {self._database} '
+                f'in account {self._account_id} '
+                f'due to {e}'
             )
             raise e
 
@@ -39,12 +46,9 @@ class GlueClient:
             }
             if location:
                 db_input['LocationUri'] = location
-            log.info(f'Creating Glue database with input: {db_input}')
             response = self._client.create_database(CatalogId=self._account_id, DatabaseInput=db_input)
-            log.info(f'response Create Database: {response}')
             return response
         except ClientError as e:
-            log.debug(f'Failed to create database {database}', e)
             raise e
 
     def get_glue_database(self):
@@ -70,46 +74,62 @@ class GlueClient:
 
     def delete_table(self, table_name):
         database = self._database
-        log.info(
-            'Deleting table {} in database {}'.format(
-                table_name, database
+        try:
+            response = self._client.delete_table(
+                CatalogId=self._account_id,
+                DatabaseName=database,
+                Name=table_name
             )
-        )
-        response = self._client.delete_table(
-            CatalogId=self._account_id,
-            DatabaseName=database,
-            Name=table_name
-        )
+            log.info(
+                f'Successfully deleted table {table_name} '
+                f'in database {database}'
+                f'response: {response}'
+            )
+            return response
+        except ClientError as e:
+            log.error(
+                f'Could not delete table {table_name} '
+                f'in database {database}'
+                f'due to: {e}'
+            )
+            raise e
 
-        return response
-
-    def create_resource_link(self, resource_link_name, resource_link_input):
+    def create_resource_link(self, resource_link_name, table, catalog_id):
         account_id = self._account_id
-        database = self._database
+        shared_database = self._database
+        resource_link_input = {
+            'Name': table.GlueTableName,
+            'TargetTable': {
+                'CatalogId': catalog_id,
+                'DatabaseName': table.GlueDatabaseName,
+                'Name': table.GlueTableName,
+            },
+        }
 
-        log.info(
-            f'Creating ResourceLink {resource_link_name} in database {account_id}://{database}'
-        )
         try:
             resource_link = self.table_exists(resource_link_name)
             if resource_link:
                 log.info(
-                    f'ResourceLink {resource_link_name} already exists in database {account_id}://{database}'
+                    f'ResourceLink {resource_link_name} '
+                    f'in database {account_id}://{shared_database}'
+                    f'already exists: {resource_link}'
                 )
             else:
                 resource_link = self._client.create_table(
                     CatalogId=account_id,
-                    DatabaseName=database,
+                    DatabaseName=shared_database,
                     TableInput=resource_link_input,
                 )
                 log.info(
-                    f'Successfully created ResourceLink {resource_link_name} in database {account_id}://{database}'
+                    f'Successfully created ResourceLink {resource_link_name}'
+                    f' in database {account_id}://{shared_database}'
+                    f'response: {resource_link}'
                 )
             return resource_link
         except ClientError as e:
             log.error(
                 f'Could not create ResourceLink {resource_link_name} '
-                f'in database {account_id}://{database} '
+                f'in database {account_id}://{shared_database} '
                 f'due to: {e}'
             )
             raise e
@@ -117,11 +137,13 @@ class GlueClient:
     def delete_database(self):
         account_id = self._account_id
         database = self._database
-
-        log.info(f'Deleting database {account_id}://{database} ...')
         try:
             if self.database_exists():
                 self._client.delete_database(CatalogId=account_id, Name=database)
+            log.info(
+                f'Successfully deleted database {database} '
+                f'in account {account_id}'
+            )
             return True
         except ClientError as e:
             log.error(

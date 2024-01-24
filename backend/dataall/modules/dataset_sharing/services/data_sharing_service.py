@@ -87,18 +87,17 @@ class DataSharingService:
         )
         log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
-
         log.info(f'Granting permissions to tables: {shared_tables}')
         approved_tables_succeed = ProcessLakeFormationShare(
-                session,
-                dataset,
-                share,
-                shared_tables,
-                [],
-                source_environment,
-                target_environment,
-                env_group,
-            ).process_approved_shares()
+            session,
+            dataset,
+            share,
+            shared_tables,
+            [],
+            source_environment,
+            target_environment,
+            env_group,
+        ).process_approved_shares()
         log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
         new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
@@ -209,15 +208,15 @@ class DataSharingService:
 
             log.info(f'Revoking permissions to tables: {revoked_tables}')
             processor = ProcessLakeFormationShare(
-                    session,
-                    dataset,
-                    share,
-                    [],
-                    revoked_tables,
-                    source_environment,
-                    target_environment,
-                    env_group,
-                )
+                session,
+                dataset,
+                share,
+                [],
+                revoked_tables,
+                source_environment,
+                target_environment,
+                env_group,
+            )
             revoked_tables_succeed = processor.process_revoked_shares()
             log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 

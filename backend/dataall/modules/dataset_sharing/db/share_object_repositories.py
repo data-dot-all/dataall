@@ -1026,7 +1026,7 @@ class ShareObjectRepository:
         ).to_dict()
 
     @staticmethod
-    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
+    def list_dataset_shares_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(ShareObject)
@@ -1042,6 +1042,10 @@ class ShareObjectRepository:
                 )
             )
         )
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        if item_type:
+            query = query.filter(ShareObjectItem.itemType == item_type)
         return query.all()
 
     @staticmethod
