@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum
 
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import query_expression

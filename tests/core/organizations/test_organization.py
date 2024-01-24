@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentParameter
-from dataall.core.organizations.api.enums import OrganisationUserRole
+from dataall.core.organizations.api.organizations_enums import OrganisationUserRole
 
 
 @pytest.fixture(scope='module', autouse=True)

@@ -3,7 +3,8 @@ from dataall.base.db import exceptions
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.organizations.db.organization_models import OrganisationUserRole, OrganizationGroup
+from dataall.core.organizations.api.organizations_enums import OrganisationUserRole
+from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions import permissions
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
@@ -137,7 +138,7 @@ class OrganizationService:
         else:
             with context.db_engine.scoped_session() as session:
                 if OrganizationRepository.find_organization_membership(
-                    session=session, uri=organization.organizationUri, groups=context.groups
+                        session=session, uri=organization.organizationUri, groups=context.groups
                 ):
                     return OrganisationUserRole.Invited.value
         return OrganisationUserRole.NoPermission.value
