@@ -3,7 +3,7 @@ from dataall.base.db import exceptions
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.organizations.api.organizations_enums import OrganisationUserRole
+from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions import permissions

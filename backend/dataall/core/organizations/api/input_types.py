@@ -1,6 +1,6 @@
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
 from dataall.base.api import gql
-from dataall.core.organizations.api.organizations_enums import OrganisationUserRole
+from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 
 NewOrganizationInput = gql.InputType(
     name='NewOrganizationInput',
