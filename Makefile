@@ -49,7 +49,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
-	python3 -m pytest -v -ra tests/modules/datasets/tasks/test_lf_share_manager.py::test_create_shared_database
+	python -m pytest -v -ra tests/
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \
