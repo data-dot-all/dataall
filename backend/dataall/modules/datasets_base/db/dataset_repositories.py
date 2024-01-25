@@ -80,10 +80,10 @@ class DatasetRepository(EnvironmentResource):
         organization = OrganizationRepository.get_organization_by_uri(
             session, env.organizationUri
         )
-
-        cls._set_dataset_aws_resources(dataset, data, env)
         session.add(dataset)
         session.commit()
+
+        cls._set_dataset_aws_resources(dataset, data, env)
 
         activity = Activity(
             action='dataset:create',
