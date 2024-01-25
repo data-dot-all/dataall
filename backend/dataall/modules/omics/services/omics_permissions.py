@@ -3,7 +3,6 @@ Add module's permissions to the global permissions.
 Contains permissions for Omics RUNs
 """
 
-# TODO: THIS HAS NOT BEEN IMPLEMENTED AT ALL AND NEEDS TO BE IMPLEMENTED
 from dataall.core.permissions.permissions import (
     ENVIRONMENT_ALL,
     ENVIRONMENT_INVITED,
@@ -44,7 +43,6 @@ RESOURCES_ALL.extend(OMICS_RUN_ALL)
 RESOURCES_ALL.append(LIST_ENVIRONMENT_OMICS_RUNS)
 
 RESOURCES_ALL_WITH_DESC[CREATE_OMICS_RUN] = "Create Omics workflow runs on this environment"
-RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_OMICS_RUNS] = "List Omics workflow runs on this environment"
-RESOURCES_ALL_WITH_DESC[GET_OMICS_RUN] = "General permission to list Omics workflow runs"
+RESOURCES_ALL_WITH_DESC[GET_OMICS_RUN] = "Permission to get Omics workflow runs"
 RESOURCES_ALL_WITH_DESC[DELETE_OMICS_RUN] = "Permission to delete Omics workflow runs"
 RESOURCES_ALL_WITH_DESC[UPDATE_OMICS_RUN] = "Permission to edit Omics workflow runs"

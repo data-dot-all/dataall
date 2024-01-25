@@ -61,9 +61,9 @@ class OmicsService:
     """
 
     @staticmethod
-    # @has_tenant_permission(MANAGE_OMICS_RUNS)
-    # @has_resource_permission(CREATE_OMICS_RUN)
-    # @has_group_permission(CREATE_OMICS_RUN)
+    @has_tenant_permission(MANAGE_OMICS_RUNS)
+    @has_resource_permission(CREATE_OMICS_RUN)
+    @has_group_permission(CREATE_OMICS_RUN)
     def create_omics_run(*, uri: str, admin_group: str, data: dict) -> OmicsRun:
         """
         Creates an omics_run and attach policies to it
@@ -73,13 +73,13 @@ class OmicsService:
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, data['destination'])
-            # enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
 
-            # if not enabled and enabled.lower() != "true":
-            #     raise exceptions.UnauthorizedOperation(
-            #         action=CREATE_OMICS_RUN,
-            #         message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
-            #     )
+            if not enabled and enabled.lower() != "true":
+                raise exceptions.UnauthorizedOperation(
+                    action=CREATE_OMICS_RUN,
+                    message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
+                )
 
             omics_run = OmicsRun(
                 owner=get_context().username,
@@ -95,44 +95,39 @@ class OmicsService:
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=omics_run.SamlAdminGroupName,
+                permissions=OMICS_RUN_ALL,
+                resource_uri=omics_run.runUri,
+                resource_type=OmicsRun.__name__,
+            )
 
             response = OmicsClient.run_omics_workflow(omics_run, session)
-            print(response)
+
             if response:
                 omics_run.runUri = response['id']
                 OmicsRepository(session).save_omics_run(omics_run)
-                # ResourcePolicy.attach_resource_policy(
-                #     session=session,
-                #     group=request.SamlAdminGroupName,
-                #     permissions=OMICS_RUN_ALL,
-                #     resource_uri=omics_run.runUri,
-                #     resource_type=OmicsRun.__name__,
-                # )
 
-                # if environment.SamlGroupName != admin_group:
-                #     ResourcePolicy.attach_resource_policy(
-                #         session=session,
-                #         group=environment.SamlGroupName,
-                #         permissions=OMICS_RUN_ALL,
-                #         resource_uri=omics_run.runUri,
-                #         resource_type=OmicsRun.__name__,
-                #     )
                 return True
+            # TODO: in case of failure do we want to delete the object or do we want to show it in UI?
             OmicsRepository(session).delete_omics_run(omics_run)
             return False
 
     @staticmethod
-    #@has_resource_permission(GET_OMICS_RUN)
+    @has_resource_permission(GET_OMICS_RUN)
     def get_omics_run(*, uri: str):
         with _session() as session:
             return OmicsRepository.get_omics_run(session, uri)
 
     @staticmethod
+    @has_resource_permission(GET_OMICS_RUN)
     def get_omics_run_from_aws(uri: str):
         with _session() as session:
             return OmicsClient.get_omics_run(session, uri)
 
     @staticmethod
+    @has_tenant_permission(MANAGE_OMICS_RUNS)
     def get_omics_workflow(workflowId: str) -> dict:
         """List Omics workflows."""
         with _session() as session:
@@ -142,6 +137,7 @@ class OmicsService:
         return response
 
     @staticmethod
+    @has_tenant_permission(MANAGE_OMICS_RUNS)
     def run_omics_workflow(workflowId: str, workflowType: str, roleArn: str, parameters: str) -> dict:
         """List Omics workflows."""
         with _session() as session:
@@ -149,6 +145,7 @@ class OmicsService:
         return response
     
     @staticmethod
+    @has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_user_omics_runs(filter: dict) -> dict:
         """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
         with _session() as session:
@@ -159,6 +156,7 @@ class OmicsService:
             )
     
     @staticmethod
+    @has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_omics_workflows(filter: dict) -> dict:
         """List Omics workflows."""
         with _session() as session:
@@ -167,9 +165,9 @@ class OmicsService:
             )
 
     @staticmethod
-    #@has_resource_permission(DELETE_OMICS_RUN)
-    def delete_omics_run(*, uri: str):
-        ##T TODO: IMPLEMENT IN omics_repository
+    @has_resource_permission(DELETE_OMICS_RUN)
+    def delete_omics_run(uri: str):
+        ## TODO: IMPLEMENT IN omics_repository
         """Deletes Omics project from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_run = OmicsService._get_omics_run(session, uri)
@@ -182,9 +180,6 @@ class OmicsService:
                 resource_uri=omics_run.runUri,
                 group=omics_run.SamlAdminGroupName,
             )
-
-
-
 
 def _session():
     return get_context().db_engine.scoped_session()
