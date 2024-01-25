@@ -115,7 +115,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
 
-        dataset.KmsAlias = bucket_name
+        if not dataset.imported:
+            dataset.KmsAlias = bucket_name
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,
