@@ -5,7 +5,7 @@ from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -97,7 +97,7 @@ def get_dataset_organization(context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Organization.get_organization_by_uri(session, source.organizationUri)
+        return OrganizationRepository.get_organization_by_uri(session, source.organizationUri)
 
 
 def get_dataset_environment(context, source: Dataset, **kwargs):

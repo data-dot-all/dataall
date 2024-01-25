@@ -138,6 +138,8 @@ class Dataset(Resource, Base):
     importedAdminRole = Column(Boolean, default=False)
     imported = Column(Boolean, default=False)
 
+    autoApprovalEnabled = Column(Boolean, default=False)
+
     @classmethod
     def uri(cls):
         return cls.datasetUri

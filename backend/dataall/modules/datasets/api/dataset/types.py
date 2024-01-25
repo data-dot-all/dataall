@@ -150,6 +150,7 @@ Dataset = gql.ObjectType(
             type=gql.Boolean,
         ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=get_dataset_stack),
+        gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
 

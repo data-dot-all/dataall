@@ -132,6 +132,7 @@ class DatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=Dataset.__name__,
                 )
+
             if environment.SamlGroupName != dataset.SamlAdminGroupName:
                 ResourcePolicy.attach_resource_policy(
                     session=session,

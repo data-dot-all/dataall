@@ -22,6 +22,8 @@ COPY --chown=${CONTAINER_USER}:root ./frontend .
 
 # Copy config.json to docker root, because app scripts read it from ".."
 COPY --chown=${CONTAINER_USER}:root ./config.json /
+# Copy vesion.json to docker root, because app scripts read it from ".."
+COPY --chown=${CONTAINER_USER}:root ./version.json /
 
 # Disable linting before starting the server
 ENV DISABLE_ESLINT_PLUGIN=true
