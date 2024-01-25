@@ -101,6 +101,7 @@ class DatasetService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
             dataset = DatasetRepository.build_dataset(
+                session=session,
                 username=context.username,
                 env=environment,
                 data=data

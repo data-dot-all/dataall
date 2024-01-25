@@ -23,7 +23,7 @@ class DatasetRepository(EnvironmentResource):
     """DAO layer for Datasets"""
 
     @classmethod
-    def build_dataset(cls, username: str, env: Environment, data: dict) -> Dataset:
+    def build_dataset(cls, session, username: str, env: Environment, data: dict) -> Dataset:
         """Builds a datasets based on the request data, but doesn't save it in the database"""
         dataset = Dataset(
             label=data.get('label'),
@@ -52,6 +52,10 @@ class DatasetRepository(EnvironmentResource):
             else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
+        
+        session.add(dataset)
+        session.commit()
+
         cls._set_dataset_aws_resources(dataset, data, env)
         cls._set_import_data(dataset, data)
         return dataset
@@ -80,9 +84,6 @@ class DatasetRepository(EnvironmentResource):
         organization = OrganizationRepository.get_organization_by_uri(
             session, env.organizationUri
         )
-
-        session.add(dataset)
-        session.commit()
 
         activity = Activity(
             action='dataset:create',
