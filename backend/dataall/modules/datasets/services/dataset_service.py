@@ -113,6 +113,7 @@ class DatasetService:
                 session=session,
                 env=environment,
                 dataset=dataset,
+                data=data
             )
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
