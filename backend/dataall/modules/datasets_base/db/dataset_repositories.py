@@ -52,7 +52,6 @@ class DatasetRepository(EnvironmentResource):
             else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
-        
         session.add(dataset)
         session.commit()
 
