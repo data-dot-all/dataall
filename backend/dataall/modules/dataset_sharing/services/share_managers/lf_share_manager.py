@@ -127,6 +127,7 @@ class LFShareManager:
                     f' but its correspondent Glue table {table.GlueTableName} does not exist.'
                 ),
             )
+        return True
 
     def check_resource_link_table_exists_in_target_database(
         self, table: DatasetTable
@@ -261,7 +262,7 @@ class LFShareManager:
 
     def grant_principals_permissions_to_table_in_target(self, table: DatasetTable):
         """
-        Grants 'DESCRIBE' Lake Formation permissions to share principals to the table shared in target account
+        Grants 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
         :param table: DatasetTable
         :return: True if it is successful
         """
@@ -270,7 +271,7 @@ class LFShareManager:
             database_name=table.GlueDatabaseName,
             table_name=table.GlueTableName,
             catalog_id=self.source_environment.AwsAccountId,
-            permissions=['DESCRIBE']
+            permissions=['DESCRIBE', 'SELECT']
         )
         return True
 
@@ -280,7 +281,7 @@ class LFShareManager:
         :param table: DatasetTable
         :return: True if it is successful
         """
-        self.lf_client_in_target.batch_revoke_permissions_from_table(
+        self.lf_client_in_target.revoke_permissions_from_table(
             principals=self.principals,
             database_name=self.shared_db_name,
             table_name=table.GlueTableName,
@@ -291,7 +292,7 @@ class LFShareManager:
 
     def revoke_principals_permissions_to_table_in_target(self, table):
         """
-        Revokes 'DESCRIBE' Lake Formation permissions to share principals to the table shared in target account
+        Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
         :param table: DatasetTable
         :return: True if it is successful
         """
@@ -302,7 +303,7 @@ class LFShareManager:
             database_name=table.GlueDatabaseName,
             table_name=table.GlueTableName,
             catalog_id=self.source_environment.AwsAccountId,
-            permissions=['DESCRIBE']
+            permissions=['DESCRIBE', 'SELECT']
         )
         return True
 
@@ -383,7 +384,7 @@ class LFShareManager:
         :return: True if alarm published successfully
         """
         logger.error(
-            f'Failed to revoke S3 permissions to table {table.GlueTableName} '
+            f'Failed to revoke Lake Formation permissions to table {table.GlueTableName} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'

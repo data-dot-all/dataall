@@ -106,7 +106,6 @@ class ProcessLakeFormationShare(LFShareManager):
                             source_database=self.dataset.GlueDatabaseName,
                             source_table=table
                         )
-
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
                             RamClient.accept_ram_invitation(
@@ -117,8 +116,8 @@ class ProcessLakeFormationShare(LFShareManager):
                                 source_database=self.dataset.GlueDatabaseName,
                                 source_table=table
                             )
-                    self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
+                    self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
                     self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
