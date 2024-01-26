@@ -181,6 +181,7 @@ def processor_cross_account(db, dataset1, share_cross_account, table1, table2, s
             source_environment,
             target_environment,
             target_environment_group,
+            None
         )
     yield processor
 

@@ -11,7 +11,11 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_p
     ProcessS3AccessPointShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (ShareObjectActions, ShareItemStatus, ShareableType)
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (ShareObjectActions, ShareItemStatus, ShareableType, ShareItemActions)
+
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
+    ShareItemSM
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 
 log = logging.getLogger(__name__)
 
@@ -88,32 +92,22 @@ class DataSharingService:
         )
         log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
-        if source_environment.AwsAccountId != target_environment.AwsAccountId:
-            processor = ProcessLFCrossAccountShare(
-                session,
-                dataset,
-                share,
-                shared_tables,
-                [],
-                source_environment,
-                target_environment,
-                env_group,
-            )
+        processor = DataSharingService.create_lf_processor(
+            session=session,
+            dataset=dataset,
+            share=share,
+            shared_tables=shared_tables,
+            revoked_tables=[],
+            source_environment=source_environment,
+            target_environment=target_environment,
+            env_group=env_group,
+        )
+        if processor:
+            log.info(f'Granting permissions to tables: {shared_tables}')
+            approved_tables_succeed = processor.process_approved_shares()
+            log.info(f'sharing tables succeeded = {approved_tables_succeed}')
         else:
-            processor = ProcessLFSameAccountShare(
-                session,
-                dataset,
-                share,
-                shared_tables,
-                [],
-                source_environment,
-                target_environment,
-                env_group
-            )
-
-        log.info(f'Granting permissions to tables: {shared_tables}')
-        approved_tables_succeed = processor.process_approved_shares()
-        log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+            approved_tables_succeed = False
 
         new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
         share_sm.update_state(session, share, new_share_state)
@@ -221,31 +215,23 @@ class DataSharingService:
             )
             log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
-            if source_environment.AwsAccountId != target_environment.AwsAccountId:
-                processor = ProcessLFCrossAccountShare(
-                    session,
-                    dataset,
-                    share,
-                    [],
-                    revoked_tables,
-                    source_environment,
-                    target_environment,
-                    env_group,
-                )
-            else:
-                processor = ProcessLFSameAccountShare(
-                    session,
-                    dataset,
-                    share,
-                    [],
-                    revoked_tables,
-                    source_environment,
-                    target_environment,
-                    env_group)
+            processor = DataSharingService.create_lf_processor(
+                session=session,
+                dataset=dataset,
+                share=share,
+                shared_tables=[],
+                revoked_tables=revoked_tables,
+                source_environment=source_environment,
+                target_environment=target_environment,
+                env_group=env_group,
+            )
 
-            log.info(f'Revoking permissions to tables: {revoked_tables}')
-            revoked_tables_succeed = processor.process_revoked_shares()
-            log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
+            if processor:
+                log.info(f'Revoking permissions to tables: {revoked_tables}')
+                revoked_tables_succeed = processor.process_revoked_shares()
+                log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
+            else:
+                revoked_tables_succeed = False
 
             existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
                 session,
@@ -266,3 +252,63 @@ class DataSharingService:
             share_sm.update_state(session, share, new_share_state)
 
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+
+    @staticmethod
+    def create_lf_processor(session,
+                            dataset,
+                            share,
+                            shared_tables,
+                            revoked_tables,
+                            source_environment,
+                            target_environment,
+                            env_group):
+        try:
+            catalog_details = GlueClient(database=dataset.GlueDatabaseName,
+                                         account_id=source_environment.AwsAccountId,
+                                         region=source_environment.region).get_source_catalog()
+
+            source_account_id = catalog_details.account_id if catalog_details else source_environment.AwsAccountId
+
+            if source_account_id != target_environment.AwsAccountId:
+                processor = ProcessLFCrossAccountShare(
+                    session,
+                    dataset,
+                    share,
+                    shared_tables,
+                    revoked_tables,
+                    source_environment,
+                    target_environment,
+                    env_group,
+                    catalog_details
+                )
+            else:
+                processor = ProcessLFSameAccountShare(
+                    session,
+                    dataset,
+                    share,
+                    shared_tables,
+                    revoked_tables,
+                    source_environment,
+                    target_environment,
+                    env_group,
+                )
+            return processor
+        except Exception as e:
+            log.error(f"Error creating LF processor: {e}")
+            for table in shared_tables:
+                DataSharingService._handle_table_share_failure(session, share, table, ShareItemStatus.Share_Approved.value)
+            for table in revoked_tables:
+                DataSharingService._handle_table_share_failure(session, share, table, ShareItemStatus.Revoke_Approved.value)
+
+    @staticmethod
+    def _handle_table_share_failure(session, share, table, share_item_status):
+        """ Mark the share item as failed for the approved/revoked tables """
+        log.error(f'Marking share item as failed for table {table.GlueTableName}')
+        share_item = ShareObjectRepository.find_sharable_item(
+            session, share.shareUri, table.tableUri
+        )
+        share_item_sm = ShareItemSM(share_item_status)
+        new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
+        share_item_sm.update_state_single_item(session, share_item, new_state)
+        new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
+        share_item_sm.update_state_single_item(session, share_item, new_state)

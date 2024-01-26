@@ -5,7 +5,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, Catalog
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
 log = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
+        catalog: Catalog,
     ):
         super().__init__(
             session,
@@ -32,6 +33,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             source_environment,
             target_environment,
             env_group,
+            catalog
         )
 
     def process_approved_shares(self) -> bool:

@@ -3,6 +3,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
+from dataall.modules.dataset_sharing.db.share_object_models import Catalog
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class GlueClient:
         self._client = aws_session.client('glue', region_name=region)
         self._database = database
         self._account_id = account_id
+        self._region = region
 
     def create_database(self, location):
         try:
@@ -129,4 +131,80 @@ class GlueClient:
                 f'in account {account_id} '
                 f'due to: {e}'
             )
+            raise e
+
+    ## Todo - Check if this is used anywhere
+    def remove_create_table_default_permissions(self):
+        """
+        When upgrading to LF tables and database can still have Create Table Default Permissions turned on.
+        Unless this setting is removed, the table or database
+        can not be shared using LakeFormation.
+        :return:
+        """
+        try:
+            account_id = self._account_id
+            database = self._database
+
+            log.info(
+                f'Removing CreateTableDefaultPermissions in database {database}'
+            )
+
+            response = self._client.get_database(CatalogId=account_id, Name=database)
+            existing_database_parameters = response['Database']
+            existing_database_parameters['CreateTableDefaultPermissions'] = []
+
+            if 'CreateTime' in existing_database_parameters:
+                del existing_database_parameters['CreateTime']
+            if 'CatalogId' in existing_database_parameters:
+                del existing_database_parameters['CatalogId']
+
+            response = self._client.update_database(
+                CatalogId=account_id,
+                Name=database,
+                DatabaseInput=existing_database_parameters
+            )
+
+            log.info(
+                f'Successfully removed  Create Table Default Permissions and Create Database Default Permissions '
+                f'| {response}')
+
+        except ClientError as e:
+            log.error(
+                f'Could not remove CreateDatabaseDefaultPermissions and/or CreateTableDefaultPermissions '
+                f'permission on database in {database} due to {e}'
+            )
+
+    def get_source_catalog(self):
+        """ Get the source catalog account details """
+        try:
+            log.info(f'Fetching source catalog details for database {self._database}...')
+            response = self._client.get_database(CatalogId=self._account_id, Name=self._database)
+            linked_database = response.get('Database', {}).get('TargetDatabase', {})
+            log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}...')
+            if linked_database:
+                return Catalog(account_id=linked_database.get('CatalogId'),
+                               database_name=linked_database.get('DatabaseName'),
+                               region=linked_database.get('Region', self._region))
+        except Exception as e:
+            log.exception(f'Could not fetch source catalog details for database {self._database} due to {e}')
+            raise e
+        return None
+
+    def get_database_tags(self):
+        # Get tags from the glue database
+        account_id = self._account_id
+        database = self._database
+        region = self._region
+
+        try:
+            log.info(f'Getting tags for database {database}...')
+            resource_arn = f'arn:aws:glue:{region}:{account_id}:database/{database}'
+            response = self._client.get_tags(ResourceArn=resource_arn)
+            tags = response['Tags']
+
+            log.info(f'Successfully retrieved tags: {tags}')
+
+            return tags
+        except Exception as e:
+            log.exception(f'Could not get tags for database {database} due to {e}')
             raise e
