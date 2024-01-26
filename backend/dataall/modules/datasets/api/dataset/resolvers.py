@@ -9,7 +9,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets.api.dataset.enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
 
 @is_feature_enabled('modules.datasets.features.file_uploads')
 def get_file_upload_presigned_url(
-    context, source, datasetUri: str = None, input: dict = None
+        context, source, datasetUri: str = None, input: dict = None
 ):
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
@@ -162,7 +162,7 @@ def get_dataset_stack(context: Context, source: Dataset, **kwargs):
 
 
 def delete_dataset(
-    context: Context, source, datasetUri: str = None, deleteFromAWS: bool = False
+        context: Context, source, datasetUri: str = None, deleteFromAWS: bool = False
 ):
     return DatasetService.delete_dataset(uri=datasetUri, delete_from_aws=deleteFromAWS)
 
@@ -175,7 +175,7 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
 
 
 def list_datasets_created_in_environment(
-    context: Context, source, environmentUri: str = None, filter: dict = None
+        context: Context, source, environmentUri: str = None, filter: dict = None
 ):
     if not filter:
         filter = {}
@@ -183,7 +183,7 @@ def list_datasets_created_in_environment(
 
 
 def list_datasets_owned_by_env_group(
-    context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
+        context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
 ):
     if not filter:
         filter = {}
