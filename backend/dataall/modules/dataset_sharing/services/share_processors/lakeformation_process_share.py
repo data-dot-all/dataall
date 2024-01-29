@@ -1,8 +1,8 @@
 import logging
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
-from ..share_managers import LFShareManager
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
+from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -202,6 +202,19 @@ class ProcessLakeFormationShare(LFShareManager):
                 self.handle_revoke_failure(table=table, error=e)
 
         try:
+            existing_shared_tables = ShareObjectRepository.check_existing_shared_items_of_type(
+                session=self.session,
+                uri=self.share.shareUri,
+                item_type=ShareableType.Table.value
+            )
+            log.info(
+                f'Still remaining tables shared in this share object = {existing_shared_tables}')
+
+            if not existing_shared_tables and self.revoked_tables:
+                log.info("Revoking permissions to target shared database...")
+                self.revoke_principals_database_permissions_to_shared_database()
+                # TODO Add test for this new method
+
             existing_shared_tables_environment = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
                 session=self.session,
                 dataset_uri=self.dataset.datasetUri,
@@ -214,5 +227,9 @@ class ProcessLakeFormationShare(LFShareManager):
                 log.info("Deleting target shared database...")
                 self.delete_shared_database_in_target()
         except Exception as e:
+            log.error(
+                f'Failed to clean-up database permission or delete shared database {self.shared_db_name} '
+                f'due to: {e}'
+            )
             success = False
         return success

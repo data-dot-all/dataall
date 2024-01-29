@@ -96,25 +96,45 @@ class LakeFormationClient:
                     f'permissions {permissions} '
                     f'to {str(resource)}...'
                 )
-                grant_dict = dict(
+                check_dict = dict(
                     Principal={'DataLakePrincipalIdentifier': principal},
-                    Resource=resource,
-                    Permissions=permissions,
+                    Resource=resource
                 )
-                if permissions_with_grant_options:
-                    grant_dict[
-                        'PermissionsWithGrantOption'
-                    ] = permissions_with_grant_options
+                existing = self._client.list_permissions(**check_dict)
+                current = []
+                for permission in existing['PrincipalResourcePermissions']:
+                    current.extend(permission["Permissions"])
+                missing_permissions = list(set(permissions) - set(current))
+                # TODO: decide whether to use missing permissions or permissions in grant
+                # Same for permissions with grants
 
-                response = self._client.grant_permissions(**grant_dict)
+                if not missing_permissions:
+                    log.info(
+                        f'Already granted principal {principal} '
+                        f'permissions {permissions} '
+                        f'to {str(resource)}  '
+                        f'response: {existing}'
+                    )
+                else:
+                    grant_dict = dict(
+                        Principal={'DataLakePrincipalIdentifier': principal},
+                        Resource=resource,
+                        Permissions=permissions,
+                    )
+                    if permissions_with_grant_options:
+                        grant_dict[
+                            'PermissionsWithGrantOption'
+                        ] = permissions_with_grant_options
 
-                log.info(
-                    f'Successfully granted principal {principal} '
-                    f'permissions {permissions} '
-                    f'to {str(resource)}  '
-                    f'response: {response}'
-                )
-                time.sleep(2)
+                    response = self._client.grant_permissions(**grant_dict)
+
+                    log.info(
+                        f'Successfully granted principal {principal} '
+                        f'permissions {permissions} '
+                        f'to {str(resource)}  '
+                        f'response: {response}'
+                    )
+                    time.sleep(2)
             except ClientError as e:
                 log.error(
                     f'Could not grant principal {principal} '
@@ -123,6 +143,22 @@ class LakeFormationClient:
                     f'due to: {e}'
                 )
                 raise e
+        return True
+
+    def revoke_permissions_to_database(
+        self,
+        principals,
+        database_name,
+        permissions,
+    ):
+        resource = {
+            'Database': {'Name': database_name},
+        }
+        self._revoke_permissions_from_resource(
+            principals=principals,
+            resource=resource,
+            permissions=permissions
+        )
         return True
 
     def revoke_permissions_from_table(

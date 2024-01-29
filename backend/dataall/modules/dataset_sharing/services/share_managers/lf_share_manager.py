@@ -307,6 +307,18 @@ class LFShareManager:
         )
         return True
 
+    def revoke_principals_database_permissions_to_shared_database(self):
+        """
+        Revokes 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
+        :return: True if it is successful
+        """
+        self.lf_client_in_target.revoke_permissions_to_database(
+            principals=self.principals,
+            database_name=self.shared_db_name,
+            permissions=['DESCRIBE'],
+        )
+        return True
+
     def delete_resource_link_table_in_shared_database(self, table: DatasetTable):
         """
         Checks if resource link table from shared database in target account exists

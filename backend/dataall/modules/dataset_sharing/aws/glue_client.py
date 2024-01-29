@@ -82,13 +82,15 @@ class GlueClient:
             log.info(
                 f'Successfully deleted table {table_name} '
                 f'in database {database}'
+                f'in catalog {self._account_id} '
                 f'response: {response}'
             )
             return response
         except ClientError as e:
             log.error(
                 f'Could not delete table {table_name} '
-                f'in database {database}'
+                f'in database {database} '
+                f'in catalog {self._account_id} '
                 f'due to: {e}'
             )
             raise e
@@ -137,7 +139,8 @@ class GlueClient:
         account_id = self._account_id
         database = self._database
         try:
-            if self.database_exists():
+            existing_database = self.get_glue_database()
+            if existing_database:
                 self._client.delete_database(CatalogId=account_id, Name=database)
             log.info(
                 f'Successfully deleted database {database} '
