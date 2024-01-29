@@ -47,7 +47,6 @@ class LFShareManager:
         self.source_database_name = catalog.database_name if catalog else dataset.GlueDatabaseName
         self.principals = self.get_share_principals()
         self.shared_db_name = self.build_shared_db_name()
-        self.verify_catalog_ownership()
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -540,11 +539,11 @@ class LFShareManager:
 
     def verify_catalog_ownership(self):
         if self.catalog_details is None:
-            logger.info(f'database {self.dataset.GlueDatabaseName} is not a resource link, no catalog information present')
+            logger.info(f'Database {self.dataset.GlueDatabaseName} is not a resource link, no catalog information present')
             return
 
         if self.catalog_details.account_id != self.source_environment.AwsAccountId:
-            logger.info(f'database {self.dataset.GlueDatabaseName} is a resource link '
+            logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link '
                         f'the source database {self.catalog_details.database_name} belongs to a catalog account {self.catalog_details.account_id}')
             if SessionHelper.is_assumable_pivot_role(self.catalog_details.account_id):
                 self.validate_catalog_ownership_tag()
@@ -559,4 +558,4 @@ class LFShareManager:
         if tags.get('owner_account_id', '') == self.source_environment.AwsAccountId:
             logger.info(f'owner_account_id tag exists and matches the source account id {self.source_environment.AwsAccountId}')
         else:
-            raise Exception(f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
+            raise Exception(f'owner_account_id tag does not exist or does not match the source account id {self.source_environment.AwsAccountId}')

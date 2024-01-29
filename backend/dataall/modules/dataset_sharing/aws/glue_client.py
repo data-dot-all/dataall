@@ -54,7 +54,7 @@ class GlueClient:
             self._client.get_database(CatalogId=self._account_id, Name=self._database)
             return True
         except ClientError:
-            log.info(f'Database {self._database} does not exist on account {self._account_id}...')
+            log.info(f'Database {self._database} does not exist on account {self._account_id}')
             return False
 
     def table_exists(self, table_name):
@@ -120,7 +120,7 @@ class GlueClient:
         account_id = self._account_id
         database = self._database
 
-        log.info(f'Deleting database {account_id}://{database} ...')
+        log.info(f'Deleting database {account_id}://{database} ')
         try:
             if self.database_exists():
                 self._client.delete_database(CatalogId=account_id, Name=database)
@@ -133,7 +133,6 @@ class GlueClient:
             )
             raise e
 
-    ## Todo - Check if this is used anywhere
     def remove_create_table_default_permissions(self):
         """
         When upgrading to LF tables and database can still have Create Table Default Permissions turned on.
@@ -177,16 +176,20 @@ class GlueClient:
     def get_source_catalog(self):
         """ Get the source catalog account details """
         try:
-            log.info(f'Fetching source catalog details for database {self._database}...')
+            log.info(f'Fetching source catalog details for database {self._database}')
             response = self._client.get_database(CatalogId=self._account_id, Name=self._database)
             linked_database = response.get('Database', {}).get('TargetDatabase', {})
-            log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}...')
+            log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}')
             if linked_database:
                 return Catalog(account_id=linked_database.get('CatalogId'),
                                database_name=linked_database.get('DatabaseName'),
                                region=linked_database.get('Region', self._region))
+
+        except self._client.exceptions.EntityNotFoundException as enoFnd:
+            log.exception(f'Could not fetch source catalog details for database {self._database} due to {enoFnd}')
+            raise enoFnd
         except Exception as e:
-            log.exception(f'Could not fetch source catalog details for database {self._database} due to {e}')
+            log.exception(f'Error fetching source catalog details for database {self._database} due to {e}')
             raise e
         return None
 
@@ -197,7 +200,7 @@ class GlueClient:
         region = self._region
 
         try:
-            log.info(f'Getting tags for database {database}...')
+            log.info(f'Getting tags for database {database}')
             resource_arn = f'arn:aws:glue:{region}:{account_id}:database/{database}'
             response = self._client.get_tags(ResourceArn=resource_arn)
             tags = response['Tags']
@@ -205,6 +208,9 @@ class GlueClient:
             log.info(f'Successfully retrieved tags: {tags}')
 
             return tags
+        except self._client.exceptions.EntityNotFoundException as entNotFound:
+            log.exception(f'Could not get tags for database {database} due to {entNotFound}')
+            raise entNotFound
         except Exception as e:
-            log.exception(f'Could not get tags for database {database} due to {e}')
+            log.exception(f'Error fetching tags for {database} due to {e}')
             raise e

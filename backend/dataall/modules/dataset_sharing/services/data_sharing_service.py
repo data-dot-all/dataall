@@ -105,7 +105,7 @@ class DataSharingService:
         if processor:
             log.info(f'Granting permissions to tables: {shared_tables}')
             approved_tables_succeed = processor.process_approved_shares()
-            log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+            log.info(f'Sharing tables succeeded = {approved_tables_succeed}')
         else:
             approved_tables_succeed = False
 
@@ -188,7 +188,7 @@ class DataSharingService:
             existing_shared_items = existing_shared_folders or existing_shared_buckets
             log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
             if not existing_shared_folders and revoked_folders:
-                log.info("Clean up S3 access points...")
+                log.info("Clean up S3 access points")
                 clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
                     session,
                     dataset=dataset,
@@ -240,7 +240,7 @@ class DataSharingService:
             )
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_tables:
-                log.info("Clean up LF remaining resources...")
+                log.info("Clean up LF remaining resources")
                 clean_up_tables = processor.delete_shared_database()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
@@ -292,7 +292,12 @@ class DataSharingService:
                     target_environment,
                     env_group,
                 )
+
+            # Verify account ownership in case database is in another central catalog account
+            processor.verify_catalog_ownership()
+
             return processor
+        # Todo - Add an exception in case GlueClient initialization fails ??
         except Exception as e:
             log.error(f"Error creating LF processor: {e}")
             for table in shared_tables:
