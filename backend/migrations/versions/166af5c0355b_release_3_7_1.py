@@ -19,6 +19,8 @@ from dataall.base.utils.naming_convention import (
     NamingConventionPattern,
 )
 
+from dataall.core.environment.api.enums import EnvironmentType
+
 revision = '166af5c0355b'
 down_revision = '2b40221043f1'
 branch_labels = None
@@ -36,7 +38,7 @@ class Environment(Resource, Base):
     cognitoGroupName = Column(String, nullable=True)
     resourcePrefix = Column(String, nullable=False, default='dh')
     validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
+    environmentType = Column(String, nullable=False, default=EnvironmentType.Data.value)
     isOrganizationDefaultEnvironment = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
     EnvironmentDefaultIAMRoleImported = Column(Boolean, default=False)

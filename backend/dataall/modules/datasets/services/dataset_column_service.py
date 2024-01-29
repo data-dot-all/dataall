@@ -10,7 +10,7 @@ from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableR
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, DatasetTableColumn
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE
 
 

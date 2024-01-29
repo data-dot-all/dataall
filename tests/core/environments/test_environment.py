@@ -2,7 +2,6 @@ from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 
-
 def get_env(client, env_fixture, group):
     return client.query(
         """
@@ -287,7 +286,7 @@ def test_paging(db, client, org_fixture, env_fixture, user, group):
                 EnvironmentDefaultIAMRoleName='EnvRole',
                 EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole',
                 CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-                userRoleInEnvironment='999',
+                userRoleInEnvironment=EnvironmentPermission.Owner.value,
             )
             session.add(env)
             session.commit()
