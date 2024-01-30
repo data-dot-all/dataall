@@ -202,30 +202,34 @@ class ProcessLakeFormationShare(LFShareManager):
                 self.handle_revoke_failure(table=table, error=e)
 
         try:
-            existing_shared_tables = ShareObjectRepository.check_existing_shared_items_of_type(
-                session=self.session,
-                uri=self.share.shareUri,
-                item_type=ShareableType.Table.value
-            )
-            log.info(
-                f'Still remaining tables shared in this share object = {existing_shared_tables}')
+            if self.revoked_tables:
+                existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
+                    session=self.session,
+                    uri=self.share.shareUri,
+                    item_type=ShareableType.Table.value
+                )
+                log.info(
+                    f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
 
-            if not existing_shared_tables and self.revoked_tables:
-                log.info("Revoking permissions to target shared database...")
-                self.revoke_principals_database_permissions_to_shared_database()
-                # TODO Add test for this new method
+                if not existing_shared_tables_in_share:
+                    log.info("Revoking permissions to target shared database...")
+                    self.revoke_principals_database_permissions_to_shared_database()
 
-            existing_shared_tables_environment = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=self.session,
-                dataset_uri=self.dataset.datasetUri,
-                environment_uri=self.target_environment.environmentUri,
-                item_type=ShareableType.Table.value
-            )
+                    if not self.is_new_share:
+                        log.info("Deleting OLD target shared database...")
+                        self.delete_shared_database_in_target()
 
-            log.info(f'Still remaining tables shared from this dataset to this environment = {existing_shared_tables_environment}')
-            if not existing_shared_tables_environment and self.revoked_tables:
-                log.info("Deleting target shared database...")
-                self.delete_shared_database_in_target()
+                existing_shared_tables_in_environment = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+                    session=self.session,
+                    dataset_uri=self.dataset.datasetUri,
+                    environment_uri=self.target_environment.environmentUri,
+                    item_type=ShareableType.Table.value
+                )
+
+                log.info(f'Remaining tables shared from this dataset to this environment = {existing_shared_tables_in_environment}')
+                if self.is_new_share and not existing_shared_tables_in_environment:
+                    log.info("Deleting target shared database...")
+                    self.delete_shared_database_in_target()
         except Exception as e:
             log.error(
                 f'Failed to clean-up database permission or delete shared database {self.shared_db_name} '

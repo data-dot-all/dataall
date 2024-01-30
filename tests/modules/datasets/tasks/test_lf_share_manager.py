@@ -345,7 +345,7 @@ def test_grant_pivot_role_all_database_permissions_to_shared_database(
     )
 
 
-def test_grant_principals_permissions_to_shared_database(
+def test_grant_principals_database_permissions_to_shared_database(
         processor_with_mocks,
         dataset1: Dataset
 ):
@@ -475,7 +475,6 @@ def test_revoke_principals_permissions_to_resource_link_table(
         )
 
 
-
 def test_revoke_principals_permissions_to_table_in_target(
         processor_with_mocks,
         table1: DatasetTable,
@@ -494,8 +493,6 @@ def test_revoke_principals_permissions_to_table_in_target(
             permissions=['DESCRIBE', 'SELECT']
         )
 
-
-
 def test_delete_resource_link_table_in_shared_database_true(
         processor_with_mocks,
         table2: DatasetTable
@@ -510,6 +507,20 @@ def test_delete_resource_link_table_in_shared_database_true(
     glue_client.table_exists.assert_called_once()
     glue_client.delete_table.assert_called_once()
 
+def test_revoke_principals_database_permissions_to_shared_database(
+        processor_with_mocks,
+        dataset1: Dataset
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.revoke_principals_database_permissions_to_shared_database()
+    # Then
+    lf_client.revoke_permissions_to_database.assert_called_once()
+    lf_client.revoke_permissions_to_database.assert_called_with(
+        principals=processor.principals,
+        database_name=f"{dataset1.GlueDatabaseName}_shared",
+        permissions=['DESCRIBE'],
+    )
 
 def test_delete_shared_database_in_target(
     processor_with_mocks,
