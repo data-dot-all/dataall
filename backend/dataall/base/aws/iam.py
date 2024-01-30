@@ -101,3 +101,25 @@ class IAM:
             log.error(
                 f'Failed to delete policy {policy_name} of role {role_name} : {e}'
             )
+
+
+    @staticmethod
+    def create_managed_policy(
+        account_id: str,
+        policy_name: str,
+        policy: str
+    ):
+        try:
+            iamcli = IAM.client(account_id)
+            response = iamcli.create_policy(
+                PolicyName=policy_name,
+                PolicyDocument=policy,
+            )
+            arn = response['Policy']['Arn']
+            return arn
+        except Exception as e:
+            log.error(
+                f'Failed to create managed policy {policy_name} : {e}'
+            )
+            return None
+
