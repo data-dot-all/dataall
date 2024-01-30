@@ -181,7 +181,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 if resource_link_table_exists:
                     log.info(f'Revoking access to resource link table for: {table.GlueTableName} ')
                     self.revoke_principals_permissions_to_resource_link_table(table)
-                    self.revoke_principals_permissions_to_table_in_target(table)
+                    self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         log.info(f'Deleting resource link table for: {table.GlueTableName} ')
