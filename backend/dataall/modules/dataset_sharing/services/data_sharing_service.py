@@ -1,8 +1,6 @@
 import logging
 
 from dataall.base.db import Engine
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
-    ShareItemSM
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import \
     ProcessLFCrossAccountShare
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import \
@@ -297,7 +295,7 @@ class DataSharingService:
             processor.verify_catalog_ownership()
 
             return processor
-        # Todo - Add an exception in case GlueClient initialization fails ??
+
         except Exception as e:
             log.error(f"Error creating LF processor: {e}")
             for table in shared_tables:

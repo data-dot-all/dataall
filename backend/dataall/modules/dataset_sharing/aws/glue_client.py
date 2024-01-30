@@ -184,12 +184,8 @@ class GlueClient:
                 return Catalog(account_id=linked_database.get('CatalogId'),
                                database_name=linked_database.get('DatabaseName'),
                                region=linked_database.get('Region', self._region))
-
-        except self._client.exceptions.EntityNotFoundException as enoFnd:
-            log.exception(f'Could not fetch source catalog details for database {self._database} due to {enoFnd}')
-            raise enoFnd
-        except Exception as e:
-            log.exception(f'Error fetching source catalog details for database {self._database} due to {e}')
+        except self._client.exceptions.EntityNotFoundException as e:
+            log.exception(f'Could not fetch source catalog details for database {self._database} due to {e}')
             raise e
         return None
 
@@ -204,13 +200,8 @@ class GlueClient:
             resource_arn = f'arn:aws:glue:{region}:{account_id}:database/{database}'
             response = self._client.get_tags(ResourceArn=resource_arn)
             tags = response['Tags']
-
             log.info(f'Successfully retrieved tags: {tags}')
-
             return tags
-        except self._client.exceptions.EntityNotFoundException as entNotFound:
-            log.exception(f'Could not get tags for database {database} due to {entNotFound}')
-            raise entNotFound
-        except Exception as e:
-            log.exception(f'Error fetching tags for {database} due to {e}')
+        except self._client.exceptions.EntityNotFoundException as e:
+            log.exception(f'Could not get tags for database {database} due to {e}')
             raise e
