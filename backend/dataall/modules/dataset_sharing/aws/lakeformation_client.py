@@ -74,11 +74,19 @@ class LakeFormationClient:
                 'CatalogId': catalog_id,
             }
         }
+        check_resource = {
+            'Table': {
+                'DatabaseName': database_name,
+                'Name': table_name,
+                'CatalogId': catalog_id,
+            }
+        }
         self._grant_permissions_to_resource(
             principals=principals,
             resource=resource,
             permissions=permissions,
-            permissions_with_grant_options=permissions_with_grant_options
+            permissions_with_grant_options=permissions_with_grant_options,
+            check_resource=check_resource
         )
         return True
 
@@ -88,6 +96,7 @@ class LakeFormationClient:
         resource: dict,
         permissions: List,
         permissions_with_grant_options: List = None,
+        check_resource: dict = None
     ):
         for principal in principals:
             try:
@@ -98,7 +107,7 @@ class LakeFormationClient:
                 )
                 check_dict = dict(
                     Principal={'DataLakePrincipalIdentifier': principal},
-                    Resource=resource
+                    Resource=check_resource if check_resource else resource
                 )
                 existing = self._client.list_permissions(**check_dict)
                 current = []
@@ -106,7 +115,7 @@ class LakeFormationClient:
                     current.extend(permission["Permissions"])
                 missing_permissions = list(set(permissions) - set(current))
                 # TODO: decide whether to use missing permissions or permissions in grant
-                # Same for permissions with grants
+                # TODO: Same for permissions with grants
 
                 if not missing_permissions:
                     log.info(
