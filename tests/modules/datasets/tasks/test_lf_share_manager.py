@@ -107,7 +107,7 @@ def share_item(share_item_table: Callable, share: ShareObject,
 
 @pytest.fixture(scope="function", autouse=True)
 def processor_with_mocks(db, dataset1, share, table1, table2, source_environment, target_environment,
-                            target_environment_group, mocker):
+                            target_environment_group, mocker, mock_glue_client):
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
@@ -116,6 +116,8 @@ def processor_with_mocks(db, dataset1, share, table1, table2, source_environment
         "dataall.base.aws.iam.IAM.get_role_arn_by_name",
         side_effect=lambda account_id, role_name: f"arn:aws:iam::{account_id}:role/{role_name}"
     )
+    mock_glue_client().get_glue_database.return_value = False
+
     with db.scoped_session() as session:
         processor = ProcessLakeFormationShare(
             session,
@@ -164,6 +166,7 @@ def test_init(processor_with_mocks):
     processor, lf_client, glue_client = processor_with_mocks
     assert processor.dataset
     assert processor.share
+    assert processor.shared_db_name == 'gluedatabase_shared'
 
 def test_get_share_principals(
         mocker,
@@ -192,6 +195,8 @@ def test_build_shared_db_name(
     # Given a new share, build db_share name
     processor, lf_client, glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = False
+    # Reset to remove call in __init__
+    mock_glue_client().get_glue_database.reset_mock()
     # Then
     assert processor.build_shared_db_name() == (f"{dataset1.GlueDatabaseName[:247]}_shared", True)
     mock_glue_client().get_glue_database.assert_called_once()
@@ -205,6 +210,8 @@ def test_build_shared_db_name_old(
     # Given an existing old share (shared db name with shareUri), build db_share name
     processor, lf_client, glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = True
+    # Reset to remove call in __init__
+    mock_glue_client().get_glue_database.reset_mock()
     # Then
     assert processor.build_shared_db_name() == (f"{dataset1.GlueDatabaseName}_shared_{share.shareUri}"[:254], False)
     mock_glue_client().get_glue_database.assert_called_once()
