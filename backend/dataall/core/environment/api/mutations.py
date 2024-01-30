@@ -5,7 +5,8 @@ from dataall.core.environment.api.input_types import (
     NewEnvironmentInput,
     EnableDataSubscriptionsInput,
     InviteGroupOnEnvironmentInput,
-    AddConsumptionRoleToEnvironmentInput
+    AddConsumptionRoleToEnvironmentInput,
+    UpdateConsumptionRoleInput,
 )
 from dataall.core.environment.api.resolvers import *
 
@@ -109,4 +110,15 @@ DisableDataSubscriptions = gql.MutationField(
     ],
     resolver=disable_subscriptions,
     type=gql.Boolean,
+)
+
+updateConsumptionRole = gql.MutationField(
+    name='updateConsumptionRole',
+    args=[
+        gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('input', type=UpdateConsumptionRoleInput),
+    ],
+    type=gql.Ref('ConsumptionRole'),
+    resolver=update_consumption_role,
 )

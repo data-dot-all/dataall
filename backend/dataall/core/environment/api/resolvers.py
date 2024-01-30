@@ -222,6 +222,17 @@ def remove_consumption_role(context: Context, source, environmentUri=None, consu
     return status
 
 
+def update_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None, input={}):
+    with context.engine.scoped_session() as session:
+        status = EnvironmentService.update_consumption_role(
+            session=session,
+            uri=consumptionRoleUri,
+            env_uri=environmentUri,
+            input=input,
+        )
+    return status
+
+
 def list_environment_invited_groups(
     context: Context, source, environmentUri=None, filter=None
 ):
