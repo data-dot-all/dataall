@@ -731,6 +731,26 @@ const ShareView = () => {
               <Box sx={{ mb: 3 }}>
                 <Card {...share}>
                   <Box>
+                    <CardHeader title="Dataset Description" />
+                    <Divider />
+                  </Box>
+                  <CardContent>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        color="textPrimary"
+                        variant="subtitle2"
+                        sx={{ wordBreak: 'break-word' }}
+                        style={{ whiteSpace: 'pre-line' }}
+                      >
+                        {share.dataset.description}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Card {...share}>
+                  <Box>
                     <CardHeader title="Share Object Comments" />
                     <Divider />
                   </Box>
