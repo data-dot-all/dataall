@@ -214,25 +214,6 @@ class LFShareManager:
         )
         return True
 
-    def grant_principals_permissions_to_source_table(self, table: DatasetTable):
-        """
-        Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
-        :param table: DatasetTable
-        :return: True if it is successful
-        """
-        # HAD TO REMOVE QUICKSIGHT BECAUSE IT IS NOT SUPPORTED! Blocker
-        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
-        self.lf_client_in_source.grant_permissions_to_table(
-            principals=principals,
-            database_name=table.GlueDatabaseName,
-            table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
-            permissions=['DESCRIBE', 'SELECT']
-        )
-        time.sleep(2)
-        return True
-
-
     def grant_target_account_permissions_to_source_table(self, table: DatasetTable):
         """
         Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
@@ -376,27 +357,6 @@ class LFShareManager:
         """
         self.lf_client_in_source.revoke_permissions_from_table_with_columns(
             principals=[self.target_environment.AwsAccountId],
-            database_name=table.GlueDatabaseName,
-            table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
-            permissions=['DESCRIBE', 'SELECT'],
-            permissions_with_grant_options=['DESCRIBE', 'SELECT']
-        )
-        return True
-
-    def revoke_principals_access_on_source_account(self, table: DatasetTable) -> [dict]:
-        """
-        Revokes 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
-        If the table is not shared with any other team in the environment,
-        it deletes resource_shares on RAM associated to revoked table
-        :param table: DatasetTable
-        :return: True if it is successful
-        """
-        # HAD TO REMOVE QUICKSIGHT BECAUSE IT IS NOT SUPPORTED! Blocker
-        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
-
-        self.lf_client_in_source.revoke_permissions_from_table_with_columns(
-            principals=principals,
             database_name=table.GlueDatabaseName,
             table_name=table.GlueTableName,
             catalog_id=self.source_environment.AwsAccountId,
