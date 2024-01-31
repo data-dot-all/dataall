@@ -311,7 +311,7 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_database_permissions_to_shared_database(self)  -> True:
+    def revoke_principals_database_permissions_to_shared_database(self) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
         :return: True if it is successful
