@@ -117,7 +117,8 @@ class ProcessLakeFormationShare(LFShareManager):
                                 source_table=table
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
-                    self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
+                    if self.cross_account:
+                        self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
                     self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
