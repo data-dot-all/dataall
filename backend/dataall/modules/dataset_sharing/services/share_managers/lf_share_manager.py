@@ -86,13 +86,14 @@ class LFShareManager:
 
         return principals
 
-    def build_shared_db_name(self) -> str:
+    def build_shared_db_name(self) -> tuple:
         """
-        It checks if a share is prior to 2.3.0 and builds its suffix as "_shared + shareUri"
+        It checks if a share is prior to 2.3.0 and builds its suffix as "_shared_" + shareUri
         For shares after 2.3.0 the suffix returned is "_shared"
-        :return: Shared database name
+        :return: Shared database name, boolean indicating if it is a new share
         """
         old_shared_db_name = (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
+        warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
         logger.info(
             f'Checking shared db {old_shared_db_name} exists in {self.target_environment.AwsAccountId}...'
         )
@@ -101,7 +102,6 @@ class LFShareManager:
             database=old_shared_db_name,
             region=self.target_environment.region
         ).get_glue_database()
-        warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
 
         if database:
             return old_shared_db_name, False
@@ -109,12 +109,12 @@ class LFShareManager:
 
     def check_table_exists_in_source_database(
         self, share_item: ShareObjectItem, table: DatasetTable
-    ) -> None:
+    ) -> True:
         """
         Checks if the table to be shared exists on the Glue catalog in the source account
         :param share_item: request share item
         :param table: DatasetTable
-        :return: exceptions.AWSResourceNotFound
+        :return: True or raise exceptions.AWSResourceNotFound
         """
         glue_client = GlueClient(
             account_id=self.source_environment.AwsAccountId,
@@ -133,7 +133,7 @@ class LFShareManager:
 
     def check_resource_link_table_exists_in_target_database(
         self, table: DatasetTable
-    ) -> None:
+    ) -> bool:
         """
         Checks if the table to be shared exists on the Glue catalog in the target account as resource link
         :param table: DatasetTable
@@ -152,12 +152,12 @@ class LFShareManager:
         )
         return False
 
-    def revoke_iam_allowed_principals_from_table(self, table: DatasetTable):
+    def revoke_iam_allowed_principals_from_table(self, table: DatasetTable) -> True:
         """
         Revoke ALL permissions to IAMAllowedPrincipal to the original table in source account.
-        Needed for cross-account permissions. Unless this is revoked the table can not be shared using LakeFormation
+        Needed for cross-account permissions. Unless this is revoked the table cannot be shared using LakeFormation
         :param table: DatasetTable
-        :return: Boolean
+        :return: True if it is successful
         """
         self.lf_client_in_source.revoke_permissions_from_table(
             principals=['EVERYONE'],
@@ -168,7 +168,7 @@ class LFShareManager:
         )
         return True
 
-    def grant_pivot_role_all_database_permissions_to_source_database(self) -> bool:
+    def grant_pivot_role_all_database_permissions_to_source_database(self) -> True:
         """
         Grants 'ALL' Lake Formation permissions to data.all PivotRole to the original database in source account
         :return: True if it is successful
@@ -190,7 +190,7 @@ class LFShareManager:
         database = self.glue_client_in_target.create_database(location=f's3://{self.dataset.S3BucketName}')
         return database
 
-    def grant_pivot_role_all_database_permissions_to_shared_database(self):
+    def grant_pivot_role_all_database_permissions_to_shared_database(self) -> True:
         """
         Grants 'ALL' Lake Formation permissions to data.all PivotRole to the shared database in target account
         :return: True if it is successful
@@ -202,7 +202,7 @@ class LFShareManager:
         )
         return True
 
-    def grant_principals_database_permissions_to_shared_database(self):
+    def grant_principals_database_permissions_to_shared_database(self) -> True:
         """
         Grants 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
         :return: True if it is successful
@@ -214,7 +214,7 @@ class LFShareManager:
         )
         return True
 
-    def grant_target_account_permissions_to_source_table(self, table: DatasetTable):
+    def grant_target_account_permissions_to_source_table(self, table: DatasetTable) -> True:
         """
         Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
         :param table: DatasetTable
@@ -231,7 +231,7 @@ class LFShareManager:
         time.sleep(2)
         return True
 
-    def check_if_exists_and_create_resource_link_table_in_shared_database(self, table: DatasetTable) -> dict:
+    def check_if_exists_and_create_resource_link_table_in_shared_database(self, table: DatasetTable) -> True:
         """
         Checks if resource link to the source shared Glue table exists in target account
         Creates a resource link if it does not exist
@@ -247,7 +247,7 @@ class LFShareManager:
             )
         return True
 
-    def grant_principals_permissions_to_resource_link_table(self, table: DatasetTable):
+    def grant_principals_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
         """
         Grants 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
         :param table: DatasetTable
@@ -262,7 +262,7 @@ class LFShareManager:
         )
         return True
 
-    def grant_principals_permissions_to_table_in_target(self, table: DatasetTable):
+    def grant_principals_permissions_to_table_in_target(self, table: DatasetTable) -> True:
         """
         Grants 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
         :param table: DatasetTable
@@ -277,7 +277,7 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable):
+    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
         :param table: DatasetTable
@@ -292,7 +292,7 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_table_in_target(self, table, other_table_shares_in_env):
+    def revoke_principals_permissions_to_table_in_target(self, table, other_table_shares_in_env) -> True:
         """
         Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
         If there are no more shares for this table in the environment then revoke to Quicksight group
@@ -311,7 +311,7 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_database_permissions_to_shared_database(self):
+    def revoke_principals_database_permissions_to_shared_database(self)  -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
         :return: True if it is successful
@@ -323,7 +323,7 @@ class LFShareManager:
         )
         return True
 
-    def delete_resource_link_table_in_shared_database(self, table: DatasetTable):
+    def delete_resource_link_table_in_shared_database(self, table: DatasetTable) -> True:
         """
         Checks if resource link table from shared database in target account exists
         Deletes it if it exists
@@ -337,7 +337,7 @@ class LFShareManager:
         glue_client.delete_table(table.GlueTableName)
         return True
 
-    def delete_shared_database_in_target(self) -> bool:
+    def delete_shared_database_in_target(self) -> True:
         """
         Checks if shared database in target account exists
         Deletes it if it exists
@@ -347,7 +347,7 @@ class LFShareManager:
         self.glue_client_in_target.delete_database()
         return True
 
-    def revoke_external_account_access_on_source_account(self, table: DatasetTable) -> [dict]:
+    def revoke_external_account_access_on_source_account(self, table: DatasetTable) -> True:
         """
         Revokes 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
         If the table is not shared with any other team in the environment,
@@ -369,7 +369,7 @@ class LFShareManager:
         self,
         table: DatasetTable,
         error: Exception,
-    ) -> bool:
+    ) -> True:
         """
         Handles share failure by raising an alarm to alarmsTopic
         :param table: DatasetTable
@@ -392,7 +392,7 @@ class LFShareManager:
             self,
             table: DatasetTable,
             error: Exception,
-    ) -> bool:
+    ) -> True:
         """
         Handles share failure by raising an alarm to alarmsTopic
         :param table: DatasetTable

@@ -47,7 +47,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 c.2) Grant target account permissions to original table -> create RAM invitation
                 c.3) Accept pending RAM invitation
             d) Create resource link for table in target account
-            e) grant permission to principals to shared-table in target account
+            e) If it is a cross-account share: grant permission to principals to RAM-shared table in target account
             f) grant permission to principals to resource link table
             g) update share item status to SHARE_SUCCESSFUL with Action Success
 
@@ -92,7 +92,6 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if self.cross_account:
                         log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
-                        # TODO: old shares, add if exists, use LFV3
                         self.revoke_iam_allowed_principals_from_table(table)
                         self.grant_target_account_permissions_to_source_table(table)
                         (
@@ -118,7 +117,7 @@ class ProcessLakeFormationShare(LFShareManager):
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     if self.cross_account:
-                        self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
+                        self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
@@ -168,7 +167,6 @@ class ProcessLakeFormationShare(LFShareManager):
 
             try:
                 log.info(f'Revoking access to table: {table.GlueTableName} ')
-
                 self.check_table_exists_in_source_database(share_item, table)
 
                 resource_link_table_exists = self.check_resource_link_table_exists_in_target_database(table)
@@ -180,17 +178,15 @@ class ProcessLakeFormationShare(LFShareManager):
                 ) else False
 
                 if resource_link_table_exists:
-                    log.info(f'Revoking access to resource link table for: {table.GlueTableName} ')
                     self.revoke_principals_permissions_to_resource_link_table(table)
-                    self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
+                    if self.cross_account:
+                        self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
-                        log.info(f'Deleting resource link table for: {table.GlueTableName} ')
                         warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:
-                    log.info(f'Revoking access from target account to table: {table.GlueTableName} ')
                     self.revoke_external_account_access_on_source_account(table)
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
@@ -240,7 +236,7 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.delete_shared_database_in_target()
         except Exception as e:
             log.error(
-                f'Failed to clean-up database permission or delete shared database {self.shared_db_name} '
+                f'Failed to clean-up database permissions or delete shared database {self.shared_db_name} '
                 f'due to: {e}'
             )
             success = False

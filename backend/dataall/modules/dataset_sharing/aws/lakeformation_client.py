@@ -1,5 +1,4 @@
 import logging
-import uuid
 from typing import List
 import time
 
@@ -22,7 +21,7 @@ class LakeFormationClient:
         principals,
         database_name,
         permissions,
-    ):
+    ) -> True:
         resource = {
             'Database': {'Name': database_name},
         }
@@ -41,7 +40,7 @@ class LakeFormationClient:
         catalog_id,
         permissions,
         permissions_with_grant_options=None,
-    ):
+    ) -> True:
         resource = {
             'Table': {
                 'DatabaseName': database_name,
@@ -65,7 +64,7 @@ class LakeFormationClient:
             catalog_id,
             permissions,
             permissions_with_grant_options=None,
-    ):
+    ) -> True:
         resource = {
             'TableWithColumns': {
                 'DatabaseName': database_name,
@@ -97,7 +96,7 @@ class LakeFormationClient:
         permissions: List,
         permissions_with_grant_options: List = None,
         check_resource: dict = None
-    ):
+    ) -> True:
         for principal in principals:
             try:
                 log.info(
@@ -111,20 +110,25 @@ class LakeFormationClient:
                 )
                 existing = self._client.list_permissions(**check_dict)
                 current = []
+                current_grant = []
                 for permission in existing['PrincipalResourcePermissions']:
                     current.extend(permission["Permissions"])
-                missing_permissions = list(set(permissions) - set(current))
-                # TODO: decide whether to use missing permissions or permissions in grant
-                # TODO: Same for permissions with grants
+                    current_grant.extend(permission["PermissionsWithGrantOption"])
 
-                if not missing_permissions:
+                missing_permissions = list(set(permissions) - set(current))
+                missing_grant_permissions = list(set(permissions_with_grant_options) - set(current_grant))
+
+                if not missing_permissions and not missing_grant_permissions:
                     log.info(
                         f'Already granted principal {principal} '
                         f'permissions {permissions} '
+                        f'and permissions with grant options {permissions_with_grant_options} '
                         f'to {str(resource)}  '
                         f'response: {existing}'
                     )
                 else:
+                    # We define the grant with "permissions" instead of "missing_permissions" because we want to avoid
+                    # duplicates done by data.all, but we want to avoid dependencies with external grants
                     grant_dict = dict(
                         Principal={'DataLakePrincipalIdentifier': principal},
                         Resource=resource,
@@ -140,6 +144,7 @@ class LakeFormationClient:
                     log.info(
                         f'Successfully granted principal {principal} '
                         f'permissions {permissions} '
+                        f'and permissions with grant options {permissions_with_grant_options} '
                         f'to {str(resource)}  '
                         f'response: {response}'
                     )
@@ -148,6 +153,7 @@ class LakeFormationClient:
                 log.error(
                     f'Could not grant principal {principal} '
                     f'permissions {permissions} '
+                    f'and permissions with grant options {permissions_with_grant_options} '
                     f'to {str(resource)}  '
                     f'due to: {e}'
                 )
@@ -159,7 +165,7 @@ class LakeFormationClient:
         principals,
         database_name,
         permissions,
-    ):
+    ) -> True:
         resource = {
             'Database': {'Name': database_name},
         }
@@ -178,7 +184,7 @@ class LakeFormationClient:
         catalog_id,
         permissions,
         permissions_with_grant_options=None
-    ):
+    ) -> True:
         resource = {
             'Table': {
                 'DatabaseName': database_name,
@@ -202,7 +208,7 @@ class LakeFormationClient:
         catalog_id,
         permissions,
         permissions_with_grant_options=None
-    ):
+    ) -> True:
         resource = {
             'TableWithColumns': {
                 'DatabaseName': database_name,
@@ -225,12 +231,13 @@ class LakeFormationClient:
         resource,
         permissions,
         permissions_with_grant_options=None
-    ):
+    ) -> True:
         for principal in principals:
             try:
                 log.info(
                     f'Revoking principal {principal} '
                     f'permissions {permissions} '
+                    f'and permissions with grant options {permissions_with_grant_options} '
                     f'to {str(resource)}... '
                 )
                 revoke_dict = dict(
@@ -247,6 +254,7 @@ class LakeFormationClient:
                 log.info(
                     f'Successfully revoked principal {principal} '
                     f'permissions {permissions} '
+                    f'and permissions with grant options {permissions_with_grant_options} '
                     f'to {str(resource)} '
                     f'response: {response}'
                 )
@@ -264,6 +272,7 @@ class LakeFormationClient:
                     log.error(
                         f'Failed revoking principal {principal} '
                         f'permissions {permissions} '
+                        f'and permissions with grant options {permissions_with_grant_options} '
                         f'to {str(resource)} '
                         f'due to: {error}'
                     )
@@ -271,6 +280,7 @@ class LakeFormationClient:
                 log.warning(
                     f'Principal {principal} already has revoked'
                     f'permissions {permissions} '
+                    f'and permissions with grant options {permissions_with_grant_options} '
                     f'to {str(resource)} '
                     f'response error: {error}'
                 )

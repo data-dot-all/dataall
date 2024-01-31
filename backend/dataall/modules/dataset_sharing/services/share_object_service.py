@@ -1,3 +1,4 @@
+from warnings import warn
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
@@ -370,6 +371,7 @@ class ShareObjectService:
                     region=environment.region,
                     database=old_shared_db_name
                 ).get_glue_database()
+                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                 sharedGlueDatabase = old_shared_db_name if database else f"{dataset.GlueDatabaseName[:247]}_shared"
                 return {
                     's3AccessPointName': S3AccessPointName,

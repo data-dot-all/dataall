@@ -1054,6 +1054,7 @@ class ShareObjectRepository:
         warn(
             'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
             DeprecationWarning, stacklevel=2)
+        # When deprecated, use ist_dataset_shares_with_existing_shared_items instead
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(ShareObject)
