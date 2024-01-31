@@ -94,7 +94,10 @@ class ProcessLakeFormationShare(LFShareManager):
                         log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
                         # TODO: old shares, add if exists, use LFV3
                         self.revoke_iam_allowed_principals_from_table(table)
-                        self.grant_target_account_permissions_to_source_table(table)
+                        if self.is_new_share:
+                            self.grant_principals_permissions_to_source_table(table)
+                        else:
+                            self.grant_target_account_permissions_to_source_table(table)
                         (
                             retry_share_table,
                             failed_invitations,
@@ -117,8 +120,8 @@ class ProcessLakeFormationShare(LFShareManager):
                                 source_table=table
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
-                    if self.cross_account:
-                        self.grant_principals_permissions_to_table_in_target(table)  # TODO WITH LFV3 we might be able to remove this
+                    if self.cross_account and not self.is_new_share:
+                        self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
@@ -182,7 +185,8 @@ class ProcessLakeFormationShare(LFShareManager):
                 if resource_link_table_exists:
                     log.info(f'Revoking access to resource link table for: {table.GlueTableName} ')
                     self.revoke_principals_permissions_to_resource_link_table(table)
-                    self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
+                    if not self.is_new_share:
+                        self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         log.info(f'Deleting resource link table for: {table.GlueTableName} ')
@@ -191,7 +195,10 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 if not other_table_shares_in_env:
                     log.info(f'Revoking access from target account to table: {table.GlueTableName} ')
-                    self.revoke_external_account_access_on_source_account(table)
+                    if self.is_new_share:
+                        self.revoke_principals_access_on_source_account(table)
+                    else:
+                        self.revoke_external_account_access_on_source_account(table)
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
