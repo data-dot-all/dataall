@@ -116,7 +116,7 @@ class LakeFormationClient:
                     current_grant.extend(permission["PermissionsWithGrantOption"])
 
                 missing_permissions = list(set(permissions) - set(current))
-                missing_grant_permissions = list(set(permissions_with_grant_options) - set(current_grant))
+                missing_grant_permissions = list(set(permissions_with_grant_options) - set(current_grant)) if permissions_with_grant_options else []
 
                 if not missing_permissions and not missing_grant_permissions:
                     log.info(
