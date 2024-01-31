@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 from typing import List
 
 from sqlalchemy import and_, or_, func, case
@@ -1047,6 +1048,36 @@ class ShareObjectRepository:
         if item_type:
             query = query.filter(ShareObjectItem.itemType == item_type)
         return query.all()
+
+    @staticmethod
+    def list_dataset_shares_and_datasets_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
+        warn(
+            'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+            DeprecationWarning, stacklevel=2)
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
+            )
+        )
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        if item_type:
+            query = query.filter(ShareObjectItem.itemType == item_type)
+        shares_datasets = []
+        for share in query.all():
+            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            shares_datasets.append({"shareUri": share.shareUri, "databaseName": f"{dataset.GlueDatabaseName}_shared_{share.shareUri}"})
+        return shares_datasets
 
     @staticmethod
     def delete_all_share_items(session, env_uri):

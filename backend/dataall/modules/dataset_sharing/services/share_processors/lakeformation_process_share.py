@@ -1,5 +1,5 @@
 import logging
-
+from warnings import warn
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
@@ -185,6 +185,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         log.info(f'Deleting resource link table for: {table.GlueTableName} ')
+                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:
@@ -217,18 +218,24 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if not self.is_new_share:
                         log.info("Deleting OLD target shared database...")
+                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                         self.delete_shared_database_in_target()
 
-                existing_shared_tables_in_environment = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+                existing_shares_with_shared_tables_in_environment = ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
                     session=self.session,
                     dataset_uri=self.dataset.datasetUri,
                     environment_uri=self.target_environment.environmentUri,
                     item_type=ShareableType.Table.value
                 )
-
-                log.info(f'Remaining tables shared from this dataset to this environment = {existing_shared_tables_in_environment}')
-                if self.is_new_share and not existing_shared_tables_in_environment:
+                warn(
+                    'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+                    DeprecationWarning, stacklevel=2
+                )
+                existing_old_shares_bool = [self.glue_client_in_target.database_exists(item["databaseName"]) for item in existing_shares_with_shared_tables_in_environment]
+                log.info(f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}')
+                if self.is_new_share and False not in existing_old_shares_bool:
                     log.info("Deleting target shared database...")
+                    warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                     self.delete_shared_database_in_target()
         except Exception as e:
             log.error(

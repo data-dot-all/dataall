@@ -58,6 +58,14 @@ class GlueClient:
             log.info(f'Database {self._database} does not exist on account {self._account_id}...')
             return False
 
+    def database_exists(self, database_name):
+        try:
+            self._client.get_database(CatalogId=self._account_id, Name=database_name)
+            return True
+        except ClientError:
+            log.info(f'Database {database_name} does not exist on account {self._account_id}...')
+            return False
+
     def table_exists(self, table_name):
         try:
             table = (

@@ -1,6 +1,7 @@
 import abc
 import logging
 import time
+from warnings import warn
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -100,6 +101,7 @@ class LFShareManager:
             database=old_shared_db_name,
             region=self.target_environment.region
         ).get_glue_database()
+        warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
 
         if database:
             return old_shared_db_name, False
