@@ -116,8 +116,7 @@ class ProcessLakeFormationShare(LFShareManager):
                                 source_table=table
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
-                    if self.cross_account:
-                        self.grant_principals_permissions_to_table_in_target(table)
+                    self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
 
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
@@ -179,8 +178,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 if resource_link_table_exists:
                     self.revoke_principals_permissions_to_resource_link_table(table)
-                    if self.cross_account:
-                        self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
+                    self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
