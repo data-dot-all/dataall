@@ -3,7 +3,7 @@ To Generate alembic migration during development:
 ```
 export PYTHONPATH=backend
 export envname=local
-alembic -c backend/alembic.ini revision -m "_release_vX.X.X"
+alembic -c backend/alembic.ini revision -m "_release_vX.X.X" --autogenerate
 ```
 
 To run the upgrade (this is part of the deployment pipeline)
