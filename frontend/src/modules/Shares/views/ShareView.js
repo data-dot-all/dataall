@@ -742,7 +742,9 @@ const ShareView = () => {
                         sx={{ wordBreak: 'break-word' }}
                         style={{ whiteSpace: 'pre-line' }}
                       >
-                        {share.dataset.description.trim().length != 0 ? share.dataset.description : 'No dataset description'}
+                        {share.dataset.description.trim().length !== 0
+                          ? share.dataset.description
+                          : 'No dataset description'}
                       </Typography>
                     </Box>
                   </CardContent>
