@@ -4,9 +4,9 @@ from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
-from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
@@ -143,7 +143,7 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         if source.principalType in ['Group', 'ConsumptionRole']:
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = Organization.get_organization_by_uri(
+            organization = OrganizationRepository.get_organization_by_uri(
                 session, environment.organizationUri
             )
             if source.principalType in ['ConsumptionRole']:

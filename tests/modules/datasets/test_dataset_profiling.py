@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, Dataset, DatasetTable
 
 

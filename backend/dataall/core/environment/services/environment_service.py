@@ -23,7 +23,7 @@ from dataall.base.utils.naming_convention import (
 )
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
@@ -42,7 +42,7 @@ class EnvironmentService:
     def create_environment(session, uri, data=None):
         context = get_context()
         EnvironmentService._validate_creation_params(data, uri)
-        organization = Organization.get_organization_by_uri(session, uri)
+        organization = OrganizationRepository.get_organization_by_uri(session, uri)
         env = Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),

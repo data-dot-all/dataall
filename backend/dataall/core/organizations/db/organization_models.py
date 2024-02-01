@@ -1,19 +1,10 @@
 import datetime
-from enum import Enum
 
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base
 from dataall.base.db import Resource, utils
-
-
-class OrganisationUserRole(Enum):
-    Owner = '999'
-    Admin = '900'
-    Member = '100'
-    NotMember = '000'
-    Invited = '800'
 
 
 class Organization(Resource, Base):
