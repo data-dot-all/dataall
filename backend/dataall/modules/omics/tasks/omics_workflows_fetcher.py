@@ -5,7 +5,8 @@ import sys
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.db import get_engine
 from dataall.modules.omics.aws.omics_client import OmicsClient
-from dataall.modules.omics.db.models import OmicsWorkflow, OmicsWorkflowType
+from dataall.modules.omics.db.models import OmicsWorkflow
+from dataall.modules.omics.services.omics_enums import OmicsWorkflowType
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 
 def fetch_omics_workflows(engine):
     """List Omics workflows."""
-    log.info(f'Starting omics workflows fetcher')
+    log.info('Starting omics workflows fetcher')
     with engine.scoped_session() as session:
         environments = session.query(Environment)
         is_first_time = True
@@ -45,6 +46,7 @@ def fetch_omics_workflows(engine):
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
             is_first_time = False
     return True
+
 
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')

@@ -44,7 +44,6 @@ class OmicsRunCreationRequest:
     S3OutputBucket: str = "No output bucket provided"
     S3OutputPrefix: str = ""
 
-
     @classmethod
     def from_dict(cls, env):
         """Copies only required fields from the dictionary and creates an instance of class"""
@@ -86,12 +85,11 @@ class OmicsService:
                 organizationUri=environment.organizationUri,
                 environmentUri=environment.environmentUri,
                 SamlAdminGroupName=admin_group,
-                AwsAccountId=environment.AwsAccountId,
-                region=environment.region,
-                workflowId=data['workflowId'],
+                workflowUri=data['workflowUri'],
                 parameterTemplate=data['parameterTemplate'],
                 label=data['label'],
-                outputUri=f"s3://{environment.resourcePrefix}-{dataset.name}-{dataset.datasetUri}"
+                outputUri=f"s3://{dataset.S3BucketName}",
+                outputDatasetUri=dataset.datasetUri
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
@@ -105,14 +103,10 @@ class OmicsService:
 
             response = OmicsClient.run_omics_workflow(omics_run, session)
 
-            if response:
-                omics_run.runUri = response['id']
-                OmicsRepository(session).save_omics_run(omics_run)
+            omics_run.runUri = response['id']
+            OmicsRepository(session).save_omics_run(omics_run)
 
-                return True
-            # TODO: in case of failure do we want to delete the object or do we want to show it in UI?
-            OmicsRepository(session).delete_omics_run(omics_run)
-            return False
+            return omics_run
 
     @staticmethod
     @has_resource_permission(GET_OMICS_RUN)
@@ -128,33 +122,26 @@ class OmicsService:
 
     @staticmethod
     @has_tenant_permission(MANAGE_OMICS_RUNS)
-    def get_omics_workflow(workflowId: str) -> dict:
-        """List Omics workflows."""
+    def get_omics_workflow(uri: str) -> dict:
+        """Get Omics workflow."""
         with _session() as session:
-            response = OmicsClient.get_omics_workflow(id=workflowId, session=session)
+            response = OmicsClient.get_omics_workflow(workflowUri=uri, session=session)
             parameterTemplateJson = json.dumps(response['parameterTemplate'])
             response['parameterTemplate'] = parameterTemplateJson
+            response['workflowUri'] = uri
         return response
 
     @staticmethod
     @has_tenant_permission(MANAGE_OMICS_RUNS)
-    def run_omics_workflow(workflowId: str, workflowType: str, roleArn: str, parameters: str) -> dict:
-        """List Omics workflows."""
-        with _session() as session:
-            response = OmicsClient.run_omics_workflow(workflowId,workflowType, roleArn, parameters, session)
-        return response
-    
-    @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_user_omics_runs(filter: dict) -> dict:
-        """List existed user Omics pipelines. Filters only required omics_runs by the filter param"""
+        """List existed user Omics runs. Filters only required omics_runs by the filter param"""
         with _session() as session:
             return OmicsRepository(session).paginated_user_runs(
                 username=get_context().username,
                 groups=get_context().groups,
                 filter=filter
             )
-    
+
     @staticmethod
     @has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_omics_workflows(filter: dict) -> dict:
@@ -167,8 +154,8 @@ class OmicsService:
     @staticmethod
     @has_resource_permission(DELETE_OMICS_RUN)
     def delete_omics_run(uri: str):
-        ## TODO: IMPLEMENT IN omics_repository
-        """Deletes Omics project from the database and if delete_from_aws is True from AWS as well"""
+        # TODO: IMPLEMENT _get_omics_run and in FRONTEND
+        """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_run = OmicsService._get_omics_run(session, uri)
             if not omics_run:
@@ -180,6 +167,7 @@ class OmicsService:
                 resource_uri=omics_run.runUri,
                 group=omics_run.SamlAdminGroupName,
             )
+
 
 def _session():
     return get_context().db_engine.scoped_session()

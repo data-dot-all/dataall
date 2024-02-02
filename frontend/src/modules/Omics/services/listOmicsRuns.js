@@ -14,11 +14,11 @@ export const listOmicsRuns = (filter) => ({
         hasPrevious
         nodes {
           runUri
-          workflowId
+          workflowUri
           name
           owner
           SamlAdminGroupName
-          outputUri
+          outputDatasetUri
           description
           label
           created
@@ -37,23 +37,17 @@ export const listOmicsRuns = (filter) => ({
             organizationUri
           }
           workflow {
-            id
+            label
             name
+            workflowUri
+            id
             description
             parameterTemplate
-            status
             type
           }
           status {
-            arn
-            id
             status
-            runId
-            roleArn
             statusMessage
-            creationTime
-            startTime
-            stopTime
           }
         }
       }

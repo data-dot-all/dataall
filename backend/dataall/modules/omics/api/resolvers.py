@@ -1,11 +1,12 @@
 import logging
 from dataall.base.api.context import Context
-from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
 from dataall.modules.omics.services.omics_service import OmicsService
+from dataall.modules.omics.services.omics_enums import OmicsWorkflowType
 from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
 
 log = logging.getLogger(__name__)
+
 
 class RequestValidator:
     """Aggregates all validation logic for operating with omics"""
@@ -30,6 +31,7 @@ class RequestValidator:
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
 
+
 def create_omics_run(context: Context, source, input=None):
     RequestValidator.validate_creation_request(input)
     # request = OmicsRunCreationRequest.from_dict(input)
@@ -52,13 +54,10 @@ def list_omics_workflows(context: Context, source, filter: dict = None):
     return OmicsService.list_omics_workflows(filter)
 
 
-def get_omics_workflow(context: Context, source, workflowId: str = None):
-    RequestValidator.required_uri(workflowId)
-    return OmicsService.get_omics_workflow(workflowId)
+def get_omics_workflow(context: Context, source, workflowUri: str = None):
+    RequestValidator.required_uri(workflowUri)
+    return OmicsService.get_omics_workflow(workflowUri)
 
-def run_omics_workflow(context: Context, source, workflowId: str = None, workflowType: str = 'READY2RUN', roleArn: str = None, parameters: str = None):
-    RequestValidator.required_uri(workflowId)
-    return OmicsService.run_omics_workflow(workflowId,workflowType,roleArn,parameters)
 
 def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):
     RequestValidator.required_uri(runUri)
@@ -67,11 +66,10 @@ def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS
         delete_from_aws=deleteFromAWS
     )
 
+
 def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
-    return OmicsService.get_omics_workflow(source.workflowId)
+    return OmicsService.get_omics_workflow(source.workflowUri)
 
 
 def resolve_omics_run_details(context, source: OmicsRun, **kwargs):
     return OmicsService.get_omics_run_from_aws(source.runUri)
-
-

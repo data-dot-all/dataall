@@ -39,5 +39,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('runUri', name='omics_run_pkey'),
     )
 
+
 def downgrade():
     op.drop_table('omics_run')

@@ -33,7 +33,7 @@ const OmicsWorkflowView = () => {
     } else {
       const error = response.errors
         ? response.errors[0].message
-        : 'Omics Workflownot found';
+        : 'Omics Workflow not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -65,26 +65,29 @@ const OmicsWorkflowView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid container justifyContent="space-between" spacing={3}>
-            <Grid item>
+          <Grid container spacing={0.5} alignItems="center">
+            <Grid item justifyContent="center" md={10} lg={10} xl={10}>
               <Typography color="textPrimary" variant="h5">
-                Omics Workflow: {omicsWorkflow.name}
+                Omics Workflow
+              </Typography>
+              <Typography color="textSecondary" variant="h5">
+                {omicsWorkflow.name}
               </Typography>
             </Grid>
-          </Grid>
-          <Grid>
-            <Box sx={{ m: 1 }}>
-              <Button
-                color="primary"
-                component={RouterLink}
-                startIcon={<PlusIcon fontSize="small" />}
-                sx={{ m: 1 }}
-                to={`/console/omics/runs/new/${omicsWorkflow.id}`}
-                variant="contained"
-              >
-                Create Run
-              </Button>
-            </Box>
+            <Grid item justifyContent="center" md={2} lg={2} xl={2}>
+              <Box sx={{ m: 1 }}>
+                <Button
+                  color="primary"
+                  component={RouterLink}
+                  startIcon={<PlusIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  to={`/console/omics/workflows/${omicsWorkflow.workflowUri}/runs/new/`}
+                  variant="contained"
+                >
+                  Create Run
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
           <Divider />
           <Box sx={{ mt: 3 }}>

@@ -7,7 +7,7 @@ export const OmicsWorkflowDetails = (props) => {
 
   return (
     <Grid container spacing={3} {...other}>
-      <Grid item lg={7} xl={7} xs={12}>
+      <Grid item lg={6} xl={6} xs={12}>
         <Box>
           <ObjectBrief
             title="Details"
@@ -20,11 +20,15 @@ export const OmicsWorkflowDetails = (props) => {
           />
         </Box>
       </Grid>
-      <Grid item lg={5} xl={5} xs={12}>
+      <Grid item lg={6} xl={6} xs={12}>
         <Box>
           <ObjectBrief
             title="Parameter template"
-            parameterTemplate={workflow.parameterTemplate || '-'}
+            parameterTemplate={JSON.stringify(
+              JSON.parse(workflow.parameterTemplate) || '{}',
+              null,
+              2
+            )}
           />
         </Box>
       </Grid>

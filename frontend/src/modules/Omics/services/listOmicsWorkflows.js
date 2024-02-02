@@ -15,10 +15,11 @@ export const listOmicsWorkflows = (filter) => ({
         hasPrevious
         nodes {
           arn
-          name
           id
+          name
+          label
+          workflowUri
           description
-          status
           type
           parameterTemplate
         }

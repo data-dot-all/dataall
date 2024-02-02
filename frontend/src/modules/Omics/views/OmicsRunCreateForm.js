@@ -48,7 +48,7 @@ const OmicsRunCreateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(getOmicsWorkflow(params.workflowId));
+    const response = await client.query(getOmicsWorkflow(params.uri));
     if (!response.errors) {
       setOmicsWorkflow(response.data.getOmicsWorkflow);
       console.log(omicsWorkflow); // eslint-disable-line no-console
@@ -59,7 +59,7 @@ const OmicsRunCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.workflowId]);
+  }, [client, dispatch, params.uri]);
 
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
@@ -155,7 +155,7 @@ const OmicsRunCreateForm = (props) => {
         createOmicsRun({
           label: values.label,
           environmentUri: values.environment.environmentUri,
-          workflowId: params.workflowId,
+          workflowUri: omicsWorkflow.workflowUri,
           parameterTemplate: values.parameterTemplate,
           SamlAdminGroupName: values.SamlAdminGroupName,
           destination: values.destination
@@ -255,7 +255,7 @@ const OmicsRunCreateForm = (props) => {
           <Box sx={{ mt: 3 }}>
             <Formik
               initialValues={{
-                omicsWorkflowId: params.workflowId,
+                workflowUri: omicsWorkflow.workflowUri,
                 label: '',
                 SamlAdminGroupName: '',
                 environment: '',
@@ -263,7 +263,7 @@ const OmicsRunCreateForm = (props) => {
                 parameterTemplate: omicsWorkflow.parameterTemplate
               }}
               validationSchema={Yup.object().shape({
-                omicsWorkflowId: Yup.string()
+                workflowUri: Yup.string()
                   .max(255)
                   .required('*Workflow is required'),
                 label: Yup.string().max(255).required('*Run Name is required'),
@@ -302,17 +302,11 @@ const OmicsRunCreateForm = (props) => {
                         <CardHeader title="Details" />
                         <CardContent>
                           <TextField
-                            error={Boolean(
-                              touched.omicsWorkflowId && errors.omicsWorkflowId
-                            )}
+                            disabled
                             fullWidth
-                            helperText={
-                              touched.omicsWorkflowId && errors.omicsWorkflowId
-                            }
-                            label="Workflow ID"
-                            name="omicsWorkflowId"
-                            value={values.omicsWorkflowId}
-                            onBlur={handleBlur}
+                            label="Workflow Id"
+                            name="workflowUri"
+                            value={omicsWorkflow ? omicsWorkflow.id : ''}
                             variant="outlined"
                           />
                         </CardContent>

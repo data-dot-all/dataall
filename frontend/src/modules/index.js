@@ -5,6 +5,7 @@ export * from './Glossaries';
 export * from './MLStudio';
 export * from './Notebooks';
 export * from './Notifications';
+export * from './Omics';
 export * from './Pipelines';
 export * from './Shares';
 export * from './Worksheets';

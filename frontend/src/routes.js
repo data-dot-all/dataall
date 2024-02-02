@@ -154,17 +154,13 @@ const GlossaryCreateForm = Loadable(
 );
 
 const OmicsList = Loadable(
-  lazy(() => import('./modules/Omics/views/OmicsListView'))
+  lazy(() => import('./modules/Omics/views/OmicsList'))
 );
-const OmicsWorkflowsList = Loadable(
-  lazy(() => import('./modules/Omics/views/OmicsWorkflowsList'))
-);
-const OmicsWorkflowsView = Loadable(
+
+const OmicsWorkflowView = Loadable(
   lazy(() => import('./modules/Omics/views/OmicsWorkflowView'))
 );
-const OmicsRunsList = Loadable(
-  lazy(() => import('./modules/Omics/views/OmicsRunsList'))
-);
+
 const OmicsRunCreateForm = Loadable(
   lazy(() => import('./modules/Omics/views/OmicsRunCreateForm'))
 );
@@ -417,19 +413,11 @@ const routes = [
             element: <OmicsList />
           },
           {
-            path: 'omics/workflows',
-            element: <OmicsWorkflowsList />
-          },
-          {
-            path: 'omics/runs',
-            element: <OmicsRunsList />
-          },
-          {
             path: 'omics/workflows/:uri',
-            element: <OmicsWorkflowsView />
+            element: <OmicsWorkflowView />
           },
           {
-            path: 'omics/runs/new/:workflowId',
+            path: 'omics/workflows/:uri/runs/new',
             element: <OmicsRunCreateForm />
           }
         ]

@@ -30,5 +30,3 @@ createOmicsRun = gql.MutationField(
 #     ],
 #     resolver=delete_omics_run,
 # )
-
-
