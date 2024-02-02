@@ -99,6 +99,7 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name='description', type=gql.String),
     ],
 )
 
