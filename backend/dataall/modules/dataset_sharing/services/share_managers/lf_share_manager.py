@@ -40,7 +40,7 @@ class LFShareManager:
         self.target_environment = target_environment
         self.shared_db_name, self.is_new_share = self.build_shared_db_name()
         self.principals = self.get_share_principals()
-        self.cross_account = True if self.target_environment.AwsAccountId != self.source_environment.AwsAccountId else False
+        self.cross_account = self.target_environment.AwsAccountId != self.source_environment.AwsAccountId
         self.lf_client_in_target = LakeFormationClient(
             account_id=self.target_environment.AwsAccountId,
             region=self.target_environment.region
@@ -105,7 +105,7 @@ class LFShareManager:
 
         if database:
             return old_shared_db_name, False
-        return self.dataset.GlueDatabaseName[:247] + '_shared', True
+        return self.dataset.GlueDatabaseName + '_shared', True
 
     def check_table_exists_in_source_database(
         self, share_item: ShareObjectItem, table: DatasetTable
