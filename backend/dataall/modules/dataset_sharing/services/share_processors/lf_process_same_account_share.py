@@ -1,10 +1,10 @@
 import logging
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from ..share_managers import LFShareManager
+from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
 log = logging.getLogger(__name__)

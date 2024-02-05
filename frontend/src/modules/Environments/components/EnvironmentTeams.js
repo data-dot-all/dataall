@@ -1,6 +1,5 @@
 import {
   CopyAllOutlined,
-  DeleteOutlined,
   GroupAddOutlined,
   SupervisedUserCircleRounded
 } from '@mui/icons-material';
@@ -13,7 +12,6 @@ import {
   Chip,
   Divider,
   Grid,
-  IconButton,
   InputAdornment,
   Table,
   TableBody,
@@ -22,6 +20,10 @@ import {
   TableRow,
   TextField
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useTheme } from '@mui/styles';
 import { useSnackbar } from 'notistack';
@@ -46,12 +48,15 @@ import {
   listAllEnvironmentConsumptionRoles,
   listAllEnvironmentGroups,
   removeConsumptionRoleFromEnvironment,
-  removeGroupFromEnvironment
+  removeGroupFromEnvironment,
+  updateConsumptionRole
 } from '../services';
 import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { isFeatureEnabled } from '../../../utils';
+import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
+import { useFetchGroups } from '../../../utils/api';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
@@ -243,6 +248,7 @@ export const EnvironmentTeams = ({ environment }) => {
   const [filter, setFilter] = useState(Defaults.filter);
   const [filterRoles, setFilterRoles] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [inputValueRoles, setInputValueRoles] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
@@ -282,6 +288,7 @@ export const EnvironmentTeams = ({ environment }) => {
 
   const fetchRoles = useCallback(async () => {
     try {
+      setLoadingRoles(true);
       const response = await client.query(
         listAllEnvironmentConsumptionRoles({
           environmentUri: environment.environmentUri,
@@ -296,7 +303,7 @@ export const EnvironmentTeams = ({ environment }) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      setLoading(false);
+      setLoadingRoles(false);
     }
   }, [client, dispatch, environment, filterRoles]);
 
@@ -322,6 +329,31 @@ export const EnvironmentTeams = ({ environment }) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
+  const updateConsumptionRoleHandler = async (newRow) => {
+    const response = await client.mutate(
+      updateConsumptionRole({
+        environmentUri: environment.environmentUri,
+        consumptionRoleUri: newRow.consumptionRoleUri,
+        input: {
+          groupUri: newRow.groupUri,
+          consumptionRoleName: newRow.consumptionRoleName
+        }
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Consumption Role was updated', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      fetchRoles();
+    } else {
+      throw new Error(response.errors[0].message);
     }
   };
 
@@ -368,11 +400,48 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   };
 
-  const handlePageChangeRoles = async (event, value) => {
-    if (value <= roles.pages && value !== roles.page) {
-      await setFilterRoles({ ...filterRoles, page: value });
+  const handlePageChangeRoles = async (page) => {
+    page += 1; //expecting 1-indexing
+    if (page <= roles.pages && page !== roles.page) {
+      await setFilterRoles({ ...filterRoles, page: page });
     }
   };
+
+  const [rowModesModel, setRowModesModel] = React.useState({});
+
+  const handleRowEditStart = (params, event) => {
+    event.defaultMuiPrevented = true;
+  };
+
+  const handleRowEditStop = (params, event) => {
+    event.defaultMuiPrevented = true;
+  };
+
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleDeleteClick = (id) => () => {
+    removeConsumptionRole(id);
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true }
+    });
+  };
+
+  const processRowUpdate = async (newRow, oldRow) => {
+    await updateConsumptionRoleHandler(newRow);
+    return newRow;
+  };
+
+  let { groupOptions } = useFetchGroups(environment);
 
   return (
     <Box>
@@ -554,52 +623,101 @@ export const EnvironmentTeams = ({ environment }) => {
           </Box>
           <Scrollbar>
             <Box sx={{ minWidth: 600 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>IAM Role</TableCell>
-                    <TableCell>Role Owner</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                {loading ? (
-                  <CircularProgress sx={{ mt: 1 }} />
-                ) : (
-                  <TableBody>
-                    {roles.nodes.length > 0 ? (
-                      roles.nodes.map((role) => (
-                        <TableRow hover key={role.consumptionRoleUri}>
-                          <TableCell>{role.consumptionRoleName}</TableCell>
-                          <TableCell>{role.IAMRoleArn}</TableCell>
-                          <TableCell>{role.groupUri}</TableCell>
-                          <TableCell>
-                            <IconButton
-                              onClick={() =>
-                                removeConsumptionRole(role.consumptionRoleUri)
-                              }
-                            >
-                              <DeleteOutlined fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow hover>
-                        <TableCell>No Consumption IAM Role added</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                )}
-              </Table>
-              {!loading && roles.nodes.length > 0 && (
-                <Pager
-                  mgTop={2}
-                  mgBottom={2}
-                  items={roles}
-                  onChange={handlePageChangeRoles}
-                />
-              )}
+              <DataGrid
+                autoHeight
+                getRowId={(node) => node.consumptionRoleUri}
+                rows={roles.nodes}
+                columns={[
+                  { field: 'id', hide: true },
+                  {
+                    field: 'consumptionRoleName',
+                    headerName: 'Name',
+                    flex: 0.5,
+                    editable: true
+                  },
+                  {
+                    field: 'IAMRoleArn',
+                    headerName: 'IAM Role',
+                    flex: 1
+                  },
+                  {
+                    field: 'groupUri',
+                    headerName: 'Role Owner',
+                    flex: 0.5,
+                    editable: true,
+                    type: 'singleSelect',
+                    valueOptions: groupOptions.map((group) => group.label)
+                  },
+                  {
+                    field: 'actions',
+                    headerName: 'Actions',
+                    flex: 0.5,
+                    type: 'actions',
+                    cellClassName: 'actions',
+                    getActions: ({ id }) => {
+                      const isInEditMode =
+                        rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                      if (isInEditMode) {
+                        return [
+                          <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            sx={{
+                              color: 'primary.main'
+                            }}
+                            onClick={handleSaveClick(id)}
+                          />,
+                          <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            className="textPrimary"
+                            onClick={handleCancelClick(id)}
+                            color="inherit"
+                          />
+                        ];
+                      }
+                      return [
+                        <GridActionsCellItem
+                          icon={<EditIcon />}
+                          label="Edit"
+                          className="textPrimary"
+                          onClick={handleEditClick(id)}
+                          color="inherit"
+                        />,
+                        <GridActionsCellItem
+                          icon={<DeleteIcon />}
+                          label="Delete"
+                          onClick={handleDeleteClick(id)}
+                          color="inherit"
+                        />
+                      ];
+                    }
+                  }
+                ]}
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={setRowModesModel}
+                onRowEditStart={handleRowEditStart}
+                onRowEditStop={handleRowEditStop}
+                processRowUpdate={processRowUpdate}
+                onProcessRowUpdateError={(error) =>
+                  dispatch({ type: SET_ERROR, error: error.message })
+                }
+                experimentalFeatures={{ newEditingApi: true }}
+                rowCount={roles.count}
+                page={roles.page - 1}
+                pageSize={filterRoles.pageSize}
+                paginationMode="server"
+                onPageChange={handlePageChangeRoles}
+                loading={loadingRoles}
+                onPageSizeChange={(pageSize) => {
+                  setFilterRoles({ ...filterRoles, pageSize: pageSize });
+                }}
+                getRowHeight={() => 'auto'}
+                disableSelectionOnClick
+                sx={{ wordWrap: 'break-word' }}
+              />
             </Box>
           </Scrollbar>
         </Card>

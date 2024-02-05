@@ -4,10 +4,12 @@ import pytest
 
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
+from dataall.core.environment.api.enums import EnvironmentPermission
+
 
 
 @pytest.fixture(scope='module')
@@ -25,7 +27,7 @@ def otherenv(org_fixture, db):
             EnvironmentDefaultIAMRoleName='EnvRole',
             EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole',
             CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
+            userRoleInEnvironment=EnvironmentPermission.Owner.value,
         )
         session.add(env)
     yield env
