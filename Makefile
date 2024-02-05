@@ -85,6 +85,13 @@ upgrade-db: upgrade-pip install-backend
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
 
+generate-migrations: upgrade-pip install-backend
+	pip install 'alembic'
+	export PYTHONPATH=./backend && \
+	alembic -c backend/alembic.ini upgrade head
+	alembic -c backend/alembic.ini revision -m "_describe_changes_shortly" --autogenerate
+
+
 version-major:
 	pip install bump2version
 	git config --global user.email git-cicd@codecommit.com
