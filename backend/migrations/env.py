@@ -1,6 +1,18 @@
 from __future__ import with_statement
 from alembic import context
 from logging.config import fileConfig
+import re
+
+# import additional models here
+
+from dataall.modules.catalog.db.glossary_models import GlossaryNode, TermLink
+from dataall.modules.dashboards.db.dashboard_models import DashboardShare, Dashboard
+from dataall.modules.datapipelines import DataPipeline
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipelineEnvironment
+from dataall.modules.feed.db.feed_models import FeedMessage
+from dataall.modules.notifications.db.notification_models import Notification
+from dataall.modules.vote.db.vote_models import Vote
+from dataall.modules.worksheets.db.worksheet_models import WorksheetQueryResult, Worksheet
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,6 +37,13 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+exclude_tables = config.get_section('alembic:exclude').get('tables', '').split(',')
+
+
+def include_object(object, name, type_, *args, **kwargs):
+    return not (type_ == 'table' and name in exclude_tables)
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -47,6 +66,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         version_table_schema=ENVNAME,
         literal_binds=True,
+        include_object=include_object
     )
 
     with context.begin_transaction():
@@ -62,7 +82,7 @@ def run_migrations_online():
     """
 
     with get_engine(ENVNAME).engine.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(connection=connection, target_metadata=target_metadata, include_object=include_object)
 
         with context.begin_transaction():
             context.run_migrations()
