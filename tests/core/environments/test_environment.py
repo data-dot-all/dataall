@@ -1,6 +1,9 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
+
 
 def get_env(client, env_fixture, group):
     return client.query(
@@ -582,7 +585,8 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     ]
 
 
-def test_archive_env(client, org_fixture, env_fixture, group, group2):
+def test_archive_env(client, org_fixture, env, group, group2):
+    env_fixture = env(org_fixture, 'dev-delete', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     response = client.query(
         """
         mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean!){
@@ -652,3 +656,58 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
         )
         session.delete(env)
         session.commit()
+
+
+def test_update_consumption_role(
+        client,
+        org_fixture,
+        env_fixture,
+        user,
+        group,
+        db,
+        consumption_role
+):
+    query = """
+        mutation updateConsumptionRole(
+            $environmentUri:String!,
+            $consumptionRoleUri:String!,
+            $input:UpdateConsumptionRoleInput
+        ){
+            updateConsumptionRole(
+                environmentUri:$environmentUri,
+                consumptionRoleUri: $consumptionRoleUri,
+                input:$input
+            ){
+                consumptionRoleUri
+                consumptionRoleName
+                environmentUri
+                groupUri
+                IAMRoleName
+                IAMRoleArn
+            }
+        }
+    """
+
+    consumption_role_uri = consumption_role.data.addConsumptionRoleToEnvironment.consumptionRoleUri
+
+    with db.scoped_session() as session:
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            resource_uri=consumption_role_uri,
+            group=group.name,
+            permissions=[REMOVE_ENVIRONMENT_CONSUMPTION_ROLE],
+            resource_type=Environment.__name__,
+        )
+
+    response = client.query(
+        query,
+        username=user,
+        groups=[group.name],
+        environmentUri=env_fixture.environmentUri,
+        consumptionRoleUri=consumption_role_uri,
+        input={'consumptionRoleName': 'testRoleName', 'groupUri': 'testGroupUri'},
+    )
+
+    assert not response.errors
+    assert response.data.updateConsumptionRole.consumptionRoleName == 'testRoleName'
+    assert response.data.updateConsumptionRole.groupUri == 'testGroupUri'
