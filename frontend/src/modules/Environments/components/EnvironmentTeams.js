@@ -41,7 +41,8 @@ import {
   SearchIcon
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
+import { isFeatureEnabled } from 'utils';
+import { useClient, useFetchGroups } from 'services';
 import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
@@ -54,9 +55,7 @@ import {
 import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
-import { isFeatureEnabled } from '../../../utils';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
-import { useFetchGroups } from '../../../utils/api';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
@@ -436,7 +435,7 @@ export const EnvironmentTeams = ({ environment }) => {
     });
   };
 
-  const processRowUpdate = async (newRow, oldRow) => {
+  const processRowUpdate = async (newRow) => {
     await updateConsumptionRoleHandler(newRow);
     return newRow;
   };

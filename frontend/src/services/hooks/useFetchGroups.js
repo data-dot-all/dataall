@@ -1,7 +1,7 @@
-import { listEnvironmentGroups, useClient } from '../services';
+import { listEnvironmentGroups, useClient } from 'services';
 import { useEffect, useState } from 'react';
-import { SET_ERROR, useDispatch } from '../globalErrors';
-import { Defaults } from '../design';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { Defaults } from 'design';
 
 // TODO DRY fetchGroup usages using this func
 export const useFetchGroups = (environment) => {

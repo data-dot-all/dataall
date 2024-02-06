@@ -463,6 +463,12 @@ class EnvironmentService:
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
     def update_consumption_role(session, uri, env_uri, input):
+        if not input:
+            raise exceptions.RequiredParameter('input')
+        if not input.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
+        if not input.get('consumptionRoleName'):
+            raise exceptions.RequiredParameter('consumptionRoleName')
         role_query = session.query(ConsumptionRole).filter(
             (
                 and_(
