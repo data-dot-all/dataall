@@ -277,14 +277,17 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
+    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable, other_table_shares_in_env: bool) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
         :param table: DatasetTable
+        :param other_table_shares_in_env: Boolean. Other table shares in this environment for this table
         :return: True if it is successful
         """
+        principals = self.principals if not other_table_shares_in_env else [p for p in self.principals if "arn:aws:quicksight" not in p]
+
         self.lf_client_in_target.revoke_permissions_from_table(
-            principals=self.principals,
+            principals=principals,
             database_name=self.shared_db_name,
             table_name=table.GlueTableName,
             catalog_id=self.target_environment.AwsAccountId,
@@ -292,7 +295,7 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_table_in_target(self, table, other_table_shares_in_env) -> True:
+    def revoke_principals_permissions_to_table_in_target(self, table: DatasetTable, other_table_shares_in_env) -> True:
         """
         Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
         If there are no more shares for this table in the environment then revoke to Quicksight group
