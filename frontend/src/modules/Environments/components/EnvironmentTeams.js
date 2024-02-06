@@ -407,7 +407,7 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   };
 
-  const [rowModesModel, setRowModesModel] = React.useState({});
+  const [rowModesModel, setRowModesModel] = useState({});
 
   const handleRowEditStart = (params, event) => {
     event.defaultMuiPrevented = true;
