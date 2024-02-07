@@ -138,7 +138,12 @@ class EnvironmentService:
             raise exceptions.RequiredParameter('label')
         if not data.get('SamlGroupName'):
             raise exceptions.RequiredParameter('group')
+        if not data.get('AwsAccountId'):
+            raise exceptions.RequiredParameter('AwsAccountId')
+        if not data.get('region'):
+            raise exceptions.RequiredParameter('region')
         EnvironmentService._validate_resource_prefix(data)
+        EnvironmentService._validate_account_region(data)
 
     @staticmethod
     def _validate_resource_prefix(data):
@@ -149,6 +154,16 @@ class EnvironmentService:
                 'resourcePrefix',
                 data.get('resourcePrefix'),
                 'must match the pattern ^[a-z-]+$',
+            )
+
+    @staticmethod
+    def _validate_account_region(data):
+        environment = EnvironmentRepository.find_environment_by_account_region(account_id=data.get('AwsAccountId'), region=data.get('region'))
+        if environment:
+            raise exceptions.InvalidInput(
+                'AwsAccount/region',
+                f"{data.get('AwsAccountId')}/{data.get('region')}",
+                'An environment for AwsAccount/region already exists',
             )
 
     @staticmethod
