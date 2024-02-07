@@ -6,17 +6,16 @@ Create Date: 2023-07-13 09:20:20.091639
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Boolean
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import query_expression
 
 from dataall.base.db import utils, Resource
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 revision = 'e1cd4927482b'
@@ -55,9 +54,9 @@ class Dataset(Resource, Base):
     IAMDatasetAdminRoleArn = Column(String, nullable=False)
     IAMDatasetAdminUserArn = Column(String, nullable=False)
     KmsAlias = Column(String, nullable=False)
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default=Language.English.value)
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(postgresql.ARRAY(String))
 
     bucketCreated = Column(Boolean, default=False)

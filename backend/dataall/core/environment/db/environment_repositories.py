@@ -44,3 +44,16 @@ class EnvironmentRepository:
         if not environment:
             raise exceptions.ObjectNotFound(Environment.__name__, uri)
         return environment
+
+    @staticmethod
+    def count_environments_with_organization_uri(session, uri):
+        return session.query(Environment).filter(Environment.organizationUri == uri).count()
+
+    @staticmethod
+    def count_environments_with_organization_and_group(session, organization, group):
+        return session.query(Environment).filter(
+            and_(
+                Environment.organizationUri == organization.organizationUri,
+                Environment.SamlGroupName == group,
+            )
+        ).count()

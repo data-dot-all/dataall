@@ -53,6 +53,8 @@ RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
 
 COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend/package.json ./frontend/yarn.lock ./
 COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./config.json /
+# Copy vesion.json to docker root, because app scripts read it from ".."
+COPY --chown=${CONTAINER_USER}:root ./version.json /
 
 RUN . ~/.nvm/nvm.sh && yarn install
 

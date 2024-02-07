@@ -9,7 +9,7 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
@@ -195,6 +195,17 @@ class ShareObjectService:
                 share=share
             ).notify_share_object_submission(email_id=context.username)
 
+            # if parent dataset has auto-approve flag, we trigger the next transition to approved state
+            if dataset.autoApprovalEnabled:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
+                share = cls.approve_share_object(uri=share.shareUri)
+
             return share
 
     @classmethod
@@ -236,7 +247,6 @@ class ShareObjectService:
             session.add(approve_share_task)
 
         Worker.queue(engine=context.db_engine, task_ids=[approve_share_task.taskUri])
-
         return share
 
     @staticmethod

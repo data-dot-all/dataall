@@ -265,7 +265,7 @@ export const EnvironmentTeams = ({ environment }) => {
       const response = await client.query(
         listAllEnvironmentGroups({
           environmentUri: environment.environmentUri,
-          filter
+          filter: filter
         })
       );
       if (!response.errors) {
@@ -285,7 +285,7 @@ export const EnvironmentTeams = ({ environment }) => {
       const response = await client.query(
         listAllEnvironmentConsumptionRoles({
           environmentUri: environment.environmentUri,
-          filterRoles
+          filter: filterRoles
         })
       );
       if (!response.errors) {
