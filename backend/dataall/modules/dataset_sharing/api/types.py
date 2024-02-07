@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType, ShareItemHealthStatus
 from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
     resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
     resolve_group, list_shareable_objects, resolve_user_role
@@ -23,6 +23,9 @@ ShareItem = gql.ObjectType(
         gql.Field('itemType', ShareableType.toGraphQLEnum()),
         gql.Field('itemName', gql.String),
         gql.Field('description', gql.String),
+        gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
+        gql.Field('healthMessage', gql.String),
+        gql.Field('lastVerificationTime', gql.String),
         gql.Field(
             name='sharedObject',
             type=gql.Ref('ShareableObject'),

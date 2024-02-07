@@ -42,6 +42,11 @@ class ShareItemStatus(GraphQLEnumMapper):
     Revoke_Succeeded = 'Revoke_Succeeded'
 
 
+class ShareItemHealthStatus(GraphQLEnumMapper):
+    Healthy = 'Healthy'
+    Unhealthy = 'Unhealthy'
+
+
 class ShareObjectActions(GraphQLEnumMapper):
     Submit = 'Submit'
     Approve = 'Approve'

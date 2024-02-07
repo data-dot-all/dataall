@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus, ShareItemHealthStatus
 
 
 def in_one_month():
@@ -58,3 +58,6 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
+    healthStatus = Column(String, nullable=False, default=ShareItemHealthStatus.Healthy.value)
+    healthMessage = Column(String, nullable=True)
+    lastVerificationTime = Column(DateTime, nullable=True)
