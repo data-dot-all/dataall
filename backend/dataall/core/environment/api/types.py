@@ -99,7 +99,7 @@ Environment = gql.ObjectType(
         gql.Field(
             name='networks',
             type=gql.ArrayType(gql.Ref('Vpc')),
-            resolver=resolve_vpc_list,
+            resolver=resolve_environment_networks,
         ),
         gql.Field(
             name='parameters',
@@ -139,7 +139,7 @@ EnvironmentSimplified = gql.ObjectType(
         gql.Field(
             name='networks',
             type=gql.ArrayType(gql.Ref('Vpc')),
-            resolver=resolve_vpc_list,
+            resolver=resolve_environment_networks,
         )
     ],
 )

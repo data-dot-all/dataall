@@ -19,9 +19,8 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
-from dataall.core.vpc.db.vpc_repositories import Vpc
+from dataall.core.vpc.services.vpc_service import VpcService
 from dataall.base.aws.ec2_client import EC2
-from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
@@ -350,11 +349,8 @@ def get_parent_organization(context: Context, source, **kwargs):
     return org
 
 
-def resolve_vpc_list(context: Context, source, **kwargs):
-    with context.engine.scoped_session() as session:
-        return Vpc.get_environment_vpc_list(
-            session=session, environment_uri=source.environmentUri
-        )
+def resolve_environment_networks(context: Context, source, **kwargs):
+    return VpcService.get_environment_networks(environment_uri=source.environmentUri)
 
 
 def get_environment(context: Context, source, environmentUri: str = None):
