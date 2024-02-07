@@ -469,15 +469,7 @@ class EnvironmentService:
             raise exceptions.RequiredParameter('groupUri')
         if not input.get('consumptionRoleName'):
             raise exceptions.RequiredParameter('consumptionRoleName')
-        role_query = session.query(ConsumptionRole).filter(
-            (
-                and_(
-                    ConsumptionRole.consumptionRoleUri == uri,
-                    ConsumptionRole.environmentUri == env_uri,
-                )
-            )
-        )
-        consumption_role = role_query.first()
+        consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
         if consumption_role:
             ResourcePolicy.update_resource_policy(
                 session=session,
@@ -487,9 +479,10 @@ class EnvironmentService:
                 new_group=input['groupUri'],
                 new_permissions=permissions.CONSUMPTION_ROLE_ALL
             )
-            role_query.update(input)
+            for key, value in input.items():
+                setattr(consumption_role, key, value)
             session.commit()
-        return role_query.first()
+        return consumption_role
 
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
@@ -849,7 +842,7 @@ class EnvironmentService:
         return env_group
 
     @staticmethod
-    def get_environment_consumption_role(session, role_uri, environment_uri):
+    def get_environment_consumption_role(session, role_uri, environment_uri) -> ConsumptionRole:
         role = (
             session.query(ConsumptionRole)
             .filter(
