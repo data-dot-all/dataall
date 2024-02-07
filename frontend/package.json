@@ -82,14 +82,15 @@
     "env-cmd": "^10.1.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-no-relative-import-paths": "^1.5.3",
     "prettier": "2.8.7",
     "watch": "^1.0.2"
   },
   "eslintConfig": {
     "plugins": [
       "prettier",
+      "no-relative-import-paths",
       "import"
     ],
     "extends": [
@@ -100,46 +101,8 @@
     ],
     "settings": {
       "import/resolver": {
-        "alias": {
-          "map": [
-            [
-              "authentication",
-              "./src/authentication"
-            ],
-            [
-              "reauthentication",
-              "./src/reauthentication"
-            ],
-            [
-              "design",
-              "./src/design"
-            ],
-            [
-              "globalErrors",
-              "./src/globalErrors"
-            ],
-            [
-              "modules",
-              "./src/modules"
-            ],
-            [
-              "services",
-              "./src/services"
-            ],
-            [
-              "utils",
-              "./src/utils"
-            ],
-            [
-              "Shared",
-              "./src/modules/Shared"
-            ]
-          ],
-          "extensions": [
-            ".js",
-            ".jsx",
-            ".json"
-          ]
+        "node": {
+          "paths": ["src/"]
         }
       }
     },
@@ -159,6 +122,13 @@
       "jsx-quotes": [
         "error",
         "prefer-double"
+      ],
+      "no-relative-import-paths/no-relative-import-paths": [
+        "warn",
+        {
+          "rootDir": "src",
+          "allowSameFolder": false
+        }
       ],
       "import/no-default-export": "warn"
     }
