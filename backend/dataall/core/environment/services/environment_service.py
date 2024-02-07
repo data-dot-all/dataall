@@ -41,7 +41,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
     def create_environment(session, uri, data=None):
         context = get_context()
-        EnvironmentService._validate_creation_params(data, uri)
+        EnvironmentService._validate_creation_params(data, uri, session)
         organization = OrganizationRepository.get_organization_by_uri(session, uri)
         env = Environment(
             organizationUri=data.get('organizationUri'),
@@ -129,7 +129,7 @@ class EnvironmentService:
         return env
 
     @staticmethod
-    def _validate_creation_params(data, uri):
+    def _validate_creation_params(data, uri, session):
         if not uri:
             raise exceptions.RequiredParameter('organizationUri')
         if not data:
@@ -143,7 +143,7 @@ class EnvironmentService:
         if not data.get('region'):
             raise exceptions.RequiredParameter('region')
         EnvironmentService._validate_resource_prefix(data)
-        EnvironmentService._validate_account_region(data)
+        EnvironmentService._validate_account_region(data, session)
 
     @staticmethod
     def _validate_resource_prefix(data):
@@ -157,8 +157,8 @@ class EnvironmentService:
             )
 
     @staticmethod
-    def _validate_account_region(data):
-        environment = EnvironmentRepository.find_environment_by_account_region(account_id=data.get('AwsAccountId'), region=data.get('region'))
+    def _validate_account_region(data, session):
+        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
