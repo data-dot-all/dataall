@@ -22,9 +22,9 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { searchDashboards } from '../services';
+import { searchDashboards } from 'modules/Dashboards/services';
 
-import { DashboardListItem } from '../components';
+import { DashboardListItem } from 'modules/Dashboards/components';
 
 function DashboardPageHeader() {
   return (

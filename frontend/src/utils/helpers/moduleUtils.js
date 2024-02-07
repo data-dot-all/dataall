@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-properties */
 import * as modules from 'modules';
-import config from '../../generated/config.json';
+import config from 'generated/config.json';
 
 function _resolveModuleName(module) {
   return Object.values(modules).find((_module) => _module.name === module);

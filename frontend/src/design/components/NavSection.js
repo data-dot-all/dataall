@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { matchPath } from 'react-router-dom';
 import { List, ListSubheader } from '@mui/material';
-import { NavItem } from './NavItem';
+import { NavItem } from 'design/components/NavItem';
 
 const renderNavItems = ({ depth = 0, items, pathname }) => (
   <List disablePadding>

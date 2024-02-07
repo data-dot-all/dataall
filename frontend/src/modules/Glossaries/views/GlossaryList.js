@@ -21,8 +21,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listGlossaries } from '../services';
-import { GlossaryListItem } from '../components';
+import { listGlossaries } from 'modules/Glossaries/services';
+import { GlossaryListItem } from 'modules/Glossaries/components';
 
 function GlossariesPageHeader() {
   return (

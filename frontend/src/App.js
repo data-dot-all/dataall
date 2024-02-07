@@ -6,9 +6,9 @@ import {
   useScrollReset,
   useSettings,
   LoadingScreen
-} from './design';
-import routes from './routes';
-import { useAuth } from './authentication';
+} from 'design';
+import routes from 'routes';
+import { useAuth } from 'authentication';
 
 export const App = () => {
   const content = useRoutes(routes);

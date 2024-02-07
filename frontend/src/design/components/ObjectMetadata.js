@@ -12,8 +12,8 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { StackStatus } from '.';
 import { dayjs } from 'utils';
-import { Label } from './Label';
-import { TextAvatar } from './TextAvatar';
+import { Label } from 'design/components/Label';
+import { TextAvatar } from 'design/components/TextAvatar';
 
 export const ObjectMetadata = (props) => {
   const {

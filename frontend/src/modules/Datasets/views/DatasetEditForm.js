@@ -37,8 +37,8 @@ import {
   searchGlossary,
   useClient
 } from 'services';
-import { updateDataset } from '../services';
-import { Topics } from '../../constants';
+import { updateDataset } from 'modules/Datasets/services';
+import { Topics } from 'modules/constants';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();

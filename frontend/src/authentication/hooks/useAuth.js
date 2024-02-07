@@ -1,6 +1,6 @@
-import { GenericAuthContext } from '../contexts/GenericAuthContext';
+import { GenericAuthContext } from 'authentication/contexts/GenericAuthContext';
 import { useContext } from 'react';
-import { LocalAuthContext } from '../contexts/LocalAuthContext';
+import { LocalAuthContext } from 'authentication/contexts/LocalAuthContext';
 
 export const useAuth = () => {
   return useContext(

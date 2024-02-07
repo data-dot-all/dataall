@@ -35,7 +35,10 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { archiveEnvironment, getEnvironment } from '../services';
+import {
+  archiveEnvironment,
+  getEnvironment
+} from 'modules/Environments/services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import {
   EnvironmentDatasets,
@@ -44,7 +47,7 @@ import {
   EnvironmentSubscriptions,
   EnvironmentTeams,
   EnvironmentNetworks
-} from '../components';
+} from 'modules/Environments/components';
 import { ModuleNames, isModuleEnabled } from 'utils';
 
 const tabs = [

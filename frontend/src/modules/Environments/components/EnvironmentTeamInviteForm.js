@@ -27,7 +27,7 @@ import { useClient, listGroups } from 'services';
 import {
   inviteGroupOnEnvironment,
   listEnvironmentGroupInvitationPermissions
-} from '../services';
+} from 'modules/Environments/services';
 
 export const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;

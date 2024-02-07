@@ -1,5 +1,5 @@
 import * as PropTypes from 'prop-types';
-import { Label } from './Label';
+import { Label } from 'design/components/Label';
 
 export const StackStatus = (props) => {
   const { status } = props;

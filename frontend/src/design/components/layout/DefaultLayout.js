@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { makeStyles, styled } from '@mui/styles';
 import { Box } from '@mui/material';
-import { DefaultNavbar } from './DefaultNavbar';
-import { DefaultSidebar } from './DefaultSidebar';
-import { ErrorNotification } from '../ErrorNotification';
+import { DefaultNavbar } from 'design/components/layout/DefaultNavbar';
+import { DefaultSidebar } from 'design/components/layout/DefaultSidebar';
+import { ErrorNotification } from 'design/components/ErrorNotification';
 
 export const DefaultLayoutRoot = styled(Box)(({ theme }) => ({
   ...(theme.palette.mode === 'light' && {

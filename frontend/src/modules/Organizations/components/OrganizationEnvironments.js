@@ -32,7 +32,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listOrganizationEnvironments } from '../services';
+import { listOrganizationEnvironments } from 'modules/Organizations/services';
 
 export const OrganizationEnvironments = (props) => {
   const { organization, ...other } = props;

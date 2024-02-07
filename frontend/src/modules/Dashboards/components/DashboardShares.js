@@ -6,8 +6,8 @@ import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listDashboardShares } from '../services';
-import { DashboardShareItem } from './DashboardShareItem';
+import { listDashboardShares } from 'modules/Dashboards/services';
+import { DashboardShareItem } from 'modules/Dashboards/components/DashboardShareItem';
 
 export const DashboardShares = (props) => {
   const { dashboard } = props;

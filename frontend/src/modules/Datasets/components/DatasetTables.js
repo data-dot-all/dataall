@@ -37,9 +37,9 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listDatasetTables, deleteDatasetTable, useClient } from 'services';
 
-import { syncTables } from '../services';
+import { syncTables } from 'modules/Datasets/services';
 
-import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
+import { DatasetStartCrawlerModal } from 'modules/Datasets/components/DatasetStartCrawlerModal';
 import { isFeatureEnabled } from 'utils';
 
 export const DatasetTables = (props) => {

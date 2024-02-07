@@ -16,7 +16,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, useFetchGroups } from 'services';
-import { addConsumptionRoleToEnvironment } from '../services';
+import { addConsumptionRoleToEnvironment } from 'modules/Environments/services';
 
 export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;

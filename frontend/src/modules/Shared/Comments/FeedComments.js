@@ -14,7 +14,7 @@ import { Defaults, Label, Scrollbar, TextAvatar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listFeedMessages, useClient } from 'services';
 import { dayjs } from 'utils';
-import { FeedCommentAdd } from './FeedCommentAdd';
+import { FeedCommentAdd } from 'modules/Shared/Comments/FeedCommentAdd';
 
 export const FeedComments = (props) => {
   const { targetUri, targetType, objectOwner, open, onClose } = props;

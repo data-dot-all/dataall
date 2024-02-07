@@ -3,7 +3,7 @@ import {
   useSelector as useReduxSelector
 } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { rootReducer } from './rootReducer';
+import { rootReducer } from 'globalErrors/rootReducer';
 
 export const store = configureStore({
   reducer: rootReducer,

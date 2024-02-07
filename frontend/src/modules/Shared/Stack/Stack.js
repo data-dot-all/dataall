@@ -21,7 +21,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Scrollbar, StackStatus } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getStack, updateStack, useClient } from 'services';
-import { StackLogs } from './StackLogs';
+import { StackLogs } from 'modules/Shared/Stack/StackLogs';
 
 export const Stack = (props) => {
   const { environmentUri, stackUri, targetUri, targetType } = props;

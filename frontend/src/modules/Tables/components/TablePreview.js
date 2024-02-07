@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { previewTable } from '../services';
+import { previewTable } from 'modules/Tables/services';
 
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   '& .MuiDataGrid-columnsContainer': {

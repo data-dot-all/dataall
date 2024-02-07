@@ -51,10 +51,10 @@ import {
   removeConsumptionRoleFromEnvironment,
   removeGroupFromEnvironment,
   updateConsumptionRole
-} from '../services';
-import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
-import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
-import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
+} from 'modules/Environments/services';
+import { EnvironmentRoleAddForm } from 'modules/Environments/components/EnvironmentRoleAddForm';
+import { EnvironmentTeamInviteEditForm } from 'modules/Environments/components/EnvironmentTeamInviteEditForm';
+import { EnvironmentTeamInviteForm } from 'modules/Environments/components/EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
 
 function TeamRow({ team, environment, fetchItems }) {

@@ -27,7 +27,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listDatasetsCreatedInEnvironment } from '../services';
+import { listDatasetsCreatedInEnvironment } from 'modules/Environments/services';
 
 export const EnvironmentOwnedDatasets = ({ environment }) => {
   const client = useClient();

@@ -9,12 +9,12 @@ import * as BsIcons from 'react-icons/bs';
 import { Defaults, ObjectBrief, PlusIcon } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listToTree } from 'utils';
-import { getGlossaryTree } from '../services';
+import { getGlossaryTree } from 'modules/Glossaries/services';
 import {
   GlossaryCreateCategoryForm,
   GlossaryCreateTermForm,
   GlossaryNodeForm
-} from '../components';
+} from 'modules/Glossaries/components';
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {

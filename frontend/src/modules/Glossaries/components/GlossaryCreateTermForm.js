@@ -14,7 +14,7 @@ import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { createTerm } from '../services';
+import { createTerm } from 'modules/Glossaries/services';
 
 export const GlossaryCreateTermForm = ({
   client,

@@ -3,9 +3,12 @@ import { AppBar, Box, IconButton, Toolbar } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Menu } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { AccountPopover, NotificationsPopover } from '../popovers';
-import { Logo } from '../Logo';
-import { SettingsDrawer } from '../SettingsDrawer';
+import {
+  AccountPopover,
+  NotificationsPopover
+} from 'design/components/popovers';
+import { Logo } from 'design/components/Logo';
+import { SettingsDrawer } from 'design/components/SettingsDrawer';
 import { ModuleNames, isModuleEnabled } from 'utils';
 
 const useStyles = makeStyles((theme) => ({

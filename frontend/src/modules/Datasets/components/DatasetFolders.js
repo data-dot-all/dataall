@@ -38,8 +38,8 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDatasetStorageLocation, useClient } from 'services';
 
-import { listDatasetStorageLocations } from '../services';
-import { FolderCreateModal } from './FolderCreateModal';
+import { listDatasetStorageLocations } from 'modules/Datasets/services';
+import { FolderCreateModal } from 'modules/Datasets/components/FolderCreateModal';
 
 export const DatasetFolders = (props) => {
   const { dataset, isAdmin } = props;

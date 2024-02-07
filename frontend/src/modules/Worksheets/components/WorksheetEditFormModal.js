@@ -16,7 +16,7 @@ import * as Yup from 'yup';
 import { ChipInput } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { updateWorksheet } from '../services';
+import { updateWorksheet } from 'modules/Worksheets/services';
 
 export const WorksheetEditFormModal = (props) => {
   const { worksheet, onApply, onClose, open, reload, ...other } = props;

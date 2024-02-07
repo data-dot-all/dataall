@@ -21,8 +21,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listSagemakerStudioUsers } from '../services';
-import { MLStudioListItem } from '../components/';
+import { listSagemakerStudioUsers } from 'modules/MLStudio/services';
+import { MLStudioListItem } from 'modules/MLStudio/components';
 
 function MLStudioPageHeader() {
   return (

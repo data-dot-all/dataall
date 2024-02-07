@@ -1,5 +1,5 @@
 import { createContext, useEffect, useReducer } from 'react';
-import { SET_ERROR } from '../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import PropTypes from 'prop-types';
 import { useAuth } from 'react-oidc-context';
 import { Auth } from 'aws-amplify';

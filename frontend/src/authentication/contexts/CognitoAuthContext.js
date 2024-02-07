@@ -1,7 +1,7 @@
 import { Auth, Amplify } from 'aws-amplify';
 import PropTypes from 'prop-types';
-import { GenericAuthProvider } from './GenericAuthContext';
-import { RequestContextProvider } from '../../reauthentication';
+import { GenericAuthProvider } from 'authentication/contexts/GenericAuthContext';
+import { RequestContextProvider } from 'reauthentication';
 
 Amplify.configure({
   Auth: {

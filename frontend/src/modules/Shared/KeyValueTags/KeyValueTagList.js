@@ -17,7 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { PencilAltIcon, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listKeyValueTags, useClient } from 'services';
-import { KeyValueTagUpdateForm } from './KeyValueTagUpdateForm';
+import { KeyValueTagUpdateForm } from 'modules/Shared/KeyValueTags/KeyValueTagUpdateForm';
 
 export const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();

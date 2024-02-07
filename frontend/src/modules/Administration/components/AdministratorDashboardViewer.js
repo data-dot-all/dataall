@@ -25,7 +25,7 @@ import {
   getPlatformAuthorSession,
   getPlatformReaderSession,
   updateSSMParameter
-} from '../services';
+} from 'modules/Administration/services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

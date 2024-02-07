@@ -33,12 +33,12 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { FeedComments } from 'modules/Shared';
-import { deleteDashboard, getDashboard } from '../services';
+import { deleteDashboard, getDashboard } from 'modules/Dashboards/services';
 import {
   DashboardOverview,
   DashboardShares,
   DashboardViewer
-} from '../components';
+} from 'modules/Dashboards/components';
 
 const DashboardView = () => {
   const dispatch = useDispatch();

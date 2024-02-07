@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { Logo } from './Logo';
+import { Logo } from 'design/components/Logo';
 
 export const SplashScreen = () => (
   <Box

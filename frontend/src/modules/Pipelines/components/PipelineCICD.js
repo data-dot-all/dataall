@@ -18,7 +18,7 @@ import { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getDataPipelineCredsLinux } from '../services';
+import { getDataPipelineCredsLinux } from 'modules/Pipelines/services';
 
 export const PipelineCICD = (props) => {
   const { pipeline } = props;

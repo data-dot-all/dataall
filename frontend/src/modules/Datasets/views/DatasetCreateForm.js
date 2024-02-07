@@ -31,13 +31,13 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { createDataset } from '../services';
+import { createDataset } from 'modules/Datasets/services';
 import {
   useClient,
   listEnvironmentGroups,
   listValidEnvironments
 } from 'services';
-import { Topics } from '../../constants';
+import { Topics } from 'modules/constants';
 
 const DatasetCreateForm = (props) => {
   const dispatch = useDispatch();

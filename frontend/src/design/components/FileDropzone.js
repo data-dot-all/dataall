@@ -13,7 +13,7 @@ import {
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { bytesToSize } from 'utils';
-import { DuplicateIcon, XIcon } from '../icons';
+import { DuplicateIcon, XIcon } from 'design/icons';
 
 export const FileDropzone = (props) => {
   const {

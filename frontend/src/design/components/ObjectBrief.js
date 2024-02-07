@@ -8,7 +8,7 @@ import {
   Typography,
   Divider
 } from '@mui/material';
-import { Label } from './Label';
+import { Label } from 'design/components/Label';
 
 export const ObjectBrief = (props) => {
   const {

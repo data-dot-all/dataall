@@ -21,8 +21,8 @@ import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, useCardStyle } from 'design';
 import { dayjs } from 'utils';
-import { RequestAccessModal } from './RequestAccessModal';
-import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
+import { RequestAccessModal } from 'modules/Catalog/components/RequestAccessModal';
+import { RequestDashboardAccessModal } from 'modules/Catalog/components/RequestDashboardAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>

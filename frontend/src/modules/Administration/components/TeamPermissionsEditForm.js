@@ -23,7 +23,7 @@ import { useClient } from 'services';
 import {
   listTenantPermissions,
   updateTenantGroupPermissions
-} from '../services';
+} from 'modules/Administration/services';
 
 export const TeamPermissionsEditForm = (props) => {
   const { team, onClose, open, reloadTeams, ...other } = props;

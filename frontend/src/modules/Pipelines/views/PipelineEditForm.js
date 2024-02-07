@@ -29,8 +29,11 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listValidEnvironments, useClient } from 'services';
-import { getDataPipeline, updateDataPipeline } from '../services';
-import { PipelineEnvironmentEditForm } from '../components';
+import {
+  getDataPipeline,
+  updateDataPipeline
+} from 'modules/Pipelines/services';
+import { PipelineEnvironmentEditForm } from 'modules/Pipelines/components';
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();

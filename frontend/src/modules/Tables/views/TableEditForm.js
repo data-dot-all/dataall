@@ -31,7 +31,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { searchGlossary, useClient } from 'services';
-import { getDatasetTable, updateDatasetTable } from '../services';
+import { getDatasetTable, updateDatasetTable } from 'modules/Tables/services';
 
 function TableEditHeader(props) {
   const { table } = props;

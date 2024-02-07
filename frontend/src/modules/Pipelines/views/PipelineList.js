@@ -25,9 +25,9 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listDataPipelines } from '../services';
+import { listDataPipelines } from 'modules/Pipelines/services';
 import { AwsRegions } from 'utils';
-import { PipelineListItem } from '../components';
+import { PipelineListItem } from 'modules/Pipelines/components';
 
 function PipelinesPageHeader() {
   return (

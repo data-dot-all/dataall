@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Box } from '@mui/material';
-import { DatasetTables } from './DatasetTables';
-import { DatasetFolders } from './DatasetFolders';
+import { DatasetTables } from 'modules/Datasets/components/DatasetTables';
+import { DatasetFolders } from 'modules/Datasets/components/DatasetFolders';
 import { isFeatureEnabled } from 'utils';
 
 export const DatasetData = (props) => {

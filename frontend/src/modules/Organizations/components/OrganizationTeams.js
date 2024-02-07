@@ -37,11 +37,11 @@ import { useClient } from 'services';
 import {
   listOrganizationGroups,
   removeGroupFromOrganization
-} from '../services';
+} from 'modules/Organizations/services';
 import {
   OrganizationTeamInviteEditForm,
   OrganizationTeamInviteForm
-} from '../components';
+} from 'modules/Organizations/components';
 
 function TeamRow({ team, organization, fetchItems }) {
   const client = useClient();

@@ -1,7 +1,10 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
-import { PipelineCICD, PipelineEnvironments } from '../components';
+import {
+  PipelineCICD,
+  PipelineEnvironments
+} from 'modules/Pipelines/components';
 
 export const PipelineOverview = (props) => {
   const { pipeline, ...other } = props;

@@ -21,7 +21,7 @@ import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listEnvironmentGroups, useClient } from 'services';
-import { createDataPipelineEnvironment } from '../services';
+import { createDataPipelineEnvironment } from 'modules/Pipelines/services';
 
 export const PipelineEnvironmentCreateForm = (props) => {
   const {

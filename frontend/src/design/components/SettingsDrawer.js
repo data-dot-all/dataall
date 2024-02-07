@@ -10,9 +10,9 @@ import {
   Typography
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { THEMES } from '../constants';
-import { useSettings } from '../hooks';
-import { AdjustmentsIcon } from '../icons';
+import { THEMES } from 'design/constants';
+import { useSettings } from 'design/hooks';
+import { AdjustmentsIcon } from 'design/icons';
 
 const getValues = (settings) => ({
   compact: settings.compact,

@@ -21,8 +21,8 @@ import {
   markNotificationAsRead,
   useClient
 } from 'services';
-import { BellIcon } from '../../icons';
-import { Defaults } from '../defaults';
+import { BellIcon } from 'design/icons';
+import { Defaults } from 'design/components/defaults';
 
 export const NotificationsPopover = () => {
   const anchorRef = useRef(null);

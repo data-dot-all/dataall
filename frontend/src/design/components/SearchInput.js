@@ -1,6 +1,6 @@
 import { Box, Card, Input } from '@mui/material';
 import * as PropTypes from 'prop-types';
-import { SearchIcon } from '../icons';
+import { SearchIcon } from 'design/icons';
 
 export function SearchInput(props) {
   const { onChange, onKeyUp, value } = props;

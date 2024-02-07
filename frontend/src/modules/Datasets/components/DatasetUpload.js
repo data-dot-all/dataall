@@ -17,7 +17,10 @@ import { FileDropzone } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 
-import { getDatasetPresignedUrl, startGlueCrawler } from '../services';
+import {
+  getDatasetPresignedUrl,
+  startGlueCrawler
+} from 'modules/Datasets/services';
 
 export const DatasetUpload = (props) => {
   const { dataset, isAdmin } = props;

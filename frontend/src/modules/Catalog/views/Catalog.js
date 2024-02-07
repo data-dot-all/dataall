@@ -31,7 +31,10 @@ import {
   THEMES,
   useSettings
 } from 'design';
-import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
+import {
+  GlossarySearchWrapper,
+  GlossarySearchResultItem
+} from 'modules/Catalog/components';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {

@@ -7,12 +7,12 @@ import ReactDOM from 'react-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
-import { App } from './App';
-import { AuthProvider } from './authentication';
-import { SettingsProvider } from './design';
-import { store } from './globalErrors';
-import { reportWebVitals } from './reportWebVitals';
-import * as serviceWorker from './serviceWorker';
+import { App } from 'App';
+import { AuthProvider } from 'authentication';
+import { SettingsProvider } from 'design';
+import { store } from 'globalErrors';
+import { reportWebVitals } from 'reportWebVitals';
+import * as serviceWorker from 'serviceWorker';
 import { SnackbarProvider } from 'notistack';
 
 ReactDOM.render(

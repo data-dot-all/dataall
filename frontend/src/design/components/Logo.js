@@ -1,5 +1,5 @@
 import { Box, CardMedia, Grid, Tooltip, Typography } from '@mui/material';
-import version from '../../generated/version.json';
+import version from 'generated/version.json';
 
 export const Logo = () => (
   <>

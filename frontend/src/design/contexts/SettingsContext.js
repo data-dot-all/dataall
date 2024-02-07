@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useState } from 'react';
-import { THEMES } from '../constants';
+import { THEMES } from 'design/constants';
 
 const initialSettings = {
   compact: true,
