@@ -1,24 +1,53 @@
 # Managing DB with Alembic locally
+In data.all we use [Alembic](https://alembic.sqlalchemy.org/en/latest/)  -- a lightweight database migration tool for usage with the SQLAlchemy Database Toolkit for Python.
+Alembic relies on the database's current state to generate and apply migrations accurately.
+Alembic determines the changes to be made by comparing the current state of the database with the desired state specified in your SQLAlchemy models. This process, known as schema diffing, requires an existing database to identify differences.
+Alembic generates migration scripts based on the detected differences between the current database schema and the desired schema defined in your application code. This generation is dependent on the actual structure and content of the database.
 
-When we run ```docker-compose up``` the postgres container is created with no tables or schemas.
+In order to create and test migrations locally you will have to create a local database.
+
+## Prerequisites
+
+1. Build and launch Docker containers for the database and GraphQL. 
+```bash
+docker compose build db
+docker compose run db
+docker compose build graphql
+docker compose run graphql
+```
+These can also be initiated alongside all local testing containers using the following command:
+```bash
+docker compose up
+```
+2. Specify the location of database model descriptions. If you are at the project's root, the target folder path is backend.
+```bash
+export PYTHONPATH=backend
+```
+3. The containers initiated in the first step will default to using the schema named `local`. Alembic relies on the environmental variable `envname` to determine the schema. Set it to `local` with the following command:
+```bash
+export envname=local
+```
+In a real-life RDS database, `envname` adopts the value of the environment (e.g., dev, test, etc.).
+
+
+## Managing migrations
+
+When we run ```docker compose build``` the postgres container is created with no tables or schemas.
 
 Upon start of GraphQL container, sqlalchemy ```declarative_base``` is used to create all tables with this function: 
 ```Base.metadata.create_all(engine.engine)```. **The number of tables depends on the modules that are enabled in ```config.json``` (in the root of the project).**
 
 As the database is created from scratch, it has no current information about migration state, so, first we need to run database upgrade.
-After that alembic will be able to generate the further migrations localy.
+After that alembic will be able to generate the further migrations locally.
 
-To upgrade database without generating migrations use
+This command will apply all migrations, and syncronize the DB state with local alembic historyt of migrations.
 ```bash
 make upgrade-db 
 ```
 or
 ```bash
-export PYTHONPATH=backend
-export envname=local
 alembic -c backend/alembic.ini upgrade head
 ```
-This command will apply all migrations, and syncronize the DB state with local list of migraitions.
 
 To upgrade database and generate alembic migration during development use:
 
@@ -27,8 +56,6 @@ make generate-migrations
 ```
 or
 ```bash
-export PYTHONPATH=backend
-export envname=local
 alembic -c backend/alembic.ini upgrade head
 alembic -c backend/alembic.ini revision -m "_describe_changes_shortly" --autogenerate
 ```
