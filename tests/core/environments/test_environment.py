@@ -32,6 +32,41 @@ def get_env(client, env_fixture, group):
         groups=[group.name],
     )
 
+def test_create_environment_invalid_account_region(client, org_fixture, env_fixture, group):
+    response = client.query(
+        """mutation CreateEnv($input:NewEnvironmentInput){
+                createEnvironment(input:$input){
+                    organization{
+                        organizationUri
+                    }
+                    environmentUri
+                    label
+                    AwsAccountId
+                    SamlGroupName
+                    region
+                    name
+                    owner
+                    parameters {
+                        key
+                        value
+                    }
+                }
+            }""",
+            username='alice',
+            groups=[group.name],
+            input={
+                'label': 'invalid',
+                'description': 'invalid environment',
+                'organizationUri': org_fixture.organizationUri,
+                'AwsAccountId': env_fixture.AwsAccountId,
+                'tags': ['a', 'b', 'c'],
+                'region': env_fixture.region,
+                'SamlGroupName': group.name,
+                'parameters': [{'key': k, 'value': v} for k, v in {"dashboardsEnabled": "true"}.items()]
+            },
+        )
+    assert 'InvalidInput' in response.errors[0].message
+
 
 def test_get_environment(client, org_fixture, env_fixture, group):
     response = get_env(client, env_fixture, group)
