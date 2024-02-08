@@ -1,6 +1,7 @@
 import abc
 import logging
 import time
+from typing import Any
 from warnings import warn
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -24,8 +25,7 @@ class LFShareManager:
         session,
         dataset: Dataset,
         share: ShareObject,
-        shared_tables: [DatasetTable],
-        revoked_tables: [DatasetTable],
+        tables: [DatasetTable],
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
@@ -34,8 +34,7 @@ class LFShareManager:
         self.env_group = env_group
         self.dataset = dataset
         self.share = share
-        self.shared_tables = shared_tables
-        self.revoked_tables = revoked_tables
+        self.tables = tables
         self.source_environment = source_environment
         self.target_environment = target_environment
         self.shared_db_name, self.is_new_share = self.build_shared_db_name()
@@ -179,6 +178,13 @@ class LFShareManager:
             permissions=['ALL'],
         )
         return True
+    
+    def check_shared_database_in_target(self) -> Any:
+        """
+        Checks if shared database exists in target account
+        :return: boto3 glue get_database or False if does not exist
+        """
+        return self.glue_client_in_target.get_glue_database()
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
         """
@@ -201,6 +207,57 @@ class LFShareManager:
             permissions=['ALL'],
         )
         return True
+
+    def check_pivot_role_permissions_to_source_database(self) -> bool:
+        """
+        Checks 'ALL' Lake Formation permissions to data.all PivotRole to the source database in source account
+        :return: True if permissions already granted else False
+        """
+        return self.lf_client_in_source.check_permissions_to_database(
+            principals=[SessionHelper.get_delegation_role_arn(self.source_environment.AwsAccountId)],
+            database_name=self.dataset.GlueDatabaseName,
+            permissions=['ALL'],
+        )
+
+
+    def check_pivot_role_permissions_to_shared_database(self) -> bool:
+        """
+        Checks 'ALL' Lake Formation permissions to data.all PivotRole to the shared database in target account
+        :return: True if permissions already granted else False
+        """
+        return self.lf_client_in_target.check_permissions_to_database(
+            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            database_name=self.shared_db_name,
+            permissions=['ALL'],
+        )
+    
+    # TODO: FIX WITH CHECK OF OTHER SHARE PRINCIPAL
+    def check_principals_permissions_to_shared_database(self) -> bool:
+        """
+        Checks 'DESCRIBE' Lake Formation permissions to data.all PivotRole to the shared database in target account
+        :return: True if permissions already granted else False
+        """
+        return self.lf_client_in_target.check_permissions_to_database(
+            principals=self.principals,
+            database_name=self.shared_db_name,
+            permissions=['DESCRIBE'],
+        )
+
+    def check_target_account_permissions_to_source_table(self, table: DatasetTable) -> bool:
+        """
+        Checks 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
+        :param table: DatasetTable
+        :return: True if permissions already granted else False
+        """
+        return self.lf_client_in_source.check_permissions_to_table(
+            principals=[self.target_environment.AwsAccountId],
+            database_name=table.GlueDatabaseName,
+            table_name=table.GlueTableName,
+            catalog_id=self.source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT'],
+            permissions_with_grant_options=['DESCRIBE', 'SELECT']
+        )
+
 
     def grant_principals_database_permissions_to_shared_database(self) -> True:
         """
@@ -274,6 +331,36 @@ class LFShareManager:
             table_name=table.GlueTableName,
             catalog_id=self.source_environment.AwsAccountId,
             permissions=['DESCRIBE', 'SELECT']
+        )
+        return True
+
+    def check_principals_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
+        """
+        Checks 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
+        :param table: DatasetTable
+        :return: True if permissions already granted else False
+        """
+        self.lf_client_in_target.check_permissions_to_table_with_columns(
+            principals=self.principals,
+            database_name=table.GlueDatabaseName,
+            table_name=table.GlueTableName,
+            catalog_id=self.source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT']
+        )
+        return True
+    
+    def check_principals_permissions_to_table_in_target(self, table: DatasetTable) -> bool:
+        """
+        Checks 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
+        :param table: DatasetTable
+        :return: True if permissions already granted else False
+        """
+        self.lf_client_in_target.check_permissions_to_table(
+            principals=self.principals,
+            database_name=self.shared_db_name,
+            table_name=table.GlueTableName,
+            catalog_id=self.target_environment.AwsAccountId,
+            permissions=['DESCRIBE']
         )
         return True
 

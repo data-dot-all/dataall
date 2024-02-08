@@ -6,6 +6,10 @@ import {
   RefreshRounded,
   RemoveCircleOutlineOutlined
 } from '@mui/icons-material';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import GppBadIcon from '@mui/icons-material/GppBad';
+import SecurityIcon from '@mui/icons-material/Security';
+import PendingIcon from '@mui/icons-material/Pending';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -43,6 +47,7 @@ import {
   Defaults,
   Pager,
   PlusIcon,
+  // Label,
   Scrollbar,
   ShareStatus,
   TextAvatar,
@@ -63,7 +68,8 @@ import {
   RevokeShareItemsModal,
   ShareRejectModal,
   UpdateRejectReason,
-  UpdateRequestReason
+  UpdateRequestReason,
+  VerifyShareItemsModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 
@@ -397,6 +403,38 @@ function SharedItem(props) {
           </>
         )}
       </TableCell>
+      <TableCell>
+        {item.healthStatus === 'Unhealthy' ? (
+          <Tooltip
+            title={
+              <Typography>
+                {item.healthStatus} | Error Message:{' '}
+                {item.healthMessage || 'N/A'} | Last Checked{' '}
+                {item.lastVerificationTime || 'N/A'}
+              </Typography>
+            }
+          >
+            <GppBadIcon />
+          </Tooltip>
+        ) : item.healthStatus === 'Healthy' ? (
+          <Tooltip
+            title={
+              <Typography>
+                {item.healthStatus} | Last Checked{' '}
+                {item.lastVerificationTime || 'N/A'}
+              </Typography>
+            }
+          >
+            <VerifiedUserIcon />
+          </Tooltip>
+        ) : (
+          <Tooltip title={<Typography>Pending Check</Typography>}>
+            <PendingIcon />
+          </Tooltip>
+        )}
+        {/* <CheckCircleIcon color={'success'} />
+        <Label color="success">{item.healthStatus}</Label> */}
+      </TableCell>
     </TableRow>
   );
 }
@@ -425,6 +463,7 @@ const ShareView = () => {
   const [loadingShareItems, setLoadingShareItems] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isRevokeItemsModalOpen, setIsRevokeItemsModalOpen] = useState(false);
+  const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
   const handleAddItemModalOpen = () => {
     setIsAddItemModalOpen(true);
   };
@@ -437,6 +476,13 @@ const ShareView = () => {
   const handleRevokeItemModalClose = () => {
     setIsRevokeItemsModalOpen(false);
   };
+  const handleVerifyItemModalOpen = () => {
+    setIsVerifyItemsModalOpen(true);
+  };
+  const handleVerifyItemModalClose = () => {
+    setIsVerifyItemsModalOpen(false);
+  };
+
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
       await setFilter({ ...filter, isShared: true, page: value });
@@ -928,6 +974,16 @@ const ShareView = () => {
                       >
                         Revoke Items
                       </LoadingButton>
+                      <LoadingButton
+                        color="info"
+                        startIcon={<SecurityIcon />}
+                        sx={{ m: 1 }}
+                        onClick={handleVerifyItemModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Verify Items
+                      </LoadingButton>
                     </Box>
                   }
                 />
@@ -941,6 +997,7 @@ const ShareView = () => {
                           <TableCell>Name</TableCell>
                           <TableCell>Status</TableCell>
                           <TableCell>Action</TableCell>
+                          <TableCell>Health Status</TableCell>
                         </TableRow>
                       </TableHead>
                       {loadingShareItems ? (
@@ -997,6 +1054,15 @@ const ShareView = () => {
             onClose={handleRevokeItemModalClose}
             reloadSharedItems={fetchShareItems}
             open={isRevokeItemsModalOpen}
+          />
+        )}
+        {isVerifyItemsModalOpen && (
+          <VerifyShareItemsModal
+            share={share}
+            onApply={handleVerifyItemModalClose}
+            onClose={handleVerifyItemModalClose}
+            reloadSharedItems={fetchShareItems}
+            open={isVerifyItemsModalOpen}
           />
         )}
       </Box>

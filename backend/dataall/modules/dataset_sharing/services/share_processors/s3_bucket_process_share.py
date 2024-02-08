@@ -174,3 +174,58 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 removing_bucket.handle_revoke_failure(e)
 
         return success
+    
+    @classmethod
+    def verify_shares(
+        cls,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        buckets_to_verify: [DatasetBucket],
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup
+    ) -> bool:
+        
+        log.info(
+            '##### Starting S3 bucket share #######'
+        )
+        success = True
+        for shared_bucket in buckets_to_verify:
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                session,
+                share.shareUri,
+                shared_bucket.bucketUri,
+            )
+
+            sharing_bucket = cls(
+                session,
+                dataset,
+                share,
+                shared_bucket,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group
+            )
+            try:
+                sharing_bucket.check_role_bucket_policy()
+                sharing_bucket.grant_role_bucket_policy()
+                sharing_bucket.grant_s3_iam_access()
+                if not dataset.imported or dataset.importedKmsKey:
+                    sharing_bucket.grant_dataset_bucket_key_policy()
+                new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
+                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+
+            except Exception as e:
+                # must run first to ensure state transitions to failed
+                new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
+                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                success = False
+
+                # statements which can throw exceptions but are not critical
+                sharing_bucket.handle_share_failure(e)
+
+        return success
+        return True

@@ -19,7 +19,7 @@ if __name__ == '__main__':
         ENGINE = get_engine(envname=ENVNAME)
 
         share_uri = os.getenv('shareUri')
-        share_item_uri = os.getenv('shareItemUri')
+        share_item_uri = os.getenv('shareItemUris')
         handler = os.getenv('handler')
 
         if handler == 'approve_share':

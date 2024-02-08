@@ -483,6 +483,9 @@ class ShareObjectRepository:
                 DatasetTable.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -510,6 +513,9 @@ class ShareObjectRepository:
                 DatasetStorageLocation.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -536,6 +542,9 @@ class ShareObjectRepository:
                 DatasetBucket.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -805,19 +814,19 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status):
+    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetTable, DatasetTable.tableUri
+            session, share, status, healthStatus, DatasetTable, DatasetTable.tableUri
         )
 
         folders = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetStorageLocation, DatasetStorageLocation.locationUri
+            session, share, status, healthStatus, DatasetStorageLocation, DatasetStorageLocation.locationUri
         )
 
         s3_buckets = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetBucket, DatasetBucket.bucketUri
+            session, share, status, healthStatus, DatasetBucket, DatasetBucket.bucketUri
         )
 
         return (
@@ -827,8 +836,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def _find_all_share_item(session, share, status, share_type_model, share_type_uri):
-        return (
+    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+        query = (
             session.query(share_type_model)
             .join(
                 ShareObjectItem,
@@ -843,11 +852,14 @@ class ShareObjectRepository:
                     ShareObject.datasetUri == share.datasetUri,
                     ShareObject.environmentUri == share.environmentUri,
                     ShareObject.shareUri == share.shareUri,
-                    ShareObjectItem.status == status,
                 )
             )
-            .all()
         )
+        if status:
+            query = query.filter(ShareObjectItem.status == status)
+        if healthStatus:
+            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
+        return query.all()
 
     @staticmethod
     def find_all_share_items(session, share_uri, share_type, status=None):

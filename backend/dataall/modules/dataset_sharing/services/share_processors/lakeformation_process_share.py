@@ -1,7 +1,8 @@
 import logging
 from warnings import warn
+from datetime import datetime
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -17,8 +18,7 @@ class ProcessLakeFormationShare(LFShareManager):
         session,
         dataset: Dataset,
         share: ShareObject,
-        shared_tables: [DatasetTable],
-        revoked_tables: [DatasetTable],
+        tables: [DatasetTable],
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
@@ -27,8 +27,7 @@ class ProcessLakeFormationShare(LFShareManager):
             session,
             dataset,
             share,
-            shared_tables,
-            revoked_tables,
+            tables,
             source_environment,
             target_environment,
             env_group,
@@ -61,7 +60,7 @@ class ProcessLakeFormationShare(LFShareManager):
             '##### Starting Sharing tables #######'
         )
         success = True
-        if not self.shared_tables:
+        if not self.tables:
             log.info("No tables to share. Skipping...")
         else:
             self.grant_pivot_role_all_database_permissions_to_source_database()
@@ -69,7 +68,7 @@ class ProcessLakeFormationShare(LFShareManager):
             self.grant_pivot_role_all_database_permissions_to_shared_database()
             self.grant_principals_database_permissions_to_shared_database()
 
-            for table in self.shared_tables:
+            for table in self.tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
 
                 share_item = ShareObjectRepository.find_sharable_item(
@@ -155,7 +154,7 @@ class ProcessLakeFormationShare(LFShareManager):
             '##### Starting Revoking tables #######'
         )
         success = True
-        for table in self.revoked_tables:
+        for table in self.tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
             )
@@ -198,7 +197,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 self.handle_revoke_failure(table=table, error=e)
 
         try:
-            if self.revoked_tables:
+            if self.tables:
                 existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
                     session=self.session,
                     uri=self.share.shareUri,
@@ -239,3 +238,83 @@ class ProcessLakeFormationShare(LFShareManager):
             )
             success = False
         return success
+
+    def verify_shares(self) -> bool:
+        log.info(
+            '##### Starting Verify tables #######'
+        )
+        if not self.tables:
+            log.info("No tables to verify. Skipping...")
+        else:
+            db_level_errors = []
+            if not self.check_pivot_role_permissions_to_source_database():
+                db_level_errors.append("MISSING SOURCE PIVOT ROLE PERMISSIONS SOURCE DB")
+            
+            if not self.check_shared_database_in_target():
+                db_level_errors.append("MISSING SHARED DB IN TARGET")
+
+            if not self.check_pivot_role_permissions_to_shared_database():
+                db_level_errors.append("MISSING TARGET PIVOT ROLE PERMISSIONS SHARED DB")
+
+            if not self.check_principals_permissions_to_shared_database():
+                db_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS SHARED DB")
+
+
+            for table in self.tables:
+                tbl_level_errors = []
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share.shareUri, table.tableUri
+                )
+                if not share_item:
+                    log.info(
+                        f'Share Item not found for {self.share.shareUri} '
+                        f'and Dataset Table {table.GlueTableName} continuing loop...'
+                    )
+                    print(
+                        f'Share Item not found for {self.share.shareUri} '
+                        f'and Dataset Table {table.GlueTableName} continuing loop...'
+                    )
+                    continue
+
+                try:
+                    self.check_table_exists_in_source_database(share_item, table)
+                except:
+                    tbl_level_errors.append("TABLE DOES NOT EXIST ON SOURCE")
+                
+                if self.cross_account:
+                    if not self.check_target_account_permissions_to_source_table():
+                        tbl_level_errors.append("MISSING TARGET ACCOUNT PERMISSIONS SOURCE TABLE")
+
+                    if not RamClient.check_ram_invitation_status(
+                        source_account_id=self.source_environment.AwsAccountId,
+                        source_region=self.source_environment.region,
+                        target_account_id=self.target_environment.AwsAccountId,
+                        target_region=self.target_environment.region,
+                        source_database=self.dataset.GlueDatabaseName,
+                        source_table=table
+                    ):
+                        tbl_level_errors.append("MISSING OR NON ACCEPTED RAM INVITATION")
+
+                if not self.check_resource_link_table_exists_in_target_database(table):
+                    tbl_level_errors.append("MISSING RESOURCE LINK IN TARGET DB")
+                
+                if not self.check_principals_permissions_to_table_in_target(table):
+                     tbl_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS TARGET TABLE")
+
+                if not self.check_principals_permissions_to_resource_link_table(table):
+                     tbl_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS RESOURCE LINK TABLE")
+
+                print("\n\n\n\n\n")
+                print(db_level_errors)
+                print(tbl_level_errors)
+                print("\n\n\n\n\n")
+
+                if len(db_level_errors) or len(tbl_level_errors):
+                    share_item.healthMessage = " | ".join(db_level_errors) + " | ".join(tbl_level_errors)
+                    share_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
+                else:
+                    share_item.healthMessage = None
+                    share_item.healthStatus = ShareItemHealthStatus.Healthy.value
+                share_item.lastVerificationTime = datetime.now()
+
+        return True

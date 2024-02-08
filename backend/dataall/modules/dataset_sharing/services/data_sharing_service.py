@@ -9,7 +9,7 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_p
     ProcessS3AccessPointShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (ShareObjectActions, ShareItemStatus, ShareableType)
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (ShareItemHealthStatus, ShareObjectActions, ShareItemStatus, ShareableType)
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +92,6 @@ class DataSharingService:
             dataset,
             share,
             shared_tables,
-            [],
             source_environment,
             target_environment,
             env_group,
@@ -210,7 +209,6 @@ class DataSharingService:
                 session,
                 dataset,
                 share,
-                [],
                 revoked_tables,
                 source_environment,
                 target_environment,
@@ -226,3 +224,72 @@ class DataSharingService:
             share_sm.update_state(session, share, new_share_state)
 
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+
+    @classmethod
+    def verify_share(cls, engine: Engine, share_uri: str):
+        """
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        True if verify completes
+        False if verify fails
+        """
+        with engine.scoped_session() as session:
+            (
+                source_env_group,
+                env_group,
+                dataset,
+                share,
+                source_environment,
+                target_environment,
+            ) = ShareObjectRepository.get_share_data(session, share_uri)
+          
+            (
+                tables_to_verify,
+                folders_to_verify,
+                buckets_to_verify
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, status=None, healthStatus=ShareItemHealthStatus.Pending.value)
+
+        print(tables_to_verify)
+        # --------------------------------------
+        log.info(f'Verifying permissions to folders: {folders_to_verify}')
+        ProcessS3AccessPointShare.verify_shares(
+            session,
+            dataset,
+            share,
+            folders_to_verify,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group
+        )
+
+        log.info(f'Verifying permissions to S3 buckets: {buckets_to_verify}')
+        ProcessS3BucketShare.verify_shares(
+            session,
+            dataset,
+            share,
+            buckets_to_verify,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group
+        )
+
+        log.info(f'Granting permissions to tables: {tables_to_verify}')
+        ProcessLakeFormationShare(
+            session,
+            dataset,
+            share,
+            tables_to_verify,
+            source_environment,
+            target_environment,
+            env_group,
+        ).verify_shares()
+
+
+        return True

@@ -10,3 +10,4 @@ export * from './revokeItemsShareObject';
 export * from './submitApproval';
 export * from './updateShareRejectReason';
 export * from './updateShareRequestReason';
+export * from './verifyItemsShareObject';

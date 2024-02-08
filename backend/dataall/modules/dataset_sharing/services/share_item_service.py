@@ -9,7 +9,7 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
-    ShareItemActions
+    ShareItemActions, ShareItemHealthStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
@@ -28,6 +28,27 @@ class ShareItemService:
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
         return share.shareUri
+
+
+    @staticmethod
+    @has_resource_permission(GET_SHARE_OBJECT)
+    def verify_items_share_object(uri, item_uris):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            for item in verify_items:
+                setattr(item, "healthStatus", ShareItemHealthStatus.Pending.value)
+
+            verify_share_items_task: Task = Task(
+                action='ecs.share.verify',
+                targetUri=uri
+            )
+            session.add(verify_share_items_task)
+
+        Worker.queue(engine=context.db_engine, task_ids=[verify_share_items_task.taskUri])
+        return
+
 
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)

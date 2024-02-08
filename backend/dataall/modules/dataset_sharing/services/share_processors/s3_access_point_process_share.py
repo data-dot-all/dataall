@@ -219,3 +219,17 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 clean_up_folder.delete_dataset_bucket_key_policy(dataset=dataset)
 
         return True
+
+    @classmethod
+    def verify_shares(
+        cls,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        share_folders: [DatasetStorageLocation],
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup
+    ) -> bool:
+        return True

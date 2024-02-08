@@ -22,6 +22,11 @@ class EcsShareHandler:
         return EcsShareHandler._manage_share(engine, task, DataSharingService.revoke_share, 'revoke_share')
 
     @staticmethod
+    @Worker.handler(path='ecs.share.verify')
+    def verify_share(engine, task: Task):
+        return EcsShareHandler._manage_share(engine, task, DataSharingService.verify_share, 'verfiy_share')
+
+    @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:

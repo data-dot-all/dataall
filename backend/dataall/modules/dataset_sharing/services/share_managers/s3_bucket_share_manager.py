@@ -64,6 +64,15 @@ class S3BucketShareManager:
     def process_revoked_shares(self, *kwargs) -> bool:
         raise NotImplementedError
 
+
+    def check_s3_iam_access(self):
+        """
+        Checks if requester IAM role policy includes requested S3 bucket and kms key permissions
+        :return:
+        """
+        return
+
+
     def grant_s3_iam_access(self):
         """
         Updates requester IAM role policy to include requested S3 bucket and kms key
@@ -193,6 +202,22 @@ class S3BucketShareManager:
             [self.dataset_admin, self.source_env_admin, SessionHelper.get_delegation_role_arn(self.source_account_id)]
         )]
         return exceptions_roleId
+
+
+    def check_role_bucket_policy(self) -> bool:
+        """
+        This function checks if the bucket policy grants read only access to accepted share roles.
+        :return: True if bucket policy contains permissions else False
+        """
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        bucket_policy = self.get_bucket_policy_or_default()
+        counter = count()
+        statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+        if DATAALL_READ_ONLY_SID not in statements.keys():
+            return False
+        elif f"{target_requester_arn}"  not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
+            return False
+        return True
 
     def grant_role_bucket_policy(self):
         """
