@@ -621,7 +621,7 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
 
 
 def test_archive_env(client, org_fixture, env, group, group2):
-    env_fixture = env(org_fixture, 'dev-delete', 'alice', 'testadmins', '111111111111', 'eu-west-1')
+    env_fixture = env(org_fixture, 'dev-delete', 'alice', 'testadmins', '111111111111', 'eu-west-2')
     response = client.query(
         """
         mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean!){
@@ -637,7 +637,7 @@ def test_archive_env(client, org_fixture, env, group, group2):
     assert response.data.deleteEnvironment
 
 
-def test_create_environment(db, client, org_fixture, env_fixture, user, group):
+def test_create_environment(db, client, org_fixture, user, group):
     response = client.query(
         """mutation CreateEnv($input:NewEnvironmentInput){
             createEnvironment(input:$input){
@@ -668,11 +668,11 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
         input={
             'label': f'dev',
             'description': f'test',
-            'EnvironmentDefaultIAMRoleArn': f'arn:aws:iam::{env_fixture.AwsAccountId}:role/myOwnIamRole',
+            'EnvironmentDefaultIAMRoleArn': 'arn:aws:iam::444444444444:role/myOwnIamRole',
             'organizationUri': org_fixture.organizationUri,
-            'AwsAccountId': env_fixture.AwsAccountId,
+            'AwsAccountId': '444444444444',
             'tags': ['a', 'b', 'c'],
-            'region': f'{env_fixture.region}',
+            'region': 'eu-west-1',
             'SamlGroupName': group.name,
             'resourcePrefix': 'customer-prefix',
         },
