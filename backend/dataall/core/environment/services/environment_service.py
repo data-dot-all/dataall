@@ -160,10 +160,11 @@ class EnvironmentService:
     def _validate_account_region(data, session):
         environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
         if environment:
+            #  An error occurred (InvalidInput): f'AwsAccount/region value 081212569412/eu-west-1 must be An environment for AwsAccount/region already exists'
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
                 f"{data.get('AwsAccountId')}/{data.get('region')}",
-                'An environment for AwsAccount/region already exists',
+                f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
             )
 
     @staticmethod

@@ -54,7 +54,7 @@ class InvalidInput(Exception):
         self.param_name = param_name
         self.param_value = param_value
         self.message = f"""
-                    An error occurred (InvalidInput): f'{param_name} value {param_value} must be {constraint}'
+                    An error occurred (InvalidInput): '{param_name} value {param_value} must be {constraint}'
         """
 
     def __str__(self):
