@@ -45,7 +45,7 @@ class ShareManagerUtils:
         :return
         """
         for target_resource in target_resources:
-            if target_resource not in existing_policy_statement["Resource"]:
+            if not self.check_resource_in_policy_statement([target_resource], existing_policy_statement):
                 logger.info(
                     f'{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName}, '
                     f'but {resource_type} is not included, updating...'
@@ -57,6 +57,22 @@ class ShareManagerUtils:
                 f'and {resource_type} is included, skipping...'
             )
 
+    def check_resource_in_policy_statement(
+            self,
+            target_resources: list,
+            existing_policy_statement: dict,
+    ):
+        """
+        Checks if the resources are in the existing policy
+        :param target_resources: list
+        :param existing_policy_statement: dict
+        :return True if all target_resources in the existing policy else False
+        """
+        for target_resource in target_resources:
+            if target_resource not in existing_policy_statement["Resource"]:
+                return False
+        return True
+                
     @staticmethod
     def remove_resource_from_statement(policy_statement, target_resources):
         for target_resource in target_resources:

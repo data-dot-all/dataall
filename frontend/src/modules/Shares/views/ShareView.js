@@ -61,15 +61,18 @@ import {
   getShareObject,
   rejectShareObject,
   removeSharedItem,
-  submitApproval
+  submitApproval,
+  revokeItemsShareObject,
+  verifyItemsShareObject
 } from '../services';
 import {
   AddShareItemModal,
-  RevokeShareItemsModal,
+  // RevokeShareItemsModal,
+  ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
-  UpdateRequestReason,
-  VerifyShareItemsModal
+  UpdateRequestReason
+  // VerifyShareItemsModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 
@@ -464,18 +467,21 @@ const ShareView = () => {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isRevokeItemsModalOpen, setIsRevokeItemsModalOpen] = useState(false);
   const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
+
   const handleAddItemModalOpen = () => {
     setIsAddItemModalOpen(true);
   };
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
   };
+
   const handleRevokeItemModalOpen = () => {
     setIsRevokeItemsModalOpen(true);
   };
   const handleRevokeItemModalClose = () => {
     setIsRevokeItemsModalOpen(false);
   };
+
   const handleVerifyItemModalOpen = () => {
     setIsVerifyItemsModalOpen(true);
   };
@@ -534,6 +540,79 @@ const ShareView = () => {
     },
     [client, dispatch, filter, fetchItem, params.uri]
   );
+
+  const revoke = async (shareUri, selectionModel) => {
+    const response = await client.mutate(
+      revokeItemsShareObject({
+        input: {
+          shareUri: share.shareUri,
+          revokedItemUris: selectionModel
+        }
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Items revoked', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      handleRevokeItemModalClose();
+      await fetchShareItems();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
+
+  const verify = async (shareUri, selectionModel) => {
+    const response = await client.mutate(
+      verifyItemsShareObject({
+        input: {
+          shareUri: shareUri,
+          revokedItemUris: selectionModel
+        }
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Share Item Verification Started.', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      handleVerifyItemModalClose();
+      await fetchShareItems();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
+
+  // const reapply = async (shareUri, selectionModel) => {
+  //   setLoadingShareItemSelector(true);
+  //   const response = await client.mutate(
+  //     verifyItemsShareObject({
+  //       input: {
+  //         shareUri: shareUri,
+  //         revokedItemUris: selectionModel
+  //       }
+  //     })
+  //   );
+  //   if (!response.errors) {
+  //     enqueueSnackbar('Share Item Verification Started.', {
+  //       anchorOrigin: {
+  //         horizontal: 'right',
+  //         vertical: 'top'
+  //       },
+  //       variant: 'success'
+  //     });
+  //     await fetchShareItems();
+  //   } else {
+  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
+  //   }
+  //   setLoadingShareItemSelector(false);
+  // };
 
   useEffect(() => {
     if (client) {
@@ -982,7 +1061,7 @@ const ShareView = () => {
                         type="button"
                         variant="outlined"
                       >
-                        Verify Items
+                        Verify Item(s) Health Status
                       </LoadingButton>
                     </Box>
                   }
@@ -1048,21 +1127,23 @@ const ShareView = () => {
           />
         )}
         {isRevokeItemsModalOpen && (
-          <RevokeShareItemsModal
+          <ShareItemsSelectorModal
             share={share}
             onApply={handleRevokeItemModalClose}
             onClose={handleRevokeItemModalClose}
-            reloadSharedItems={fetchShareItems}
             open={isRevokeItemsModalOpen}
+            submit={revoke}
+            name={'Revoke'}
           />
         )}
         {isVerifyItemsModalOpen && (
-          <VerifyShareItemsModal
+          <ShareItemsSelectorModal
             share={share}
             onApply={handleVerifyItemModalClose}
             onClose={handleVerifyItemModalClose}
-            reloadSharedItems={fetchShareItems}
             open={isVerifyItemsModalOpen}
+            submit={verify}
+            name={'Verify'}
           />
         )}
       </Box>

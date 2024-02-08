@@ -24,7 +24,7 @@ IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
-
+DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
 class S3AccessPointShareManager:
     def __init__(
@@ -84,6 +84,19 @@ class S3AccessPointShareManager:
         logger.info(f"S3AccessPointName={S3AccessPointName}")
         return S3AccessPointName
 
+
+    def check_bucket_policy(self) -> bool:
+        """
+        This function will check if delegate access to access point statemnet is in the bucket policy
+        :return: True if contains delegate access policy else False
+        """
+        s3_client = S3Client(self.source_account_id, self.source_environment.region)
+        bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
+        for statement in bucket_policy["Statement"]:
+            if statement.get("Sid") in [DATAALL_DELEGATE_TO_ACCESS_POINT]:
+                return True
+        return False
+
     def manage_bucket_policy(self):
         """
         This function will manage bucket policy by grant admin access to dataset admin, pivot role
@@ -97,7 +110,7 @@ class S3AccessPointShareManager:
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
         for statement in bucket_policy["Statement"]:
-            if statement.get("Sid") in ["DelegateAccessToAccessPoint"]:
+            if statement.get("Sid") in [DATAALL_DELEGATE_TO_ACCESS_POINT]:
                 return
         exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
             self.source_account_id,
@@ -119,7 +132,7 @@ class S3AccessPointShareManager:
             }
         }
         delegated_to_accesspoint = {
-            "Sid": "DelegateAccessToAccessPoint",
+            "Sid": DATAALL_DELEGATE_TO_ACCESS_POINT,
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:*",
@@ -137,6 +150,57 @@ class S3AccessPointShareManager:
         bucket_policy["Statement"].append(delegated_to_accesspoint)
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
+
+    def check_target_role_access_policy(self) -> bool:
+        """
+        Checks if requester IAM role policy includes requested S3 bucket and access point
+        :return: True if policy contains correct permissions else False
+        """
+        key_alias = f"alias/{self.dataset.KmsAlias}"
+        kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
+        kms_key_id = kms_client.get_key_id(key_alias)
+        existing_policy = IAM.get_role_policy(
+            self.target_account_id,
+            self.target_requester_IAMRoleName,
+            IAM_ACCESS_POINT_ROLE_POLICY,
+        )
+        if not existing_policy:
+            return False
+
+        share_manager = ShareManagerUtils(
+            self.session,
+            self.dataset,
+            self.share,
+            self.source_environment,
+            self.target_environment,
+            self.source_env_group,
+            self.env_group
+        )
+
+        s3_target_resources = [
+            f"arn:aws:s3:::{self.bucket_name}",
+            f"arn:aws:s3:::{self.bucket_name}/*",
+            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
+            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+        ]
+        if not share_manager.check_resource_in_policy_statement(
+            s3_target_resources,
+            existing_policy["Statement"][0]
+        ):
+            return False
+        
+        if kms_key_id:
+            if len(existing_policy["Statement"]) <= 1:
+                return False
+            kms_target_resources = [
+                f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
+            ]
+            if not share_manager.check_resource_in_policy_statement(
+                kms_target_resources,
+                existing_policy["Statement"][1],
+            ):
+                return False
+        return True
 
     def grant_target_role_access_policy(self):
         """
@@ -239,6 +303,41 @@ class S3AccessPointShareManager:
             json.dumps(policy),
         )
 
+    def check_access_point_and_policy(self) -> bool:
+        """
+        Checks if access point created with correct permissions
+        :return: True if access point created with correct permissions else False
+        """
+        s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
+        access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
+        if not access_point_arn:
+            return False
+        
+        existing_policy = s3_client.get_access_point_policy(self.access_point_name)
+        if not existing_policy:
+            return False
+        
+        existing_policy = json.loads(existing_policy)
+        statements = {item["Sid"]: item for item in existing_policy["Statement"]}
+        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+
+
+        if f"{target_requester_id}0" not in statements.keys():
+           return False
+           
+        prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+        if isinstance(prefix_list, str):
+            prefix_list = [prefix_list]
+        if f"{self.s3_prefix}/*" not in prefix_list:
+            return False
+
+        resource_list = statements[f"{target_requester_id}1"]["Resource"]
+        if isinstance(resource_list, str):
+            resource_list = [resource_list]
+        if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
+            return False
+        return True
+
     def manage_access_point_and_policy(self):
         """
         :return:
@@ -325,6 +424,32 @@ class S3AccessPointShareManager:
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
+
+    def check_dataset_bucket_key_policy(self):
+        """
+        Checks if dataset kms key policy includes read pemrissions for requestors IAM Role
+        :return:
+        """
+        key_alias = f"alias/{self.dataset.KmsAlias}"
+        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
+        kms_key_id = kms_client.get_key_id(key_alias)
+        existing_policy = kms_client.get_key_policy(kms_key_id)
+
+        if not existing_policy:
+            return False
+        
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        existing_policy = json.loads(existing_policy)
+        counter = count()
+        statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+
+        if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID not in statements.keys():
+            return False
+        
+
+        if f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]):
+            return False
+        return True
 
     def update_dataset_bucket_key_policy(self):
         logger.info(

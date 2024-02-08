@@ -70,7 +70,54 @@ class S3BucketShareManager:
         Checks if requester IAM role policy includes requested S3 bucket and kms key permissions
         :return:
         """
-        return
+        logger.info(
+            f'Check target role {self.target_requester_IAMRoleName} access policy'
+        )
+        existing_policy = IAM.get_role_policy(
+            self.target_account_id,
+            self.target_requester_IAMRoleName,
+            IAM_S3BUCKET_ROLE_POLICY,
+        )
+        if not existing_policy:
+            return False
+            
+        key_alias = f"alias/{self.target_bucket.KmsAlias}"
+        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
+        kms_key_id = kms_client.get_key_id(key_alias)
+        
+        share_manager = ShareManagerUtils(
+            self.session,
+            self.dataset,
+            self.share,
+            self.source_environment,
+            self.target_environment,
+            self.source_env_group,
+            self.env_group
+        )
+
+        s3_target_resources = [
+            f"arn:aws:s3:::{self.bucket_name}",
+            f"arn:aws:s3:::{self.bucket_name}/*"
+        ]
+
+        if not share_manager.check_resource_in_policy_statement(
+            target_resources=s3_target_resources,
+            existing_policy_statement=existing_policy["Statement"][0],
+        ):
+            return False
+
+        if kms_key_id:
+            if len(existing_policy["Statement"]) <= 1:
+                return False
+            kms_target_resources = [
+                f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
+            ]
+            if not share_manager.check_resource_in_policy_statement(
+                target_resources=kms_target_resources,
+                existing_policy_statement=existing_policy["Statement"][1],
+            ):
+                return False
+        return True
 
 
     def grant_s3_iam_access(self):
@@ -215,7 +262,7 @@ class S3BucketShareManager:
         statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
         if DATAALL_READ_ONLY_SID not in statements.keys():
             return False
-        elif f"{target_requester_arn}"  not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
+        elif f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
             return False
         return True
 
@@ -290,6 +337,31 @@ class S3BucketShareManager:
             principal_list = [principal_list]
         return principal_list
 
+    def check_dataset_bucket_key_policy(self):
+        """
+        Checks if dataset kms key policy includes read pemrissions for requestors IAM Role
+        :return:
+        """
+        key_alias = f"alias/{self.target_bucket.KmsAlias}"
+        kms_client = KmsClient(self.source_account_id, self.source_environment.region)
+        kms_key_id = kms_client.get_key_id(key_alias)
+        existing_policy = kms_client.get_key_policy(kms_key_id)
+
+        if not existing_policy:
+            return False
+        
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        existing_policy = json.loads(existing_policy)
+        counter = count()
+        statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
+
+        if DATAALL_BUCKET_KMS_DECRYPT_SID not in statements.keys():
+            return False
+        
+        if f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID]):
+            return False
+        return True
+        
     def grant_dataset_bucket_key_policy(self):
         if (self.target_bucket.imported and self.target_bucket.importedKmsKey) or not self.target_bucket.imported:
             logger.info(

@@ -1,9 +1,10 @@
 import logging
+from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
@@ -189,7 +190,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
     ) -> bool:
         
         log.info(
-            '##### Starting S3 bucket share #######'
+            '##### Verifying S3 bucket share #######'
         )
         success = True
         for shared_bucket in buckets_to_verify:
@@ -209,23 +210,29 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 source_env_group,
                 env_group
             )
+            bucket_errors = []
             try:
-                sharing_bucket.check_role_bucket_policy()
-                sharing_bucket.grant_role_bucket_policy()
-                sharing_bucket.grant_s3_iam_access()
+                if not sharing_bucket.check_role_bucket_policy():
+                    bucket_errors.append("MISSING PERMISSION TO TARGET ROLE IN BUCKET POLICY")
+                    
+                if not sharing_bucket.check_s3_iam_access():
+                    bucket_errors.append("MISSING PERMISSION IN TARGET ROLE IAM POLICY")
+                    
                 if not dataset.imported or dataset.importedKmsKey:
-                    sharing_bucket.grant_dataset_bucket_key_policy()
-                new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                    if not sharing_bucket.check_dataset_bucket_key_policy():
+                        bucket_errors.append("MISSING PERMISSION TO TARGET ROLE IN KMS KEY POLICY ")
 
+
+                print("\n\n\n\n\n")
+                print(bucket_errors)
+                print("\n\n\n\n\n")
+                if len(bucket_errors):
+                    sharing_item.healthMessage = " | ".join(bucket_errors)
+                    sharing_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
+                else:
+                    sharing_item.healthMessage = None
+                    sharing_item.healthStatus = ShareItemHealthStatus.Healthy.value
+                sharing_item.lastVerificationTime = datetime.now()
             except Exception as e:
-                # must run first to ensure state transitions to failed
-                new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
-                success = False
-
-                # statements which can throw exceptions but are not critical
-                sharing_bucket.handle_share_failure(e)
-
-        return success
+                print(e)
         return True

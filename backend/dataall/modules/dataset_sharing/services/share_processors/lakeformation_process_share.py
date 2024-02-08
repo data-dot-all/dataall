@@ -316,5 +316,4 @@ class ProcessLakeFormationShare(LFShareManager):
                     share_item.healthMessage = None
                     share_item.healthStatus = ShareItemHealthStatus.Healthy.value
                 share_item.lastVerificationTime = datetime.now()
-
         return True

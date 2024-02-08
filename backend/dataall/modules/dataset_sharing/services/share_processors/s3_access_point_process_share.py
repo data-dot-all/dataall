@@ -1,9 +1,10 @@
 import logging
+from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
@@ -232,4 +233,53 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup
     ) -> bool:
+        log.info(
+            '##### Verifying folders shares #######'
+        )
+        success = True
+        for folder in share_folders:
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                session,
+                share.shareUri,
+                folder.locationUri,
+            )
+
+            sharing_folder = cls(
+                session,
+                dataset,
+                share,
+                folder,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group,
+            )
+            folder_errors = []
+            try:
+                if not sharing_folder.check_bucket_policy():
+                    folder_errors.append("MISSING DELEGATE ACCESS POINT BUCKET POLICY")
+
+                if not sharing_folder.check_target_role_access_policy():
+                    folder_errors.append("MISSING PERMISSION IN TARGET ROLE IAM POLICY")
+
+                if not sharing_folder.check_access_point_and_policy():
+                    folder_errors.append("MISSING PERMISSION IN S3 ACCESS POINT")
+
+                if not dataset.imported or dataset.importedKmsKey:
+                    sharing_folder.check_dataset_bucket_key_policy()
+
+
+                print("\n\n\n\n\n")
+                print(folder_errors)
+                print("\n\n\n\n\n")
+                if len(folder_errors):
+                    sharing_item.healthMessage = " | ".join(folder_errors)
+                    sharing_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
+                else:
+                    sharing_item.healthMessage = None
+                    sharing_item.healthStatus = ShareItemHealthStatus.Healthy.value
+                sharing_item.lastVerificationTime = datetime.now()
+
+            except Exception as e:
+                print(e)
         return True
