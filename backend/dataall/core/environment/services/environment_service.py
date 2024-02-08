@@ -41,7 +41,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
     def create_environment(session, uri, data=None):
         context = get_context()
-        EnvironmentService._validate_creation_params(data, uri)
+        EnvironmentService._validate_creation_params(data, uri, session)
         organization = OrganizationRepository.get_organization_by_uri(session, uri)
         env = Environment(
             organizationUri=data.get('organizationUri'),
@@ -129,7 +129,7 @@ class EnvironmentService:
         return env
 
     @staticmethod
-    def _validate_creation_params(data, uri):
+    def _validate_creation_params(data, uri, session):
         if not uri:
             raise exceptions.RequiredParameter('organizationUri')
         if not data:
@@ -138,7 +138,12 @@ class EnvironmentService:
             raise exceptions.RequiredParameter('label')
         if not data.get('SamlGroupName'):
             raise exceptions.RequiredParameter('group')
+        if not data.get('AwsAccountId'):
+            raise exceptions.RequiredParameter('AwsAccountId')
+        if not data.get('region'):
+            raise exceptions.RequiredParameter('region')
         EnvironmentService._validate_resource_prefix(data)
+        EnvironmentService._validate_account_region(data, session)
 
     @staticmethod
     def _validate_resource_prefix(data):
@@ -149,6 +154,16 @@ class EnvironmentService:
                 'resourcePrefix',
                 data.get('resourcePrefix'),
                 'must match the pattern ^[a-z-]+$',
+            )
+
+    @staticmethod
+    def _validate_account_region(data, session):
+        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
+        if environment:
+            raise exceptions.InvalidInput(
+                'AwsAccount/region',
+                f"{data.get('AwsAccountId')}/{data.get('region')}",
+                f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
             )
 
     @staticmethod
