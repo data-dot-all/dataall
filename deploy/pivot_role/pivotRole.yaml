@@ -48,8 +48,6 @@ Resources:
                 ]
   PivotRolePolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
-    # checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management without constraints
-    # checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
     Properties:
       PolicyDocument:
         Version: 2012-10-17
@@ -223,8 +221,6 @@ Resources:
 
   PivotRolePolicy1:
     Type: 'AWS::IAM::ManagedPolicy'
-    # checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management without constraints
-    # checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
     Properties:
       PolicyDocument:
         Version: 2012-10-17
@@ -425,7 +421,6 @@ Resources:
 
   PivotRolepolicy3:
     Type: 'AWS::IAM::ManagedPolicy'
-    # checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management without constraints
     Properties:
       PolicyDocument:
         Version: 2012-10-17

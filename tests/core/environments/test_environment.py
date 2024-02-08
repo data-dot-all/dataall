@@ -1,6 +1,8 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
 
 
 def get_env(client, env_fixture, group):
@@ -32,6 +34,41 @@ def get_env(client, env_fixture, group):
         environmentUri=env_fixture.environmentUri,
         groups=[group.name],
     )
+
+def test_create_environment_invalid_account_region(client, org_fixture, env_fixture, group):
+    response = client.query(
+        """mutation CreateEnv($input:NewEnvironmentInput){
+                createEnvironment(input:$input){
+                    organization{
+                        organizationUri
+                    }
+                    environmentUri
+                    label
+                    AwsAccountId
+                    SamlGroupName
+                    region
+                    name
+                    owner
+                    parameters {
+                        key
+                        value
+                    }
+                }
+            }""",
+            username='alice',
+            groups=[group.name],
+            input={
+                'label': 'invalid',
+                'description': 'invalid environment',
+                'organizationUri': org_fixture.organizationUri,
+                'AwsAccountId': env_fixture.AwsAccountId,
+                'tags': ['a', 'b', 'c'],
+                'region': env_fixture.region,
+                'SamlGroupName': group.name,
+                'parameters': [{'key': k, 'value': v} for k, v in {"dashboardsEnabled": "true"}.items()]
+            },
+        )
+    assert 'InvalidInput' in response.errors[0].message
 
 
 def test_get_environment(client, org_fixture, env_fixture, group):
@@ -287,7 +324,7 @@ def test_paging(db, client, org_fixture, env_fixture, user, group):
                 EnvironmentDefaultIAMRoleName='EnvRole',
                 EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole',
                 CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-                userRoleInEnvironment='999',
+                userRoleInEnvironment=EnvironmentPermission.Owner.value,
             )
             session.add(env)
             session.commit()
@@ -583,7 +620,8 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     ]
 
 
-def test_archive_env(client, org_fixture, env_fixture, group, group2):
+def test_archive_env(client, org_fixture, env, group, group2):
+    env_fixture = env(org_fixture, 'dev-delete', 'alice', 'testadmins', '111111111111', 'eu-west-2')
     response = client.query(
         """
         mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean!){
@@ -599,7 +637,7 @@ def test_archive_env(client, org_fixture, env_fixture, group, group2):
     assert response.data.deleteEnvironment
 
 
-def test_create_environment(db, client, org_fixture, env_fixture, user, group):
+def test_create_environment(db, client, org_fixture, user, group):
     response = client.query(
         """mutation CreateEnv($input:NewEnvironmentInput){
             createEnvironment(input:$input){
@@ -630,11 +668,11 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
         input={
             'label': f'dev',
             'description': f'test',
-            'EnvironmentDefaultIAMRoleArn': f'arn:aws:iam::{env_fixture.AwsAccountId}:role/myOwnIamRole',
+            'EnvironmentDefaultIAMRoleArn': 'arn:aws:iam::444444444444:role/myOwnIamRole',
             'organizationUri': org_fixture.organizationUri,
-            'AwsAccountId': env_fixture.AwsAccountId,
+            'AwsAccountId': '444444444444',
             'tags': ['a', 'b', 'c'],
-            'region': f'{env_fixture.region}',
+            'region': 'eu-west-1',
             'SamlGroupName': group.name,
             'resourcePrefix': 'customer-prefix',
         },
@@ -653,3 +691,58 @@ def test_create_environment(db, client, org_fixture, env_fixture, user, group):
         )
         session.delete(env)
         session.commit()
+
+
+def test_update_consumption_role(
+        client,
+        org_fixture,
+        env_fixture,
+        user,
+        group,
+        db,
+        consumption_role
+):
+    query = """
+        mutation updateConsumptionRole(
+            $environmentUri:String!,
+            $consumptionRoleUri:String!,
+            $input:UpdateConsumptionRoleInput
+        ){
+            updateConsumptionRole(
+                environmentUri:$environmentUri,
+                consumptionRoleUri: $consumptionRoleUri,
+                input:$input
+            ){
+                consumptionRoleUri
+                consumptionRoleName
+                environmentUri
+                groupUri
+                IAMRoleName
+                IAMRoleArn
+            }
+        }
+    """
+
+    consumption_role_uri = consumption_role.data.addConsumptionRoleToEnvironment.consumptionRoleUri
+
+    with db.scoped_session() as session:
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            resource_uri=consumption_role_uri,
+            group=group.name,
+            permissions=[REMOVE_ENVIRONMENT_CONSUMPTION_ROLE],
+            resource_type=Environment.__name__,
+        )
+
+    response = client.query(
+        query,
+        username=user,
+        groups=[group.name],
+        environmentUri=env_fixture.environmentUri,
+        consumptionRoleUri=consumption_role_uri,
+        input={'consumptionRoleName': 'testRoleName', 'groupUri': 'testGroupUri'},
+    )
+
+    assert not response.errors
+    assert response.data.updateConsumptionRole.consumptionRoleName == 'testRoleName'
+    assert response.data.updateConsumptionRole.groupUri == 'testGroupUri'

@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
-from dataall.modules.datasets_base.db.enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.base.utils.naming_convention import (
@@ -33,7 +33,7 @@ class DatasetRepository(EnvironmentResource):
             AwsAccountId=env.AwsAccountId,
             SamlAdminGroupName=data['SamlAdminGroupName'],
             region=env.region,
-            S3BucketName='undefined',
+            S3BucketName=data.get('bucketName', 'undefined'),
             GlueDatabaseName='undefined',
             IAMDatasetAdminRoleArn='undefined',
             IAMDatasetAdminUserArn='undefined',
@@ -52,7 +52,7 @@ class DatasetRepository(EnvironmentResource):
             else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
-        cls._set_dataset_aws_resources(dataset, data, env)
+
         cls._set_import_data(dataset, data)
         return dataset
 
@@ -75,14 +75,15 @@ class DatasetRepository(EnvironmentResource):
             .count()
         )
 
-    @staticmethod
-    def create_dataset(session, env: Environment, dataset: Dataset):
+    @classmethod
+    def create_dataset(cls, session, env: Environment, dataset: Dataset, data: dict):
         organization = OrganizationRepository.get_organization_by_uri(
             session, env.organizationUri
         )
-
         session.add(dataset)
         session.commit()
+
+        cls._set_dataset_aws_resources(dataset, data, env)
 
         activity = Activity(
             action='dataset:create',
@@ -114,7 +115,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
 
-        dataset.KmsAlias = bucket_name
+        if not dataset.imported:
+            dataset.KmsAlias = bucket_name
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,

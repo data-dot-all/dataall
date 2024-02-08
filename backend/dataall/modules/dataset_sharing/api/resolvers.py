@@ -6,7 +6,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
-from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
@@ -126,6 +126,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
+                'description' : ds.description
             }
 
 
