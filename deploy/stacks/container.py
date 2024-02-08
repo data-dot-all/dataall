@@ -205,7 +205,6 @@ class ContainerStack(pyNestedClass):
 
         self.add_catalog_indexer_task()
         self.add_sync_dataset_table_task()
-        self.add_bucket_policy_updater_task()
         self.add_subscription_task()
         self.add_share_management_task()
 
@@ -301,28 +300,6 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
         self.ecs_task_definitions_families.append(subscriptions_task.task_definition.family)
-
-    @run_if(["modules.datasets.active"])
-    def add_bucket_policy_updater_task(self):
-        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
-            cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
-            container_id=f'container',
-            ecr_repository=self._ecr_repository,
-            environment=self._create_env('DEBUG'),
-            image_tag=self._cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                self._envname, self._resource_prefix, log_group_name='policies-updater'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-policies-updater-schedule',
-            task_id=f'{self._resource_prefix}-{self._envname}-policies-updater',
-            task_role=self.task_role,
-            vpc=self._vpc,
-            security_group=self.scheduled_tasks_sg,
-            prod_sizing=self._prod_sizing,
-        )
-        self.ecs_task_definitions_families.append(update_bucket_policies_task.task_definition.family)
 
     @run_if(["modules.datasets.active"])
     def add_sync_dataset_table_task(self):
