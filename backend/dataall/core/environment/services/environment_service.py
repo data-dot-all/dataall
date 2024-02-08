@@ -475,6 +475,31 @@ class EnvironmentService:
         return True
 
     @staticmethod
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
+    def update_consumption_role(session, uri, env_uri, input):
+        if not input:
+            raise exceptions.RequiredParameter('input')
+        if not input.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
+        if not input.get('consumptionRoleName'):
+            raise exceptions.RequiredParameter('consumptionRoleName')
+        consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+        if consumption_role:
+            ResourcePolicy.update_resource_policy(
+                session=session,
+                resource_uri=uri,
+                resource_type=ConsumptionRole.__name__,
+                old_group=consumption_role.groupUri,
+                new_group=input['groupUri'],
+                new_permissions=permissions.CONSUMPTION_ROLE_ALL
+            )
+            for key, value in input.items():
+                setattr(consumption_role, key, value)
+            session.commit()
+        return consumption_role
+
+    @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
         query = (
             session.query(Environment)
@@ -714,7 +739,7 @@ class EnvironmentService:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query
+        return query.order_by(ConsumptionRole.consumptionRoleUri)
 
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
@@ -746,7 +771,7 @@ class EnvironmentService:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query
+        return query.order_by(ConsumptionRole.consumptionRoleUri)
 
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
@@ -832,7 +857,7 @@ class EnvironmentService:
         return env_group
 
     @staticmethod
-    def get_environment_consumption_role(session, role_uri, environment_uri):
+    def get_environment_consumption_role(session, role_uri, environment_uri) -> ConsumptionRole:
         role = (
             session.query(ConsumptionRole)
             .filter(
