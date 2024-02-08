@@ -277,14 +277,15 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable, other_table_shares_in_env: bool) -> True:
+    def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
+        At the moment there is one single Quicksight group per environment. Permissions for the Quicksight group
+        are removed when the resource link table is deleted.
         :param table: DatasetTable
-        :param other_table_shares_in_env: Boolean. Other table shares in this environment for this table
         :return: True if it is successful
         """
-        principals = self.principals if not other_table_shares_in_env else [p for p in self.principals if "arn:aws:quicksight" not in p]
+        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
 
         self.lf_client_in_target.revoke_permissions_from_table(
             principals=principals,
@@ -295,15 +296,15 @@ class LFShareManager:
         )
         return True
 
-    def revoke_principals_permissions_to_table_in_target(self, table: DatasetTable, other_table_shares_in_env) -> True:
+    def revoke_principals_permissions_to_table_in_target(self, table: DatasetTable) -> True:
         """
         Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
-        If there are no more shares for this table in the environment then revoke to Quicksight group
+        At the moment there is one single Quicksight group per environment. Permissions for the Quicksight group
+        are removed when the table is deleted.
         :param table: DatasetTable
-        :param other_table_shares_in_env: Boolean. Other table shares in this environment for this table
         :return: True if it is successful
         """
-        principals = self.principals if not other_table_shares_in_env else [p for p in self.principals if "arn:aws:quicksight" not in p]
+        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
 
         self.lf_client_in_target.revoke_permissions_from_table_with_columns(
             principals=principals,
@@ -317,10 +318,14 @@ class LFShareManager:
     def revoke_principals_database_permissions_to_shared_database(self) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
+        At the moment there is one single Quicksight group per environment. Permissions for the Quicksight group
+        are removed when the database is deleted.
         :return: True if it is successful
         """
+        principals = [p for p in self.principals if "arn:aws:quicksight" not in p]
+
         self.lf_client_in_target.revoke_permissions_to_database(
-            principals=self.principals,
+            principals=principals,
             database_name=self.shared_db_name,
             permissions=['DESCRIBE'],
         )

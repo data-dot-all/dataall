@@ -470,7 +470,7 @@ def test_revoke_principals_permissions_to_resource_link_table(
 ):
     processor, lf_client, glue_client = processor_with_mocks
     # When
-    processor.revoke_principals_permissions_to_resource_link_table(table=table1, other_table_shares_in_env=False)
+    processor.revoke_principals_permissions_to_resource_link_table(table=table1)
     # Then
     lf_client.revoke_permissions_from_table.assert_called_once()
     lf_client.revoke_permissions_from_table.assert_called_with(
@@ -489,7 +489,7 @@ def test_revoke_principals_permissions_to_table_in_target(
 ):
     processor, lf_client, glue_client = processor_with_mocks
     # When
-    processor.revoke_principals_permissions_to_table_in_target(table = table1, other_table_shares_in_env=False)
+    processor.revoke_principals_permissions_to_table_in_target(table = table1)
     # Then
     lf_client.revoke_permissions_from_table_with_columns.assert_called_once()
     lf_client.revoke_permissions_from_table_with_columns.assert_called_with(
