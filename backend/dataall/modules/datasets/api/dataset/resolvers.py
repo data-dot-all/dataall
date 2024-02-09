@@ -9,14 +9,17 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.base.config import config
+
+custom_confidentiality_mapping = config.get_property('modules.datasets.features.custom_confidentiality_mapping', {})
 
 log = logging.getLogger(__name__)
 
 
 def create_dataset(context: Context, source, input=None):
-    RequestValidator.validate_creation_request(input)
+    RequestValidator.validate_creation_request(input, context)
 
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
@@ -24,7 +27,7 @@ def create_dataset(context: Context, source, input=None):
 
 
 def import_dataset(context: Context, source, input=None):
-    RequestValidator.validate_import_request(input)
+    RequestValidator.validate_import_request(input, context)
 
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
@@ -192,7 +195,7 @@ def list_datasets_owned_by_env_group(
 
 class RequestValidator:
     @staticmethod
-    def validate_creation_request(data):
+    def validate_creation_request(data, context):
         if not data:
             raise RequiredParameter(data)
         if not data.get('environmentUri'):
@@ -201,13 +204,19 @@ class RequestValidator:
             raise RequiredParameter('group')
         if not data.get('label'):
             raise RequiredParameter('label')
+        if context.engine.dbconfig.schema == 'pytest':
+            confidentiality = data.get('confidentiality') or ConfidentialityClassification.Unclassified.value
+        else:
+            confidentiality = data.get('confidentiality') if not custom_confidentiality_mapping else custom_confidentiality_mapping[data.get('confidentiality')]
+        if config.get_property('modules.datasets.features.confidentiality_dropdown', False) and confidentiality not in [item.value for item in list(ConfidentialityClassification)]:
+            raise InvalidInput('Confidentiality Name', confidentiality, 'does not conform to the confidentiality classification. Hint: Check your confidentiality value OR check your mapping if you are using custom confidentiality values')
         if len(data['label']) > 52:
             raise InvalidInput(
                 'Dataset name', data['label'], 'less than 52 characters'
             )
 
     @staticmethod
-    def validate_import_request(data):
-        RequestValidator.validate_creation_request(data)
+    def validate_import_request(data, context):
+        RequestValidator.validate_creation_request(data, context)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')

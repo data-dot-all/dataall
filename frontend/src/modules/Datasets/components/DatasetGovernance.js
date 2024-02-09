@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Label } from 'design';
+import { isFeatureEnabled } from 'utils';
 
 export const DatasetGovernance = (props) => {
   const { dataset } = props;
@@ -38,41 +39,36 @@ export const DatasetGovernance = (props) => {
           {dataset.stewards}
         </Typography>
       </CardContent>
-      <CardContent>
-        <Typography color="textSecondary" variant="subtitle2">
-          Auto-Approval
-        </Typography>
-        <Box sx={{ mt: 1 }}>
-          <Label color="primary">
-            {dataset.autoApprovalEnabled ? 'Enabled' : 'Disabled'}
-          </Label>
-        </Box>
-      </CardContent>
-      <CardContent>
-        <Typography color="textSecondary" variant="subtitle2">
-          Classification
-        </Typography>
-        <Box sx={{ mt: 1 }}>
-          <Label color="primary">{dataset.confidentiality}</Label>
-        </Box>
-      </CardContent>
-      <CardContent>
-        <Typography color="textSecondary" variant="subtitle2">
-          Topics
-        </Typography>
-        <Box sx={{ mt: 1 }}>
-          {dataset.topics &&
-            dataset.topics.length > 0 &&
-            dataset.topics.map((t) => (
-              <Chip
-                sx={{ mr: 0.5, mb: 0.5 }}
-                key={t}
-                label={t}
-                variant="outlined"
-              />
-            ))}
-        </Box>
-      </CardContent>
+      {isFeatureEnabled('datasets', 'confidentiality_dropdown') && (
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            Classification
+          </Typography>
+          <Box sx={{ mt: 1 }}>
+            <Label color="primary">{dataset.confidentiality}</Label>
+          </Box>
+        </CardContent>
+      )}
+      {isFeatureEnabled('datasets', 'topics_dropdown') && (
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            Topics
+          </Typography>
+          <Box sx={{ mt: 1 }}>
+            {dataset.topics &&
+              dataset.topics.length > 0 &&
+              dataset.topics.map((t) => (
+                <Chip
+                  sx={{ mr: 0.5, mb: 0.5 }}
+                  key={t}
+                  label={t}
+                  variant="outlined"
+                />
+              ))}
+          </Box>
+        </CardContent>
+      )}
+
       <CardContent>
         <Typography color="textSecondary" variant="subtitle2">
           Tags

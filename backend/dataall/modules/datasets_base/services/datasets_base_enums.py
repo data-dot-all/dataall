@@ -1,4 +1,6 @@
 from dataall.base.api.constants import GraphQLEnumMapper
+from dataall.base.config import config
+custom_confidentiality_mapping = config.get_property('modules.datasets.features.custom_confidentiality_mapping', None)
 
 
 class DatasetRole(GraphQLEnumMapper):
@@ -21,6 +23,13 @@ class ConfidentialityClassification(GraphQLEnumMapper):
     Unclassified = 'Unclassified'
     Official = 'Official'
     Secret = 'Secret'
+
+    @staticmethod
+    def get_confidentiality_level(confidentiality, context):
+        if context.db_engine.dbconfig.schema == 'pytest':
+            return confidentiality
+        return confidentiality if not custom_confidentiality_mapping else custom_confidentiality_mapping.get(
+            confidentiality, None)
 
 
 class Language(GraphQLEnumMapper):

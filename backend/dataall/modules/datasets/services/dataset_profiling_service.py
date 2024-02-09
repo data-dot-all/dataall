@@ -110,7 +110,7 @@ class DatasetProfilingService:
             session, table_uri
         )
         dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-        if dataset.confidentiality != ConfidentialityClassification.Unclassified.value:
+        if ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality, context) != ConfidentialityClassification.Unclassified.value:
             ResourcePolicy.check_user_resource_permission(
                 session=session,
                 username=context.username,
