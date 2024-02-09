@@ -452,11 +452,12 @@ class EnvironmentService:
             resource_type=ConsumptionRole.__name__,
         )
 
-        EnvironmentService._generate_managed_policies_for_consumption_role(environment, IAMRoleArn)
+        EnvironmentService._generate_managed_policies_for_consumption_role(environment,
+                                                                           consumption_role.consumptionRoleName)
         return consumption_role
 
     @staticmethod
-    def _generate_managed_policies_for_consumption_role(environment, iam_role_arn):
+    def _generate_managed_policies_for_consumption_role(environment, iam_role_name):
         empty_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -466,12 +467,11 @@ class EnvironmentService:
                         "s3:*"
                     ],
                     "Resource": [
-                        "initial_empty_resource",
+                        "arn:aws:s3:::initial-fake-empty-bucket",
                     ]
                 }
             ]
         }
-        iam_role_name = iam_role_arn.split("/")[-1]
         IAM.create_managed_policy(
             account_id=environment.AwsAccountId,
             policy_name=f'dataall-env-{environment.environmentUri}-bucket-share-{iam_role_name}',
@@ -481,6 +481,33 @@ class EnvironmentService:
             account_id=environment.AwsAccountId,
             policy_name=f'dataall-env-{environment.environmentUri}-accesspoint-share-{iam_role_name}',
             policy=json.dumps(empty_policy)
+        )
+
+    @staticmethod
+    def _delete_managed_policies_for_consumption_role(environment, iam_role_name):
+        bucket_policy_name = f'dataall-env-{environment.environmentUri}-bucket-share-{iam_role_name}'
+        accesspoint_policy_name = f'dataall-env-{environment.environmentUri}-accesspoint-share-{iam_role_name}'
+
+        IAM.detach_policy_from_role(
+            account_id=environment.AwsAccountId,
+            role_name=iam_role_name,
+            policy_name=bucket_policy_name
+        )
+
+        IAM.delete_managed_policy_by_name(
+            account_id=environment.AwsAccountId,
+            policy_name=bucket_policy_name
+        )
+
+        IAM.detach_policy_from_role(
+            account_id=environment.AwsAccountId,
+            role_name=iam_role_name,
+            policy_name=accesspoint_policy_name
+        )
+
+        IAM.delete_managed_policy_by_name(
+            account_id=environment.AwsAccountId,
+            policy_name=accesspoint_policy_name
         )
 
     @staticmethod
@@ -506,6 +533,11 @@ class EnvironmentService:
             resource_uri=consumption_role.consumptionRoleUri,
             resource_type=ConsumptionRole.__name__,
         )
+
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
+        role_name = consumption_role.IAMRoleName
+        EnvironmentService._delete_managed_policies_for_consumption_role(environment, role_name)
+
         return True
 
     @staticmethod

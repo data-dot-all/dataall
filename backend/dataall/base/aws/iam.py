@@ -120,3 +120,59 @@ class IAM:
                 f'Failed to create managed policy {policy_name} : {e}'
             )
             return None
+
+    @staticmethod
+    def delete_managed_policy_by_name(
+            account_id: str,
+            policy_name):
+        try:
+            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            iamcli = IAM.client(account_id)
+            iamcli.delete_policy(
+                PolicyArn=arn
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to delete managed policy {policy_name} : {e}'
+            )
+
+    @staticmethod
+    def update_managed_policy(
+            account_id: str,
+            policy_name: str,
+            policy: str):
+        try:
+            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            iamcli = IAM.client(account_id)
+            policy = iamcli.get_policy(PolicyArn=arn)
+            versionId = policy['Policy']['DefaultVersionId']
+
+            iamcli.create_policy_version(
+                PolicyArn=arn,
+                PolicyDocument=policy,
+                SetAsDefault=True
+            )
+
+            iamcli.delete_policy_version(PolicyArn=arn, VersionId=versionId)
+        except Exception as e:
+            log.error(
+                f'Failed to update policy {policy_name} : {e}'
+            )
+
+    @staticmethod
+    def detach_policy_from_role(
+            account_id: str,
+            role_name: str,
+            policy_name: str):
+
+        try:
+            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            iamcli = IAM.client(account_id)
+            iamcli.detach_role_policy(
+                RoleName=role_name,
+                PolicyArn=arn
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to detatch policy {policy_name} from role {role_name} : {e}'
+            )
