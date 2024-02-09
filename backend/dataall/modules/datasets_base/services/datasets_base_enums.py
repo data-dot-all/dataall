@@ -1,6 +1,6 @@
 from dataall.base.api.constants import GraphQLEnumMapper
 from dataall.base.config import config
-custom_confidentiality_mapping = config.get_property('modules.datasets.features.custom_confidentiality_mapping', None)
+custom_confidentiality_mapping = config.get_property('modules.datasets.features.custom_confidentiality_mapping', {})
 
 
 class DatasetRole(GraphQLEnumMapper):
