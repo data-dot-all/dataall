@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 
@@ -5,6 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
+from dataall.base.aws.iam import IAM
 from dataall.base.context import get_context
 from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
@@ -148,7 +150,7 @@ class EnvironmentService:
     @staticmethod
     def _validate_resource_prefix(data):
         if data.get('resourcePrefix') and not bool(
-            re.match(r'^[a-z-]+$', data.get('resourcePrefix'))
+                re.match(r'^[a-z-]+$', data.get('resourcePrefix'))
         ):
             raise exceptions.InvalidInput(
                 'resourcePrefix',
@@ -158,7 +160,9 @@ class EnvironmentService:
 
     @staticmethod
     def _validate_account_region(data, session):
-        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
+        environment = EnvironmentRepository.find_environment_by_account_region(session=session,
+                                                                               account_id=data.get('AwsAccountId'),
+                                                                               region=data.get('region'))
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
@@ -398,7 +402,7 @@ class EnvironmentService:
 
     @staticmethod
     def list_group_invitation_permissions(
-        session, username, groups, uri, data=None, check_perm=None
+            session, username, groups, uri, data=None, check_perm=None
     ):
         group_invitation_permissions = []
         for p in permissions.ENVIRONMENT_INVITATION_REQUEST:
@@ -447,7 +451,37 @@ class EnvironmentService:
             permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=ConsumptionRole.__name__,
         )
+
+        EnvironmentService._generate_managed_policies_for_consumption_role(environment, IAMRoleArn)
         return consumption_role
+
+    @staticmethod
+    def _generate_managed_policies_for_consumption_role(environment, iam_role_arn):
+        empty_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        "initial_empty_resource",
+                    ]
+                }
+            ]
+        }
+        iam_role_name = iam_role_arn.split("/")[-1]
+        IAM.create_managed_policy(
+            account_id=environment.AwsAccountId,
+            policy_name=f'dataall-env-{environment.environmentUri}-bucket-share-{iam_role_name}',
+            policy=json.dumps(empty_policy)
+        )
+        IAM.create_managed_policy(
+            account_id=environment.AwsAccountId,
+            policy_name=f'dataall-env-{environment.environmentUri}-accesspoint-share-{iam_role_name}',
+            policy=json.dumps(empty_policy)
+        )
 
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
@@ -776,7 +810,7 @@ class EnvironmentService:
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_all_environment_consumption_roles(
-        session, uri, data=None
+            session, uri, data=None
     ) -> dict:
         return paginate(
             query=EnvironmentService.query_all_environment_consumption_roles(

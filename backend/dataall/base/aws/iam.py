@@ -2,7 +2,6 @@ import logging
 
 from .sts import SessionHelper
 
-
 log = logging.getLogger(__name__)
 
 
@@ -47,10 +46,10 @@ class IAM:
 
     @staticmethod
     def update_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
-        policy: str,
+            account_id: str,
+            role_name: str,
+            policy_name: str,
+            policy: str,
     ):
         try:
             iamcli = IAM.client(account_id)
@@ -67,9 +66,9 @@ class IAM:
 
     @staticmethod
     def get_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
+            account_id: str,
+            role_name: str,
+            policy_name: str,
     ):
         try:
             iamcli = IAM.client(account_id)
@@ -87,9 +86,9 @@ class IAM:
 
     @staticmethod
     def delete_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
+            account_id: str,
+            role_name: str,
+            policy_name: str,
     ):
         try:
             iamcli = IAM.client(account_id)
@@ -102,12 +101,11 @@ class IAM:
                 f'Failed to delete policy {policy_name} of role {role_name} : {e}'
             )
 
-
     @staticmethod
     def create_managed_policy(
-        account_id: str,
-        policy_name: str,
-        policy: str
+            account_id: str,
+            policy_name: str,
+            policy: str
     ):
         try:
             iamcli = IAM.client(account_id)
@@ -122,4 +120,3 @@ class IAM:
                 f'Failed to create managed policy {policy_name} : {e}'
             )
             return None
-
