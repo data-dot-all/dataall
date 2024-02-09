@@ -19,7 +19,7 @@ class DataSharingService:
         pass
 
     @classmethod
-    def approve_share(cls, engine: Engine, share_uri: str) -> bool:
+    def approve_share(cls, engine: Engine, share_uri: str, status: ShareItemStatus = None, healthStatus: ShareItemHealthStatus = None) -> bool:
         """
         1) Updates share object State Machine with the Action: Start
         2) Retrieves share data and items in Share_Approved state
@@ -56,7 +56,12 @@ class DataSharingService:
                 shared_tables,
                 shared_folders,
                 shared_buckets
-            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
+            ) = ShareObjectRepository.get_share_data_items(
+                session=session, 
+                share_uri=share_uri, 
+                status=status or ShareItemStatus.Share_Approved.value,
+                healthStatus=healthStatus or None
+            )
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -293,3 +298,13 @@ class DataSharingService:
 
 
         return True
+
+    @classmethod
+    def reapply_share(cls, engine: Engine, share_uri: str):
+        DataSharingService.approve_share(
+            engine,
+            share_uri,
+            None,
+            ShareItemHealthStatus.Unhealthy.value
+        )
+        

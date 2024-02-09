@@ -74,6 +74,16 @@ def verify_items_share_object(context: Context, source, input):
     verify_item_uris = input.get("revokedItemUris")
     return ShareItemService.verify_items_share_object(uri=share_uri, item_uris=verify_item_uris)
 
+def reapply_items_share_object(context: Context, source, input):
+    if not input:
+        raise RequiredParameter(input)
+    if 'shareUri' not in input:
+        raise RequiredParameter('shareUri')
+    if 'revokedItemUris' not in input:
+        raise RequiredParameter('revokedItemUris')
+    share_uri = input.get("shareUri")
+    verify_item_uris = input.get("revokedItemUris")
+    return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=verify_item_uris)
 
 def delete_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.delete_share_object(uri=shareUri)

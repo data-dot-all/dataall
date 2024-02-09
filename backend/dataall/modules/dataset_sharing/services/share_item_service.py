@@ -47,8 +47,26 @@ class ShareItemService:
             session.add(verify_share_items_task)
 
         Worker.queue(engine=context.db_engine, task_ids=[verify_share_items_task.taskUri])
-        return
+        return True
 
+    @staticmethod
+    @has_resource_permission(GET_SHARE_OBJECT)
+    def reapply_items_share_object(uri, item_uris):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            for item in verify_items:
+                setattr(item, "healthStatus", ShareItemHealthStatus.Pending.value)
+
+            verify_share_items_task: Task = Task(
+                action='ecs.share.reapply',
+                targetUri=uri
+            )
+            session.add(verify_share_items_task)
+
+        Worker.queue(engine=context.db_engine, task_ids=[verify_share_items_task.taskUri])
+        return True
 
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)

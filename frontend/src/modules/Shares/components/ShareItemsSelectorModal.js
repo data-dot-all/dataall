@@ -13,7 +13,8 @@ import { generateShareItemLabel } from 'utils';
 
 export const ShareItemsSelectorModal = (props) => {
   const client = useClient();
-  const { share, onApply, onClose, open, submit, name, ...other } = props;
+  const { share, onApply, onClose, open, submit, name, filter, ...other } =
+    props;
   const [rows, setRows] = useState([]);
   const dispatch = useDispatch();
   const params = useParams();
@@ -26,12 +27,7 @@ export const ShareItemsSelectorModal = (props) => {
     const response = await client.query(
       getShareObject({
         shareUri: params.uri,
-        filter: {
-          ...Defaults.filter,
-          pageSize: 1000,
-          isShared: true,
-          isRevokable: true
-        }
+        filter: filter
       })
     );
     if (!response.errors) {
@@ -141,5 +137,6 @@ ShareItemsSelectorModal.propTypes = {
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired,
   submit: PropTypes.func.isRequired,
-  name: PropTypes.string.isRequired
+  name: PropTypes.string.isRequired,
+  filter: PropTypes.object
 };

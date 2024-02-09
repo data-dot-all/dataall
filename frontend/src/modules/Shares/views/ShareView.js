@@ -63,16 +63,15 @@ import {
   removeSharedItem,
   submitApproval,
   revokeItemsShareObject,
-  verifyItemsShareObject
+  verifyItemsShareObject,
+  reApplyItemsShareObject
 } from '../services';
 import {
   AddShareItemModal,
-  // RevokeShareItemsModal,
   ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
   UpdateRequestReason
-  // VerifyShareItemsModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 
@@ -407,37 +406,31 @@ function SharedItem(props) {
         )}
       </TableCell>
       <TableCell>
-        {item.healthStatus === 'Unhealthy' ? (
-          <Tooltip
-            title={
-              <Typography>
-                {item.healthStatus} | Error Message:{' '}
-                {item.healthMessage || 'N/A'} | Last Checked{' '}
-                {item.lastVerificationTime || 'N/A'}
-              </Typography>
-            }
-          >
-            <GppBadIcon />
-          </Tooltip>
-        ) : item.healthStatus === 'Healthy' ? (
-          <Tooltip
-            title={
-              <Typography>
-                {item.healthStatus} | Last Checked{' '}
-                {item.lastVerificationTime || 'N/A'}
-              </Typography>
-            }
-          >
-            <VerifiedUserIcon />
-          </Tooltip>
-        ) : (
-          <Tooltip title={<Typography>Pending Check</Typography>}>
-            <PendingIcon />
-          </Tooltip>
-        )}
+        <div style={{ display: 'flex', alignItems: 'left' }}>
+          {item.healthStatus === 'Unhealthy' ? (
+            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
+              <GppBadIcon color={'error'} />
+            </Tooltip>
+          ) : item.healthStatus === 'Healthy' ? (
+            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
+              <VerifiedUserIcon color={'success'} />
+            </Tooltip>
+          ) : (
+            <Tooltip title={<Typography>Pending Check</Typography>}>
+              <PendingIcon color={'info'} />
+            </Tooltip>
+          )}
+          <Typography color="textSecondary" variant="subtitle2">
+            {item.lastVerificationTime.substring(
+              0,
+              item.lastVerificationTime.indexOf('.')
+            ) || 'N/A'}
+          </Typography>
+        </div>
         {/* <CheckCircleIcon color={'success'} />
         <Label color="success">{item.healthStatus}</Label> */}
       </TableCell>
+      <TableCell>{item.healthMessage || '-'}</TableCell>
     </TableRow>
   );
 }
@@ -467,6 +460,8 @@ const ShareView = () => {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isRevokeItemsModalOpen, setIsRevokeItemsModalOpen] = useState(false);
   const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
+  const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
+    useState(false);
 
   const handleAddItemModalOpen = () => {
     setIsAddItemModalOpen(true);
@@ -487,6 +482,13 @@ const ShareView = () => {
   };
   const handleVerifyItemModalClose = () => {
     setIsVerifyItemsModalOpen(false);
+  };
+
+  const handleReApplyShareItemModalOpen = () => {
+    setIsReApplyShareItemModalOpen(true);
+  };
+  const handleReApplyShareItemModalClose = () => {
+    setIsReApplyShareItemModalOpen(false);
   };
 
   const handlePageChange = async (event, value) => {
@@ -589,30 +591,29 @@ const ShareView = () => {
     }
   };
 
-  // const reapply = async (shareUri, selectionModel) => {
-  //   setLoadingShareItemSelector(true);
-  //   const response = await client.mutate(
-  //     verifyItemsShareObject({
-  //       input: {
-  //         shareUri: shareUri,
-  //         revokedItemUris: selectionModel
-  //       }
-  //     })
-  //   );
-  //   if (!response.errors) {
-  //     enqueueSnackbar('Share Item Verification Started.', {
-  //       anchorOrigin: {
-  //         horizontal: 'right',
-  //         vertical: 'top'
-  //       },
-  //       variant: 'success'
-  //     });
-  //     await fetchShareItems();
-  //   } else {
-  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //   }
-  //   setLoadingShareItemSelector(false);
-  // };
+  const reapply = async (shareUri, selectionModel) => {
+    const response = await client.mutate(
+      reApplyItemsShareObject({
+        input: {
+          shareUri: shareUri,
+          revokedItemUris: selectionModel
+        }
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Share Item Re-Apply Started.', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      handleReApplyShareItemModalClose();
+      await fetchShareItems();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   useEffect(() => {
     if (client) {
@@ -1063,6 +1064,20 @@ const ShareView = () => {
                       >
                         Verify Item(s) Health Status
                       </LoadingButton>
+                      {(share.userRoleForShareObject === 'Approvers' ||
+                        share.userRoleForShareObject ===
+                          'ApproversAndRequesters') && (
+                        <LoadingButton
+                          color="info"
+                          startIcon={<SecurityIcon />}
+                          sx={{ m: 1 }}
+                          onClick={handleReApplyShareItemModalOpen}
+                          type="button"
+                          variant="outlined"
+                        >
+                          Re-Apply Share
+                        </LoadingButton>
+                      )}
                     </Box>
                   }
                 />
@@ -1077,6 +1092,7 @@ const ShareView = () => {
                           <TableCell>Status</TableCell>
                           <TableCell>Action</TableCell>
                           <TableCell>Health Status</TableCell>
+                          <TableCell>Health Message</TableCell>
                         </TableRow>
                       </TableHead>
                       {loadingShareItems ? (
@@ -1134,6 +1150,12 @@ const ShareView = () => {
             open={isRevokeItemsModalOpen}
             submit={revoke}
             name={'Revoke'}
+            filter={{
+              ...Defaults.filter,
+              pageSize: 1000,
+              isShared: true,
+              isRevokable: true
+            }}
           />
         )}
         {isVerifyItemsModalOpen && (
@@ -1144,6 +1166,29 @@ const ShareView = () => {
             open={isVerifyItemsModalOpen}
             submit={verify}
             name={'Verify'}
+            filter={{
+              ...Defaults.filter,
+              pageSize: 1000,
+              isShared: true,
+              isRevokable: true
+            }}
+          />
+        )}
+        {isReApplyShareItemModalOpen && (
+          <ShareItemsSelectorModal
+            share={share}
+            onApply={handleReApplyShareItemModalClose}
+            onClose={handleReApplyShareItemModalClose}
+            open={isReApplyShareItemModalOpen}
+            submit={reapply}
+            name={'Re-Apply Share'}
+            filter={{
+              ...Defaults.filter,
+              pageSize: 1000,
+              isShared: true,
+              isRevokable: true,
+              isHealthy: false
+            }}
           />
         )}
       </Box>

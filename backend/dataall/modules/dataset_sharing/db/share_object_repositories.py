@@ -9,7 +9,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
@@ -578,6 +578,10 @@ class ShareObjectRepository:
             if 'isShared' in data.keys():
                 is_shared = data.get('isShared')
                 query = query.filter(shareable_objects.c.isShared == is_shared)
+
+            if 'isHealthy' in data.keys():
+                health_status = ShareItemHealthStatus.Unhealthy.value if not data.get('isHealthy') else ShareItemHealthStatus.Healthy.value
+                query = query.filter(shareable_objects.c.healthStatus == health_status)
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 

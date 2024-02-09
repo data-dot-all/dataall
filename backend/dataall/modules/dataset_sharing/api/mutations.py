@@ -79,6 +79,13 @@ verifyItemsShareObject = gql.MutationField(
     resolver=verify_items_share_object,
 )
 
+reApplyItemsShareObject = gql.MutationField(
+    name='reApplyItemsShareObject',
+    args=[gql.Argument(name='input', type=gql.Ref('RevokeItemsInput'))],
+    type=gql.Ref('ShareObject'),
+    resolver=reapply_items_share_object,
+)
+
 updateShareRejectReason = gql.MutationField(
     name='updateShareRejectReason',
     args=[
