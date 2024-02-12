@@ -34,6 +34,19 @@ def patch_dataset_methods(module_mocker):
     s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
     glue_mock_client().run_job.return_value = True
 
+    module_mocker.patch(
+        'dataall.modules.datasets.api.dataset.resolvers.RequestValidator.validate_confidentiality', return_value=True
+    )
+
+    confidentiality_classification_mocker = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification', return_value=confidentiality_classification_mocker
+    )
+    # Return the input when mocking. This mock avoids checking the custom_confidentiality_mapping value in the actual function and just returns  whatever confidentiality value is supplied for pytests
+    confidentiality_classification_mocker().side_effect = lambda input: input
+
+
+
 
 @pytest.fixture(scope='module', autouse=True)
 def dataset(client, patch_es, patch_dataset_methods):

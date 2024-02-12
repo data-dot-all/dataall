@@ -26,8 +26,6 @@ class ConfidentialityClassification(GraphQLEnumMapper):
 
     @staticmethod
     def get_confidentiality_level(confidentiality, context):
-        if context.db_engine.dbconfig.schema == 'pytest':
-            return confidentiality
         return confidentiality if not custom_confidentiality_mapping else custom_confidentiality_mapping.get(
             confidentiality, None)
 
