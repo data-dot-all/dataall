@@ -430,7 +430,17 @@ function SharedItem(props) {
         {/* <CheckCircleIcon color={'success'} />
         <Label color="success">{item.healthStatus}</Label> */}
       </TableCell>
-      <TableCell>{item.healthMessage || '-'}</TableCell>
+      <TableCell>
+        {item.healthMessage ? (
+          <List dense>
+            {item.healthMessage.split('|').map((err_msg, i) => (
+              <ListItem key={i}>{err_msg}</ListItem>
+            ))}
+          </List>
+        ) : (
+          '-'
+        )}
+      </TableCell>
     </TableRow>
   );
 }

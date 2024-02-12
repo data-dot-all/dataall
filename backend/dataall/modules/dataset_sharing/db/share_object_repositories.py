@@ -1,6 +1,7 @@
 import logging
 from warnings import warn
 from typing import List
+from datetime import datetime
 
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
@@ -721,12 +722,14 @@ class ShareObjectRepository:
     def update_share_item_health_status(
         session,
         share_item: ShareObjectItem,
-        healthStatus: str,
-        healthMessage: str
+        healthStatus: str = None,
+        healthMessage: str = None,
+        timestamp: datetime = None
     ) -> ShareObjectItem:
 
         share_item.healthStatus = healthStatus
         share_item.healthMessage = healthMessage
+        share_item.lastVerificationTime = timestamp
         session.commit()
         return share_item
 

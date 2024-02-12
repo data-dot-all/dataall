@@ -85,13 +85,15 @@ class RamClient:
         if not len(ram_invitations):
             return False
         else:
+            is_accepted = []
             for invitation in ram_invitations:
                 if invitation['status'] != 'ACCEPTED':
                     log.info(
-                        f'Invitation {invitation} already accepted nothing to do ...'
+                        f'Invitation {invitation} not accepted ...'
                     )
-                    return False
-        return True
+                    is_accepted.append(False)
+                is_accepted.append(True)
+        return any(is_accepted)
 
 
     @staticmethod

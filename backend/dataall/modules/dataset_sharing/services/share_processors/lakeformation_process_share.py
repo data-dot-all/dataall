@@ -8,6 +8,7 @@ from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import format_error_message
 
 log = logging.getLogger(__name__)
 
@@ -123,17 +124,15 @@ class ProcessLakeFormationShare(LFShareManager):
                         new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     else:
-                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Healthy.value, None)
+                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now())
                 except Exception as e:
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-                        self.handle_share_failure(table=table, error=e)
                     else:
-                        #TODO: HANDLE REAPPLY FAILURE
-                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e))
-                        self.handle_share_failure(table=table, error=e)
+                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), share_item.lastVerificationTime)
                     success = False
+                    self.handle_share_failure(table=table, error=e)
         return success
         
     def process_revoked_shares(self) -> bool:
@@ -252,74 +251,60 @@ class ProcessLakeFormationShare(LFShareManager):
         if not self.tables:
             log.info("No tables to verify. Skipping...")
         else:
-            db_level_errors = []
-            if not self.check_pivot_role_permissions_to_source_database():
-                db_level_errors.append("MISSING SOURCE PIVOT ROLE PERMISSIONS SOURCE DB")
-            
-            if not self.check_shared_database_in_target():
-                db_level_errors.append("MISSING SHARED DB IN TARGET")
-
-            if not self.check_pivot_role_permissions_to_shared_database():
-                db_level_errors.append("MISSING TARGET PIVOT ROLE PERMISSIONS SHARED DB")
-
-            if not self.check_principals_permissions_to_shared_database():
-                db_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS SHARED DB")
-
-
+            try:
+                self.db_level_errors = []
+                self.check_pivot_role_permissions_to_source_database()
+                self.check_shared_database_in_target()
+                self.check_pivot_role_permissions_to_shared_database()
+                self.check_principals_permissions_to_shared_database()
+            except Exception as e:
+                self.db_level_errors = [str(e)]
+                
             for table in self.tables:
-                tbl_level_errors = []
-                share_item = ShareObjectRepository.find_sharable_item(
-                    self.session, self.share.shareUri, table.tableUri
-                )
-                if not share_item:
-                    log.info(
-                        f'Share Item not found for {self.share.shareUri} '
-                        f'and Dataset Table {table.GlueTableName} continuing loop...'
-                    )
-                    print(
-                        f'Share Item not found for {self.share.shareUri} '
-                        f'and Dataset Table {table.GlueTableName} continuing loop...'
-                    )
-                    continue
-
+                self.tbl_level_errors = []
                 try:
-                    self.check_table_exists_in_source_database(share_item, table)
-                except:
-                    tbl_level_errors.append("TABLE DOES NOT EXIST ON SOURCE")
-                
-                if self.cross_account:
-                    if not self.check_target_account_permissions_to_source_table():
-                        tbl_level_errors.append("MISSING TARGET ACCOUNT PERMISSIONS SOURCE TABLE")
+                    share_item = ShareObjectRepository.find_sharable_item(
+                        self.session, self.share.shareUri, table.tableUri
+                    )
+                    self.verify_table_exists_in_source_database(share_item, table)
 
-                    if not RamClient.check_ram_invitation_status(
-                        source_account_id=self.source_environment.AwsAccountId,
-                        source_region=self.source_environment.region,
-                        target_account_id=self.target_environment.AwsAccountId,
-                        target_region=self.target_environment.region,
-                        source_database=self.dataset.GlueDatabaseName,
-                        source_table=table
-                    ):
-                        tbl_level_errors.append("MISSING OR NON ACCEPTED RAM INVITATION")
+                    if self.cross_account:
+                        self.check_target_account_permissions_to_source_table()
+                            # self.tbl_level_errors.append("MISSING TARGET ACCOUNT PERMISSIONS SOURCE TABLE")
 
-                if not self.check_resource_link_table_exists_in_target_database(table):
-                    tbl_level_errors.append("MISSING RESOURCE LINK IN TARGET DB")
-                
-                if not self.check_principals_permissions_to_table_in_target(table):
-                     tbl_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS TARGET TABLE")
+                        if not RamClient.check_ram_invitation_status(
+                            source_account_id=self.source_environment.AwsAccountId,
+                            source_region=self.source_environment.region,
+                            target_account_id=self.target_environment.AwsAccountId,
+                            target_region=self.target_environment.region,
+                            source_database=self.dataset.GlueDatabaseName,
+                            source_table=table
+                        ):
+                            self.tbl_level_errors.append(
+                                format_error_message(self.tbl_level_errors, self.target_environment.AwsAccountId, "RAM Invitation", "Accepted", "Glue Table", f"{self.dataset.GlueDatabaseName}.{table}")
+                            )
 
-                if not self.check_principals_permissions_to_resource_link_table(table):
-                     tbl_level_errors.append("MISSING TARGET PRINCIPAL PERMISSIONS RESOURCE LINK TABLE")
+                    self.verify_resource_link_table_exists_in_target_database(table)                    
+                    self.check_principals_permissions_to_table_in_target(table)
+                    self.check_principals_permissions_to_resource_link_table(table)
 
-                print("\n\n\n\n\n")
-                print(db_level_errors)
-                print(tbl_level_errors)
-                print("\n\n\n\n\n")
+                except Exception as e:
+                    self.tbl_level_errors = [str(e)]
 
-                if len(db_level_errors) or len(tbl_level_errors):
-                    share_item.healthMessage = " | ".join(db_level_errors) + " | ".join(tbl_level_errors)
-                    share_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
+                if len(self.db_level_errors) or len(self.tbl_level_errors):
+                    ShareObjectRepository.update_share_item_health_status(
+                        self.session, 
+                        share_item, 
+                        ShareItemHealthStatus.Unhealthy.value, 
+                        " | ".join(self.db_level_errors) + " | ".join(self.tbl_level_errors),
+                        datetime.now()
+                    )
                 else:
-                    share_item.healthMessage = None
-                    share_item.healthStatus = ShareItemHealthStatus.Healthy.value
-                share_item.lastVerificationTime = datetime.now()
+                    ShareObjectRepository.update_share_item_health_status(
+                        self.session, 
+                        share_item, 
+                        ShareItemHealthStatus.Healthy.value, 
+                        None,
+                        datetime.now()
+                    )
         return True
