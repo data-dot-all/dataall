@@ -74,4 +74,3 @@ Alarm Details:
                 return response
             except ClientError as e:
                 logger.error(f'Failed to deliver message due to: {e} ')
-                raise e
