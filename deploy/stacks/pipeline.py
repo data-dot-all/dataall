@@ -793,7 +793,7 @@ class PipelineStack(Stack):
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     'export AWS_PROFILE=buildprofile',
-                    'pip install boto3==1.20.50',
+                    'pip install boto3==1.34.35',
                     'pip install beautifulsoup4',
                     'python deploy/configs/frontend_config.py',
                     'export AWS_DEFAULT_REGION=us-east-1',
