@@ -46,7 +46,8 @@ class ProcessS3BucketShare(S3BucketShareManager):
         source_environment: Environment,
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup
+        env_group: EnvironmentGroup,
+        reapply: bool = False,
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -69,9 +70,10 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 share.shareUri,
                 shared_bucket.bucketUri,
             )
-            shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
-            new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
-            shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+            if not reapply:
+                shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+                new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
+                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             sharing_bucket = cls(
                 session,
@@ -88,18 +90,23 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 sharing_bucket.grant_s3_iam_access()
                 if not dataset.imported or dataset.importedKmsKey:
                     sharing_bucket.grant_dataset_bucket_key_policy()
-                new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                if not reapply:
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
+                    shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                else:
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Healthy.value, None)
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
-                new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                if not reapply:
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
+                    shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                    sharing_bucket.handle_share_failure(e)
+                else:
+                    #TODO: HANDLE REAPPLY FAILURE
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e))
+                    sharing_bucket.handle_share_failure(e)
                 success = False
-
-                # statements which can throw exceptions but are not critical
-                sharing_bucket.handle_share_failure(e)
-
         return success
 
     @classmethod

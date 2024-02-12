@@ -19,7 +19,7 @@ class DataSharingService:
         pass
 
     @classmethod
-    def approve_share(cls, engine: Engine, share_uri: str, status: ShareItemStatus = None, healthStatus: ShareItemHealthStatus = None) -> bool:
+    def approve_share(cls, engine: Engine, share_uri: str) -> bool:
         """
         1) Updates share object State Machine with the Action: Start
         2) Retrieves share data and items in Share_Approved state
@@ -56,12 +56,7 @@ class DataSharingService:
                 shared_tables,
                 shared_folders,
                 shared_buckets
-            ) = ShareObjectRepository.get_share_data_items(
-                session=session, 
-                share_uri=share_uri, 
-                status=status or ShareItemStatus.Share_Approved.value,
-                healthStatus=healthStatus or None
-            )
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -257,10 +252,8 @@ class DataSharingService:
                 tables_to_verify,
                 folders_to_verify,
                 buckets_to_verify
-            ) = ShareObjectRepository.get_share_data_items(session, share_uri, status=None, healthStatus=ShareItemHealthStatus.Pending.value)
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, status=None, healthStatus=ShareItemHealthStatus.PendingVerify.value)
 
-        print(tables_to_verify)
-        # --------------------------------------
         log.info(f'Verifying permissions to folders: {folders_to_verify}')
         ProcessS3AccessPointShare.verify_shares(
             session,
@@ -301,10 +294,81 @@ class DataSharingService:
 
     @classmethod
     def reapply_share(cls, engine: Engine, share_uri: str):
-        DataSharingService.approve_share(
-            engine,
-            share_uri,
-            None,
-            ShareItemHealthStatus.Unhealthy.value
+        """
+        1) Updates share object State Machine with the Action: Start
+        2) Retrieves share data and items in Share_Approved state
+        3) Calls sharing folders processor to grant share
+        4) Calls sharing buckets processor to grant share
+        5) Calls sharing tables processor for same or cross account sharing to grant share
+        6) Updates share object State Machine with the Action: Finish
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        True if sharing succeeds,
+        False if folder or table sharing failed
+        """
+        with engine.scoped_session() as session:
+            (
+                source_env_group,
+                env_group,
+                dataset,
+                share,
+                source_environment,
+                target_environment,
+            ) = ShareObjectRepository.get_share_data(session, share_uri)
+
+            (
+                reapply_tables,
+                reapply_folders,
+                reapply_buckets
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, None, ShareItemHealthStatus.PendingReApply.value)
+
+        log.info(f'Reapply permissions to folders: {reapply_folders}')
+        approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+            session,
+            dataset,
+            share,
+            reapply_folders,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group,
+            True
         )
+        log.info(f'reapply folders succeeded = {approved_folders_succeed}')
+
+        log.info('Reapply permissions to S3 buckets')
+        approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+            session,
+            dataset,
+            share,
+            reapply_buckets,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group,
+            True
+        )
+        log.info(f'Reapply s3 buckets succeeded = {approved_s3_buckets_succeed}')
+
+        log.info(f'Reapply permissions to tables: {reapply_tables}')
+        approved_tables_succeed = ProcessLakeFormationShare(
+            session,
+            dataset,
+            share,
+            reapply_tables,
+            source_environment,
+            target_environment,
+            env_group,
+            True
+        ).process_approved_shares()
+        log.info(f'Reapply tables succeeded = {approved_tables_succeed}')
+
+        return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
+
         

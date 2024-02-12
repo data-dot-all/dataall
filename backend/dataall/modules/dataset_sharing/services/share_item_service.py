@@ -38,7 +38,7 @@ class ShareItemService:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
             for item in verify_items:
-                setattr(item, "healthStatus", ShareItemHealthStatus.Pending.value)
+                setattr(item, "healthStatus", ShareItemHealthStatus.PendingVerify.value)
 
             verify_share_items_task: Task = Task(
                 action='ecs.share.verify',
@@ -57,7 +57,7 @@ class ShareItemService:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
             for item in verify_items:
-                setattr(item, "healthStatus", ShareItemHealthStatus.Pending.value)
+                setattr(item, "healthStatus", ShareItemHealthStatus.PendingReApply.value)
 
             verify_share_items_task: Task = Task(
                 action='ecs.share.reapply',

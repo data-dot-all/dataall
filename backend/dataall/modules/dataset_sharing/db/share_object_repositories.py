@@ -718,6 +718,19 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
+    def update_share_item_health_status(
+        session,
+        share_item: ShareObjectItem,
+        healthStatus: str,
+        healthMessage: str
+    ) -> ShareObjectItem:
+
+        share_item.healthStatus = healthStatus
+        share_item.healthMessage = healthMessage
+        session.commit()
+        return share_item
+
+    @staticmethod
     def delete_share_item_status_batch(
         session,
         share_uri: str,

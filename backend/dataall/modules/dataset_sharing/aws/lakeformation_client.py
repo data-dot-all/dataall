@@ -104,7 +104,8 @@ class LakeFormationClient:
                     principal=principal,
                     resource=resource,
                     permissions=permissions,
-                    permissions_with_grant_options=permissions_with_grant_options
+                    permissions_with_grant_options=permissions_with_grant_options,
+                    check_resource=check_resource
                 ):
                     log.info(
                         f'Granting principal {principal} '

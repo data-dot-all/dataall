@@ -22,6 +22,7 @@ class ProcessLakeFormationShare(LFShareManager):
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
+        reapply: bool = False
     ):
         super().__init__(
             session,
@@ -32,6 +33,7 @@ class ProcessLakeFormationShare(LFShareManager):
             target_environment,
             env_group,
         )
+        self.reapply = reapply
 
     def process_approved_shares(self) -> bool:
         """
@@ -81,10 +83,10 @@ class ProcessLakeFormationShare(LFShareManager):
                         f'and Dataset Table {table.GlueTableName} continuing loop...'
                     )
                     continue
-
-                shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
-                new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
-                shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                if not self.reapply:
+                    shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+                    new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
+                    shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
                     self.check_table_exists_in_source_database(share_item, table)
@@ -117,19 +119,23 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
-
-                    new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
-                    shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-
+                    if not self.reapply:
+                        new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
+                        shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    else:
+                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Healthy.value, None)
                 except Exception as e:
-                    new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
-                    shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    if not self.reapply:
+                        new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
+                        shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                        self.handle_share_failure(table=table, error=e)
+                    else:
+                        #TODO: HANDLE REAPPLY FAILURE
+                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e))
+                        self.handle_share_failure(table=table, error=e)
                     success = False
-
-                    self.handle_share_failure(table=table, error=e)
-
         return success
-
+        
     def process_revoked_shares(self) -> bool:
         """
         1) For each revoked table:
