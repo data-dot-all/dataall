@@ -212,10 +212,8 @@ class RequestValidator:
 
     @staticmethod
     def validate_confidentiality(data):
-        confidentiality = data.get('confidentiality') if not custom_confidentiality_mapping else \
-        custom_confidentiality_mapping[data.get('confidentiality')]
-        if config.get_property('modules.datasets.features.confidentiality_dropdown', False) and confidentiality not in [
-            item.value for item in list(ConfidentialityClassification)]:
+        confidentiality = data.get('confidentiality') if not custom_confidentiality_mapping else custom_confidentiality_mapping[data.get('confidentiality')]
+        if config.get_property('modules.datasets.features.confidentiality_dropdown', False) and confidentiality not in [item.value for item in list(ConfidentialityClassification)]:
             raise InvalidInput('Confidentiality Name', confidentiality,
                                'does not conform to the confidentiality classification. Hint: Check your confidentiality value OR check your mapping if you are using custom confidentiality values')
 
