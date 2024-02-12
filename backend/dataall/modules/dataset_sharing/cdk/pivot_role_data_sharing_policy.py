@@ -16,7 +16,11 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'iam:PutRolePolicy',
-                    'iam:DeleteRolePolicy'
+                    'iam:DeleteRolePolicy',
+                    'iam:CreatePolicy',
+                    'iam:AttachRolePolicy',
+                    'iam:DetachRolePolicy',
+                    'iam:DeletePolicy',
                 ],
                 resources=['*'],
             ),

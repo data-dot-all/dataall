@@ -114,6 +114,9 @@ class IAM:
                 PolicyDocument=policy,
             )
             arn = response['Policy']['Arn']
+            log.info(
+                f'Created managed policy {arn}'
+            )
             return arn
         except Exception as e:
             log.error(
@@ -174,5 +177,5 @@ class IAM:
             )
         except Exception as e:
             log.error(
-                f'Failed to detatch policy {policy_name} from role {role_name} : {e}'
+                f'Failed to detach policy {policy_name} from role {role_name} : {e}'
             )
