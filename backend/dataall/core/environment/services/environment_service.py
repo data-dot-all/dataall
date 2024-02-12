@@ -538,7 +538,7 @@ class EnvironmentService:
             resource_type=ConsumptionRole.__name__,
         )
 
-        environment = EnvironmentService.get_environment_by_uri(session, uri)
+        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
         role_name = consumption_role.IAMRoleName
         EnvironmentService._delete_managed_policies_for_consumption_role(environment, role_name)
 
