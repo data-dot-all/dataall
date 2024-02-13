@@ -478,14 +478,11 @@ class EnvironmentService:
             policy=json.dumps(empty_policy)
         )
 
-
         IAM.create_managed_policy(
             account_id=environment.AwsAccountId,
             policy_name=f'dataall-env-{environment.environmentUri}-accesspoint-share-{iam_role_name}',
             policy=json.dumps(empty_policy)
         )
-
-
 
     @staticmethod
     def _delete_managed_policies_for_consumption_role(environment, iam_role_name):
