@@ -22,3 +22,4 @@ export * from './removeConsumptionRole';
 export * from './removeGroup';
 export * from './updateEnvironment';
 export * from './updateGroupEnvironmentPermissions';
+export * from './updateConsumptionRole';
