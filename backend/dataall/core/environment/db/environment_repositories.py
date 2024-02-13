@@ -57,3 +57,15 @@ class EnvironmentRepository:
                 Environment.SamlGroupName == group,
             )
         ).count()
+
+    @staticmethod
+    def find_environment_by_account_region(session, account_id, region):
+        environment: Environment = session.query(Environment).filter(
+            and_(
+                Environment.AwsAccountId == account_id,
+                Environment.region == region
+            )
+        ).first()
+        if not environment:
+            return None
+        return environment

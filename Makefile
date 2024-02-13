@@ -92,29 +92,6 @@ generate-migrations: upgrade-pip install-backend
 	alembic -c backend/alembic.ini revision -m "_describe_changes_shortly" --autogenerate
 
 
-version-major:
-	pip install bump2version
-	git config --global user.email git-cicd@codecommit.com
-	git config --global user.name git-cicd
-	git checkout ${branch}
-	git reset --hard origin/${branch}
-	git pull origin ${branch}
-	bump2version major
-	git push --set-upstream origin ${branch}
-	git push --follow-tags
-
-version-minor:
-	pip install bump2version
-	git config --global user.email git-cicd@codecommit.com
-	git config --global user.name git-cicd
-	git checkout ${branch}
-	git reset --hard origin/${branch}
-	git pull origin ${branch}
-	bump2version minor
-	git push --set-upstream origin ${branch}
-	git push --follow-tags
-
-clean:
 	@rm -fr cdk_out/
 	@rm -fr dist/
 	@rm -fr htmlcov/
