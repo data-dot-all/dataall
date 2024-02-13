@@ -23,7 +23,7 @@ docker compose up
 ```bash
 export PYTHONPATH=backend
 ```
-3. The containers initiated in the first step will default to using the schema named `local`. Alembic relies on the environmental variable `envname` to determine the schema. Set it to `local` with the following command:
+3. The containers initiated in the first step will default to using the schema named `dkrcompose`. In order to freely experiment with database let's create new schema 'local'. Alembic relies on the environmental variable `envname` to determine the schema. Set it to `local` with the following command:
 ```bash
 export envname=local
 ```
