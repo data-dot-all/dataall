@@ -40,7 +40,7 @@ Upon start of GraphQL container, sqlalchemy ```declarative_base``` is used to cr
 As the database is created from scratch, it has no current information about migration state, so, first we need to run database upgrade.
 After that alembic will be able to generate the further migrations locally.
 
-This command will apply all migrations, and syncronize the DB state with local alembic historyt of migrations.
+This command will apply all migrations, and syncronize the DB state with local alembic history of migrations.
 ```bash
 make upgrade-db 
 ```

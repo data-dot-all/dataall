@@ -11,7 +11,7 @@ from dataall.base.db import Resource, utils
 class SagemakerStudioDomain(Resource, Base):
     """Describes ORM model for sagemaker ML Studio domain"""
     __tablename__ = 'sagemaker_studio_domain'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"))
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     sagemakerStudioUri = Column(
         String, primary_key=True, default=utils.uuid('sagemakerstudio')
     )
