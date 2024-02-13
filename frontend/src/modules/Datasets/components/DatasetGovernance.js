@@ -39,6 +39,16 @@ export const DatasetGovernance = (props) => {
           {dataset.stewards}
         </Typography>
       </CardContent>
+      <CardContent>
+        <Typography color="textSecondary" variant="subtitle2">
+          Auto-Approval
+        </Typography>
+        <Box sx={{ mt: 1 }}>
+          <Label color="primary">
+            {dataset.autoApprovalEnabled ? 'Enabled' : 'Disabled'}
+          </Label>
+        </Box>
+      </CardContent>
       {isFeatureEnabled('datasets', 'confidentiality_dropdown') && (
         <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
