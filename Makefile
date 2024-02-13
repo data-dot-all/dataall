@@ -91,7 +91,7 @@ generate-migrations: upgrade-pip install-backend
 	alembic -c backend/alembic.ini upgrade head
 	alembic -c backend/alembic.ini revision -m "_describe_changes_shortly" --autogenerate
 
-
+clean:
 	@rm -fr cdk_out/
 	@rm -fr dist/
 	@rm -fr htmlcov/
