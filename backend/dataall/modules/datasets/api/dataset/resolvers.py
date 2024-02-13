@@ -27,7 +27,7 @@ def create_dataset(context: Context, source, input=None):
 
 
 def import_dataset(context: Context, source, input=None):
-    RequestValidator.validate_import_request(input, context)
+    RequestValidator.validate_import_request(input)
 
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
@@ -204,21 +204,14 @@ class RequestValidator:
             raise RequiredParameter('group')
         if not data.get('label'):
             raise RequiredParameter('label')
-        RequestValidator.validate_confidentiality(data)
+        ConfidentialityClassification.validate_confidentiality_level(data.get('confidentiality', ''))
         if len(data['label']) > 52:
             raise InvalidInput(
                 'Dataset name', data['label'], 'less than 52 characters'
             )
 
     @staticmethod
-    def validate_confidentiality(data):
-        confidentiality = data.get('confidentiality') if not custom_confidentiality_mapping else custom_confidentiality_mapping[data.get('confidentiality')]
-        if config.get_property('modules.datasets.features.confidentiality_dropdown', False) and confidentiality not in [item.value for item in list(ConfidentialityClassification)]:
-            raise InvalidInput('Confidentiality Name', confidentiality,
-                               'does not conform to the confidentiality classification. Hint: Check your confidentiality value OR check your mapping if you are using custom confidentiality values')
-
-    @staticmethod
-    def validate_import_request(data, context):
+    def validate_import_request(data):
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')

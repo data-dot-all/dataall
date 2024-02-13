@@ -35,7 +35,7 @@ def patch_dataset_methods(module_mocker):
     glue_mock_client().run_job.return_value = True
 
     module_mocker.patch(
-        'dataall.modules.datasets.api.dataset.resolvers.RequestValidator.validate_confidentiality', return_value=True
+        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification.validate_confidentiality_level', return_value=True
     )
 
     confidentiality_classification_mocker = MagicMock()
@@ -44,7 +44,6 @@ def patch_dataset_methods(module_mocker):
     )
     # Return the input when mocking. This mock avoids checking the custom_confidentiality_mapping value in the actual function and just returns  whatever confidentiality value is supplied for pytests
     confidentiality_classification_mocker().side_effect = lambda input: input
-
 
 
 

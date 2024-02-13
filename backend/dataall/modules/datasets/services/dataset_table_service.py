@@ -85,7 +85,7 @@ class DatasetTableService:
             )
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
-                ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality, context) != ConfidentialityClassification.Unclassified.value
+                ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality) != ConfidentialityClassification.Unclassified.value
             ):
                 ResourcePolicy.check_user_resource_permission(
                     session=session,
