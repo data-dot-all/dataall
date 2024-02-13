@@ -1,5 +1,5 @@
 {
-  "1096432": {
+  "GHSA-78xj-cgh5-2h22": {
     "active": true,
     "notes": "Work in-progress ignored until end of month to unblock development",
     "expiry": "2024/02/20"
