@@ -190,7 +190,11 @@ const routes = [
     element: (
       <AuthGuard>
         <DefaultLayout />
-        <ReAuthModal />
+        {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
+          <ReAuthModal />
+        ) : (
+          <></>
+        )}
       </AuthGuard>
     ),
     children: [

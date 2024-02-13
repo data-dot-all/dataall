@@ -131,7 +131,11 @@ export const ObjectBrief = (props) => {
               <Typography color="textSecondary" variant="subtitle2">
                 Description
               </Typography>
-              <Typography color="textPrimary" variant="subtitle2">
+              <Typography
+                color="textPrimary"
+                variant="subtitle2"
+                style={{ whiteSpace: 'pre-line' }}
+              >
                 {description}
               </Typography>
             </Box>

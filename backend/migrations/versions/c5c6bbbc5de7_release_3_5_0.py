@@ -12,6 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Resource, utils
+from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
 # revision identifiers, used by Alembic.
 revision = 'c5c6bbbc5de7'
@@ -31,7 +32,7 @@ class Environment(Resource, Base):
     cognitoGroupName = Column(String, nullable=True)
 
     validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
+    environmentType = Column(String, nullable=False, default=EnvironmentType.Data.value)
     isOrganizationDefaultEnvironment = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
     EnvironmentDefaultIAMRoleArn = Column(String, nullable=False)

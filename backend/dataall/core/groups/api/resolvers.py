@@ -5,7 +5,7 @@ from dataall.base.context import get_context
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.base.db import exceptions
 
@@ -61,8 +61,8 @@ def list_groups(context, source, filter: dict = None):
                 ).all()
         if category == 'organization':
             with context.engine.scoped_session() as session:
-                organization = Organization.get_organization_by_uri(session, category_uri)
-                invited_groups = Organization.query_organization_groups(
+                organization = OrganizationRepository.get_organization_by_uri(session, category_uri)
+                invited_groups = OrganizationRepository.query_organization_groups(
                     session=session,
                     uri=organization.organizationUri,
                     filter=None,

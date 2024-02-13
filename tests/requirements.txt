@@ -4,4 +4,3 @@ pytest-cov==3.0.0
 pytest-mock==3.6.1
 pytest-dependency==0.5.1
 werkzeug==3.0.1
-deprecated==1.2.13

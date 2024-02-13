@@ -70,18 +70,16 @@ class DatasetS3Policy(S3Policy):
 
     @staticmethod
     def _set_allowed_kms_keys_statements(datasets):
-        allowed_buckets_kms_keys = []
+        imported_kms_alias = []
         if datasets:
+            # Datasets belonging to a team and an environment are present in same region and aws account
+            imported_dataset_resources = [f"arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*"]
             dataset: Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
-                    key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
-                        key_alias=f"alias/{dataset.KmsAlias}"
-                    )
-                    if key_id:
-                        allowed_buckets_kms_keys.append(
-                            f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
-            if len(allowed_buckets_kms_keys):
+                    imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
+
+            if len(imported_kms_alias):
                 return iam.PolicyStatement(
                     sid="KMSImportedDatasetAccess",
                     actions=[
@@ -92,6 +90,11 @@ class DatasetS3Policy(S3Policy):
                         "kms:GenerateDataKey"
                     ],
                     effect=iam.Effect.ALLOW,
-                    resources=allowed_buckets_kms_keys
+                    resources=imported_dataset_resources,
+                    conditions={
+                        'ForAnyValue:StringLike': {
+                            'kms:ResourceAliases' : imported_kms_alias
+                        }
+                    }
                 )
         return None

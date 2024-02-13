@@ -30,9 +30,7 @@ class AuroraServerlessStack(pyNestedClass):
         super().__init__(scope, id, **kwargs)
 
         # if exclude_characters property is set make sure that the pwd regex in DbConfig is changed accordingly
-        db_credentials = rds.DatabaseSecret(
-            self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin'
-        )
+
 
         db_subnet_group = rds.SubnetGroup(
             self,
@@ -65,17 +63,21 @@ class AuroraServerlessStack(pyNestedClass):
             alias=f'{resource_prefix}-{envname}-aurora',
             enable_key_rotation=True,
         )
+        
+        db_credentials = rds.DatabaseSecret(
+            self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin', encryption_key=key
+        )
 
         database = rds.ServerlessCluster(
             self,
             f'AuroraDatabase{envname}',
             engine=rds.DatabaseClusterEngine.aurora_postgres(
-                version=rds.AuroraPostgresEngineVersion.VER_11_16
+                version=rds.AuroraPostgresEngineVersion.VER_13_12
             ),
             deletion_protection=True,
             cluster_identifier=f'{resource_prefix}-{envname}-db',
             parameter_group=rds.ParameterGroup.from_parameter_group_name(
-                self, 'ParameterGroup', 'default.aurora-postgresql11'
+                self, 'ParameterGroup', 'default.aurora-postgresql13'
             ),
             enable_data_api=True,
             default_database_name=f'{envname}db',

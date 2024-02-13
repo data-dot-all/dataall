@@ -64,31 +64,29 @@ class RamClient:
                 raise e
 
     @staticmethod
-    def accept_ram_invitation(**data):
+    def accept_ram_invitation(source_account_id, source_region, target_account_id, target_region, source_database, source_table):
         """
         Accepts RAM invitations on the target account
         """
         retry_share_table = False
         failed_invitations = []
-        source = data['source']
-        target = data['target']
 
-        if source['accountid'] == target['accountid']:
+        if source_account_id == target_account_id:
             log.debug('Skipping RAM invitation management for same account sharing.')
             return True
 
-        source_ram = RamClient(source['accountid'], target['region'])
-        target_ram = RamClient(target['accountid'], target['region'])
+        source_ram = RamClient(source_account_id, source_region)
+        target_ram = RamClient(target_account_id, target_region)
 
         resource_arn = (
-            f'arn:aws:glue:{source["region"]}:{source["accountid"]}:'
-            f'table/{data["source"]["database"]}/{data["source"]["tablename"]}'
+            f'arn:aws:glue:{source_region}:{source_account_id}:'
+            f'table/{source_database}/{source_table}'
         )
         associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
         ram_invitations = target_ram._get_resource_share_invitations(
-            resource_share_arns, source['accountid'], target['accountid']
+            resource_share_arns, source_account_id, target_account_id
         )
         log.info(
             f'Found {len(ram_invitations)} RAM invitations for resourceShareArn: {resource_share_arns}'

@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.dataset.enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_environment,
     get_dataset_organization,
@@ -14,7 +14,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_stack
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
-
 
 DatasetStatistics = gql.ObjectType(
     name='DatasetStatistics',
@@ -150,9 +149,9 @@ Dataset = gql.ObjectType(
             type=gql.Boolean,
         ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=get_dataset_stack),
+        gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
-
 
 DatasetSearchResult = gql.ObjectType(
     name='DatasetSearchResult',
@@ -168,7 +167,6 @@ DatasetSearchResult = gql.ObjectType(
         gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )
-
 
 GlueCrawler = gql.ObjectType(
     name='GlueCrawler',

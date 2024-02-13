@@ -196,6 +196,11 @@ def mock_aws_client(module_mocker):
         session_helper
     )
 
+    module_mocker.patch(
+        'dataall.base.aws.sts.SessionHelper',
+        session_helper
+    )
+
     session_helper.get_session.return_value = session
     session_helper.remote_session.return_value = session
     session.client.return_value = aws_client

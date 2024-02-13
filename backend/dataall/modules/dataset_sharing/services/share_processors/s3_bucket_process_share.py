@@ -3,7 +3,7 @@ import logging
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
-from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
@@ -91,10 +91,14 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             except Exception as e:
-                sharing_bucket.handle_share_failure(e)
+                # must run first to ensure state transitions to failed
                 new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                sharing_bucket.handle_share_failure(e)
+
         return success
 
     @classmethod
@@ -161,9 +165,12 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
-                removing_bucket.handle_revoke_failure(e)
+                # must run first to ensure state transitions to failed
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False
+
+                # statements which can throw exceptions but are not critical
+                removing_bucket.handle_revoke_failure(e)
 
         return success

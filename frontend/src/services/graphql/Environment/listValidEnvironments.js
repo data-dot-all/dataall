@@ -17,6 +17,11 @@ export const listValidEnvironments = ({ filter }) => ({
             name
             label
           }
+          networks {
+            VpcId
+            privateSubnetIds
+            publicSubnetIds
+          }
         }
       }
     }

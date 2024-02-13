@@ -13,6 +13,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Resource, utils
+from dataall.core.environment.api.enums import EnvironmentType
 
 revision = 'b6e0ac8f6d3f'
 down_revision = '967fa9c0a147'
@@ -30,7 +31,7 @@ class Environment(Resource, Base):
     cognitoGroupName = Column(String, nullable=True)
 
     validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
+    environmentType = Column(String, nullable=False, default=EnvironmentType.Data.value)
     isOrganizationDefaultEnvironment = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
     EnvironmentDefaultIAMRoleArn = Column(String, nullable=False)

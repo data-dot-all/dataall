@@ -1,6 +1,6 @@
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
 from dataall.base.api import gql
-from dataall.core.organizations.api.enums import OrganisationUserRole
+from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 
 NewOrganizationInput = gql.InputType(
     name='NewOrganizationInput',
@@ -52,24 +52,6 @@ OrganizationFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
         gql.Argument('roles', gql.ArrayType(OrganisationUserRole.toGraphQLEnum())),
         gql.Argument('tags', gql.ArrayType(gql.String)),
-    ],
-)
-
-
-OrganizationTopicFilter = gql.InputType(
-    name='OrganizationTopicFilter',
-    arguments=[
-        gql.Argument(name='term', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-    ],
-)
-
-OrganizationTopicInput = gql.InputType(
-    name='OrganizationTopicInput',
-    arguments=[
-        gql.Argument(name='label', type=gql.String),
-        gql.Argument(name='description', type=gql.String),
     ],
 )
 

@@ -1,4 +1,4 @@
-name: Validate DB migration with alembic
+name: Integration tests
 
 on:
   workflow_dispatch:
@@ -9,15 +9,12 @@ on:
     - main-v2
     - v2m*
 
-env:
-  envname: local
-
 jobs:
   run-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.8 ]
+        python-version: [ 3.9 ]
     services:
       postgres:
         image: postgres
@@ -39,7 +36,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - name: Drop tables
-        run: make drop-tables
-      - name: Upgrade tables
-        run: make upgrade-db
+      - name: coverage
+        run: make coverage

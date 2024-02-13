@@ -12,6 +12,10 @@ class _DeployConfig:
 
     def __init__(self):
         self._config = self._read_config_file()
+        self._version = self._read_version_file()
+
+    def get_dataall_version(self) -> str:
+        return json.dumps(self._version)
 
     def get_property(self, key: str, default=None) -> Any:
         """
@@ -52,20 +56,24 @@ class _DeployConfig:
 
     @classmethod
     def _read_config_file(cls) -> Dict[str, Any]:
-        with open(cls._path_to_file()) as config_file:
+        with open(cls._path_to_file("config.json")) as config_file:
             return json.load(config_file)
 
+    @classmethod
+    def _read_version_file(cls) -> Dict[str, Any]:
+        with open(cls._path_to_file("version.json")) as version_file:
+            return json.load(version_file)
+
     @staticmethod
-    def _path_to_file() -> str:
+    def _path_to_file(filename) -> str:
         """Tries to get a property. If not defined it tries to resolve the config from the current file's directory"""
         path = os.getenv("config_location")
         if path:
             return path
-        return os.path.join(Path(__file__).parents[2], "config.json")
+        return os.path.join(Path(__file__).parents[2], filename)
 
     def __repr__(self):
         return str(self._config)
 
 
 deploy_config = _DeployConfig()
-

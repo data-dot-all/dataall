@@ -151,6 +151,7 @@ class PipelineStack(Stack):
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
+            enable_key_rotation=True,
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
@@ -204,9 +205,6 @@ class PipelineStack(Stack):
                 )
             else:
                 self.set_albfront_stage(target_env, repository_name)
-
-        if self.node.try_get_context('git_release'):
-            self.set_release_stage()
 
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
@@ -342,41 +340,6 @@ class PipelineStack(Stack):
                 )
             ],
         )
-        if self.node.try_get_context('git_release'):
-            self.git_project_role = iam.Role(
-                self,
-                id=f'GitReleaseCBRole{self.git_branch}',
-                role_name=f'{self.resource_prefix}-{self.git_branch}-git-release-role',
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('codebuild.amazonaws.com'),
-                    iam.AccountPrincipal(self.account),
-                ),
-            )
-            self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
-            self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
-            self.git_release_policy = iam.ManagedPolicy(
-                self,
-                'GitReleaseManagedPolicy',
-                managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-gitrelease-policy',
-                roles=[self.git_project_role],
-                statements= [
-                    iam.PolicyStatement(
-                        actions=[
-                            'codecommit:CreateBranch',
-                            'codecommit:GetCommit',
-                            'codecommit:ListBranches',
-                            'codecommit:GetRepository',
-                            'codecommit:GetBranch',
-                            'codecommit:GitPull',
-                            'codecommit:PutFile',
-                            'codecommit:CreateCommit',
-                            'codecommit:GitPush',
-                            'codecommit:ListTagsForResource',
-                        ],
-                        resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
-                    )
-                ],
-            )
 
     def validate_deployment_params(self, source, repo_connection_arn, git_branch, resource_prefix, target_envs):
         if (source == "codestar_connection" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
@@ -507,6 +470,7 @@ class PipelineStack(Stack):
                         f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run copy-config',
+                        'npm run copy-version',
                         'npm run lint -- --quiet',
                     ],
                     role=self.baseline_codebuild_role.without_policy_updates(),
@@ -892,7 +856,7 @@ class PipelineStack(Stack):
                 f'export enable_cw_canaries={target_env.get("enable_cw_canaries", False)}',
                 'mkdir ~/.aws/ && touch ~/.aws/config',
                 'echo "[profile buildprofile]" > ~/.aws/config',
-                f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role" >> ~/.aws/config',
+                f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
                 'echo "credential_source = EcsContainer" >> ~/.aws/config',
                 'aws sts get-caller-identity --profile buildprofile',
                 'export AWS_PROFILE=buildprofile',
@@ -905,6 +869,10 @@ class PipelineStack(Stack):
         )
 
     def set_albfront_stage(self, target_env, repository_name):
+        if target_env.get('custom_auth', None) is None:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role'
+        else:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
         albfront_stage = self.pipeline.add_stage(
             AlbFrontStage(
                 self,
@@ -955,7 +923,7 @@ class PipelineStack(Stack):
                         f'export custom_auth_claims_mapping_user_id={str(target_env.get("custom_auth", {}).get("claims_mapping", {}).get("user_id", "None"))}',
                         'mkdir ~/.aws/ && touch ~/.aws/config',
                         'echo "[profile buildprofile]" > ~/.aws/config',
-                        f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role" >> ~/.aws/config',
+                        f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                         'echo "credential_source = EcsContainer" >> ~/.aws/config',
                         'aws sts get-caller-identity --profile buildprofile',
                         'export AWS_PROFILE=buildprofile',
@@ -1006,43 +974,4 @@ class PipelineStack(Stack):
             ],
             role=self.expanded_codebuild_role.without_policy_updates(),
             vpc=self.vpc,
-        )
-
-    def set_release_stage(
-        self,
-    ):
-        self.pipeline.add_wave(
-            f'{self.resource_prefix}-{self.git_branch}-release-stage'
-        ).add_post(
-            pipelines.CodeBuildStep(
-                id='GitRelease',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
-                partial_build_spec=codebuild.BuildSpec.from_object(
-                    dict(
-                        version='0.2',
-                        phases={
-                            'build': {
-                                'commands': [
-                                    'set -eu',
-                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                                    'python -m venv env',
-                                    '. env/bin/activate',
-                                    'pip install git-remote-codecommit',
-                                    'mkdir release && cd release',
-                                    f'git clone codecommit::{self.region}://dataall',
-                                    'cd dataall',
-                                    f'git checkout {self.git_branch}',
-                                    f'make version-minor branch={self.git_branch}',
-                                ]
-                            },
-                        },
-                    )
-                ),
-                role=self.git_project_role.without_policy_updates(),
-                vpc=self.vpc,
-                security_groups=[self.codebuild_sg],
-                commands=[],
-            )
         )

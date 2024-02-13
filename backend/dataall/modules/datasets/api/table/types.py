@@ -5,8 +5,6 @@ from dataall.modules.datasets.api.table.resolvers import (
     get_glue_table_properties,
     resolve_glossary_terms
 )
-from dataall.modules.datasets.api.table.enums import DatasetTablePreviewStatus
-
 
 TablePermission = gql.ObjectType(
     name='TablePermission',
@@ -23,7 +21,6 @@ TablePermissionSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(TablePermission)),
     ],
 )
-
 
 DatasetTable = gql.ObjectType(
     name='DatasetTable',
@@ -66,7 +63,6 @@ DatasetTable = gql.ObjectType(
     ],
 )
 
-
 DatasetTableSearchResult = gql.ObjectType(
     name='DatasetTableSearchResult',
     fields=[
@@ -79,7 +75,6 @@ DatasetTableSearchResult = gql.ObjectType(
     ],
 )
 
-
 DatasetTableRecord = gql.ObjectType(
     name='DatasetTableRecord', fields=[gql.Field(name='data', type=gql.String)]
 )
@@ -89,25 +84,6 @@ DatasetTableMetadataItem = gql.ObjectType(
     fields=[
         gql.Field(name='Name', type=gql.String),
         gql.Field(name='Type', type=gql.String),
-    ],
-)
-
-
-DatasetTablePreviewResult = gql.ObjectType(
-    name='DatasetTablePreviewResult',
-    fields=[
-        gql.Field(name='queryExecutionId', type=gql.ID),
-        gql.Field(name='status', type=DatasetTablePreviewStatus.toGraphQLEnum()),
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='nodes', type=gql.ArrayType(DatasetTableRecord)),
-        gql.Field(name='schema', type=gql.ArrayType(DatasetTableMetadataItem)),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )
 

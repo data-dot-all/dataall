@@ -3,6 +3,7 @@ import logging
 
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
+from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
@@ -30,7 +31,7 @@ from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DA
     DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ, IMPORT_DATASET
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
@@ -54,6 +55,9 @@ class DatasetService:
 
     @staticmethod
     def check_imported_resources(dataset: Dataset):
+        if dataset.importedGlueDatabase:
+            if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
+                raise exceptions.InvalidInput(param_name="GlueDatabaseName", param_value=dataset.GlueDatabaseName, constraint=f"less than {NamingConventionPattern.GLUE.value.get('max_length')} characters")
         kms_alias = dataset.KmsAlias
 
         s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
@@ -113,6 +117,7 @@ class DatasetService:
                 session=session,
                 env=environment,
                 dataset=dataset,
+                data=data
             )
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -132,6 +137,7 @@ class DatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=Dataset.__name__,
                 )
+
             if environment.SamlGroupName != dataset.SamlAdminGroupName:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
@@ -393,7 +399,7 @@ class DatasetService:
             env = EnvironmentService.get_environment_by_uri(
                 session, dataset.environmentUri
             )
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
+            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session=session, dataset_uri=uri)
             if shares:
                 raise exceptions.UnauthorizedOperation(
                     action=DELETE_DATASET,

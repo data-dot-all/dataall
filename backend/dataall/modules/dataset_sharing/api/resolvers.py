@@ -4,9 +4,9 @@ from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
-from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
@@ -126,6 +126,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
+                'description' : ds.description
             }
 
 
@@ -143,7 +144,7 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         if source.principalType in ['Group', 'ConsumptionRole']:
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = Organization.get_organization_by_uri(
+            organization = OrganizationRepository.get_organization_by_uri(
                 session, environment.organizationUri
             )
             if source.principalType in ['ConsumptionRole']:
@@ -181,18 +182,12 @@ def resolve_group(context: Context, source: ShareObject, **kwargs):
 def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
-        if ds:
-            S3AccessPointName = utils.slugify(
-                source.datasetUri + '-' + source.principalId,
-                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
-            )
-            return {
-                's3AccessPointName': S3AccessPointName,
-                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
-                's3bucketName': ds.S3BucketName,
-            }
+    return ShareObjectService.resolve_share_object_consumption_data(
+        uri=source.shareUri,
+        datasetUri=source.datasetUri,
+        principalId=source.principalId,
+        environmentUri=source.environmentUri
+    )
 
 
 def resolve_share_object_statistics(context: Context, source: ShareObject, **kwargs):

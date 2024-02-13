@@ -9,7 +9,6 @@
     "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
     "tooling_vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",
     "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
-    "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
     "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",

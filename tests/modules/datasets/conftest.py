@@ -6,12 +6,12 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.modules.dataset_sharing.db.enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
-from dataall.modules.datasets.api.dataset.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation, DatasetBucket
+from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -45,7 +45,8 @@ def dataset(client, patch_es, patch_dataset_methods):
         name: str,
         owner: str,
         group: str,
-        confidentiality: str = None
+        confidentiality: str = None,
+        autoApprovalEnabled: bool = False
     ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -95,6 +96,7 @@ def dataset(client, patch_es, patch_dataset_methods):
                     topics
                     language
                     confidentiality
+                    autoApprovalEnabled
                     organization{
                         organizationUri
                         label
@@ -149,7 +151,8 @@ def dataset(client, patch_es, patch_dataset_methods):
                 'environmentUri': env.environmentUri,
                 'SamlAdminGroupName': group or random_group(),
                 'organizationUri': org.organizationUri,
-                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value
+                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value,
+                'autoApprovalEnabled': autoApprovalEnabled
 
             },
         )
@@ -205,6 +208,7 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
         group=group.name,
     )
 
+
 @pytest.fixture(scope='module')
 def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
     yield dataset(
@@ -215,6 +219,7 @@ def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Da
         group=group.name,
         confidentiality=ConfidentialityClassification.Secret.value
     )
+
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
@@ -229,6 +234,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
+
 
 @pytest.fixture(scope='module')
 def table_confidential_fixture(db, dataset_confidential_fixture, table, group, user):
@@ -267,7 +273,8 @@ def dataset_model(db):
     def factory(
         organization: Organization,
         environment: Environment,
-        label: str
+        label: str,
+        autoApprovalEnabled: bool = False
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -286,6 +293,7 @@ def dataset_model(db):
                 region=environment.region,
                 IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
                 IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
+                autoApprovalEnabled = autoApprovalEnabled
             )
             session.add(dataset)
             session.commit()
@@ -420,4 +428,3 @@ def random_tag():
 
 def random_tags():
     return [random_tag() for i in range(1, random.choice([2, 3, 4, 5]))]
-

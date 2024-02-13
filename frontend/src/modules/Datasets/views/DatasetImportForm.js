@@ -122,7 +122,8 @@ const DatasetImportForm = (props) => {
           KmsKeyAlias: values.KmsKeyAlias,
           glueDatabaseName: values.glueDatabaseName,
           stewards: values.stewards,
-          confidentiality: values.confidentiality
+          confidentiality: values.confidentiality,
+          autoApprovalEnabled: values.autoApprovalEnabled
         })
       );
       if (!response.errors) {
@@ -222,7 +223,8 @@ const DatasetImportForm = (props) => {
                 glueDatabaseName: '',
                 bucketName: '',
                 KmsKeyAlias: '',
-                confidentiality: ''
+                confidentiality: '',
+                autoApprovalEnabled: false
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -242,7 +244,10 @@ const DatasetImportForm = (props) => {
                   .required('*S3 bucket name is required'),
                 confidentiality: Yup.string()
                   .max(255)
-                  .required('*Confidentiality is required')
+                  .required('*Confidentiality is required'),
+                autoApprovalEnabled: Yup.boolean().required(
+                  '*AutoApproval property is required'
+                )
               })}
               onSubmit={async (
                 values,
@@ -379,6 +384,24 @@ const DatasetImportForm = (props) => {
                               }}
                             />
                           </Box>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            label="Auto Approval"
+                            name="autoApprovalEnabled"
+                            onChange={handleChange}
+                            select
+                            value={values.autoApprovalEnabled}
+                            variant="outlined"
+                          >
+                            <MenuItem key={'Enabled'} value={true}>
+                              Enabled
+                            </MenuItem>
+                            <MenuItem key={'Enabled'} value={false}>
+                              Disabled
+                            </MenuItem>
+                          </TextField>
                         </CardContent>
                       </Card>
                     </Grid>

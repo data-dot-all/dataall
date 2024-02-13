@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 
-from dataall.core.environment.api.enums import EnvironmentPermission
+from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
 
 class Environment(Resource, Base):
@@ -18,7 +18,7 @@ class Environment(Resource, Base):
     resourcePrefix = Column(String, nullable=False, default='dataall')
 
     validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
+    environmentType = Column(String, nullable=False, default=EnvironmentType.Data.value)
     isOrganizationDefaultEnvironment = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
     EnvironmentDefaultIAMRoleImported = Column(Boolean, default=False)
