@@ -58,7 +58,6 @@ import {
   isModuleEnabled,
   ModuleNames
 } from 'utils';
-import config from '../../../generated/config.json';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
