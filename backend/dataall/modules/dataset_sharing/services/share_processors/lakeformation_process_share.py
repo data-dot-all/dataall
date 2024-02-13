@@ -270,7 +270,6 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if self.cross_account:
                         self.check_target_account_permissions_to_source_table()
-                            # self.tbl_level_errors.append("MISSING TARGET ACCOUNT PERMISSIONS SOURCE TABLE")
 
                         if not RamClient.check_ram_invitation_status(
                             source_account_id=self.source_environment.AwsAccountId,
@@ -281,7 +280,7 @@ class ProcessLakeFormationShare(LFShareManager):
                             source_table=table
                         ):
                             self.tbl_level_errors.append(
-                                format_error_message(self.tbl_level_errors, self.target_environment.AwsAccountId, "RAM Invitation", "Accepted", "Glue Table", f"{self.dataset.GlueDatabaseName}.{table}")
+                                format_error_message(self.target_environment.AwsAccountId, "RAM Invitation", "Accepted", "Glue Table", f"{self.dataset.GlueDatabaseName}.{table}")
                             )
 
                     self.verify_resource_link_table_exists_in_target_database(table)                    
@@ -296,7 +295,7 @@ class ProcessLakeFormationShare(LFShareManager):
                         self.session, 
                         share_item, 
                         ShareItemHealthStatus.Unhealthy.value, 
-                        " | ".join(self.db_level_errors) + " | ".join(self.tbl_level_errors),
+                        " | ".join(self.db_level_errors) + " | " + " | ".join(self.tbl_level_errors),
                         datetime.now()
                     )
                 else:

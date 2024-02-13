@@ -9,7 +9,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils, format_error_message
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
@@ -79,7 +79,8 @@ class S3BucketShareManager:
             IAM_S3BUCKET_ROLE_POLICY,
         )
         if not existing_policy:
-            return False
+            self.bucket_errors.append(format_error_message(None, None, None, IAM_S3BUCKET_ROLE_POLICY, self.target_requester_IAMRoleName))
+            return
             
         key_alias = f"alias/{self.target_bucket.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
@@ -104,21 +105,28 @@ class S3BucketShareManager:
             target_resources=s3_target_resources,
             existing_policy_statement=existing_policy["Statement"][0],
         ):
-            return False
+            self.bucket_errors.append(
+                format_error_message(self.target_requester_IAMRoleName, "IAM Policy", IAM_S3BUCKET_ROLE_POLICY, "S3 Bucket", f"{self.bucket_name}")
+            )
 
         if kms_key_id:
-            if len(existing_policy["Statement"]) <= 1:
-                return False
+            kms_error = False
             kms_target_resources = [
                 f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
             ]
-            if not share_manager.check_resource_in_policy_statement(
+            if len(existing_policy["Statement"]) <= 1:
+                kms_error = True
+            elif not share_manager.check_resource_in_policy_statement(
                 target_resources=kms_target_resources,
                 existing_policy_statement=existing_policy["Statement"][1],
             ):
-                return False
-        return True
+                kms_error = True
 
+            if kms_error:
+                self.bucket_errors.append(
+                    format_error_message(self.target_requester_IAMRoleName, "IAM Policy", IAM_S3BUCKET_ROLE_POLICY, "KMS Key", f"{kms_key_id}")
+                )
+        return
 
     def grant_s3_iam_access(self):
         """
@@ -250,7 +258,6 @@ class S3BucketShareManager:
         )]
         return exceptions_roleId
 
-
     def check_role_bucket_policy(self) -> bool:
         """
         This function checks if the bucket policy grants read only access to accepted share roles.
@@ -260,11 +267,15 @@ class S3BucketShareManager:
         bucket_policy = self.get_bucket_policy_or_default()
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+        error = False
         if DATAALL_READ_ONLY_SID not in statements.keys():
-            return False
+            error = True
         elif f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
-            return False
-        return True
+            error = True
+        if error:
+            self.bucket_errors.append(
+                format_error_message(target_requester_arn, "Bucket Policy", DATAALL_READ_ONLY_SID, "S3 Bucket", f"{self.bucket_name}")
+            )
 
     def grant_role_bucket_policy(self):
         """
@@ -348,19 +359,24 @@ class S3BucketShareManager:
         existing_policy = kms_client.get_key_policy(kms_key_id)
 
         if not existing_policy:
-            return False
+            self.bucket_errors.append(format_error_message(None, None, None, "KMS Key Policy", kms_key_id))
+            return
         
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         existing_policy = json.loads(existing_policy)
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
 
+        error = False
         if DATAALL_BUCKET_KMS_DECRYPT_SID not in statements.keys():
-            return False
-        
-        if f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID]):
-            return False
-        return True
+            error = True
+        elif f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID]):
+            error = True
+        if error:
+            self.bucket_errors.append(
+                format_error_message(self.target_requester_IAMRoleName, "KMS Key Policy", DATAALL_BUCKET_KMS_DECRYPT_SID, "KMS Key", f"{kms_key_id}")
+            )
+        return
         
     def grant_dataset_bucket_key_policy(self):
         if (self.target_bucket.imported and self.target_bucket.importedKmsKey) or not self.target_bucket.imported:

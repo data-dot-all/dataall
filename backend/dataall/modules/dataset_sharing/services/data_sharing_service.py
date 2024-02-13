@@ -329,7 +329,7 @@ class DataSharingService:
             ) = ShareObjectRepository.get_share_data_items(session, share_uri, None, ShareItemHealthStatus.PendingReApply.value)
 
         log.info(f'Reapply permissions to folders: {reapply_folders}')
-        approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+        reapply_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
             session,
             dataset,
             share,
@@ -340,10 +340,10 @@ class DataSharingService:
             env_group,
             True
         )
-        log.info(f'reapply folders succeeded = {approved_folders_succeed}')
+        log.info(f'reapply folders succeeded = {reapply_folders_succeed}')
 
         log.info('Reapply permissions to S3 buckets')
-        approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+        reapply_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
             session,
             dataset,
             share,
@@ -354,10 +354,10 @@ class DataSharingService:
             env_group,
             True
         )
-        log.info(f'Reapply s3 buckets succeeded = {approved_s3_buckets_succeed}')
+        log.info(f'Reapply s3 buckets succeeded = {reapply_s3_buckets_succeed}')
 
         log.info(f'Reapply permissions to tables: {reapply_tables}')
-        approved_tables_succeed = ProcessLakeFormationShare(
+        reapply_tables_succeed = ProcessLakeFormationShare(
             session,
             dataset,
             share,
@@ -367,8 +367,8 @@ class DataSharingService:
             env_group,
             True
         ).process_approved_shares()
-        log.info(f'Reapply tables succeeded = {approved_tables_succeed}')
+        log.info(f'Reapply tables succeeded = {reapply_tables_succeed}')
 
-        return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
+        return reapply_folders_succeed and reapply_s3_buckets_succeed and reapply_tables_succeed
 
         

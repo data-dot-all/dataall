@@ -9,7 +9,7 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 logger = logging.getLogger(__name__)
 
 
-def format_error_message(self, requestor, permission_type, permissions, resource_type, target_resource):
+def format_error_message(requestor, permission_type, permissions, resource_type, target_resource):
     if isinstance(requestor, list):
         requestor = ",".join(requestor)
     if isinstance(permissions, list):

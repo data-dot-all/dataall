@@ -113,7 +113,7 @@ class LFShareManager:
             self.check_table_exists_in_source_database(share_item, table)
         except:
             self.tbl_level_errors.append(
-                format_error_message(self.tbl_level_errors, None, None, None, "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
+                format_error_message(None, None, None, "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
             )
         
     def check_table_exists_in_source_database(
@@ -145,7 +145,7 @@ class LFShareManager:
     ) -> True:
         if not self.check_resource_link_table_exists_in_target_database(table):
             self.tbl_level_errors.append(
-                format_error_message(self.tbl_level_errors, None, None, None, "Glue Table", f"{self.target_environment.AwsAccountId}/{table.GlueDatabaseName}.{table.GlueTableName}")
+                format_error_message(None, None, None, "Resource Link Table", f"{self.target_environment.AwsAccountId}/{table.GlueDatabaseName}.{table.GlueTableName}")
             )        
 
     def check_resource_link_table_exists_in_target_database(
@@ -204,7 +204,7 @@ class LFShareManager:
         """
         if not self.glue_client_in_target.get_glue_database():
             self.db_level_errors.append(
-                format_error_message(self.db_level_errors, None, None, None, "Glue DB", self.dataset.GlueDatabaseName)
+                format_error_message(None, None, None, "Glue DB", self.dataset.GlueDatabaseName)
             )
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
@@ -241,7 +241,7 @@ class LFShareManager:
             permissions=['ALL'],
         ):
             self.db_level_errors.append(
-                format_error_message(self.db_level_errors, principal, "LF", ['ALL'], "Glue DB", self.dataset.GlueDatabaseName)
+                format_error_message(principal, "LF", ['ALL'], "Glue DB", self.dataset.GlueDatabaseName)
             )
 
     def check_pivot_role_permissions_to_shared_database(self) -> bool:
@@ -256,7 +256,7 @@ class LFShareManager:
             permissions=['ALL'],
         ):
             self.db_level_errors.append(
-                format_error_message(self.db_level_errors, principal, "LF", ['ALL'], "Glue DB", self.shared_db_name)
+                format_error_message(principal, "LF", ['ALL'], "Glue DB", self.shared_db_name)
             )
     
     # TODO: FIX WITH CHECK OF OTHER SHARE PRINCIPAL
@@ -271,7 +271,7 @@ class LFShareManager:
             permissions=['DESCRIBE'],
         ):
             self.db_level_errors.append(
-                format_error_message(self.db_level_errors, self.principals, "LF", ['DESCRIBE'], "Glue DB", self.shared_db_name)
+                format_error_message(self.principals, "LF", ['DESCRIBE'], "Glue DB", self.shared_db_name)
             )
 
     def check_target_account_permissions_to_source_table(self, table: DatasetTable) -> bool:
@@ -289,7 +289,7 @@ class LFShareManager:
             permissions_with_grant_options=['DESCRIBE', 'SELECT']
         ):
             self.tbl_level_errors.append(
-                format_error_message(self.tbl_level_errors, self.target_environment.AwsAccountId, "LF", ['DESCRIBE', 'SELECT'], "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
+                format_error_message(self.target_environment.AwsAccountId, "LF", ['DESCRIBE', 'SELECT'], "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
             )
 
     def grant_principals_database_permissions_to_shared_database(self) -> True:
@@ -381,7 +381,7 @@ class LFShareManager:
             permissions=['DESCRIBE', 'SELECT']
         ):
             self.tbl_level_errors.append(
-                format_error_message(self.tbl_level_errors, self.principals, "LF", ['DESCRIBE', 'SELECT'], "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
+                format_error_message(self.principals, "LF", ['DESCRIBE', 'SELECT'], "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
             )     
    
     def check_principals_permissions_to_table_in_target(self, table: DatasetTable) -> bool:
@@ -398,7 +398,7 @@ class LFShareManager:
             permissions=['DESCRIBE']
         ):
             self.tbl_level_errors.append(
-                format_error_message(self.tbl_level_errors, self.principals, "LF", ['DESCRIBE'], "Glue Table", f"{self.shared_db_name}.{table.GlueTableName}")
+                format_error_message(self.principals, "LF", ['DESCRIBE'], "Glue Table", f"{self.shared_db_name}.{table.GlueTableName}")
             )        
 
     def revoke_principals_permissions_to_resource_link_table(self, table: DatasetTable, other_table_shares_in_env: bool) -> True:

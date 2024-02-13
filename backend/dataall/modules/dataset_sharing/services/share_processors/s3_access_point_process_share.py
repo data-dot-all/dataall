@@ -100,20 +100,17 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 else:
-                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Healthy.value, None)
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now())
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
                 if not reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(session, sharing_item, new_state)
-                    # statements which can throw exceptions but are not critical
-                    sharing_folder.handle_share_failure(e)
                 else:
-                    #TODO: HANDLE REAPPLY FAILURE
-                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e))
-                    sharing_folder.handle_share_failure(e)
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), sharing_item.lastVerificationTime)
                 success = False
+                sharing_folder.handle_share_failure(e)
         return success
 
     @classmethod
@@ -244,7 +241,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         log.info(
             '##### Verifying folders shares #######'
         )
-        success = True
         for folder in share_folders:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
@@ -262,32 +258,31 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 source_env_group,
                 env_group,
             )
-            folder_errors = []
+            sharing_folder.folder_errors = []
             try:
-                if not sharing_folder.check_bucket_policy():
-                    folder_errors.append("MISSING DELEGATE ACCESS POINT BUCKET POLICY")
-
-                if not sharing_folder.check_target_role_access_policy():
-                    folder_errors.append("MISSING PERMISSION IN TARGET ROLE IAM POLICY")
-
-                if not sharing_folder.check_access_point_and_policy():
-                    folder_errors.append("MISSING PERMISSION IN S3 ACCESS POINT")
+                sharing_folder.check_bucket_policy()
+                sharing_folder.check_target_role_access_policy()
+                sharing_folder.check_access_point_and_policy()
 
                 if not dataset.imported or dataset.importedKmsKey:
                     sharing_folder.check_dataset_bucket_key_policy()
-
-
-                print("\n\n\n\n\n")
-                print(folder_errors)
-                print("\n\n\n\n\n")
-                if len(folder_errors):
-                    sharing_item.healthMessage = " | ".join(folder_errors)
-                    sharing_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
-                else:
-                    sharing_item.healthMessage = None
-                    sharing_item.healthStatus = ShareItemHealthStatus.Healthy.value
-                sharing_item.lastVerificationTime = datetime.now()
-
             except Exception as e:
-                print(e)
+                sharing_folder.folder_errors = [str(e)]
+
+            if len(sharing_folder.folder_errors):
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_folder.session, 
+                    sharing_item, 
+                    ShareItemHealthStatus.Unhealthy.value, 
+                    " | ".join(sharing_folder.folder_errors),
+                    datetime.now()
+                )
+            else:
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_folder.session, 
+                    sharing_item, 
+                    ShareItemHealthStatus.Healthy.value, 
+                    None,
+                    datetime.now()
+                )
         return True

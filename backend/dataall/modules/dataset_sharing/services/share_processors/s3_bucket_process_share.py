@@ -94,19 +94,17 @@ class ProcessS3BucketShare(S3BucketShareManager):
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 else:
-                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Healthy.value, None)
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now())
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
                 if not reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(session, sharing_item, new_state)
-                    sharing_bucket.handle_share_failure(e)
                 else:
-                    #TODO: HANDLE REAPPLY FAILURE
-                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e))
-                    sharing_bucket.handle_share_failure(e)
+                    ShareObjectRepository.update_share_item_health_status(session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), sharing_item.lastVerificationTime)
                 success = False
+                sharing_bucket.handle_share_failure(e)
         return success
 
     @classmethod
@@ -199,7 +197,6 @@ class ProcessS3BucketShare(S3BucketShareManager):
         log.info(
             '##### Verifying S3 bucket share #######'
         )
-        success = True
         for shared_bucket in buckets_to_verify:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
@@ -217,29 +214,30 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 source_env_group,
                 env_group
             )
-            bucket_errors = []
+            sharing_bucket.bucket_errors = []
             try:
-                if not sharing_bucket.check_role_bucket_policy():
-                    bucket_errors.append("MISSING PERMISSION TO TARGET ROLE IN BUCKET POLICY")
-                    
-                if not sharing_bucket.check_s3_iam_access():
-                    bucket_errors.append("MISSING PERMISSION IN TARGET ROLE IAM POLICY")
-                    
+                sharing_bucket.check_role_bucket_policy()
+                sharing_bucket.check_s3_iam_access()
+
                 if not dataset.imported or dataset.importedKmsKey:
-                    if not sharing_bucket.check_dataset_bucket_key_policy():
-                        bucket_errors.append("MISSING PERMISSION TO TARGET ROLE IN KMS KEY POLICY ")
-
-
-                print("\n\n\n\n\n")
-                print(bucket_errors)
-                print("\n\n\n\n\n")
-                if len(bucket_errors):
-                    sharing_item.healthMessage = " | ".join(bucket_errors)
-                    sharing_item.healthStatus = ShareItemHealthStatus.Unhealthy.value
-                else:
-                    sharing_item.healthMessage = None
-                    sharing_item.healthStatus = ShareItemHealthStatus.Healthy.value
-                sharing_item.lastVerificationTime = datetime.now()
+                    sharing_bucket.check_dataset_bucket_key_policy()
             except Exception as e:
-                print(e)
+                sharing_bucket.bucket_errors = [str(e)]
+
+            if len(sharing_bucket.bucket_errors):
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_bucket.session, 
+                    sharing_item, 
+                    ShareItemHealthStatus.Unhealthy.value, 
+                    " | ".join(sharing_bucket.bucket_errors),
+                    datetime.now()
+                )
+            else:
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_bucket.session, 
+                    sharing_item, 
+                    ShareItemHealthStatus.Healthy.value, 
+                    None,
+                    datetime.now()
+                )
         return True
