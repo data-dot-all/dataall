@@ -129,7 +129,7 @@ class IAM:
             account_id: str,
             policy_name):
         try:
-            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
             iamcli.delete_policy(
                 PolicyArn=arn
@@ -145,10 +145,10 @@ class IAM:
             policy_name: str,
             policy: str):
         try:
-            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
-            policy = iamcli.get_policy(PolicyArn=arn)
-            versionId = policy['Policy']['DefaultVersionId']
+            policy_obj = iamcli.get_policy(PolicyArn=arn)
+            versionId = policy_obj['Policy']['DefaultVersionId']
 
             iamcli.create_policy_version(
                 PolicyArn=arn,
@@ -169,7 +169,7 @@ class IAM:
             policy_name: str):
 
         try:
-            arn = IAM.get_role_arn_by_name(account_id, policy_name)
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
             iamcli.detach_role_policy(
                 RoleName=role_name,
