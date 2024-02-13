@@ -485,9 +485,9 @@ class EnvironmentService:
         )
 
     @staticmethod
-    def _delete_managed_policies_for_consumption_role(environment, iam_role_name):
-        bucket_policy_name = f'dataall-env-{environment.environmentUri}-bucket-share-{iam_role_name}'
-        accesspoint_policy_name = f'dataall-env-{environment.environmentUri}-accesspoint-share-{iam_role_name}'
+    def _delete_managed_policies_for_consumption_role(environment,consumption_role_name, iam_role_name):
+        bucket_policy_name = f'dataall-env-{environment.environmentUri}-bucket-share-{consumption_role_name}'
+        accesspoint_policy_name = f'dataall-env-{environment.environmentUri}-accesspoint-share-{consumption_role_name}'
 
         IAM.detach_policy_from_role(
             account_id=environment.AwsAccountId,
@@ -536,8 +536,9 @@ class EnvironmentService:
         )
 
         environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        role_name = consumption_role.consumptionRoleName
-        EnvironmentService._delete_managed_policies_for_consumption_role(environment, role_name)
+        consumption_role_name = consumption_role.consumptionRoleName
+        iam_role_name = consumption_role.IAMRoleName
+        EnvironmentService._delete_managed_policies_for_consumption_role(environment, consumption_role_name, iam_role_name)
 
         return True
 
