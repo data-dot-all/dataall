@@ -1,3 +1,4 @@
+from warnings import warn
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
@@ -7,9 +8,10 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
+from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
@@ -18,6 +20,7 @@ from dataall.modules.dataset_sharing.services.share_notification_service import 
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
     GET_SHARE_OBJECT
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -195,6 +198,17 @@ class ShareObjectService:
                 share=share
             ).notify_share_object_submission(email_id=context.username)
 
+            # if parent dataset has auto-approve flag, we trigger the next transition to approved state
+            if dataset.autoApprovalEnabled:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
+                share = cls.approve_share_object(uri=share.shareUri)
+
             return share
 
     @classmethod
@@ -206,15 +220,18 @@ class ShareObjectService:
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-            share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
-            for table in share_table_items:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=share.principalId,
-                    permissions=DATASET_TABLE_READ,
-                    resource_uri=table.itemUri,
-                    resource_type=DatasetTable.__name__,
+            if share.groupUri != dataset.SamlAdminGroupName:
+                share_table_items = ShareObjectRepository.find_all_share_items(
+                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
                 )
+                for table in share_table_items:
+                    ResourcePolicy.attach_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        permissions=DATASET_TABLE_READ,
+                        resource_uri=table.itemUri,
+                        resource_type=DatasetTable.__name__,
+                    )
 
             share.rejectPurpose = ""
             session.commit()
@@ -233,7 +250,6 @@ class ShareObjectService:
             session.add(approve_share_task)
 
         Worker.queue(engine=context.db_engine, task_ids=[approve_share_task.taskUri])
-
         return share
 
     @staticmethod
@@ -261,11 +277,6 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Reject)
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
 
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose
@@ -295,6 +306,28 @@ class ShareObjectService:
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
+                # Delete share resource policy permissions
+                # Deleting REQUESTER permissions
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=share.shareUri,
+                )
+
+                # Deleting APPROVER permissions
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    resource_uri=share.shareUri,
+                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
+
+                # Delete share
                 session.delete(share)
 
             return True
@@ -322,6 +355,35 @@ class ShareObjectService:
             )
             return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items,
                     'failedItems': failed_items, 'pendingItems': pending_items}
+
+    @staticmethod
+    def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
+        with get_context().db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
+            if dataset:
+                environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+                S3AccessPointName = utils.slugify(
+                    datasetUri + '-' + principalId,
+                    max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+                )
+                old_shared_db_name = f"{dataset.GlueDatabaseName}_shared_{uri}"[:254]
+                database = GlueClient(
+                    account_id=environment.AwsAccountId,
+                    region=environment.region,
+                    database=old_shared_db_name
+                ).get_glue_database()
+                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                sharedGlueDatabase = old_shared_db_name if database else f"{dataset.GlueDatabaseName}_shared"
+                return {
+                    's3AccessPointName': S3AccessPointName,
+                    'sharedGlueDatabase': sharedGlueDatabase,
+                    's3bucketName': dataset.S3BucketName,
+                }
+            return {
+                's3AccessPointName': "Not Created",
+                'sharedGlueDatabase': "Not Created",
+                's3bucketName': "Not Created",
+            }
 
     @staticmethod
     def list_shares_in_my_inbox(filter: dict):

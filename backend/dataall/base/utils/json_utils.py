@@ -22,6 +22,10 @@ def json_decoder(x):
         return str(x)
     if hasattr(x, '__table__'):
         return to_json(x)
+    if isinstance(x, bytes):
+        return str(x)
+    if isinstance(x, bytearray):
+        return str(x)
     return x
 
 
@@ -56,6 +60,8 @@ def to_json(record):
             (datetime.now() - startquery).total_seconds(),
         )
         return to_json(items)
+    elif type(record) in [bytes, bytearray]:
+        return json_decoder(record)
     else:
         return json.loads(json.dumps(record.to_dict(), default=json_decoder))
 

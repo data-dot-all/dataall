@@ -1,5 +1,5 @@
 from dataall.base.api.constants import *
-from dataall.modules.dataset_sharing.api.enums import ShareableType, ShareSortField
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, ShareSortField
 
 
 NewShareObjectInput = gql.InputType(

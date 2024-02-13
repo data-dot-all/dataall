@@ -26,7 +26,7 @@ class DashboardRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def update_env(session, environment):
+    def update_env(session, environment, **kwargs):
         return EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
 
     @staticmethod

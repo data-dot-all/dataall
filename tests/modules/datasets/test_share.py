@@ -1,13 +1,12 @@
 import random
 import typing
-from unittest.mock import MagicMock
 
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.dataset_sharing.api.enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM, ShareObjectSM
@@ -133,6 +132,34 @@ def env2group(environment_group: typing.Callable, env2, user2, group2) -> Enviro
     )
 
 
+
+@pytest.fixture(scope='module')
+def dataset3(
+        dataset_model: typing.Callable, org2: Organization, env2: Environment
+) -> Dataset:
+    yield dataset_model(
+        organization=org2,
+        environment=env2,
+        label="datasettoshare3",
+        autoApprovalEnabled=True
+    )
+
+
+@pytest.fixture(scope='module')
+def tables3(table, dataset3):
+    for i in range(1, 100):
+        table(dataset3, name=random_table_name(), username=dataset3.owner)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def table3(table: typing.Callable, dataset3: Dataset) -> DatasetTable:
+    yield table(
+        dataset=dataset3,
+        name="table3",
+        username='bob'
+    )
+
+
 @pytest.fixture(scope='function')
 def share1_draft(
         db,
@@ -196,6 +223,28 @@ def share1_draft(
         shareUri=share1.shareUri
     )
 
+@pytest.fixture(scope='function')
+def share_autoapprove_draft(
+        db,
+        client,
+        user2,
+        group2,
+        share: typing.Callable,
+        dataset3: Dataset,
+        env2: Environment,
+        env2group: EnvironmentGroup,
+) -> ShareObject:
+    share1 = share(
+        dataset=dataset3,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.username,
+        status=ShareObjectStatus.Draft.value
+    )
+
+    yield share1
+
+
 
 @pytest.fixture(scope='function')
 def share1_item_pa(
@@ -207,6 +256,20 @@ def share1_item_pa(
     yield share_item(
         share=share1_draft,
         table=table1,
+        status=ShareItemStatus.PendingApproval.value
+    )
+
+
+@pytest.fixture(scope='function')
+def share_autoapprove_item_pa(
+        share_item: typing.Callable,
+        share_autoapprove_draft: ShareObject,
+        table3: DatasetTable
+) -> ShareObjectItem:
+    # Cleaned up with share1_draft
+    yield share_item(
+        share=share_autoapprove_draft,
+        table=table3,
         status=ShareItemStatus.PendingApproval.value
     )
 
@@ -1194,6 +1257,53 @@ def test_submit_share_request(
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     status = shareItem['status']
     assert status == ShareItemStatus.PendingApproval.name
+
+
+def test_submit_share_request_with_auto_approval(
+        client, user2, group2, share_autoapprove_draft, share_autoapprove_item_pa,
+):
+    # Given
+    # Existing share object in status Draft (-> fixture share1_draft)
+    # with existing share item in status Pending Approval (-> fixture share1_item_pa)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share_autoapprove_draft.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Draft.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share_autoapprove_item_pa.shareItemUri
+    assert shareItem.status == ShareItemStatus.PendingApproval.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
+
+    # When
+    # Submit share object
+    submit_share_object_response = submit_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share_autoapprove_draft.shareUri
+    )
+
+    # Then share object status is changed to Submitted
+    assert submit_share_object_response.data.submitShareObject.status == ShareObjectStatus.Approved.name
+    assert submit_share_object_response.data.submitShareObject.userRoleForShareObject == 'ApproversAndRequesters'
+
+    # and share item status stays in PendingApproval
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share_autoapprove_draft.shareUri,
+        filter={"isShared": True}
+    )
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    status = shareItem['status']
+    assert status == ShareItemStatus.Share_Approved.name
 
 
 def test_update_share_reject_purpose(client, share2_submitted, user, group):

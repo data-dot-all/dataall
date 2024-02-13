@@ -10,7 +10,7 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 from tests.core.permissions.test_permission import *
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.services.organization_service import OrganizationService
 
 
 def test_attach_resource_policy(db, user, group, dataset_fixture):
@@ -68,7 +68,7 @@ def test_unauthorized_resource_policy(
 
 def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
-        set_context(RequestContext(db, user.username, [group.name]))
+        set_context(RequestContext(db, user.username, [group.name], user_id=user.username))
 
         TenantPolicy.attach_group_tenant_policy(
             session=session,
@@ -76,8 +76,7 @@ def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
             permissions=TENANT_ALL,
             tenant_name='dataall',
         )
-        org_with_perm = Organization.create_organization(
-            session=session,
+        org_with_perm = OrganizationService.create_organization(
             data={
                 'label': 'OrgWithPerm',
                 'SamlGroupName': group.name,

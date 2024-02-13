@@ -28,13 +28,11 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('AwsAccountId', gql.NonNullableType(gql.String)),
         gql.Argument('region', gql.NonNullableType(gql.String)),
-        gql.Argument('vpcId', gql.String),
-        gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('EnvironmentDefaultIAMRoleArn', gql.String),
         gql.Argument('resourcePrefix', gql.String),
-        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
-
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 
@@ -45,11 +43,10 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('SamlGroupName', gql.String),
-        gql.Argument('vpcId', gql.String),
-        gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
-        gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('resourcePrefix', gql.String),
-        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
+        gql.Argument('vpcId', gql.String),
+        gql.Argument('subnetIds', gql.ArrayType(gql.String))
     ],
 )
 
@@ -119,5 +116,13 @@ ConsumptionRoleFilter = gql.InputType(
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
         gql.Argument(name='groupUri', type=gql.String),
+    ],
+)
+
+UpdateConsumptionRoleInput = gql.InputType(
+    name='UpdateConsumptionRoleInput',
+    arguments=[
+        gql.Argument('consumptionRoleName', gql.String),
+        gql.Argument('groupUri', gql.String),
     ],
 )

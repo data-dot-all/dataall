@@ -57,6 +57,7 @@ class BackendStack(Stack):
         codeartifact_pip_repo_name=None,
         reauth_config=None,
         cognito_user_session_timeout_inmins=43200,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -113,18 +114,41 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        cognito_stack = IdpStack(
-            self,
-            f'Cognito',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            internet_facing=internet_facing,
-            tooling_account_id=tooling_account_id,
-            enable_cw_rum=enable_cw_rum,
-            vpc=vpc,
-            cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
-            **kwargs,
-        )
+        cognito_stack = None
+        if custom_auth is None:
+            cognito_stack = IdpStack(
+                self,
+                f'Cognito',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                internet_facing=internet_facing,
+                tooling_account_id=tooling_account_id,
+                enable_cw_rum=enable_cw_rum,
+                vpc=vpc,
+                cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
+                **kwargs,
+            )
+        else:
+            cross_account_frontend_config_role = iam.Role(
+                self,
+                f'{resource_prefix}-{envname}-frontend-config-role',
+                role_name=f'{resource_prefix}-{envname}-frontend-config-role',
+                assumed_by=iam.AccountPrincipal(tooling_account_id),
+            )
+            cross_account_frontend_config_role.add_to_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        'ssm:GetParameterHistory',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        'ssm:GetParametersByPath'
+                    ],
+                    resources=[
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*'
+                    ],
+                ),
+            )
 
         sqs_stack = SqsStack(
             self,
@@ -160,12 +184,13 @@ class BackendStack(Stack):
             ip_ranges=ip_ranges,
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
-            user_pool=cognito_stack.user_pool,
+            user_pool=cognito_stack.user_pool if custom_auth is None else None,
             pivot_role_name=self.pivot_role_name,
             reauth_ttl=reauth_config.get("ttl", 5) if reauth_config else 5,
             email_notification_sender_email_id=email_sender,
             email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
             ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
+            custom_auth=custom_auth,
             **kwargs,
         )
 
@@ -342,7 +367,7 @@ class BackendStack(Stack):
         else:
             self.create_opensearch_stack()
 
-        if enable_cw_rum:
+        if enable_cw_rum and custom_auth is None:
             CloudWatchRumStack(
                 self,
                 'CWRumStack',

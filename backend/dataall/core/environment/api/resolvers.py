@@ -11,7 +11,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
-from dataall.core.environment.db.environment_models import EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
@@ -19,8 +19,8 @@ from dataall.core.permissions.db.resource_policy_repositories import ResourcePol
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
-from dataall.core.vpc.db.vpc_repositories import Vpc
-from dataall.base.db import exceptions
+from dataall.core.vpc.services.vpc_service import VpcService
+from dataall.base.aws.ec2_client import EC2
 from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
@@ -43,7 +43,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region):
+def check_environment(context: Context, source, account_id, region, data):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account assuming cdk_look_up_role
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
@@ -71,11 +71,25 @@ def check_environment(context: Context, source, account_id, region):
                 action='CHECK_PIVOT_ROLE',
                 message='Pivot Role has not been created in the Environment AWS Account',
             )
+    mlStudioEnabled = None
+    for parameter in data.get("parameters", []):
+        if parameter['key'] == 'mlStudiosEnabled':
+            mlStudioEnabled = parameter['value']
+
+    if mlStudioEnabled and data.get("vpcId", None) and data.get("subnetIds", []):
+        log.info("Check if ML Studio VPC Exists in the Account")
+        EC2.check_vpc_exists(
+            AwsAccountId=account_id,
+            region=region,
+            role=cdk_look_up_role_arn,
+            vpc_id=data.get("vpcId", None),
+            subnet_ids=data.get('subnetIds', []),
+        )
 
     return cdk_role_name
 
 
-def create_environment(context: Context, source, input=None):
+def create_environment(context: Context, source, input={}):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
             action=permissions.LINK_ENVIRONMENT,
@@ -85,8 +99,10 @@ def create_environment(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         cdk_role_name = check_environment(context, source,
                                           account_id=input.get('AwsAccountId'),
-                                          region=input.get('region')
+                                          region=input.get('region'),
+                                          data=input
                                           )
+
         input['cdk_role_name'] = cdk_role_name
         env = EnvironmentService.create_environment(
             session=session,
@@ -119,7 +135,8 @@ def update_environment(
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         cdk_role_name = check_environment(context, source,
                                           account_id=environment.AwsAccountId,
-                                          region=environment.region
+                                          region=environment.region,
+                                          data=input
                                           )
 
         previous_resource_prefix = environment.resourcePrefix
@@ -130,7 +147,7 @@ def update_environment(
             data=input,
         )
 
-        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
+        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
             stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
@@ -202,6 +219,17 @@ def remove_consumption_role(context: Context, source, environmentUri=None, consu
         )
 
     return status
+
+
+def update_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None, input={}):
+    with context.engine.scoped_session() as session:
+        consumption_role = EnvironmentService.update_consumption_role(
+            session=session,
+            uri=consumptionRoleUri,
+            env_uri=environmentUri,
+            input=input,
+        )
+    return consumption_role
 
 
 def list_environment_invited_groups(
@@ -332,11 +360,8 @@ def get_parent_organization(context: Context, source, **kwargs):
     return org
 
 
-def resolve_vpc_list(context: Context, source, **kwargs):
-    with context.engine.scoped_session() as session:
-        return Vpc.get_environment_vpc_list(
-            session=session, environment_uri=source.environmentUri
-        )
+def resolve_environment_networks(context: Context, source, **kwargs):
+    return VpcService.get_environment_networks(environment_uri=source.environmentUri)
 
 
 def get_environment(context: Context, source, environmentUri: str = None):

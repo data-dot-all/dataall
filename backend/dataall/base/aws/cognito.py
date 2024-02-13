@@ -2,12 +2,12 @@ import os
 import logging
 import boto3
 
-from dataall.base.utils.IdentityProvider import IdentityProvider
+from dataall.base.services.service_provider import ServiceProvider
 
 log = logging.getLogger(__name__)
 
 
-class Cognito(IdentityProvider):
+class Cognito(ServiceProvider):
 
     def __init__(self):
         self.client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
@@ -45,8 +45,7 @@ class Cognito(IdentityProvider):
         else:
             return group_email_ids
 
-    @staticmethod
-    def list_cognito_groups(envname: str, region: str):
+    def list_groups(self, envname: str, region: str):
         user_pool_id = None
         groups = []
         try:
@@ -64,3 +63,6 @@ class Cognito(IdentityProvider):
             )
             raise e
         return groups
+
+    def get_groups_for_user(self, user_id):
+        return []

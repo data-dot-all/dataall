@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from typing import Callable
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
@@ -21,6 +21,7 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_ALL_ADMINS_SID = "AllowAllToAdmin"
 
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 @pytest.fixture(scope="module")
@@ -131,6 +132,24 @@ def base_kms_key_policy(target_requester_arn=None):
                 ]},
                 "Action": "kms:Decrypt",
                 "Resource": "*"
+            },
+            {
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Effect": "Allow",
+                "Principal": {"AWS": [
+                    f"arn:aws:iam::{TARGET_ACCOUNT_ENV}:role/dataallPivotRole"
+                ]},
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey*",
+                    "kms:PutKeyPolicy",
+                    "kms:GetKeyPolicy",
+                    "kms:ReEncrypt*",
+                    "kms:TagResource",
+                    "kms:UntagResource",
+                   ],
+                "Resource": "*"
             }
         ],
     }
@@ -216,6 +235,16 @@ def mock_kms_client(mocker):
     return mock_client
 
 
+def mock_iam_client(mocker, account_id, role_name):
+    mock_client = MagicMock()
+    mocker.patch(
+        'dataall.modules.dataset_sharing.services.share_managers.s3_bucket_share_manager.IAM',
+        mock_client
+    )
+    mock_client.get_role_arn_by_name.return_value = f"arn:aws:iam::{account_id}:role/{role_name}"
+    return mock_client
+
+
 # For below test cases, dataset2, share2, src, target env and src group , env group remain the same
 def test_grant_role_bucket_policy_with_no_policy_present(
         mocker,
@@ -232,6 +261,7 @@ def test_grant_role_bucket_policy_with_no_policy_present(
     # No Bucket policy. A Default bucket policy should be formed with DataAll-Bucket-ReadOnly, AllowAllToAdmin & RequiredSecureTransport Sids
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = None
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -299,6 +329,7 @@ def test_grant_role_bucket_policy_with_default_complete_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -344,6 +375,7 @@ def test_grant_role_bucket_policy_with_policy_and_no_allow_owner_sid_and_no_read
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -419,6 +451,7 @@ def test_grant_role_bucket_policy_with_another_read_only_role(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -676,6 +709,7 @@ def test_grant_dataset_bucket_key_policy_with_complete_policy_present(
     existing_key_policy = base_kms_key_policy()
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -687,6 +721,11 @@ def test_grant_dataset_bucket_key_policy_with_complete_policy_present(
             target_environment,
             source_environment_group,
             target_environment_group,
+        )
+
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
         )
 
         manager.grant_dataset_bucket_key_policy()
@@ -712,6 +751,7 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
     existing_key_policy = base_kms_key_policy("OtherTargetRequestorArn")
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     # Mock the S3BucketShareManager with the KMS client
     with db.scoped_session() as session:
@@ -726,6 +766,11 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
     # Check if KMS.put_key_policy is called and check if the policy is modified
@@ -734,7 +779,7 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
     # Check the modified KMS key policy
     kms_key_policy = json.loads(kms_client().put_key_policy.call_args[0][1])
 
-    assert len(kms_key_policy["Statement"]) == 1
+    assert len(kms_key_policy["Statement"]) == 2
     assert kms_key_policy["Statement"][0]["Sid"] == DATAALL_BUCKET_KMS_DECRYPT_SID
     assert kms_key_policy["Statement"][0]["Action"] == "kms:Decrypt"
 
@@ -768,6 +813,7 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -784,6 +830,11 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
         # dataset2 should not have importedKey to simulate that while importing the dataset a key was not added
         bucket3.importedKmsKey = False
         session.add(bucket3)
+
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
 
         manager.grant_dataset_bucket_key_policy()
 
@@ -818,6 +869,7 @@ def test_grant_dataset_bucket_key_policy_with_imported(
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -831,6 +883,11 @@ def test_grant_dataset_bucket_key_policy_with_imported(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         manager.grant_dataset_bucket_key_policy()
 
         # Assert that when a dataset is imported and has importedKey
@@ -839,7 +896,7 @@ def test_grant_dataset_bucket_key_policy_with_imported(
         kms_client().put_key_policy.assert_called()
         updated_bucket_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(updated_bucket_policy["Statement"]) == 1
+        assert len(updated_bucket_policy["Statement"]) == 2
         assert updated_bucket_policy["Statement"][0]["Sid"] == DATAALL_BUCKET_KMS_DECRYPT_SID
         assert "OtherTargetRequestorArn" in updated_bucket_policy["Statement"][0]["Principal"]["AWS"]
 
@@ -864,6 +921,7 @@ def test_delete_target_role_bucket_policy_with_no_read_only_sid(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -923,6 +981,7 @@ def test_delete_target_role_bucket_policy_with_multiple_principals_in_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -996,6 +1055,7 @@ def test_delete_target_role_bucket_policy_with_one_principal_in_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1284,6 +1344,7 @@ def test_delete_target_role_bucket_key_policy_with_no_target_requester_id(
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1324,6 +1385,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id(
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1345,7 +1407,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id(
 
         new_kms_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(new_kms_policy["Statement"]) == 0
+        assert len(new_kms_policy["Statement"]) == 1
 
 
 # Test for delete_target_role_bucket_key_policy when dataset is imported
@@ -1370,6 +1432,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1391,7 +1454,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
 
         new_kms_policy = json.loads(kms_client().put_key_policy.call_args.args[1])
 
-        assert len(new_kms_policy["Statement"]) == 0
+        assert len(new_kms_policy["Statement"]) == 1
 
 
 # Test for delete_target_role_bucket_key_policy when dataset is imported and importedKMS key is missing
@@ -1416,6 +1479,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1479,6 +1543,7 @@ def test_delete_target_role_bucket_key_policy_with_multiple_principals_in_policy
     kms_client().get_key_id.return_value = "kms-key"
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(

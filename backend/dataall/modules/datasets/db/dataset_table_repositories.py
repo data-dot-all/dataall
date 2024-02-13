@@ -93,7 +93,12 @@ class DatasetTableRepository:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
                 existing_table.LastGlueTableStatus = 'Deleted'
                 logger.info(
-                    f'Table {existing_table.GlueTableName} status set to Deleted from Glue.'
+                    f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue'
+                )
+            elif existing_table.GlueTableName in [t['Name'] for t in glue_tables] and existing_table.LastGlueTableStatus == 'Deleted':
+                existing_table.LastGlueTableStatus = 'InSync'
+                logger.info(
+                    f'Updating Existing Table {existing_table.GlueTableName} status set to InSync from Deleted after found in Glue'
                 )
 
     @staticmethod

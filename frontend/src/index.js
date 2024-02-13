@@ -14,7 +14,6 @@ import { store } from './globalErrors';
 import { reportWebVitals } from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
 import { SnackbarProvider } from 'notistack';
-import { RequestContextProvider } from './reauthentication';
 
 ReactDOM.render(
   <StrictMode>
@@ -25,11 +24,9 @@ ReactDOM.render(
             <SettingsProvider>
               <BrowserRouter>
                 <SnackbarProvider dense maxSnack={3} hideIconVariant>
-                  <RequestContextProvider>
-                    <AuthProvider>
-                      <App />
-                    </AuthProvider>
-                  </RequestContextProvider>
+                  <AuthProvider>
+                    <App />
+                  </AuthProvider>
                 </SnackbarProvider>
               </BrowserRouter>
             </SettingsProvider>

@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 from typing import List
 
 from sqlalchemy import and_, or_, func, case
@@ -8,7 +9,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
@@ -849,8 +850,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_all_share_items(session, share_uri, share_type):
-        return (
+    def find_all_share_items(session, share_uri, share_type, status=None):
+        query = (
             session.query(ShareObjectItem).filter(
                 (
                     and_(
@@ -858,8 +859,11 @@ class ShareObjectRepository:
                         ShareObjectItem.itemType == share_type
                     )
                 )
-            ).all()
+            )
         )
+        if status :
+            query = query.filter(ShareObjectItem.status.in_(status))
+        return query.all()
 
     @staticmethod
     def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
@@ -1023,7 +1027,7 @@ class ShareObjectRepository:
         ).to_dict()
 
     @staticmethod
-    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
+    def list_dataset_shares_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(ShareObject)
@@ -1039,7 +1043,42 @@ class ShareObjectRepository:
                 )
             )
         )
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        if item_type:
+            query = query.filter(ShareObjectItem.itemType == item_type)
         return query.all()
+
+    @staticmethod
+    def list_dataset_shares_and_datasets_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
+        warn(
+            'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+            DeprecationWarning, stacklevel=2)
+        # When deprecated, use ist_dataset_shares_with_existing_shared_items instead
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(ShareObject)
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
+            )
+        )
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        if item_type:
+            query = query.filter(ShareObjectItem.itemType == item_type)
+        shares_datasets = []
+        for share in query.all():
+            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            shares_datasets.append({"shareUri": share.shareUri, "databaseName": f"{dataset.GlueDatabaseName}_shared_{share.shareUri}"})
+        return shares_datasets
 
     @staticmethod
     def delete_all_share_items(session, env_uri):

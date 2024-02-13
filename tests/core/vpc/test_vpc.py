@@ -60,7 +60,7 @@ def test_list_networks(client, env_fixture, db, user, group, vpc):
     )
     print(response)
 
-    assert response.data.listEnvironmentNetworks.count == 2
+    assert response.data.listEnvironmentNetworks.count == 1
 
 
 def test_list_networks_nopermissions(client, env_fixture, db, user, group2, vpc):
@@ -119,4 +119,4 @@ def test_delete_network(client, env_fixture, db, user, group, module_mocker, vpc
         username='alice',
         groups=[group.name],
     )
-    assert len(response.data.listEnvironmentNetworks['nodes']) == 1
+    assert len(response.data.listEnvironmentNetworks['nodes']) == 0

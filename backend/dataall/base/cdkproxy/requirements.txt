@@ -4,16 +4,14 @@ boto3-stubs==1.24.85
 botocore==1.27.85
 cdk-nag==2.7.2
 constructs==10.0.73
-starlette==0.27.0
-fastapi == 0.95.2
+starlette==0.36.3
+fastapi == 0.109.2
 Flask==2.3.2
 PyYAML==6.0
 requests==2.31.0
 tabulate==0.8.9
 uvicorn==0.15.0
-jinja2==3.1.2
 werkzeug==3.0.1
 constructs>=10.0.0,<11.0.0
 git-remote-codecommit==1.16
 aws-ddk-core==1.3.0
-deprecated==1.2.13

@@ -25,7 +25,14 @@ export const ReAuthModal = () => {
       const timestamp = new Date();
       const pathname = location.pathname;
       const username = user.name;
-      storeRequestInfo({ requestInfo, timestamp, pathname, username });
+      const id_token = user.id_token;
+      storeRequestInfo({
+        requestInfo,
+        timestamp,
+        pathname,
+        username,
+        id_token
+      });
     }
   }, [reAuthStatus, requestInfo]);
 

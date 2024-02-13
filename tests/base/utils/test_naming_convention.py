@@ -32,7 +32,7 @@ def test_iam_role_name():
 def test_glue_database_name_():
     service = NamingConventionService(
         target_uri='yTrfS',
-        target_label='my-database/-namelongverylongtotestmaxlength',
+        target_label='my-long-db' * 40,
         pattern=NamingConventionPattern.GLUE,
         resource_prefix='customerverylongprefix',
     )

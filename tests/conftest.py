@@ -7,7 +7,7 @@ from dataall.base.db import get_engine, create_schema_and_tables, Engine
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
 
-from dataall.core.cognito_groups.db.cognito_group_models import Group
+from dataall.core.groups.db.group_models import Group
 from dataall.core.permissions.db import Tenant, Permission
 from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
 from dataall.core.permissions.permissions import TENANT_ALL
@@ -193,6 +193,11 @@ def mock_aws_client(module_mocker):
 
     module_mocker.patch(
         'dataall.modules.dataset_sharing.aws.kms_client.SessionHelper',
+        session_helper
+    )
+
+    module_mocker.patch(
+        'dataall.base.aws.sts.SessionHelper',
         session_helper
     )
 

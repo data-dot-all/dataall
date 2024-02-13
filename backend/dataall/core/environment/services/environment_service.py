@@ -23,7 +23,7 @@ from dataall.base.utils.naming_convention import (
 )
 from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
-from dataall.core.organizations.db.organization_repositories import Organization
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
@@ -41,8 +41,8 @@ class EnvironmentService:
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
     def create_environment(session, uri, data=None):
         context = get_context()
-        EnvironmentService._validate_creation_params(data, uri)
-        organization = Organization.get_organization_by_uri(session, uri)
+        EnvironmentService._validate_creation_params(data, uri, session)
+        organization = OrganizationRepository.get_organization_by_uri(session, uri)
         env = Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),
@@ -66,6 +66,7 @@ class EnvironmentService:
         session.commit()
 
         EnvironmentService._update_env_parameters(session, env, data)
+        EnvironmentResourceManager.create_env(session, env, data=data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -98,29 +99,6 @@ class EnvironmentService:
             env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
-        if data.get('vpcId'):
-            vpc = Vpc(
-                environmentUri=env.environmentUri,
-                region=env.region,
-                AwsAccountId=env.AwsAccountId,
-                VpcId=data.get('vpcId'),
-                privateSubnetIds=data.get('privateSubnetIds', []),
-                publicSubnetIds=data.get('publicSubnetIds', []),
-                SamlGroupName=data['SamlGroupName'],
-                owner=context.username,
-                label=f"{env.name}-{data.get('vpcId')}",
-                name=f"{env.name}-{data.get('vpcId')}",
-                default=True,
-            )
-            session.add(vpc)
-            session.commit()
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=data['SamlGroupName'],
-                permissions=permissions.NETWORK_ALL,
-                resource_uri=vpc.vpcUri,
-                resource_type=Vpc.__name__,
-            )
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
@@ -151,7 +129,7 @@ class EnvironmentService:
         return env
 
     @staticmethod
-    def _validate_creation_params(data, uri):
+    def _validate_creation_params(data, uri, session):
         if not uri:
             raise exceptions.RequiredParameter('organizationUri')
         if not data:
@@ -160,7 +138,12 @@ class EnvironmentService:
             raise exceptions.RequiredParameter('label')
         if not data.get('SamlGroupName'):
             raise exceptions.RequiredParameter('group')
+        if not data.get('AwsAccountId'):
+            raise exceptions.RequiredParameter('AwsAccountId')
+        if not data.get('region'):
+            raise exceptions.RequiredParameter('region')
         EnvironmentService._validate_resource_prefix(data)
+        EnvironmentService._validate_account_region(data, session)
 
     @staticmethod
     def _validate_resource_prefix(data):
@@ -171,6 +154,16 @@ class EnvironmentService:
                 'resourcePrefix',
                 data.get('resourcePrefix'),
                 'must match the pattern ^[a-z-]+$',
+            )
+
+    @staticmethod
+    def _validate_account_region(data, session):
+        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
+        if environment:
+            raise exceptions.InvalidInput(
+                'AwsAccount/region',
+                f"{data.get('AwsAccountId')}/{data.get('region')}",
+                f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
             )
 
     @staticmethod
@@ -482,6 +475,31 @@ class EnvironmentService:
         return True
 
     @staticmethod
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
+    def update_consumption_role(session, uri, env_uri, input):
+        if not input:
+            raise exceptions.RequiredParameter('input')
+        if not input.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
+        if not input.get('consumptionRoleName'):
+            raise exceptions.RequiredParameter('consumptionRoleName')
+        consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+        if consumption_role:
+            ResourcePolicy.update_resource_policy(
+                session=session,
+                resource_uri=uri,
+                resource_type=ConsumptionRole.__name__,
+                old_group=consumption_role.groupUri,
+                new_group=input['groupUri'],
+                new_permissions=permissions.CONSUMPTION_ROLE_ALL
+            )
+            for key, value in input.items():
+                setattr(consumption_role, key, value)
+            session.commit()
+        return consumption_role
+
+    @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
         query = (
             session.query(Environment)
@@ -721,7 +739,7 @@ class EnvironmentService:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query
+        return query.order_by(ConsumptionRole.consumptionRoleUri)
 
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
@@ -753,7 +771,7 @@ class EnvironmentService:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query
+        return query.order_by(ConsumptionRole.consumptionRoleUri)
 
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
@@ -839,7 +857,7 @@ class EnvironmentService:
         return env_group
 
     @staticmethod
-    def get_environment_consumption_role(session, role_uri, environment_uri):
+    def get_environment_consumption_role(session, role_uri, environment_uri) -> ConsumptionRole:
         role = (
             session.query(ConsumptionRole)
             .filter(

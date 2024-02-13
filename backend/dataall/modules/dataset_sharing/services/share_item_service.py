@@ -8,7 +8,7 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
@@ -57,11 +57,16 @@ class ShareItemService:
 
             share_sm.update_state(session, share, new_share_state)
 
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=dataset.datasetUri,
-            )
+            if share.groupUri != dataset.SamlAdminGroupName:
+                revoke_table_items = ShareObjectRepository.find_all_share_items(
+                    session, uri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
+                )
+                for item in revoke_table_items:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        resource_uri=item.itemUri,
+                    )
 
             ShareNotificationService(
                 session=session,
@@ -141,6 +146,13 @@ class ShareItemService:
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            if share_item.itemType == ShareableType.Table.value and share_item.status == ShareItemStatus.Share_Failed.value:
+                share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=share_item.itemUri,
+                )
 
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
