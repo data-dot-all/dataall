@@ -150,6 +150,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
+                'description' : ds.description
             }
 
 

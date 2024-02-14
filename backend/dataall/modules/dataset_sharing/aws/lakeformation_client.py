@@ -1,7 +1,6 @@
 import logging
 from typing import List
 import time
-from xmlrpc.client import Boolean
 
 from botocore.exceptions import ClientError
 
@@ -42,6 +41,7 @@ class LakeFormationClient:
         permissions,
         permissions_with_grant_options=None,
     ) -> True:
+
         resource = {
             'Table': {
                 'DatabaseName': database_name,
@@ -125,6 +125,7 @@ class LakeFormationClient:
                         ] = permissions_with_grant_options
 
                     response = self._client.grant_permissions(**grant_dict)
+                    response = self._client.grant_permissions(**grant_dict)
 
                     log.info(
                         f'Successfully granted principal {principal} '
@@ -134,6 +135,7 @@ class LakeFormationClient:
                         f'response: {response}'
                     )
                     time.sleep(2)
+
             except ClientError as e:
                 log.error(
                     f'Could not grant principal {principal} '
@@ -272,7 +274,7 @@ class LakeFormationClient:
         return True
 
     def check_permissions_to_database(
-        self,
+        self, 
         principals,
         database_name,
         permissions,
@@ -363,7 +365,7 @@ class LakeFormationClient:
         permissions: List,
         permissions_with_grant_options: List = None,
         check_resource: dict = None
-    ) -> Boolean:
+    ) -> bool:
         try:
             log.info(
                 f'Checking principal {principal} '

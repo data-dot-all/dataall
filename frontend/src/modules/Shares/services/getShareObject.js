@@ -59,6 +59,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           AwsAccountId
           region
           exists
+          description
         }
       }
     }

@@ -373,27 +373,26 @@ class ShareObjectService:
             if dataset:
                 environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
                 S3AccessPointName = utils.slugify(
-                    datasetUri + "-" + principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern="[^a-zA-Z0-9-]",
-                    separator="-",
+                    datasetUri + '-' + principalId,
+                    max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
                 )
                 old_shared_db_name = f"{dataset.GlueDatabaseName}_shared_{uri}"[:254]
                 database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
+                    account_id=environment.AwsAccountId,
+                    region=environment.region,
+                    database=old_shared_db_name
                 ).get_glue_database()
-                warn("old_shared_db_name will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
+                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                 sharedGlueDatabase = old_shared_db_name if database else f"{dataset.GlueDatabaseName}_shared"
                 return {
-                    "s3AccessPointName": S3AccessPointName,
-                    "sharedGlueDatabase": sharedGlueDatabase,
-                    "s3bucketName": dataset.S3BucketName,
+                    's3AccessPointName': S3AccessPointName,
+                    'sharedGlueDatabase': sharedGlueDatabase,
+                    's3bucketName': dataset.S3BucketName,
                 }
             return {
-                "s3AccessPointName": "Not Created",
-                "sharedGlueDatabase": "Not Created",
-                "s3bucketName": "Not Created",
+                's3AccessPointName': "Not Created",
+                'sharedGlueDatabase': "Not Created",
+                's3bucketName': "Not Created",
             }
 
     @staticmethod

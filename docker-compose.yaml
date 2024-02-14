@@ -5,6 +5,8 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
+      args:
+        CONTAINER_UID: ${UID}
     entrypoint: /bin/bash -c 'aws configure set region "eu-west-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
     expose:
       - 2805
@@ -33,7 +35,9 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.9 -u local_graphql_server.py"
+      args:
+        CONTAINER_UID: ${UID}
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.9 local_graphql_server.py"
     expose:
       - 5000
     ports:
