@@ -140,23 +140,39 @@ class IAM:
             )
 
     @staticmethod
-    def update_managed_policy(
+    def get_managed_policy_default_version(
             account_id: str,
-            policy_name: str,
-            policy: str):
+            policy_name: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
-            policy_obj = iamcli.get_policy(PolicyArn=arn)
-            versionId = policy_obj['Policy']['DefaultVersionId']
+            response = iamcli.get_policy(PolicyArn=arn)
+            versionId = response['Policy']['DefaultVersionId']
+            policyVersion = iamcli.get_policy_version(PolicyArn=arn, VersionId=versionId)
+            policyDocument = policyVersion['PolicyVersion']['Document']
+            return versionId, policyDocument
+        except Exception as e:
+            log.error(
+                f'Failed to get policy {policy_name} : {e}'
+            )
+            return None
 
+    @staticmethod
+    def update_managed_policy_default_version(
+            account_id: str,
+            policy_name: str,
+            old_version_id: str,
+            policy_document: str):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            iamcli = IAM.client(account_id)
             iamcli.create_policy_version(
                 PolicyArn=arn,
-                PolicyDocument=policy,
+                PolicyDocument=policy_document,
                 SetAsDefault=True
             )
 
-            iamcli.delete_policy_version(PolicyArn=arn, VersionId=versionId)
+            iamcli.delete_policy_version(PolicyArn=arn, VersionId=old_version_id)
         except Exception as e:
             log.error(
                 f'Failed to update policy {policy_name} : {e}'
@@ -179,3 +195,19 @@ class IAM:
             log.error(
                 f'Failed to detach policy {policy_name} from role {role_name} : {e}'
             )
+
+    @staticmethod
+    def get_policy_by_name(
+            account_id: str,
+            policy_name: str
+    ):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            iamcli = IAM.client(account_id)
+            response = iamcli.get_policy(PolicyArn=arn)
+            return response['Policy']
+        except Exception as e:
+            log.error(
+                f'Failed to get policy {policy_name} : {e}'
+            )
+            return None

@@ -148,7 +148,7 @@ def base_kms_key_policy(target_requester_arn=None):
                     "kms:ReEncrypt*",
                     "kms:TagResource",
                     "kms:UntagResource",
-                   ],
+                ],
                 "Resource": "*"
             }
         ],
@@ -512,7 +512,24 @@ def test_grant_s3_iam_access_with_no_policy(
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+
+    initial_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::initial-fake-empty-bucket",
+                ]
+            }
+        ]
+    }
+
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_managed_policy_default_version", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',initial_policy_document))
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -530,13 +547,14 @@ def test_grant_s3_iam_access_with_no_policy(
 
         iam_update_role_policy_mock.assert_called()
 
-        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        iam_policy = initial_policy_document
 
         # Assert if the IAM role policy with S3 and KMS permissions was created
         assert len(iam_policy["Statement"]) == 2
         assert len(iam_policy["Statement"][0]["Resource"]) == 2
         assert len(iam_policy["Statement"][1]["Resource"]) == 1
-        assert f"arn:aws:s3:::{dataset2.S3BucketName}" in iam_policy["Statement"][0]["Resource"] and "s3:*" in iam_policy["Statement"][0]["Action"]
+        assert f"arn:aws:s3:::{dataset2.S3BucketName}" in iam_policy["Statement"][0]["Resource"] and "s3:*" in \
+               iam_policy["Statement"][0]["Action"]
         assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" in \
                iam_policy["Statement"][1]["Resource"] \
                and "kms:*" in iam_policy["Statement"][1]["Action"]
@@ -590,7 +608,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',policy))
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -608,14 +626,15 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
 
         iam_update_role_policy_mock.assert_called()
 
-        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        iam_policy = policy
 
         # Assert that new resources were appended
         assert len(policy["Statement"]) == 2
         assert len(iam_policy["Statement"][0]["Resource"]) == 4
         assert f'arn:aws:s3:::{dataset2.S3BucketName}' in iam_policy["Statement"][0]["Resource"]
         assert len(iam_policy["Statement"][1]["Resource"]) == 2
-        assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" in iam_policy["Statement"][1]["Resource"]
+        assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" in iam_policy["Statement"][1][
+            "Resource"]
 
 
 # Tests to check if
@@ -663,7 +682,7 @@ def test_grant_s3_iam_access_with_complete_policy_present(
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',policy))
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -682,11 +701,13 @@ def test_grant_s3_iam_access_with_complete_policy_present(
         # Assert that the IAM Policy is the same as the existing complete policy
         iam_update_role_policy_mock.assert_called()
 
-        created_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        created_iam_policy = policy
 
         assert len(created_iam_policy["Statement"]) == 2
-        assert policy["Statement"][0]["Resource"] == created_iam_policy["Statement"][0]["Resource"] and policy["Statement"][0]["Action"] == created_iam_policy["Statement"][0]["Action"]
-        assert policy["Statement"][1]["Resource"] == created_iam_policy["Statement"][1]["Resource"] and policy["Statement"][1]["Action"] == \
+        assert policy["Statement"][0]["Resource"] == created_iam_policy["Statement"][0]["Resource"] and \
+               policy["Statement"][0]["Action"] == created_iam_policy["Statement"][0]["Action"]
+        assert policy["Statement"][1]["Resource"] == created_iam_policy["Statement"][1]["Resource"] and \
+               policy["Statement"][1]["Action"] == \
                created_iam_policy["Statement"][1]["Action"]
 
 
@@ -801,7 +822,7 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
         bucket3,
         source_environment: Environment,
         target_environment: Environment
-    ):
+):
     # Given
     # Dataset is imported and it doesn't have Imported KMS Key
     # Mocking KMS key function - > Check if not called
@@ -1129,9 +1150,9 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',iam_policy))
 
-    iam_delete_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.delete_role_policy", return_value=None)
+
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1152,12 +1173,12 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         )
 
         iam_update_role_policy_mock.assert_called()
-        iam_delete_role_policy_mock.assert_not_called()
 
         # Get the updated IAM policy and compare it with the existing one
-        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        updated_iam_policy = iam_policy
         assert len(updated_iam_policy["Statement"]) == 2
-        assert "arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*" == ",".join(updated_iam_policy["Statement"][0]["Resource"])
+        assert "arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*" == ",".join(
+            updated_iam_policy["Statement"][0]["Resource"])
         assert "arn:aws:kms:us-east-1:121231131212:key/some-key-2112" == ",".join(
             updated_iam_policy["Statement"][1]["Resource"])
 
@@ -1210,9 +1231,8 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
         return_value=iam_policy,
     )
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',iam_policy))
 
-    iam_delete_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.delete_role_policy", return_value=None)
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -1236,16 +1256,16 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
         )
 
         iam_update_role_policy_mock.assert_called()
-        iam_delete_role_policy_mock.assert_not_called()
 
-        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        updated_iam_policy = iam_policy
 
         assert f"arn:aws:s3:::{dataset2.S3BucketName}" not in updated_iam_policy["Statement"][0]["Resource"]
         assert f"arn:aws:s3:::{dataset2.S3BucketName}/*" not in updated_iam_policy["Statement"][0]["Resource"]
         assert f"arn:aws:s3:::someOtherBucket" in updated_iam_policy["Statement"][0]["Resource"]
         assert f"arn:aws:s3:::someOtherBucket/*" in updated_iam_policy["Statement"][0]["Resource"]
 
-        assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" not in updated_iam_policy["Statement"][1]["Resource"]
+        assert f"arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key" not in \
+               updated_iam_policy["Statement"][1]["Resource"]
         assert f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112" in updated_iam_policy["Statement"][1]["Resource"]
 
 
@@ -1297,9 +1317,8 @@ def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resourc
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
-    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.update_role_policy", return_value=None)
+    iam_update_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',iam_policy))
 
-    iam_delete_role_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.delete_role_policy", return_value=None)
 
     with db.scoped_session() as session:
         manager = S3BucketShareManager(
@@ -1319,8 +1338,7 @@ def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resourc
             target_environment=target_environment
         )
 
-        iam_update_role_policy_mock.assert_not_called()
-        iam_delete_role_policy_mock.assert_called()
+        iam_update_role_policy_mock.assert_called()
 
 
 def test_delete_target_role_bucket_key_policy_with_no_target_requester_id(
@@ -1421,7 +1439,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
         share3: ShareObject,
         source_environment: Environment,
         target_environment: Environment
-    ):
+):
     # Given complete existing KMS key policy with target requester id in it
     # and that the dataset is imported and has a importedKMS key
     # Check if KMS.put_key_policy is called and the statement corresponding to target Sid should be removed
@@ -1468,7 +1486,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
         share3: ShareObject,
         source_environment: Environment,
         target_environment: Environment
-    ):
+):
     # Given complete existing KMS key policy with target requester id in it
     # and the dataset is imported but doens't contain importedKey
     # In that case the KMS.put_key_policy should not be called

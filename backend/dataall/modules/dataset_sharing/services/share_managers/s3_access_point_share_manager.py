@@ -4,7 +4,7 @@ import json
 import time
 from itertools import count
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
@@ -28,15 +28,15 @@ DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 class S3AccessPointShareManager:
     def __init__(
-        self,
-        session,
-        dataset: Dataset,
-        share: ShareObject,
-        target_folder: DatasetStorageLocation,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
+            self,
+            session,
+            dataset: Dataset,
+            share: ShareObject,
+            target_folder: DatasetStorageLocation,
+            source_environment: Environment,
+            target_environment: Environment,
+            source_env_group: EnvironmentGroup,
+            env_group: EnvironmentGroup,
     ):
         self.session = session
         self.source_env_group = source_env_group
@@ -146,97 +146,71 @@ class S3AccessPointShareManager:
         logger.info(
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
+
+        accesspoint_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
+                                                                       self.target_requester_IAMRoleName, 'accesspoint')
+        version_id, policy_document = IAM.get_managed_policy_default_version(
+            self.target_account_id,
+            accesspoint_policy_name)
+
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
 
-        existing_policy = IAM.get_role_policy(
-            self.target_account_id,
-            self.target_requester_IAMRoleName,
-            IAM_ACCESS_POINT_ROLE_POLICY,
-        )
-        if existing_policy:  # type dict
-            s3_target_resources = [
-                f"arn:aws:s3:::{self.bucket_name}",
-                f"arn:aws:s3:::{self.bucket_name}/*",
-                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
-            ]
-            share_manager = ShareManagerUtils(
-                self.session,
-                self.dataset,
-                self.share,
-                self.source_environment,
-                self.target_environment,
-                self.source_env_group,
-                self.env_group
-            )
-            share_manager.add_missing_resources_to_policy_statement(
-                self.bucket_name,
-                s3_target_resources,
-                existing_policy["Statement"][0],
-                IAM_ACCESS_POINT_ROLE_POLICY
-            )
-            if kms_key_id:
-                kms_target_resources = [
-                    f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                ]
-                if len(existing_policy["Statement"]) > 1:
-                    share_manager.add_missing_resources_to_policy_statement(
-                        kms_key_id,
-                        kms_target_resources,
-                        existing_policy["Statement"][1],
-                        IAM_ACCESS_POINT_ROLE_POLICY
-                    )
-                else:
-                    additional_policy = {
-                        "Effect": "Allow",
-                        "Action": [
-                            "kms:*"
-                        ],
-                        "Resource": kms_target_resources
-                    }
-                    existing_policy["Statement"].append(additional_policy)
+        s3_target_resources = [
+            f"arn:aws:s3:::{self.bucket_name}",
+            f"arn:aws:s3:::{self.bucket_name}/*",
+            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
+            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+        ]
 
-            policy = existing_policy
-        else:
-            logger.info(
-                f'{IAM_ACCESS_POINT_ROLE_POLICY} does not exists for IAM role {self.target_requester_IAMRoleName}, creating...'
-            )
-            policy = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:*"
-                        ],
-                        "Resource": [
-                            f"arn:aws:s3:::{self.bucket_name}",
-                            f"arn:aws:s3:::{self.bucket_name}/*",
-                            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
-                        ]
-                    }
-                ]
-            }
-            if kms_key_id:
+        share_manager = ShareManagerUtils(
+            self.session,
+            self.dataset,
+            self.share,
+            self.source_environment,
+            self.target_environment,
+            self.source_env_group,
+            self.env_group
+        )
+        share_manager.add_missing_resources_to_policy_statement(
+            self.bucket_name,
+            s3_target_resources,
+            policy_document["Statement"][0],
+            IAM_ACCESS_POINT_ROLE_POLICY
+        )
+
+        # toDo somehow remove this fake statement in more elegant way
+        fake_statement = "arn:aws:s3:::initial-fake-empty-bucket"
+        if fake_statement in policy_document["Statement"][0]["Resource"]:
+            policy_document["Statement"][0]["Resource"].remove("arn:aws:s3:::initial-fake-empty-bucket")
+
+        if kms_key_id:
+            kms_target_resources = [
+                f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
+            ]
+            if len(policy_document["Statement"]) > 1:
+                share_manager.add_missing_resources_to_policy_statement(
+                    kms_key_id,
+                    kms_target_resources,
+                    policy_document["Statement"][1],
+                    IAM_ACCESS_POINT_ROLE_POLICY
+                )
+            else:
                 additional_policy = {
                     "Effect": "Allow",
                     "Action": [
                         "kms:*"
                     ],
-                    "Resource": [
-                        f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                    ]
+                    "Resource": kms_target_resources
                 }
-                policy["Statement"].append(additional_policy)
+                policy_document["Statement"].append(additional_policy)
 
-        IAM.update_role_policy(
+        IAM.update_managed_policy_default_version(
             self.target_account_id,
-            self.target_requester_IAMRoleName,
-            IAM_ACCESS_POINT_ROLE_POLICY,
-            json.dumps(policy),
+            accesspoint_policy_name,
+            version_id,
+            json.dumps(policy_document)
         )
 
     def manage_access_point_and_policy(self):
@@ -349,7 +323,8 @@ class S3AccessPointShareManager:
                 logger.info(
                     f'KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
                 statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] \
-                    = self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
+                    = self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name,
+                                                                                   self.dataset_account_id)
 
             if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
                 logger.info(
@@ -372,7 +347,8 @@ class S3AccessPointShareManager:
                 "Version": "2012-10-17",
                 "Statement": [
                     self.generate_default_kms_decrypt_policy_statement(target_requester_arn),
-                    self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
+                    self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name,
+                                                                                 self.dataset_account_id)
                 ]
             }
         kms_client.put_key_policy(
@@ -393,7 +369,8 @@ class S3AccessPointShareManager:
             prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
             if isinstance(prefix_list, list) and f"{self.s3_prefix}/*" in prefix_list:
                 prefix_list.remove(f"{self.s3_prefix}/*")
-                statements[f"{target_requester_id}1"]["Resource"].remove(f"{access_point_arn}/object/{self.s3_prefix}/*")
+                statements[f"{target_requester_id}1"]["Resource"].remove(
+                    f"{access_point_arn}/object/{self.s3_prefix}/*")
                 access_point_policy["Statement"] = list(statements.values())
             else:
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}0"])
@@ -431,53 +408,64 @@ class S3AccessPointShareManager:
         logger.info(
             'Deleting target role IAM policy...'
         )
-        access_point_name = S3AccessPointShareManager.build_access_point_name(share)
-        existing_policy = IAM.get_role_policy(
+
+        accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                       share.principalIAMRoleName, 'accesspoint')
+        version_id, policy_document = IAM.get_managed_policy_default_version(
             target_environment.AwsAccountId,
-            share.principalIAMRoleName,
-            IAM_ACCESS_POINT_ROLE_POLICY,
-        )
+            accesspoint_policy_name)
+
+        access_point_name = S3AccessPointShareManager.build_access_point_name(share)
+
         key_alias = f"alias/{dataset.KmsAlias}"
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        if existing_policy:
-            s3_target_resources = [
-                f"arn:aws:s3:::{dataset.S3BucketName}",
-                f"arn:aws:s3:::{dataset.S3BucketName}/*",
-                f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
-                f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
+
+        s3_target_resources = [
+            f"arn:aws:s3:::{dataset.S3BucketName}",
+            f"arn:aws:s3:::{dataset.S3BucketName}/*",
+            f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
+            f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
+        ]
+
+        ShareManagerUtils.remove_resource_from_statement(
+            policy_document["Statement"][0],
+            s3_target_resources
+        )
+        if kms_key_id:
+            kms_target_resources = [
+                f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
             ]
-            ShareManagerUtils.remove_resource_from_statement(
-                existing_policy["Statement"][0],
-                s3_target_resources
-            )
-            if kms_key_id:
-                kms_target_resources = [
-                    f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
-                ]
-                if len(existing_policy["Statement"]) > 1:
-                    ShareManagerUtils.remove_resource_from_statement(
-                        existing_policy["Statement"][1],
-                        kms_target_resources
-                    )
-
-            policy_statements = []
-            for statement in existing_policy["Statement"]:
-                if len(statement["Resource"]) != 0:
-                    policy_statements.append(statement)
-
-            existing_policy["Statement"] = policy_statements
-            if len(existing_policy["Statement"]) == 0:
-                IAM.delete_role_policy(target_environment.AwsAccountId,
-                                       share.principalIAMRoleName,
-                                       IAM_ACCESS_POINT_ROLE_POLICY)
-            else:
-                IAM.update_role_policy(
-                    target_environment.AwsAccountId,
-                    share.principalIAMRoleName,
-                    IAM_ACCESS_POINT_ROLE_POLICY,
-                    json.dumps(existing_policy),
+            if len(policy_document["Statement"]) > 1:
+                ShareManagerUtils.remove_resource_from_statement(
+                    policy_document["Statement"][1],
+                    kms_target_resources
                 )
+
+        policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
+
+        if len(policy_document["Statement"]) == 0:
+            policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:*"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::initial-fake-empty-bucket",
+                        ]
+                    }
+                ]
+            }
+
+        IAM.update_managed_policy_default_version(
+            target_environment.AwsAccountId,
+            accesspoint_policy_name,
+            version_id,
+            json.dumps(policy_document)
+        )
 
     def delete_dataset_bucket_key_policy(
             self,

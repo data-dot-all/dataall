@@ -6,7 +6,7 @@ import json
 from typing import Callable
 
 from dataall.core.groups.db.group_models import Group
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
@@ -17,10 +17,8 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
 
-
 TARGET_ACCOUNT_ENV = "222222222222"
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
-
 
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
@@ -98,7 +96,8 @@ def base_bucket_policy():
                 "Effect": "Deny",
                 "Principal": {"AWS": "*"},
                 "Action": "s3:*",
-                "Resource": ["arn:aws:s3:::dataall-iris-test-120922-4s47wv71", "arn:aws:s3:::dataall-iris-test-120922-4s47wv71/*"],
+                "Resource": ["arn:aws:s3:::dataall-iris-test-120922-4s47wv71",
+                             "arn:aws:s3:::dataall-iris-test-120922-4s47wv71/*"],
                 "Condition": {"Bool": {"aws:SecureTransport": "false"}},
             },
             {
@@ -121,7 +120,8 @@ def admin_ap_delegation_bucket_policy():
                 "Effect": "Deny",
                 "Principal": {"AWS": "*"},
                 "Action": "s3:*",
-                "Resource": ["arn:aws:s3:::dataall-iris-test-120922-4s47wv71", "arn:aws:s3:::dataall-iris-test-120922-4s47wv71/*"],
+                "Resource": ["arn:aws:s3:::dataall-iris-test-120922-4s47wv71",
+                             "arn:aws:s3:::dataall-iris-test-120922-4s47wv71/*"],
                 "Condition": {"Bool": {"aws:SecureTransport": "false"}},
             },
             {
@@ -193,7 +193,6 @@ def mock_iam_client(mocker, account_id, role_name):
 
 @pytest.fixture(scope="module")
 def target_dataset_access_control_policy(request):
-
     iam_policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -223,19 +222,18 @@ def target_dataset_access_control_policy(request):
 
 
 def test_manage_bucket_policy_no_policy(
-    mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
-    base_bucket_policy,
+        mocker,
+        source_environment_group,
+        target_environment_group,
+        dataset1,
+        db,
+        share1: ShareObject,
+        share_item_folder1,
+        location1,
+        source_environment: Environment,
+        target_environment: Environment,
+        base_bucket_policy,
 ):
-
     # Given
     bucket_policy = base_bucket_policy
     s3_client = mock_s3_client(mocker)
@@ -281,19 +279,18 @@ def test_manage_bucket_policy_no_policy(
 
 
 def test_manage_bucket_policy_existing_policy(
-    mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
-    admin_ap_delegation_bucket_policy,
+        mocker,
+        source_environment_group,
+        target_environment_group,
+        dataset1,
+        db,
+        share1: ShareObject,
+        share_item_folder1,
+        location1,
+        source_environment: Environment,
+        target_environment: Environment,
+        admin_ap_delegation_bucket_policy,
 ):
-
     # Given
     bucket_policy = admin_ap_delegation_bucket_policy
     s3_client = mock_s3_client(mocker)
@@ -323,29 +320,25 @@ def test_manage_bucket_policy_existing_policy(
                          ([("bucketname", "aws_account_id", "access_point_name")]),
                          indirect=True)
 def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
-    mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
-    target_dataset_access_control_policy,
+        mocker,
+        source_environment_group,
+        target_environment_group,
+        dataset1,
+        db,
+        share1: ShareObject,
+        share_item_folder1,
+        location1,
+        source_environment: Environment,
+        target_environment: Environment,
+        target_dataset_access_control_policy,
 ):
-
     # Given
     iam_policy = target_dataset_access_control_policy
 
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=iam_policy,
-    )
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -371,7 +364,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
         iam_update_role_policy_mock.assert_called()
 
         # Iam function is called with str from object so we transform back to object
-        policy_object = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        policy_object = iam_policy
 
         # Assert that bucket_name is inside the resource array of policy object
         assert location1.S3BucketName in ",".join(policy_object["Statement"][0]["Resource"])
@@ -380,31 +373,28 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
                and "kms:*" in iam_policy["Statement"][1]["Action"]
 
 
-@pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]), indirect=True)
+@pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]),
+                         indirect=True)
 def test_grant_target_role_access_policy_existing_policy_bucket_included(
-    mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
-    target_dataset_access_control_policy,
+        mocker,
+        source_environment_group,
+        target_environment_group,
+        dataset1,
+        db,
+        share1: ShareObject,
+        share_item_folder1,
+        location1,
+        source_environment: Environment,
+        target_environment: Environment,
+        target_dataset_access_control_policy,
 ):
-
     # Given
     iam_policy = target_dataset_access_control_policy
 
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=iam_policy,
-    )
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -431,26 +421,39 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
 
 def test_grant_target_role_access_policy_test_no_policy(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
 
+    initial_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::initial-fake-empty-bucket",
+                ]
+            }
+        ]
+    }
+
     # Given
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=None,
-    )
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',initial_policy_document))
+
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -497,24 +500,26 @@ def test_grant_target_role_access_policy_test_no_policy(
         # When
         manager.grant_target_role_access_policy()
 
+        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                    share1.principalIAMRoleName, 'accesspoint')
         # Then
         iam_update_role_policy_mock.assert_called_with(
-            target_environment.AwsAccountId, share1.principalIAMRoleName,
-            "targetDatasetAccessControlPolicy", json.dumps(expected_policy)
+            target_environment.AwsAccountId, expected_policy_name,
+            "v1", json.dumps(expected_policy)
         )
 
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -565,8 +570,8 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
 
 
 def _generate_ap_policy_object(
-    access_point_arn: str,
-    env_admin_prefix_list: list,
+        access_point_arn: str,
+        env_admin_prefix_list: list,
 ):
     new_ap_policy = {
         "Version": "2012-10-17",
@@ -577,7 +582,8 @@ def _generate_ap_policy_object(
                 "Principal": "*",
                 "Action": "s3:*",
                 "Resource": "access-point-arn",
-                "Condition": {"StringLike": {"aws:userId": ["dataset_admin_role_id:*", "source_env_admin_role_id:*", "source_account_pivot_role_id:*"]}},
+                "Condition": {"StringLike": {"aws:userId": ["dataset_admin_role_id:*", "source_env_admin_role_id:*",
+                                                            "source_account_pivot_role_id:*"]}},
             },
         ],
     }
@@ -616,16 +622,16 @@ def _generate_ap_policy_object(
 
 
 def test_update_dataset_bucket_key_policy_without_env_admin(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -692,16 +698,16 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
 
 # NO existing Access point and ap policy
 def test_manage_access_point_and_policy_1(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     access_point_arn = "new-access-point-arn"
@@ -750,10 +756,12 @@ def test_manage_access_point_and_policy_1(
 
         # Assert that listbucket and getobject permissions were added for target environment admin
         assert "s3:GetObject" in [
-            statement["Action"] for statement in new_ap_policy["Statement"] if statement["Sid"].startswith(target_environment.SamlGroupName)
+            statement["Action"] for statement in new_ap_policy["Statement"] if
+            statement["Sid"].startswith(target_environment.SamlGroupName)
         ]
         assert "s3:ListBucket" in [
-            statement["Action"] for statement in new_ap_policy["Statement"] if statement["Sid"].startswith(target_environment.SamlGroupName)
+            statement["Action"] for statement in new_ap_policy["Statement"] if
+            statement["Sid"].startswith(target_environment.SamlGroupName)
         ]
 
         # Assert AllowAllToAdmin "Sid" exists
@@ -764,16 +772,16 @@ def test_manage_access_point_and_policy_1(
 # target_env_admin is already in policy
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_2(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
 
@@ -783,7 +791,8 @@ def test_manage_access_point_and_policy_2(
     s3_client().get_bucket_access_point_arn.return_value = access_point_arn
 
     # target_env_admin is already in policy but current folder is NOT yet in prefix_list
-    existing_ap_policy = _generate_ap_policy_object(access_point_arn, [[target_environment.SamlGroupName, ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object(access_point_arn,
+                                                    [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
     # Existing access point policy
     s3_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
@@ -829,16 +838,16 @@ def test_manage_access_point_and_policy_2(
 # target_env_admin is NOT already in ap policy
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_3(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
 
@@ -891,16 +900,16 @@ def test_manage_access_point_and_policy_3(
 
 
 def test_delete_access_point_policy_with_env_admin_one_prefix(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
 
@@ -942,27 +951,29 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
         # Assert statements for share have been removed
         new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
-        deleted_statements = {item["Sid"]: item for item in new_ap_policy["Statement"] if item["Sid"].startswith(f"{target_environment.SamlGroupName}")}
+        deleted_statements = {item["Sid"]: item for item in new_ap_policy["Statement"] if
+                              item["Sid"].startswith(f"{target_environment.SamlGroupName}")}
 
         assert len(deleted_statements) == 0
 
         # Assert other statements are remaining
-        remaining_statements = {item["Sid"]: item for item in new_ap_policy["Statement"] if not item["Sid"].startswith(f"{target_environment.SamlGroupName}")}
+        remaining_statements = {item["Sid"]: item for item in new_ap_policy["Statement"] if
+                                not item["Sid"].startswith(f"{target_environment.SamlGroupName}")}
 
         assert len(remaining_statements) > 0
 
 
 def test_delete_access_point_policy_with_env_admin_multiple_prefix(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
 
@@ -972,7 +983,8 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
     existing_ap_policy = _generate_ap_policy_object(
         access_point_arn,
-        [[target_environment.SamlGroupName, [location1.S3Prefix, "another-prefix"]], ["another-env-admin", [location1.S3Prefix]]],
+        [[target_environment.SamlGroupName, [location1.S3Prefix, "another-prefix"]],
+         ["another-env-admin", [location1.S3Prefix]]],
     )
 
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
@@ -1003,26 +1015,28 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
         new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
         statements = {item["Sid"]: item for item in new_ap_policy["Statement"]}
 
-        remaining_prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"]["s3:prefix"]
+        remaining_prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"][
+            "s3:prefix"]
 
         assert location1.S3Prefix not in remaining_prefix_list
         assert "another-prefix/*" in remaining_prefix_list
 
 
 def test_dont_delete_access_point_with_policy(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
-    existing_ap_policy = _generate_ap_policy_object("access-point-arn", [[target_environment.SamlGroupName, ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object("access-point-arn",
+                                                    [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
     s3_control_client = mock_s3_control_client(mocker)
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
@@ -1048,16 +1062,16 @@ def test_dont_delete_access_point_with_policy(
 
 
 def test_delete_access_point_without_policy(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [])
@@ -1088,16 +1102,16 @@ def test_delete_access_point_without_policy(
 
 
 def test_delete_target_role_access_policy_no_remaining_statement(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_target_role_policy = {
@@ -1125,20 +1139,30 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         ],
     }
 
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=existing_target_role_policy,
-    )
+    initial_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::initial-fake-empty-bucket",
+                ]
+            }
+        ]
+    }
 
-    iam_delete_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.delete_role_policy",
-        return_value=None,
-    )
+    # Given
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',existing_target_role_policy))
+
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
+
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -1159,22 +1183,26 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         # When
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
-        # Then
-        iam_delete_role_policy_mock.assert_called()
-        iam_update_role_policy_mock.assert_not_called()
+        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                    share1.principalIAMRoleName, 'accesspoint')
+
+        iam_update_role_policy_mock.assert_called_with(
+            target_environment.AwsAccountId, expected_policy_name,
+            "v1", json.dumps(initial_policy_document)
+        )
 
 
 def test_delete_target_role_access_policy_with_remaining_statement(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     # target role policy that has a bucket unrelated to the current bucket to be deleted
@@ -1225,18 +1253,12 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         ],
     }
 
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=existing_target_role_policy,
-    )
+    # Given
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',existing_target_role_policy))
 
-    iam_delete_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.delete_role_policy",
-        return_value=None,
-    )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -1260,29 +1282,28 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
         # Then
-        iam_delete_role_policy_mock.assert_not_called()
+        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                    share1.principalIAMRoleName, 'accesspoint')
 
         iam_update_role_policy_mock.assert_called_with(
-            target_environment.AwsAccountId,
-            share1.principalIAMRoleName,
-            "targetDatasetAccessControlPolicy",
-            json.dumps(expected_remaining_target_role_policy),
+            target_environment.AwsAccountId, expected_policy_name,
+            "v1", json.dumps(expected_remaining_target_role_policy)
         )
 
 
 # The kms key policy includes the target env admin to be removed aswell as one additional target env
 # admin, that should remain
 def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target_env(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -1348,16 +1369,16 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
 
 # The kms key policy only includes the target env admin
 def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_target_env(
-    mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
+        mocker,
+        source_environment_group: EnvironmentGroup,
+        target_environment_group: EnvironmentGroup,
+        dataset1: Dataset,
+        db,
+        share1: ShareObject,
+        share_item_folder1: ShareObjectItem,
+        location1: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
