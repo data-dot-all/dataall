@@ -125,7 +125,6 @@ class LakeFormationClient:
                         ] = permissions_with_grant_options
 
                     response = self._client.grant_permissions(**grant_dict)
-                    response = self._client.grant_permissions(**grant_dict)
 
                     log.info(
                         f'Successfully granted principal {principal} '

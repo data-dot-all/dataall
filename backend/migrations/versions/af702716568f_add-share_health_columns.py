@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('share_object_item', sa.Column('healthStatus', sa.String(), nullable=False))
+    op.add_column('share_object_item', sa.Column('healthStatus', sa.String(), nullable=True))
     op.add_column('share_object_item', sa.Column('healthMessage', sa.String(), nullable=True))
     op.add_column('share_object_item', sa.Column('lastVerificationTime', sa.DateTime(), nullable=True))
     # ### end Alembic commands ###

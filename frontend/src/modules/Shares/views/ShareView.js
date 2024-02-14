@@ -47,7 +47,6 @@ import {
   Defaults,
   Pager,
   PlusIcon,
-  // Label,
   Scrollbar,
   ShareStatus,
   TextAvatar,
@@ -427,8 +426,6 @@ function SharedItem(props) {
             ) || 'N/A'}
           </Typography>
         </div>
-        {/* <CheckCircleIcon color={'success'} />
-        <Label color="success">{item.healthStatus}</Label> */}
       </TableCell>
       <TableCell>
         {item.healthMessage ? (

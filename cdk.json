@@ -4,18 +4,6 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false,
-    "tooling_region": "eu-west-1",
-    "git_branch": "fresh",
-    "resource_prefix": "res",
-    "DeploymentEnvironments": [
-      {
-        "envname": "fr",
-        "account": "165741930873",
-        "region": "eu-west-1",
-        "internet_facing": true,
-        "enable_pivot_role_auto_create": true
-      }
-    ]
+    "@aws-cdk/core:stackRelativeExports": false
   }
 }

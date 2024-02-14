@@ -95,7 +95,7 @@ class Permission:
             .count()
         )
 
-        logger.error(f'count_resource_permissions: {count_resource_permissions}, RESOURCES_ALL: {len(permissions.RESOURCES_ALL_WITH_DESC)}')
+        logger.debug(f'count_resource_permissions: {count_resource_permissions}, RESOURCES_ALL: {len(permissions.RESOURCES_ALL_WITH_DESC)}')
 
         if count_resource_permissions < len(permissions.RESOURCES_ALL_WITH_DESC):
             for name, desc in permissions.RESOURCES_ALL_WITH_DESC.items():
@@ -107,8 +107,8 @@ class Permission:
                         permission_type=PermissionType.RESOURCE.name,
                     )
                 )
-                logger.error(f'Saved permission {name} successfully')
-            logger.error(f'Saved {len(perms)} resource permissions successfully')
+                logger.info(f'Saved permission {name} successfully')
+            logger.info(f'Saved {len(perms)} resource permissions successfully')
 
         count_tenant_permissions = (
             session.query(models.Permission)
@@ -116,7 +116,7 @@ class Permission:
             .count()
         )
 
-        logger.error(f'count_tenant_permissions: {count_tenant_permissions}, TENANT_ALL: {len(permissions.TENANT_ALL_WITH_DESC)}')
+        logger.debug(f'count_tenant_permissions: {count_tenant_permissions}, TENANT_ALL: {len(permissions.TENANT_ALL_WITH_DESC)}')
 
         if count_tenant_permissions < len(permissions.TENANT_ALL_WITH_DESC):
             for name, desc in permissions.TENANT_ALL_WITH_DESC.items():
