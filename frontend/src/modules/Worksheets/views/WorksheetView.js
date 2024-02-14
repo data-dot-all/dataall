@@ -181,11 +181,19 @@ const WorksheetView = () => {
           response.data.searchEnvironmentDataItems.nodes.map((d) => ({
             datasetUri: d.datasetUri,
             value: d.datasetUri,
-            label: `${d.GlueDatabaseName}_shared_${d.shareUri}`,
-            GlueDatabaseName:
-              `${d.GlueDatabaseName}_shared_${d.shareUri}`.substring(0, 254),
+            label: `${d.GlueDatabaseName}_shared`,
+            GlueDatabaseName: `${d.GlueDatabaseName}_shared`,
             environmentUri: d.environmentUri
           }));
+
+        // Remove duplicates based on GlueDatabaseName
+        sharedWithDatabases = sharedWithDatabases.filter(
+          (database, index, self) =>
+            index ===
+            self.findIndex(
+              (d) => d.GlueDatabaseName === database.GlueDatabaseName
+            )
+        );
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
       setLoadingDatabases(false);
@@ -196,7 +204,7 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = '';
-      if (dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared_')) {
+      if (dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')) {
         response = await client.query(
           getSharedDatasetTables({
             datasetUri: dataset.datasetUri,
@@ -214,7 +222,7 @@ const WorksheetView = () => {
 
       if (
         !response.errors &&
-        dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared_')
+        dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')
       ) {
         setTableOptions(
           response.data.getSharedDatasetTables.map((t) => ({
