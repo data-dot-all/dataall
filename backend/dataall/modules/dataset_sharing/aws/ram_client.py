@@ -63,7 +63,6 @@ class RamClient:
                 )
                 raise e
 
-
     @staticmethod
     def check_ram_invitation_status(source_account_id, source_region, target_account_id, target_region, source_database, source_table):
         source_ram = RamClient(source_account_id, source_region)
@@ -94,7 +93,6 @@ class RamClient:
                     is_accepted.append(False)
                 is_accepted.append(True)
         return any(is_accepted)
-
 
     @staticmethod
     def accept_ram_invitation(source_account_id, source_region, target_account_id, target_region, source_database, source_table):

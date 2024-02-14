@@ -2,7 +2,13 @@ import logging
 from warnings import warn
 from datetime import datetime
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareItemHealthStatus,
+    ShareItemStatus,
+    ShareObjectActions,
+    ShareItemActions,
+    ShareableType,
+)
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -23,7 +29,7 @@ class ProcessLakeFormationShare(LFShareManager):
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
-        reapply: bool = False
+        reapply: bool = False,
     ):
         super().__init__(
             session,
@@ -59,9 +65,7 @@ class ProcessLakeFormationShare(LFShareManager):
         False if share fails
         """
 
-        log.info(
-            '##### Starting Sharing tables #######'
-        )
+        log.info("##### Starting Sharing tables #######")
         success = True
         if not self.tables:
             log.info("No tables to share. Skipping...")
@@ -74,14 +78,12 @@ class ProcessLakeFormationShare(LFShareManager):
             for table in self.tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
 
-                share_item = ShareObjectRepository.find_sharable_item(
-                    self.session, self.share.shareUri, table.tableUri
-                )
+                share_item = ShareObjectRepository.find_sharable_item(self.session, self.share.shareUri, table.tableUri)
 
                 if not share_item:
                     log.info(
-                        f'Share Item not found for {self.share.shareUri} '
-                        f'and Dataset Table {table.GlueTableName} continuing loop...'
+                        f"Share Item not found for {self.share.shareUri} "
+                        f"and Dataset Table {table.GlueTableName} continuing loop..."
                     )
                     continue
                 if not self.reapply:
@@ -93,7 +95,7 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.check_table_exists_in_source_database(share_item, table)
 
                     if self.cross_account:
-                        log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
+                        log.info(f"Processing cross-account permissions for table {table.GlueTableName}...")
                         self.revoke_iam_allowed_principals_from_table(table)
                         self.grant_target_account_permissions_to_source_table(table)
                         (
@@ -105,7 +107,7 @@ class ProcessLakeFormationShare(LFShareManager):
                             target_account_id=self.target_environment.AwsAccountId,
                             target_region=self.target_environment.region,
                             source_database=self.dataset.GlueDatabaseName,
-                            source_table=table
+                            source_table=table,
                         )
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
@@ -115,7 +117,7 @@ class ProcessLakeFormationShare(LFShareManager):
                                 target_account_id=self.target_environment.AwsAccountId,
                                 target_region=self.target_environment.region,
                                 source_database=self.dataset.GlueDatabaseName,
-                                source_table=table
+                                source_table=table,
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
@@ -123,18 +125,21 @@ class ProcessLakeFormationShare(LFShareManager):
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-                    else:
-                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now())
+                    ShareObjectRepository.update_share_item_health_status(
+                        self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                    )
                 except Exception as e:
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     else:
-                        ShareObjectRepository.update_share_item_health_status(self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), share_item.lastVerificationTime)
+                        ShareObjectRepository.update_share_item_health_status(
+                            self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                        )
                     success = False
                     self.handle_share_failure(table=table, error=e)
         return success
-        
+
     def process_revoked_shares(self) -> bool:
         """
         1) For each revoked table:
@@ -155,37 +160,37 @@ class ProcessLakeFormationShare(LFShareManager):
         True if share is revoked successfully
         False if revoke fails
         """
-        log.info(
-            '##### Starting Revoking tables #######'
-        )
+        log.info("##### Starting Revoking tables #######")
         success = True
         for table in self.tables:
-            share_item = ShareObjectRepository.find_sharable_item(
-                self.session, self.share.shareUri, table.tableUri
-            )
+            share_item = ShareObjectRepository.find_sharable_item(self.session, self.share.shareUri, table.tableUri)
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
-                log.info(f'Revoking access to table: {table.GlueTableName} ')
+                log.info(f"Revoking access to table: {table.GlueTableName} ")
                 self.check_table_exists_in_source_database(share_item, table)
 
                 resource_link_table_exists = self.check_resource_link_table_exists_in_target_database(table)
-                other_table_shares_in_env = True if ShareObjectRepository.other_approved_share_item_table_exists(
-                    self.session,
-                    self.target_environment.environmentUri,
-                    share_item.itemUri,
-                    share_item.shareItemUri
-                ) else False
+                other_table_shares_in_env = (
+                    True
+                    if ShareObjectRepository.other_approved_share_item_table_exists(
+                        self.session,
+                        self.target_environment.environmentUri,
+                        share_item.itemUri,
+                        share_item.shareItemUri,
+                    )
+                    else False
+                )
 
                 if resource_link_table_exists:
                     self.revoke_principals_permissions_to_resource_link_table(table, other_table_shares_in_env)
                     self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
-                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                        warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:
@@ -193,6 +198,9 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                ShareObjectRepository.update_share_item_health_status(
+                    self.session, share_item, None, None, share_item.lastVerificationTime
+                )
 
             except Exception as e:
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
@@ -204,12 +212,9 @@ class ProcessLakeFormationShare(LFShareManager):
         try:
             if self.tables:
                 existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
-                    session=self.session,
-                    uri=self.share.shareUri,
-                    item_type=ShareableType.Table.value
+                    session=self.session, uri=self.share.shareUri, item_type=ShareableType.Table.value
                 )
-                log.info(
-                    f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
+                log.info(f"Remaining tables shared in this share object = {existing_shared_tables_in_share}")
 
                 if not existing_shared_tables_in_share:
                     log.info("Revoking permissions to target shared database...")
@@ -217,37 +222,43 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if not self.is_new_share:
                         log.info("Deleting OLD target shared database...")
-                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                        warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
                         self.delete_shared_database_in_target()
 
-                existing_shares_with_shared_tables_in_environment = ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
-                    session=self.session,
-                    dataset_uri=self.dataset.datasetUri,
-                    environment_uri=self.target_environment.environmentUri,
-                    item_type=ShareableType.Table.value
+                existing_shares_with_shared_tables_in_environment = (
+                    ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
+                        session=self.session,
+                        dataset_uri=self.dataset.datasetUri,
+                        environment_uri=self.target_environment.environmentUri,
+                        item_type=ShareableType.Table.value,
+                    )
                 )
                 warn(
-                    'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
-                    DeprecationWarning, stacklevel=2
+                    "ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0",
+                    DeprecationWarning,
+                    stacklevel=2,
                 )
-                existing_old_shares_bool = [self.glue_client_in_target.database_exists(item["databaseName"]) for item in existing_shares_with_shared_tables_in_environment]
-                log.info(f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}')
+                existing_old_shares_bool = [
+                    self.glue_client_in_target.database_exists(item["databaseName"])
+                    for item in existing_shares_with_shared_tables_in_environment
+                ]
+                log.info(
+                    f"Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}"
+                )
                 if self.is_new_share and False not in existing_old_shares_bool:
                     log.info("Deleting target shared database...")
-                    warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                    warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
                     self.delete_shared_database_in_target()
         except Exception as e:
             log.error(
-                f'Failed to clean-up database permissions or delete shared database {self.shared_db_name} '
-                f'due to: {e}'
+                f"Failed to clean-up database permissions or delete shared database {self.shared_db_name} "
+                f"due to: {e}"
             )
             success = False
         return success
 
     def verify_shares(self) -> bool:
-        log.info(
-            '##### Starting Verify tables #######'
-        )
+        log.info("##### Starting Verify tables #######")
         if not self.tables:
             log.info("No tables to verify. Skipping...")
         else:
@@ -259,7 +270,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 self.check_principals_permissions_to_shared_database()
             except Exception as e:
                 self.db_level_errors = [str(e)]
-                
+
             for table in self.tables:
                 self.tbl_level_errors = []
                 try:
@@ -277,13 +288,19 @@ class ProcessLakeFormationShare(LFShareManager):
                             target_account_id=self.target_environment.AwsAccountId,
                             target_region=self.target_environment.region,
                             source_database=self.dataset.GlueDatabaseName,
-                            source_table=table
+                            source_table=table,
                         ):
                             self.tbl_level_errors.append(
-                                format_error_message(self.target_environment.AwsAccountId, "RAM Invitation", "Accepted", "Glue Table", f"{self.dataset.GlueDatabaseName}.{table}")
+                                format_error_message(
+                                    self.target_environment.AwsAccountId,
+                                    "RAM Invitation",
+                                    "Accepted",
+                                    "Glue Table",
+                                    f"{self.dataset.GlueDatabaseName}.{table}",
+                                )
                             )
 
-                    self.verify_resource_link_table_exists_in_target_database(table)                    
+                    self.verify_resource_link_table_exists_in_target_database(table)
                     self.check_principals_permissions_to_table_in_target(table)
                     self.check_principals_permissions_to_resource_link_table(table)
 
@@ -292,18 +309,14 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 if len(self.db_level_errors) or len(self.tbl_level_errors):
                     ShareObjectRepository.update_share_item_health_status(
-                        self.session, 
-                        share_item, 
-                        ShareItemHealthStatus.Unhealthy.value, 
+                        self.session,
+                        share_item,
+                        ShareItemHealthStatus.Unhealthy.value,
                         " | ".join(self.db_level_errors) + " | " + " | ".join(self.tbl_level_errors),
-                        datetime.now()
+                        datetime.now(),
                     )
                 else:
                     ShareObjectRepository.update_share_item_health_status(
-                        self.session, 
-                        share_item, 
-                        ShareItemHealthStatus.Healthy.value, 
-                        None,
-                        datetime.now()
+                        self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
         return True

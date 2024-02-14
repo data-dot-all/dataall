@@ -13,7 +13,10 @@ from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils, format_error_message
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import (
+    ShareManagerUtils,
+    format_error_message,
+)
 
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -24,7 +27,8 @@ IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
-DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
+DATAALL_DELEGATE_TO_ACCESS_POINT = "DelegateAccessToAccessPoint"
+
 
 class S3AccessPointShareManager:
     def __init__(
@@ -78,12 +82,14 @@ class S3AccessPointShareManager:
     @staticmethod
     def build_access_point_name(share):
         S3AccessPointName = utils.slugify(
-            share.datasetUri + '-' + share.principalId,
-            max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+            share.datasetUri + "-" + share.principalId,
+            max_length=50,
+            lowercase=True,
+            regex_pattern="[^a-zA-Z0-9-]",
+            separator="-",
         )
         logger.info(f"S3AccessPointName={S3AccessPointName}")
         return S3AccessPointName
-
 
     def check_bucket_policy(self) -> bool:
         """
@@ -97,7 +103,9 @@ class S3AccessPointShareManager:
 
         if DATAALL_DELEGATE_TO_ACCESS_POINT not in statements.keys():
             self.folder_errors.append(
-                format_error_message(None, None, None, f"Bucket Policy {DATAALL_DELEGATE_TO_ACCESS_POINT}", f"{self.bucket_name}")
+                format_error_message(
+                    None, None, None, f"Bucket Policy {DATAALL_DELEGATE_TO_ACCESS_POINT}", f"{self.bucket_name}"
+                )
             )
 
     def manage_bucket_policy(self):
@@ -106,48 +114,39 @@ class S3AccessPointShareManager:
         and environment admin. All of the policies will only be added once.
         :return:
         """
-        logger.info(
-            f'Manage Bucket policy for {self.bucket_name}'
-        )
+        logger.info(f"Manage Bucket policy for {self.bucket_name}")
 
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
         for statement in bucket_policy["Statement"]:
             if statement.get("Sid") in [DATAALL_DELEGATE_TO_ACCESS_POINT]:
                 return
-        exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
-            self.source_account_id,
-            [self.dataset_admin, self.source_env_admin, SessionHelper.get_delegation_role_arn(self.source_account_id)]
-        )]
+        exceptions_roleId = [
+            f"{item}:*"
+            for item in SessionHelper.get_role_ids(
+                self.source_account_id,
+                [
+                    self.dataset_admin,
+                    self.source_env_admin,
+                    SessionHelper.get_delegation_role_arn(self.source_account_id),
+                ],
+            )
+        ]
         allow_owner_access = {
             "Sid": DATAALL_ALLOW_OWNER_SID,
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:*",
-            "Resource": [
-                f"arn:aws:s3:::{self.bucket_name}",
-                f"arn:aws:s3:::{self.bucket_name}/*"
-            ],
-            "Condition": {
-                "StringLike": {
-                    "aws:userId": exceptions_roleId
-                }
-            }
+            "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
+            "Condition": {"StringLike": {"aws:userId": exceptions_roleId}},
         }
         delegated_to_accesspoint = {
             "Sid": DATAALL_DELEGATE_TO_ACCESS_POINT,
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:*",
-            "Resource": [
-                f"arn:aws:s3:::{self.bucket_name}",
-                f"arn:aws:s3:::{self.bucket_name}/*"
-            ],
-            "Condition": {
-                "StringEquals": {
-                    "s3:DataAccessPointAccount": f"{self.source_account_id}"
-                }
-            }
+            "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
+            "Condition": {"StringEquals": {"s3:DataAccessPointAccount": f"{self.source_account_id}"}},
         }
         bucket_policy["Statement"].append(allow_owner_access)
         bucket_policy["Statement"].append(delegated_to_accesspoint)
@@ -168,7 +167,9 @@ class S3AccessPointShareManager:
             IAM_ACCESS_POINT_ROLE_POLICY,
         )
         if not existing_policy:
-            self.folder_errors.append(format_error_message(None, None, None, IAM_ACCESS_POINT_ROLE_POLICY, self.target_requester_IAMRoleName))
+            self.folder_errors.append(
+                format_error_message(None, None, None, IAM_ACCESS_POINT_ROLE_POLICY, self.target_requester_IAMRoleName)
+            )
             return
 
         share_manager = ShareManagerUtils(
@@ -178,28 +179,29 @@ class S3AccessPointShareManager:
             self.source_environment,
             self.target_environment,
             self.source_env_group,
-            self.env_group
+            self.env_group,
         )
 
         s3_target_resources = [
             f"arn:aws:s3:::{self.bucket_name}",
             f"arn:aws:s3:::{self.bucket_name}/*",
             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*",
         ]
-        if not share_manager.check_resource_in_policy_statement(
-            s3_target_resources,
-            existing_policy["Statement"][0]
-        ):
+        if not share_manager.check_resource_in_policy_statement(s3_target_resources, existing_policy["Statement"][0]):
             self.folder_errors.append(
-                format_error_message(self.target_requester_IAMRoleName, "IAM Policy", IAM_ACCESS_POINT_ROLE_POLICY, "S3 Bucket", f"{self.bucket_name}")
+                format_error_message(
+                    self.target_requester_IAMRoleName,
+                    "IAM Policy",
+                    IAM_ACCESS_POINT_ROLE_POLICY,
+                    "S3 Bucket",
+                    f"{self.bucket_name}",
+                )
             )
-        
+
         if kms_key_id:
             kms_error = False
-            kms_target_resources = [
-                f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-            ]
+            kms_target_resources = [f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"]
             if len(existing_policy["Statement"]) <= 1:
                 kms_error = True
             elif not share_manager.check_resource_in_policy_statement(
@@ -207,21 +209,25 @@ class S3AccessPointShareManager:
                 existing_policy["Statement"][1],
             ):
                 kms_error = True
-            
+
             if kms_error:
                 self.folder_errors.append(
-                    format_error_message(self.target_requester_IAMRoleName, "IAM Policy", IAM_ACCESS_POINT_ROLE_POLICY, "KMS Key", f"{kms_key_id}")
+                    format_error_message(
+                        self.target_requester_IAMRoleName,
+                        "IAM Policy",
+                        IAM_ACCESS_POINT_ROLE_POLICY,
+                        "KMS Key",
+                        f"{kms_key_id}",
+                    )
                 )
-        return 
+        return
 
     def grant_target_role_access_policy(self):
         """
         Updates requester IAM role policy to include requested S3 bucket and access point
         :return:
         """
-        logger.info(
-            f'Grant target role {self.target_requester_IAMRoleName} access policy'
-        )
+        logger.info(f"Grant target role {self.target_requester_IAMRoleName} access policy")
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
@@ -236,7 +242,7 @@ class S3AccessPointShareManager:
                 f"arn:aws:s3:::{self.bucket_name}",
                 f"arn:aws:s3:::{self.bucket_name}/*",
                 f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+                f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*",
             ]
             share_manager = ShareManagerUtils(
                 self.session,
@@ -245,66 +251,46 @@ class S3AccessPointShareManager:
                 self.source_environment,
                 self.target_environment,
                 self.source_env_group,
-                self.env_group
+                self.env_group,
             )
             share_manager.add_missing_resources_to_policy_statement(
-                self.bucket_name,
-                s3_target_resources,
-                existing_policy["Statement"][0],
-                IAM_ACCESS_POINT_ROLE_POLICY
+                self.bucket_name, s3_target_resources, existing_policy["Statement"][0], IAM_ACCESS_POINT_ROLE_POLICY
             )
             if kms_key_id:
-                kms_target_resources = [
-                    f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                ]
+                kms_target_resources = [f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"]
                 if len(existing_policy["Statement"]) > 1:
                     share_manager.add_missing_resources_to_policy_statement(
-                        kms_key_id,
-                        kms_target_resources,
-                        existing_policy["Statement"][1],
-                        IAM_ACCESS_POINT_ROLE_POLICY
+                        kms_key_id, kms_target_resources, existing_policy["Statement"][1], IAM_ACCESS_POINT_ROLE_POLICY
                     )
                 else:
-                    additional_policy = {
-                        "Effect": "Allow",
-                        "Action": [
-                            "kms:*"
-                        ],
-                        "Resource": kms_target_resources
-                    }
+                    additional_policy = {"Effect": "Allow", "Action": ["kms:*"], "Resource": kms_target_resources}
                     existing_policy["Statement"].append(additional_policy)
 
             policy = existing_policy
         else:
             logger.info(
-                f'{IAM_ACCESS_POINT_ROLE_POLICY} does not exists for IAM role {self.target_requester_IAMRoleName}, creating...'
+                f"{IAM_ACCESS_POINT_ROLE_POLICY} does not exists for IAM role {self.target_requester_IAMRoleName}, creating..."
             )
             policy = {
                 "Version": "2012-10-17",
                 "Statement": [
                     {
                         "Effect": "Allow",
-                        "Action": [
-                            "s3:*"
-                        ],
+                        "Action": ["s3:*"],
                         "Resource": [
                             f"arn:aws:s3:::{self.bucket_name}",
                             f"arn:aws:s3:::{self.bucket_name}/*",
                             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
-                        ]
+                            f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*",
+                        ],
                     }
-                ]
+                ],
             }
             if kms_key_id:
                 additional_policy = {
                     "Effect": "Allow",
-                    "Action": [
-                        "kms:*"
-                    ],
-                    "Resource": [
-                        f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
-                    ]
+                    "Action": ["kms:*"],
+                    "Resource": [f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"],
                 }
                 policy["Statement"].append(additional_policy)
 
@@ -324,12 +310,14 @@ class S3AccessPointShareManager:
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
         if not access_point_arn:
             self.folder_errors.append(format_error_message(None, None, None, "Access Point", self.access_point_name))
-            return   
+            return
 
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         if not existing_policy:
-            self.folder_errors.append(format_error_message(None, None, None, "Access Point Policy", self.access_point_name))
-            return        
+            self.folder_errors.append(
+                format_error_message(None, None, None, "Access Point Policy", self.access_point_name)
+            )
+            return
 
         existing_policy = json.loads(existing_policy)
         statements = {item["Sid"]: item for item in existing_policy["Statement"]}
@@ -337,7 +325,13 @@ class S3AccessPointShareManager:
 
         if f"{target_requester_id}0" not in statements.keys():
             self.folder_errors.append(
-                format_error_message(self.target_requester_IAMRoleName, "Policy", f"{target_requester_id}0", "Access Point", self.access_point_name)
+                format_error_message(
+                    self.target_requester_IAMRoleName,
+                    "Policy",
+                    f"{target_requester_id}0",
+                    "Access Point",
+                    self.access_point_name,
+                )
             )
         else:
             prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
@@ -345,12 +339,24 @@ class S3AccessPointShareManager:
                 prefix_list = [prefix_list]
             if f"{self.s3_prefix}/*" not in prefix_list:
                 self.folder_errors.append(
-                    format_error_message(self.target_requester_IAMRoleName, "Policy", f"{target_requester_id}0", "Access Point", self.access_point_name)
+                    format_error_message(
+                        self.target_requester_IAMRoleName,
+                        "Policy",
+                        f"{target_requester_id}0",
+                        "Access Point",
+                        self.access_point_name,
+                    )
                 )
 
         if f"{target_requester_id}1" not in statements.keys():
             self.folder_errors.append(
-                format_error_message(self.target_requester_IAMRoleName, "Policy", f"{target_requester_id}1", "Access Point", self.access_point_name)
+                format_error_message(
+                    self.target_requester_IAMRoleName,
+                    "Policy",
+                    f"{target_requester_id}1",
+                    "Access Point",
+                    self.access_point_name,
+                )
             )
         else:
             resource_list = statements[f"{target_requester_id}1"]["Resource"]
@@ -358,7 +364,13 @@ class S3AccessPointShareManager:
                 resource_list = [resource_list]
             if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
                 self.folder_errors.append(
-                    format_error_message(self.target_requester_IAMRoleName, "Policy", f"{target_requester_id}1", "Access Point", self.access_point_name)
+                    format_error_message(
+                        self.target_requester_IAMRoleName,
+                        "Policy",
+                        f"{target_requester_id}1",
+                        "Access Point",
+                        self.access_point_name,
+                    )
                 )
         return
 
@@ -370,17 +382,15 @@ class S3AccessPointShareManager:
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
         if not access_point_arn:
-            logger.info(
-                f'Access point {self.access_point_name} does not exists, creating...'
-            )
+            logger.info(f"Access point {self.access_point_name} does not exists, creating...")
             access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
             # Access point creation is slow
             retries = 1
-            while (not s3_client.get_bucket_access_point_arn(self.access_point_name)
-                   and retries < ACCESS_POINT_CREATION_RETRIES):
-                logger.info(
-                    'Waiting 30s for access point creation to complete..'
-                )
+            while (
+                not s3_client.get_bucket_access_point_arn(self.access_point_name)
+                and retries < ACCESS_POINT_CREATION_RETRIES
+            ):
+                logger.info("Waiting 30s for access point creation to complete..")
                 time.sleep(ACCESS_POINT_CREATION_TIME)
                 retries += 1
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
@@ -389,7 +399,7 @@ class S3AccessPointShareManager:
         if existing_policy:
             # Update existing access point policy
             logger.info(
-                f'There is already an existing access point {access_point_arn} with an existing policy, updating policy...'
+                f"There is already an existing access point {access_point_arn} with an existing policy, updating policy..."
             )
             existing_policy = json.loads(existing_policy)
             statements = {item["Sid"]: item for item in existing_policy["Statement"]}
@@ -417,32 +427,30 @@ class S3AccessPointShareManager:
             access_point_policy = existing_policy
         else:
             # First time to create access point policy
-            logger.info(
-                f'Access point policy for access point {access_point_arn} does not exists, creating policy...'
-            )
+            logger.info(f"Access point policy for access point {access_point_arn} does not exists, creating policy...")
             access_point_policy = S3ControlClient.generate_access_point_policy_template(
                 target_requester_id,
                 access_point_arn,
                 self.s3_prefix,
             )
-            exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
-                self.source_account_id,
-                [
-                    self.dataset_admin, self.source_env_admin,
-                    SessionHelper.get_delegation_role_arn(self.source_account_id)
-                ]
-            )]
+            exceptions_roleId = [
+                f"{item}:*"
+                for item in SessionHelper.get_role_ids(
+                    self.source_account_id,
+                    [
+                        self.dataset_admin,
+                        self.source_env_admin,
+                        SessionHelper.get_delegation_role_arn(self.source_account_id),
+                    ],
+                )
+            ]
             admin_statement = {
                 "Sid": DATAALL_ALLOW_OWNER_SID,
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": "s3:*",
                 "Resource": f"{access_point_arn}",
-                "Condition": {
-                    "StringLike": {
-                        "aws:userId": exceptions_roleId
-                    }
-                }
+                "Condition": {"StringLike": {"aws:userId": exceptions_roleId}},
             }
             access_point_policy["Statement"].append(admin_statement)
         s3_client.attach_access_point_policy(
@@ -462,7 +470,7 @@ class S3AccessPointShareManager:
         if not existing_policy:
             self.folder_errors.append(format_error_message(None, None, None, "KMS Key Policy", kms_key_id))
             return
-        
+
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         existing_policy = json.loads(existing_policy)
         counter = count()
@@ -476,14 +484,18 @@ class S3AccessPointShareManager:
 
         if error:
             self.folder_errors.append(
-                format_error_message(self.target_requester_IAMRoleName, "KMS Key Policy", DATAALL_ACCESS_POINT_KMS_DECRYPT_SID, "KMS Key", f"{kms_key_id}")
+                format_error_message(
+                    self.target_requester_IAMRoleName,
+                    "KMS Key Policy",
+                    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+                    "KMS Key",
+                    f"{kms_key_id}",
+                )
             )
         return
 
     def update_dataset_bucket_key_policy(self):
-        logger.info(
-            'Updating dataset Bucket KMS key policy...'
-        )
+        logger.info("Updating dataset Bucket KMS key policy...")
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
@@ -497,47 +509,50 @@ class S3AccessPointShareManager:
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
 
             if DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
-                logger.info(
-                    f'KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}')
+                logger.info(f"KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}")
             else:
                 logger.info(
-                    f'KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one')
-                statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] \
-                    = self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
+                    f"KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one"
+                )
+                statements[
+                    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID
+                ] = self.generate_enable_pivot_role_permissions_policy_statement(
+                    pivot_role_name, self.dataset_account_id
+                )
 
             if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
                 logger.info(
-                    f'KMS key policy contains share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
-                    f'updating the current one')
-                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = (self.add_target_arn_to_statement_principal
-                                                                    (statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID],
-                                                                     target_requester_arn))
+                    f"KMS key policy contains share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, "
+                    f"updating the current one"
+                )
+                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
+                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID], target_requester_arn
+                )
             else:
                 logger.info(
-                    f'KMS key does not contain share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
-                    f'generating a new one')
-                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = (self.generate_default_kms_decrypt_policy_statement
-                                                                    (target_requester_arn))
+                    f"KMS key does not contain share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, "
+                    f"generating a new one"
+                )
+                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
+                    target_requester_arn
+                )
             existing_policy["Statement"] = list(statements.values())
 
         else:
-            logger.info('KMS key policy does not contain any statements, generating a new one')
+            logger.info("KMS key policy does not contain any statements, generating a new one")
             existing_policy = {
                 "Version": "2012-10-17",
                 "Statement": [
                     self.generate_default_kms_decrypt_policy_statement(target_requester_arn),
-                    self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
-                ]
+                    self.generate_enable_pivot_role_permissions_policy_statement(
+                        pivot_role_name, self.dataset_account_id
+                    ),
+                ],
             }
-        kms_client.put_key_policy(
-            kms_key_id,
-            json.dumps(existing_policy)
-        )
+        kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
     def delete_access_point_policy(self):
-        logger.info(
-            f'Deleting access point policy for access point {self.access_point_name}...'
-        )
+        logger.info(f"Deleting access point policy for access point {self.access_point_name}...")
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(self.access_point_name))
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
@@ -547,25 +562,24 @@ class S3AccessPointShareManager:
             prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
             if isinstance(prefix_list, list) and f"{self.s3_prefix}/*" in prefix_list:
                 prefix_list.remove(f"{self.s3_prefix}/*")
-                statements[f"{target_requester_id}1"]["Resource"].remove(f"{access_point_arn}/object/{self.s3_prefix}/*")
+                statements[f"{target_requester_id}1"]["Resource"].remove(
+                    f"{access_point_arn}/object/{self.s3_prefix}/*"
+                )
                 access_point_policy["Statement"] = list(statements.values())
             else:
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}0"])
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}1"])
         s3_client.attach_access_point_policy(
-            access_point_name=self.access_point_name,
-            policy=json.dumps(access_point_policy)
+            access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
 
     @staticmethod
     def delete_access_point(
-            share: ShareObject,
-            dataset: Dataset,
+        share: ShareObject,
+        dataset: Dataset,
     ):
         access_point_name = S3AccessPointShareManager.build_access_point_name(share)
-        logger.info(
-            f'Deleting access point {access_point_name}...'
-        )
+        logger.info(f"Deleting access point {access_point_name}...")
 
         s3_client = S3ControlClient(dataset.AwsAccountId, dataset.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(access_point_name))
@@ -578,13 +592,11 @@ class S3AccessPointShareManager:
 
     @staticmethod
     def delete_target_role_access_policy(
-            share: ShareObject,
-            dataset: Dataset,
-            target_environment: Environment,
+        share: ShareObject,
+        dataset: Dataset,
+        target_environment: Environment,
     ):
-        logger.info(
-            'Deleting target role IAM policy...'
-        )
+        logger.info("Deleting target role IAM policy...")
         access_point_name = S3AccessPointShareManager.build_access_point_name(share)
         existing_policy = IAM.get_role_policy(
             target_environment.AwsAccountId,
@@ -599,20 +611,14 @@ class S3AccessPointShareManager:
                 f"arn:aws:s3:::{dataset.S3BucketName}",
                 f"arn:aws:s3:::{dataset.S3BucketName}/*",
                 f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
-                f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
+                f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*",
             ]
-            ShareManagerUtils.remove_resource_from_statement(
-                existing_policy["Statement"][0],
-                s3_target_resources
-            )
+            ShareManagerUtils.remove_resource_from_statement(existing_policy["Statement"][0], s3_target_resources)
             if kms_key_id:
-                kms_target_resources = [
-                    f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
-                ]
+                kms_target_resources = [f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"]
                 if len(existing_policy["Statement"]) > 1:
                     ShareManagerUtils.remove_resource_from_statement(
-                        existing_policy["Statement"][1],
-                        kms_target_resources
+                        existing_policy["Statement"][1], kms_target_resources
                     )
 
             policy_statements = []
@@ -622,9 +628,9 @@ class S3AccessPointShareManager:
 
             existing_policy["Statement"] = policy_statements
             if len(existing_policy["Statement"]) == 0:
-                IAM.delete_role_policy(target_environment.AwsAccountId,
-                                       share.principalIAMRoleName,
-                                       IAM_ACCESS_POINT_ROLE_POLICY)
+                IAM.delete_role_policy(
+                    target_environment.AwsAccountId, share.principalIAMRoleName, IAM_ACCESS_POINT_ROLE_POLICY
+                )
             else:
                 IAM.update_role_policy(
                     target_environment.AwsAccountId,
@@ -634,12 +640,10 @@ class S3AccessPointShareManager:
                 )
 
     def delete_dataset_bucket_key_policy(
-            self,
-            dataset: Dataset,
+        self,
+        dataset: Dataset,
     ):
-        logger.info(
-            'Deleting dataset bucket KMS key policy...'
-        )
+        logger.info("Deleting dataset bucket KMS key policy...")
         key_alias = f"alias/{dataset.KmsAlias}"
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
@@ -656,10 +660,7 @@ class S3AccessPointShareManager:
                 else:
                     statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]["Principal"]["AWS"] = principal_list
                 existing_policy["Statement"] = list(statements.values())
-                kms_client.put_key_policy(
-                    kms_key_id,
-                    json.dumps(existing_policy)
-                )
+                kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
     def handle_share_failure(self, error: Exception) -> None:
         """
@@ -669,10 +670,10 @@ class S3AccessPointShareManager:
         True if alarm published successfully
         """
         logger.error(
-            f'Failed to share folder {self.s3_prefix} '
-            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
-            f'due to: {error}'
+            f"Failed to share folder {self.s3_prefix} "
+            f"from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} "
+            f"with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} "
+            f"due to: {error}"
         )
         DatasetAlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
@@ -686,10 +687,10 @@ class S3AccessPointShareManager:
         True if alarm published successfully
         """
         logger.error(
-            f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
-            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
-            f'due to: {error}'
+            f"Failed to revoke S3 permissions to folder {self.s3_prefix} "
+            f"from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} "
+            f"with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} "
+            f"due to: {error}"
         )
         DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
@@ -701,13 +702,9 @@ class S3AccessPointShareManager:
         return {
             "Sid": f"{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}",
             "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    f"{target_requester_arn}"
-                ]
-            },
+            "Principal": {"AWS": [f"{target_requester_arn}"]},
             "Action": "kms:Decrypt",
-            "Resource": "*"
+            "Resource": "*",
         }
 
     @staticmethod
@@ -715,11 +712,7 @@ class S3AccessPointShareManager:
         return {
             "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
             "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    f"arn:aws:iam::{dataset_account_id}:role/{pivot_role_name}"
-                ]
-            },
+            "Principal": {"AWS": [f"arn:aws:iam::{dataset_account_id}:role/{pivot_role_name}"]},
             "Action": [
                 "kms:Decrypt",
                 "kms:Encrypt",
@@ -728,9 +721,9 @@ class S3AccessPointShareManager:
                 "kms:GetKeyPolicy",
                 "kms:ReEncrypt*",
                 "kms:TagResource",
-                "kms:UntagResource"
+                "kms:UntagResource",
             ],
-            "Resource": "*"
+            "Resource": "*",
         }
 
     def add_target_arn_to_statement_principal(self, statement, target_requester_arn):

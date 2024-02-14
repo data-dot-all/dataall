@@ -28,7 +28,7 @@ class EcsShareHandler:
 
     @staticmethod
     @Worker.handler(path='ecs.share.reapply')
-    def verify_share(engine, task: Task):
+    def reapply_share(engine, task: Task):
         return EcsShareHandler._manage_share(engine, task, DataSharingService.reapply_share, 'reapply_share')
 
     @staticmethod
