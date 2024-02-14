@@ -273,7 +273,7 @@ class LakeFormationClient:
         return True
 
     def check_permissions_to_database(
-        self, 
+        self,
         principals,
         database_name,
         permissions,
