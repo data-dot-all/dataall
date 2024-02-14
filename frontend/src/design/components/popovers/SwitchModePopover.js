@@ -1,6 +1,6 @@
 import { IconButton, Tooltip } from '@mui/material';
-import { useSettings } from '../../hooks';
-import { RefreshIcon } from '../../icons';
+import { useSettings } from 'design/hooks';
+import { RefreshIcon } from 'design/icons';
 
 /**
  * @description Toggle "advanced" / "basic" mode.

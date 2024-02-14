@@ -1,8 +1,8 @@
 import { IconButton, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { THEMES } from '../../constants';
-import { useSettings } from '../../hooks';
-import { MoonIcon, SunIcon } from '../../icons';
+import { THEMES } from 'design/constants';
+import { useSettings } from 'design/hooks';
+import { MoonIcon, SunIcon } from 'design/icons';
 
 export const ThemePopover = () => {
   const { settings, saveSettings } = useSettings();

@@ -31,7 +31,10 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getEnvironmentMLStudioDomain, useClient } from 'services';
-import { getEnvironment, updateEnvironment } from '../services';
+import {
+  getEnvironment,
+  updateEnvironment
+} from 'modules/Environments/services';
 import {
   isAnyEnvironmentModuleEnabled,
   isModuleEnabled,

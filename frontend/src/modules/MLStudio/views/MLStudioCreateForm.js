@@ -35,7 +35,7 @@ import {
   useClient
 } from 'services';
 
-import { createSagemakerStudioUser } from '../services';
+import { createSagemakerStudioUser } from 'modules/MLStudio/services';
 
 const MLStudioCreateForm = (props) => {
   const navigate = useNavigate();

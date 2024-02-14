@@ -28,8 +28,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listTenantGroups } from '../services';
-import { TeamPermissionsEditForm } from './TeamPermissionsEditForm';
+import { listTenantGroups } from 'modules/Administration/services';
+import { TeamPermissionsEditForm } from 'modules/Administration/components/TeamPermissionsEditForm';
 
 function TeamRow({ team, fetchItems }) {
   const theme = useTheme();

@@ -19,7 +19,7 @@ import {
   updateCategory,
   updateGlossary,
   updateTerm
-} from '../services';
+} from 'modules/Glossaries/services';
 
 export const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
   const dispatch = useDispatch();

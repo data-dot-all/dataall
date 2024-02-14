@@ -30,7 +30,7 @@ import {
   getDatasetTableProfilingRun,
   listDatasetTableProfilingRuns,
   startDatasetProfilingRun
-} from '../services';
+} from 'modules/Tables/services';
 
 export const TableMetrics = ({ table, isAdmin }) => {
   const client = useClient();

@@ -18,9 +18,9 @@ import { SiJupyter } from 'react-icons/si';
 import { VscBook } from 'react-icons/vsc';
 import { useLocation } from 'react-router-dom';
 import { ModuleNames, isModuleEnabled } from 'utils';
-import { useSettings } from '../../hooks';
-import { NavSection } from '../NavSection';
-import { Scrollbar } from '../Scrollbar';
+import { useSettings } from 'design/hooks';
+import { NavSection } from 'design/components/NavSection';
+import { Scrollbar } from 'design/components/Scrollbar';
 
 export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
   const getSections = (isAdvancedMode) => {

@@ -16,7 +16,10 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, TextAvatar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { approveDashboardShare, rejectDashboardShare } from '../services';
+import {
+  approveDashboardShare,
+  rejectDashboardShare
+} from 'modules/Dashboards/services';
 
 export const DashboardShareItem = (props) => {
   const { share, dashboard, reload } = props;

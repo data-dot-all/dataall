@@ -35,7 +35,7 @@ import {
   listValidEnvironments,
   useClient
 } from 'services';
-import { createSagemakerNotebook } from '../services';
+import { createSagemakerNotebook } from 'modules/Notebooks/services';
 
 const NotebookCreateForm = (props) => {
   const navigate = useNavigate();

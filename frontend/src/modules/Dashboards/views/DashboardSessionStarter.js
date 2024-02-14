@@ -28,7 +28,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Defaults, Pager, Scrollbar, SearchIcon, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listEnvironments, useClient } from 'services';
-import { getAuthorSession } from '../services';
+import { getAuthorSession } from 'modules/Dashboards/services';
 
 function DashboardSessionStarterPageHeader() {
   return (

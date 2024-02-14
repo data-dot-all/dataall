@@ -1,8 +1,8 @@
 import { Box, Card, CardContent, Container, Typography } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoginButton } from '../components';
+import { LoginButton } from 'authentication/components';
 import { Logo } from 'design';
-import { useAuth } from '../hooks';
+import { useAuth } from 'authentication/hooks';
 
 const platformIcons = {
   Amplify: '/static/icons/amplify.svg'

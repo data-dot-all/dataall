@@ -57,14 +57,14 @@ import {
   rejectShareObject,
   removeSharedItem,
   submitApproval
-} from '../services';
+} from 'modules/Shares/services';
 import {
   AddShareItemModal,
   RevokeShareItemsModal,
   ShareRejectModal,
   UpdateRejectReason,
   UpdateRequestReason
-} from '../components';
+} from 'modules/Shares/components';
 import { generateShareItemLabel } from 'utils';
 
 function ShareViewHeader(props) {

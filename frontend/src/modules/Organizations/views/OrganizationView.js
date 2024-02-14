@@ -32,12 +32,12 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getOrganization, useClient } from 'services';
-import { archiveOrganization } from '../services';
+import { archiveOrganization } from 'modules/Organizations/services';
 import {
   OrganizationEnvironments,
   OrganizationOverview,
   OrganizationTeams
-} from '../components';
+} from 'modules/Organizations/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

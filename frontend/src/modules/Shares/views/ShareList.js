@@ -15,7 +15,7 @@ import { FiSend } from 'react-icons/fi';
 import { RiInboxArchiveLine } from 'react-icons/ri';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import { ShareBoxList } from '../components';
+import { ShareBoxList } from 'modules/Shares/components';
 
 const tabs = [
   { label: 'Received', value: 'inbox', icon: <RiInboxArchiveLine size={20} /> },

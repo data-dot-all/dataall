@@ -34,7 +34,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getDataset, countUpVotes, getVote, upVote, useClient } from 'services';
-import { deleteDataset } from '../services';
+import { deleteDataset } from 'modules/Datasets/services';
 import { ShareBoxList } from 'modules/Shares';
 import {
   FeedComments,
@@ -47,7 +47,7 @@ import {
   DatasetData,
   DatasetOverview,
   DatasetUpload
-} from '../components';
+} from 'modules/Datasets/components';
 import { isFeatureEnabled } from 'utils';
 
 const DatasetView = () => {

@@ -27,7 +27,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, useGroups } from 'services';
-import { createWorksheet } from '../services';
+import { createWorksheet } from 'modules/Worksheets/services';
 
 const WorksheetCreateForm = (props) => {
   const navigate = useNavigate();

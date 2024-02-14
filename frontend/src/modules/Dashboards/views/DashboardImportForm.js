@@ -37,7 +37,7 @@ import {
   searchGlossary,
   useClient
 } from 'services';
-import { importDashboard } from '../services';
+import { importDashboard } from 'modules/Dashboards/services';
 
 const DashboardImportForm = (props) => {
   const navigate = useNavigate();

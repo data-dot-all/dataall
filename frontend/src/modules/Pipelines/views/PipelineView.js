@@ -27,14 +27,17 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { deleteDataPipeline, getDataPipeline } from '../services';
+import {
+  deleteDataPipeline,
+  getDataPipeline
+} from 'modules/Pipelines/services';
 import {
   FeedComments,
   KeyValueTagList,
   StackStatus,
   Stack
 } from 'modules/Shared';
-import { PipelineOverview } from '../components';
+import { PipelineOverview } from 'modules/Pipelines/components';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);

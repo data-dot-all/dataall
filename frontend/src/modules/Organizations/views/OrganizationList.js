@@ -23,8 +23,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listOrganizations } from '../services';
-import { OrganizationListItem } from '../components';
+import { listOrganizations } from 'modules/Organizations/services';
+import { OrganizationListItem } from 'modules/Organizations/components';
 
 const OrganizationList = () => {
   const [items, setItems] = useState(Defaults.pagedResponse);

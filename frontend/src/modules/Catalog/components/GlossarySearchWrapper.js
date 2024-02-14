@@ -1,7 +1,7 @@
 import { ReactiveComponent } from '@appbaseio/reactivesearch';
 import { Box } from '@mui/material';
 import React from 'react';
-import { GlossarySearchUI } from './GlossarySearchUI';
+import { GlossarySearchUI } from 'modules/Catalog/components/GlossarySearchUI';
 
 export const GlossarySearchWrapper = (innerClass) => (
   <Box>

@@ -32,8 +32,11 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { deleteNetwork, listEnvironmentNetworks } from '../services';
-import { NetworkCreateModal } from './NetworkCreateModal';
+import {
+  deleteNetwork,
+  listEnvironmentNetworks
+} from 'modules/Environments/services';
+import { NetworkCreateModal } from 'modules/Environments/components/NetworkCreateModal';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {
   return (

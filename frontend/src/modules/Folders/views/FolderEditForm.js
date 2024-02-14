@@ -35,7 +35,7 @@ import { useClient, searchGlossary } from 'services';
 import {
   getDatasetStorageLocation,
   updateDatasetStorageLocation
-} from '../services';
+} from 'modules/Folders/services';
 
 function FolderEditHeader(props) {
   const { folder } = props;

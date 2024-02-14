@@ -5,7 +5,7 @@ import { FaExternalLinkAlt } from 'react-icons/fa';
 import * as ReactIf from 'react-if';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getReaderSession } from '../services';
+import { getReaderSession } from 'modules/Dashboards/services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

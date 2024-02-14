@@ -36,8 +36,8 @@ import {
   listValidEnvironments,
   useClient
 } from 'services';
-import { importDataset } from '../services';
-import { Topics } from '../../constants';
+import { importDataset } from 'modules/Datasets/services';
+import { Topics } from 'modules/constants';
 
 const DatasetImportForm = (props) => {
   const dispatch = useDispatch();

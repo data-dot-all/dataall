@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listGroups, useClient } from 'services';
-import { inviteGroupToOrganization } from '../services';
+import { inviteGroupToOrganization } from 'modules/Organizations/services';
 
 export const OrganizationTeamInviteForm = (props) => {
   const { organization, onClose, open, reloadTeams, ...other } = props;

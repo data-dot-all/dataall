@@ -34,8 +34,8 @@ import {
   listValidEnvironments,
   useClient
 } from 'services';
-import { createDataPipeline } from '../services';
-import { PipelineEnvironmentCreateForm } from '../components';
+import { createDataPipeline } from 'modules/Pipelines/services';
+import { PipelineEnvironmentCreateForm } from 'modules/Pipelines/components';
 
 const PipelineCreateForm = (props) => {
   const navigate = useNavigate();

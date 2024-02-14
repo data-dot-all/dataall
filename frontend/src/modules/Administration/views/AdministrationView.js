@@ -13,7 +13,10 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import { AdministrationTeams, DashboardViewer } from '../components';
+import {
+  AdministrationTeams,
+  DashboardViewer
+} from 'modules/Administration/components';
 
 const tabs = [
   { label: 'Teams', value: 'teams' },

@@ -21,10 +21,13 @@ import {
   getShareRequestsToMe,
   useClient
 } from 'services';
-import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
+import {
+  getShareRequestsFromMe,
+  listOwnedDatasets
+} from 'modules/Shares/services';
 
-import { ShareBoxListItem } from './ShareBoxListItem';
-import { ShareStatusList } from '../constants';
+import { ShareBoxListItem } from 'modules/Shares/components/ShareBoxListItem';
+import { ShareStatusList } from 'modules/Shares/constants';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;

@@ -28,7 +28,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getOrganization, useClient } from 'services';
-import { updateOrganization } from '../services';
+import { updateOrganization } from 'modules/Organizations/services';
 
 const OrganizationEditForm = (props) => {
   const navigate = useNavigate();

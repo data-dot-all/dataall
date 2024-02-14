@@ -23,7 +23,7 @@ import { useClient } from 'services';
 import {
   listEnvironmentGroupInvitationPermissions,
   updateGroupEnvironmentPermissions
-} from '../services';
+} from 'modules/Environments/services';
 
 export const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;

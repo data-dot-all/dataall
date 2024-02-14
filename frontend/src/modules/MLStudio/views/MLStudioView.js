@@ -30,10 +30,10 @@ import {
   deleteSagemakerStudioUser,
   getSagemakerStudioUser,
   getSagemakerStudioUserPresignedUrl
-} from '../services';
+} from 'modules/MLStudio/services';
 import { useClient } from 'services';
 import { StackStatus, Stack } from 'modules/Shared';
-import { MLStudioOverview } from '../components';
+import { MLStudioOverview } from 'modules/MLStudio/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

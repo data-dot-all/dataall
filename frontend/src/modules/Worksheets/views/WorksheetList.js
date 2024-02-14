@@ -22,8 +22,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { listWorksheets } from '../services';
-import { WorksheetListItem } from '../components';
+import { listWorksheets } from 'modules/Worksheets/services';
+import { WorksheetListItem } from 'modules/Worksheets/components';
 
 function WorksheetsPageHeader({ navigate }) {
   const startWorksheetSession = () => {

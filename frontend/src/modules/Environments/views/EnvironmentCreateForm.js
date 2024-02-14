@@ -37,7 +37,7 @@ import {
   getPivotRoleName,
   getPivotRolePresignedUrl,
   getCDKExecPolicyPresignedUrl
-} from '../services';
+} from 'modules/Environments/services';
 import {
   SanitizedHTML,
   ArrowLeftIcon,
@@ -58,7 +58,7 @@ import {
   isModuleEnabled,
   ModuleNames
 } from 'utils';
-import config from '../../../generated/config.json';
+import config from 'generated/config.json';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();

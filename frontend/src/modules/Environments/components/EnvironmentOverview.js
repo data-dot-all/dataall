@@ -1,8 +1,8 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
-import { EnvironmentConsoleAccess } from './EnvironmentConsoleAccess';
-import { EnvironmentFeatures } from './EnvironmentFeatures';
+import { EnvironmentConsoleAccess } from 'modules/Environments/components/EnvironmentConsoleAccess';
+import { EnvironmentFeatures } from 'modules/Environments/components/EnvironmentFeatures';
 
 export const EnvironmentOverview = (props) => {
   const { environment, ...other } = props;

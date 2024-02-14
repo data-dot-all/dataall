@@ -27,8 +27,11 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { deleteGlossary, getGlossary } from '../services';
-import { GlossaryAssociations, GlossaryManagement } from '../components';
+import { deleteGlossary, getGlossary } from 'modules/Glossaries/services';
+import {
+  GlossaryAssociations,
+  GlossaryManagement
+} from 'modules/Glossaries/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

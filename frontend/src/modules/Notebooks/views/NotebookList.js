@@ -21,8 +21,8 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { NotebookListItem } from '../components';
-import { listSagemakerNotebooks } from '../services';
+import { NotebookListItem } from 'modules/Notebooks/components';
+import { listSagemakerNotebooks } from 'modules/Notebooks/services';
 
 function NotebookPageHeader() {
   return (

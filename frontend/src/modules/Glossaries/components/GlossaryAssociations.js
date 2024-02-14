@@ -24,7 +24,7 @@ import {
   approveTermAssociation,
   dismissTermAssociation,
   listGlossaryAssociations
-} from '../services';
+} from 'modules/Glossaries/services';
 
 export const GlossaryAssociations = ({ glossary }) => {
   const client = useClient();

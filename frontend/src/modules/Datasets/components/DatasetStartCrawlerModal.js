@@ -15,7 +15,7 @@ import PropTypes from 'prop-types';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { startGlueCrawler } from '../services';
+import { startGlueCrawler } from 'modules/Datasets/services';
 
 export const DatasetStartCrawlerModal = (props) => {
   const { dataset, onApply, onClose, open } = props;

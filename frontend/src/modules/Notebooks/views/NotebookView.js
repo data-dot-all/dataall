@@ -30,14 +30,14 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { KeyValueTagList, StackStatus, Stack } from 'modules/Shared';
-import { NotebookOverview } from '../components';
+import { NotebookOverview } from 'modules/Notebooks/components';
 import {
   deleteSagemakerNotebook,
   getSagemakerNotebook,
   getSagemakerNotebookPresignedUrl,
   startSagemakerNotebook,
   stopSagemakerNotebook
-} from '../services';
+} from 'modules/Notebooks/services';
 
 /**
  * @description NotebookView component.

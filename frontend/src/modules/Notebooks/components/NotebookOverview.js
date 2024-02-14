@@ -1,7 +1,7 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
-import { NotebookInstanceProperties } from './NotebookInstanceProperties';
+import { NotebookInstanceProperties } from 'modules/Notebooks/components/NotebookInstanceProperties';
 
 /**
  * @description NotebookOverview view.

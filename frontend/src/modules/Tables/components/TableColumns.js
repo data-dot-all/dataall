@@ -8,7 +8,10 @@ import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listDatasetTableColumns, useClient } from 'services';
-import { updateColumnDescription, syncDatasetTableColumns } from '../services';
+import {
+  updateColumnDescription,
+  syncDatasetTableColumns
+} from 'modules/Tables/services';
 
 export const TableColumns = (props) => {
   const { table, isAdmin } = props;

@@ -9,7 +9,10 @@ import { useParams } from 'react-router-dom';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getShareObject, revokeItemsShareObject } from '../services';
+import {
+  getShareObject,
+  revokeItemsShareObject
+} from 'modules/Shares/services';
 import { generateShareItemLabel } from 'utils';
 
 export const RevokeShareItemsModal = (props) => {

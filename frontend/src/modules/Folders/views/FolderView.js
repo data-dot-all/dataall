@@ -34,10 +34,10 @@ import {
   deleteDatasetStorageLocation,
   getDatasetAssumeRoleUrl
 } from 'services';
-import { getDatasetStorageLocation } from '../services';
+import { getDatasetStorageLocation } from 'modules/Folders/services';
 
 import { FeedComments } from 'modules/Shared';
-import { FolderOverview } from '../components';
+import { FolderOverview } from 'modules/Folders/components';
 import { isFeatureEnabled } from 'utils';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];

@@ -19,7 +19,7 @@ import { useParams } from 'react-router-dom';
 import { Defaults, Pager, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { addSharedItem, getShareObject } from '../services';
+import { addSharedItem, getShareObject } from 'modules/Shares/services';
 import { generateShareItemLabel } from 'utils';
 
 export const AddShareItemModal = (props) => {

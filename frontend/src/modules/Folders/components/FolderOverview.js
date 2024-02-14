@@ -1,7 +1,7 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
-import { FolderS3Properties } from './FolderS3Properties';
+import { FolderS3Properties } from 'modules/Folders/components/FolderS3Properties';
 
 export const FolderOverview = (props) => {
   const { folder, isAdmin, ...other } = props;

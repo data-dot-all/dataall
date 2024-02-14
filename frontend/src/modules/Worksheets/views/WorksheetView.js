@@ -43,12 +43,12 @@ import {
   getWorksheet,
   runAthenaSqlQuery,
   updateWorksheet
-} from '../services';
+} from 'modules/Worksheets/services';
 import {
   SQLQueryEditor,
   WorksheetEditFormModal,
   WorksheetResult
-} from '../components';
+} from 'modules/Worksheets/components';
 
 const WorksheetView = () => {
   const navigate = useNavigate();

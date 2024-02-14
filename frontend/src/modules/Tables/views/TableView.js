@@ -29,13 +29,13 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDatasetTable, useClient } from 'services';
 import { FeedComments } from 'modules/Shared';
-import { getDatasetTable } from '../services';
+import { getDatasetTable } from 'modules/Tables/services';
 import {
   TableColumns,
   TableMetrics,
   TableOverview,
   TablePreview
-} from '../components';
+} from 'modules/Tables/components';
 import { isFeatureEnabled } from 'utils';
 
 const previewDataEnabled = isFeatureEnabled('datasets', 'preview_data');

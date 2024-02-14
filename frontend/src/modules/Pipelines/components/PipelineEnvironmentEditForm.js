@@ -25,7 +25,7 @@ import {
   createDataPipelineEnvironment,
   deleteDataPipelineEnvironment,
   updateDataPipelineEnvironment
-} from '../services';
+} from 'modules/Pipelines/services';
 
 export const PipelineEnvironmentEditForm = (props) => {
   const {
