@@ -1,0 +1,97 @@
+{
+    "failed_checks": [
+        {
+            "file": "/backend/docker/prod/ecs/Dockerfile",
+            "findings": [
+                {
+                    "resource": "/backend/docker/prod/ecs/Dockerfile.",
+                    "check_ids": [
+                        "CKV_DOCKER_2"
+                    ]
+                },
+                {
+                    "resource": "/backend/docker/prod/ecs/Dockerfile.ADD",
+                    "check_ids": [
+                        "CKV_DOCKER_4",
+                        "CKV_DOCKER_4",
+                        "CKV_DOCKER_4",
+                        "CKV_DOCKER_4",
+                        "CKV_DOCKER_4"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/backend/docker/prod/lambda/Dockerfile",
+            "findings": [
+                {
+                    "resource": "/backend/docker/prod/lambda/Dockerfile.",
+                    "check_ids": [
+                        "CKV_DOCKER_2"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/deploy/cdk_exec_policy/cdkExecPolicy.yaml",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.CDKCustomExecutionPolicy0",
+                    "check_ids": [
+                        "CKV_AWS_107",
+                        "CKV_AWS_109",
+                        "CKV_AWS_110",
+                        "CKV_AWS_111"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/deploy/pivot_role/pivotRole.yaml",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy0",
+                    "check_ids": [
+                        "CKV_AWS_109",
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy1",
+                    "check_ids": [
+                        "CKV_AWS_109",
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.PivotRolepolicy3",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/documentation/userguide/docker/prod/Dockerfile",
+            "findings": [
+                {
+                    "resource": "/documentation/userguide/docker/prod/Dockerfile.",
+                    "check_ids": [
+                        "CKV_DOCKER_2"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/frontend/docker/prod/Dockerfile",
+            "findings": [
+                {
+                    "resource": "/frontend/docker/prod/Dockerfile.",
+                    "check_ids": [
+                        "CKV_DOCKER_2"
+                    ]
+                }
+            ]
+        }
+    ]
+}
