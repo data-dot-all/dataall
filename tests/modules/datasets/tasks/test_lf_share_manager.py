@@ -124,7 +124,6 @@ def processor_with_mocks(db, dataset1, share, table1, table2, source_environment
             dataset1,
             share,
             [table1],
-            [table2],
             source_environment,
             target_environment,
             target_environment_group,
