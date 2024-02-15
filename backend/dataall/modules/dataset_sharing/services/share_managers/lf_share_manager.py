@@ -70,6 +70,7 @@ class LFShareManager:
         """
         principal_iam_role_arn = IAM.get_role_arn_by_name(
             account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
             role_name=self.share.principalIAMRoleName
         )
         principals = [principal_iam_role_arn]

@@ -74,6 +74,7 @@ class S3BucketShareManager:
         )
         existing_policy = IAM.get_role_policy(
             self.target_account_id,
+            self.target_environment.region,
             self.target_requester_IAMRoleName,
             IAM_S3BUCKET_ROLE_POLICY,
         )
@@ -158,6 +159,7 @@ class S3BucketShareManager:
 
         IAM.update_role_policy(
             self.target_account_id,
+            self.target_environment.region,
             self.target_requester_IAMRoleName,
             IAM_S3BUCKET_ROLE_POLICY,
             json.dumps(policy),
@@ -205,7 +207,7 @@ class S3BucketShareManager:
             f'Granting access via Bucket policy for {self.bucket_name}'
         )
         try:
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
@@ -274,7 +276,7 @@ class S3BucketShareManager:
             kms_client = KmsClient(self.source_account_id, self.source_environment.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = kms_client.get_key_policy(kms_key_id)
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
             pivot_role_name = SessionHelper.get_delegation_role_name()
 
             if existing_policy:
@@ -324,7 +326,7 @@ class S3BucketShareManager:
         try:
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
             bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
@@ -354,6 +356,7 @@ class S3BucketShareManager:
         )
         existing_policy = IAM.get_role_policy(
             target_environment.AwsAccountId,
+            target_environment.region,
             share.principalIAMRoleName,
             IAM_S3BUCKET_ROLE_POLICY,
         )
@@ -389,11 +392,12 @@ class S3BucketShareManager:
 
             existing_policy["Statement"] = policy_statements
             if len(existing_policy["Statement"]) == 0:
-                IAM.delete_role_policy(target_environment.AwsAccountId, share.principalIAMRoleName,
+                IAM.delete_role_policy(target_environment.AwsAccountId, target_environment.region, share.principalIAMRoleName,
                                        IAM_S3BUCKET_ROLE_POLICY)
             else:
                 IAM.update_role_policy(
                     target_environment.AwsAccountId,
+                    target_environment.region,
                     share.principalIAMRoleName,
                     IAM_S3BUCKET_ROLE_POLICY,
                     json.dumps(existing_policy),
@@ -411,7 +415,7 @@ class S3BucketShareManager:
             kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
             if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():

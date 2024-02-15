@@ -152,6 +152,7 @@ class S3AccessPointShareManager:
 
         existing_policy = IAM.get_role_policy(
             self.target_account_id,
+            self.target_environment.region,
             self.target_requester_IAMRoleName,
             IAM_ACCESS_POINT_ROLE_POLICY,
         )
@@ -234,6 +235,7 @@ class S3AccessPointShareManager:
 
         IAM.update_role_policy(
             self.target_account_id,
+            self.target_environment.region,
             self.target_requester_IAMRoleName,
             IAM_ACCESS_POINT_ROLE_POLICY,
             json.dumps(policy),
@@ -334,7 +336,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
         pivot_role_name = SessionHelper.get_delegation_role_name()
 
         if existing_policy:
@@ -434,6 +436,7 @@ class S3AccessPointShareManager:
         access_point_name = S3AccessPointShareManager.build_access_point_name(share)
         existing_policy = IAM.get_role_policy(
             target_environment.AwsAccountId,
+            target_environment.region,
             share.principalIAMRoleName,
             IAM_ACCESS_POINT_ROLE_POLICY,
         )
@@ -469,11 +472,13 @@ class S3AccessPointShareManager:
             existing_policy["Statement"] = policy_statements
             if len(existing_policy["Statement"]) == 0:
                 IAM.delete_role_policy(target_environment.AwsAccountId,
+                                       target_environment.region,
                                        share.principalIAMRoleName,
                                        IAM_ACCESS_POINT_ROLE_POLICY)
             else:
                 IAM.update_role_policy(
                     target_environment.AwsAccountId,
+                    target_environment.region,
                     share.principalIAMRoleName,
                     IAM_ACCESS_POINT_ROLE_POLICY,
                     json.dumps(existing_policy),
@@ -490,7 +495,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in existing_policy.get("Statement", {})}
         if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():

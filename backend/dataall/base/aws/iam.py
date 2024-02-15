@@ -8,15 +8,15 @@ log = logging.getLogger(__name__)
 
 class IAM:
     @staticmethod
-    def client(account_id: str, role=None):
-        session = SessionHelper.remote_session(accountid=account_id, role=role)
+    def client(account_id: str, region: str, role=None):
+        session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
         return session.client('iam')
 
     @staticmethod
-    def get_role(account_id: str, role_arn: str, role=None):
+    def get_role(account_id: str, region: str, role_arn: str, role=None):
         log.info(f"Getting IAM role = {role_arn}")
         try:
-            iamcli = IAM.client(account_id=account_id, role=role)
+            iamcli = IAM.client(account_id=account_id, region=region, role=role)
             response = iamcli.get_role(
                 RoleName=role_arn.split("/")[-1]
             )
@@ -30,10 +30,10 @@ class IAM:
             return response["Role"]
 
     @staticmethod
-    def get_role_arn_by_name(account_id: str, role_name: str, role=None):
+    def get_role_arn_by_name(account_id: str, region: str, role_name: str, role=None):
         log.info(f"Getting IAM role name= {role_name}")
         try:
-            iamcli = IAM.client(account_id=account_id, role=role)
+            iamcli = IAM.client(account_id=account_id, region=region, role=role)
             response = iamcli.get_role(
                 RoleName=role_name
             )
@@ -47,13 +47,14 @@ class IAM:
 
     @staticmethod
     def update_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
-        policy: str,
+            account_id: str,
+            region: str,
+            role_name: str,
+            policy_name: str,
+            policy: str,
     ):
         try:
-            iamcli = IAM.client(account_id)
+            iamcli = IAM.client(account_id, region)
             iamcli.put_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
@@ -67,12 +68,13 @@ class IAM:
 
     @staticmethod
     def get_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
+            account_id: str,
+            region:str,
+            role_name: str,
+            policy_name: str,
     ):
         try:
-            iamcli = IAM.client(account_id)
+            iamcli = IAM.client(account_id, region)
             response = iamcli.get_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
@@ -87,12 +89,13 @@ class IAM:
 
     @staticmethod
     def delete_role_policy(
-        account_id: str,
-        role_name: str,
-        policy_name: str,
+            account_id: str,
+            region: str,
+            role_name: str,
+            policy_name: str,
     ):
         try:
-            iamcli = IAM.client(account_id)
+            iamcli = IAM.client(account_id, region)
             iamcli.delete_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
