@@ -419,7 +419,7 @@ class LFShareManager:
         )
         return True
 
-    def handle_share_failure_on_catalog_account(self, tables, error, share_item_status):
+    def handle_share_failure_for_all_tables(self, tables, error, share_item_status):
         for table in tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
@@ -434,7 +434,7 @@ class LFShareManager:
 
     def verify_catalog_ownership(self, catalog_dict):
         if catalog_dict.get('account_id') != self.source_environment.AwsAccountId:
-            logger.info(f'database {self.dataset.GlueDatabaseName} is a resource link '
+            logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link and '
                         f'the source database {catalog_dict.get("database_name")} belongs to a catalog account {catalog_dict.get("account_id")}')
             if SessionHelper.is_assumable_pivot_role(catalog_dict.get('account_id')):
                 self.validate_catalog_ownership_tag(catalog_dict)
@@ -452,19 +452,23 @@ class LFShareManager:
         else:
             raise Exception(f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
 
-    def check_catalog_account_exists_and_update_processor(self, tables, share_item_status):
+    def check_catalog_account_exists_and_update_processor(self):
         try:
             catalog_dict = self.glue_client_in_source.get_source_catalog()
             if catalog_dict is not None:
                 # Found a catalog account
                 logger.info("Updating source aws account id, source account region, source database with catalog details")
+                logger.debug(f"Catalog Account id - {catalog_dict.get('account_id')}, Catalog Region - { catalog_dict.get('region')}, Catalog DB - {catalog_dict.get('database_name')}")
                 self.source_account_id = catalog_dict.get('account_id')
                 self.source_account_region = catalog_dict.get('region')
                 self.source_database_name = catalog_dict.get('database_name')
                 # Build the shared db name again as the shared db name on the producer account cannot be used ( as that is the resource link ).
                 # Instead update the shared db name with the new name.
                 self.shared_db_name, self.is_new_share = self.build_shared_db_name()
+                # Again Update the Cross Account Instance Variable
                 self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
+                # Update / Reinitialize Glue and Lake formation Clients as the source account , region, db are changed
+                # Also reinitialize target glue client as the shared DB name changes
                 self.lf_client_in_source = LakeFormationClient(
                     account_id=self.source_account_id,
                     region=self.source_account_region
@@ -494,5 +498,4 @@ class LFShareManager:
                 f'Failed to initialise catalog account details for share - {self.share.shareUri} '
                 f'due to: {e}'
             )
-            self.handle_share_failure_on_catalog_account(tables=tables, error=e, share_item_status=share_item_status)
-            return False
+            raise e

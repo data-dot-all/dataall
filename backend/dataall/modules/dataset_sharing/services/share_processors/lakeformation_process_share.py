@@ -64,16 +64,21 @@ class ProcessLakeFormationShare(LFShareManager):
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
         else:
-            if not self.check_catalog_account_exists_and_update_processor(tables=self.shared_tables,
-                                                                          share_item_status=ShareItemStatus.Share_Approved.value):
+            try:
+                if not self.check_catalog_account_exists_and_update_processor():
+                    success = False
+                    return success
+
+                self.grant_pivot_role_all_database_permissions_to_source_database()
+                self.check_if_exists_and_create_shared_database_in_target()
+                self.grant_pivot_role_all_database_permissions_to_shared_database()
+                self.grant_principals_database_permissions_to_shared_database()
+            except Exception as e:
+                log.error(f"Failed to process approved tables due to {e}")
+                self.handle_share_failure_for_all_tables(tables=self.shared_tables, error=e,
+                                                         share_item_status=ShareItemStatus.Share_Approved.value)
                 success = False
                 return success
-
-            # Check with Adriana if below functions need try catch and how failure should be handled
-            self.grant_pivot_role_all_database_permissions_to_source_database()
-            self.check_if_exists_and_create_shared_database_in_target()
-            self.grant_pivot_role_all_database_permissions_to_shared_database()
-            self.grant_principals_database_permissions_to_shared_database()
 
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
@@ -158,7 +163,14 @@ class ProcessLakeFormationShare(LFShareManager):
         )
         success = True
 
-        if not self.check_catalog_account_exists_and_update_processor(tables=self.revoked_tables, share_item_status=ShareItemStatus.Revoke_Approved.value):
+        try:
+            if not self.check_catalog_account_exists_and_update_processor():
+                success = False
+                return success
+        except Exception as e:
+            log.error(f"Failed to process revoked tables due to {e}")
+            self.handle_share_failure_for_all_tables(tables=self.revoked_tables, error=e,
+                                                     share_item_status=ShareItemStatus.Revoke_Approved.value)
             success = False
             return success
 
@@ -246,5 +258,3 @@ class ProcessLakeFormationShare(LFShareManager):
             )
             success = False
         return success
-
-
