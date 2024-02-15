@@ -60,7 +60,7 @@ def aws_configure(profile_name='default'):
 def update_stack_output(session, stack):
     outputs = {}
     stack_outputs = None
-    aws = SessionHelper.remote_session(stack.accountid)
+    aws = SessionHelper.remote_session(stack.accountid, stack.region)
     cfn = aws.resource('cloudformation', region_name=stack.region)
     try:
         stack_outputs = cfn.Stack(f'{stack.name}').outputs
@@ -211,7 +211,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
             stack = session.query(Stack).get(stackid)
     if stack.status == 'DELETE_COMPLETE':
         return {'StackId': stack.stackid, 'StackStatus': stack.status}
-    session = SessionHelper.remote_session(stack.accountid)
+    session = SessionHelper.remote_session(stack.accountid, stack.region)
     resource = session.resource('cloudformation', region_name=stack.region)
     try:
         meta = resource.Stack(f'{stack.name}')

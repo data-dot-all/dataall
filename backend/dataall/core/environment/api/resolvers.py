@@ -411,7 +411,7 @@ def _get_environment_group_aws_session(
             action='ENVIRONMENT_AWS_ACCESS',
             message=f'User: {username} is not member of the team {groupUri}',
         )
-    pivot_session = SessionHelper.remote_session(environment.AwsAccountId)
+    pivot_session = SessionHelper.remote_session(environment.AwsAccountId, environment.region)
     if not groupUri:
         if environment.SamlGroupName in groups:
             aws_session = SessionHelper.get_session(

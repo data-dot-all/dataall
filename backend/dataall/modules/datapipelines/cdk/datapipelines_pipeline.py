@@ -543,7 +543,7 @@ class PipelineStack(Stack):
 
     @staticmethod
     def _set_env_vars(pipeline_environment):
-        aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
+        aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId, pipeline_environment.region)
         env_creds = aws.get_credentials()
 
         env = {
