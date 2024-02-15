@@ -114,7 +114,7 @@ def processor_with_mocks(db, dataset1, share, table1, table2, source_environment
     )
     mocker.patch(
         "dataall.base.aws.iam.IAM.get_role_arn_by_name",
-        side_effect=lambda account_id, role_name: f"arn:aws:iam::{account_id}:role/{role_name}"
+        side_effect=lambda account_id, region, role_name: f"arn:aws:iam::{account_id}:role/{role_name}"
     )
     mock_glue_client().get_glue_database.return_value = False
 
@@ -179,7 +179,7 @@ def test_get_share_principals(
     processor, lf_client, glue_client = processor_with_mocks
     get_iam_role_arn_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.get_role_arn_by_name",
-        side_effect = lambda account_id, role_name : f"arn:aws:iam::{account_id}:role/{role_name}"
+        side_effect = lambda account_id, region, role_name : f"arn:aws:iam::{account_id}:role/{role_name}"
     )
 
     # Then, it should return

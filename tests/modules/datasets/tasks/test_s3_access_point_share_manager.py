@@ -371,7 +371,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
         iam_update_role_policy_mock.assert_called()
 
         # Iam function is called with str from object so we transform back to object
-        policy_object = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        policy_object = json.loads(iam_update_role_policy_mock.call_args.args[4])
 
         # Assert that bucket_name is inside the resource array of policy object
         assert location1.S3BucketName in ",".join(policy_object["Statement"][0]["Resource"])
@@ -499,7 +499,7 @@ def test_grant_target_role_access_policy_test_no_policy(
 
         # Then
         iam_update_role_policy_mock.assert_called_with(
-            target_environment.AwsAccountId, share1.principalIAMRoleName,
+            target_environment.AwsAccountId, target_environment.region, share1.principalIAMRoleName,
             "targetDatasetAccessControlPolicy", json.dumps(expected_policy)
         )
 
@@ -1264,6 +1264,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId,
+            target_environment.region,
             share1.principalIAMRoleName,
             "targetDatasetAccessControlPolicy",
             json.dumps(expected_remaining_target_role_policy),

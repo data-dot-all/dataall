@@ -69,7 +69,7 @@ class IAM:
     @staticmethod
     def get_role_policy(
             account_id: str,
-            region:str,
+            region: str,
             role_name: str,
             policy_name: str,
     ):
