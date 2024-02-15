@@ -1,4 +1,6 @@
 """Indexes Datasets in OpenSearch"""
+import re
+
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
@@ -34,7 +36,7 @@ class DatasetIndexer(BaseIndexer):
                     'source': dataset.S3BucketName,
                     'resourceKind': 'dataset',
                     'description': dataset.description,
-                    'classification': dataset.confidentiality.replace(' ', ''),
+                    'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [t.replace('-', '') for t in dataset.tags or []],
                     'topics': dataset.topics,
                     'region': dataset.region.replace('-', ''),
