@@ -11,6 +11,9 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, \
+    ShareItemActions
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
@@ -38,21 +41,29 @@ class LFShareManager:
         self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
+        self.source_account_id = source_environment.AwsAccountId
+        self.source_account_region = source_environment.region
+        self.source_database_name = dataset.GlueDatabaseName
         self.shared_db_name, self.is_new_share = self.build_shared_db_name()
         self.principals = self.get_share_principals()
-        self.cross_account = self.target_environment.AwsAccountId != self.source_environment.AwsAccountId
+        self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
         self.lf_client_in_target = LakeFormationClient(
             account_id=self.target_environment.AwsAccountId,
             region=self.target_environment.region
         )
         self.lf_client_in_source = LakeFormationClient(
-            account_id=self.source_environment.AwsAccountId,
-            region=self.source_environment.region
+            account_id=self.source_account_id,
+            region=self.source_account_region
         )
         self.glue_client_in_target = GlueClient(
             account_id=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             database=self.shared_db_name,
+        )
+        self.glue_client_in_source = GlueClient(
+            account_id=self.source_account_id,
+            region=self.source_account_region,
+            database=self.source_database_name,
         )
 
     @abc.abstractmethod
@@ -92,7 +103,7 @@ class LFShareManager:
         For shares after 2.3.0 the suffix returned is "_shared"
         :return: Shared database name, boolean indicating if it is a new share
         """
-        old_shared_db_name = (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
+        old_shared_db_name = (self.source_database_name + '_shared_' + self.share.shareUri)[:254]
         warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
         logger.info(
             f'Checking shared db {old_shared_db_name} exists in {self.target_environment.AwsAccountId}...'
@@ -105,7 +116,7 @@ class LFShareManager:
 
         if database:
             return old_shared_db_name, False
-        return self.dataset.GlueDatabaseName + '_shared', True
+        return self.source_database_name + '_shared', True
 
     def check_table_exists_in_source_database(
         self, share_item: ShareObjectItem, table: DatasetTable
@@ -116,12 +127,7 @@ class LFShareManager:
         :param table: DatasetTable
         :return: True or raise exceptions.AWSResourceNotFound
         """
-        glue_client = GlueClient(
-            account_id=self.source_environment.AwsAccountId,
-            region=self.source_environment.region,
-            database=table.GlueDatabaseName,
-        )
-        if not glue_client.table_exists(table.GlueTableName):
+        if not self.glue_client_in_source.table_exists(table.GlueTableName):
             raise exceptions.AWSResourceNotFound(
                 action='ProcessShare',
                 message=(
@@ -139,12 +145,7 @@ class LFShareManager:
         :param table: DatasetTable
         :return: Boolean
         """
-        glue_client = GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-        )
-        if glue_client.table_exists(table.GlueTableName):
+        if self.glue_client_in_target.table_exists(table.GlueTableName):
             return True
         logger.info(
             f'Resource link could not be found '
@@ -161,9 +162,9 @@ class LFShareManager:
         """
         self.lf_client_in_source.revoke_permissions_from_table(
             principals=['EVERYONE'],
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=['ALL']
         )
         return True
@@ -174,8 +175,8 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_source.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.source_environment.AwsAccountId)],
-            database_name=self.dataset.GlueDatabaseName,
+            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id)],
+            database_name=self.source_database_name,
             permissions=['ALL'],
         )
         return True
@@ -222,9 +223,9 @@ class LFShareManager:
         """
         self.lf_client_in_source.grant_permissions_to_table(
             principals=[self.target_environment.AwsAccountId],
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=['DESCRIBE', 'SELECT'],
             permissions_with_grant_options=['DESCRIBE', 'SELECT']
         )
@@ -238,12 +239,12 @@ class LFShareManager:
         :param table: DatasetTable
         :return: True if it is successful
         """
-
         if not self.check_resource_link_table_exists_in_target_database(table):
             self.glue_client_in_target.create_resource_link(
                 resource_link_name=table.GlueTableName,
                 table=table,
-                catalog_id=self.source_environment.AwsAccountId
+                catalog_id=self.source_account_id,
+                database=self.source_database_name
             )
         return True
 
@@ -270,9 +271,9 @@ class LFShareManager:
         """
         self.lf_client_in_target.grant_permissions_to_table_with_columns(
             principals=self.principals,
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=['DESCRIBE', 'SELECT']
         )
         return True
@@ -308,9 +309,9 @@ class LFShareManager:
 
         self.lf_client_in_target.revoke_permissions_from_table_with_columns(
             principals=principals,
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=['DESCRIBE', 'SELECT']
         )
         return True
@@ -365,9 +366,9 @@ class LFShareManager:
         """
         self.lf_client_in_source.revoke_permissions_from_table_with_columns(
             principals=[self.target_environment.AwsAccountId],
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=['DESCRIBE', 'SELECT'],
             permissions_with_grant_options=['DESCRIBE', 'SELECT']
         )
@@ -417,3 +418,81 @@ class LFShareManager:
             table, self.share, self.target_environment
         )
         return True
+
+    def handle_share_failure_on_catalog_account(self, tables, error, share_item_status):
+        for table in tables:
+            share_item = ShareObjectRepository.find_sharable_item(
+                self.session, self.share.shareUri, table.tableUri
+            )
+            share_item_sm = ShareItemSM(share_item_status)
+            new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
+            share_item_sm.update_state_single_item(self.session, share_item, new_state)
+            new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
+            share_item_sm.update_state_single_item(self.session, share_item, new_state)
+
+            self.handle_revoke_failure(table=table, error=error)
+
+    def verify_catalog_ownership(self, catalog_dict):
+        if catalog_dict.get('account_id') != self.source_environment.AwsAccountId:
+            logger.info(f'database {self.dataset.GlueDatabaseName} is a resource link '
+                        f'the source database {catalog_dict.get("database_name")} belongs to a catalog account {catalog_dict.get("account_id")}')
+            if SessionHelper.is_assumable_pivot_role(catalog_dict.get('account_id')):
+                self.validate_catalog_ownership_tag(catalog_dict)
+            else:
+                raise Exception(f'Pivot role is not assumable, catalog account {catalog_dict.get("account_id")} is not onboarded')
+
+    def validate_catalog_ownership_tag(self, catalog_dict):
+        glue_client = GlueClient(account_id=catalog_dict.get('account_id'),
+                                 database=catalog_dict.get('database_name'),
+                                 region=catalog_dict.get('region'))
+
+        tags = glue_client.get_database_tags()
+        if tags.get('owner_account_id', '') == self.source_environment.AwsAccountId:
+            logger.info(f'owner_account_id tag exists and matches the source account id {self.source_environment.AwsAccountId}')
+        else:
+            raise Exception(f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
+
+    def check_catalog_account_exists_and_update_processor(self, tables, share_item_status):
+        try:
+            catalog_dict = self.glue_client_in_source.get_source_catalog()
+            if catalog_dict is not None:
+                # Found a catalog account
+                logger.info("Updating source aws account id, source account region, source database with catalog details")
+                self.source_account_id = catalog_dict.get('account_id')
+                self.source_account_region = catalog_dict.get('region')
+                self.source_database_name = catalog_dict.get('database_name')
+                # Build the shared db name again as the shared db name on the producer account cannot be used ( as that is the resource link ).
+                # Instead update the shared db name with the new name.
+                self.shared_db_name, self.is_new_share = self.build_shared_db_name()
+                self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
+                self.lf_client_in_source = LakeFormationClient(
+                    account_id=self.source_account_id,
+                    region=self.source_account_region
+                )
+                self.glue_client_in_source = GlueClient(
+                    account_id=self.source_account_id,
+                    region=self.source_account_region,
+                    database=self.source_database_name,
+                )
+
+                self.glue_client_in_target = GlueClient(
+                    account_id=self.target_environment.AwsAccountId,
+                    region=self.target_environment.region,
+                    database=self.shared_db_name,
+                )
+
+                # Verify the ownership of dataset
+                self.verify_catalog_ownership(catalog_dict)
+            else:
+                logger.info(
+                    f'No Catalog information found for dataset - {self.dataset.name} containing database - {self.dataset.GlueDatabaseName}')
+
+            return True
+
+        except Exception as e:
+            logger.error(
+                f'Failed to initialise catalog account details for share - {self.share.shareUri} '
+                f'due to: {e}'
+            )
+            self.handle_share_failure_on_catalog_account(tables=tables, error=e, share_item_status=share_item_status)
+            return False

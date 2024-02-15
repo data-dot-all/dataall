@@ -64,6 +64,12 @@ class ProcessLakeFormationShare(LFShareManager):
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
         else:
+            if not self.check_catalog_account_exists_and_update_processor(tables=self.shared_tables,
+                                                                          share_item_status=ShareItemStatus.Share_Approved.value):
+                success = False
+                return success
+
+            # Check with Adriana if below functions need try catch and how failure should be handled
             self.grant_pivot_role_all_database_permissions_to_source_database()
             self.check_if_exists_and_create_shared_database_in_target()
             self.grant_pivot_role_all_database_permissions_to_shared_database()
@@ -97,24 +103,20 @@ class ProcessLakeFormationShare(LFShareManager):
                         (
                             retry_share_table,
                             failed_invitations,
-                        ) = RamClient.accept_ram_invitation(
-                            source_account_id=self.source_environment.AwsAccountId,
-                            source_region=self.source_environment.region,
-                            target_account_id=self.target_environment.AwsAccountId,
-                            target_region=self.target_environment.region,
-                            source_database=self.dataset.GlueDatabaseName,
-                            source_table=table
-                        )
+                        ) = RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
+                                                            source_region=self.source_account_region,
+                                                            source_database=self.source_database_name,
+                                                            source_table=table,
+                                                            target_account_id=self.target_environment.AwsAccountId,
+                                                            target_region=self.target_environment.region)
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
-                            RamClient.accept_ram_invitation(
-                                source_account_id=self.source_environment.AwsAccountId,
-                                source_region=self.source_environment.region,
-                                target_account_id=self.target_environment.AwsAccountId,
-                                target_region=self.target_environment.region,
-                                source_database=self.dataset.GlueDatabaseName,
-                                source_table=table
-                            )
+                            RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
+                                                            source_region=self.source_account_region,
+                                                            source_database=self.source_database_name,
+                                                            source_table=table,
+                                                            target_account_id=self.target_environment.AwsAccountId,
+                                                            target_region=self.target_environment.region)
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
@@ -155,6 +157,11 @@ class ProcessLakeFormationShare(LFShareManager):
             '##### Starting Revoking tables #######'
         )
         success = True
+
+        if not self.check_catalog_account_exists_and_update_processor(tables=self.revoked_tables, share_item_status=ShareItemStatus.Revoke_Approved.value):
+            success = False
+            return success
+
         for table in self.revoked_tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
@@ -239,3 +246,5 @@ class ProcessLakeFormationShare(LFShareManager):
             )
             success = False
         return success
+
+

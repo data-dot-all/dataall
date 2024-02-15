@@ -13,6 +13,7 @@ class GlueClient:
         self._client = aws_session.client('glue', region_name=region)
         self._database = database
         self._account_id = account_id
+        self._region = region
 
     def create_database(self, location):
         try:
@@ -125,14 +126,14 @@ class GlueClient:
             )
             raise e
 
-    def create_resource_link(self, resource_link_name, table, catalog_id):
+    def create_resource_link(self, resource_link_name, table, catalog_id, database):
         account_id = self._account_id
         shared_database = self._database
         resource_link_input = {
             'Name': table.GlueTableName,
             'TargetTable': {
                 'CatalogId': catalog_id,
-                'DatabaseName': table.GlueDatabaseName,
+                'DatabaseName': database,
                 'Name': table.GlueTableName,
             },
         }
@@ -191,4 +192,46 @@ class GlueClient:
                 f'in account {account_id} '
                 f'due to: {e}'
             )
+            raise e
+
+    def get_source_catalog(self):
+        """ Get the source catalog account details """
+        try:
+            log.info(f'Fetching source catalog details for database {self._database}...')
+            response = self._client.get_database(CatalogId=self._account_id, Name=self._database)
+            linked_database = response.get('Database', {}).get('TargetDatabase', {})
+            log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}...')
+            if linked_database:
+                return {'account_id' : linked_database.get('CatalogId'), 'database_name' : linked_database.get('DatabaseName'), 'region' : linked_database.get('Region', self._region)}
+                # return Catalog(account_id=linked_database.get('CatalogId'),
+                #                database_name=linked_database.get('DatabaseName'),
+                #                region=linked_database.get('Region', self._region))
+        except self._client.exceptions.EntityNotFoundException as enoFnd:
+            log.exception(f'Could not fetch source catalog details for database {self._database} due to {enoFnd}')
+            raise enoFnd
+        except Exception as e:
+            log.exception(f'Error fetching source catalog details for database {self._database} due to {e}')
+            raise e
+        return None
+
+    def get_database_tags(self):
+        # Get tags from the glue database
+        account_id = self._account_id
+        database = self._database
+        region = self._region
+
+        try:
+            log.info(f'Getting tags for database {database}')
+            resource_arn = f'arn:aws:glue:{region}:{account_id}:database/{database}'
+            response = self._client.get_tags(ResourceArn=resource_arn)
+            tags = response['Tags']
+
+            log.info(f'Successfully retrieved tags: {tags}')
+
+            return tags
+        except self._client.exceptions.EntityNotFoundException as entNotFound:
+            log.exception(f'Could not get tags for database {database} due to {entNotFound}')
+            raise entNotFound
+        except Exception as e:
+            log.exception(f'Error fetching tags for {database} due to {e}')
             raise e
