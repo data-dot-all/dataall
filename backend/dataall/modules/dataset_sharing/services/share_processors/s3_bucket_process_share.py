@@ -1,7 +1,6 @@
 import logging
 
-from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, \
@@ -37,31 +36,6 @@ class ProcessS3BucketShare(S3BucketShareManager):
         )
 
     @classmethod
-    def check_if_target_role_has_policies_attached(cls,
-                                                   share: ShareObject,
-                                                   target_environment: Environment
-                                                   ):
-        bucket_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                  share.principalIAMRoleName, 'bucket')
-        accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                       share.principalIAMRoleName, 'accesspoint')
-
-        is_bucket_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, bucket_policy_name,
-                                                           share.principalIAMRoleName)
-        is_accesspoint_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId,
-                                                                accesspoint_policy_name, share.principalIAMRoleName)
-
-        missing_policies = []
-        if not is_accesspoint_policy_attached:
-            missing_policies.append(accesspoint_policy_name)
-
-        if not is_bucket_policy_attached:
-            missing_policies.append(bucket_policy_name)
-
-        if not (is_bucket_policy_attached and is_accesspoint_policy_attached):
-            raise f"Required customer managed policies {','.join(missing_policies)} are not attached to role {share.principalIAMRoleName}"
-
-    @classmethod
     def process_approved_shares(
             cls,
             session,
@@ -86,11 +60,6 @@ class ProcessS3BucketShare(S3BucketShareManager):
         """
         log.info(
             '##### Starting S3 bucket share #######'
-        )
-
-        ProcessS3BucketShare.check_if_target_role_has_policies_attached(
-            share,
-            target_environment
         )
 
         success = True

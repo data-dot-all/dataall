@@ -1,7 +1,8 @@
+from dataall.base.aws.iam import IAM
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole, Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
@@ -9,10 +10,12 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, \
+    ShareItemStatus, \
     ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, \
+    ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
@@ -29,6 +32,31 @@ class ShareObjectService:
     def get_share_object(uri):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, uri)
+
+    @classmethod
+    def check_if_target_role_has_policies_attached(cls,
+                                                   consumption_role: ConsumptionRole,
+                                                   target_environment: Environment
+                                                   ):
+        bucket_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                  consumption_role.IAMRoleName, 'bucket')
+        accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                       consumption_role.IAMRoleName, 'accesspoint')
+
+        is_bucket_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, bucket_policy_name,
+                                                           consumption_role.IAMRoleName)
+        is_accesspoint_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId,
+                                                                accesspoint_policy_name, consumption_role.IAMRoleName)
+
+        missing_policies = []
+        if not is_accesspoint_policy_attached:
+            missing_policies.append(accesspoint_policy_name)
+
+        if not is_bucket_policy_attached:
+            missing_policies.append(bucket_policy_name)
+
+        if not (is_bucket_policy_attached and is_accesspoint_policy_attached):
+            raise f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}"
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
@@ -62,6 +90,11 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
+                ShareObjectService.check_if_target_role_has_policies_attached(
+                    consumption_role,
+                    environment
+                )
+
             else:
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session,
@@ -185,7 +218,8 @@ class ShareObjectService:
             if dashboard_enabled:
                 share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
                 if share_table_items:
-                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId, region=env.region)
+                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId,
+                                                                              region=env.region)
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 
@@ -350,7 +384,8 @@ class ShareObjectService:
             pending_items = ShareObjectRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
-            return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items,
+            return {'tables': tables, 'locations': locations, 'sharedItems': shared_items,
+                    'revokedItems': revoked_items,
                     'failedItems': failed_items, 'pendingItems': pending_items}
 
     @staticmethod
@@ -397,7 +432,7 @@ class ShareObjectService:
 
     @staticmethod
     def _validate_group_membership(
-        session, share_object_group, environment_uri
+            session, share_object_group, environment_uri
     ):
         context = get_context()
         if share_object_group and share_object_group not in context.groups:
@@ -406,8 +441,8 @@ class ShareObjectService:
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
-            session=session,
-            uri=environment_uri,
+                session=session,
+                uri=environment_uri,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
