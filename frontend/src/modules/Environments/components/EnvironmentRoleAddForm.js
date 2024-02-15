@@ -5,7 +5,9 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
+  FormControlLabel,
   MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -31,7 +33,8 @@ export const EnvironmentRoleAddForm = (props) => {
           groupUri: values.groupUri,
           consumptionRoleName: values.consumptionRoleName,
           IAMRoleArn: values.IAMRoleArn,
-          environmentUri: environment.environmentUri
+          environmentUri: environment.environmentUri,
+          dataaallManaged: values.dataaallManaged
         })
       );
       if (!response.errors) {
@@ -91,7 +94,8 @@ export const EnvironmentRoleAddForm = (props) => {
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
-              groupUri: ''
+              groupUri: '',
+              dataaallManaged: false
             }}
             validationSchema={Yup.object().shape({
               groupUri: Yup.string()
@@ -167,6 +171,30 @@ export const EnvironmentRoleAddForm = (props) => {
                       </MenuItem>
                     ))}
                   </TextField>
+                </CardContent>
+                <CardContent>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={values.dataaallManaged}
+                        color="primary"
+                        edge="start"
+                        name="dataaallManaged"
+                      />
+                    }
+                    label={
+                      <div>
+                        Advanced UX
+                        <Typography
+                          color="textSecondary"
+                          component="p"
+                          variant="caption"
+                        >
+                          Let Data.All attach policies to this role
+                        </Typography>
+                      </div>
+                    }
+                  />
                 </CardContent>
                 <Box>
                   <CardContent>

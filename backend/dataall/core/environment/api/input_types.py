@@ -106,6 +106,8 @@ AddConsumptionRoleToEnvironmentInput = gql.InputType(
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
         gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
+        gql.Argument('dataaallManaged', gql.NonNullableType(gql.Boolean)),
+
     ],
 )
 

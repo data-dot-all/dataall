@@ -439,6 +439,7 @@ class EnvironmentService:
             groupUri=group,
             IAMRoleArn=IAMRoleArn,
             IAMRoleName=IAMRoleArn.split("/")[-1],
+            dataaallManaged=data['dataaallManaged']
         )
 
         session.add(consumption_role)
@@ -453,6 +454,9 @@ class EnvironmentService:
         )
 
         EnvironmentService._generate_managed_policies_for_consumption_role(environment, consumption_role)
+        if consumption_role.dataaallManaged:
+            # toDo: attach policies
+            pass
         return consumption_role
 
     @staticmethod
