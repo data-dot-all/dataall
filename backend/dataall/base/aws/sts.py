@@ -238,8 +238,8 @@ class SessionHelper:
         return response['Organization']['Id']
 
     @staticmethod
-    def get_role_id(accountid, name):
-        session = SessionHelper.remote_session(accountid=accountid)
+    def get_role_id(accountid, region, name):
+        session = SessionHelper.remote_session(accountid=accountid, region=region)
         client = session.client('iam')
         try:
             response = client.get_role(RoleName=name)
