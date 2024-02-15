@@ -56,7 +56,7 @@ class ShareObjectService:
             missing_policies.append(bucket_policy_name)
 
         if not (is_bucket_policy_attached and is_accesspoint_policy_attached):
-            raise f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}"
+            raise Exception(f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}")
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
