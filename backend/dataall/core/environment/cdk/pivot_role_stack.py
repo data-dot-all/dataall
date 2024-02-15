@@ -45,8 +45,8 @@ class PivotRoleStatementSet(object):
             policies.append(
                 iam.ManagedPolicy(
                     self.stack,
-                    f'PivotRolePolicy-{self.environmentUri}-{index+1}',
-                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.environmentUri}-{index+1}',
+                    f'PivotRolePolicy-{self.region}-{index+1}',
+                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index+1}',
                     statements=chunk,
                 )
             )
@@ -66,7 +66,7 @@ class PivotRole(NestedStack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.env_resource_prefix = config['resourcePrefix']
-        self.role_name = f"{config['roleName']}-{self.environmentUri}"
+        self.role_name = f"{config['roleName']}-{self.region}"
         self.environmentUri = config['environmentUri']
 
         from dataall.core.environment.cdk import pivot_role_core_policies
@@ -98,7 +98,7 @@ class PivotRole(NestedStack):
         logger.info(f'Managed Policies: {managed_policies}')
         role = iam.Role(
             self,
-            f'DataAllPivotRole-cdk-{self.environmentUri}',
+            f'DataAllPivotRole-cdk-{self.region}',
             role_name=self.role_name,
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('lakeformation.amazonaws.com'),
