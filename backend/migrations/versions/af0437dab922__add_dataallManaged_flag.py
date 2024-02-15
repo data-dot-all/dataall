@@ -20,7 +20,5 @@ def upgrade():
     op.add_column('consumptionrole', sa.Column('dataaallManaged', sa.Boolean(), nullable=False))
 
 
-
 def downgrade():
     op.drop_column('consumptionrole', 'dataaallManaged')
-

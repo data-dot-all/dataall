@@ -177,6 +177,7 @@ export const EnvironmentRoleAddForm = (props) => {
                     control={
                       <Switch
                         checked={values.dataaallManaged}
+                        onChange={handleChange}
                         color="primary"
                         edge="start"
                         name="dataaallManaged"
@@ -184,7 +185,7 @@ export const EnvironmentRoleAddForm = (props) => {
                     }
                     label={
                       <div>
-                        Advanced UX
+                        Data.all managed
                         <Typography
                           color="textSecondary"
                           component="p"
