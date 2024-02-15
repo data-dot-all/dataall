@@ -211,3 +211,19 @@ class IAM:
                 f'Failed to get policy {policy_name} : {e}'
             )
             return None
+
+    @staticmethod
+    def is_policy_attached(
+            account_id: str,
+            policy_name: str,
+            role_name: str
+    ):
+        try:
+            iamcli = IAM.client(account_id)
+            response = iamcli.list_attached_role_policies(RoleName=role_name)
+            return policy_name in [p['PolicyName'] for p in response['AttachedPolicies']]
+        except Exception as e:
+            log.error(
+                f'Failed to get the list of attachep policies to the role {role_name}'
+            )
+            return False
