@@ -13,15 +13,12 @@ from typing import Callable
 from dataall.core.groups.db.group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem, Catalog
+from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
-from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
-
+from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import ProcessLakeFormationShare
+from dataall.base.db import exceptions
 
 SOURCE_ENV_ACCOUNT = "1" *  12
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
@@ -29,8 +26,6 @@ SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
 
 TARGET_ACCOUNT_ENV = "2" * 12
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
-
-LF_CLIENT = "dataall.modules.dataset_sharing.aws.lakeformation_client.LakeFormationClient"
 
 
 @pytest.fixture(scope="module")
@@ -42,24 +37,6 @@ def source_environment(env: Callable, org_fixture: Organization, group: Group) -
         owner=group.owner,
         group=group.name,
         role=SOURCE_ENV_ROLE_NAME,
-    )
-
-
-@pytest.fixture(scope="module")
-def source_environment_group(environment_group: Callable, source_environment: Environment,
-                             group: Group) -> EnvironmentGroup:
-    yield environment_group(
-        environment=source_environment,
-        group=group.name
-    )
-
-
-@pytest.fixture(scope="module")
-def source_environment_group_requesters(environment_group: Callable, source_environment: Environment,
-                                        group2: Group) -> EnvironmentGroup:
-    yield environment_group(
-        environment=source_environment,
-        group=group2.name
     )
 
 
@@ -110,18 +87,7 @@ def table2(table: Callable, dataset1: Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope="module")
-def share_same_account(
-        share: Callable, dataset1: Dataset, source_environment: Environment,
-        source_environment_group_requesters: EnvironmentGroup) -> ShareObject:
-    yield share(
-        dataset=dataset1,
-        environment=source_environment,
-        env_group=source_environment_group_requesters
-    )
-
-
-@pytest.fixture(scope="module")
-def share_cross_account(
+def share(
         share: Callable, dataset1: Dataset, target_environment: Environment,
         target_environment_group: EnvironmentGroup) -> ShareObject:
     yield share(
@@ -130,102 +96,61 @@ def share_cross_account(
         env_group=target_environment_group
     )
 
-
 @pytest.fixture(scope="module")
-def share_item_same_account(share_item_table: Callable, share_same_account: ShareObject,
-                            table1: DatasetTable) -> ShareObjectItem:
-    yield share_item_table(
-        share=share_same_account,
-        table=table1,
-        status=ShareItemStatus.Share_Approved.value
-    )
-
-@pytest.fixture(scope="module")
-def revoke_item_same_account(share_item_table: Callable, share_same_account: ShareObject,
-                             table2: DatasetTable) -> ShareObjectItem:
-    yield share_item_table(
-        share=share_same_account,
-        table=table2,
-        status=ShareItemStatus.Revoke_Approved.value
-    )
-
-@pytest.fixture(scope="module")
-def share_item_cross_account(share_item_table: Callable, share_cross_account: ShareObject,
+def share_item(share_item_table: Callable, share: ShareObject,
                              table1: DatasetTable) -> ShareObjectItem:
     yield share_item_table(
-        share=share_cross_account,
+        share=share,
         table=table1,
         status=ShareItemStatus.Share_Approved.value
     )
 
-
-@pytest.fixture(scope="module")
-def revoke_item_cross_account(share_item_table: Callable, share_cross_account: ShareObject,
-                              table2: DatasetTable) -> ShareObjectItem:
-    yield share_item_table(
-        share=share_cross_account,
-        table=table2,
-        status=ShareItemStatus.Revoke_Approved.value
+@pytest.fixture(scope="function", autouse=True)
+def processor_with_mocks(db, dataset1, share, table1, table2, source_environment, target_environment,
+                            target_environment_group, mocker, mock_glue_client):
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.remote_session",
+        return_value=boto3.Session(),
     )
-
-@pytest.fixture(scope="module")
-def catalog_details():
-    yield Catalog(
-        account_id='Catalog-Id',
-        database_name='Catalog-Target-Database',
-        region='catalog-region'
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_role_arn_by_name",
+        side_effect=lambda account_id, role_name: f"arn:aws:iam::{account_id}:role/{role_name}"
     )
+    mock_glue_client().get_glue_database.return_value = False
 
-@pytest.fixture(scope="module", autouse=True)
-def processor_cross_account(db, dataset1, share_cross_account, table1, table2, source_environment, target_environment,
-                            target_environment_group):
     with db.scoped_session() as session:
-        processor = ProcessLFCrossAccountShare(
+        processor = ProcessLakeFormationShare(
             session,
             dataset1,
-            share_cross_account,
+            share,
             [table1],
             [table2],
             source_environment,
             target_environment,
             target_environment_group,
-            None
         )
-    yield processor
+        lf_mock_client = MagicMock()
 
-@pytest.fixture(scope="module", autouse=True)
-def processor_cross_account_with_catalog(db, dataset1, share_cross_account, table1, table2, source_environment, target_environment,
-                            target_environment_group, catalog_details):
-    with db.scoped_session() as session:
-        processor = ProcessLFCrossAccountShare(
-            session,
-            dataset1,
-            share_cross_account,
-            [table1],
-            [table2],
-            source_environment,
-            target_environment,
-            target_environment_group,
-            catalog_details
+        mocker.patch.object(
+            processor,
+            "lf_client_in_target",
+            lf_mock_client,
         )
-    yield processor
-
-
-@pytest.fixture(scope="module", autouse=True)
-def processor_same_account(db, dataset1, share_same_account, table1, source_environment,
-                           source_environment_group_requesters):
-    with db.scoped_session() as session:
-        processor = ProcessLFSameAccountShare(
-            session,
-            dataset1,
-            share_same_account,
-            [table1],
-            [table2],
-            source_environment,
-            source_environment,
-            source_environment_group_requesters,
+        mocker.patch.object(
+            processor,
+            "lf_client_in_source",
+            lf_mock_client
         )
-    yield processor
+        glue_mock_client = MagicMock()
+
+        mocker.patch.object(
+            processor,
+            "glue_client_in_target",
+            glue_mock_client
+        )
+
+    yield processor, lf_mock_client, glue_mock_client
+
 
 
 @pytest.fixture(scope="function")
@@ -237,733 +162,436 @@ def mock_glue_client(mocker):
     )
     yield mock_client
 
-
-@pytest.fixture(scope="function")
-def mock_iam_client(mocker):
-    mock_client = MagicMock()
-    mocker.patch(
-        "dataall.base.aws.iam.IAM",
-        mock_client
-    )
-    yield mock_client
-
-
-def test_init(processor_same_account, processor_cross_account):
-    assert processor_same_account.dataset
-    assert processor_same_account.share
-
-
-def test_build_shared_db_name(
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        dataset1: Dataset,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        catalog_details
-):
-    # Given a dataset and its share, build db_share name
-    # Then, it should return
-    assert processor_same_account.build_shared_db_name() == (dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254]
-    assert processor_cross_account.build_shared_db_name() == (dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254]
-    assert processor_cross_account_with_catalog.build_shared_db_name() == (catalog_details.database_name + '_shared_' + share_cross_account.shareUri)[:254]
-
+def test_init(processor_with_mocks):
+    processor, lf_client, glue_client = processor_with_mocks
+    assert processor.dataset
+    assert processor.share
+    assert processor.shared_db_name == 'gluedatabase_shared'
 
 def test_get_share_principals(
         mocker,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
+        processor_with_mocks,
         source_environment: Environment,
         target_environment: Environment,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
+        share: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
+    processor, lf_client, glue_client = processor_with_mocks
     get_iam_role_arn_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.get_role_arn_by_name",
         side_effect = lambda account_id, role_name : f"arn:aws:iam::{account_id}:role/{role_name}"
     )
 
     # Then, it should return
-    assert processor_same_account.get_share_principals() == [f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
-    get_iam_role_arn_mock.assert_called_once()
-    get_iam_role_arn_mock.reset_mock()
-
-    assert processor_cross_account.get_share_principals() == [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
-    get_iam_role_arn_mock.assert_called_once()
-    get_iam_role_arn_mock.reset_mock()
-
-    assert processor_cross_account_with_catalog.get_share_principals() == [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
+    assert processor.get_share_principals() == [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share.principalIAMRoleName}"]
     get_iam_role_arn_mock.assert_called_once()
 
 
-def test_create_shared_database(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
+def test_build_shared_db_name(
+        processor_with_mocks,
         dataset1: Dataset,
-        mocker,
-        mock_glue_client,
-        catalog_details
+        mock_glue_client
 ):
-    mock_glue_client().create_database.return_value = True
-
-    lf_mock_pr = mocker.patch(
-        f"{LF_CLIENT}.grant_pivot_role_all_database_permissions",
-        return_value=True,
-    )
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.remote_session",
-        return_value=boto3.Session(),
-    )
-    lf_mock = mocker.patch(
-        f"{LF_CLIENT}.grant_permissions_to_database",
-        return_value=True,
-    )
-    # When
-    processor_same_account.create_shared_database(
-        target_environment=source_environment,
-        dataset=dataset1,
-        shared_db_name=(dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254],
-        principals=[f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
-    )
-
+    # Given a new share, build db_share name
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().get_glue_database.return_value = False
+    # Reset to remove call in __init__
+    mock_glue_client().get_glue_database.reset_mock()
     # Then
-    mock_glue_client().create_database.assert_called_once()
-    lf_mock_pr.assert_called_once()
-    lf_mock.assert_called_once()
+    assert processor.build_shared_db_name() == (f"{dataset1.GlueDatabaseName[:247]}_shared", True)
+    mock_glue_client().get_glue_database.assert_called_once()
 
-    # Reset mocks
-    mock_glue_client().create_database.reset_mock()
-    lf_mock_pr.reset_mock()
-    lf_mock.reset_mock()
-
-    # When
-    processor_cross_account.create_shared_database(
-        target_environment=target_environment,
-        dataset=dataset1,
-        shared_db_name=(dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254],
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
-    )
-
+def test_build_shared_db_name_old(
+        processor_with_mocks,
+        dataset1: Dataset,
+        share: ShareObject,
+        mock_glue_client
+):
+    # Given an existing old share (shared db name with shareUri), build db_share name
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().get_glue_database.return_value = True
+    # Reset to remove call in __init__
+    mock_glue_client().get_glue_database.reset_mock()
     # Then
-    mock_glue_client().create_database.assert_called_once()
-    lf_mock_pr.assert_called_once()
-    lf_mock.assert_called_once()
+    assert processor.build_shared_db_name() == (f"{dataset1.GlueDatabaseName}_shared_{share.shareUri}"[:254], False)
+    mock_glue_client().get_glue_database.assert_called_once()
 
-    # Reset mocks
-    mock_glue_client().create_database.reset_mock()
-    lf_mock_pr.reset_mock()
-    lf_mock.reset_mock()
-
-    # When
-    processor_cross_account_with_catalog.create_shared_database(
-        target_environment=target_environment,
-        dataset=dataset1,
-        shared_db_name=(catalog_details.database_name + '_shared_' + share_cross_account.shareUri)[:254],
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
-    )
-
-    # Then
-    mock_glue_client().create_database.assert_called_once()
-    lf_mock_pr.assert_called_once()
-    lf_mock.assert_called_once()
-
-
-def test_check_share_item_exists_on_glue_catalog(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
+def test_check_table_exists_in_source_database(
+        processor_with_mocks,
         table1: DatasetTable,
-        share_item_same_account: ShareObjectItem,
-        share_item_cross_account: ShareObjectItem,
-        mocker,
-        mock_glue_client,
+        share_item: ShareObjectItem,
+        mock_glue_client
 ):
-
+    processor, lf_client, glue_client = processor_with_mocks
     mock_glue_client().table_exists.return_value = True
-
     # When
-    processor_same_account.check_share_item_exists_on_glue_catalog(
-        share_item=share_item_same_account,
+    processor.check_table_exists_in_source_database(
+        share_item=share_item,
         table=table1
     )
     # Then
     mock_glue_client().table_exists.assert_called_once()
-    mock_glue_client().table_exists.reset_mock()
+    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
 
-    # When
-    processor_cross_account.check_share_item_exists_on_glue_catalog(
-        share_item=share_item_cross_account,
-        table=table1
-    )
-    # Then
-    mock_glue_client().table_exists.assert_called_once()
-
-    # Reset
-    mock_glue_client().table_exists.reset_mock()
-
-    # When
-    processor_cross_account_with_catalog.check_share_item_exists_on_glue_catalog(
-        share_item=share_item_cross_account,
-        table=table1
-    )
-    # Then
-    mock_glue_client().table_exists.assert_called_once()
-
-
-def test_build_share_data(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
+def test_check_table_exists_in_source_database_exception(
+        processor_with_mocks,
         table1: DatasetTable,
-        catalog_details
-):
-    data_same_account = {
-        'source': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'database': table1.GlueDatabaseName,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'principals': [None],
-            'database': (dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254],
-        },
-    }
-
-    data = processor_same_account.build_share_data(table=table1)
-    assert data == data_same_account
-
-    data_cross_account = {
-        'source': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'database': table1.GlueDatabaseName,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': target_environment.AwsAccountId,
-            'region': target_environment.region,
-            'principals': [None],
-            'database': (dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254],
-        },
-    }
-
-    data = processor_cross_account.build_share_data(table=table1)
-    assert data == data_cross_account
-
-    data_cross_account = {
-        'source': {
-            'accountid': catalog_details.account_id,
-            'region': catalog_details.region,
-            'database': catalog_details.database_name,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': target_environment.AwsAccountId,
-            'region': target_environment.region,
-            'principals': [None],
-            'database': (catalog_details.database_name + '_shared_' + share_cross_account.shareUri)[:254],
-        },
-    }
-
-    data = processor_cross_account_with_catalog.build_share_data(table=table1)
-    assert data == data_cross_account
-
-
-def test_create_resource_link(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
-        table1: DatasetTable,
-        mocker,
-        mock_glue_client,
-        catalog_details
-):
-    sts_mock = mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.remote_session",
-        return_value=boto3.Session(),
-    )
-    glue_mock = mock_glue_client().create_resource_link
-    glue_mock.return_value = True
-
-    lf_mock_1 = mocker.patch(
-        f"{LF_CLIENT}.grant_resource_link_permission",
-        return_value=True,
-    )
-    lf_mock_2 = mocker.patch(
-        f"{LF_CLIENT}.grant_resource_link_permission_on_target",
-        return_value=True,
-    )
-
-    # When
-    data_same_account = {
-        'source': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'database': table1.GlueDatabaseName,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'principals': [f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"],
-            'database': (dataset1.GlueDatabaseName + '_shared_' + share_same_account.shareUri)[:254],
-        },
-    }
-    processor_same_account.create_resource_link(**data_same_account)
-
-    # Then
-    sts_mock.assert_called_once()
-    glue_mock.assert_called_once()
-    lf_mock_1.assert_called_once()
-    lf_mock_2.assert_called_once()
-
-    # Reset mocks
-    sts_mock.reset_mock()
-    glue_mock.reset_mock()
-    lf_mock_1.reset_mock()
-    lf_mock_2.reset_mock()
-
-
-    data_cross_account = {
-        'source': {
-            'accountid': source_environment.AwsAccountId,
-            'region': source_environment.region,
-            'database': table1.GlueDatabaseName,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': target_environment.AwsAccountId,
-            'region': target_environment.region,
-            'principals': [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
-            'database': (dataset1.GlueDatabaseName + '_shared_' + share_cross_account.shareUri)[:254],
-        },
-    }
-    processor_cross_account.create_resource_link(**data_cross_account)
-
-    # Then
-    sts_mock.assert_called_once()
-    glue_mock.assert_called_once()
-    lf_mock_1.assert_called_once()
-    lf_mock_2.assert_called_once()
-
-    # Reset mocks
-    sts_mock.reset_mock()
-    glue_mock.reset_mock()
-    lf_mock_1.reset_mock()
-    lf_mock_2.reset_mock()
-
-    data_cross_account_catalog_details = {
-        'source': {
-            'accountid':  catalog_details.account_id,
-            'region': catalog_details.region,
-            'database': catalog_details.database_name,
-            'tablename': table1.GlueTableName,
-        },
-        'target': {
-            'accountid': target_environment.AwsAccountId,
-            'region': target_environment.region,
-            'principals': [
-                f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
-            'database': (catalog_details.database_name + '_shared_' + share_cross_account.shareUri)[:254],
-        },
-    }
-    processor_cross_account_with_catalog.create_resource_link(**data_cross_account_catalog_details)
-
-    # Then
-    sts_mock.assert_called_once()
-    glue_mock.assert_called_once()
-    lf_mock_1.assert_called_once()
-    lf_mock_2.assert_called_once()
-
-    # Check the supplied database name is the same as the catalog db name
-    assert glue_mock.call_args.kwargs['resource_link_input']['TargetTable']['DatabaseName'] == catalog_details.database_name
-
-
-
-def test_revoke_table_resource_link_access(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
-        table2: DatasetTable,
-        mocker,
+        share_item: ShareObjectItem,
         mock_glue_client
 ):
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().table_exists.return_value = False
+    # When
+    with pytest.raises(Exception) as exception:
+        processor.check_table_exists_in_source_database(
+            share_item=share_item,
+            table=table1
+        )
+    #Then
+    mock_glue_client().table_exists.assert_called_once()
+    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
+    assert "ExceptionInfo" in str(exception)
 
-    glue_mock = mock_glue_client().table_exists
-    glue_mock.return_value = True
+def test_check_resource_link_table_exists_in_target_database_true(
+        processor_with_mocks,
+        table1: DatasetTable,
+        mock_glue_client
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().table_exists.return_value = True
+    # When
+    response = processor.check_resource_link_table_exists_in_target_database(table=table1)
+    # Then
+    assert response == True
+    mock_glue_client().table_exists.assert_called_once()
+    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
 
+def test_check_resource_link_table_exists_in_target_database_false(
+        processor_with_mocks,
+        table1: DatasetTable,
+        mock_glue_client
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().table_exists.return_value = False
+    # Then
+    assert processor.check_resource_link_table_exists_in_target_database(table=table1) == False
+    mock_glue_client().table_exists.assert_called_once()
+    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
+
+def test_revoke_iam_allowed_principals_from_table(
+        processor_with_mocks,
+        table1: DatasetTable,
+        source_environment
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    lf_client.revoke_permissions_from_table.return_value = True
+    # Then
+    assert processor.revoke_iam_allowed_principals_from_table(table1) == True
+    lf_client.revoke_permissions_from_table.assert_called_once()
+    lf_client.revoke_permissions_from_table.assert_called_with(
+            principals=['EVERYONE'],
+            database_name=table1.GlueDatabaseName,
+            table_name=table1.GlueTableName,
+            catalog_id=source_environment.AwsAccountId,
+            permissions=['ALL']
+        )
+
+def test_grant_pivot_role_all_database_permissions_to_source_database(
+        processor_with_mocks,
+        dataset1: Dataset,
+        source_environment: Environment,
+        mocker
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    lf_client.grant_permissions_to_database.return_value = True
     mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.remote_session",
-        return_value=boto3.Session(),
-    )
-
-    lf_mock = mocker.patch(
-        f"{LF_CLIENT}.batch_revoke_permissions",
-        return_value=True,
-    )
-
-    processor_same_account.revoke_table_resource_link_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
+        return_value="arn:role",
     )
     # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
-
-    # Reset mocks
-    glue_mock.reset_mock()
-    lf_mock.reset_mock()
-
-    processor_cross_account.revoke_table_resource_link_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
+    assert processor.grant_pivot_role_all_database_permissions_to_source_database() == True
+    lf_client.grant_permissions_to_database.assert_called_once()
+    lf_client.grant_permissions_to_database.assert_called_with(
+        principals=["arn:role"],
+        database_name=dataset1.GlueDatabaseName,
+        permissions=['ALL'],
     )
+
+
+def test_check_if_exists_and_create_shared_database_in_target(
+        processor_with_mocks,
+        dataset1: Dataset
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    glue_client.create_database.return_value = True
+    # When
+    processor.check_if_exists_and_create_shared_database_in_target()
     # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
-
-    # Reset mocks
-    glue_mock.reset_mock()
-    lf_mock.reset_mock()
-
-    processor_cross_account_with_catalog.revoke_table_resource_link_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
-    )
-    # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
+    glue_client.create_database.assert_called_once()
+    glue_client.create_database.assert_called_with(location=f's3://{dataset1.S3BucketName}')
 
 
-def test_revoke_source_table_access(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
+def test_grant_pivot_role_all_database_permissions_to_shared_database(
+        processor_with_mocks,
         dataset1: Dataset,
-        table2: DatasetTable,
-        mocker,
+        mocker
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
+        return_value="arn:role",
+    )
+    # When
+    processor.grant_pivot_role_all_database_permissions_to_shared_database()
+    # Then
+    lf_client.grant_permissions_to_database.assert_called_once()
+    lf_client.grant_permissions_to_database.assert_called_with(
+        principals=["arn:role"],
+        database_name=f"{dataset1.GlueDatabaseName}_shared",
+        permissions=['ALL'],
+    )
+
+
+def test_grant_principals_database_permissions_to_shared_database(
+        processor_with_mocks,
+        dataset1: Dataset
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.grant_principals_database_permissions_to_shared_database()
+    # Then
+    lf_client.grant_permissions_to_database.assert_called_once()
+    lf_client.grant_permissions_to_database.assert_called_with(
+        principals=processor.principals,
+        database_name=f"{dataset1.GlueDatabaseName}_shared",
+        permissions=['DESCRIBE'],
+    )
+
+def test_grant_target_account_permissions_to_source_table(
+        processor_with_mocks,
+        target_environment: Environment,
+        source_environment: Environment,
+        table1: DatasetTable
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.grant_target_account_permissions_to_source_table(table1)
+    # Then
+    lf_client.grant_permissions_to_table.assert_called_once()
+    lf_client.grant_permissions_to_table.assert_called_with(
+            principals=[target_environment.AwsAccountId],
+            database_name=table1.GlueDatabaseName,
+            table_name=table1.GlueTableName,
+            catalog_id=source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT'],
+            permissions_with_grant_options=['DESCRIBE', 'SELECT']
+        )
+
+
+def test_check_if_exists_and_create_resource_link_table_in_shared_database_false(
+        processor_with_mocks,
+        table1: DatasetTable,
+        source_environment: Environment,
         mock_glue_client
 ):
-    glue_mock = mock_glue_client().table_exists
-    glue_mock.return_value = True
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().table_exists.return_value = False
+    glue_client.create_resource_link.return_value = True
 
-    lf_mock = mocker.patch(
-        f"{LF_CLIENT}.revoke_source_table_access",
-        return_value=True,
-    )
+    # When
+    processor.check_if_exists_and_create_resource_link_table_in_shared_database(table1)
 
-    processor_same_account.revoke_source_table_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
-    )
     # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
-
-    # Reset mocks
-    glue_mock.reset_mock()
-    lf_mock.reset_mock()
-
-    processor_cross_account.revoke_source_table_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
+    mock_glue_client().table_exists.assert_called_once()
+    glue_client.create_resource_link.assert_called_once()
+    glue_client.create_resource_link.assert_called_with(
+        resource_link_name=table1.GlueTableName,
+        table=table1,
+        catalog_id=source_environment.AwsAccountId
     )
-    # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
 
-    # Reset mocks
-    glue_mock.reset_mock()
-    lf_mock.reset_mock()
-
-    processor_cross_account_with_catalog.revoke_source_table_access(
-        table=table2,
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
-    )
-    # Then
-    glue_mock.assert_called_once()
-    lf_mock.assert_called_once()
-
-
-def test_delete_resource_link_table(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
-        table2: DatasetTable,
-        mock_glue_client
-):
-    glue_mock = mock_glue_client().table_exists
-    glue_mock.return_value = True,
-
-    glue_mock2 = mock_glue_client().delete_table
-    glue_mock2.return_value = True,
-
-
-    processor_same_account.delete_resource_link_table(
-        table=table2
-    )
-    # Then
-    glue_mock.assert_called_once()
-    glue_mock2.assert_called_once()
-
-    # Reset mocks
-    glue_mock.reset_mock()
-    glue_mock2.reset_mock()
-
-    processor_cross_account.delete_resource_link_table(
-        table=table2
-    )
-    # Then
-    glue_mock.assert_called_once()
-    glue_mock2.assert_called_once()
-
-    # Reset mocks
-    glue_mock.reset_mock()
-    glue_mock2.reset_mock()
-
-    processor_cross_account_with_catalog.delete_resource_link_table(
-        table=table2
-    )
-    # Then
-    glue_mock.assert_called_once()
-    glue_mock2.assert_called_once()
-
-
-def test_delete_shared_database(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_same_account: ShareObject,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
+def test_check_if_exists_and_create_resource_link_table_in_shared_database_true(
+        processor_with_mocks,
         table1: DatasetTable,
         mock_glue_client
 ):
-    glue_mock = mock_glue_client().delete_database
-    glue_mock.return_value = True
+    processor, lf_client, glue_client = processor_with_mocks
+    mock_glue_client().table_exists.return_value = True
+    glue_client.create_resource_link.return_value = True
 
-    processor_same_account.delete_shared_database()
+    # When
+    processor.check_if_exists_and_create_resource_link_table_in_shared_database(table1)
+
     # Then
-    glue_mock.assert_called_once()
+    mock_glue_client().table_exists.assert_called_once()
+    glue_client.create_resource_link.assert_not_called()
 
-    # Reset mocks
-    glue_mock.reset_mock()
 
-    processor_cross_account.delete_shared_database()
+def test_grant_principals_permissions_to_resource_link_table(
+        processor_with_mocks,
+        table1: DatasetTable,
+        target_environment: Environment
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.grant_principals_permissions_to_resource_link_table(table1)
     # Then
-    glue_mock.assert_called_once()
+    lf_client.grant_permissions_to_table.assert_called_once()
+    lf_client.grant_permissions_to_table.assert_called_with(
+            principals=processor.principals,
+            database_name=processor.shared_db_name,
+            table_name=table1.GlueTableName,
+            catalog_id=target_environment.AwsAccountId,
+            permissions=['DESCRIBE']
+        )
 
-    # Reset mocks
-    glue_mock.reset_mock()
-
-    processor_cross_account_with_catalog.delete_shared_database()
+def test_grant_principals_permissions_to_table_in_target(
+        processor_with_mocks,
+        table1: DatasetTable,
+        source_environment: Environment
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.grant_principals_permissions_to_table_in_target(table1)
     # Then
-    glue_mock.assert_called_once()
+    lf_client.grant_permissions_to_table_with_columns.assert_called_once()
+    lf_client.grant_permissions_to_table_with_columns.assert_called_with(
+            principals=processor.principals,
+            database_name=table1.GlueDatabaseName,
+            table_name=table1.GlueTableName,
+            catalog_id=source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT']
+        )
+
+def test_revoke_principals_permissions_to_resource_link_table(
+        processor_with_mocks,
+        table1: DatasetTable,
+        target_environment:Environment
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.revoke_principals_permissions_to_resource_link_table(table=table1)
+    # Then
+    lf_client.revoke_permissions_from_table.assert_called_once()
+    lf_client.revoke_permissions_from_table.assert_called_with(
+            principals=processor.principals,
+            database_name=processor.shared_db_name,
+            table_name=table1.GlueTableName,
+            catalog_id=target_environment.AwsAccountId,
+            permissions=['DESCRIBE']
+        )
+
+
+def test_revoke_principals_permissions_to_table_in_target(
+        processor_with_mocks,
+        table1: DatasetTable,
+        source_environment: Environment
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.revoke_principals_permissions_to_table_in_target(table = table1, other_table_shares_in_env=False)
+    # Then
+    lf_client.revoke_permissions_from_table_with_columns.assert_called_once()
+    lf_client.revoke_permissions_from_table_with_columns.assert_called_with(
+            principals=processor.principals,
+            database_name=table1.GlueDatabaseName,
+            table_name=table1.GlueTableName,
+            catalog_id=source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT']
+        )
+
+def test_delete_resource_link_table_in_shared_database_true(
+        processor_with_mocks,
+        table2: DatasetTable
+):
+    processor, lf_client, glue_client = processor_with_mocks
+
+    # When
+    processor.delete_resource_link_table_in_shared_database(
+        table=table2
+    )
+    # Then
+    glue_client.table_exists.assert_called_once()
+    glue_client.delete_table.assert_called_once()
+
+def test_revoke_principals_database_permissions_to_shared_database(
+        processor_with_mocks,
+        dataset1: Dataset
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.revoke_principals_database_permissions_to_shared_database()
+    # Then
+    lf_client.revoke_permissions_to_database.assert_called_once()
+    lf_client.revoke_permissions_to_database.assert_called_with(
+        principals=processor.principals,
+        database_name=f"{dataset1.GlueDatabaseName}_shared",
+        permissions=['DESCRIBE'],
+    )
+
+def test_delete_shared_database_in_target(
+    processor_with_mocks,
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.delete_shared_database_in_target()
+    # Then
+    glue_client.delete_database.assert_called_once()
 
 
 def test_revoke_external_account_access_on_source_account(
-        db,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_cross_account: ShareObject,
-        source_environment: Environment,
-        target_environment: Environment,
-        dataset1: Dataset,
+        processor_with_mocks,
         table1: DatasetTable,
-        table2: DatasetTable,
-        mocker,
+        source_environment: Environment,
+        target_environment: Environment
 ):
-    lf_mock = mocker.patch(f"{LF_CLIENT}.batch_revoke_permissions", return_value=True)
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.remote_session",
-        return_value=boto3.Session(),
-    )
-
-    processor_cross_account.revoke_external_account_access_on_source_account(table1.GlueDatabaseName, table1.GlueTableName)
+    processor, lf_client, glue_client = processor_with_mocks
+    # When
+    processor.revoke_external_account_access_on_source_account(table1)
     # Then
-    lf_mock.assert_called_once()
-
-    #Reset mock
-    lf_mock.reset_mock()
-    processor_cross_account_with_catalog.revoke_external_account_access_on_source_account(table1.GlueDatabaseName,
-                                                                             table1.GlueTableName)
-    # Then
-    lf_mock.assert_called_once()
+    lf_client.revoke_permissions_from_table_with_columns.assert_called_once()
+    lf_client.revoke_permissions_from_table_with_columns.assert_called_with(
+            principals=[target_environment.AwsAccountId],
+            database_name=table1.GlueDatabaseName,
+            table_name=table1.GlueTableName,
+            catalog_id=source_environment.AwsAccountId,
+            permissions=['DESCRIBE', 'SELECT'],
+            permissions_with_grant_options=['DESCRIBE', 'SELECT']
+        )
 
 
 def test_handle_share_failure(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        share_item_same_account: ShareObjectItem,
-        share_item_cross_account: ShareObjectItem,
+        processor_with_mocks,
         table1: DatasetTable,
-        mocker,
+        mocker
 ):
-
     # Given
     alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_table_sharing_failure_alarm")
     error = Exception
+    processor, lf_client, glue_client = processor_with_mocks
 
     # When
-    processor_same_account.handle_share_failure(table1, share_item_same_account, error)
+    processor.handle_share_failure(table1, error)
 
     # Then
     alarm_service_mock.assert_called_once()
 
-    # Reset mock
-    alarm_service_mock.reset_mock()
-
-    # When
-    processor_cross_account.handle_share_failure(table1, share_item_cross_account, error)
-
-    # Then
-    alarm_service_mock.assert_called_once()
-
-    # Reset mock
-    alarm_service_mock.reset_mock()
-
-    # When
-    processor_cross_account_with_catalog.handle_share_failure(table1, share_item_cross_account, error)
-
-    # Then
-    alarm_service_mock.assert_called_once()
 
 
 def test_handle_revoke_failure(
-        db,
-        processor_same_account: ProcessLFSameAccountShare,
-        processor_cross_account: ProcessLFCrossAccountShare,
-        processor_cross_account_with_catalog: ProcessLFCrossAccountShare,
-        revoke_item_same_account: ShareObjectItem,
-        revoke_item_cross_account: ShareObjectItem,
+        processor_with_mocks,
         table1: DatasetTable,
         mocker,
 ):
+
     # Given
     alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_revoke_table_sharing_failure_alarm")
     error = Exception
+    processor, lf_client, glue_client = processor_with_mocks
 
     # When
-    processor_same_account.handle_revoke_failure(table1, revoke_item_same_account, error)
+    processor.handle_revoke_failure(table1, error)
 
     # Then
     alarm_service_mock.assert_called_once()
 
-    # Reset mock
-    alarm_service_mock.reset_mock()
-
-    # When
-    processor_cross_account.handle_revoke_failure(table1, revoke_item_cross_account, error)
-
-    # Then
-    alarm_service_mock.assert_called_once()
-
-    # Reset mock
-    alarm_service_mock.reset_mock()
-
-    # When
-    processor_cross_account_with_catalog.handle_revoke_failure(table1, revoke_item_cross_account, error)
-
-    # Then
-    alarm_service_mock.assert_called_once()
-
-
-# Test to check if the processor with catalog get instantiated correctly
-def test_create_lf_share_processor(
-        db,
-        catalog_details,
-        source_environment,
-        target_environment,
-        target_environment_group,
-        share_cross_account,
-        dataset1,
-        table1,
-        mocker
-):
-    mock_client = MagicMock()
-    mocker.patch(
-        "dataall.modules.dataset_sharing.services.data_sharing_service.GlueClient",
-        mock_client
-    )
-
-    glue_get_source_catalog_mock = mock_client().get_source_catalog
-    glue_get_source_catalog_mock.return_value = catalog_details
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.is_assumable_pivot_role",
-        return_value=True,
-    )
-    mock_client_2 = MagicMock()
-    mocker.patch(
-        "dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient",
-        mock_client_2
-    )
-
-    glue_catalog_ownwership_tag = mock_client_2().get_database_tags
-    glue_catalog_ownwership_tag.return_value = {'owner_account_id' : source_environment.AwsAccountId}
-
-
-    with db.scoped_session() as session:
-        processor = DataSharingService.create_lf_processor(
-            session,
-            dataset1,
-            share_cross_account,
-            [table1],
-            [table2],
-            source_environment,
-            target_environment,
-            target_environment_group
-        )
-
-    glue_catalog_ownwership_tag.assert_called_once()
-    glue_get_source_catalog_mock.assert_called_once()
-    assert processor.catalog_details.account_id == catalog_details.account_id
-    assert processor.catalog_details.region == catalog_details.region
-    assert processor.catalog_details.database_name == catalog_details.database_name

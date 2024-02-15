@@ -118,3 +118,11 @@ ConsumptionRoleFilter = gql.InputType(
         gql.Argument(name='groupUri', type=gql.String),
     ],
 )
+
+UpdateConsumptionRoleInput = gql.InputType(
+    name='UpdateConsumptionRoleInput',
+    arguments=[
+        gql.Argument('consumptionRoleName', gql.String),
+        gql.Argument('groupUri', gql.String),
+    ],
+)

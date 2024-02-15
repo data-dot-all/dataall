@@ -11,10 +11,6 @@ Parameters:
 Resources:
   CDKCustomExecutionPolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
-    # checkov:skip=CKV_AWS_107:Ensure IAM policies does not allow credentials exposure
-    # checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management without constraints
-    # checkov:skip=CKV_AWS_110:Ensure IAM policies does not allow privilege escalation
-    # checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
     Properties:
       ManagedPolicyName: !Ref PolicyName
       PolicyDocument:
@@ -200,7 +196,9 @@ Resources:
             Effect: Allow
             Action:
               - 'cloudformation:*'
-            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*'
 
           - Sid: ECR
             Effect: Allow
