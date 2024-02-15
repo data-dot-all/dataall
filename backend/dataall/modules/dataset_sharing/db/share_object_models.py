@@ -58,11 +58,3 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
-
-
-class Catalog:
-    """ Can be expanded to include other details once broader catalog support is added to data.all """
-    def __init__(self, account_id, database_name, region):
-        self.account_id = account_id
-        self.database_name = database_name
-        self.region = region
