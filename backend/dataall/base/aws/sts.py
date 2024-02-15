@@ -6,6 +6,7 @@ import urllib
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
+from dataall.base.config import config
 
 from dataall.version import __version__, __pkg_name__
 
@@ -148,13 +149,16 @@ class SessionHelper:
         return request_url
 
     @classmethod
-    def get_delegation_role_arn(cls, accountid):
+    def get_delegation_role_arn(cls, accountid, region):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:
             accountid(string) : aws account id
+            region(string) : aws account region
         Returns:
                 string : arn of the delegation role on the target aws account id
         """
+        if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False):
+            return 'arn:aws:iam::{}:role/{}-{}'.format(accountid, cls.get_delegation_role_name(), region)
         return 'arn:aws:iam::{}:role/{}'.format(accountid, cls.get_delegation_role_name())
 
     @classmethod
@@ -180,23 +184,11 @@ class SessionHelper:
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-cfn-exec-role-{}-{}'.format(accountid, accountid, region)
 
     @classmethod
-    def get_delegation_role_id(cls, accountid):
-        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
-        Args:
-            accountid(string) : aws account id
-        Returns :
-            string : RoleId of the role
-        """
-        session = SessionHelper.remote_session(accountid=accountid)
-        client = session.client('iam', region_name='eu-west-1')
-        response = client.get_role(RoleName=cls.get_delegation_role_name())
-        return response['Role']['RoleId']
-
-    @classmethod
-    def remote_session(cls, accountid, role=None):
+    def remote_session(cls, accountid, region, role=None):
         """Creates a remote boto3 session on the remote AWS account , assuming the delegation Role
         Args:
             accountid(string) : aws account id
+            region(string) : aws region
             role(string) : arn of the IAM role to assume in the boto3 session
         Returns :
             boto3.session.Session: boto3 Session, on the target aws accountid, assuming the delegation role or a provided role
@@ -207,7 +199,7 @@ class SessionHelper:
             role_arn = role
         else:
             log.info(f"Remote boto3 session using pivot role for account= {accountid}")
-            role_arn = cls.get_delegation_role_arn(accountid=accountid)
+            role_arn = cls.get_delegation_role_arn(accountid=accountid, region=region)
         session = SessionHelper.get_session(base_session=base_session, role_arn=role_arn)
         return session
 
