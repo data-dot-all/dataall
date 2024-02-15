@@ -338,6 +338,12 @@ class ShareObjectRepository:
         session.commit()
 
     @staticmethod
+    def list_all_active_share_objects(session) -> [ShareObject]:
+        return (
+            session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
+        )
+
+    @staticmethod
     def find_share(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)

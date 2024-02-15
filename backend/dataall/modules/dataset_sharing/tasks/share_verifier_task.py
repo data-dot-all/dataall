@@ -1,7 +1,10 @@
 import logging
 import os
 import sys
-
+from dataall.backend.dataall.modules.dataset_sharing.api.types import ShareObject
+from dataall.backend.dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.backend.dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
+from dataall.backend.dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 from dataall.base.db import get_engine
 
@@ -12,34 +15,22 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
+def verify_shares(engine):
+    with engine.scoped_session() as session:
+        processed_share_objects = []
+        all_share_objects: [ShareObject] = ShareObjectRepository.list_all_active_share_objects(session)
+        log.info(f'Found {len(all_share_objects)} share objects  verify ')
+        share_object: ShareObject
+        for share_object in all_share_objects:
+            log.info(
+                f'Verifying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
+            )
+            processed_share_objects.append(share_object.shareUri)
+            DataSharingService.verify_share(engine, share_uri=share_object.shareUri, status=ShareItemStatus.Share_Succeeded.value, healthStatus=None)
+        return processed_share_objects
+
+
 if __name__ == '__main__':
-
-    try:
-        ENVNAME = os.environ.get('envname', 'local')
-        ENGINE = get_engine(envname=ENVNAME)
-
-        share_uri = os.getenv('shareUri')
-        share_item_uri = os.getenv('shareItemUris')
-        handler = os.getenv('handler')
-
-        if handler == 'approve_share':
-            log.info(f'Starting processing task for share : {share_uri}...')
-            DataSharingService.approve_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'revoke_share':
-            log.info(f'Starting revoking task for share : {share_uri}...')
-            DataSharingService.revoke_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'verify_share':
-            log.info(f'Starting verify task for share : {share_uri}...')
-            DataSharingService.verify_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'reapply_share':
-            log.info(f'Starting re-apply task for share : {share_uri}...')
-            DataSharingService.reapply_share(engine=ENGINE, share_uri=share_uri)
-
-        log.info('Sharing task finished successfully')
-
-    except Exception as e:
-        log.error(f'Sharing task failed due to: {e}')
-        raise e
+    ENVNAME = os.environ.get('envname', 'local')
+    ENGINE = get_engine(envname=ENVNAME)
+    verify_shares(engine=ENGINE)

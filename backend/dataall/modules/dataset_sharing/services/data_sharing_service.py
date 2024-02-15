@@ -214,8 +214,13 @@ class DataSharingService:
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
 
     @classmethod
-    def verify_share(cls, engine: Engine, share_uri: str):
+    def verify_share(cls, engine: Engine, share_uri: str, status=None, healthStatus=ShareItemHealthStatus.PendingVerify.value):
         """
+        2) Retrieves share data and items in specified status and health state (by default - PendingVerify)
+        3) Calls verify folders processor to verify share and update health status
+        4) Calls verify buckets processor to verify share and update health status
+        5) Calls verify tables processor for same or cross account sharing to verify share and update health status
+
         Parameters
         ----------
         engine : db.engine
@@ -223,8 +228,6 @@ class DataSharingService:
 
         Returns
         -------
-        True if verify completes
-        False if verify fails
         """
         with engine.scoped_session() as session:
             (
@@ -237,7 +240,7 @@ class DataSharingService:
             ) = ShareObjectRepository.get_share_data(session, share_uri)
 
             (tables_to_verify, folders_to_verify, buckets_to_verify) = ShareObjectRepository.get_share_data_items(
-                session, share_uri, status=None, healthStatus=ShareItemHealthStatus.PendingVerify.value
+                session, share_uri, status=status, healthStatus=healthStatus
             )
 
         log.info(f"Verifying permissions to folders: {folders_to_verify}")
@@ -274,18 +277,15 @@ class DataSharingService:
             target_environment,
             env_group,
         ).verify_shares()
-
-        return True
+        return
 
     @classmethod
     def reapply_share(cls, engine: Engine, share_uri: str):
         """
-        1) Updates share object State Machine with the Action: Start
-        2) Retrieves share data and items in Share_Approved state
-        3) Calls sharing folders processor to grant share
-        4) Calls sharing buckets processor to grant share
-        5) Calls sharing tables processor for same or cross account sharing to grant share
-        6) Updates share object State Machine with the Action: Finish
+        1) Retrieves share data and items in PendingReApply health state
+        2) Calls sharing folders processor to re-apply share + update share item(s) health status
+        3) Calls sharing buckets processor to re-apply share + update share item(s) health status
+        4) Calls sharing tables processor for same or cross account sharing to re-apply share + update share item(s) health status
 
         Parameters
         ----------
@@ -294,8 +294,8 @@ class DataSharingService:
 
         Returns
         -------
-        True if sharing succeeds,
-        False if folder or table sharing failed
+        True if re-apply of share item(s) succeeds,
+        False if any re-apply of share item(s) failed
         """
         with engine.scoped_session() as session:
             (
