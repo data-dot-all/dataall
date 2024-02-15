@@ -25,6 +25,10 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.config import config
+
+config.get_property('modules.datasets.features.custom_confidentiality_mapping', {})
+
 
 logger = logging.getLogger(__name__)
 
@@ -535,7 +539,8 @@ class DatasetStack(Stack):
             )
             trigger.node.add_dependency(job)
 
-        Tags.of(self).add('Classification', dataset.confidentiality)
+        if config.get_property('modules.datasets.features.confidentiality_dropdown', False):
+            Tags.of(self).add('Classification', dataset.confidentiality)
 
         TagsUtil.add_tags(stack=self, model=Dataset, target_type="dataset")
 

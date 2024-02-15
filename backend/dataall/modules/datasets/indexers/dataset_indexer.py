@@ -34,7 +34,7 @@ class DatasetIndexer(BaseIndexer):
                     'source': dataset.S3BucketName,
                     'resourceKind': 'dataset',
                     'description': dataset.description,
-                    'classification': dataset.confidentiality,
+                    'classification': dataset.confidentiality.replace(' ', ''),
                     'tags': [t.replace('-', '') for t in dataset.tags or []],
                     'topics': dataset.topics,
                     'region': dataset.region.replace('-', ''),
