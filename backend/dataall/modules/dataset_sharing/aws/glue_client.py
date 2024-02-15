@@ -203,9 +203,7 @@ class GlueClient:
             log.info(f'Fetched source catalog details for database {self._database} are: {linked_database}...')
             if linked_database:
                 return {'account_id' : linked_database.get('CatalogId'), 'database_name' : linked_database.get('DatabaseName'), 'region' : linked_database.get('Region', self._region)}
-                # return Catalog(account_id=linked_database.get('CatalogId'),
-                #                database_name=linked_database.get('DatabaseName'),
-                #                region=linked_database.get('Region', self._region))
+
         except self._client.exceptions.EntityNotFoundException as enoFnd:
             log.exception(f'Could not fetch source catalog details for database {self._database} due to {enoFnd}')
             raise enoFnd
