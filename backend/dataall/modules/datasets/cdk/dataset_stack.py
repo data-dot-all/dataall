@@ -93,10 +93,10 @@ class DatasetStack(Stack):
 
         # Read input
         self.target_uri = target_uri
-        self.pivot_role_name = SessionHelper.get_delegation_role_name()
         dataset = self.get_target()
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
+        self.pivot_role_name = SessionHelper.get_delegation_role_name(region=env.region)
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):

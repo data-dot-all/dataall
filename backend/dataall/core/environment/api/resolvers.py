@@ -711,7 +711,7 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
             resource_uri=organizationUri,
             permission_name=permissions.GET_ORGANIZATION,
         )
-        pivot_role_name = SessionHelper.get_delegation_role_name()
+        pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
                 action='GET_PIVOT_ROLE_NAME',

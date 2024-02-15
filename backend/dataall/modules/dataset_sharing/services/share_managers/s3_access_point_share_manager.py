@@ -337,7 +337,7 @@ class S3AccessPointShareManager:
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
-        pivot_role_name = SessionHelper.get_delegation_role_name()
+        pivot_role_name = SessionHelper.get_delegation_role_name(region=self.dataset_region)
 
         if existing_policy:
             existing_policy = json.loads(existing_policy)

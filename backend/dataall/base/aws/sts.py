@@ -101,13 +101,14 @@ class SessionHelper:
             parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId')
 
     @classmethod
-    def get_delegation_role_name(cls):
+    def get_delegation_role_name(cls, region):
         """Returns the role name that this package assumes on remote accounts
         Returns:
             string: name of the assumed role
         """
-        return SessionHelper._get_parameter_value(
+        base_name = SessionHelper._get_parameter_value(
             parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
+        return f"{base_name}-{region}" if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False) else base_name
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None):
@@ -157,9 +158,7 @@ class SessionHelper:
         Returns:
                 string : arn of the delegation role on the target aws account id
         """
-        if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False):
-            return 'arn:aws:iam::{}:role/{}-{}'.format(accountid, cls.get_delegation_role_name(), region)
-        return 'arn:aws:iam::{}:role/{}'.format(accountid, cls.get_delegation_role_name())
+        return 'arn:aws:iam::{}:role/{}'.format(accountid, cls.get_delegation_role_name(region))
 
     @classmethod
     def get_cdk_look_up_role_arn(cls, accountid, region):
@@ -200,6 +199,7 @@ class SessionHelper:
         else:
             log.info(f"Remote boto3 session using pivot role for account= {accountid}")
             role_arn = cls.get_delegation_role_arn(accountid=accountid, region=region)
+            print(f"#### ROLE ARN= {role_arn}")
         session = SessionHelper.get_session(base_session=base_session, role_arn=role_arn)
         return session
 

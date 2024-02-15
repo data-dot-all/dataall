@@ -67,8 +67,7 @@ class PivotRole(NestedStack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.env_resource_prefix = config['resourcePrefix']
-        regional_pivot_role = config_json.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False)
-        self.role_name = f"{config['roleName']}-{self.region}" if regional_pivot_role else config['roleName']
+        self.role_name = config['roleName']
         self.environmentUri = config['environmentUri']
 
         from dataall.core.environment.cdk import pivot_role_core_policies
