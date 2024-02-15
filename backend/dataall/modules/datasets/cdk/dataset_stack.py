@@ -27,8 +27,6 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 from dataall.base.config import config
 
-config.get_property('modules.datasets.features.custom_confidentiality_mapping', {})
-
 
 logger = logging.getLogger(__name__)
 
