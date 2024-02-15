@@ -307,7 +307,7 @@ class DatasetService:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
 
-        pivot_session = SessionHelper.remote_session(account_id)
+        pivot_session = SessionHelper.remote_session(account_id, dataset.region)
         aws_session = SessionHelper.get_session(
             base_session=pivot_session, role_arn=role_arn
         )
@@ -370,7 +370,7 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
-        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
+        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId, dataset.region)
         aws_session = SessionHelper.get_session(
             base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn
         )

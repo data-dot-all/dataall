@@ -10,7 +10,7 @@ log = logging.getLogger('aws:ram')
 
 class RamClient:
     def __init__(self, account_id, region):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('ram', region_name=region)
         self._account_id = account_id
 

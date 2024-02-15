@@ -20,7 +20,7 @@ class DatasetColumnGlueHandler:
             column: DatasetTableColumn = session.query(DatasetTableColumn).get(task.targetUri)
             table: DatasetTable = session.query(DatasetTable).get(column.tableUri)
 
-            aws_session = SessionHelper.remote_session(table.AWSAccountId)
+            aws_session = SessionHelper.remote_session(table.AWSAccountId, table.region)
 
             lf_client = LakeFormationTableClient(table=table, aws_session=aws_session)
             lf_client.grant_pivot_role_all_table_permissions()

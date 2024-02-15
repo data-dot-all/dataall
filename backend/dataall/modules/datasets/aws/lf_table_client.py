@@ -12,7 +12,7 @@ class LakeFormationTableClient:
 
     def __init__(self, table: DatasetTable, aws_session=None):
         if not aws_session:
-            aws_session = SessionHelper.remote_session(table.AWSAccountId)
+            aws_session = SessionHelper.remote_session(table.AWSAccountId, table.region)
         self._client = aws_session.client('lakeformation', region_name=table.region)
         self._table = table
 

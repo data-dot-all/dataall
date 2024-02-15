@@ -7,7 +7,7 @@ class AthenaClient:
 
     @staticmethod
     def run_athena_query(aws_account_id, env_group, s3_staging_dir, region, sql=None):
-        base_session = SessionHelper.remote_session(accountid=aws_account_id)
+        base_session = SessionHelper.remote_session(accountid=aws_account_id, region=region)
         boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
         creds = boto3_session.get_credentials()
         connection = connect(

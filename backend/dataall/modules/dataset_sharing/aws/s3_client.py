@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class S3ControlClient:
     def __init__(self, account_id: str, region: str):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('s3control', region_name=region)
         self._account_id = account_id
 
@@ -169,7 +169,7 @@ class S3ControlClient:
 
 class S3Client:
     def __init__(self, account_id, region):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('s3', region_name=region)
         self._account_id = account_id
 

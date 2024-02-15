@@ -96,7 +96,7 @@ def sync_tables(engine):
 
 
 def is_assumable_pivot_role(env: Environment):
-    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId)
+    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
     if not aws_session:
         log.error(
             f'Failed to assume dataall pivot role in environment {env.AwsAccountId}'

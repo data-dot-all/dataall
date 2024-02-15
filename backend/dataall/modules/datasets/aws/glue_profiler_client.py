@@ -12,7 +12,7 @@ class GlueDatasetProfilerClient:
     """Controls glue profiling jobs in AWS"""
 
     def __init__(self, dataset: Dataset):
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = session.client('glue', region_name=dataset.region)
         self._name = dataset.GlueProfilingJobName
 
