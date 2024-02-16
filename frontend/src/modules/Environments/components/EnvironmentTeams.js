@@ -648,6 +648,11 @@ export const EnvironmentTeams = ({ environment }) => {
                     valueOptions: groupOptions.map((group) => group.label)
                   },
                   {
+                    field: 'dataaallManaged',
+                    headerName: 'Data.all Managed',
+                    flex: 0.5
+                  },
+                  {
                     field: 'actions',
                     headerName: 'Actions',
                     flex: 0.5,

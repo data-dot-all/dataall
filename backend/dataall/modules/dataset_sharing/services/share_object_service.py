@@ -36,7 +36,8 @@ class ShareObjectService:
     @classmethod
     def check_if_target_role_has_policies_attached(cls,
                                                    consumption_role: ConsumptionRole,
-                                                   target_environment: Environment
+                                                   target_environment: Environment,
+                                                   attachMissingPolicies: bool = False
                                                    ):
         bucket_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
                                                                   consumption_role.IAMRoleName, 'bucket')
@@ -55,7 +56,15 @@ class ShareObjectService:
         if not is_bucket_policy_attached:
             missing_policies.append(bucket_policy_name)
 
-        if not (is_bucket_policy_attached and is_accesspoint_policy_attached):
+        if consumption_role.dataaallManaged or attachMissingPolicies:
+            for p in missing_policies:
+                arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{p}'
+                IAM.attach_role_policy(
+                    target_environment.AwsAccountId,
+                    consumption_role.IAMRoleName,
+                    arn
+                )
+        elif not (is_bucket_policy_attached and is_accesspoint_policy_attached):
             raise Exception(f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}")
 
     @classmethod
@@ -70,6 +79,7 @@ class ShareObjectService:
             principal_id,
             principal_type,
             requestPurpose,
+            attachMissingPolicies
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -92,7 +102,8 @@ class ShareObjectService:
                 principal_iam_role_name = consumption_role.IAMRoleName
                 ShareObjectService.check_if_target_role_has_policies_attached(
                     consumption_role,
-                    environment
+                    environment,
+                    attachMissingPolicies
                 )
 
             else:

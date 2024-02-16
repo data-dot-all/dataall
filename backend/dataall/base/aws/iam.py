@@ -224,6 +224,23 @@ class IAM:
             return policy_name in [p['PolicyName'] for p in response['AttachedPolicies']]
         except Exception as e:
             log.error(
-                f'Failed to get the list of attachep policies to the role {role_name}: {e}'
+                f'Failed to get the list of attached policies to the role {role_name}: {e}'
             )
             return False
+
+    @staticmethod
+    def attach_role_policy(
+            account_id,
+            role_name,
+            policy_arn
+    ):
+        try:
+            iamcli = IAM.client(account_id)
+            response = iamcli.attach_role_policy(
+                RoleName=role_name,
+                PolicyArn=policy_arn
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to attach policy {policy_arn} to the role {role_name}: {e}'
+            )

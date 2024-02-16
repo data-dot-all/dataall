@@ -1,7 +1,6 @@
 from dataall.base.api.constants import *
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, ShareSortField
 
-
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
     arguments=[
@@ -10,9 +9,9 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
+        gql.Argument(name='attachMissingPolicies', type=gql.Boolean)
     ],
 )
-
 
 AddSharedItemInput = gql.InputType(
     name='AddSharedItemInput',
@@ -24,7 +23,6 @@ AddSharedItemInput = gql.InputType(
     ],
 )
 
-
 RevokeItemsInput = gql.InputType(
     name='RevokeItemsInput',
     arguments=[
@@ -32,7 +30,6 @@ RevokeItemsInput = gql.InputType(
         gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
-
 
 ShareSortCriteria = gql.InputType(
     name='ShareSortCriteria',
@@ -60,7 +57,6 @@ ShareObjectFilter = gql.InputType(
         gql.Argument('share_iam_roles', gql.ArrayType(gql.String)),
     ],
 )
-
 
 ShareableObjectFilter = gql.InputType(
     name='ShareableObjectFilter',

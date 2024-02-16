@@ -5,8 +5,10 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
+  FormControlLabel,
   FormHelperText,
   MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -177,7 +179,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -237,7 +240,8 @@ export const RequestAccessModal = (props) => {
           <Formik
             initialValues={{
               environment: '',
-              comment: ''
+              comment: '',
+              attachMissingPolicies: false
             }}
             validationSchema={Yup.object().shape({
               environment: Yup.object().required('*Environment is required'),
@@ -453,6 +457,29 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     </Box>
                   )}
+                  <CardContent>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={values.attachMissingPolicies}
+                          onChange={handleChange}
+                          color="primary"
+                          edge="start"
+                          name="attachMissingPolicies"
+                        />
+                      }
+                      label={
+                        <div>
+                          Let Data.All attach policies to this role
+                          <Typography
+                            color="textSecondary"
+                            component="p"
+                            variant="caption"
+                          ></Typography>
+                        </div>
+                      }
+                    />
+                  </CardContent>
                   <CardContent>
                     <TextField
                       FormHelperTextProps={{

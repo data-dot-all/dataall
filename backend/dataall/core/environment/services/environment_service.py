@@ -270,6 +270,19 @@ class EnvironmentService:
             permissions=data['permissions'],
             resource_type=Environment.__name__,
         )
+
+        fake_consumption_role = ConsumptionRole(
+            consumptionRoleName='fake',
+            environmentUri=environment.environmentUri,
+            groupUri=group,
+            IAMRoleArn=env_group_iam_role_arn,
+            IAMRoleName=env_group_iam_role_name,
+            dataaallManaged=True
+        )
+
+        EnvironmentService._generate_managed_policies_for_consumption_role(environment, fake_consumption_role)
+        EnvironmentService._attach_managed_policies_for_consumption_role(environment, fake_consumption_role)
+
         return environment, environment_group
 
     @staticmethod
@@ -454,9 +467,7 @@ class EnvironmentService:
         )
 
         EnvironmentService._generate_managed_policies_for_consumption_role(environment, consumption_role)
-        if consumption_role.dataaallManaged:
-            # toDo: attach policies
-            pass
+
         return consumption_role
 
     @staticmethod
@@ -475,6 +486,7 @@ class EnvironmentService:
                 }
             ]
         }
+
         IAM.create_managed_policy(
             account_id=environment.AwsAccountId,
             policy_name=consumption_role.get_managed_bucket_share_policy_name(),
@@ -485,6 +497,24 @@ class EnvironmentService:
             account_id=environment.AwsAccountId,
             policy_name=consumption_role.get_managed_accesspoint_share_policy_name(),
             policy=json.dumps(empty_policy)
+        )
+
+        if consumption_role.dataaallManaged:
+            EnvironmentService._attach_managed_policies_for_consumption_role(environment, consumption_role)
+
+        return
+
+    @staticmethod
+    def _attach_managed_policies_for_consumption_role(environment, consumption_role):
+        IAM.attach_role_policy(
+            account_id=environment.AwsAccountId,
+            role_name=consumption_role.IAMRoleName,
+            policy_arn=consumption_role.get_managed_accesspoint_share_policy_name()
+        )
+        IAM.attach_role_policy(
+            account_id=environment.AwsAccountId,
+            role_name=consumption_role.IAMRoleName,
+            policy_arn=consumption_role.get_managed_bucket_share_policy_name()
         )
 
     @staticmethod

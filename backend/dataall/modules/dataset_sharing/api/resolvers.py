@@ -41,7 +41,8 @@ def create_share_object(
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
         principal_type=input['principalType'],
-        requestPurpose=input.get('requestPurpose')
+        requestPurpose=input.get('requestPurpose'),
+        attachMissingPolicies=input.get('attachMissingPolicies')
     )
 
 
