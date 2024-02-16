@@ -448,6 +448,8 @@ Resources:
               - 'iam:AttachRolePolicy'
               - 'iam:DetachRolePolicy'
               - 'iam:ListAttachedRolePolicies'
+              - 'iam:CreatePolicyVersion'
+              - 'iam:DeletePolicyVersion'
             Effect: Allow
             Resource: '*'
           - Sid: IAMPassRole
