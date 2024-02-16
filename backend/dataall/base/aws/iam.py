@@ -224,6 +224,6 @@ class IAM:
             return policy_name in [p['PolicyName'] for p in response['AttachedPolicies']]
         except Exception as e:
             log.error(
-                f'Failed to get the list of attachep policies to the role {role_name}'
+                f'Failed to get the list of attachep policies to the role {role_name}: {e}'
             )
             return False

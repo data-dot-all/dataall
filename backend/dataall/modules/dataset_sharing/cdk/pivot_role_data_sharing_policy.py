@@ -21,6 +21,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                     'iam:AttachRolePolicy',
                     'iam:DetachRolePolicy',
                     'iam:DeletePolicy',
+                    'iam:ListAttachedRolePolicies',
                 ],
                 resources=['*'],
             ),
