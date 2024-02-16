@@ -256,7 +256,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 source_env_group,
                 env_group,
             )
-            sharing_folder.folder_errors = []
+
             try:
                 sharing_folder.check_bucket_policy()
                 sharing_folder.check_target_role_access_policy()

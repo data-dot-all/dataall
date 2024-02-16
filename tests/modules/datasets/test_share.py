@@ -7,7 +7,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
-    ShareItemStatus
+    ShareItemStatus, ShareItemHealthStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -74,6 +74,15 @@ def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
+        username='alice'
+    )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def table1_1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
+    yield table(
+        dataset=dataset1,
+        name="table5",
         username='alice'
     )
 
@@ -441,6 +450,21 @@ def share4_draft(
     )
 
 
+@pytest.fixture(scope='function')
+def share3_item_shared_unhealthy(
+        share_item: typing.Callable,
+        share3_processed: ShareObject,
+        table1_1:DatasetTable
+) -> ShareObjectItem:
+    # Cleaned up with share3
+    yield share_item(
+        share=share3_processed,
+        table=table1_1,
+        status=ShareItemStatus.Share_Succeeded.value,
+        healthStatus=ShareItemHealthStatus.Unhealthy.value
+    )
+
+
 def test_init(tables1, tables2):
     assert True
 
@@ -531,6 +555,9 @@ def get_share_object(client, user, group, shareUri, filter):
             itemName
             status
             action
+            healthStatus
+            healthMessage
+            lastVerificationTime
           }
         }
         dataset {
@@ -821,7 +848,7 @@ def reject_share_object(client, user, group, shareUri):
 
 def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris):
     q = """
-        mutation revokeItemsShareObject($input: RevokeItemsInput) {
+        mutation revokeItemsShareObject($input: ShareItemSelectorInput) {
             revokeItemsShareObject(input: $input) {
                 shareUri
                 status
@@ -835,10 +862,56 @@ def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris)
         groups=[group.name],
         input={
             'shareUri': shareUri,
-            'revokedItemUris': revoked_items_uris
+            'itemUris': revoked_items_uris
         },
     )
     print('Response from revokeItemsShareObject: ', response)
+    return response
+
+
+def verify_items_share_object(client, user, group, shareUri, verify_items_uris):
+    q = """
+        mutation verifyItemsShareObject($input: ShareItemSelectorInput) {
+          verifyItemsShareObject(input: $input) {
+            shareUri
+            status
+          }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'shareUri': shareUri,
+            'itemUris': verify_items_uris
+        },
+    )
+    print('Response from verifyItemsShareObject: ', response)
+    return response
+
+
+def reapply_items_share_object(client, user, group, shareUri, reapply_items_uris):
+    q = """
+        mutation reApplyItemsShareObject($input: ShareItemSelectorInput) {
+          reApplyItemsShareObject(input: $input) {
+            shareUri
+            status
+          }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'shareUri': shareUri,
+            'itemUris': reapply_items_uris
+        },
+    )
+    print('Response from reApplyItemsShareObject: ', response)
     return response
 
 
@@ -1481,6 +1554,97 @@ def test_search_shared_items_in_environment(
     # Then we get the share information from the environment2
     assert list_datasets_published_in_environment_response.data.searchEnvironmentDataItems.nodes[
                0].principalId == group2.name
+
+
+def test_verify_items_share_request(
+        db, client, user2, group2, share3_processed, share3_item_shared
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared.shareItemUri
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+    verify_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # verifying items from share object
+    verify_items_share_object_response = verify_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        verify_items_uris=verify_items_uris
+    )
+
+    # Then share item health Status changes to PendingVerify
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+    print(get_share_object_response.data.getShareObject.get('items').nodes)
+    sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    status = sharedItem['healthStatus']
+    assert status == ShareItemHealthStatus.PendingVerify.value
+
+
+def test_reapply_items_share_request(
+        db, client, user2, group2, share3_processed, share3_item_shared_unhealthy
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True, "isHealthy": False}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared_unhealthy.shareItemUri
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+    reapply_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # re-applying share items from share object
+    reapply_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        reapply_items_uris=reapply_items_uris
+    )
+
+    # Then share item health Status changes to PendingVerify
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True, "isHealthy": False}
+    )
+    sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    status = sharedItem['healthStatus']
+    assert status == ShareItemHealthStatus.PendingReApply.value
 
 
 def test_revoke_items_share_request(

@@ -1,5 +1,7 @@
 import logging
 
+from h11 import Request
+
 from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
@@ -16,6 +18,28 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 log = logging.getLogger(__name__)
 
 
+class RequestValidator:
+    @staticmethod
+    def validate_creation_request(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('principalId'):
+            raise RequiredParameter('principalId')
+        if not data.get('principalType'):
+            raise RequiredParameter('principalType')
+        if not data.get('groupUri'):
+            raise RequiredParameter('groupUri')
+
+    @staticmethod
+    def validate_item_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('shareUri'):
+            raise RequiredParameter('shareUri')
+        if not data.get('itemUris'):
+            raise RequiredParameter('itemUris')
+
+
 def create_share_object(
     context: Context,
     source,
@@ -24,14 +48,7 @@ def create_share_object(
     itemType: str = None,
     input: dict = None,
 ):
-    if not input:
-        raise RequiredParameter(input)
-    if 'principalId' not in input:
-        raise RequiredParameter('principalId')
-    if 'principalType' not in input:
-        raise RequiredParameter('principalType')
-    if 'groupUri' not in input:
-        raise RequiredParameter('groupUri')
+    RequestValidator.validate_creation_request(input)
 
     return ShareObjectService.create_share_object(
         uri=input['environmentUri'],
@@ -58,33 +75,24 @@ def reject_share_object(context: Context, source, shareUri: str = None, rejectPu
 
 
 def revoke_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
     share_uri = input.get("shareUri")
-    revoked_uris = input.get("revokedItemUris")
+    revoked_uris = input.get("itemUris")
     return ShareItemService.revoke_items_share_object(uri=share_uri, revoked_uris=revoked_uris)
 
 
 def verify_items_share_object(context: Context, source, input):
-    if not input:
-        raise RequiredParameter(input)
-    if 'shareUri' not in input:
-        raise RequiredParameter('shareUri')
-    if 'revokedItemUris' not in input:
-        raise RequiredParameter('revokedItemUris')
+    RequestValidator.validate_item_selector_input(input)
     share_uri = input.get("shareUri")
-    verify_item_uris = input.get("revokedItemUris")
+    verify_item_uris = input.get("itemUris")
     return ShareItemService.verify_items_share_object(uri=share_uri, item_uris=verify_item_uris)
 
 
 def reapply_items_share_object(context: Context, source, input):
-    if not input:
-        raise RequiredParameter(input)
-    if 'shareUri' not in input:
-        raise RequiredParameter('shareUri')
-    if 'revokedItemUris' not in input:
-        raise RequiredParameter('revokedItemUris')
+    RequestValidator.validate_item_selector_input(input)
     share_uri = input.get("shareUri")
-    verify_item_uris = input.get("revokedItemUris")
-    return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=verify_item_uris)
+    reapply_item_uris = input.get("itemUris")
+    return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
 def delete_share_object(context: Context, source, shareUri: str = None):

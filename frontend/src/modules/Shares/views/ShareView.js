@@ -555,7 +555,7 @@ const ShareView = () => {
       revokeItemsShareObject({
         input: {
           shareUri: share.shareUri,
-          revokedItemUris: selectionModel
+          itemUris: selectionModel
         }
       })
     );
@@ -579,7 +579,7 @@ const ShareView = () => {
       verifyItemsShareObject({
         input: {
           shareUri: shareUri,
-          revokedItemUris: selectionModel
+          itemUris: selectionModel
         }
       })
     );
@@ -603,7 +603,7 @@ const ShareView = () => {
       reApplyItemsShareObject({
         input: {
           shareUri: shareUri,
-          revokedItemUris: selectionModel
+          itemUris: selectionModel
         }
       })
     );

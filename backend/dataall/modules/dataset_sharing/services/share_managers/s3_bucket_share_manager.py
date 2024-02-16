@@ -58,6 +58,7 @@ class S3BucketShareManager:
         self.bucket_name = target_bucket.S3BucketName
         self.dataset_admin = dataset.IAMDatasetAdminRoleArn
         self.bucket_region = target_bucket.region
+        self.bucket_errors = []
 
     @abc.abstractmethod
     def process_approved_shares(self, *kwargs) -> bool:

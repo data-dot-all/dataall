@@ -5,7 +5,7 @@ export const reApplyItemsShareObject = ({ input }) => ({
     input
   },
   mutation: gql`
-    mutation reApplyItemsShareObject($input: RevokeItemsInput) {
+    mutation reApplyItemsShareObject($input: ShareItemSelectorInput) {
       reApplyItemsShareObject(input: $input) {
         shareUri
         status

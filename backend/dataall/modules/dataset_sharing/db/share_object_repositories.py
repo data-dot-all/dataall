@@ -587,8 +587,8 @@ class ShareObjectRepository:
                 query = query.filter(shareable_objects.c.isShared == is_shared)
 
             if 'isHealthy' in data.keys():
-                health_status = ShareItemHealthStatus.Unhealthy.value if not data.get('isHealthy') else ShareItemHealthStatus.Healthy.value
-                query = query.filter(shareable_objects.c.healthStatus == health_status)
+                health_status = [ShareItemHealthStatus.Healthy.value] if data.get('isHealthy') else [h.value for h in ShareItemHealthStatus if h.value != ShareItemHealthStatus.Healthy.value]
+                query = query.filter(shareable_objects.c.healthStatus.in_(health_status))
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 

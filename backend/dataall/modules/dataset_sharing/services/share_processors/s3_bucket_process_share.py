@@ -215,7 +215,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 source_env_group,
                 env_group,
             )
-            sharing_bucket.bucket_errors = []
+
             try:
                 sharing_bucket.check_role_bucket_policy()
                 sharing_bucket.check_s3_iam_access()

@@ -5,7 +5,7 @@ export const verifyItemsShareObject = ({ input }) => ({
     input
   },
   mutation: gql`
-    mutation verifyItemsShareObject($input: RevokeItemsInput) {
+    mutation verifyItemsShareObject($input: ShareItemSelectorInput) {
       verifyItemsShareObject(input: $input) {
         shareUri
         status

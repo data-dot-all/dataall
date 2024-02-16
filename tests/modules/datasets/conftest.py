@@ -332,7 +332,8 @@ def share_item(db):
     def factory(
             share: ShareObject,
             table: DatasetTable,
-            status: str
+            status: str,
+            healthStatus: str = None,
     ) -> ShareObjectItem:
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
@@ -342,6 +343,7 @@ def share_item(db):
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
+                healthStatus=healthStatus
             )
             session.add(share_item)
             session.commit()

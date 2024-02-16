@@ -66,6 +66,7 @@ class S3AccessPointShareManager:
         self.dataset_account_id = dataset.AwsAccountId
         self.dataset_region = dataset.region
         self.s3_prefix = target_folder.S3Prefix
+        self.folder_errors = []
 
     @abc.abstractmethod
     def process_approved_shares(self, *kwargs) -> bool:

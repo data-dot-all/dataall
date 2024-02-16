@@ -41,6 +41,8 @@ class ProcessLakeFormationShare(LFShareManager):
             env_group,
         )
         self.reapply = reapply
+        self.tbl_level_errors = []
+        self.db_level_errors = []
 
     def process_approved_shares(self) -> bool:
         """
@@ -263,7 +265,6 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to verify. Skipping...")
         else:
             try:
-                self.db_level_errors = []
                 self.check_pivot_role_permissions_to_source_database()
                 self.check_shared_database_in_target()
                 self.check_pivot_role_permissions_to_shared_database()
@@ -272,7 +273,6 @@ class ProcessLakeFormationShare(LFShareManager):
                 self.db_level_errors = [str(e)]
 
             for table in self.tables:
-                self.tbl_level_errors = []
                 try:
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share.shareUri, table.tableUri
