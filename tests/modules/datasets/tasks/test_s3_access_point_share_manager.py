@@ -83,7 +83,7 @@ def share1(share: Callable, dataset1: Dataset,
     yield share1
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def share_item_folder1(share_item_folder: Callable, share1: ShareObject, location1: DatasetStorageLocation):
     share_item_folder1 = share_item_folder(share1, location1)
     return share_item_folder1
@@ -240,15 +240,6 @@ def target_dataset_access_control_policy(request):
 
 def test_manage_bucket_policy_no_policy(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     base_bucket_policy,
     share_manager
 ):
@@ -287,15 +278,6 @@ def test_manage_bucket_policy_no_policy(
 
 def test_manage_bucket_policy_existing_policy(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     admin_ap_delegation_bucket_policy,
     share_manager
 ):
@@ -318,15 +300,8 @@ def test_manage_bucket_policy_existing_policy(
                          indirect=True)
 def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     mocker,
-    source_environment_group,
-    target_environment_group,
     dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
     location1,
-    source_environment: Environment,
-    target_environment: Environment,
     target_dataset_access_control_policy,
     share_manager
 ):
@@ -366,15 +341,6 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
 @pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]), indirect=True)
 def test_grant_target_role_access_policy_existing_policy_bucket_included(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     target_dataset_access_control_policy,
     share_manager
 ):
@@ -404,14 +370,10 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
 def test_grant_target_role_access_policy_test_no_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -467,21 +429,14 @@ def test_grant_target_role_access_policy_test_no_policy(
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = None
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -567,14 +522,7 @@ def _generate_ap_policy_object(
 
 def test_update_dataset_bucket_key_policy_without_env_admin(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -632,14 +580,6 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
 # NO existing Access point and ap policy
 def test_manage_access_point_and_policy_1(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -693,14 +633,7 @@ def test_manage_access_point_and_policy_1(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_2(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -747,14 +680,7 @@ def test_manage_access_point_and_policy_2(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_3(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -798,14 +724,7 @@ def test_manage_access_point_and_policy_3(
 
 def test_delete_access_point_policy_with_env_admin_one_prefix(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -849,14 +768,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
 def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -895,14 +807,8 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
 def test_dont_delete_access_point_with_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -922,15 +828,8 @@ def test_dont_delete_access_point_with_policy(
 
 def test_delete_access_point_without_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
     share_manager
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
@@ -950,14 +849,9 @@ def test_delete_access_point_without_policy(
 
 def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1015,14 +909,9 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
 def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1111,21 +1000,15 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 # admin, that should remain
 def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target_env(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1175,21 +1058,15 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
 # The kms key policy only includes the target env admin
 def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_target_env(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "1"
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1263,15 +1140,6 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
 
 def test_check_bucket_policy(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     admin_ap_delegation_bucket_policy,
     share_manager
 ):
@@ -1288,15 +1156,6 @@ def test_check_bucket_policy(
 
 def test_check_bucket_policy_missing_sid(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     base_bucket_policy,
     share_manager
 ):
@@ -1314,15 +1173,6 @@ def test_check_bucket_policy_missing_sid(
 @pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "location1")]), indirect=True)
 def test_check_target_role_access_policy(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     target_dataset_access_control_policy,
     share_manager
 ):
@@ -1348,15 +1198,6 @@ def test_check_target_role_access_policy(
                          indirect=True)
 def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(
     mocker,
-    source_environment_group,
-    target_environment_group,
-    dataset1,
-    db,
-    share1: ShareObject,
-    share_item_folder1,
-    location1,
-    source_environment: Environment,
-    target_environment: Environment,
     target_dataset_access_control_policy,
     share_manager
 ):
@@ -1379,15 +1220,6 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
 
 def test_check_target_role_access_policy_test_no_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
     share_manager
 ):
 
@@ -1407,14 +1239,7 @@ def test_check_target_role_access_policy_test_no_policy(
 
 def test_check_access_point_and_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1441,15 +1266,6 @@ def test_check_access_point_and_policy(
 
 def test_check_access_point_and_policy_no_ap(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
     share_manager
 ):
     # Given
@@ -1464,15 +1280,6 @@ def test_check_access_point_and_policy_no_ap(
 
 def test_check_access_point_and_policy_no_ap_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
     share_manager
 ):
     # Given
@@ -1488,14 +1295,6 @@ def test_check_access_point_and_policy_no_ap_policy(
 
 def test_check_access_point_and_policy_missing_prefix_list(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1524,14 +1323,7 @@ def test_check_access_point_and_policy_missing_prefix_list(
 
 def test_check_access_point_and_policy_missing_role(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1561,14 +1353,7 @@ def test_check_access_point_and_policy_missing_role(
 
 def test_check_dataset_bucket_key_policy(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
@@ -1609,15 +1394,6 @@ def test_check_dataset_bucket_key_policy(
 
 def test_check_dataset_bucket_key_policy_missing(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
-    target_environment: Environment,
     share_manager
 ):
     # Given
@@ -1633,21 +1409,14 @@ def test_check_dataset_bucket_key_policy_missing(
 
 def test_check_dataset_bucket_key_policy_mising_role(
     mocker,
-    source_environment_group: EnvironmentGroup,
-    target_environment_group: EnvironmentGroup,
-    dataset1: Dataset,
-    db,
     share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    source_environment: Environment,
     target_environment: Environment,
     share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
 
     existing_key_policy = {
         "Version": "2012-10-17",
@@ -1669,6 +1438,5 @@ def test_check_dataset_bucket_key_policy_mising_role(
 
     # When
     share_manager.check_dataset_bucket_key_policy()
-
     # Then
     assert len(share_manager.folder_errors) == 1

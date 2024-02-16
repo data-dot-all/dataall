@@ -255,14 +255,18 @@ class S3BucketShareManager:
         :return: True if bucket policy contains permissions else False
         """
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
-        bucket_policy = self.get_bucket_policy_or_default()
-        counter = count()
-        statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+        s3_client = S3Client(self.source_account_id, self.source_environment.region)
+        bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
         error = False
-        if DATAALL_READ_ONLY_SID not in statements.keys():
+        if not bucket_policy:
             error = True
-        elif f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
-            error = True
+        else:
+            counter = count()
+            statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+            if DATAALL_READ_ONLY_SID not in statements.keys():
+                error = True
+            elif f"{target_requester_arn}" not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
+                error = True
         if error:
             self.bucket_errors.append(
                 format_error_message(
