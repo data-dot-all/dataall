@@ -33,8 +33,10 @@ You can check the ports assigned to each container in the `docker-compose.yaml` 
 
 ```bash
 cd dataall
-docker-compose up
+export UID && docker-compose up
 ```
+
+**Note:** We export `UID` to ensure the docker user created to run the container has the correct permissions to read from the mounted file systems for the locally deployed data.all.
 
 ![dockercompose](../img/docker_compose.png#zoom#shadow)
 
