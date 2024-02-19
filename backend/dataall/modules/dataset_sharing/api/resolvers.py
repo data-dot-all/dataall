@@ -1,7 +1,5 @@
 import logging
 
-from h11 import Request
-
 from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
