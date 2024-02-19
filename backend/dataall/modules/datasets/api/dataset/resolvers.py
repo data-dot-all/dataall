@@ -9,7 +9,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
@@ -201,6 +201,7 @@ class RequestValidator:
             raise RequiredParameter('group')
         if not data.get('label'):
             raise RequiredParameter('label')
+        ConfidentialityClassification.validate_confidentiality_level(data.get('confidentiality', ''))
         if len(data['label']) > 52:
             raise InvalidInput(
                 'Dataset name', data['label'], 'less than 52 characters'
