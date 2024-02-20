@@ -606,7 +606,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists(
     mocker.patch("dataall.base.aws.sts.SessionHelper.is_assumable_pivot_role", return_value=True)
 
     # When
-    assert processor.check_catalog_account_exists_and_update_processor() == True
+    assert processor.check_catalog_account_exists_and_verify() == True
 
     # Then
     # Check the source account id. source account database and region to check if it is updated
@@ -637,7 +637,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_a
 
     # When
     with pytest.raises(Exception) as exception:
-        processor.check_catalog_account_exists_and_update_processor()
+        processor.check_catalog_account_exists_and_verify()
 
     # Then
     assert "Pivot role is not assumable" in str(exception)
@@ -662,7 +662,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_a
 
     # When
     with pytest.raises(Exception) as exception:
-        processor.check_catalog_account_exists_and_update_processor()
+        processor.check_catalog_account_exists_and_verify()
 
     # Then
     assert "owner_account_id tag does not exist or does not matches the source account id" in str(exception)
@@ -677,7 +677,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_doesnt_e
     glue_client.get_source_catalog.return_value = None
 
     # When
-    assert processor.check_catalog_account_exists_and_update_processor() == True
+    assert processor.check_catalog_account_exists_and_verify() == True
 
     # Then
     # Check the source account id. source account database and region to check if it is updated

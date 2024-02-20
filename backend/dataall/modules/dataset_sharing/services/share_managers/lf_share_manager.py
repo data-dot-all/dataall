@@ -23,15 +23,15 @@ logger = logging.getLogger(__name__)
 
 class LFShareManager:
     def __init__(
-        self,
-        session,
-        dataset: Dataset,
-        share: ShareObject,
-        shared_tables: [DatasetTable],
-        revoked_tables: [DatasetTable],
-        source_environment: Environment,
-        target_environment: Environment,
-        env_group: EnvironmentGroup,
+            self,
+            session,
+            dataset: Dataset,
+            share: ShareObject,
+            shared_tables: [DatasetTable],
+            revoked_tables: [DatasetTable],
+            source_environment: Environment,
+            target_environment: Environment,
+            env_group: EnvironmentGroup,
     ):
         self.session = session
         self.env_group = env_group
@@ -41,9 +41,13 @@ class LFShareManager:
         self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.source_account_id = source_environment.AwsAccountId
-        self.source_account_region = source_environment.region
-        self.source_database_name = dataset.GlueDatabaseName
+        # self.source_account_id = source_environment.AwsAccountId
+        # self.source_account_region = source_environment.region
+        # self.source_database_name = dataset.GlueDatabaseName
+        # Set the source account details by checking if a catalog account exists
+        self.source_account_id, self.source_account_region, self.source_database_name = (
+        source_environment.AwsAccountId, source_environment.region,
+        dataset.GlueDatabaseName) if not self.check_catalog_account_exists_and_verify() else self.get_catalog_account_details()
         self.shared_db_name, self.is_new_share = self.build_shared_db_name()
         self.principals = self.get_share_principals()
         self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
@@ -84,7 +88,8 @@ class LFShareManager:
             role_name=self.share.principalIAMRoleName
         )
         principals = [principal_iam_role_arn]
-        dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
+        dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment,
+                                                                     "dashboardsEnabled")
 
         if dashboard_enabled:
             group = QuicksightClient.create_quicksight_group(
@@ -119,7 +124,7 @@ class LFShareManager:
         return self.source_database_name + '_shared', True
 
     def check_table_exists_in_source_database(
-        self, share_item: ShareObjectItem, table: DatasetTable
+            self, share_item: ShareObjectItem, table: DatasetTable
     ) -> True:
         """
         Checks if the table to be shared exists on the Glue catalog in the source account
@@ -138,7 +143,7 @@ class LFShareManager:
         return True
 
     def check_resource_link_table_exists_in_target_database(
-        self, table: DatasetTable
+            self, table: DatasetTable
     ) -> bool:
         """
         Checks if the table to be shared exists on the Glue catalog in the target account as resource link
@@ -320,7 +325,8 @@ class LFShareManager:
         :param other_table_shares_in_env: Boolean. Other table shares in this environment for this table
         :return: True if it is successful
         """
-        principals = self.principals if not other_table_shares_in_env else [p for p in self.principals if "arn:aws:quicksight" not in p]
+        principals = self.principals if not other_table_shares_in_env else [p for p in self.principals if
+                                                                            "arn:aws:quicksight" not in p]
 
         self.lf_client_in_target.revoke_permissions_from_table_with_columns(
             principals=principals,
@@ -390,9 +396,9 @@ class LFShareManager:
         return True
 
     def handle_share_failure(
-        self,
-        table: DatasetTable,
-        error: Exception,
+            self,
+            table: DatasetTable,
+            error: Exception,
     ) -> True:
         """
         Handles share failure by raising an alarm to alarmsTopic
@@ -445,72 +451,60 @@ class LFShareManager:
             new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
             share_item_sm.update_state_single_item(self.session, share_item, new_state)
 
-            self.handle_revoke_failure(table=table, error=error)
+            if share_item_status == ShareItemStatus.Share_Approved.value:
+                self.handle_share_failure(table=table, error=error)
+            if share_item_sm == ShareItemStatus.Revoke_Approved.value:
+                self.handle_revoke_failure(table=table, error=error)
 
-    def verify_catalog_ownership(self, catalog_dict):
-        if catalog_dict.get('account_id') != self.source_environment.AwsAccountId:
+    def _verify_catalog_ownership(self, catalog_account_id, catalog_region, catalog_database):
+        if catalog_account_id != self.source_environment.AwsAccountId:
             logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link and '
-                        f'the source database {catalog_dict.get("database_name")} belongs to a catalog account {catalog_dict.get("account_id")}')
-            if SessionHelper.is_assumable_pivot_role(catalog_dict.get('account_id')):
-                self.validate_catalog_ownership_tag(catalog_dict)
+                        f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}')
+            if SessionHelper.is_assumable_pivot_role(catalog_account_id):
+                self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
             else:
-                raise Exception(f'Pivot role is not assumable, catalog account {catalog_dict.get("account_id")} is not onboarded')
+                raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')
 
-    def validate_catalog_ownership_tag(self, catalog_dict):
-        glue_client = GlueClient(account_id=catalog_dict.get('account_id'),
-                                 database=catalog_dict.get('database_name'),
-                                 region=catalog_dict.get('region'))
+    def _validate_catalog_ownership_tag(self, catalog_account_id, catalog_region, catalog_database):
+        glue_client = GlueClient(account_id=catalog_account_id,
+                                 database=catalog_database,
+                                 region=catalog_region)
 
         tags = glue_client.get_database_tags()
         if tags.get('owner_account_id', '') == self.source_environment.AwsAccountId:
-            logger.info(f'owner_account_id tag exists and matches the source account id {self.source_environment.AwsAccountId}')
+            logger.info(
+                f'owner_account_id tag exists and matches the source account id {self.source_environment.AwsAccountId}')
         else:
-            raise Exception(f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
+            raise Exception(
+                f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
 
-    def check_catalog_account_exists_and_update_processor(self):
+    def check_catalog_account_exists_and_verify(self):
         try:
             catalog_dict = self.glue_client_in_source.get_source_catalog()
             if catalog_dict is not None:
-                # Found a catalog account
-                logger.info("Updating source aws account id, source account region, source database with catalog details")
-                logger.debug(f"Catalog Account id - {catalog_dict.get('account_id')}, Catalog Region - { catalog_dict.get('region')}, Catalog DB - {catalog_dict.get('database_name')}")
-                self.source_account_id = catalog_dict.get('account_id')
-                self.source_account_region = catalog_dict.get('region')
-                self.source_database_name = catalog_dict.get('database_name')
-                # Build the shared db name again as the shared db name on the producer account cannot be used ( as that is the resource link ).
-                # Instead update the shared db name with the new name.
-                self.shared_db_name, self.is_new_share = self.build_shared_db_name()
-                # Again Update the Cross Account Instance Variable
-                self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
-                # Update / Reinitialize Glue and Lake formation Clients as the source account , region, db are changed
-                # Also reinitialize target glue client as the shared DB name changes
-                self.lf_client_in_source = LakeFormationClient(
-                    account_id=self.source_account_id,
-                    region=self.source_account_region
-                )
-                self.glue_client_in_source = GlueClient(
-                    account_id=self.source_account_id,
-                    region=self.source_account_region,
-                    database=self.source_database_name,
-                )
-
-                self.glue_client_in_target = GlueClient(
-                    account_id=self.target_environment.AwsAccountId,
-                    region=self.target_environment.region,
-                    database=self.shared_db_name,
-                )
-
                 # Verify the ownership of dataset
-                self.verify_catalog_ownership(catalog_dict)
+                self._verify_catalog_ownership(catalog_dict.get('account_id'), catalog_dict.get('region'),
+                                               catalog_dict.get('database'))
             else:
                 logger.info(
                     f'No Catalog information found for dataset - {self.dataset.name} containing database - {self.dataset.GlueDatabaseName}')
-
-            return True
-
+                return False
         except Exception as e:
             logger.error(
                 f'Failed to initialise catalog account details for share - {self.share.shareUri} '
                 f'due to: {e}'
             )
-            raise e
+            # Returning True in case an exception occurs. This will call the update method which will update the source account details appropriately
+            return True
+        return True
+
+    def get_catalog_account_details(self):
+        try:
+            catalog_dict = self.glue_client_in_source.get_source_catalog()
+            return catalog_dict.get('account_id'), catalog_dict.get('region'), catalog_dict.get('database')
+        except Exception as e:
+            logger.error(
+                f'Failed to fetch catalog account details for share - {self.share.shareUri} '
+                f'due to: {e}'
+            )
+            return None, None, None

@@ -65,7 +65,11 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to share. Skipping...")
         else:
             try:
-                if not self.check_catalog_account_exists_and_update_processor():
+                # if not self.check_catalog_account_exists_and_verify():
+                #     success = False
+                #     return success
+                if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
+                    log.info('Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
                     success = False
                     return success
 
@@ -165,7 +169,12 @@ class ProcessLakeFormationShare(LFShareManager):
 
         try:
             self.grant_pivot_role_all_database_permissions_to_shared_database()
-            if not self.check_catalog_account_exists_and_update_processor():
+            # if not self.check_catalog_account_exists_and_verify():
+            #     success = False
+            #     return success
+            if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
+                log.info(
+                    'Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
                 success = False
                 return success
         except Exception as e:
