@@ -33,7 +33,7 @@ def consumption_role(mock_aws_client, client, org_fixture, env_fixture, user, gr
             'groupUri': str(uuid.uuid4())[:8],
             'IAMRoleArn': test_arn,
             'environmentUri': env_fixture.environmentUri,
-            'dataaallManaged': False
+            'dataallManaged': False
         },
     )
     assert not response.errors

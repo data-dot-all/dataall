@@ -162,6 +162,7 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='IAMRoleArn', type=gql.String),
         gql.Field(name='IAMRoleName', type=gql.String),
+        gql.Field(name='dataallManaged', type=gql.Boolean),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),

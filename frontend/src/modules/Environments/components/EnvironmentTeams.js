@@ -648,8 +648,15 @@ export const EnvironmentTeams = ({ environment }) => {
                     valueOptions: groupOptions.map((group) => group.label)
                   },
                   {
-                    field: 'dataaallManaged',
-                    headerName: 'Data.all Managed',
+                    field: 'dataallManaged',
+                    headerName: 'Sharing Policy Management',
+                    valueGetter: (params) => {
+                      return `${
+                        params.row.dataallManaged
+                          ? 'Data.all managed'
+                          : 'Customer managed'
+                      }`;
+                    },
                     flex: 0.5
                   },
                   {

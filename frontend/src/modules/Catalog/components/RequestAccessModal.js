@@ -110,7 +110,8 @@ export const RequestAccessModal = (props) => {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionRoleUri,
-            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join('')
+            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
+            dataallManaged: g.dataallManaged
           }))
         );
       } else {
@@ -147,7 +148,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -163,7 +165,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -422,15 +425,23 @@ export const RequestAccessModal = (props) => {
                                 onChange={(event) => {
                                   setFieldValue(
                                     'consumptionRole',
+                                    event.target.value.value
+                                  );
+                                  setFieldValue(
+                                    'consumptionRoleObj',
                                     event.target.value
+                                  );
+                                  setFieldValue(
+                                    'dontShowSwitch',
+                                    event.target.value.dataallManaged
                                   );
                                 }}
                                 select
-                                value={values.consumptionRole}
+                                value={values.consumptionRoleObj}
                                 variant="outlined"
                               >
                                 {roleOptions.map((role) => (
-                                  <MenuItem key={role.value} value={role.value}>
+                                  <MenuItem key={role.value} value={role}>
                                     {role.label}
                                   </MenuItem>
                                 ))}
@@ -457,29 +468,33 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     </Box>
                   )}
-                  <CardContent>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={values.attachMissingPolicies}
-                          onChange={handleChange}
-                          color="primary"
-                          edge="start"
-                          name="attachMissingPolicies"
-                        />
-                      }
-                      label={
-                        <div>
-                          Let Data.All attach policies to this role
-                          <Typography
-                            color="textSecondary"
-                            component="p"
-                            variant="caption"
-                          ></Typography>
-                        </div>
-                      }
-                    />
-                  </CardContent>
+                  {!values.consumptionRole || values.dontShowSwitch ? (
+                    <Box />
+                  ) : (
+                    <CardContent sx={{ ml: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={values.attachMissingPolicies}
+                            onChange={handleChange}
+                            color="primary"
+                            edge="start"
+                            name="attachMissingPolicies"
+                          />
+                        }
+                        label={
+                          <div>
+                            Let Data.All attach policies to this role
+                            <Typography
+                              color="textSecondary"
+                              component="p"
+                              variant="caption"
+                            ></Typography>
+                          </div>
+                        }
+                      />
+                    </CardContent>
+                  )}
                   <CardContent>
                     <TextField
                       FormHelperTextProps={{

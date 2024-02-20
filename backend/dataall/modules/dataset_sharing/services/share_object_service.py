@@ -24,6 +24,9 @@ from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SH
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
@@ -37,7 +40,7 @@ class ShareObjectService:
     def check_if_target_role_has_policies_attached(cls,
                                                    consumption_role: ConsumptionRole,
                                                    target_environment: Environment,
-                                                   attachMissingPolicies: bool = False
+                                                   attachMissingPolicies: bool
                                                    ):
         bucket_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
                                                                   consumption_role.IAMRoleName, 'bucket')
@@ -56,7 +59,9 @@ class ShareObjectService:
         if not is_bucket_policy_attached:
             missing_policies.append(bucket_policy_name)
 
-        if consumption_role.dataaallManaged or attachMissingPolicies:
+        if consumption_role.dataallManaged or attachMissingPolicies:
+            log.info(
+                f' consumption_role.dataallManaged ({consumption_role.dataallManaged}) or flag attachMissingPolicies ({attachMissingPolicies}) is true: so let`s attach missing policies')
             for p in missing_policies:
                 arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{p}'
                 IAM.attach_role_policy(
@@ -65,7 +70,8 @@ class ShareObjectService:
                     arn
                 )
         elif not (is_bucket_policy_attached and is_accesspoint_policy_attached):
-            raise Exception(f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}")
+            raise Exception(
+                f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}")
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)

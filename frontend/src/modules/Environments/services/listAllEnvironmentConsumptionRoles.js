@@ -28,6 +28,7 @@ export const listAllEnvironmentConsumptionRoles = ({
           environmentUri
           groupUri
           IAMRoleArn
+          dataallManaged
         }
       }
     }

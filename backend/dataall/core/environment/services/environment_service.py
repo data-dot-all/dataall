@@ -277,7 +277,7 @@ class EnvironmentService:
             groupUri=group,
             IAMRoleArn=env_group_iam_role_arn,
             IAMRoleName=env_group_iam_role_name,
-            dataaallManaged=True
+            dataallManaged=True
         )
 
         EnvironmentService._generate_managed_policies_for_consumption_role(environment, fake_consumption_role)
@@ -452,7 +452,7 @@ class EnvironmentService:
             groupUri=group,
             IAMRoleArn=IAMRoleArn,
             IAMRoleName=IAMRoleArn.split("/")[-1],
-            dataaallManaged=data['dataaallManaged']
+            dataallManaged=data['dataallManaged']
         )
 
         session.add(consumption_role)
@@ -499,7 +499,7 @@ class EnvironmentService:
             policy=json.dumps(empty_policy)
         )
 
-        if consumption_role.dataaallManaged:
+        if consumption_role.dataallManaged:
             EnvironmentService._attach_managed_policies_for_consumption_role(environment, consumption_role)
 
         return

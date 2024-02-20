@@ -34,7 +34,7 @@ export const EnvironmentRoleAddForm = (props) => {
           consumptionRoleName: values.consumptionRoleName,
           IAMRoleArn: values.IAMRoleArn,
           environmentUri: environment.environmentUri,
-          dataaallManaged: values.dataaallManaged
+          dataallManaged: values.dataallManaged
         })
       );
       if (!response.errors) {
@@ -95,7 +95,7 @@ export const EnvironmentRoleAddForm = (props) => {
           <Formik
             initialValues={{
               groupUri: '',
-              dataaallManaged: false
+              dataallManaged: false
             }}
             validationSchema={Yup.object().shape({
               groupUri: Yup.string()
@@ -176,11 +176,11 @@ export const EnvironmentRoleAddForm = (props) => {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={values.dataaallManaged}
+                        checked={values.dataallManaged}
                         onChange={handleChange}
                         color="primary"
                         edge="start"
-                        name="dataaallManaged"
+                        name="dataallManaged"
                       />
                     }
                     label={
