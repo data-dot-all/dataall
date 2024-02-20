@@ -1,6 +1,6 @@
 """Contains the code related to X"""
 import logging
-from typing import Set
+from typing import Set, List, Type
 
 from dataall.base.loader import ImportMode, ModuleInterface
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
@@ -8,13 +8,18 @@ from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 log = logging.getLogger(__name__)
 
-#todo: dependency on Datasets and CDK is wrong we need to update it for ECS
+
 class OmicsApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for omics GraphQl lambda"""
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.API in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets import DatasetApiModuleInterface
+        return [DatasetApiModuleInterface]
 
     def __init__(self):
         import dataall.modules.omics.api
