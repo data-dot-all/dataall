@@ -203,6 +203,21 @@ class LFShareManager:
         )
         return True
 
+    def grant_pivot_role_drop_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
+        """
+        Grants 'DROP' Lake Formation permissions to pivot role to the resource link table in target account
+        :param table: DatasetTable
+        :return: True if it is successful
+        """
+        self.lf_client_in_target.grant_permissions_to_table(
+            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            database_name=self.shared_db_name,
+            table_name=table.GlueTableName,
+            catalog_id=self.target_environment.AwsAccountId,
+            permissions=['DROP']
+        )
+        return True
+
     def grant_principals_database_permissions_to_shared_database(self) -> True:
         """
         Grants 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account

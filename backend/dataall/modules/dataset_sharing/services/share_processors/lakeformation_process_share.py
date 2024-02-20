@@ -164,6 +164,7 @@ class ProcessLakeFormationShare(LFShareManager):
         success = True
 
         try:
+            self.grant_pivot_role_all_database_permissions_to_shared_database()
             if not self.check_catalog_account_exists_and_update_processor():
                 success = False
                 return success
@@ -201,6 +202,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                        self.grant_pivot_role_drop_permissions_to_resource_link_table(table)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:

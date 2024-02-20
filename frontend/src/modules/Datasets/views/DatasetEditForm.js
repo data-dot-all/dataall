@@ -38,7 +38,9 @@ import {
   useClient
 } from 'services';
 import { updateDataset } from '../services';
-import { Topics } from '../../constants';
+import { ConfidentialityList, Topics } from '../../constants';
+import config from '../../../generated/config.json';
+import { isFeatureEnabled } from 'utils';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();
@@ -52,11 +54,14 @@ const DatasetEditForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
-  const [confidentialityOptions] = useState([
-    'Unclassified',
-    'Official',
-    'Secret'
-  ]);
+  const [confidentialityOptions] = useState(
+    config.modules.datasets.features.confidentiality_dropdown === true &&
+      config.modules.datasets.features.custom_confidentiality_mapping
+      ? Object.keys(
+          config.modules.datasets.features.custom_confidentiality_mapping
+        )
+      : ConfidentialityList
+  );
 
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
@@ -271,11 +276,18 @@ const DatasetEditForm = (props) => {
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
                 KmsAlias: Yup.string().max(255),
-                topics: Yup.array().min(1).required('*Topics are required'),
+                topics: isFeatureEnabled('datasets', 'topics_dropdown')
+                  ? Yup.array().min(1).required('*Topics are required')
+                  : Yup.array(),
                 tags: Yup.array().min(1).required('*Tags are required'),
-                confidentiality: Yup.string().required(
-                  '*Confidentiality is required'
-                ),
+                confidentiality: isFeatureEnabled(
+                  'datasets',
+                  'confidentiality_dropdown'
+                )
+                  ? Yup.string()
+                      .max(255)
+                      .required('*Confidentiality is required')
+                  : Yup.string(),
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
                 )
@@ -350,62 +362,73 @@ const DatasetEditForm = (props) => {
                       </Card>
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            defaultValue={dataset.confidentiality}
-                            error={Boolean(
-                              touched.confidentiality && errors.confidentiality
-                            )}
-                            helperText={
-                              touched.confidentiality && errors.confidentiality
-                            }
-                            label="Confidentiality"
-                            name="confidentiality"
-                            onChange={handleChange}
-                            select
-                            value={values.confidentiality}
-                            variant="outlined"
-                          >
-                            {confidentialityOptions.map((c) => (
-                              <MenuItem key={c} value={c}>
-                                {c}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <Autocomplete
-                            multiple
-                            id="tags-filled"
-                            defaultValue={values.topics}
-                            options={topicsData}
-                            getOptionSelected={(option, value) =>
-                              option.value === value.value
-                            }
-                            getOptionLabel={(opt) => opt.label}
-                            onChange={(event, value) => {
-                              setFieldValue('topics', value);
-                            }}
-                            renderTags={(tagValue, getTagProps) =>
-                              tagValue.map((option, index) => (
-                                <Chip
-                                  label={option.label}
-                                  {...getTagProps({ index })}
+                        {isFeatureEnabled(
+                          'datasets',
+                          'confidentiality_dropdown'
+                        ) && (
+                          <CardContent>
+                            <TextField
+                              fullWidth
+                              defaultValue={dataset.confidentiality}
+                              error={Boolean(
+                                touched.confidentiality &&
+                                  errors.confidentiality
+                              )}
+                              helperText={
+                                touched.confidentiality &&
+                                errors.confidentiality
+                              }
+                              label="Confidentiality"
+                              name="confidentiality"
+                              onChange={handleChange}
+                              select
+                              value={values.confidentiality}
+                              variant="outlined"
+                            >
+                              {confidentialityOptions.map((c) => (
+                                <MenuItem key={c} value={c}>
+                                  {c}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          </CardContent>
+                        )}
+                        {isFeatureEnabled('datasets', 'topics_dropdown') && (
+                          <CardContent>
+                            <Autocomplete
+                              multiple
+                              id="tags-filled"
+                              defaultValue={values.topics}
+                              options={topicsData}
+                              getOptionSelected={(option, value) =>
+                                option.value === value.value
+                              }
+                              getOptionLabel={(opt) => opt.label}
+                              onChange={(event, value) => {
+                                setFieldValue('topics', value);
+                              }}
+                              renderTags={(tagValue, getTagProps) =>
+                                tagValue.map((option, index) => (
+                                  <Chip
+                                    label={option.label}
+                                    {...getTagProps({ index })}
+                                  />
+                                ))
+                              }
+                              renderInput={(p) => (
+                                <TextField
+                                  {...p}
+                                  variant="outlined"
+                                  label="Topics"
+                                  error={Boolean(
+                                    touched.topics && errors.topics
+                                  )}
+                                  helperText={touched.topics && errors.topics}
                                 />
-                              ))
-                            }
-                            renderInput={(p) => (
-                              <TextField
-                                {...p}
-                                variant="outlined"
-                                label="Topics"
-                                error={Boolean(touched.topics && errors.topics)}
-                                helperText={touched.topics && errors.topics}
-                              />
-                            )}
-                          />
-                        </CardContent>
+                              )}
+                            />
+                          </CardContent>
+                        )}
                         <CardContent>
                           {dataset && (
                             <Autocomplete
