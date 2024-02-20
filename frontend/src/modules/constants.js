@@ -12,3 +12,5 @@ export const Topics = [
   'Customers',
   'Misc'
 ];
+
+export const ConfidentialityList = ['Unclassified', 'Official', 'Secret'];
