@@ -101,5 +101,6 @@ class OmicsClient:
             )
             return 'ERROR LISTING WORKFLOWS'
 
+
 def client() -> OmicsClient:
     return OmicsClient()

@@ -56,7 +56,7 @@ class OmicsRunCreationRequest:
 
 class OmicsService:
     """
-    Encapsulate the logic of interactions with Omics pipelines.
+    Encapsulate the logic of interactions with Omics.
     """
 
     @staticmethod
