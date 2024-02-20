@@ -8,7 +8,7 @@ from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 log = logging.getLogger(__name__)
 
-
+#todo: dependency on Datasets and CDK is wrong we need to update it for ECS
 class OmicsApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for omics GraphQl lambda"""
 

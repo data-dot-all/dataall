@@ -18,7 +18,7 @@ from dataall.base.db import exceptions
 import json
 
 from dataall.modules.omics.db.omics_repository import OmicsRepository
-from dataall.modules.omics.aws.omics_client import client
+from dataall.modules.omics.aws.omics_client import OmicsClient
 from dataall.modules.omics.db.models import OmicsRun
 from dataall.modules.omics.services.omics_permissions import (
     MANAGE_OMICS_RUNS,
@@ -101,7 +101,7 @@ class OmicsService:
                 resource_type=OmicsRun.__name__,
             )
 
-            response = client.run_omics_workflow(omics_run, session)
+            response = OmicsClient.run_omics_workflow(omics_run, session)
 
             omics_run.runUri = response['id']
             OmicsRepository(session).save_omics_run(omics_run)
@@ -118,14 +118,14 @@ class OmicsService:
     @has_resource_permission(GET_OMICS_RUN)
     def get_omics_run_from_aws(uri: str):
         with _session() as session:
-            return client.get_omics_run(session, uri)
+            return OmicsClient.get_omics_run(session, uri)
 
     @staticmethod
     @has_tenant_permission(MANAGE_OMICS_RUNS)
     def get_omics_workflow(uri: str) -> dict:
         """Get Omics workflow."""
         with _session() as session:
-            response = client.get_omics_workflow(workflowUri=uri, session=session)
+            response = OmicsClient.get_omics_workflow(workflowUri=uri, session=session)
             parameterTemplateJson = json.dumps(response['parameterTemplate'])
             response['parameterTemplate'] = parameterTemplateJson
             response['workflowUri'] = uri

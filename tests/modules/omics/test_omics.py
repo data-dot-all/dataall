@@ -2,6 +2,8 @@ import pytest
 
 
 def test_omics_run(omics_run, group):
+    print("adri")
+    print(omics_run)
     assert omics_run.runUri
     assert omics_run.SamlAdminGroupName == group.name
     assert omics_run.label == 'my omics run'
@@ -33,11 +35,11 @@ def test_list_user_omics_runs(client, user, group, omics_run):
             hasPrevious
             nodes {
               runUri
-              workflowId
+              workflowUri
               name
               owner
               SamlAdminGroupName
-              outputUri
+              outputDatasetUri
               description
               label
               created
@@ -56,23 +58,17 @@ def test_list_user_omics_runs(client, user, group, omics_run):
                 organizationUri
               }
               workflow {
-                id
+                label
                 name
+                workflowUri
+                id
                 description
                 parameterTemplate
-                status
                 type
               }
               status {
-                arn
-                id
                 status
-                runId
-                roleArn
                 statusMessage
-                creationTime
-                startTime
-                stopTime
               }
             }
           }
@@ -109,11 +105,11 @@ def test_nopermissions_list_user_omics_runs(client, user2, group2):
             hasPrevious
             nodes {
               runUri
-              workflowId
+              workflowUri
               name
               owner
               SamlAdminGroupName
-              outputUri
+              outputDatasetUri
               description
               label
               created
@@ -132,23 +128,17 @@ def test_nopermissions_list_user_omics_runs(client, user2, group2):
                 organizationUri
               }
               workflow {
-                id
+                label
                 name
+                workflowUri
+                id
                 description
                 parameterTemplate
-                status
                 type
               }
               status {
-                arn
-                id
                 status
-                runId
-                roleArn
                 statusMessage
-                creationTime
-                startTime
-                stopTime
               }
             }
           }
