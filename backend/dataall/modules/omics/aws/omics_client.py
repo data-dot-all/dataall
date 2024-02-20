@@ -100,3 +100,6 @@ class OmicsClient:
                 f'Could not retrieve {type} Omics Workflows status due to: {e} '
             )
             return 'ERROR LISTING WORKFLOWS'
+
+def client() -> OmicsClient:
+    return OmicsClient()
