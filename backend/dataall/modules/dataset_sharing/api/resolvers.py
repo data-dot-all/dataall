@@ -126,6 +126,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
+                'description' : ds.description
             }
 
 
@@ -181,18 +182,12 @@ def resolve_group(context: Context, source: ShareObject, **kwargs):
 def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
-        if ds:
-            S3AccessPointName = utils.slugify(
-                source.datasetUri + '-' + source.principalId,
-                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
-            )
-            return {
-                's3AccessPointName': S3AccessPointName,
-                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
-                's3bucketName': ds.S3BucketName,
-            }
+    return ShareObjectService.resolve_share_object_consumption_data(
+        uri=source.shareUri,
+        datasetUri=source.datasetUri,
+        principalId=source.principalId,
+        environmentUri=source.environmentUri
+    )
 
 
 def resolve_share_object_statistics(context: Context, source: ShareObject, **kwargs):

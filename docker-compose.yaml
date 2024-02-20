@@ -5,7 +5,9 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c 'aws configure set region "us-east-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
+      args:
+        CONTAINER_UID: ${UID}
+    entrypoint: /bin/bash -c 'aws configure set region "eu-west-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
     expose:
       - 2805
     ports:
@@ -21,7 +23,8 @@ services:
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
+      - $HOME/.aws/config:/home/cuser/.aws/config
       - ./config.json:/config.json
     restart:
       on-failure:60
@@ -32,6 +35,8 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
+      args:
+        CONTAINER_UID: ${UID}
     entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.9 local_graphql_server.py"
     expose:
       - 5000
@@ -45,7 +50,7 @@ services:
       email_sender_id: "noreply@someawsdomain"
     volumes:
       - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
       - ./config.json:/config.json
     depends_on:
       - db
@@ -93,14 +98,14 @@ services:
       on-failure:60
 
   frontend:
-   build:
-     context: .
-     dockerfile: frontend/docker/dev/Dockerfile
-   deploy:
-     resources:
-       limits:
-         memory: 4096M
-       reservations:
-         memory: 128M
-   ports:
-     - "8080:80"
+    build:
+      context: .
+      dockerfile: frontend/docker/dev/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 4096M
+        reservations:
+          memory: 128M
+    ports:
+      - "8080:80"

@@ -27,7 +27,9 @@
                     }
                 },
                 "preview_data": true,
-                "glue_crawler": true
+                "glue_crawler": true,
+                "confidentiality_dropdown" : true,
+                "topics_dropdown" : true
             }
         },
         "worksheets": {

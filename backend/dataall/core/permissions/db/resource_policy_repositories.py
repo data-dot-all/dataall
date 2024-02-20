@@ -123,6 +123,29 @@ class ResourcePolicy:
         return resource_policy
 
     @staticmethod
+    def update_resource_policy(
+            session,
+            resource_uri: str,
+            resource_type: str,
+            old_group: str,
+            new_group: str,
+            new_permissions: [str]
+    ) -> models.ResourcePolicy:
+        ResourcePolicy.delete_resource_policy(
+            session=session,
+            group=old_group,
+            resource_uri=resource_uri,
+            resource_type=resource_type,
+        )
+        return ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=new_group,
+            resource_uri=resource_uri,
+            permissions=new_permissions,
+            resource_type=resource_type,
+        )
+
+    @staticmethod
     def attach_resource_policy(
         session,
         group: str,
