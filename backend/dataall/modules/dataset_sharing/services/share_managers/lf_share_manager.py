@@ -73,7 +73,6 @@ class LFShareManager:
         else:
             return self.source_environment.AwsAccountId, self.source_environment.region, self.dataset.GlueDatabaseName
 
-
     def get_share_principals(self) -> [str]:
         """
         Builds list of principals of the share request
@@ -121,7 +120,6 @@ class LFShareManager:
         if database:
             return old_shared_db_name, False
         return self.source_database_name + '_shared', True
-
 
     def check_table_exists_in_source_database(
             self, share_item: ShareObjectItem, table: DatasetTable
