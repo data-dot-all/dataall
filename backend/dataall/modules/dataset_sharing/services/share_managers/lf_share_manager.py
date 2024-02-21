@@ -292,6 +292,7 @@ class LFShareManager:
                     f"{table.GlueDatabaseName}.{table.GlueTableName}",
                 )
             )
+
     def grant_pivot_role_drop_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
         """
         Grants 'DROP' Lake Formation permissions to pivot role to the resource link table in target account
