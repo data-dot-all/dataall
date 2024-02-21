@@ -76,4 +76,3 @@ verifyDatasetShareObjects = gql.MutationField(
     type=gql.Boolean,
     resolver=verify_dataset_share_objects,
 )
-

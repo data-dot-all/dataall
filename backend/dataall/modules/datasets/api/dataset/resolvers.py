@@ -227,4 +227,3 @@ class RequestValidator:
             raise RequiredParameter('datasetUri')
         if not data.get('shareUris'):
             raise RequiredParameter('shareUris')
-

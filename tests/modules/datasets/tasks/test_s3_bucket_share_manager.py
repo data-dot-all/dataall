@@ -1276,7 +1276,7 @@ def test_check_role_bucket_policy(
         })
 
     s3_client = mock_s3_client(mocker)
-    s3_client().get_bucket_policy.return_value = bucket_policy
+    s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
     mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
     
     share2_manager.check_role_bucket_policy()
@@ -1315,7 +1315,7 @@ def test_check_role_bucket_policy_missing_role_principal(
         })
 
     s3_client = mock_s3_client(mocker)
-    s3_client().get_bucket_policy.return_value = bucket_policy
+    s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
     mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
     
     share2_manager.check_role_bucket_policy()

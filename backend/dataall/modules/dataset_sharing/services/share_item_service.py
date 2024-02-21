@@ -28,6 +28,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     ADD_ITEM,
     REMOVE_ITEM,
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
+    APPROVE_SHARE_OBJECT
 )
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -58,7 +59,7 @@ class ShareItemService:
         return True
 
     @staticmethod
-    @has_resource_permission(GET_SHARE_OBJECT)
+    @has_resource_permission(APPROVE_SHARE_OBJECT)
     def reapply_items_share_object(uri, item_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:

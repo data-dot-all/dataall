@@ -593,7 +593,7 @@ class DatasetService:
             for share_uri in share_uris:
                 share = ShareObjectRepository.get_share_by_uri(session, share_uri)
                 states = ShareItemSM.get_share_item_revokable_states()
-                items = ShareObjectRepository.list_shareable_items(session, share, states, { "pageSize": 1000, "isShared": True })
-                item_uris = [item.shareItemUri for item in items.get("nodes",[])] 
+                items = ShareObjectRepository.list_shareable_items(session, share, states, {"pageSize": 1000, "isShared": True})
+                item_uris = [item.shareItemUri for item in items.get("nodes", [])]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
         return True
