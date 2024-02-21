@@ -98,11 +98,18 @@ class S3AccessPointShareManager:
         :return: True if contains delegate access policy else False
         """
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
-        bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-        counter = count()
-        statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+        bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
+        error = False
+        if not bucket_policy:
+            error = True
+        else:
+            bucket_policy = json.loads(bucket_policy)
+            counter = count()
+            statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
 
-        if DATAALL_DELEGATE_TO_ACCESS_POINT not in statements.keys():
+            if DATAALL_DELEGATE_TO_ACCESS_POINT not in statements.keys():
+                error = True
+        if error:
             self.folder_errors.append(
                 format_error_message(
                     None, None, None, f"Bucket Policy {DATAALL_DELEGATE_TO_ACCESS_POINT}", f"{self.bucket_name}"

@@ -190,6 +190,13 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
 
+def verify_dataset_share_objects(context: Context, source, input):
+    RequestValidator.validate_dataset_share_selector_input(input)
+    dataset_uri = input.get("datasetUri")
+    verify_share_uris = input.get("shareUris")
+    return DatasetService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+
+
 class RequestValidator:
     @staticmethod
     def validate_creation_request(data):
@@ -211,3 +218,13 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
+
+    @staticmethod
+    def validate_dataset_share_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('datasetUri'):
+            raise RequiredParameter('datasetUri')
+        if not data.get('shareUris'):
+            raise RequiredParameter('shareUris')
+

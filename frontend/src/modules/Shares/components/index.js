@@ -5,3 +5,4 @@ export * from './ShareRejectModal';
 export * from './ShareUpdateReject';
 export * from './ShareUpdateRequest';
 export * from './ShareItemsSelectorModal';
+export * from './ShareObjectSelectorModal';

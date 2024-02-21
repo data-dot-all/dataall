@@ -261,6 +261,7 @@ class S3BucketShareManager:
         if not bucket_policy:
             error = True
         else:
+            bucket_policy = json.loads(bucket_policy)
             counter = count()
             statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
             if DATAALL_READ_ONLY_SID not in statements.keys():
