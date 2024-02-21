@@ -29,6 +29,8 @@ export const listAllEnvironmentConsumptionRoles = ({
           groupUri
           IAMRoleArn
           dataallManaged
+          sharePolicyRolName
+          isSharePolicyAttached
         }
       }
     }

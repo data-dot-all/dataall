@@ -42,36 +42,26 @@ class ShareObjectService:
                                                    target_environment: Environment,
                                                    attachMissingPolicies: bool
                                                    ):
-        bucket_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                  consumption_role.IAMRoleName, 'bucket')
-        accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                       consumption_role.IAMRoleName, 'accesspoint')
+        share_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+                                                                 consumption_role.IAMRoleName)
 
-        is_bucket_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, bucket_policy_name,
-                                                           consumption_role.IAMRoleName)
-        is_accesspoint_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId,
-                                                                accesspoint_policy_name, consumption_role.IAMRoleName)
-
-        missing_policies = []
-        if not is_accesspoint_policy_attached:
-            missing_policies.append(accesspoint_policy_name)
-
-        if not is_bucket_policy_attached:
-            missing_policies.append(bucket_policy_name)
+        is_share_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, share_policy_name,
+                                                          consumption_role.IAMRoleName)
+        if is_share_policy_attached:
+            return
 
         if consumption_role.dataallManaged or attachMissingPolicies:
-            log.info(
-                f' consumption_role.dataallManaged ({consumption_role.dataallManaged}) or flag attachMissingPolicies ({attachMissingPolicies}) is true: so let`s attach missing policies')
-            for p in missing_policies:
-                arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{p}'
-                IAM.attach_role_policy(
-                    target_environment.AwsAccountId,
-                    consumption_role.IAMRoleName,
-                    arn
-                )
-        elif not (is_bucket_policy_attached and is_accesspoint_policy_attached):
+            log.info(f' consumption_role.dataallManaged ({consumption_role.dataallManaged}) or flag '
+                     f'attachMissingPolicies ({attachMissingPolicies}) is true: so let`s attach missing policies')
+            arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{share_policy_name}'
+            IAM.attach_role_policy(
+                target_environment.AwsAccountId,
+                consumption_role.IAMRoleName,
+                arn
+            )
+        else:
             raise Exception(
-                f"Required customer managed policies {','.join(missing_policies)} are not attached to role {consumption_role.IAMRoleName}")
+                f"Required customer managed policy {share_policy_name} is not attached to role {consumption_role.IAMRoleName}")
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)

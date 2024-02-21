@@ -660,6 +660,16 @@ export const EnvironmentTeams = ({ environment }) => {
                     flex: 0.5
                   },
                   {
+                    field: 'sharePolicyRolName',
+                    headerName: 'Sharing Policy Name',
+                    flex: 0.5
+                  },
+                  {
+                    field: 'isSharePolicyAttached',
+                    headerName: 'Sharing Policy Attached',
+                    flex: 0.5
+                  },
+                  {
                     field: 'actions',
                     headerName: 'Actions',
                     flex: 0.5,

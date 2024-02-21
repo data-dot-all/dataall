@@ -89,12 +89,9 @@ class ConsumptionRole(Base):
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
 
-    def get_managed_bucket_share_policy_name(self):
-        return ConsumptionRole.generate_policy_name(self.environmentUri, self.IAMRoleName, 'bucket')
-
-    def get_managed_accesspoint_share_policy_name(self):
-        return ConsumptionRole.generate_policy_name(self.environmentUri, self.IAMRoleName, 'accesspoint')
+    def get_managed_share_policy_name(self):
+        return ConsumptionRole.generate_policy_name(self.environmentUri, self.IAMRoleName)
 
     @staticmethod
-    def generate_policy_name(environment_uri, role_name, policy_type):
-        return f'dataall-env-{environment_uri}-{policy_type}-share-{role_name}'
+    def generate_policy_name(environment_uri, role_name):
+        return f'dataall-env-{environment_uri}-share-{role_name}'

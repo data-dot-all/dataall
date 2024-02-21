@@ -489,13 +489,7 @@ class EnvironmentService:
 
         IAM.create_managed_policy(
             account_id=environment.AwsAccountId,
-            policy_name=consumption_role.get_managed_bucket_share_policy_name(),
-            policy=json.dumps(empty_policy)
-        )
-
-        IAM.create_managed_policy(
-            account_id=environment.AwsAccountId,
-            policy_name=consumption_role.get_managed_accesspoint_share_policy_name(),
+            policy_name=consumption_role.get_managed_share_policy_name(),
             policy=json.dumps(empty_policy)
         )
 
@@ -509,39 +503,22 @@ class EnvironmentService:
         IAM.attach_role_policy(
             account_id=environment.AwsAccountId,
             role_name=consumption_role.IAMRoleName,
-            policy_arn=consumption_role.get_managed_accesspoint_share_policy_name()
-        )
-        IAM.attach_role_policy(
-            account_id=environment.AwsAccountId,
-            role_name=consumption_role.IAMRoleName,
-            policy_arn=consumption_role.get_managed_bucket_share_policy_name()
+            policy_arn=consumption_role.get_managed_share_policy_name()
         )
 
     @staticmethod
     def _delete_managed_policies_for_consumption_role(environment, consumption_role):
-        bucket_policy_name = consumption_role.get_managed_bucket_share_policy_name()
-        accesspoint_policy_name = consumption_role.get_managed_accesspoint_share_policy_name()
+        policy_name = consumption_role.get_managed_share_policy_name()
 
         IAM.detach_policy_from_role(
             account_id=environment.AwsAccountId,
             role_name=consumption_role.IAMRoleName,
-            policy_name=bucket_policy_name
+            policy_name=policy_name
         )
 
         IAM.delete_managed_policy_by_name(
             account_id=environment.AwsAccountId,
-            policy_name=bucket_policy_name
-        )
-
-        IAM.detach_policy_from_role(
-            account_id=environment.AwsAccountId,
-            role_name=consumption_role.IAMRoleName,
-            policy_name=accesspoint_policy_name
-        )
-
-        IAM.delete_managed_policy_by_name(
-            account_id=environment.AwsAccountId,
-            policy_name=accesspoint_policy_name
+            policy_name=policy_name
         )
 
     @staticmethod

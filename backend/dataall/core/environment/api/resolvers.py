@@ -39,7 +39,8 @@ def get_trust_account(context: Context, source, **kwargs):
 
 
 def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
-    ssm_param = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate")
+    ssm_param = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'),
+                                                          parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate")
     return True if ssm_param == "True" else False
 
 
@@ -122,7 +123,7 @@ def create_environment(context: Context, source, input={}):
 
 
 def update_environment(
-    context: Context, source, environmentUri: str = None, input: dict = None
+        context: Context, source, environmentUri: str = None, input: dict = None
 ):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
@@ -233,7 +234,7 @@ def update_consumption_role(context: Context, source, environmentUri=None, consu
 
 
 def list_environment_invited_groups(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -257,7 +258,7 @@ def list_environment_groups(context: Context, source, environmentUri=None, filte
 
 
 def list_all_environment_groups(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -270,7 +271,7 @@ def list_all_environment_groups(
 
 
 def list_environment_consumption_roles(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -283,7 +284,7 @@ def list_environment_consumption_roles(
 
 
 def list_all_environment_consumption_roles(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -296,9 +297,9 @@ def list_all_environment_consumption_roles(
 
 
 def list_environment_group_invitation_permissions(
-    context: Context,
-    source,
-    environmentUri=None,
+        context: Context,
+        source,
+        environmentUri=None,
 ):
     with context.engine.scoped_session() as session:
         return EnvironmentService.list_group_invitation_permissions(
@@ -331,7 +332,7 @@ def list_groups(context: Context, source, filter=None):
 
 
 def list_consumption_roles(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -343,7 +344,7 @@ def list_consumption_roles(
 
 
 def list_environment_networks(
-    context: Context, source, environmentUri=None, filter=None
+        context: Context, source, environmentUri=None, filter=None
 ):
     if filter is None:
         filter = {}
@@ -358,6 +359,17 @@ def list_environment_networks(
 def get_parent_organization(context: Context, source, **kwargs):
     org = get_organization(context, source, organizationUri=source.organizationUri)
     return org
+
+
+def is_share_policy_attached(context: Context, source, **kwargs):
+    policy_name = source.get_share_policy_role_name()
+    with context.engine.scoped_session() as session:
+        environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+        return IAM.is_policy_attached(environment.AwsAccountId, policy_name, source.IAMRoleName)
+
+
+def get_share_policy_role_name(context: Context, source, **kwargs):
+    return source.get_managed_share_policy_name()
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):
@@ -392,7 +404,7 @@ def resolve_user_role(context: Context, source: Environment):
 
 
 def list_environment_group_permissions(
-    context, source, environmentUri: str = None, groupUri: str = None
+        context, source, environmentUri: str = None, groupUri: str = None
 ):
     with context.engine.scoped_session() as session:
         return EnvironmentService.list_group_permissions(
@@ -404,7 +416,7 @@ def list_environment_group_permissions(
 
 @is_feature_enabled('core.features.env_aws_actions')
 def _get_environment_group_aws_session(
-    session, username, groups, environment, groupUri=None
+        session, username, groups, environment, groupUri=None
 ):
     if groupUri and groupUri not in groups:
         raise exceptions.UnauthorizedOperation(
@@ -452,10 +464,10 @@ def _get_environment_group_aws_session(
 
 @is_feature_enabled('core.features.env_aws_actions')
 def get_environment_assume_role_url(
-    context: Context,
-    source,
-    environmentUri: str = None,
-    groupUri: str = None,
+        context: Context,
+        source,
+        environmentUri: str = None,
+        groupUri: str = None,
 ):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -481,7 +493,7 @@ def get_environment_assume_role_url(
 
 @is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(
-    context, source, environmentUri: str = None, groupUri: str = None
+        context, source, environmentUri: str = None, groupUri: str = None
 ):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -515,7 +527,7 @@ def get_environment_stack(context: Context, source: Environment, **kwargs):
 
 
 def delete_environment(
-    context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
+        context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
 ):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
@@ -537,7 +549,7 @@ def delete_environment(
 
 
 def enable_subscriptions(
-    context: Context, source, environmentUri: str = None, input: dict = None
+        context: Context, source, environmentUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(

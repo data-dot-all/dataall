@@ -147,11 +147,11 @@ class S3AccessPointShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
 
-        accesspoint_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                       self.target_requester_IAMRoleName, 'accesspoint')
+        share_resource_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
+                                                                          self.target_requester_IAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
-            accesspoint_policy_name)
+            share_resource_policy_name)
 
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
@@ -208,7 +208,7 @@ class S3AccessPointShareManager:
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
-            accesspoint_policy_name,
+            share_resource_policy_name,
             version_id,
             json.dumps(policy_document)
         )
@@ -410,7 +410,7 @@ class S3AccessPointShareManager:
         )
 
         accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                       share.principalIAMRoleName, 'accesspoint')
+                                                                       share.principalIAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             target_environment.AwsAccountId,
             accesspoint_policy_name)

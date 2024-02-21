@@ -74,7 +74,7 @@ class S3BucketShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
         bucket_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                  self.target_requester_IAMRoleName, 'bucket')
+                                                                  self.target_requester_IAMRoleName)
 
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
@@ -331,11 +331,11 @@ class S3BucketShareManager:
             'Deleting target role IAM policy...'
         )
 
-        bucket_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                  self.target_requester_IAMRoleName, 'bucket')
+        share_resource_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
+                                                                          self.target_requester_IAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name)
+            share_resource_policy_name)
 
         key_alias = f"alias/{target_bucket.KmsAlias}"
         kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
@@ -383,7 +383,7 @@ class S3BucketShareManager:
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name,
+            share_resource_policy_name,
             version_id,
             json.dumps(policy_document)
         )

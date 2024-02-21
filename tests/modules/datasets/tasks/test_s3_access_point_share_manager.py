@@ -501,7 +501,7 @@ def test_grant_target_role_access_policy_test_no_policy(
         manager.grant_target_role_access_policy()
 
         expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName, 'accesspoint')
+                                                                    share1.principalIAMRoleName)
         # Then
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
@@ -1184,7 +1184,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
         expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName, 'accesspoint')
+                                                                    share1.principalIAMRoleName)
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
@@ -1283,7 +1283,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 
         # Then
         expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName, 'accesspoint')
+                                                                    share1.principalIAMRoleName)
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
