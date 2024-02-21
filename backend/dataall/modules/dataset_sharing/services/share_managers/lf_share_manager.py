@@ -41,34 +41,16 @@ class LFShareManager:
         self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
-        # self.source_account_id = source_environment.AwsAccountId
-        # self.source_account_region = source_environment.region
-        # self.source_database_name = dataset.GlueDatabaseName
         # Set the source account details by checking if a catalog account exists
-        self.source_account_id, self.source_account_region, self.source_database_name = (
-        source_environment.AwsAccountId, source_environment.region,
-        dataset.GlueDatabaseName) if not self.check_catalog_account_exists_and_verify() else self.get_catalog_account_details()
+        self.source_account_id, self.source_account_region, self.source_database_name = self.init_source_account_details()
         self.shared_db_name, self.is_new_share = self.build_shared_db_name()
         self.principals = self.get_share_principals()
         self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
-        self.lf_client_in_target = LakeFormationClient(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region
-        )
-        self.lf_client_in_source = LakeFormationClient(
-            account_id=self.source_account_id,
-            region=self.source_account_region
-        )
-        self.glue_client_in_target = GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-        )
-        self.glue_client_in_source = GlueClient(
-            account_id=self.source_account_id,
-            region=self.source_account_region,
-            database=self.source_database_name,
-        )
+        # Below Clients initialized by the initialize_clients()
+        self.glue_client_in_source = None
+        self.glue_client_in_target = None
+        self.lf_client_in_source = None
+        self.lf_client_in_target = None
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -77,6 +59,20 @@ class LFShareManager:
     @abc.abstractmethod
     def process_revoked_shares(self) -> [str]:
         return NotImplementedError
+
+    def init_source_account_details(self):
+        """
+        Check if the catalog account is present and update the source account, source database and source region accordingly
+        """
+        catalog_account_present = self.check_catalog_account_exists_and_verify()
+        if catalog_account_present is not False:
+            if catalog_account_present is not None:
+                return self.get_catalog_account_details()
+            else:
+                return None, None, None
+        else:
+            return self.source_environment.AwsAccountId, self.source_environment.region, self.dataset.GlueDatabaseName
+
 
     def get_share_principals(self) -> [str]:
         """
@@ -108,11 +104,14 @@ class LFShareManager:
         For shares after 2.3.0 the suffix returned is "_shared"
         :return: Shared database name, boolean indicating if it is a new share
         """
+        if self.source_database_name is None:
+            return '', True
         old_shared_db_name = (self.source_database_name + '_shared_' + self.share.shareUri)[:254]
         warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
         logger.info(
             f'Checking shared db {old_shared_db_name} exists in {self.target_environment.AwsAccountId}...'
         )
+
         database = GlueClient(
             account_id=self.target_environment.AwsAccountId,
             database=old_shared_db_name,
@@ -122,6 +121,7 @@ class LFShareManager:
         if database:
             return old_shared_db_name, False
         return self.source_database_name + '_shared', True
+
 
     def check_table_exists_in_source_database(
             self, share_item: ShareObjectItem, table: DatasetTable
@@ -441,6 +441,13 @@ class LFShareManager:
         return True
 
     def handle_share_failure_for_all_tables(self, tables, error, share_item_status):
+        """
+        Handle table share failure for all tables
+        :param tables - List[DatasetTable]
+        :param error - share error
+        :param share_item_status : Status of approved/ revoked share
+        returns : Returns True is handling is successful
+        """
         for table in tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
@@ -453,10 +460,18 @@ class LFShareManager:
 
             if share_item_status == ShareItemStatus.Share_Approved.value:
                 self.handle_share_failure(table=table, error=error)
-            if share_item_sm == ShareItemStatus.Revoke_Approved.value:
+            if share_item_status == ShareItemStatus.Revoke_Approved.value:
                 self.handle_revoke_failure(table=table, error=error)
 
+        return True
+
     def _verify_catalog_ownership(self, catalog_account_id, catalog_region, catalog_database):
+        """
+        Verifies the catalog ownership by checking
+        1. if the pivot role is assumable in the catalog account
+        2. if "owner_account_id" tag is present in the catalog account, which contains AWS account of source account / producer account -  where the data is present in S3 bucket
+        Returns : Raises exception only in case there is an issue with any of above
+        """
         if catalog_account_id != self.source_environment.AwsAccountId:
             logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link and '
                         f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}')
@@ -479,12 +494,23 @@ class LFShareManager:
                 f'owner_account_id tag does not exist or does not matches the source account id {self.source_environment.AwsAccountId}')
 
     def check_catalog_account_exists_and_verify(self):
+        """
+        Checks if the source account has a catalog associated with it. This is checked by getting source catalog information and checking if there exists a target database for the source db
+        Return -
+        True - if a catalog account is present and it is verified
+        False - if no source catalog account is present
+        None - if catalog account exists but there is an issue with verifing the conditions needed for source account. Check _verify_catalog_ownership for more details
+        """
         try:
-            catalog_dict = self.glue_client_in_source.get_source_catalog()
+            catalog_dict = GlueClient(
+                account_id=self.source_environment.AwsAccountId,
+                region=self.source_environment.region,
+                database=self.dataset.GlueDatabaseName,
+            ).get_source_catalog()
             if catalog_dict is not None:
-                # Verify the ownership of dataset
+                # Verify the ownership of dataset by checking if pivot role is assumable and ownership tag is present
                 self._verify_catalog_ownership(catalog_dict.get('account_id'), catalog_dict.get('region'),
-                                               catalog_dict.get('database'))
+                                               catalog_dict.get('database_name'))
             else:
                 logger.info(
                     f'No Catalog information found for dataset - {self.dataset.name} containing database - {self.dataset.GlueDatabaseName}')
@@ -494,17 +520,48 @@ class LFShareManager:
                 f'Failed to initialise catalog account details for share - {self.share.shareUri} '
                 f'due to: {e}'
             )
-            # Returning True in case an exception occurs. This will call the update method which will update the source account details appropriately
-            return True
+            return None
         return True
 
     def get_catalog_account_details(self):
+        """
+        Fetched the catalog details and returns a dict containing information about the catalog account
+        Returns :
+        'account_id' - AWS account id of catalog account
+        'region' - AWS region in which the catalog account is present
+        'database_name' - DB present in the catalog account
+        """
         try:
-            catalog_dict = self.glue_client_in_source.get_source_catalog()
-            return catalog_dict.get('account_id'), catalog_dict.get('region'), catalog_dict.get('database')
+            catalog_dict = GlueClient(
+                account_id=self.source_environment.AwsAccountId,
+                region=self.source_environment.region,
+                database=self.dataset.GlueDatabaseName,
+            ).get_source_catalog()
+            return catalog_dict.get('account_id'), catalog_dict.get('region'), catalog_dict.get('database_name')
         except Exception as e:
             logger.error(
                 f'Failed to fetch catalog account details for share - {self.share.shareUri} '
                 f'due to: {e}'
             )
             return None, None, None
+
+    def initialize_clients(self):
+
+        self.lf_client_in_target = LakeFormationClient(
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region
+        )
+        self.lf_client_in_source = LakeFormationClient(
+            account_id=self.source_account_id,
+            region=self.source_account_region
+        )
+        self.glue_client_in_target = GlueClient(
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+        )
+        self.glue_client_in_source = GlueClient(
+            account_id=self.source_account_id,
+            region=self.source_account_region,
+            database=self.source_database_name,
+        )

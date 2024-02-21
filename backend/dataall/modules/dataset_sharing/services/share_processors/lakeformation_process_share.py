@@ -36,6 +36,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
     def process_approved_shares(self) -> bool:
         """
+        0) Check if source account details are properly initialized and initialize the Glue and LF clients
         1) Grant ALL permissions to pivotRole for source database in source account
         2) Create the shared database in target account if it doesn't exist
         3) Grant permissions to pivotRole and principals to "shared" database
@@ -65,14 +66,11 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to share. Skipping...")
         else:
             try:
-                # if not self.check_catalog_account_exists_and_verify():
-                #     success = False
-                #     return success
                 if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
                     log.info('Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
                     success = False
                     return success
-
+                self.initialize_clients()
                 self.grant_pivot_role_all_database_permissions_to_source_database()
                 self.check_if_exists_and_create_shared_database_in_target()
                 self.grant_pivot_role_all_database_permissions_to_shared_database()
@@ -144,7 +142,9 @@ class ProcessLakeFormationShare(LFShareManager):
 
     def process_revoked_shares(self) -> bool:
         """
-        1) For each revoked table:
+        0) Check if source account details are properly initialized and initialize the Glue and LF clients
+        1) Grant Pivot Role all database permissions to the shared database
+        2) For each revoked table:
             a) Update its status to REVOKE_IN_PROGRESS with Action Start
             b) Check if table exists on glue catalog raise error if not and flag share item status to failed
             c) Check if resource link table exists in target account
@@ -154,8 +154,8 @@ class ProcessLakeFormationShare(LFShareManager):
             g) If c is True and (old-share or (new-share and d is True, no other shares of this table)) then delete resource link table
             g) If d is True (no other shares of this table with target), revoke permissions to target account to the original table
             h) update share item status to REVOKE_SUCCESSFUL with Action Success
-        2) Check if there are existing_shared_tables for this dataset with target environment
-        3) If no existing_shared_tables, delete shared database
+        3) Check if there are existing_shared_tables for this dataset with target environment
+        4) If no existing_shared_tables, delete shared database
 
         Returns
         -------
@@ -166,17 +166,14 @@ class ProcessLakeFormationShare(LFShareManager):
             '##### Starting Revoking tables #######'
         )
         success = True
-
         try:
-            self.grant_pivot_role_all_database_permissions_to_shared_database()
-            # if not self.check_catalog_account_exists_and_verify():
-            #     success = False
-            #     return success
             if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
                 log.info(
                     'Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
                 success = False
                 return success
+            self.initialize_clients()
+            self.grant_pivot_role_all_database_permissions_to_shared_database()
         except Exception as e:
             log.error(f"Failed to process revoked tables due to {e}")
             self.handle_share_failure_for_all_tables(tables=self.revoked_tables, error=e,

@@ -118,6 +118,8 @@ def processor_with_mocks(db, dataset1, share, table1, table2, source_environment
     )
     mock_glue_client().get_glue_database.return_value = False
 
+    mock_glue_client().get_source_catalog.return_value = None
+
     with db.scoped_session() as session:
         processor = ProcessLakeFormationShare(
             session,
@@ -155,7 +157,7 @@ def processor_with_mocks(db, dataset1, share, table1, table2, source_environment
             glue_mock_client
         )
 
-    yield processor, lf_mock_client, glue_mock_client
+    yield processor, lf_mock_client, glue_mock_client, mock_glue_client
 
 
 
@@ -169,7 +171,7 @@ def mock_glue_client(mocker):
     yield mock_client
 
 def test_init(processor_with_mocks):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     assert processor.dataset
     assert processor.share
     assert processor.shared_db_name == 'gluedatabase_shared'
@@ -182,7 +184,7 @@ def test_get_share_principals(
         share: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     get_iam_role_arn_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.get_role_arn_by_name",
         side_effect = lambda account_id, role_name : f"arn:aws:iam::{account_id}:role/{role_name}"
@@ -199,7 +201,7 @@ def test_build_shared_db_name(
         mock_glue_client
 ):
     # Given a new share, build db_share name
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = False
     # Reset to remove call in __init__
     mock_glue_client().get_glue_database.reset_mock()
@@ -214,7 +216,7 @@ def test_build_shared_db_name_old(
         mock_glue_client
 ):
     # Given an existing old share (shared db name with shareUri), build db_share name
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = True
     # Reset to remove call in __init__
     mock_glue_client().get_glue_database.reset_mock()
@@ -228,7 +230,7 @@ def test_check_table_exists_in_source_database(
         share_item: ShareObjectItem,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = True
     # When
     processor.check_table_exists_in_source_database(
@@ -245,7 +247,7 @@ def test_check_table_exists_in_source_database_exception(
         share_item: ShareObjectItem,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = False
     # When
     with pytest.raises(Exception) as exception:
@@ -262,7 +264,7 @@ def test_check_resource_link_table_exists_in_target_database_true(
         processor_with_mocks,
         table1: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = True
     # When
     response = processor.check_resource_link_table_exists_in_target_database(table=table1)
@@ -275,7 +277,7 @@ def test_check_resource_link_table_exists_in_target_database_false(
         processor_with_mocks,
         table1: DatasetTable,
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = False
     # Then
     assert processor.check_resource_link_table_exists_in_target_database(table=table1) == False
@@ -287,7 +289,7 @@ def test_revoke_iam_allowed_principals_from_table(
         table1: DatasetTable,
         source_environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.revoke_permissions_from_table.return_value = True
     # Then
     assert processor.revoke_iam_allowed_principals_from_table(table1) == True
@@ -306,7 +308,7 @@ def test_grant_pivot_role_all_database_permissions_to_source_database(
         source_environment: Environment,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.grant_permissions_to_database.return_value = True
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -326,7 +328,7 @@ def test_check_if_exists_and_create_shared_database_in_target(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.create_database.return_value = True
     # When
     processor.check_if_exists_and_create_shared_database_in_target()
@@ -340,7 +342,7 @@ def test_grant_pivot_role_all_database_permissions_to_shared_database(
         dataset1: Dataset,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
@@ -360,7 +362,7 @@ def test_grant_principals_database_permissions_to_shared_database(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.grant_principals_database_permissions_to_shared_database()
     # Then
@@ -377,7 +379,7 @@ def test_grant_target_account_permissions_to_source_table(
         source_environment: Environment,
         table1: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.grant_target_account_permissions_to_source_table(table1)
     # Then
@@ -397,7 +399,7 @@ def test_check_if_exists_and_create_resource_link_table_in_shared_database_false
         table1: DatasetTable,
         source_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = False
     glue_client.create_resource_link.return_value = True
 
@@ -418,7 +420,7 @@ def test_check_if_exists_and_create_resource_link_table_in_shared_database_true(
         processor_with_mocks,
         table1: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.table_exists.return_value = True
     glue_client.create_resource_link.return_value = True
 
@@ -435,7 +437,7 @@ def test_grant_principals_permissions_to_resource_link_table(
         table1: DatasetTable,
         target_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.grant_principals_permissions_to_resource_link_table(table1)
     # Then
@@ -455,7 +457,7 @@ def test_grant_pivot_role_drop_permissions_to_resource_link_table(
         target_environment: Environment,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
@@ -478,7 +480,7 @@ def test_grant_principals_permissions_to_table_in_target(
         table1: DatasetTable,
         source_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.grant_principals_permissions_to_table_in_target(table1)
     # Then
@@ -496,7 +498,7 @@ def test_revoke_principals_permissions_to_resource_link_table(
         table1: DatasetTable,
         target_environment:Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.revoke_principals_permissions_to_resource_link_table(table=table1)
     # Then
@@ -515,7 +517,7 @@ def test_revoke_principals_permissions_to_table_in_target(
         table1: DatasetTable,
         source_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.revoke_principals_permissions_to_table_in_target(table = table1, other_table_shares_in_env=False)
     # Then
@@ -532,7 +534,7 @@ def test_delete_resource_link_table_in_shared_database_true(
         processor_with_mocks,
         table2: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
 
     # When
     processor.delete_resource_link_table_in_shared_database(
@@ -546,7 +548,7 @@ def test_revoke_principals_database_permissions_to_shared_database(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.revoke_principals_database_permissions_to_shared_database()
     # Then
@@ -560,7 +562,7 @@ def test_revoke_principals_database_permissions_to_shared_database(
 def test_delete_shared_database_in_target(
     processor_with_mocks,
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.delete_shared_database_in_target()
     # Then
@@ -573,7 +575,7 @@ def test_revoke_external_account_access_on_source_account(
         source_environment: Environment,
         target_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     # When
     processor.revoke_external_account_access_on_source_account(table1)
     # Then
@@ -588,34 +590,50 @@ def test_revoke_external_account_access_on_source_account(
         )
 
 def test_check_catalog_account_exists_and_update_processor_with_catalog_exists(
-        processor_with_mocks,
-        table1: DatasetTable,
-        source_environment: Environment,
-        target_environment: Environment,
+        db, dataset1, share, table1, table2, source_environment, target_environment,
+                            target_environment_group, mock_glue_client,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    glue_client.get_source_catalog.return_value = {'account_id' : '12129101212', 'database_name' : 'catalog_db', 'region' : 'us-east-1'}
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.remote_session",
+        return_value=boto3.Session(),
+    )
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_role_arn_by_name",
+        side_effect=lambda account_id, role_name: f"arn:aws:iam::{account_id}:role/{role_name}"
+    )
+    mock_glue_client().get_glue_database.return_value = False
 
-    mock_glue_client_catalog = MagicMock()
-    mocker.patch("dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient", mock_glue_client_catalog)
-    mock_glue_client_catalog().get_database_tags.return_value = {'owner_account_id' : source_environment.AwsAccountId}
+    mock_glue_client().get_source_catalog.return_value = {'account_id' : '12129101212', 'database_name' : 'catalog_db', 'region' : 'us-east-1'}
 
-    mock_glue_client_catalog().get_glue_database.return_value = False
+    mock_glue_client().get_database_tags.return_value = {'owner_account_id': source_environment.AwsAccountId}
 
     mocker.patch("dataall.base.aws.sts.SessionHelper.is_assumable_pivot_role", return_value=True)
 
-    # When
-    assert processor.check_catalog_account_exists_and_verify() == True
+    # when
+    with db.scoped_session() as session:
+        processor = ProcessLakeFormationShare(
+            session,
+            dataset1,
+            share,
+            [table1],
+            [table2],
+            source_environment,
+            target_environment,
+            target_environment_group,
+        )
 
-    # Then
-    # Check the source account id. source account database and region to check if it is updated
-    assert processor.source_account_id == '12129101212'
-    assert processor.source_database_name == 'catalog_db'
-    assert processor.source_account_region == 'us-east-1'
+        # Check if the catalog account exists
+        assert processor.check_catalog_account_exists_and_verify() == True
+        # Then
+        # Check the source account id. source account database and region to check if it is updated
+        assert processor.source_account_id == '12129101212'
+        assert processor.source_database_name == 'catalog_db'
+        assert processor.source_account_region == 'us-east-1'
 
-    # Check the shared database
-    assert processor.shared_db_name == 'catalog_db' + "_shared"
+        # Check the shared database
+        assert processor.shared_db_name == 'catalog_db' + '_shared'
 
 def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_and_pivot_role_not_assumable(
         processor_with_mocks,
@@ -624,23 +642,25 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_a
         target_environment: Environment,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    glue_client.get_source_catalog.return_value = {'account_id' : '12129101212', 'database_name' : 'catalog_db', 'region' : 'us-east-1'}
+    # Given
+    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
 
-    mock_glue_client_catalog = MagicMock()
-    mocker.patch("dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient", mock_glue_client_catalog)
-    mock_glue_client_catalog().get_database_tags.return_value = {'owner_account_id' : source_environment.AwsAccountId}
+    # Override the mocks to check catalog account details
+    mock_glue_client().get_source_catalog.return_value = {'account_id' : '12129101212', 'database_name' : 'catalog_db', 'region' : 'us-east-1'}
 
-    mock_glue_client_catalog().get_glue_database.return_value = False
+    mock_glue_client().get_database_tags.return_value = {'owner_account_id' : source_environment.AwsAccountId}
+
+    mock_glue_client().get_glue_database.return_value = False
 
     mocker.patch("dataall.base.aws.sts.SessionHelper.is_assumable_pivot_role", return_value=False)
 
     # When
     with pytest.raises(Exception) as exception:
-        processor.check_catalog_account_exists_and_verify()
+        processor._verify_catalog_ownership('12129101212', 'us-east-1', 'catalog_db')
 
     # Then
     assert "Pivot role is not assumable" in str(exception)
+    assert processor.check_catalog_account_exists_and_verify() is None
 
 def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_and_tag_doesnt_exists(
         processor_with_mocks,
@@ -649,22 +669,25 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists_a
         target_environment: Environment,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    glue_client.get_source_catalog.return_value = {'account_id' : '12129101212', 'database_name' : 'catalog_db', 'region' : 'us-east-1'}
+    # Given
+    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
 
-    mock_glue_client_catalog = MagicMock()
-    mocker.patch("dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient", mock_glue_client_catalog)
-    mock_glue_client_catalog().get_database_tags.return_value = {'owner_account_id' : 'NotTheSourceAccountID'}
+    # Override the mocks to check catalog account details
+    mock_glue_client().get_source_catalog.return_value = {'account_id': '12129101212', 'database_name': 'catalog_db',
+                                                          'region': 'us-east-1'}
 
-    mock_glue_client_catalog().get_glue_database.return_value = False
+    mock_glue_client().get_database_tags.return_value = {'owner_account_id' : 'NotTheSourceAccountID'}
+
+    mock_glue_client().get_glue_database.return_value = False
 
     mocker.patch("dataall.base.aws.sts.SessionHelper.is_assumable_pivot_role", return_value=True)
 
-    # When
+    # when
     with pytest.raises(Exception) as exception:
-        processor.check_catalog_account_exists_and_verify()
+        processor._validate_catalog_ownership_tag('12129101212', 'us-east-1', 'catalog_db')
 
-    # Then
+    # then
+    assert processor.check_catalog_account_exists_and_verify() is None
     assert "owner_account_id tag does not exist or does not matches the source account id" in str(exception)
 
 def test_check_catalog_account_exists_and_update_processor_with_catalog_doesnt_exists(
@@ -673,11 +696,10 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_doesnt_e
         source_environment: Environment,
         target_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    glue_client.get_source_catalog.return_value = None
+    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
 
     # When
-    assert processor.check_catalog_account_exists_and_verify() == True
+    assert processor.check_catalog_account_exists_and_verify() == False
 
     # Then
     # Check the source account id. source account database and region to check if it is updated
@@ -696,7 +718,7 @@ def test_handle_share_failure(
     # Given
     alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_table_sharing_failure_alarm")
     error = Exception()
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
 
     # When
     processor.handle_share_failure(table1, error)
@@ -715,7 +737,7 @@ def test_handle_revoke_failure(
     # Given
     alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_revoke_table_sharing_failure_alarm")
     error = Exception()
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
 
     # When
     processor.handle_revoke_failure(table1, error)
