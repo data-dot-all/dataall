@@ -2,7 +2,7 @@ import boto3
 import pytest
 import typing
 
-from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
+from dataall.modules.omics.db.omics_models import OmicsRun, OmicsWorkflow
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization

@@ -3,7 +3,7 @@ from dataall.base.api.context import Context
 from dataall.base.db import exceptions
 from dataall.modules.omics.services.omics_service import OmicsService
 from dataall.modules.omics.services.omics_enums import OmicsWorkflowType
-from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
+from dataall.modules.omics.db.omics_models import OmicsRun, OmicsWorkflow
 
 log = logging.getLogger(__name__)
 

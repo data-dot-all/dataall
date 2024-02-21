@@ -7,7 +7,7 @@ from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import paginate, exceptions
-from dataall.modules.omics.db.models import OmicsWorkflow, OmicsRun
+from dataall.modules.omics.db.omics_models import OmicsWorkflow, OmicsRun
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 
 

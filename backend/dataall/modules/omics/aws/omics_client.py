@@ -3,7 +3,7 @@ import json
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.modules.omics.db.models import OmicsRun
+from dataall.modules.omics.db.omics_models import OmicsRun
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 from botocore.exceptions import ClientError
 from dataall.core.environment.services.environment_service import EnvironmentService

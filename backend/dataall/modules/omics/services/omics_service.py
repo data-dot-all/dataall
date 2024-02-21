@@ -19,7 +19,7 @@ import json
 
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 from dataall.modules.omics.aws.omics_client import OmicsClient
-from dataall.modules.omics.db.models import OmicsRun
+from dataall.modules.omics.db.omics_models import OmicsRun
 from dataall.modules.omics.services.omics_permissions import (
     MANAGE_OMICS_RUNS,
     CREATE_OMICS_RUN,

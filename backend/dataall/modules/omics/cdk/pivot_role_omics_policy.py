@@ -1,9 +1,8 @@
 from aws_cdk import aws_iam as iam
+from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 
-from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 
-
-class OmicsPolicy(ServicePolicy):
+class OmicsPolicy(PivotRoleStatementSet):
     """
     Creates an Omics policy for Pivot role accessing and interacting with Omics Projects
     """

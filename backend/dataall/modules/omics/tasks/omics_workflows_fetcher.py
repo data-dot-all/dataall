@@ -5,7 +5,7 @@ import sys
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.db import get_engine
 from dataall.modules.omics.aws.omics_client import OmicsClient
-from dataall.modules.omics.db.models import OmicsWorkflow
+from dataall.modules.omics.db.omics_models import OmicsWorkflow
 from dataall.modules.omics.services.omics_enums import OmicsWorkflowType
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 
