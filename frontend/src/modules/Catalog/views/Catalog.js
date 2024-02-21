@@ -32,6 +32,7 @@ import {
   useSettings
 } from 'design';
 import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
+import config from '../../../generated/config.json';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -171,7 +172,14 @@ const Catalog = () => {
   const classes = useStyles();
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
-  const [filterItems] = useState([
+  const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
+
+  if (config.modules.datasets.features.topics_dropdown === true)
+    dataFieldList.push('topics');
+  if (config.modules.datasets.features.confidentiality_dropdown === true)
+    dataFieldList.push('classification');
+
+  const filterItemsInit = [
     {
       title: 'Type',
       dataField: 'resourceKind',
@@ -185,24 +193,29 @@ const Catalog = () => {
       filterLabel: 'Tags'
     },
     {
-      title: 'Topics',
-      dataField: 'topics',
-      componentId: 'TopicSensor',
-      filterLabel: 'Topics'
-    },
-    {
       title: 'Region',
       dataField: 'region',
       componentId: 'RegionSensor',
       filterLabel: 'Region'
-    },
-    {
+    }
+  ];
+
+  if (config.modules.datasets.features.topics_dropdown === true)
+    filterItemsInit.push({
+      title: 'Topics',
+      dataField: 'topics',
+      componentId: 'TopicSensor',
+      filterLabel: 'Topics'
+    });
+  if (config.modules.datasets.features.confidentiality_dropdown === true)
+    filterItemsInit.push({
       title: 'Classification',
       dataField: 'classification',
       componentId: 'ClassificationSensor',
       filterLabel: 'Classification'
-    }
-  ]);
+    });
+
+  const [filterItems] = useState(filterItemsInit);
   const [listClass, setListClass] = useState(
     settings.theme === THEMES.LIGHT
       ? classes.lightListSearch
@@ -337,14 +350,7 @@ const Catalog = () => {
                     fuzziness="AUTO"
                     componentId="SearchSensor"
                     filterLabel="text"
-                    dataField={[
-                      'label',
-                      'name',
-                      'description',
-                      'region',
-                      'topics',
-                      'tags'
-                    ]}
+                    dataField={dataFieldList}
                     placeholder="Search"
                   />
                 </Box>
