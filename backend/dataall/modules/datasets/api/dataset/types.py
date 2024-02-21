@@ -129,7 +129,7 @@ Dataset = gql.ObjectType(
         ),
         gql.Field(name='topics', type=gql.ArrayType(gql.Ref('Topic'))),
         gql.Field(
-            name='confidentiality', type=gql.Ref('ConfidentialityClassification')
+            name='confidentiality', type=gql.String
         ),
         gql.Field(name='language', type=gql.Ref('Language')),
         gql.Field(

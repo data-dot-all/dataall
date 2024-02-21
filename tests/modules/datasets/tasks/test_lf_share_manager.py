@@ -444,6 +444,31 @@ def test_grant_principals_permissions_to_resource_link_table(
             permissions=['DESCRIBE']
         )
 
+
+def test_grant_pivot_role_drop_permissions_to_resource_link_table(
+        processor_with_mocks,
+        table1: DatasetTable,
+        target_environment: Environment,
+        mocker
+):
+    processor, lf_client, glue_client = processor_with_mocks
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
+        return_value="arn:role",
+    )
+    # When
+    processor.grant_pivot_role_drop_permissions_to_resource_link_table(table1)
+    # Then
+    lf_client.grant_permissions_to_table.assert_called_once()
+    lf_client.grant_permissions_to_table.assert_called_with(
+            principals=["arn:role"],
+            database_name=processor.shared_db_name,
+            table_name=table1.GlueTableName,
+            catalog_id=target_environment.AwsAccountId,
+            permissions=['DROP']
+        )
+
+
 def test_grant_principals_permissions_to_table_in_target(
         processor_with_mocks,
         table1: DatasetTable,

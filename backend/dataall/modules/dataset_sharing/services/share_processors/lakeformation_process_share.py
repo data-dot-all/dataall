@@ -41,8 +41,6 @@ class ProcessLakeFormationShare(LFShareManager):
             env_group,
         )
         self.reapply = reapply
-        self.tbl_level_errors = []
-        self.db_level_errors = []
 
     def process_approved_shares(self) -> bool:
         """
@@ -164,8 +162,11 @@ class ProcessLakeFormationShare(LFShareManager):
         """
         log.info("##### Starting Revoking tables #######")
         success = True
-        for table in self.tables:
-            share_item = ShareObjectRepository.find_sharable_item(self.session, self.share.shareUri, table.tableUri)
+        self.grant_pivot_role_all_database_permissions_to_shared_database()
+        for table in self.revoked_tables:
+            share_item = ShareObjectRepository.find_sharable_item(
+                self.session, self.share.shareUri, table.tableUri
+            )
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
@@ -192,7 +193,8 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
-                        warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
+                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                        self.grant_pivot_role_drop_permissions_to_resource_link_table(table)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:
@@ -280,7 +282,7 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.verify_table_exists_in_source_database(share_item, table)
 
                     if self.cross_account:
-                        self.check_target_account_permissions_to_source_table()
+                        self.check_target_account_permissions_to_source_table(table)
 
                         if not RamClient.check_ram_invitation_status(
                             source_account_id=self.source_environment.AwsAccountId,

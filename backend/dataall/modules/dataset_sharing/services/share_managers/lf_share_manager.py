@@ -30,6 +30,7 @@ class LFShareManager:
         target_environment: Environment,
         env_group: EnvironmentGroup,
     ):
+
         self.session = session
         self.env_group = env_group
         self.dataset = dataset
@@ -51,6 +52,8 @@ class LFShareManager:
             region=self.target_environment.region,
             database=self.shared_db_name,
         )
+        self.tbl_level_errors = []
+        self.db_level_errors = []
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -289,6 +292,20 @@ class LFShareManager:
                     f"{table.GlueDatabaseName}.{table.GlueTableName}",
                 )
             )
+    def grant_pivot_role_drop_permissions_to_resource_link_table(self, table: DatasetTable) -> True:
+        """
+        Grants 'DROP' Lake Formation permissions to pivot role to the resource link table in target account
+        :param table: DatasetTable
+        :return: True if it is successful
+        """
+        self.lf_client_in_target.grant_permissions_to_table(
+            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            database_name=self.shared_db_name,
+            table_name=table.GlueTableName,
+            catalog_id=self.target_environment.AwsAccountId,
+            permissions=['DROP']
+        )
+        return True
 
     def grant_principals_database_permissions_to_shared_database(self) -> True:
         """
