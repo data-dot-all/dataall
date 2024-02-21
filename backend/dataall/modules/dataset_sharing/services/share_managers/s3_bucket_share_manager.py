@@ -76,6 +76,7 @@ class S3BucketShareManager:
         bucket_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
                                                                   self.target_requester_IAMRoleName)
 
+        logger.info(f'Share policy name is {bucket_policy_name}')
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
             bucket_policy_name)

@@ -38,30 +38,31 @@ class ShareObjectService:
 
     @classmethod
     def check_if_target_role_has_policies_attached(cls,
-                                                   consumption_role: ConsumptionRole,
+                                                   role_name,
+                                                   dataallManaged,
                                                    target_environment: Environment,
                                                    attachMissingPolicies: bool
                                                    ):
         share_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                 consumption_role.IAMRoleName)
+                                                                 role_name)
 
         is_share_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, share_policy_name,
-                                                          consumption_role.IAMRoleName)
+                                                          role_name)
         if is_share_policy_attached:
             return
 
-        if consumption_role.dataallManaged or attachMissingPolicies:
-            log.info(f' consumption_role.dataallManaged ({consumption_role.dataallManaged}) or flag '
+        if dataallManaged or attachMissingPolicies:
+            log.info(f' consumption_role.dataallManaged ({dataallManaged}) or flag '
                      f'attachMissingPolicies ({attachMissingPolicies}) is true: so let`s attach missing policies')
             arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{share_policy_name}'
             IAM.attach_role_policy(
                 target_environment.AwsAccountId,
-                consumption_role.IAMRoleName,
+                role_name,
                 arn
             )
         else:
             raise Exception(
-                f"Required customer managed policy {share_policy_name} is not attached to role {consumption_role.IAMRoleName}")
+                f"Required customer managed policy {share_policy_name} is not attached to role {role_name}")
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
@@ -97,7 +98,8 @@ class ShareObjectService:
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
                 ShareObjectService.check_if_target_role_has_policies_attached(
-                    consumption_role,
+                    consumption_role.IAMRoleName,
+                    consumption_role.dataallManaged,
                     environment,
                     attachMissingPolicies
                 )
@@ -109,6 +111,12 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
+                ShareObjectService.check_if_target_role_has_policies_attached(
+                    principal_iam_role_name,
+                    True,
+                    environment,
+                    True
+                )
 
             if (
                     dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri

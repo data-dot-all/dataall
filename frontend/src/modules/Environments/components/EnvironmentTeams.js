@@ -657,17 +657,47 @@ export const EnvironmentTeams = ({ environment }) => {
                           : 'Customer managed'
                       }`;
                     },
-                    flex: 0.5
+                    flex: 0.6
                   },
                   {
                     field: 'sharePolicyRolName',
-                    headerName: 'Sharing Policy Name',
-                    flex: 0.5
-                  },
-                  {
-                    field: 'isSharePolicyAttached',
-                    headerName: 'Sharing Policy Attached',
-                    flex: 0.5
+                    headerName: 'Sharing Policy',
+                    flex: 0.5,
+                    renderCell: (params: GridRenderCellParams<any, Date>) => (
+                      <Box>
+                        <Label
+                          sx={{ ml: 5 }}
+                          color={
+                            params.row.isSharePolicyAttached
+                              ? 'success'
+                              : 'error'
+                          }
+                        >
+                          {params.row.isSharePolicyAttached
+                            ? 'Attached'
+                            : 'Not Attached'}
+                        </Label>
+                        <LoadingButton
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(
+                              params.row.sharePolicyRolName
+                            );
+                            enqueueSnackbar(
+                              'Policy Name is copied to clipboard',
+                              {
+                                anchorOrigin: {
+                                  horizontal: 'right',
+                                  vertical: 'top'
+                                },
+                                variant: 'success'
+                              }
+                            );
+                          }}
+                        >
+                          <CopyAllOutlined />
+                        </LoadingButton>
+                      </Box>
+                    )
                   },
                   {
                     field: 'actions',

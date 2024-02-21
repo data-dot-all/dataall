@@ -111,7 +111,8 @@ export const RequestAccessModal = (props) => {
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionRoleUri,
             label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
-            dataallManaged: g.dataallManaged
+            dataallManaged: g.dataallManaged,
+            isSharePolicyAttached: g.isSharePolicyAttached
           }))
         );
       } else {
@@ -431,10 +432,6 @@ export const RequestAccessModal = (props) => {
                                     'consumptionRoleObj',
                                     event.target.value
                                   );
-                                  setFieldValue(
-                                    'dontShowSwitch',
-                                    event.target.value.dataallManaged
-                                  );
                                 }}
                                 select
                                 value={values.consumptionRoleObj}
@@ -468,7 +465,10 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     </Box>
                   )}
-                  {!values.consumptionRole || values.dontShowSwitch ? (
+
+                  {!values.consumptionRole ||
+                  values.consumptionRoleObj.dataallManaged ||
+                  values.consumptionRoleObj.isSharePolicyAttached ? (
                     <Box />
                   ) : (
                     <CardContent sx={{ ml: 2 }}>

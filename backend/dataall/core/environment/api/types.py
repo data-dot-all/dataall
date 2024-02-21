@@ -173,7 +173,7 @@ ConsumptionRole = gql.ObjectType(
         ),
         gql.Field(
             name='isSharePolicyAttached',
-            type=gql.String,
+            type=gql.Boolean,
             resolver=is_share_policy_attached,
         ),
 
