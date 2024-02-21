@@ -449,6 +449,8 @@ the different configuration options.
                         }
                     }
                 },
+                "confidentiality_dropdown" : true,
+                "topics_dropdown" : true
             },
         },
         "mlstudio": {
@@ -557,7 +559,13 @@ disable any other core feature.
 |-----------------------|----------------|----------------------------------------------------------------------------------|
 | env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
 
+### Add Customization
 
+At places, you can use few customizations to create a tailored data.all for your needs. Below are few customization available,
+
+| **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
+|--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
 
 ## 8. Run CDK synth and check cdk.context.json
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
