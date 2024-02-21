@@ -25,16 +25,18 @@ data.all is fully dockerized with docker-compose, and can be fully run from your
 The first step is to clone the repo.
 
 ```bash
-git clone https://github.com/awslabs/aws-dataall.git
+git clone https://github.com/data-dot-all/dataall.git
 ```
 
 With docker compose we orchestrate the build of 5 containers: frontend, db, graphql, cdkproxy, opensearch.
 You can check the ports assigned to each container in the `docker-compose.yaml` file at the root level of the repo.
 
 ```bash
-cd aws-dataall
-docker-compose up
+cd dataall
+export UID && docker-compose up
 ```
+
+**Note:** We export `UID` to ensure the docker user created to run the container has the correct permissions to read from the mounted file systems for the locally deployed data.all.
 
 ![dockercompose](../img/docker_compose.png#zoom#shadow)
 
