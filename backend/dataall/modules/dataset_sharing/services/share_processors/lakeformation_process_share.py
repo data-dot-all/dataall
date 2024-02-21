@@ -107,7 +107,7 @@ class ProcessLakeFormationShare(LFShareManager):
                             target_account_id=self.target_environment.AwsAccountId,
                             target_region=self.target_environment.region,
                             source_database=self.dataset.GlueDatabaseName,
-                            source_table=table,
+                            source_table_name=table.GlueTableName,
                         )
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
@@ -117,7 +117,7 @@ class ProcessLakeFormationShare(LFShareManager):
                                 target_account_id=self.target_environment.AwsAccountId,
                                 target_region=self.target_environment.region,
                                 source_database=self.dataset.GlueDatabaseName,
-                                source_table=table,
+                                source_table_name=table.GlueTableName,
                             )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
@@ -288,17 +288,16 @@ class ProcessLakeFormationShare(LFShareManager):
                             source_account_id=self.source_environment.AwsAccountId,
                             source_region=self.source_environment.region,
                             target_account_id=self.target_environment.AwsAccountId,
-                            target_region=self.target_environment.region,
                             source_database=self.dataset.GlueDatabaseName,
-                            source_table=table,
+                            source_table_name=table.GlueTableName,
                         ):
                             self.tbl_level_errors.append(
                                 format_error_message(
                                     self.target_environment.AwsAccountId,
                                     "RAM Invitation",
-                                    "Accepted",
+                                    "ASSOCIATED",
                                     "Glue Table",
-                                    f"{self.dataset.GlueDatabaseName}.{table}",
+                                    f"{self.dataset.GlueDatabaseName}.{table.GlueTableName}",
                                 )
                             )
 
