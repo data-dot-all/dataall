@@ -415,15 +415,21 @@ function SharedItem(props) {
               <VerifiedUserIcon color={'success'} />
             </Tooltip>
           ) : (
-            <Tooltip title={<Typography>Pending Check</Typography>}>
+            <Tooltip
+              title={
+                <Typography>{item.healthStatus || 'Undefined'}</Typography>
+              }
+            >
               <PendingIcon color={'info'} />
             </Tooltip>
           )}
           <Typography color="textSecondary" variant="subtitle2">
-            {item.lastVerificationTime.substring(
-              0,
-              item.lastVerificationTime.indexOf('.')
-            ) || 'N/A'}
+            {(item.lastVerificationTime &&
+              item.lastVerificationTime.substring(
+                0,
+                item.lastVerificationTime.indexOf('.')
+              )) ||
+              ''}
           </Typography>
         </div>
       </TableCell>
