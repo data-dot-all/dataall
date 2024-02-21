@@ -61,4 +61,3 @@ def upgrade():
 def downgrade():
     op.drop_table('omics_workflow')
     op.drop_table('omics_run')
-

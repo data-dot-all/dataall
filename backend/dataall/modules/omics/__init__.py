@@ -3,7 +3,6 @@ import logging
 from typing import Set, List, Type
 
 from dataall.base.loader import ImportMode, ModuleInterface
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 log = logging.getLogger(__name__)
