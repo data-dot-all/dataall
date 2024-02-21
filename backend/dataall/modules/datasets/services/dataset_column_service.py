@@ -33,7 +33,7 @@ class DatasetColumnService:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
-                    dataset.confidentiality != ConfidentialityClassification.Unclassified.value
+                    ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality) != ConfidentialityClassification.Unclassified.value
             ):
                 ResourcePolicy.check_user_resource_permission(
                     session=session,

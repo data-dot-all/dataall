@@ -19,7 +19,7 @@ NewDatasetInput = gql.InputType(
         gql.Argument(
             name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
         ),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
     ],
@@ -36,7 +36,7 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument('businessOwnerDelegationEmails', gql.ArrayType(gql.String)),
         gql.Argument('businessOwnerEmail', gql.String),
         gql.Argument('language', gql.Ref('Language')),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
@@ -103,7 +103,7 @@ ImportDatasetInput = gql.InputType(
         gql.Argument(
             name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
         ),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
 
