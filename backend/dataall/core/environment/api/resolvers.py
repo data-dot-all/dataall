@@ -362,7 +362,7 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 
 def is_share_policy_attached(context: Context, source, **kwargs):
-    policy_name =  source.get_managed_share_policy_name()
+    policy_name = source.get_managed_share_policy_name()
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
         return IAM.is_policy_attached(environment.AwsAccountId, policy_name, source.IAMRoleName)
