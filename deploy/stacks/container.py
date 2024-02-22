@@ -280,7 +280,7 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
