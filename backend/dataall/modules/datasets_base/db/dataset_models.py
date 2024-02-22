@@ -164,3 +164,14 @@ class DatasetBucket(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.bucketUri
+
+
+class DatasetLock(Base):
+    __tablename__ = 'dataset_lock'
+    datasetUri = Column(String, nullable=False, primary_key=True)
+    isLocked = Column(Boolean, default=False)
+    acquiredBy = Column(String, nullable=False)
+
+    @classmethod
+    def uri(cls):
+        return cls.datasetUri

@@ -1,5 +1,8 @@
 import logging
 
+from sqlalchemy import and_
+from time import sleep
+
 from dataall.base.db import Engine
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
     ShareItemSM
@@ -10,6 +13,8 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_p
 from dataall.modules.dataset_sharing.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
 
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (ShareObjectActions, ShareItemStatus, ShareableType)
+from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+
 
 log = logging.getLogger(__name__)
 
@@ -38,71 +43,86 @@ class DataSharingService:
         True if sharing succeeds,
         False if folder or table sharing failed
         """
-        with engine.scoped_session() as session:
-            (
-                source_env_group,
-                env_group,
+        try:
+            with engine.scoped_session() as session:
+                (
+                    source_env_group,
+                    env_group,
+                    dataset,
+                    share,
+                    source_environment,
+                    target_environment,
+                ) = ShareObjectRepository.get_share_data(session, share_uri)
+
+                lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
+                if not lock_acquired:
+                    log.error(f"Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...")
+                    return False
+
+                share_sm = ShareObjectSM(share.status)
+                new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+                share_sm.update_state(session, share, new_share_state)
+
+                (
+                    shared_tables,
+                    shared_folders,
+                    shared_buckets
+                ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
+
+            log.info(f'Granting permissions to folders: {shared_folders}')
+
+            approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+                session,
                 dataset,
                 share,
+                shared_folders,
                 source_environment,
                 target_environment,
-            ) = ShareObjectRepository.get_share_data(session, share_uri)
+                source_env_group,
+                env_group
+            )
+            log.info(f'sharing folders succeeded = {approved_folders_succeed}')
 
-            share_sm = ShareObjectSM(share.status)
-            new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+            log.info('Granting permissions to S3 buckets')
+
+            approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+                session,
+                dataset,
+                share,
+                shared_buckets,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group
+            )
+            log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
+
+            log.info(f'Granting permissions to tables: {shared_tables}')
+            approved_tables_succeed = ProcessLakeFormationShare(
+                session,
+                dataset,
+                share,
+                shared_tables,
+                [],
+                source_environment,
+                target_environment,
+                env_group,
+            ).process_approved_shares()
+            log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+
+            new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
             share_sm.update_state(session, share, new_share_state)
 
-            (
-                shared_tables,
-                shared_folders,
-                shared_buckets
-            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
+            return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
 
-        log.info(f'Granting permissions to folders: {shared_folders}')
+        except Exception as e:
+            log.error(f"Error occurred during share approval: {e}")
+            return False
 
-        approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
-            session,
-            dataset,
-            share,
-            shared_folders,
-            source_environment,
-            target_environment,
-            source_env_group,
-            env_group
-        )
-        log.info(f'sharing folders succeeded = {approved_folders_succeed}')
-
-        log.info('Granting permissions to S3 buckets')
-
-        approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
-            session,
-            dataset,
-            share,
-            shared_buckets,
-            source_environment,
-            target_environment,
-            source_env_group,
-            env_group
-        )
-        log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
-
-        log.info(f'Granting permissions to tables: {shared_tables}')
-        approved_tables_succeed = ProcessLakeFormationShare(
-            session,
-            dataset,
-            share,
-            shared_tables,
-            [],
-            source_environment,
-            target_environment,
-            env_group,
-        ).process_approved_shares()
-        log.info(f'sharing tables succeeded = {approved_tables_succeed}')
-
-        new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
-        share_sm.update_state(session, share, new_share_state)
-
-        return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
+        finally:
+            lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+            if not lock_released:
+                log.error(f"Failed to release lock for dataset {dataset.datasetUri}.")
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str):
@@ -226,3 +246,108 @@ class DataSharingService:
             share_sm.update_state(session, share, new_share_state)
 
             return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+
+    @staticmethod
+    def acquire_lock(dataset_uri, session, share_uri):
+        """
+        Attempts to acquire a lock on the dataset identified by dataset_id.
+
+        Args:
+            dataset_uri: The ID of the dataset for which the lock is being acquired.
+            session (sqlalchemy.orm.Session): The SQLAlchemy session object used for interacting with the database.
+            share_uri: The ID of the share that is attempting to acquire the lock.
+
+        Returns:
+            bool: True if the lock is successfully acquired, False otherwise.
+        """
+        try:
+            # Execute the query to get the DatasetLock object
+            dataset_lock = (
+                session.query(DatasetLock)
+                .filter(
+                    and_(
+                        DatasetLock.datasetUri == dataset_uri,
+                        ~DatasetLock.isLocked
+                    )
+                )
+                .first()
+            )
+
+            # Check if dataset_lock is not None before attempting to update
+            if dataset_lock:
+                # Update the attributes of the DatasetLock object
+                dataset_lock.isLocked = True
+                dataset_lock.acquiredBy = share_uri
+
+                session.commit()
+                return True
+            else:
+                log.info("DatasetLock not found for the given criteria.")
+                return False
+
+        except Exception as e:
+            session.rollback()
+            log.error("Error occurred while acquiring lock:", e)
+            return False
+
+    @staticmethod
+    def acquire_lock_with_retry(dataset_uri, session, share_uri):
+        max_retries = 10
+        retry_interval = 60
+        for attempt in range(max_retries):
+            try:
+                log.info(f"Attempting to acquire lock for dataset {dataset_uri} by share {share_uri}...")
+                lock_acquired = DataSharingService.acquire_lock(dataset_uri, session, share_uri)
+                if lock_acquired:
+                    return True
+
+                log.info(
+                    f"Lock for dataset {dataset_uri} already acquired. Retrying in {retry_interval} seconds...")
+                sleep(retry_interval)
+
+            except Exception as e:
+                log.error("Error occurred while retrying acquiring lock:", e)
+                return False
+
+        log.info(f"Max retries reached. Failed to acquire lock for dataset {dataset_uri}")
+        return False
+
+    @staticmethod
+    def release_lock(dataset_uri, session, share_uri):
+        """
+        Releases the lock on the dataset identified by dataset_uri.
+
+        Args:
+            dataset_uri: The ID of the dataset for which the lock is being released.
+            session (sqlalchemy.orm.Session): The SQLAlchemy session object used for interacting with the database.
+            share_uri: The ID of the share that is attempting to release the lock.
+
+        Returns:
+            bool: True if the lock is successfully released, False otherwise.
+        """
+        try:
+            log.info(f"Releasing lock for dataset: {dataset_uri} last acquired by share: {share_uri}")
+            query = (
+                session.query(DatasetLock)
+                .filter(
+                    and_(
+                        DatasetLock.datasetUri == dataset_uri,
+                        DatasetLock.isLocked == True,
+                        DatasetLock.acquiredBy == share_uri
+                    )
+                )
+            )
+
+            query.update(
+                {
+                    "isLocked": False,
+                    "acquiredBy": share_uri
+                },
+                synchronize_session=False
+            )
+
+            session.commit()
+            return True
+        except Exception as e:
+            log.error("Error occurred while releasing lock:", e)
+            return False
