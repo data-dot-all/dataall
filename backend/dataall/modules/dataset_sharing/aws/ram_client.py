@@ -78,7 +78,7 @@ class RamClient:
 
         paginator = source_ram._client.get_paginator('get_resource_share_associations')
         association_pages = paginator.paginate(
-            resourceShareArns = resource_share_arns,
+            resourceShareArns=resource_share_arns,
             associationType="PRINCIPAL",
             principal=target_account_id
         )
