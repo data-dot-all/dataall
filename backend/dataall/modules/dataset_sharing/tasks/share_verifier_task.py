@@ -1,10 +1,9 @@
 import logging
 import os
 import sys
-from dataall.backend.dataall.modules.dataset_sharing.api.types import ShareObject
-from dataall.backend.dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.backend.dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
-from dataall.backend.dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
+from dataall.modules.dataset_sharing.api.types import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
 from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 from dataall.base.db import get_engine
 
