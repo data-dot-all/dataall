@@ -71,19 +71,25 @@ class RamClient:
             f'arn:aws:glue:{source_region}:{source_account_id}:'
             f'table/{source_database}/{source_table_name}'
         )
+        associations = source_ram._list_resource_share_associations(resource_arn)
+        resource_share_arns = [a['resourceShareArn'] for a in associations]
 
         resource_share_associations = []
 
         paginator = source_ram._client.get_paginator('get_resource_share_associations')
         association_pages = paginator.paginate(
+            resourceShareArns = resource_share_arns,
             associationType="PRINCIPAL",
-            principal=target_account_id,
-            associationStatus="ASSOCIATED"
+            principal=target_account_id
         )
         for page in association_pages:
             resource_share_associations.extend(page.get('resourceShareAssociations'))
 
-        filtered_associations = [i for i in resource_share_associations if i['associatedEntity'] == "417633957888"]
+        filtered_associations = [
+            i
+            for i in resource_share_associations
+            if i["status"] == "ASSOCIATED"
+        ]
 
         log.info(
             f'Found {len(filtered_associations)} RAM associations for resourceShareArn: {resource_arn}'
