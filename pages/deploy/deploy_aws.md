@@ -431,9 +431,7 @@ instructions in the comments to create and return an instance of your custom ser
         else:
             return Cognito()
 ```
-
-## 7. Configure the application modules in the config.json file
-
+## 7. Configure the application modules in the config.json file <a name="configjson"></a>
 In data.all V2 you can enable, disable, configure and add new modules to your data.all deployment in the `config.json` file
 located at the top level of the repository. Here is an example file, where you
 can distinguish 2 parts: `modules` and `core`. Read the following subsections to understand each of these parts and 
@@ -549,6 +547,8 @@ In the example config.json, the feature that enables file upload from data.all U
 | preview_data        | datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
 | glue_crawler        | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
 | share_notifications | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
+| confidentiality_dropdown | datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
+| topics_dropdown | datasets | Disable / Enable use of topics for a dataset | 
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
@@ -570,7 +570,7 @@ disable any other core feature.
 
 ### Add Customization
 
-At places, you can use few customizations to create a tailored data.all for your needs. Below are few customization available,
+At places, you can use few customizations to create a tailored data.all for your needs. Below are few customizations available,
 
 | **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
 |--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
