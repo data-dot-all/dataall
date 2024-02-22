@@ -28,7 +28,10 @@ export PYTHONPATH=backend
 export envname=local
 ```
 In a real-life RDS database, `envname` adopts the value of the environment (e.g., dev, test, etc.).
-
+If you want to apply the same migrations against your db schema that is used in local data.all deployments, you should use schema `dkrcompose`.
+```bash
+export envname=dkrcompose
+```
 
 ## Managing migrations
 
