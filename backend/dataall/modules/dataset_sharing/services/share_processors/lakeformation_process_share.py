@@ -155,6 +155,7 @@ class ProcessLakeFormationShare(LFShareManager):
             '##### Starting Revoking tables #######'
         )
         success = True
+        self.grant_pivot_role_all_database_permissions_to_shared_database()
         for table in self.revoked_tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
@@ -182,6 +183,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
                         warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                        self.grant_pivot_role_drop_permissions_to_resource_link_table(table)
                         self.delete_resource_link_table_in_shared_database(table)
 
                 if not other_table_shares_in_env:
