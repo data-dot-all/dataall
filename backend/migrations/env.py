@@ -5,8 +5,9 @@ import re
 
 
 # DO NOT DELETE
+# these models are not used directly in env.py, but these imports are important for alembic
 # import additional models here
-# they are not used directly in env.py, but these imports are important for alembic
+
 
 from dataall.modules.catalog.db.glossary_models import GlossaryNode, TermLink
 from dataall.modules.dashboards.db.dashboard_models import DashboardShare, Dashboard
