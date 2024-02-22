@@ -362,10 +362,12 @@ class SessionHelper:
 
     @staticmethod
     def is_assumable_pivot_role(accountid):
-        aws_session = SessionHelper.remote_session(accountid=accountid)
-        if aws_session is None:
-            log.error(
-                f'Failed to assume dataall pivot role in environment {accountid}'
-            )
+        try:
+            SessionHelper.remote_session(accountid=accountid)
+        except ClientError as e:
+            log.error(f'Failed to assume dataall pivot role session in environment with account id {accountid} due to {e}')
+            return False
+        except Exception as e:
+            log.error(f'Unexpected error while assuming data.all pivot role in environment with account id {accountid} due to {e}')
             return False
         return True

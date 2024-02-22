@@ -66,10 +66,9 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to share. Skipping...")
         else:
             try:
-                if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
-                    log.info('Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
-                    success = False
-                    return success
+                if None in [self.source_account_id ,self.source_account_region ,self.source_database_name]:
+                    raise Exception(
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
                 self.initialize_clients()
                 self.grant_pivot_role_all_database_permissions_to_source_database()
                 self.check_if_exists_and_create_shared_database_in_target()
@@ -79,8 +78,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 log.error(f"Failed to process approved tables due to {e}")
                 self.handle_share_failure_for_all_tables(tables=self.shared_tables, error=e,
                                                          share_item_status=ShareItemStatus.Share_Approved.value)
-                success = False
-                return success
+                return False
 
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
@@ -167,19 +165,16 @@ class ProcessLakeFormationShare(LFShareManager):
         )
         success = True
         try:
-            if self.source_account_id is None or self.source_account_region is None or self.source_database_name is None:
-                log.info(
-                    'Source account details not initialized properly. Hint : Check if the catalog account is onboarded successfully if it is being used')
-                success = False
-                return success
+            if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
+                raise Exception(
+                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
             self.initialize_clients()
             self.grant_pivot_role_all_database_permissions_to_shared_database()
         except Exception as e:
             log.error(f"Failed to process revoked tables due to {e}")
             self.handle_share_failure_for_all_tables(tables=self.revoked_tables, error=e,
                                                      share_item_status=ShareItemStatus.Revoke_Approved.value)
-            success = False
-            return success
+            return False
 
         for table in self.revoked_tables:
             share_item = ShareObjectRepository.find_sharable_item(
