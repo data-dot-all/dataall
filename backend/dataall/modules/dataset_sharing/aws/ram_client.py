@@ -72,7 +72,7 @@ class RamClient:
             f'table/{source_database}/{source_table_name}'
         )
         associations = source_ram._list_resource_share_associations(resource_arn)
-        resource_share_arns = [a['resourceShareArn'] for a in associations]
+        resource_share_arns = [a['resourceShareArn'] for a in associations if a['status'] == "ASSOCIATED"]
 
         if not len(resource_share_arns):
             return False
