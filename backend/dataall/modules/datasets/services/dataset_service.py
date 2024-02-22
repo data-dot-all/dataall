@@ -228,15 +228,16 @@ class DatasetService:
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
-                for k in data.keys():
-                    if k != 'stewards':
-                        setattr(dataset, k, data.get(k))
-                if data.get('KmsAlias') not in ["Undefined"]:
-                    dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
-                    dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
-
                 if data.get('imported', False):
                     DatasetService.check_imported_resources(dataset)
+
+                for k in data.keys():
+                    if k not in ['stewards', 'KmsAlias']:
+                        setattr(dataset, k, data.get(k))
+
+                if data.get('KmsAlias') not in ["Undefined"] and data.get('KmsAlias') != dataset.KmsAlias:
+                    dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
+                    dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:

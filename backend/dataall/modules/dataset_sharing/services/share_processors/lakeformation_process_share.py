@@ -163,7 +163,7 @@ class ProcessLakeFormationShare(LFShareManager):
         log.info("##### Starting Revoking tables #######")
         success = True
         self.grant_pivot_role_all_database_permissions_to_shared_database()
-        for table in self.revoked_tables:
+        for table in self.tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
             )
