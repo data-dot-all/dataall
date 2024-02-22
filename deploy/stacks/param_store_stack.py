@@ -1,3 +1,4 @@
+import json
 import random
 import string
 
@@ -8,6 +9,7 @@ from aws_cdk import (
 )
 
 from .pyNestedStack import pyNestedClass
+from .deploy_config import deploy_config
 
 
 class ParamStoreStack(pyNestedClass):
@@ -120,6 +122,14 @@ class ParamStoreStack(pyNestedClass):
             parameter_name=f"/dataall/{envname}/pivotRole/externalId",
             string_value=str(external_id_value),
             description=f"Stores dataall external id for environment {envname}",
+        )
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataall_{envname}_version',
+            parameter_name=f'/dataall/{envname}/version',
+            string_value=str(json.dumps(deploy_config.get_dataall_version())),
+            description='Deployed data all version'
         )
 
 def _get_external_id_value(envname, account_id, region):

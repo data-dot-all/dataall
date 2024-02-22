@@ -382,6 +382,7 @@ class DatasetStack(Stack):
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
                 iam.ServicePrincipal('glue.amazonaws.com'),
+                iam.ServicePrincipal('lakeformation.amazonaws.com'),
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)

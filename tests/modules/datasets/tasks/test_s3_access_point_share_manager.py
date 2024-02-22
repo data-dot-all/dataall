@@ -23,6 +23,7 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
 
 @pytest.fixture(scope="module")
@@ -551,6 +552,11 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         # When
         manager.update_dataset_bucket_key_policy()
 
@@ -657,6 +663,11 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
             target_environment_group,
         )
 
+        mocker.patch(
+            "dataall.base.aws.sts.SessionHelper.get_delegation_role_name",
+            return_value="dataallPivotRole",
+        )
+
         # When
         manager.update_dataset_bucket_key_policy()
 
@@ -666,7 +677,7 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
         kms_key_policy = json.loads(kms_client().put_key_policy.call_args[0][1])
 
         # Then
-        assert len(kms_key_policy["Statement"]) == 1
+        assert len(kms_key_policy["Statement"]) == 2
         assert kms_key_policy["Statement"][0]["Sid"] == DATAALL_ACCESS_POINT_KMS_DECRYPT_SID
         assert kms_key_policy["Statement"][0]["Action"] == "kms:Decrypt"
 
@@ -1365,13 +1376,50 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
                 ]},
                 "Action": "kms:Decrypt",
                 "Resource": "*"
+            },
+            {
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Effect": "Allow",
+                "Principal": {"AWS": [
+                    f"arn:aws:iam::{target_environment.AwsAccountId}:role/dataallPivotRole"
+                ]},
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey*",
+                    "kms:PutKeyPolicy",
+                    "kms:GetKeyPolicy",
+                    "kms:ReEncrypt*",
+                    "kms:TagResource",
+                    "kms:UntagResource"
+                ],
+                "Resource": "*"
             }
         ],
     }
 
     remaining_policy = {
         "Version": "2012-10-17",
-        "Statement": [],
+        "Statement": [
+            {
+                "Sid": f"{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}",
+                "Effect": "Allow",
+                "Principal": {"AWS": [
+                    f"arn:aws:iam::{target_environment.AwsAccountId}:role/dataallPivotRole"
+                ]},
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey*",
+                    "kms:PutKeyPolicy",
+                    "kms:GetKeyPolicy",
+                    "kms:ReEncrypt*",
+                    "kms:TagResource",
+                    "kms:UntagResource"
+                ],
+                "Resource": "*"
+            }
+        ],
     }
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)

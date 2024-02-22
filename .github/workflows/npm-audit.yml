@@ -1,4 +1,4 @@
-name: Run npm-audit
+name: npm-audit
 
 on:
   workflow_dispatch:

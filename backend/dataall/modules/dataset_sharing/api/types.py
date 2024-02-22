@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.dataset_sharing.api.enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
     resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
     resolve_group, list_shareable_objects, resolve_user_role
@@ -99,6 +99,7 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name='description', type=gql.String),
     ],
 )
 

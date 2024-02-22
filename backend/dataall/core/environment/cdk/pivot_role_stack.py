@@ -77,11 +77,6 @@ class PivotRole(NestedStack):
             external_id=config['externalId'],
         )
 
-        # Data.All IAM Lake Formation service role creation
-        self.lf_service_role = iam.CfnServiceLinkedRole(
-            self, 'LakeFormationSLR', aws_service_name='lakeformation.amazonaws.com'
-        )
-
     def create_pivot_role(self, principal_id: str, external_id: str) -> iam.Role:
         """
         Creates an IAM Role that will enable data.all to interact with this Data Account

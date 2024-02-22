@@ -67,7 +67,7 @@ class CDKPipelineStack:
                     )
                 )
                 CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
-                CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
+                CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments, pipeline_environment=self.pipeline_environment)
 
                 logger.info(f"Pipeline Repo {self.pipeline.repo} Exists...Handling Update")
                 update_cmds = [
@@ -94,7 +94,7 @@ class CDKPipelineStack:
                 raise Exception
         except Exception as e:
             self.initialize_repo()
-            CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
+            CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments, pipeline_environment=self.pipeline_environment)
             CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
             self.git_push_repo()
 
@@ -157,7 +157,7 @@ class CDKPipelineStack:
             print(json, file=text_file)
 
     @staticmethod
-    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
+    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments, pipeline_environment):
         header = f"""
 # !/usr/bin/env python3
 
@@ -177,7 +177,7 @@ class ApplicationStage(cdk.Stage):
         super().__init__(scope, f"dataall-{{environment_id.title()}}", **kwargs)
         DataallPipelineStack(self, "{pipeline.name}-DataallPipelineStack", environment_id)
 
-id = f"dataall-cdkpipeline-{pipeline.DataPipelineUri}"
+id = f"{pipeline_environment.resourcePrefix}-cdkpipeline-{pipeline.DataPipelineUri}"
 cicd_pipeline = (
     ddk.CICDPipelineStack(
         app,

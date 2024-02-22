@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_cognito as cognito,
     aws_ssm as ssm,
     aws_iam as iam,
+    aws_wafv2 as wafv2,
     aws_lambda as _lambda,
     CfnOutput,
     BundlingOptions,
@@ -14,6 +15,7 @@ from aws_cdk import (
 
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
+from .waf_rules import get_waf_rules
 
 
 class IdpStack(pyNestedClass):
@@ -26,6 +28,7 @@ class IdpStack(pyNestedClass):
         vpc=None,
         prod_sizing=False,
         internet_facing=True,
+        custom_waf_rules=None,
         tooling_account_id=None,
         enable_cw_rum=False,
         cognito_user_session_timeout_inmins=43200,
@@ -50,6 +53,41 @@ class IdpStack(pyNestedClass):
         cfn_user_pool.user_pool_add_ons = cognito.CfnUserPool.UserPoolAddOnsProperty(
             advanced_security_mode='ENFORCED'
         )
+
+        # Create IP set if IP filtering enabled in CDK.json
+        ip_set_regional = None
+        if custom_waf_rules and custom_waf_rules.get('allowed_ip_list'):
+            ip_set_regional = wafv2.CfnIPSet(
+                self,
+                'DataallRegionalIPSet-Cognito',
+                name=f'{resource_prefix}-{envname}-ipset-regional-cognito',
+                description=f'IP addresses allowed for Dataall {envname} Cognito User Pool',
+                addresses=custom_waf_rules.get('allowed_ip_list'),
+                ip_address_version='IPV4',
+                scope='REGIONAL',
+            )
+            
+
+        acl = wafv2.CfnWebACL(
+            self,
+            'ACL-Cognito',
+            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+            scope='REGIONAL',
+            visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                cloud_watch_metrics_enabled=True,
+                metric_name='waf-cognito',
+                sampled_requests_enabled=True,
+            ),
+            rules=get_waf_rules(envname, 'Cognito', custom_waf_rules, ip_set_regional),
+        )
+
+        wafv2.CfnWebACLAssociation(
+            self,
+            'WafCognito',
+            resource_arn=self.user_pool.user_pool_arn,
+            web_acl_arn=acl.get_att('Arn').to_string(),
+        )
+
         self.domain = cognito.UserPoolDomain(
             self,
             f'UserPool{envname}',
@@ -160,8 +198,8 @@ class IdpStack(pyNestedClass):
 
         cross_account_frontend_config_role = iam.Role(
             self,
-            f'{resource_prefix}-{envname}-frontend-config-role',
-            role_name=f'{resource_prefix}-{envname}-frontend-config-role',
+            f'{resource_prefix}-{envname}-cognito-config-role',
+            role_name=f'{resource_prefix}-{envname}-cognito-config-role',
             assumed_by=iam.AccountPrincipal(tooling_account_id),
         )
         cross_account_frontend_config_role.add_to_policy(

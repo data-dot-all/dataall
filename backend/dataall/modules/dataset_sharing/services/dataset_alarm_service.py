@@ -19,9 +19,9 @@ class DatasetAlarmService(AlarmService):
             target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
-        subject = f'ALARM: DATAALL Table {table.GlueTableName} Sharing Failure Notification'[:100]
+        subject = f'Data.all Share Failure for Table {table.GlueTableName}'[:100]
         message = f"""
-    You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the table {table.GlueTableName} with Lake Formation.
+    You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the table {table.GlueTableName} with Lake Formation.
 
     Alarm Details:
         - State Change:               	OK -> ALARM
@@ -49,9 +49,9 @@ class DatasetAlarmService(AlarmService):
             target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
-        subject = f'ALARM: DATAALL Table {table.GlueTableName} Revoking LF permissions Failure Notification'[:100]
+        subject = f'Data.all Revoke LF Permissions Failure for Table {table.GlueTableName}'[:100]
         message = f"""
-    You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to revoke Lake Formation permissions for table {table.GlueTableName} with Lake Formation.
+    You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to revoke Lake Formation permissions for table {table.GlueTableName} with Lake Formation.
 
     Alarm Details:
         - State Change:               	OK -> ALARM
@@ -74,9 +74,9 @@ class DatasetAlarmService(AlarmService):
 
     def trigger_dataset_sync_failure_alarm(self, dataset: Dataset, error: str):
         log.info(f'Triggering dataset {dataset.name} tables sync failure alarm...')
-        subject = f'ALARM: DATAALL Dataset {dataset.name} Tables Sync Failure Notification'[:100]
+        subject = f'Data.all Dataset Tables Sync Failure for {dataset.name}'[:100]
         message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to synchronize Dataset {dataset.name} tables from AWS Glue to the Search Catalog.
+You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to synchronize Dataset {dataset.name} tables from AWS Glue to the Search Catalog.
 
 Alarm Details:
     - State Change:               	OK -> ALARM
@@ -97,9 +97,9 @@ Alarm Details:
         target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
-        subject = f'ALARM: DATAALL Folder {folder.S3Prefix} Sharing Failure Notification'[:100]
+        subject = f'Data.all Folder Share Failure for {folder.S3Prefix}'[:100]
         message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
+You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
 Alarm Details:
     - State Change:               	OK -> ALARM
     - Reason for State Change:      S3 Folder sharing failure
@@ -123,9 +123,9 @@ Alarm Details:
         target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
-        subject = f'ALARM: DATAALL Folder {folder.S3Prefix} Sharing Revoke Failure'[:100]
+        subject = f'Data.all Folder Share Revoke Failure for {folder.S3Prefix}'[:100]
         message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
+You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
 Alarm Details:
     - State Change:               	OK -> ALARM
     - Reason for State Change:      S3 Folder sharing Revoke failure
@@ -165,9 +165,9 @@ Alarm Details:
                                       target_environment: Environment,
                                       alarm_type: str):
         log.info(f'Triggering {alarm_type} failure alarm...')
-        subject = f'ALARM: DATAALL S3 Bucket {bucket.S3BucketName} {alarm_type} Failure'[:100]
+        subject = f'Data.all S3 Bucket Failure for {bucket.S3BucketName} {alarm_type}'[:100]
         message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to {alarm_type} the S3 Bucket {bucket.S3BucketName}.
+You are receiving this email because your Data.all {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to {alarm_type} the S3 Bucket {bucket.S3BucketName}.
 Alarm Details:
     - State Change:               	OK -> ALARM
     - Reason for State Change:      S3 Bucket {alarm_type} failure
