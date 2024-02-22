@@ -189,7 +189,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 )
 
                 if resource_link_table_exists:
-                    self.revoke_principals_permissions_to_resource_link_table(table, other_table_shares_in_env)
+                    self.revoke_principals_permissions_to_resource_link_table(table)
                     self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
