@@ -112,7 +112,8 @@ export const RequestAccessModal = (props) => {
             value: g.consumptionRoleUri,
             label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
             dataallManaged: g.dataallManaged,
-            isSharePolicyAttached: g.isSharePolicyAttached
+            isSharePolicyAttached: g.isSharePolicyAttached,
+            policyName: g.sharePolicyRolName
           }))
         );
       } else {
@@ -490,6 +491,26 @@ export const RequestAccessModal = (props) => {
                               component="p"
                               variant="caption"
                             ></Typography>
+                            {values.consumptionRoleObj &&
+                            !(
+                              values.consumptionRoleObj.dataallManaged ||
+                              values.consumptionRoleObj.isSharePolicyAttached ||
+                              values.attachMissingPolicies
+                            ) ? (
+                              <FormHelperText error>
+                                Selected consumption role is managed by
+                                customer, but the share policy{' '}
+                                <strong>
+                                  {values.consumptionRoleObj.policyName}
+                                </strong>{' '}
+                                is not attached.
+                                <br />
+                                Please attach it or let Data.all attach it for
+                                you.
+                              </FormHelperText>
+                            ) : (
+                              ''
+                            )}
                           </div>
                         }
                       />
@@ -528,7 +549,15 @@ export const RequestAccessModal = (props) => {
                     fullWidth
                     startIcon={<SendIcon fontSize="small" />}
                     color="primary"
-                    disabled={isSubmitting}
+                    disabled={
+                      isSubmitting ||
+                      (values.consumptionRoleObj &&
+                        !(
+                          values.consumptionRoleObj.dataallManaged ||
+                          values.consumptionRoleObj.isSharePolicyAttached ||
+                          values.attachMissingPolicies
+                        ))
+                    }
                     type="submit"
                     variant="contained"
                   >
