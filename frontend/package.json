@@ -80,7 +80,8 @@
     "react-scripts": {
       "resolve-url-loader": "5.0.0"
     },
-    "postcss": "8.4.31"
+    "postcss": "8.4.31",
+    "ip": "1.1.9"
   },
   "resolutions": {
     "react-redux": "^7.2.6",
@@ -89,7 +90,8 @@
     "merge": "2.1.1",
     "@babel/traverse": "7.23.2",
     "resolve-url-loader": "5.0.0",
-    "postcss": "8.4.31"
+    "postcss": "8.4.31",
+    "ip": "1.1.9"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
