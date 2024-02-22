@@ -74,6 +74,9 @@ class RamClient:
         associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
+        if not len(resource_share_arns):
+            return False
+
         resource_share_associations = []
 
         paginator = source_ram._client.get_paginator('get_resource_share_associations')

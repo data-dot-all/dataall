@@ -330,8 +330,16 @@ class S3AccessPointShareManager:
         existing_policy = json.loads(existing_policy)
         statements = {item["Sid"]: item for item in existing_policy["Statement"]}
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
-
+        error = False
         if f"{target_requester_id}0" not in statements.keys():
+            error = True
+        else:
+            prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+            if isinstance(prefix_list, str):
+                prefix_list = [prefix_list]
+            if f"{self.s3_prefix}/*" not in prefix_list:
+                error = True
+        if error:
             self.folder_errors.append(
                 format_error_message(
                     self.target_requester_IAMRoleName,
@@ -341,22 +349,17 @@ class S3AccessPointShareManager:
                     self.access_point_name,
                 )
             )
-        else:
-            prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
-            if isinstance(prefix_list, str):
-                prefix_list = [prefix_list]
-            if f"{self.s3_prefix}/*" not in prefix_list:
-                self.folder_errors.append(
-                    format_error_message(
-                        self.target_requester_IAMRoleName,
-                        "Policy",
-                        f"{target_requester_id}0",
-                        "Access Point",
-                        self.access_point_name,
-                    )
-                )
 
+        error1 = False
         if f"{target_requester_id}1" not in statements.keys():
+            error1 = True
+        else:
+            resource_list = statements[f"{target_requester_id}1"]["Resource"]
+            if isinstance(resource_list, str):
+                resource_list = [resource_list]
+            if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
+                error1 = True
+        if error1:
             self.folder_errors.append(
                 format_error_message(
                     self.target_requester_IAMRoleName,
@@ -366,21 +369,6 @@ class S3AccessPointShareManager:
                     self.access_point_name,
                 )
             )
-        else:
-            resource_list = statements[f"{target_requester_id}1"]["Resource"]
-            if isinstance(resource_list, str):
-                resource_list = [resource_list]
-            if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
-                self.folder_errors.append(
-                    format_error_message(
-                        self.target_requester_IAMRoleName,
-                        "Policy",
-                        f"{target_requester_id}1",
-                        "Access Point",
-                        self.access_point_name,
-                    )
-                )
-        return
 
     def manage_access_point_and_policy(self):
         """

@@ -202,7 +202,7 @@ class LFShareManager:
         """
         if not self.glue_client_in_target.get_glue_database():
             self.db_level_errors.append(
-                format_error_message(None, None, None, "Glue DB", self.dataset.GlueDatabaseName)
+                format_error_message(None, None, None, "Glue DB", self.shared_db_name)
             )
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
