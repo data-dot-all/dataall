@@ -66,7 +66,7 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to share. Skipping...")
         else:
             try:
-                if None in [self.source_account_id ,self.source_account_region ,self.source_database_name]:
+                if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                     raise Exception(
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
                 self.initialize_clients()
