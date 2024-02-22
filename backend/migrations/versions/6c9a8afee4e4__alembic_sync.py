@@ -1,4 +1,4 @@
-"""_describe_changes_shortly
+"""alembic_sync
 
 Revision ID: 6c9a8afee4e4
 Revises: f6cd4ba7dd8d
