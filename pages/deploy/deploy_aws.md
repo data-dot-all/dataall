@@ -456,6 +456,8 @@ the different configuration options.
                         }
                     }
                 },
+                "confidentiality_dropdown" : true,
+                "topics_dropdown" : true
             },
         },
         "mlstudio": {
@@ -545,6 +547,29 @@ In the example config.json, the feature that enables file upload from data.all U
 | preview_data        | datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
 | glue_crawler        | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
 | share_notifications | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
+| confidentiality_dropdown | datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
+| topics_dropdown | datasets | Disable / Enable use of topics for a dataset | 
+
+### Customizing Module Features
+
+In addition to disabling / enabling, some module features allow for additional customization to create a tailored data.all for your needs. Below is one such example of how one could customize module features in the config.json. Please refer to the list for all customization options
+```json
+    "datasets": {
+        "features": {
+            "custom_confidentiality_mapping": {
+                 "Public" : "Unclassified",
+                 "Private" : "Official", 
+                 "Confidential" : "Secret",
+                 "Very Highly Confidential" : "Secret"
+             }
+        }
+    }
+```
+
+| **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
+|--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
+
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
@@ -563,6 +588,7 @@ disable any other core feature.
 | **Feature**           | **Module**     | **Description**                                                                  |   
 |-----------------------|----------------|----------------------------------------------------------------------------------|
 | env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
+
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
 With this command, CDK will create a **cdk.context.json** file with key-value pairs that are checked at 
