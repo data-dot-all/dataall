@@ -155,7 +155,7 @@ def share_item_folder(db):
                 itemType=ShareableType.StorageLocation.value,
                 itemName=location.name,
                 status=ShareItemStatus.Share_Approved.value,
-                S3AccessPointName="location1"
+                S3AccessPointName=location.name
             )
             session.add(share_item)
             session.commit()
