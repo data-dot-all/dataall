@@ -50,7 +50,7 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                     "cloudformation:DescribeStackResources"
                 ],
                 resources=[
-                    f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
+                    f'arn:aws:cloudformation:*:{self.account}:stack/{self.env_resource_prefix}*/*',
                 ],
             ),
             iam.PolicyStatement(
