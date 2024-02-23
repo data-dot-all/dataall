@@ -4,6 +4,9 @@ import logging
 
 log = logging.getLogger(__name__)
 
+IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
+IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
+
 
 class SharePolicyService:
 
@@ -13,11 +16,42 @@ class SharePolicyService:
 
     @staticmethod
     # returns share policy name and a flag, if it's attached or not
-    def get_share_policy_status(iam_role_name, environmentUri, AWSAccountId, ) -> (str, bool):
+    def get_share_policy_status(iam_role_name, environmentUri, AWSAccountId) -> (str, bool):
 
         policy_name = SharePolicyService.generate_share_policy_name(environmentUri, iam_role_name)
 
         return policy_name, IAM.is_policy_attached(AWSAccountId, policy_name, iam_role_name)
+
+    @staticmethod
+    def check_if_share_policy_exists(iam_role_name, environmentUri, AWSAccountId):
+        policy_name = SharePolicyService.generate_share_policy_name(environmentUri, iam_role_name)
+        share_policy = IAM.get_policy_by_name(AWSAccountId, policy_name)
+        return (share_policy is not None)
+
+    @staticmethod
+    def create_and_attach_share_policy_for_existing_role(iam_role_name, environmentUri, AWSAccountId):
+        share_policy_name = SharePolicyService.generate_share_policy_name(environmentUri, iam_role_name)
+        try:
+            policy_document = SharePolicyService.empty_share_policy_document()
+            # if there were inline policies with already shared resources,
+            # let's add these resources to new managed policy
+            SharePolicyService.fill_policy_with_existing_resources(AWSAccountId, iam_role_name, policy_document)
+            log.info(f"Required share policy does not exist. Let's create one with name: {share_policy_name}")
+            share_policy_arn = IAM.create_managed_policy(AWSAccountId, share_policy_name,
+                                                         json.dumps(policy_document))
+            SharePolicyService.delete_obsolete_inline_policies(AWSAccountId, iam_role_name)
+            try:
+                log.info('Let`s attach missing policies')
+                IAM.attach_role_policy(
+                    AWSAccountId,
+                    iam_role_name,
+                    share_policy_arn
+                )
+            except Exception as e:
+                raise Exception(f"Required customer managed policy {share_policy_name} can't be attached: {e}")
+        except Exception as e:
+            raise Exception(
+                f"Required customer managed policy {share_policy_name} does not exist and failed to be created: {e}")
 
     @staticmethod
     def ensure_share_policy_attached(iam_role_name,
@@ -45,29 +79,24 @@ class SharePolicyService:
         # For the roles, that existed before this update, there are no managed share policy.
         # We need to create one and transfer all existed shared resources there
         # let's check, that the policy exists and if not, create it
-        share_policy_arn = ''
         share_policy = IAM.get_policy_by_name(AWSAccountId, share_policy_name)
         if share_policy is None:
+            SharePolicyService.create_and_attach_share_policy_for_existing_role(iam_role_name, environmentUri,
+                                                                                AWSAccountId)
+
+        # if it exists, we just attach it
+        else:
+            # let's attach missing policy
             try:
-                policy_document_with_existed_resources = SharePolicyService.empty_share_policy_document()
-                log.info(f"Required share policy does not exist. Let's create one with name: {share_policy_name}")
-                share_policy_arn = IAM.create_managed_policy(AWSAccountId, share_policy_name,
-                                                             json.dumps(policy_document_with_existed_resources))
+                log.info('Let`s attach missing policies')
+                IAM.attach_role_policy(
+                    AWSAccountId,
+                    iam_role_name,
+                    share_policy['Arn']
+                )
             except Exception as e:
                 raise Exception(
-                    f"Required customer managed policy {share_policy_name} does not exist and failed to be created: {e}")
-
-        # let's attach missing policy
-        try:
-            log.info('Let`s attach missing policies')
-            IAM.attach_role_policy(
-                AWSAccountId,
-                iam_role_name,
-                share_policy_arn
-            )
-        except Exception as e:
-            raise Exception(
-                f"Required customer managed policy {share_policy_name} can't be attached: {e}")
+                    f"Required customer managed policy {share_policy_name} can't be attached: {e}")
 
     @staticmethod
     def empty_share_policy_document():
@@ -126,7 +155,36 @@ class SharePolicyService:
             policy_name=policy_name
         )
 
+    @staticmethod
+    def get_resources_from_existing_inline_policy(AWSAccountId, iam_role_name, inline_policy_name):
+        try:
+            existing_policy = IAM.get_role_policy(
+                AWSAccountId,
+                iam_role_name,
+                inline_policy_name
+            )
+            return existing_policy["Statement"][0]["Resource"]
+        except Exception as e:
+            log.error(
+                f'Failed to retrieve the existing policy {inline_policy_name}: {e} '
+            )
+            return []
 
     @staticmethod
     def fill_policy_with_existing_resources(AWSAccountId, iam_role_name, policy_doc):
-        pass
+        new_resources = []
+        new_resources.extend(SharePolicyService.get_resources_from_existing_inline_policy(
+            AWSAccountId, iam_role_name, IAM_S3BUCKET_ROLE_POLICY
+        ))
+        new_resources.extend(SharePolicyService.get_resources_from_existing_inline_policy(
+            AWSAccountId, iam_role_name, IAM_ACCESS_POINT_ROLE_POLICY
+        ))
+        policy_doc["Statement"][0]["Resource"] = new_resources
+        SharePolicyService.remove_empty_statement(policy_doc)
+
+
+
+    @staticmethod
+    def delete_obsolete_inline_policies(AWSAccountId, iam_role_name):
+        IAM.delete_role_policy(AWSAccountId, iam_role_name, IAM_ACCESS_POINT_ROLE_POLICY)
+        IAM.delete_role_policy(AWSAccountId, iam_role_name, IAM_S3BUCKET_ROLE_POLICY)

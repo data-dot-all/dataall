@@ -205,6 +205,19 @@ class ShareObjectService:
                 )
 
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+
+            # if somehow by this point the policy does not exist,
+            # it means, the role was introducrs to data.all before this update
+            # for the sake of backwors compatibility, let's attache the policy
+
+            if_exists_managed_share_policy = SharePolicyService.check_if_share_policy_exists(share.principalIAMRoleName,
+                                                                                             env.environmentUri,
+                                                                                             env.AwsAccountId)
+            if not if_exists_managed_share_policy:
+                SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
+                                                                                    env.environmentUri,
+                                                                                    env.AwsAccountId)
+
             dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
             if dashboard_enabled:
                 share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
@@ -239,6 +252,7 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
+
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE

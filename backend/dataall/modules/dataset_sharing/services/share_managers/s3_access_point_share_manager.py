@@ -408,6 +408,19 @@ class S3AccessPointShareManager:
             'Deleting target role IAM policy...'
         )
 
+        # if somehow by this point the policy does not exist,
+        # it means, the role was introducrs to data.all before this update
+        # for the sake of backwors compatibility, let's attache the policy
+
+        if_exists_managed_share_policy = SharePolicyService.check_if_share_policy_exists(share.principalIAMRoleName,
+                                                                                         target_environment.environmentUri,
+                                                                                         target_environment.AwsAccountId)
+        if not if_exists_managed_share_policy:
+            SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
+                                                                                target_environment.environmentUri,
+                                                                                target_environment.AwsAccountId)
+
+
         accesspoint_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
                                                                                 share.principalIAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
