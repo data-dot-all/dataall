@@ -7,8 +7,6 @@ from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, utils
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus
 
-from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-
 
 def in_one_month():
     return datetime.now() + timedelta(days=31)
@@ -60,20 +58,3 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
-
-    def build_shared_db_name(self, account_id, region):
-        """
-        It checks if a share is prior to 2.3.0 and builds its suffix as "_shared_" + shareUri
-        For shares after 2.3.0 the suffix returned is "_shared"
-        :return: Shared database name
-        """
-        old_shared_db_name = (self.GlueDatabaseName + '_shared_' + self.shareUri)[:254]
-        database = GlueClient(
-            account_id=account_id,
-            database=old_shared_db_name,
-            region=region
-        ).get_glue_database()
-
-        if database:
-            return old_shared_db_name
-        return self.GlueDatabaseName + '_shared'

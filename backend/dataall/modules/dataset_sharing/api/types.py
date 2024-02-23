@@ -208,26 +208,6 @@ EnvironmentPublishedItemSearchResults = gql.ObjectType(
     ],
 )
 
-QueryableDatabase = gql.ObjectType(
-    name='QueryableDatabase',
-    fields=[
-        gql.Field(name='shareUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='itemType', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
-        gql.Field(name='datasetUri', type=gql.String),
-    ],
-)
-
-QueryableDatabaseSearchResults = gql.ObjectType(
-    name='QueryableDatabaseSearchResults',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='nodes', type=gql.ArrayType(QueryableDatabase)),
-    ],
-)
-
 Principal = gql.ObjectType(
     name='Principal',
     fields=[

@@ -33,14 +33,3 @@ searchEnvironmentDataItems = gql.QueryField(
     type=gql.Ref('EnvironmentPublishedItemSearchResults'),
     test_scope='Dataset',
 )
-
-searchQueryableDatabases = gql.QueryField(
-    name='searchQueryableDatabases',
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=list_databases_shared_with_environment_group,
-    type=gql.Ref('QueryableDatabaseSearchResults'),
-    test_scope='Dataset',
-)

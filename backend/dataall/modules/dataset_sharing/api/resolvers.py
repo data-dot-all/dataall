@@ -242,15 +242,6 @@ def list_shared_with_environment_data_items(
             data=filter,
         )
 
-def list_databases_shared_with_environment_group(
-    context: Context, source, environmentUri: str = None, groupUri: str = None,
-):
-    with context.engine.scoped_session() as session:
-        return ShareItemService.paginate_shared_glue_databases_env_group_worksheets(
-            session=session,
-            uri=environmentUri,
-            groupUri=groupUri,
-        )
 
 def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
     return ShareObjectService.update_share_request_purpose(
