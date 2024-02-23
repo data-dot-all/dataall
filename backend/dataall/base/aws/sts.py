@@ -359,3 +359,15 @@ class SessionHelper:
 
         # Send final URL to stdout
         return request_url
+
+    @staticmethod
+    def is_assumable_pivot_role(accountid):
+        try:
+            SessionHelper.remote_session(accountid=accountid)
+        except ClientError as e:
+            log.error(f'Failed to assume dataall pivot role session in environment with account id {accountid} due to {e}')
+            return False
+        except Exception as e:
+            log.error(f'Unexpected error while assuming data.all pivot role in environment with account id {accountid} due to {e}')
+            return False
+        return True
