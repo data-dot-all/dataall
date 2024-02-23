@@ -33,15 +33,14 @@ import {
   getSharedDatasetTables,
   listDatasetTableColumns,
   listDatasetsOwnedByEnvGroup,
-  listEnvironmentGroups,
   listValidEnvironments,
-  searchEnvironmentDataItems,
   useClient
 } from 'services';
 import {
   deleteWorksheet,
   getWorksheet,
   runAthenaSqlQuery,
+  searchQueryableDatabases,
   updateWorksheet
 } from '../services';
 import {
@@ -57,7 +56,6 @@ const WorksheetView = () => {
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [worksheet, setWorksheet] = useState({ worksheetUri: '' });
   const [results, setResults] = useState({ rows: [], fields: [] });
   const [loading, setLoading] = useState(true);
@@ -65,7 +63,6 @@ const WorksheetView = () => {
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
   const [currentEnv, setCurrentEnv] = useState();
-  const [currentTeam, setCurrentTeam] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseOptions, setDatabaseOptions] = useState([]);
@@ -110,29 +107,6 @@ const WorksheetView = () => {
     setLoadingEnvs(false);
   }, [client, dispatch]);
 
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
-
   const fetchDatabases = useCallback(
     async (environment, team) => {
       setLoadingDatabases(true);
@@ -161,30 +135,29 @@ const WorksheetView = () => {
           })
         );
       }
+      /* eslint-disable no-console */
+      console.log('here');
+      console.log(worksheet);
+      console.log(worksheet.SamlAdminGroupName);
+      /* eslint-disable no-console */
       response = await client.query(
-        searchEnvironmentDataItems({
+        searchQueryableDatabases({
           environmentUri: environment.environmentUri,
-          filter: {
-            page: 1,
-            pageSize: 10000,
-            term: '',
-            uniqueShares: true,
-            itemTypes: 'DatasetTable'
-          }
+          groupUri: worksheet.SamlAdminGroupName
         })
       );
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      if (response.data.searchEnvironmentDataItems.nodes) {
-        sharedWithDatabases =
-          response.data.searchEnvironmentDataItems.nodes.map((d) => ({
+      if (response.data.searchQueryableDatabases.nodes) {
+        sharedWithDatabases = response.data.searchQueryableDatabases.nodes.map(
+          (d) => ({
             datasetUri: d.datasetUri,
             value: d.datasetUri,
             label: `${d.GlueDatabaseName}_shared`,
-            GlueDatabaseName: `${d.GlueDatabaseName}_shared`,
-            environmentUri: d.environmentUri
-          }));
+            GlueDatabaseName: `${d.GlueDatabaseName}_shared`
+          })
+        );
 
         // Remove duplicates based on GlueDatabaseName
         sharedWithDatabases = sharedWithDatabases.filter(
@@ -198,7 +171,7 @@ const WorksheetView = () => {
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
       setLoadingDatabases(false);
     },
-    [client, dispatch]
+    [client, dispatch, worksheet]
   );
   const fetchTables = useCallback(
     async (environment, dataset) => {
@@ -341,6 +314,7 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
   }, [client, dispatch, enqueueSnackbar, navigate, worksheet]);
+
   const fetchWorksheet = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getWorksheet(params.uri));
@@ -370,22 +344,9 @@ const WorksheetView = () => {
     setSelectedTable('');
     setDatabaseOptions([]);
     setTableOptions([]);
-    setCurrentTeam('');
     setCurrentEnv(event.target.value);
-    fetchGroups(event.target.value.environmentUri).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
-    );
-  }
-
-  function handleTeamChange(event) {
-    setColumns([]);
-    setSelectedDatabase('');
-    setSelectedTable('');
-    setDatabaseOptions([]);
-    setTableOptions([]);
-    setCurrentTeam(event.target.value);
-    fetchDatabases(currentEnv, event.target.value).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
+    fetchDatabases(event.target.value, worksheet.SamlAdminGroupName).catch(
+      (e) => dispatch({ type: SET_ERROR, error: e.message })
     );
   }
 
@@ -475,31 +436,13 @@ const WorksheetView = () => {
                 </Box>
                 <Box sx={{ p: 2, mt: 2 }}>
                   <TextField
+                    disabled
                     fullWidth
                     label="Team"
                     name="team"
-                    onChange={(event) => {
-                      handleTeamChange(event);
-                    }}
-                    select
-                    value={currentTeam}
+                    value={worksheet.SamlAdminGroupName}
                     variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingEnvs ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {groupOptions.map((group) => (
-                      <MenuItem key={group.value} value={group.value}>
-                        {group.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  />
                 </Box>
                 <Box sx={{ p: 2 }}>
                   <TextField

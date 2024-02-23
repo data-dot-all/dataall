@@ -185,3 +185,11 @@ class ShareItemService:
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+
+
+    @staticmethod
+    @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
+    def paginate_shared_glue_databases_env_group_worksheets(session, uri, groupUri) -> dict:
+        return ShareObjectRepository.paginate_shared_glue_databases_env_group_worksheets(session, uri, groupUri)
+
+
