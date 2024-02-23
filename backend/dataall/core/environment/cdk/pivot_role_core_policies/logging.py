@@ -36,7 +36,7 @@ class LoggingPivotRole(PivotRoleStatementSet):
             ),
             # Logging
             iam.PolicyStatement(
-                sid='Logging', effect=iam.Effect.ALLOW, actions=['logs:PutLogEvents'], resources=['*']
+                sid='Logging', effect=iam.Effect.ALLOW, actions=['logs:PutLogEvents'], resources=[f'arn:aws:logs:*:{self.account}:log-group:*']
             ),
         ]
         return statements
