@@ -95,7 +95,7 @@ export const EnvironmentRoleAddForm = (props) => {
           <Formik
             initialValues={{
               groupUri: '',
-              dataallManaged: false
+              dataallManaged: true
             }}
             validationSchema={Yup.object().shape({
               groupUri: Yup.string()

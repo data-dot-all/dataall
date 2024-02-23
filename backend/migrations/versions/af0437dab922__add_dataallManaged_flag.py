@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False))
+    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False, default=True))
 
 
 def downgrade():
