@@ -4,7 +4,7 @@ import json
 import time
 from itertools import count
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
@@ -14,6 +14,7 @@ from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -147,8 +148,9 @@ class S3AccessPointShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
 
-        share_resource_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                          self.target_requester_IAMRoleName)
+        share_resource_policy_name = SharePolicyService.generate_share_policy_name(
+            self.target_environment.environmentUri,
+            self.target_requester_IAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
             share_resource_policy_name)
@@ -180,10 +182,7 @@ class S3AccessPointShareManager:
             IAM_ACCESS_POINT_ROLE_POLICY
         )
 
-        # toDo somehow remove this fake statement in more elegant way
-        fake_statement = "arn:aws:s3:::initial-fake-empty-bucket"
-        if fake_statement in policy_document["Statement"][0]["Resource"]:
-            policy_document["Statement"][0]["Resource"].remove("arn:aws:s3:::initial-fake-empty-bucket")
+        SharePolicyService.remove_empty_statement(policy_document)
 
         if kms_key_id:
             kms_target_resources = [
@@ -409,8 +408,8 @@ class S3AccessPointShareManager:
             'Deleting target role IAM policy...'
         )
 
-        accesspoint_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                       share.principalIAMRoleName)
+        accesspoint_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
+                                                                                share.principalIAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             target_environment.AwsAccountId,
             accesspoint_policy_name)
@@ -445,20 +444,7 @@ class S3AccessPointShareManager:
         policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
 
         if len(policy_document["Statement"]) == 0:
-            policy_document = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:*"
-                        ],
-                        "Resource": [
-                            "arn:aws:s3:::initial-fake-empty-bucket",
-                        ]
-                    }
-                ]
-            }
+            policy_document = SharePolicyService.empty_share_policy_document()
 
         IAM.update_managed_policy_default_version(
             target_environment.AwsAccountId,

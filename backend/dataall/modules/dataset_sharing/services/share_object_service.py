@@ -1,15 +1,13 @@
-from dataall.base.aws.iam import IAM
 from warnings import warn
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole, Environment
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
-from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, \
@@ -24,6 +22,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SH
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
     GET_SHARE_OBJECT
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -38,34 +37,6 @@ class ShareObjectService:
     def get_share_object(uri):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, uri)
-
-    @classmethod
-    def check_if_target_role_has_policies_attached(cls,
-                                                   role_name,
-                                                   dataallManaged,
-                                                   target_environment: Environment,
-                                                   attachMissingPolicies: bool
-                                                   ):
-        share_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                 role_name)
-
-        is_share_policy_attached = IAM.is_policy_attached(target_environment.AwsAccountId, share_policy_name,
-                                                          role_name)
-        if is_share_policy_attached:
-            return
-
-        if dataallManaged or attachMissingPolicies:
-            log.info(f' consumption_role.dataallManaged ({dataallManaged}) or flag '
-                     f'attachMissingPolicies ({attachMissingPolicies}) is true: so let`s attach missing policies')
-            arn = f'arn:aws:iam::{target_environment.AwsAccountId}:policy/{share_policy_name}'
-            IAM.attach_role_policy(
-                target_environment.AwsAccountId,
-                role_name,
-                arn
-            )
-        else:
-            raise Exception(
-                f"Required customer managed policy {share_policy_name} is not attached to role {role_name}")
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
@@ -100,10 +71,11 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
-                ShareObjectService.check_if_target_role_has_policies_attached(
+                SharePolicyService.ensure_share_policy_attached(
                     consumption_role.IAMRoleName,
                     consumption_role.dataallManaged,
-                    environment,
+                    environment.environmentUri,
+                    environment.AwsAccountId,
                     attachMissingPolicies
                 )
 
@@ -114,10 +86,11 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
-                ShareObjectService.check_if_target_role_has_policies_attached(
+                SharePolicyService.ensure_share_policy_attached(
                     principal_iam_role_name,
                     True,
-                    environment,
+                    environment.environmentUri,
+                    environment.AwsAccountId,
                     True
                 )
 

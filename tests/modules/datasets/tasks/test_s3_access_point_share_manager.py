@@ -5,6 +5,7 @@ import json
 
 from typing import Callable
 
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
@@ -432,7 +433,6 @@ def test_grant_target_role_access_policy_test_no_policy(
         source_environment: Environment,
         target_environment: Environment,
 ):
-
     initial_policy_document = {
         "Version": "2012-10-17",
         "Statement": [
@@ -449,8 +449,8 @@ def test_grant_target_role_access_policy_test_no_policy(
     }
 
     # Given
-    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',initial_policy_document))
-
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+                 return_value=('v1', initial_policy_document))
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -500,7 +500,7 @@ def test_grant_target_role_access_policy_test_no_policy(
         # When
         manager.grant_target_role_access_policy()
 
-        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
                                                                     share1.principalIAMRoleName)
         # Then
         iam_update_role_policy_mock.assert_called_with(
@@ -1155,14 +1155,13 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     }
 
     # Given
-    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',existing_target_role_policy))
-
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+                 return_value=('v1', existing_target_role_policy))
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
-
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -1183,8 +1182,8 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         # When
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
-        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName)
+        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
+                                                                             share1.principalIAMRoleName)
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
@@ -1254,8 +1253,8 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     }
 
     # Given
-    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',existing_target_role_policy))
-
+    mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+                 return_value=('v1', existing_target_role_policy))
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -1282,7 +1281,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
         # Then
-        expected_policy_name = ConsumptionRole.generate_policy_name(target_environment.environmentUri,
+        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
                                                                     share1.principalIAMRoleName)
 
         iam_update_role_policy_mock.assert_called_with(
