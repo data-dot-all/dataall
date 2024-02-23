@@ -110,7 +110,7 @@ def upgrade():
 
             op.create_table(
                 'dataset_lock',
-                sa.Column('datasetUri', String, nullable=False, primary_key=True),
+                sa.ForeignKeyConstraint(columns=['datasetUri'], refcolumns=['dataset.datasetUri']),
                 sa.Column('isLocked', Boolean(), nullable=False),
                 sa.Column('acquiredBy', String, nullable=False),
                 sa.PrimaryKeyConstraint('datasetUri')

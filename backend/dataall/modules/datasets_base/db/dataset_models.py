@@ -168,7 +168,7 @@ class DatasetBucket(Resource, Base):
 
 class DatasetLock(Base):
     __tablename__ = 'dataset_lock'
-    datasetUri = Column(String, nullable=False, primary_key=True)
+    datasetUri = Column(String, ForeignKey("dataset.datasetUri"), nullable=False, primary_key=True)
     isLocked = Column(Boolean, default=False)
     acquiredBy = Column(String, nullable=False)
 

@@ -18,6 +18,9 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
 log = logging.getLogger(__name__)
 
+MAX_RETRIES = 10
+RETRY_INTERVAL = 60
+
 
 class DataSharingService:
     def __init__(self):
@@ -292,9 +295,7 @@ class DataSharingService:
 
     @staticmethod
     def acquire_lock_with_retry(dataset_uri, session, share_uri):
-        max_retries = 10
-        retry_interval = 60
-        for attempt in range(max_retries):
+        for attempt in range(MAX_RETRIES):
             try:
                 log.info(f"Attempting to acquire lock for dataset {dataset_uri} by share {share_uri}...")
                 lock_acquired = DataSharingService.acquire_lock(dataset_uri, session, share_uri)
@@ -302,8 +303,8 @@ class DataSharingService:
                     return True
 
                 log.info(
-                    f"Lock for dataset {dataset_uri} already acquired. Retrying in {retry_interval} seconds...")
-                sleep(retry_interval)
+                    f"Lock for dataset {dataset_uri} already acquired. Retrying in {RETRY_INTERVAL} seconds...")
+                sleep(RETRY_INTERVAL)
 
             except Exception as e:
                 log.error("Error occurred while retrying acquiring lock:", e)
