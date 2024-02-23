@@ -12,6 +12,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
@@ -362,14 +363,15 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 
 def is_share_policy_attached(context: Context, source, **kwargs):
-    policy_name = source.get_managed_share_policy_name()
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        return IAM.is_policy_attached(environment.AwsAccountId, policy_name, source.IAMRoleName)
+        name, status = SharePolicyService.get_share_policy_status(source.IAMRoleName, environment.environmentUri,
+                                                                  environment.AwsAccountId)
+        return status
 
 
 def get_share_policy_role_name(context: Context, source, **kwargs):
-    return source.get_managed_share_policy_name()
+    return SharePolicyService.generate_share_policy_name(source.environmentUri, source.IAMRoleName)
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):
