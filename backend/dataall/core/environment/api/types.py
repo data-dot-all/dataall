@@ -189,15 +189,5 @@ ConsumptionRoleSearchResult = gql.ObjectType(
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(ConsumptionRole)),
-        gql.Field(
-            name='sharePolicyRoleName',
-            type=gql.String,
-            resolver=get_share_policy_role_name,
-        ),
-        gql.Field(
-            name='isSharePolicyAttached',
-            type=gql.String,
-            resolver=is_share_policy_attached,
-        ),
     ],
 )
