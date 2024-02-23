@@ -85,6 +85,12 @@ upgrade-db: upgrade-pip install-backend
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
 
+generate-migrations: upgrade-pip install-backend
+	pip install 'alembic'
+	export PYTHONPATH=./backend && \
+	alembic -c backend/alembic.ini upgrade head
+	alembic -c backend/alembic.ini revision -m "describe_changes_shortly" --autogenerate
+
 clean:
 	@rm -fr cdk_out/
 	@rm -fr dist/
