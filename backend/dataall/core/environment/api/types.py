@@ -167,7 +167,7 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
         gql.Field(
-            name='sharePolicyRolName',
+            name='sharePolicyRoleName',
             type=gql.String,
             resolver=get_share_policy_role_name,
         ),
@@ -190,7 +190,7 @@ ConsumptionRoleSearchResult = gql.ObjectType(
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(ConsumptionRole)),
         gql.Field(
-            name='sharePolicyRolName',
+            name='sharePolicyRoleName',
             type=gql.String,
             resolver=get_share_policy_role_name,
         ),
