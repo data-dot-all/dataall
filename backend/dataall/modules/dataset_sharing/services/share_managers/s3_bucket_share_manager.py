@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
-IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
@@ -74,14 +73,14 @@ class S3BucketShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
 
+        share_resource_policy_name = SharePolicyService.generate_share_policy_name(
+            self.target_environment.environmentUri,
+            self.target_requester_IAMRoleName)
 
-        bucket_policy_name = SharePolicyService.generate_share_policy_name(self.target_environment.environmentUri,
-                                                                           self.target_requester_IAMRoleName)
-
-        logger.info(f'Share policy name is {bucket_policy_name}')
+        logger.info(f'Share policy name is {share_resource_policy_name}')
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name)
+            share_resource_policy_name)
 
         key_alias = f"alias/{self.target_bucket.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
@@ -106,7 +105,7 @@ class S3BucketShareManager:
             resource_type=self.bucket_name,
             target_resources=s3_target_resources,
             existing_policy_statement=policy_document["Statement"][0],
-            iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+            iam_role_policy_name=share_resource_policy_name
         )
 
         SharePolicyService.remove_empty_statement(policy_document)
@@ -120,7 +119,7 @@ class S3BucketShareManager:
                     resource_type=kms_key_id,
                     target_resources=kms_target_resources,
                     existing_policy_statement=policy_document["Statement"][1],
-                    iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+                    iam_role_policy_name=share_resource_policy_name
                 )
             else:
                 additional_policy = {
@@ -134,7 +133,7 @@ class S3BucketShareManager:
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name,
+            share_resource_policy_name,
             version_id,
             json.dumps(policy_document)
         )
@@ -342,7 +341,6 @@ class S3BucketShareManager:
             SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
                                                                                 target_environment.environmentUri,
                                                                                 target_environment.AwsAccountId)
-
 
         share_resource_policy_name = SharePolicyService.generate_share_policy_name(
             self.target_environment.environmentUri,

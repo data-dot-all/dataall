@@ -470,6 +470,7 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
             datasetUri
             datasetName
           }
+          
         }
       }
     """
@@ -487,6 +488,7 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
             'principalId': groupUri,
             'principalType': PrincipalType.Group.value,
             'requestPurpose': 'testShare',
+            'attachMissingPolicies': False
         },
     )
 

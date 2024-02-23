@@ -21,7 +21,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
-IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
@@ -179,7 +178,7 @@ class S3AccessPointShareManager:
             self.bucket_name,
             s3_target_resources,
             policy_document["Statement"][0],
-            IAM_ACCESS_POINT_ROLE_POLICY
+            share_resource_policy_name
         )
 
         SharePolicyService.remove_empty_statement(policy_document)
@@ -193,7 +192,7 @@ class S3AccessPointShareManager:
                     kms_key_id,
                     kms_target_resources,
                     policy_document["Statement"][1],
-                    IAM_ACCESS_POINT_ROLE_POLICY
+                    share_resource_policy_name
                 )
             else:
                 additional_policy = {
@@ -420,12 +419,11 @@ class S3AccessPointShareManager:
                                                                                 target_environment.environmentUri,
                                                                                 target_environment.AwsAccountId)
 
-
-        accesspoint_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
-                                                                                share.principalIAMRoleName)
+        share_resource_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
+                                                                                   share.principalIAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             target_environment.AwsAccountId,
-            accesspoint_policy_name)
+            share_resource_policy_name)
 
         access_point_name = S3AccessPointShareManager.build_access_point_name(share)
 
@@ -461,7 +459,7 @@ class S3AccessPointShareManager:
 
         IAM.update_managed_policy_default_version(
             target_environment.AwsAccountId,
-            accesspoint_policy_name,
+            share_resource_policy_name,
             version_id,
             json.dumps(policy_document)
         )

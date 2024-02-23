@@ -179,11 +179,9 @@ class SharePolicyService:
         new_resources.extend(SharePolicyService.get_resources_from_existing_inline_policy(
             AWSAccountId, iam_role_name, IAM_ACCESS_POINT_ROLE_POLICY
         ))
-        if len(new_resources)>0:
+        if len(new_resources) > 0:
             policy_doc["Statement"][0]["Resource"] = new_resources
             SharePolicyService.remove_empty_statement(policy_doc)
-
-
 
     @staticmethod
     def delete_obsolete_inline_policies(AWSAccountId, iam_role_name):
