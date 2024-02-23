@@ -468,15 +468,16 @@ class LFShareManager:
         Verifies the catalog ownership by checking
         1. if the pivot role is assumable in the catalog account
         2. if "owner_account_id" tag is present in the catalog account, which contains AWS account of source account / producer account -  where the data is present in S3 bucket
-        Returns : Raises exception only in case there is an issue with any of above
+        Returns : Raises exception only in case there is an issue with any of above or returns True
         """
-        if catalog_account_id != self.source_environment.AwsAccountId:
-            logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link and '
-                        f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}')
-            if SessionHelper.is_assumable_pivot_role(catalog_account_id):
-                self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
-            else:
-                raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')
+        logger.info(f'Database {self.dataset.GlueDatabaseName} is a resource link and '
+                    f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}')
+        if SessionHelper.is_assumable_pivot_role(catalog_account_id):
+            self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
+        else:
+            raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')
+
+        return True
 
     def _validate_catalog_ownership_tag(self, catalog_account_id, catalog_region, catalog_database):
         glue_client = GlueClient(account_id=catalog_account_id,
@@ -505,7 +506,7 @@ class LFShareManager:
                 region=self.source_environment.region,
                 database=self.dataset.GlueDatabaseName,
             ).get_source_catalog()
-            if catalog_dict is not None:
+            if catalog_dict is not None and catalog_dict.get('account_id') != self.source_environment.AwsAccountId:
                 # Verify the ownership of dataset by checking if pivot role is assumable and ownership tag is present
                 self._verify_catalog_ownership(catalog_dict.get('account_id'), catalog_dict.get('region'),
                                                catalog_dict.get('database_name'))
