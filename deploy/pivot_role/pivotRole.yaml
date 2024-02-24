@@ -213,7 +213,8 @@ Resources:
             Action:
               - 'logs:PutLogEvents'
             Effect: Allow
-            Resource: '*'
+            Resource: 
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-0
       Roles:
         - !Ref PivotRoleName
@@ -256,7 +257,6 @@ Resources:
              - 'sagemaker:ListNotebookInstances'
              - 'sagemaker:ListDomains'
              - 'sagemaker:ListApps'
-             - 'sagemaker:DeleteApp'
             Resource: '*'
           - Sid: RamTag
             Effect: Allow
@@ -326,15 +326,6 @@ Resources:
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
-          - Sid: CloudFormationDataPipelines
-            Effect: Allow
-            Action:
-              - 'cloudformation:DescribeStacks'
-              - 'cloudformation:DescribeStackResources'
-              - 'cloudformation:DescribeStackEvents'
-              - 'cloudformation:DeleteStack'
-            Resource:
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
         - !Ref PivotRoleName
