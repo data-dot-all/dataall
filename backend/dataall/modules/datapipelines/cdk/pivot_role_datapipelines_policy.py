@@ -41,19 +41,6 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                 ],
             ),
             iam.PolicyStatement(
-                sid='CloudFormationDataPipelines',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "cloudformation:DeleteStack",
-                    "cloudformation:DescribeStacks",
-                    "cloudformation:DescribeStackEvents",
-                    "cloudformation:DescribeStackResources"
-                ],
-                resources=[
-                    f'arn:aws:cloudformation:*:{self.account}:stack/{self.env_resource_prefix}*/*',
-                ],
-            ),
-            iam.PolicyStatement(
                 sid='ParameterStorePipelines',
                 effect=iam.Effect.ALLOW,
                 actions=['ssm:GetParameter'],
