@@ -181,11 +181,10 @@ const WorksheetView = () => {
           response.data.searchEnvironmentDataItems.nodes.map((d) => ({
             datasetUri: d.datasetUri,
             value: d.datasetUri,
-            label: `${d.GlueDatabaseName}_shared`,
-            GlueDatabaseName: `${d.GlueDatabaseName}_shared`,
+            label: d.sharedGlueDatabaseName,
+            GlueDatabaseName: d.sharedGlueDatabaseName,
             environmentUri: d.environmentUri
           }));
-
         // Remove duplicates based on GlueDatabaseName
         sharedWithDatabases = sharedWithDatabases.filter(
           (database, index, self) =>
