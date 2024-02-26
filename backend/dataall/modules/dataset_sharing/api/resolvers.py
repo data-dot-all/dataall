@@ -217,6 +217,7 @@ def list_shareable_objects(
         filter=filter
     )
 
+
 def resolve_shared_database_name(
     context: Context, source
 ):
@@ -234,6 +235,7 @@ def resolve_shared_database_name(
         if database:
             return old_shared_db_name
         return source.GlueDatabaseName + '_shared'
+
 
 def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
     if not filter:

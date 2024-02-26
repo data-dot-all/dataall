@@ -35,7 +35,6 @@ class ShareObjectService:
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, shareUri)
 
-
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):
