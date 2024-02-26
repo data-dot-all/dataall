@@ -582,13 +582,15 @@ class ShareObjectRepository:
                         shareable_objects.c.description.ilike(term + '%'),
                     )
                 )
-            if 'isShared' in data.keys():
+            if 'isShared' in data:
                 is_shared = data.get('isShared')
                 query = query.filter(shareable_objects.c.isShared == is_shared)
 
-            if 'isHealthy' in data.keys():
-                health_status = [ShareItemHealthStatus.Healthy.value] if data.get('isHealthy') else [h.value for h in ShareItemHealthStatus if h.value != ShareItemHealthStatus.Healthy.value]
-                query = query.filter(shareable_objects.c.healthStatus.in_(health_status))
+            if 'isHealthy' in data:
+                # healthy_status = ShareItemHealthStatus.Healthy.value
+                query = query.filter(shareable_objects.c.healthStatus == ShareItemHealthStatus.Healthy.value) \
+                    if data.get('isHealthy') \
+                    else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 

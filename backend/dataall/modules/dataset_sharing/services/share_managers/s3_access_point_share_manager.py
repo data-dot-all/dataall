@@ -92,10 +92,11 @@ class S3AccessPointShareManager:
         logger.info(f"S3AccessPointName={S3AccessPointName}")
         return S3AccessPointName
 
-    def check_bucket_policy(self) -> bool:
+    def check_bucket_policy(self) -> None:
         """
-        This function will check if delegate access to access point statemnet is in the bucket policy
-        :return: True if contains delegate access policy else False
+        This function will check if delegate access to access point statemnt is in the bucket policy
+        and add to folder errors if check fails
+        :return: None
         """
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
@@ -161,10 +162,11 @@ class S3AccessPointShareManager:
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
 
-    def check_target_role_access_policy(self) -> bool:
+    def check_target_role_access_policy(self) -> None:
         """
         Checks if requester IAM role policy includes requested S3 bucket and access point
-        :return: True if policy contains correct permissions else False
+        and add to folder errors if check fails
+        :return: None
         """
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
@@ -228,7 +230,6 @@ class S3AccessPointShareManager:
                         f"{kms_key_id}",
                     )
                 )
-        return
 
     def grant_target_role_access_policy(self):
         """
@@ -309,10 +310,11 @@ class S3AccessPointShareManager:
             json.dumps(policy),
         )
 
-    def check_access_point_and_policy(self) -> bool:
+    def check_access_point_and_policy(self) -> None:
         """
         Checks if access point created with correct permissions
-        :return: True if access point created with correct permissions else False
+        and add to folder errors if check fails
+        :return: None
         """
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
@@ -334,7 +336,7 @@ class S3AccessPointShareManager:
         if f"{target_requester_id}0" not in statements.keys():
             error = True
         else:
-            prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+            prefix_list = statements[f"{target_requester_id}0"].get("Condition", {}).get("StringLike", {}).get("s3:prefix", [])
             if isinstance(prefix_list, str):
                 prefix_list = [prefix_list]
             if f"{self.s3_prefix}/*" not in prefix_list:
@@ -354,7 +356,7 @@ class S3AccessPointShareManager:
         if f"{target_requester_id}1" not in statements.keys():
             error1 = True
         else:
-            resource_list = statements[f"{target_requester_id}1"]["Resource"]
+            resource_list = statements[f"{target_requester_id}1"].get("Resource", [])
             if isinstance(resource_list, str):
                 resource_list = [resource_list]
             if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
@@ -453,10 +455,11 @@ class S3AccessPointShareManager:
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
 
-    def check_dataset_bucket_key_policy(self):
+    def check_dataset_bucket_key_policy(self) -> None:
         """
-        Checks if dataset kms key policy includes read pemrissions for requestors IAM Role
-        :return:
+        Checks if dataset kms key policy includes read permissions for requestors IAM Role
+        and add to folder errors if check fails
+        :return: None
         """
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
@@ -488,7 +491,6 @@ class S3AccessPointShareManager:
                     f"{kms_key_id}",
                 )
             )
-        return
 
     def update_dataset_bucket_key_policy(self):
         logger.info("Updating dataset Bucket KMS key policy...")

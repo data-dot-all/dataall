@@ -267,7 +267,7 @@ class DataSharingService:
             env_group,
         )
 
-        log.info(f"Granting permissions to tables: {tables_to_verify}")
+        log.info(f"Verifying permissions to tables: {tables_to_verify}")
         ProcessLakeFormationShare(
             session,
             dataset,

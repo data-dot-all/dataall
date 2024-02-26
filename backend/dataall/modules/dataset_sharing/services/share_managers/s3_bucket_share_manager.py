@@ -68,10 +68,11 @@ class S3BucketShareManager:
     def process_revoked_shares(self, *kwargs) -> bool:
         raise NotImplementedError
 
-    def check_s3_iam_access(self):
+    def check_s3_iam_access(self) -> None:
         """
         Checks if requester IAM role policy includes requested S3 bucket and kms key permissions
-        :return:
+        and add to bucket errors if check fails
+        :return: None
         """
         logger.info(f"Check target role {self.target_requester_IAMRoleName} access policy")
         existing_policy = IAM.get_role_policy(
@@ -249,10 +250,11 @@ class S3BucketShareManager:
         ]
         return exceptions_roleId
 
-    def check_role_bucket_policy(self) -> bool:
+    def check_role_bucket_policy(self) -> None:
         """
-        This function checks if the bucket policy grants read only access to accepted share roles.
-        :return: True if bucket policy contains permissions else False
+        This function checks if the bucket policy grants read only access to accepted share roles
+        and add to bucket errors if check fails
+        :return: None
         """
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
@@ -339,10 +341,11 @@ class S3BucketShareManager:
             principal_list = [principal_list]
         return principal_list
 
-    def check_dataset_bucket_key_policy(self):
+    def check_dataset_bucket_key_policy(self) -> None:
         """
-        Checks if dataset kms key policy includes read pemrissions for requestors IAM Role
-        :return:
+        Checks if dataset kms key policy includes read permissions for requestors IAM Role
+        and add to bucket errors if check fails
+        :return: None
         """
         key_alias = f"alias/{self.target_bucket.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
