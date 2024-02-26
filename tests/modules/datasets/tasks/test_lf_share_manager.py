@@ -497,7 +497,7 @@ def test_check_pivot_role_permissions_to_source_database(
         dataset1: Dataset,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = True
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -519,7 +519,7 @@ def test_check_pivot_role_permissions_to_source_database_failed(
         dataset1: Dataset,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = False
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -534,7 +534,7 @@ def test_check_shared_database_in_target(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.get_glue_database.return_value = True
     # When
     processor.check_shared_database_in_target()
@@ -546,7 +546,7 @@ def test_check_shared_database_in_target_failed(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     glue_client.get_glue_database.return_value = False
     # When
     processor.check_shared_database_in_target()
@@ -559,7 +559,7 @@ def test_check_pivot_role_permissions_to_shared_database(
         dataset1: Dataset,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
@@ -581,7 +581,7 @@ def test_check_pivot_role_permissions_to_shared_database_failed(
         dataset1: Dataset,
         mocker
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
@@ -598,7 +598,7 @@ def test_check_principals_permissions_to_shared_database(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = True
     # When
     processor.check_principals_permissions_to_shared_database()
@@ -615,7 +615,7 @@ def test_check_principals_permissions_to_shared_database_failed(
         processor_with_mocks,
         dataset1: Dataset
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = False
     # When
     processor.check_principals_permissions_to_shared_database()
@@ -630,8 +630,8 @@ def test_verify_table_exists_in_source_database(
         share_item: ShareObjectItem,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    mock_glue_client().table_exists.return_value = True
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
+    glue_client.table_exists.return_value = True
     # When
     processor.check_table_exists_in_source_database(
         share_item=share_item,
@@ -639,8 +639,8 @@ def test_verify_table_exists_in_source_database(
     )
     # Then
     assert len(processor.tbl_level_errors) == 0
-    mock_glue_client().table_exists.assert_called_once()
-    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
+    glue_client.table_exists.assert_called_once()
+    glue_client.table_exists.assert_called_with(table1.GlueTableName)
 
 
 def test_verify_table_exists_in_source_database_failed(
@@ -649,8 +649,8 @@ def test_verify_table_exists_in_source_database_failed(
         share_item: ShareObjectItem,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    mock_glue_client().table_exists.return_value = False
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
+    glue_client.table_exists.return_value = False
     # When
     processor.verify_table_exists_in_source_database(
         share_item=share_item,
@@ -666,7 +666,7 @@ def test_check_target_account_permissions_to_source_table(
         source_environment: Environment,
         table1: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table.return_value = True
     # When
     processor.check_target_account_permissions_to_source_table(table1)
@@ -689,7 +689,7 @@ def test_check_target_account_permissions_to_source_table_failed(
         source_environment: Environment,
         table1: DatasetTable
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table.return_value = False
     # When
     processor.check_target_account_permissions_to_source_table(table1)
@@ -702,22 +702,22 @@ def test_verify_resource_link_table_exists_in_target_database(
         table1: DatasetTable,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    mock_glue_client().table_exists.return_value = True
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
+    glue_client.table_exists.return_value = True
     # When
     processor.verify_resource_link_table_exists_in_target_database(table=table1)
     # Then
     assert len(processor.tbl_level_errors) == 0
-    mock_glue_client().table_exists.assert_called_once()
-    mock_glue_client().table_exists.assert_called_with(table1.GlueTableName)
+    glue_client.table_exists.assert_called_once()
+    glue_client.table_exists.assert_called_with(table1.GlueTableName)
 
 def test_verify_resource_link_table_exists_in_target_database_failed(
         processor_with_mocks,
         table1: DatasetTable,
         mock_glue_client
 ):
-    processor, lf_client, glue_client = processor_with_mocks
-    mock_glue_client().table_exists.return_value = False
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
+    glue_client.table_exists.return_value = False
     # When
     processor.verify_resource_link_table_exists_in_target_database(table=table1)
     # Then
@@ -729,7 +729,7 @@ def test_check_principals_permissions_to_resource_link_table(
         table1: DatasetTable,
         source_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table_with_columns.return_value = True
     # When
     processor.check_principals_permissions_to_resource_link_table(table1)
@@ -749,7 +749,7 @@ def test_check_principals_permissions_to_resource_link_table_failed(
         table1: DatasetTable,
         source_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table_with_columns.return_value = False
     # When
     processor.check_principals_permissions_to_resource_link_table(table1)
@@ -762,7 +762,7 @@ def test_check_principals_permissions_to_table_in_target(
         table1: DatasetTable,
         target_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table.return_value = True
     # When
     processor.check_principals_permissions_to_table_in_target(table1)
@@ -782,7 +782,7 @@ def test_check_principals_permissions_to_table_in_target_failed(
         table1: DatasetTable,
         target_environment: Environment
 ):
-    processor, lf_client, glue_client = processor_with_mocks
+    processor, lf_client, glue_client , mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_table.return_value = False
     # When
     processor.check_principals_permissions_to_table_in_target(table1)
@@ -915,7 +915,6 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists(
             dataset1,
             share,
             [table1],
-            [table2],
             source_environment,
             target_environment,
             target_environment_group,
@@ -1041,4 +1040,3 @@ def test_handle_revoke_failure(
 
     # Then
     alarm_service_mock.assert_called_once()
-
