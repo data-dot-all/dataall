@@ -192,10 +192,10 @@ class ShareItemService:
         # Check if a catalog account exists and return database accordingly
         try:
             catalog_dict = GlueClient(
-                    account_id=account_id,
-                    region=region,
-                    database=dataset_GlueDatabase,
-                ).get_source_catalog()
+                account_id=account_id,
+                region=region,
+                database=dataset_GlueDatabase,
+            ).get_source_catalog()
 
             if catalog_dict is not None:
                 return catalog_dict.get('database_name')
