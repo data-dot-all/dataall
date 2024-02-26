@@ -172,6 +172,7 @@ class DatasetLock(Base):
     isLocked = Column(Boolean, default=False)
     acquiredBy = Column(String, nullable=False)
 
-    @classmethod
-    def uri(cls):
-        return cls.datasetUri
+    def __init__(self, datasetUri, isLocked=False, acquiredBy=None):
+        self.datasetUri = datasetUri
+        self.isLocked = isLocked
+        self.acquiredBy = acquiredBy
