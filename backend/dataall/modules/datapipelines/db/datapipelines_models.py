@@ -29,6 +29,6 @@ class DataPipelineEnvironment(Base, Resource):
     pipelineLabel = Column(String, nullable=False)
     stage = Column(String, nullable=False)
     order = Column(Integer, nullable=False)
-    region = Column(String, default='eu-west-1')
+    region = Column(String, default='eu-west-1', nullable=False)
     AwsAccountId = Column(String, nullable=False)
     samlGroupName = Column(String, nullable=False)
