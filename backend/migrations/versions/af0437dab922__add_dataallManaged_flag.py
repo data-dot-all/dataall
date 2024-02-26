@@ -11,13 +11,13 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'af0437dab922'
-down_revision = 'f6cd4ba7dd8d'
+down_revision = '6c9a8afee4e4'
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False))
+    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False, default=True))
 
 
 def downgrade():

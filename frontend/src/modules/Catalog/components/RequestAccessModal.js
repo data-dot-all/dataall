@@ -113,7 +113,7 @@ export const RequestAccessModal = (props) => {
             label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
             dataallManaged: g.dataallManaged,
             isSharePolicyAttached: g.isSharePolicyAttached,
-            policyName: g.sharePolicyRolName
+            policyName: g.sharePolicyRoleName
           }))
         );
       } else {

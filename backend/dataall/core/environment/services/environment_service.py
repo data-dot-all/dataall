@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 
@@ -6,7 +5,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from dataall.base.aws.iam import IAM
 from dataall.base.context import get_context
 from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
@@ -32,6 +30,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 
 log = logging.getLogger(__name__)
 
@@ -271,17 +270,10 @@ class EnvironmentService:
             resource_type=Environment.__name__,
         )
 
-        fake_consumption_role = ConsumptionRole(
-            consumptionRoleName='fake',
-            environmentUri=environment.environmentUri,
-            groupUri=group,
-            IAMRoleArn=env_group_iam_role_arn,
-            IAMRoleName=env_group_iam_role_name,
-            dataallManaged=True
-        )
-
-        EnvironmentService._generate_managed_policies_for_consumption_role(environment, fake_consumption_role)
-        EnvironmentService._attach_managed_policies_for_consumption_role(environment, fake_consumption_role)
+        SharePolicyService.create_managed_share_policies_for_role(environment.environmentUri,
+                                                                  environment.AwsAccountId,
+                                                                  env_group_iam_role_name,
+                                                                  True)
 
         return environment, environment_group
 
@@ -466,60 +458,12 @@ class EnvironmentService:
             resource_type=ConsumptionRole.__name__,
         )
 
-        EnvironmentService._generate_managed_policies_for_consumption_role(environment, consumption_role)
+        SharePolicyService.create_managed_share_policies_for_role(environment.environmentUri,
+                                                                  environment.AwsAccountId,
+                                                                  consumption_role.IAMRoleName,
+                                                                  consumption_role.dataallManaged)
 
         return consumption_role
-
-    @staticmethod
-    def _generate_managed_policies_for_consumption_role(environment, consumption_role):
-        empty_policy = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:*"
-                    ],
-                    "Resource": [
-                        "arn:aws:s3:::initial-fake-empty-bucket",
-                    ]
-                }
-            ]
-        }
-
-        IAM.create_managed_policy(
-            account_id=environment.AwsAccountId,
-            policy_name=consumption_role.get_managed_share_policy_name(),
-            policy=json.dumps(empty_policy)
-        )
-
-        if consumption_role.dataallManaged:
-            EnvironmentService._attach_managed_policies_for_consumption_role(environment, consumption_role)
-
-        return
-
-    @staticmethod
-    def _attach_managed_policies_for_consumption_role(environment, consumption_role):
-        IAM.attach_role_policy(
-            account_id=environment.AwsAccountId,
-            role_name=consumption_role.IAMRoleName,
-            policy_arn=consumption_role.get_managed_share_policy_name()
-        )
-
-    @staticmethod
-    def _delete_managed_policies_for_consumption_role(environment, consumption_role):
-        policy_name = consumption_role.get_managed_share_policy_name()
-
-        IAM.detach_policy_from_role(
-            account_id=environment.AwsAccountId,
-            role_name=consumption_role.IAMRoleName,
-            policy_name=policy_name
-        )
-
-        IAM.delete_managed_policy_by_name(
-            account_id=environment.AwsAccountId,
-            policy_name=policy_name
-        )
 
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
@@ -546,7 +490,9 @@ class EnvironmentService:
         )
 
         environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        EnvironmentService._delete_managed_policies_for_consumption_role(environment, consumption_role)
+        SharePolicyService.delete_managed_share_policies(environment.environmentUri,
+                                                         environment.AwsAccountId,
+                                                         consumption_role.IAMRoleName)
 
         return True
 

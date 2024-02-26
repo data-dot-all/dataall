@@ -84,14 +84,7 @@ class ConsumptionRole(Base):
     groupUri = Column(String, nullable=False)
     IAMRoleName = Column(String, nullable=False)
     IAMRoleArn = Column(String, nullable=False)
-    dataallManaged = Column(Boolean, nullable=False, default=False)
+    dataallManaged = Column(Boolean, nullable=False, default=True)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
-
-    def get_managed_share_policy_name(self):
-        return ConsumptionRole.generate_policy_name(self.environmentUri, self.IAMRoleName)
-
-    @staticmethod
-    def generate_policy_name(environment_uri, role_name):
-        return f'dataall-env-{environment_uri}-share-{role_name}'

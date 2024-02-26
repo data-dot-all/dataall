@@ -660,7 +660,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     flex: 0.6
                   },
                   {
-                    field: 'sharePolicyRolName',
+                    field: 'sharePolicyRoleName',
                     headerName: 'Sharing Policy',
                     flex: 0.5,
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
@@ -680,7 +680,7 @@ export const EnvironmentTeams = ({ environment }) => {
                         <LoadingButton
                           onClick={async () => {
                             await navigator.clipboard.writeText(
-                              params.row.sharePolicyRolName
+                              params.row.sharePolicyRoleName
                             );
                             enqueueSnackbar(
                               'Policy Name is copied to clipboard',

@@ -11,15 +11,14 @@ from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Cli
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.core.environment.db.environment_models import ConsumptionRole
 
 logger = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
-IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
@@ -73,13 +72,15 @@ class S3BucketShareManager:
         logger.info(
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
-        bucket_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                  self.target_requester_IAMRoleName)
 
-        logger.info(f'Share policy name is {bucket_policy_name}')
+        share_resource_policy_name = SharePolicyService.generate_share_policy_name(
+            self.target_environment.environmentUri,
+            self.target_requester_IAMRoleName)
+
+        logger.info(f'Share policy name is {share_resource_policy_name}')
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name)
+            share_resource_policy_name)
 
         key_alias = f"alias/{self.target_bucket.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
@@ -104,13 +105,10 @@ class S3BucketShareManager:
             resource_type=self.bucket_name,
             target_resources=s3_target_resources,
             existing_policy_statement=policy_document["Statement"][0],
-            iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+            iam_role_policy_name=share_resource_policy_name
         )
 
-        # toDo somehow remove this fake statement in more elegant way
-        fake_statement = "arn:aws:s3:::initial-fake-empty-bucket"
-        if fake_statement in policy_document["Statement"][0]["Resource"]:
-            policy_document["Statement"][0]["Resource"].remove("arn:aws:s3:::initial-fake-empty-bucket")
+        SharePolicyService.remove_empty_statement(policy_document)
 
         if kms_key_id:
             kms_target_resources = [
@@ -121,7 +119,7 @@ class S3BucketShareManager:
                     resource_type=kms_key_id,
                     target_resources=kms_target_resources,
                     existing_policy_statement=policy_document["Statement"][1],
-                    iam_role_policy_name=IAM_S3BUCKET_ROLE_POLICY
+                    iam_role_policy_name=share_resource_policy_name
                 )
             else:
                 additional_policy = {
@@ -135,7 +133,7 @@ class S3BucketShareManager:
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
-            bucket_policy_name,
+            share_resource_policy_name,
             version_id,
             json.dumps(policy_document)
         )
@@ -332,8 +330,21 @@ class S3BucketShareManager:
             'Deleting target role IAM policy...'
         )
 
-        share_resource_policy_name = ConsumptionRole.generate_policy_name(self.target_environment.environmentUri,
-                                                                          self.target_requester_IAMRoleName)
+        # if somehow by this point the policy does not exist,
+        # it means, the role was introducrs to data.all before this update
+        # for the sake of backwors compatibility, let's attache the policy
+
+        if_exists_managed_share_policy = SharePolicyService.check_if_share_policy_exists(share.principalIAMRoleName,
+                                                                                         target_environment.environmentUri,
+                                                                                         target_environment.AwsAccountId)
+        if not if_exists_managed_share_policy:
+            SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
+                                                                                target_environment.environmentUri,
+                                                                                target_environment.AwsAccountId)
+
+        share_resource_policy_name = SharePolicyService.generate_share_policy_name(
+            self.target_environment.environmentUri,
+            self.target_requester_IAMRoleName)
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
             share_resource_policy_name)
@@ -367,20 +378,7 @@ class S3BucketShareManager:
         policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
 
         if len(policy_document["Statement"]) == 0:
-            policy_document = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:*"
-                        ],
-                        "Resource": [
-                            "arn:aws:s3:::initial-fake-empty-bucket",
-                        ]
-                    }
-                ]
-            }
+            policy_document = SharePolicyService.empty_share_policy_document()
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
