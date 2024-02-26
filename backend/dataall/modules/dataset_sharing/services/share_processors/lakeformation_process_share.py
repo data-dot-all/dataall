@@ -44,6 +44,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
     def process_approved_shares(self) -> bool:
         """
+        0) Check if source account details are properly initialized and initialize the Glue and LF clients
         1) Grant ALL permissions to pivotRole for source database in source account
         2) Create the shared database in target account if it doesn't exist
         3) Grant permissions to pivotRole and principals to "shared" database
@@ -70,10 +71,20 @@ class ProcessLakeFormationShare(LFShareManager):
         if not self.tables:
             log.info("No tables to share. Skipping...")
         else:
-            self.grant_pivot_role_all_database_permissions_to_source_database()
-            self.check_if_exists_and_create_shared_database_in_target()
-            self.grant_pivot_role_all_database_permissions_to_shared_database()
-            self.grant_principals_database_permissions_to_shared_database()
+            try:
+                if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
+                    raise Exception(
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
+                self.initialize_clients()
+                self.grant_pivot_role_all_database_permissions_to_source_database()
+                self.check_if_exists_and_create_shared_database_in_target()
+                self.grant_pivot_role_all_database_permissions_to_shared_database()
+                self.grant_principals_database_permissions_to_shared_database()
+            except Exception as e:
+                log.error(f"Failed to process approved tables due to {e}")
+                self.handle_share_failure_for_all_tables(tables=self.tables, error=e,
+                                                         share_item_status=ShareItemStatus.Share_Approved.value)
+                return False
 
             for table in self.tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
@@ -101,24 +112,20 @@ class ProcessLakeFormationShare(LFShareManager):
                         (
                             retry_share_table,
                             failed_invitations,
-                        ) = RamClient.accept_ram_invitation(
-                            source_account_id=self.source_environment.AwsAccountId,
-                            source_region=self.source_environment.region,
-                            target_account_id=self.target_environment.AwsAccountId,
-                            target_region=self.target_environment.region,
-                            source_database=self.dataset.GlueDatabaseName,
-                            source_table_name=table.GlueTableName,
-                        )
+                        ) = RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
+                                                            source_region=self.source_account_region,
+                                                            source_database=self.source_database_name,
+                                                            source_table_name=table.GlueTableName,
+                                                            target_account_id=self.target_environment.AwsAccountId,
+                                                            target_region=self.target_environment.region)
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
-                            RamClient.accept_ram_invitation(
-                                source_account_id=self.source_environment.AwsAccountId,
-                                source_region=self.source_environment.region,
-                                target_account_id=self.target_environment.AwsAccountId,
-                                target_region=self.target_environment.region,
-                                source_database=self.dataset.GlueDatabaseName,
-                                source_table_name=table.GlueTableName,
-                            )
+                            RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
+                                                            source_region=self.source_account_region,
+                                                            source_database=self.source_database_name,
+                                                            source_table_name=table.GlueTableName,
+                                                            target_account_id=self.target_environment.AwsAccountId,
+                                                            target_region=self.target_environment.region)
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
@@ -142,7 +149,9 @@ class ProcessLakeFormationShare(LFShareManager):
 
     def process_revoked_shares(self) -> bool:
         """
-        1) For each revoked table:
+        0) Check if source account details are properly initialized and initialize the Glue and LF clients
+        1) Grant Pivot Role all database permissions to the shared database
+        2) For each revoked table:
             a) Update its status to REVOKE_IN_PROGRESS with Action Start
             b) Check if table exists on glue catalog raise error if not and flag share item status to failed
             c) Check if resource link table exists in target account
@@ -152,8 +161,8 @@ class ProcessLakeFormationShare(LFShareManager):
             g) If c is True and (old-share or (new-share and d is True, no other shares of this table)) then delete resource link table
             g) If d is True (no other shares of this table with target), revoke permissions to target account to the original table
             h) update share item status to REVOKE_SUCCESSFUL with Action Success
-        2) Check if there are existing_shared_tables for this dataset with target environment
-        3) If no existing_shared_tables, delete shared database
+        3) Check if there are existing_shared_tables for this dataset with target environment
+        4) If no existing_shared_tables, delete shared database
 
         Returns
         -------
@@ -162,7 +171,18 @@ class ProcessLakeFormationShare(LFShareManager):
         """
         log.info("##### Starting Revoking tables #######")
         success = True
-        self.grant_pivot_role_all_database_permissions_to_shared_database()
+        try:
+            if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
+                raise Exception(
+                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
+            self.initialize_clients()
+            self.grant_pivot_role_all_database_permissions_to_shared_database()
+        except Exception as e:
+            log.error(f"Failed to process revoked tables due to {e}")
+            self.handle_share_failure_for_all_tables(tables=self.tables, error=e,
+                                                     share_item_status=ShareItemStatus.Revoke_Approved.value)
+            return False
+
         for table in self.tables:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri

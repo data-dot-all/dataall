@@ -103,7 +103,8 @@ class RamClient:
         return True
 
     @staticmethod
-    def accept_ram_invitation(source_account_id, source_region, target_account_id, target_region, source_database, source_table_name):
+    def accept_ram_invitation(source_account_id, source_region, source_database, source_table_name, target_account_id,
+                              target_region):
         """
         Accepts RAM invitations on the target account
         """
