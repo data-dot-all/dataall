@@ -8,6 +8,7 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
@@ -128,7 +129,7 @@ class ShareItemService:
                     itemName=item.name,
                     status=ShareItemStatus.PendingApproval.value,
                     owner=context.username,
-                    GlueDatabaseName=dataset.GlueDatabaseName
+                    GlueDatabaseName=ShareItemService._get_glue_database_for_share(dataset.GlueDatabaseName, target_environment.AwsAccountId, target_environment.region)
                     if item_type == ShareableType.Table.value
                     else '',
                     GlueTableName=item.GlueTableName
@@ -185,3 +186,20 @@ class ShareItemService:
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+
+    @staticmethod
+    def _get_glue_database_for_share(dataset_GlueDatabase, account_id, region):
+        # Check if a catalog account exists and return database accordingly
+        try:
+            catalog_dict = GlueClient(
+                    account_id=account_id,
+                    region=region,
+                    database=dataset_GlueDatabase,
+                ).get_source_catalog()
+
+            if catalog_dict is not None:
+                return catalog_dict.get('database_name')
+            else:
+                return dataset_GlueDatabase
+        except Exception as e:
+            raise e

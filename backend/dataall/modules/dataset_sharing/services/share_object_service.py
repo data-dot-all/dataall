@@ -16,6 +16,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
@@ -115,7 +116,7 @@ class ShareObjectService:
                         itemName=item.name,
                         status=ShareItemStatus.PendingApproval.value,
                         owner=context.username,
-                        GlueDatabaseName=dataset.GlueDatabaseName
+                        GlueDatabaseName=ShareItemService._get_glue_database_for_share(dataset.GlueDatabaseName, environment.AwsAccountId, environment.region)
                         if item_type == ShareableType.Table.value
                         else '',
                         GlueTableName=item.GlueTableName
@@ -366,14 +367,16 @@ class ShareObjectService:
                     datasetUri + '-' + principalId,
                     max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
                 )
-                old_shared_db_name = f"{dataset.GlueDatabaseName}_shared_{uri}"[:254]
+                # Check if the share was made with a Glue Database
+                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region)
+                old_shared_db_name = f"{datasetGlueDatabase}_shared_{uri}"[:254]
                 database = GlueClient(
                     account_id=environment.AwsAccountId,
                     region=environment.region,
                     database=old_shared_db_name
                 ).get_glue_database()
                 warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f"{dataset.GlueDatabaseName}_shared"
+                sharedGlueDatabase = old_shared_db_name if database else f"{datasetGlueDatabase}_shared"
                 return {
                     's3AccessPointName': S3AccessPointName,
                     'sharedGlueDatabase': sharedGlueDatabase,

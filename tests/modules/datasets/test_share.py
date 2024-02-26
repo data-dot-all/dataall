@@ -1,5 +1,6 @@
 import random
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +13,11 @@ from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, 
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
+@pytest.fixture(scope='function')
+def mock_glue_client(mocker):
+    glue_client = MagicMock()
+    mocker.patch('dataall.modules.dataset_sharing.services.share_item_service.GlueClient', return_value=glue_client)
+    glue_client.get_source_catalog.return_value = None
 
 def random_table_name():
     def cpltz(l):
@@ -948,7 +954,7 @@ def test_create_share_object_as_approver_and_requester(client, user, group2, env
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'ApproversAndRequesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
+def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1, mock_glue_client):
     # Given
     # Existing dataset, table, target environment and group
     # When a user that belongs to environment and group creates request with table in the request
@@ -1138,7 +1144,7 @@ def test_list_shares_from_me_requester(
 
 
 def test_add_share_item(
-        client, user2, group2, share1_draft,
+        client, user2, group2, share1_draft, mock_glue_client
 
 ):
     # Given
