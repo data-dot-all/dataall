@@ -354,7 +354,7 @@ class DataSharingService:
         """
         try:
             log.info(f"Releasing lock for dataset: {dataset_uri} last acquired by share: {share_uri}")
-            query = (
+            dataset_lock = (
                 session.query(DatasetLock)
                 .filter(
                     and_(
@@ -366,16 +366,16 @@ class DataSharingService:
                 .with_for_update().one()
             )
 
-            query.update(
-                {
-                    "isLocked": False,
-                    "acquiredBy": ''
-                },
-                synchronize_session=False
-            )
+            if dataset_lock:
+                dataset_lock.isLocked = False
+                dataset_lock.acquiredBy = ''
 
-            session.commit()
-            return True
+                session.commit()
+                return True
+            else:
+                log.info("DatasetLock not found for the given criteria.")
+                return False
+
         except Exception as e:
             session.rollback()
             log.error("Error occurred while releasing lock:", e)
