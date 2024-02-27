@@ -5,7 +5,7 @@ from time import sleep
 
 from dataall.base.db import Engine
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
-    ShareItemSM, DatasetLockShareItemManagementSM, DatasetLockShareObjectManagementSM
+    ShareItemSM
 from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import \
     ProcessLakeFormationShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_process_share import \
@@ -93,11 +93,9 @@ class DataSharingService:
                         )
                         cls.handle_share_items_failure_during_locking(session, share_item)
 
-                    dataset_lock_share_object_management_SM = DatasetLockShareObjectManagementSM(
-                        share.status)
-                    new_object_state = dataset_lock_share_object_management_SM.run_transition(
-                        ShareObjectActions.Start.value)
-                    dataset_lock_share_object_management_SM.update_state(session, share, new_object_state)
+                    share_object_SM = ShareObjectSM(share.status)
+                    new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
+                    share_object_SM.update_state(session, share, new_object_state)
                     return False
 
             log.info(f'Granting permissions to folders: {shared_folders}')
@@ -393,11 +391,6 @@ class DataSharingService:
         Returns:
             None
         """
-        dataset_lock_share_item_management_SM = DatasetLockShareItemManagementSM(
-            ShareItemStatus.Share_Approved.value)
-        new_item_state = dataset_lock_share_item_management_SM.run_transition(
-            ShareObjectActions.Start.value)
-        dataset_lock_share_item_management_SM.update_state_single_item(
-            session,
-            share_item,
-            new_item_state)
+        share_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+        new_state = share_item_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
+        share_item_SM.update_state_single_item(session, share_item, new_state)
