@@ -191,7 +191,7 @@ export const EnvironmentRoleAddForm = (props) => {
                           component="p"
                           variant="caption"
                         >
-                          Let Data.All attach policies to this role
+                          Allow Data.all to attach IAM policies to this role
                         </Typography>
                       </div>
                     }

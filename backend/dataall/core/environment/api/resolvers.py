@@ -369,7 +369,7 @@ def are_policies_attached(context: Context, source, **kwargs):
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
-            managed=source.dataallManaged
+            resource_prefix=environment.resourcePrefix
         ).check_all_policies_attached()
         return (False not in list_attached)
 
@@ -377,13 +377,12 @@ def are_policies_attached(context: Context, source, **kwargs):
 def get_policies(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        list_policies = PolicyManager(
+        return PolicyManager(
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
-            managed=source.dataallManaged
-        ).list_all_policies()
-    return str(list_policies)
+            resource_prefix=environment.resourcePrefix
+        ).get_all_policies()
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):

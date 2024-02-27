@@ -22,6 +22,14 @@ class ManagedPolicy(ABC):
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
 
+    @property
+    @abstractmethod
+    def policy_type(self):
+        """
+        Returns string and needs to be implemented in the ManagedPolicies inherited classes
+        """
+        raise NotImplementedError
+
     @abstractmethod
     def generate_policy_name(self) -> str:
         """
@@ -81,7 +89,7 @@ class PolicyManager(object):
                 IAM.attach_role_policy(
                     account_id=self.account,
                     role_name=self.role_name,
-                    policy_arn=policy_name
+                    policy_arn=f"arn:aws:iam::{self.account}:policy/{policy_name}"
                 )
         return True
 
@@ -106,23 +114,18 @@ class PolicyManager(object):
             )
         return True
 
-    def list_all_policies(self) -> List[str]:
+    def get_all_policies(self) -> List[dict]:
         """
         Manager that registers and calls all policies created by data.all modules and that
         need to be listed for consumption roles and team roles
         """
-        all_policies = [Policy.generate_policy_name() for Policy in self.initializedPolicies]
-        logger.info(f'All policies currently added to role {str(all_policies)}')
-        return all_policies
-
-    def check_all_policies_attached(self) -> List[bool]:
-        """
-        Manager that registers and calls all policies created by data.all modules and that
-        need to be checked if attached for consumption roles and team roles
-        """
         all_policies = []
         for Policy in self.initializedPolicies:
-            policy_name = Policy.generate_policy_name()
-            all_policies.append(IAM.is_policy_attached(self.account, policy_name, self.role_name))
-        logger.info(f'Are policies attached to role {str(all_policies)}')
+            policy_dict = {
+                "policy_name": Policy.generate_policy_name(),
+                "policy_type": Policy.policy_type,
+                "attached": IAM.is_policy_attached(self.account, Policy.generate_policy_name(), self.role_name)
+            }
+            all_policies.append(policy_dict)
+        logger.info(f'All policies currently added to role {str(all_policies)}')
         return all_policies

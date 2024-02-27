@@ -112,8 +112,12 @@ export const RequestAccessModal = (props) => {
             value: g.consumptionRoleUri,
             label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
             dataallManaged: g.dataallManaged,
-            isSharePolicyAttached: g.isSharePolicyAttached,
-            policyName: g.sharePolicyRoleName
+            isSharePolicyAttached: g.managedPolicies.find(
+              (policy) => policy.policy_type === 'SharePolicy'
+            ).attached,
+            policyName: g.managedPolicies.find(
+              (policy) => policy.policy_type === 'SharePolicy'
+            ).policy_name
           }))
         );
       } else {

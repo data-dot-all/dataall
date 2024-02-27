@@ -661,24 +661,32 @@ export const EnvironmentTeams = ({ environment }) => {
                   },
                   {
                     field: 'policiesNames',
-                    headerName: 'IAM Policy',
+                    headerName: 'IAM Policies',
                     flex: 0.5,
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
                       <Box>
                         <Label
                           sx={{ ml: 5 }}
                           color={
-                            params.row.arePoliciesAttached ? 'success' : 'error'
+                            params.row.managedPolicies
+                              .map((policy) => policy.attached)
+                              .includes(false)
+                              ? 'error'
+                              : 'success'
                           }
                         >
-                          {params.row.arePoliciesAttached
-                            ? 'Attached'
-                            : 'Not Attached'}
+                          {params.row.managedPolicies
+                            .map((policy) => policy.attached)
+                            .includes(false)
+                            ? 'Not Attached'
+                            : 'Attached'}
                         </Label>
                         <LoadingButton
                           onClick={async () => {
                             await navigator.clipboard.writeText(
-                              params.row.policiesNames
+                              params.row.managedPolicies.map(
+                                (policy) => policy.policy_name
+                              )
                             );
                             enqueueSnackbar(
                               'Policy Name is copied to clipboard',

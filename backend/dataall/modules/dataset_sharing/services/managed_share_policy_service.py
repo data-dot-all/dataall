@@ -24,6 +24,10 @@ class SharePolicyService(ManagedPolicy):
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
 
+    @property
+    def policy_type(self):
+        return "SharePolicy"
+
     def generate_policy_name(self) -> str:
         # In this case it is not possible to build a too long policy because the IAM role can be max 64 chars
         # However it is good practice to use the standard utility to build the name
