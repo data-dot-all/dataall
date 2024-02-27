@@ -299,7 +299,7 @@ class DataSharingService:
                         ~DatasetLock.isLocked
                     )
                 )
-                .first()
+                .with_for_update().one()
             )
 
             # Check if dataset_lock is not None before attempting to update
@@ -363,6 +363,7 @@ class DataSharingService:
                         DatasetLock.acquiredBy == share_uri
                     )
                 )
+                .with_for_update().one()
             )
 
             query.update(
@@ -376,6 +377,7 @@ class DataSharingService:
             session.commit()
             return True
         except Exception as e:
+            session.rollback()
             log.error("Error occurred while releasing lock:", e)
             return False
 
