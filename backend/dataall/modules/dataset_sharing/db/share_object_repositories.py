@@ -146,7 +146,6 @@ class ShareObjectSM:
                     ]
                 }
             ),
-
         }
 
     def run_transition(self, transition):
