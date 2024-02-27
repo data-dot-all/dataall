@@ -75,7 +75,9 @@ class DataSharingService:
                         share_item = ShareObjectRepository.find_sharable_item(
                             session, share_uri, table.tableUri
                         )
-                        cls.handle_share_items_failure_during_locking(session, share_item)
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Share_Approved.value
+                        )
 
                     for folder in shared_folders:
                         share_item = ShareObjectRepository.find_sharable_item(
@@ -83,7 +85,9 @@ class DataSharingService:
                             share_uri,
                             folder.locationUri,
                         )
-                        cls.handle_share_items_failure_during_locking(session, share_item)
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Share_Approved.value
+                        )
 
                     for bucket in shared_buckets:
                         share_item = ShareObjectRepository.find_sharable_item(
@@ -91,7 +95,9 @@ class DataSharingService:
                             share_uri,
                             bucket.bucketUri,
                         )
-                        cls.handle_share_items_failure_during_locking(session, share_item)
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Share_Approved.value
+                        )
 
                     share_object_SM = ShareObjectSM(share.status)
                     new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
@@ -175,106 +181,152 @@ class DataSharingService:
         True if revoke succeeds
         False if folder or table revoking failed
         """
+        try:
+            with engine.scoped_session() as session:
+                (
+                    source_env_group,
+                    env_group,
+                    dataset,
+                    share,
+                    source_environment,
+                    target_environment,
+                ) = ShareObjectRepository.get_share_data(session, share_uri)
 
-        with engine.scoped_session() as session:
-            (
-                source_env_group,
-                env_group,
-                dataset,
-                share,
-                source_environment,
-                target_environment,
-            ) = ShareObjectRepository.get_share_data(session, share_uri)
+                share_sm = ShareObjectSM(share.status)
+                new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+                share_sm.update_state(session, share, new_share_state)
 
-            share_sm = ShareObjectSM(share.status)
-            new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
-            share_sm.update_state(session, share, new_share_state)
+                revoked_item_sm = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
 
-            revoked_item_sm = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+                (
+                    revoked_tables,
+                    revoked_folders,
+                    revoked_buckets
+                ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
 
-            (
-                revoked_tables,
-                revoked_folders,
-                revoked_buckets
-            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
+                lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
 
-            new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
-            revoked_item_sm.update_state(session, share_uri, new_state)
+                if not lock_acquired:
+                    log.error(f"Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...")
+                    for table in revoked_tables:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session, share_uri, table.tableUri
+                        )
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Revoke_Approved.value
+                        )
 
-            log.info(f'Revoking permissions to folders: {revoked_folders}')
+                    for folder in revoked_folders:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session,
+                            share_uri,
+                            folder.locationUri,
+                        )
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Revoke_Approved.value
+                        )
 
-            revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(
-                session,
-                dataset,
-                share,
-                revoked_folders,
-                source_environment,
-                target_environment,
-                source_env_group,
-                env_group,
-            )
-            log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            existing_shared_folders = ShareObjectRepository.check_existing_shared_items_of_type(
-                session,
-                share_uri,
-                ShareableType.StorageLocation.value
-            )
-            existing_shared_buckets = ShareObjectRepository.check_existing_shared_items_of_type(
-                session,
-                share_uri,
-                ShareableType.S3Bucket.value
-            )
-            existing_shared_items = existing_shared_folders or existing_shared_buckets
-            log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
-            if not existing_shared_folders and revoked_folders:
-                log.info("Clean up S3 access points...")
-                clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
+                    for bucket in revoked_buckets:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session,
+                            share_uri,
+                            bucket.bucketUri,
+                        )
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Revoke_Approved.value
+                        )
+
+                    share_object_SM = ShareObjectSM(share.status)
+                    new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
+                    share_object_SM.update_state(session, share, new_object_state)
+                    return False
+
+                new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
+                revoked_item_sm.update_state(session, share_uri, new_state)
+
+                log.info(f'Revoking permissions to folders: {revoked_folders}')
+
+                revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(
                     session,
-                    dataset=dataset,
-                    share=share,
-                    folder=revoked_folders[0],
-                    source_environment=source_environment,
-                    target_environment=target_environment,
-                    source_env_group=source_env_group,
-                    env_group=env_group
+                    dataset,
+                    share,
+                    revoked_folders,
+                    source_environment,
+                    target_environment,
+                    source_env_group,
+                    env_group,
                 )
-                log.info(f"Clean up S3 successful = {clean_up_folders}")
+                log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
+                existing_shared_folders = ShareObjectRepository.check_existing_shared_items_of_type(
+                    session,
+                    share_uri,
+                    ShareableType.StorageLocation.value
+                )
+                existing_shared_buckets = ShareObjectRepository.check_existing_shared_items_of_type(
+                    session,
+                    share_uri,
+                    ShareableType.S3Bucket.value
+                )
+                existing_shared_items = existing_shared_folders or existing_shared_buckets
+                log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
+                if not existing_shared_folders and revoked_folders:
+                    log.info("Clean up S3 access points...")
+                    clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
+                        session,
+                        dataset=dataset,
+                        share=share,
+                        folder=revoked_folders[0],
+                        source_environment=source_environment,
+                        target_environment=target_environment,
+                        source_env_group=source_env_group,
+                        env_group=env_group
+                    )
+                    log.info(f"Clean up S3 successful = {clean_up_folders}")
 
-            log.info('Revoking permissions to S3 buckets')
+                log.info('Revoking permissions to S3 buckets')
 
-            revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(
-                session,
-                dataset,
-                share,
-                revoked_buckets,
-                source_environment,
-                target_environment,
-                source_env_group,
-                env_group
-            )
-            log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
+                revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(
+                    session,
+                    dataset,
+                    share,
+                    revoked_buckets,
+                    source_environment,
+                    target_environment,
+                    source_env_group,
+                    env_group
+                )
+                log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
-            log.info(f'Revoking permissions to tables: {revoked_tables}')
-            revoked_tables_succeed = ProcessLakeFormationShare(
-                session,
-                dataset,
-                share,
-                [],
-                revoked_tables,
-                source_environment,
-                target_environment,
-                env_group,
-            ).process_revoked_shares()
-            log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
+                log.info(f'Revoking permissions to tables: {revoked_tables}')
+                revoked_tables_succeed = ProcessLakeFormationShare(
+                    session,
+                    dataset,
+                    share,
+                    [],
+                    revoked_tables,
+                    source_environment,
+                    target_environment,
+                    env_group,
+                ).process_revoked_shares()
+                log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 
-            existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
-            if existing_pending_items:
-                new_share_state = share_sm.run_transition(ShareObjectActions.FinishPending.value)
-            else:
-                new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
-            share_sm.update_state(session, share, new_share_state)
+                existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
+                if existing_pending_items:
+                    new_share_state = share_sm.run_transition(ShareObjectActions.FinishPending.value)
+                else:
+                    new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
+                share_sm.update_state(session, share, new_share_state)
 
-            return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+                return revoked_folders_succeed and revoked_s3_buckets_succeed and revoked_tables_succeed
+
+        except Exception as e:
+            log.error(f"Error occurred during share revoking: {e}")
+            return False
+
+        finally:
+            lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+            if not lock_released:
+                log.error(f"Failed to release lock for dataset {dataset.datasetUri}.")
 
     @staticmethod
     def acquire_lock(dataset_uri, session, share_uri):
@@ -382,7 +434,7 @@ class DataSharingService:
             return False
 
     @staticmethod
-    def handle_share_items_failure_during_locking(session, share_item):
+    def handle_share_items_failure_during_locking(session, share_item, share_item_status):
         """
         If lock is not acquired successfully, mark the share items as failed.
 
@@ -393,6 +445,6 @@ class DataSharingService:
         Returns:
             None
         """
-        share_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+        share_item_SM = ShareItemSM(share_item_status)
         new_state = share_item_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
         share_item_SM.update_state_single_item(session, share_item, new_state)

@@ -142,7 +142,8 @@ class ShareObjectSM:
                 name=ShareObjectActions.AcquireLockFailure.value,
                 transitions={
                     ShareObjectStatus.Processed.value: [
-                        ShareObjectStatus.Share_In_Progress.value
+                        ShareObjectStatus.Share_In_Progress.value,
+                        ShareObjectStatus.Revoke_In_Progress.value
                     ]
                 }
             ),
@@ -271,6 +272,7 @@ class ShareItemSM:
                 name=ShareObjectActions.AcquireLockFailure.value,
                 transitions={
                     ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Approved.value],
                 }
             )
         }
