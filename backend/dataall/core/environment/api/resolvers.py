@@ -362,18 +362,6 @@ def get_parent_organization(context: Context, source, **kwargs):
     return org
 
 
-def are_policies_attached(context: Context, source, **kwargs):
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        list_attached = PolicyManager(
-            role_name=source.IAMRoleName,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            resource_prefix=environment.resourcePrefix
-        ).check_all_policies_attached()
-        return (False not in list_attached)
-
-
 def get_policies(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)

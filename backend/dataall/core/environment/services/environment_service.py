@@ -229,7 +229,6 @@ class EnvironmentService:
                 action='INVITE_TEAM',
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
-
         if data.get('environmentIAMRoleArn'):
             env_group_iam_role_arn = data['environmentIAMRoleArn']
             env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
@@ -243,6 +242,15 @@ class EnvironmentService:
             ).build_compliant_name()
             env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
+
+        # If environment role is imported, then data.all should attach the policies at import time
+        # If environment role is created in environment stack, then data.all should attach the policies in the env stack
+        PolicyManager(
+            role_name=env_group_iam_role_name,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=env_role_imported)
 
         athena_workgroup = NamingConventionService(
             target_uri=environment.environmentUri,
@@ -269,13 +277,6 @@ class EnvironmentService:
             permissions=data['permissions'],
             resource_type=Environment.__name__,
         )
-
-        PolicyManager(
-            role_name=env_group_iam_role_name,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            resource_prefix=environment.resourcePrefix
-        ).create_all_policies(managed=True)
 
         return environment, environment_group
 
