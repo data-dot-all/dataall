@@ -1,5 +1,7 @@
 import logging
 import enum
+import os
+
 from dataall.base.config import config
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
@@ -40,7 +42,7 @@ class ShareNotificationService:
         self.notification_target_users = self._get_share_object_targeted_users()
 
     def notify_share_object_submission(self, email_id: str):
-        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId} \n\n Please visit Data.all Share link - {os.environ.get("domain_url")}"/shares/{self.share.shareUri}'
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
 
         notifications = self._register_notifications(
