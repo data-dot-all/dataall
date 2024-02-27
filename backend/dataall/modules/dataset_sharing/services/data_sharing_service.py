@@ -5,7 +5,7 @@ from time import sleep
 
 from dataall.base.db import Engine
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectSM, ShareObjectRepository, \
-    ShareItemSM
+    ShareItemSM, DatasetLockShareItemManagementSM, DatasetLockShareObjectManagementSM
 from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import \
     ProcessLakeFormationShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_access_point_process_share import \
@@ -57,11 +57,6 @@ class DataSharingService:
                     target_environment,
                 ) = ShareObjectRepository.get_share_data(session, share_uri)
 
-                lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
-                if not lock_acquired:
-                    log.error(f"Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...")
-                    return False
-
                 share_sm = ShareObjectSM(share.status)
                 new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
                 share_sm.update_state(session, share, new_share_state)
@@ -71,6 +66,39 @@ class DataSharingService:
                     shared_folders,
                     shared_buckets
                 ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
+
+                lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
+
+                if not lock_acquired:
+                    log.error(f"Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...")
+                    for table in shared_tables:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session, share_uri, table.tableUri
+                        )
+                        cls.handle_share_items_failure_during_locking(session, share_item)
+
+                    for folder in shared_folders:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session,
+                            share_uri,
+                            folder.locationUri,
+                        )
+                        cls.handle_share_items_failure_during_locking(session, share_item)
+
+                    for bucket in shared_buckets:
+                        share_item = ShareObjectRepository.find_sharable_item(
+                            session,
+                            share_uri,
+                            bucket.bucketUri,
+                        )
+                        cls.handle_share_items_failure_during_locking(session, share_item)
+
+                    dataset_lock_share_object_management_SM = DatasetLockShareObjectManagementSM(
+                        share.status)
+                    new_object_state = dataset_lock_share_object_management_SM.run_transition(
+                        ShareObjectActions.Start.value)
+                    dataset_lock_share_object_management_SM.update_state(session, share, new_object_state)
+                    return False
 
             log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -342,7 +370,7 @@ class DataSharingService:
             query.update(
                 {
                     "isLocked": False,
-                    "acquiredBy": share_uri
+                    "acquiredBy": ''
                 },
                 synchronize_session=False
             )
@@ -352,3 +380,24 @@ class DataSharingService:
         except Exception as e:
             log.error("Error occurred while releasing lock:", e)
             return False
+
+    @staticmethod
+    def handle_share_items_failure_during_locking(session, share_item):
+        """
+        If lock is not acquired successfully, mark the share items as failed.
+
+        Args:
+            session (sqlalchemy.orm.Session): The SQLAlchemy session object used for interacting with the database.
+            share_item: The share item that needs to be marked failed during share.
+
+        Returns:
+            None
+        """
+        dataset_lock_share_item_management_SM = DatasetLockShareItemManagementSM(
+            ShareItemStatus.Share_Approved.value)
+        new_item_state = dataset_lock_share_item_management_SM.run_transition(
+            ShareObjectActions.Start.value)
+        dataset_lock_share_item_management_SM.update_state_single_item(
+            session,
+            share_item,
+            new_item_state)

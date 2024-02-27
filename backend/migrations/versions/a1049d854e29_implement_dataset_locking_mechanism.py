@@ -84,7 +84,7 @@ class DatasetLock(Base):
     __tablename__ = 'dataset_lock'
     datasetUri = Column(String, nullable=False, primary_key=True)
     isLocked = Column(Boolean, default=False)
-    acquiredBy = Column(String, nullable=False)
+    acquiredBy = Column(String, nullable=True)
 
     @classmethod
     def uri(cls):
@@ -112,7 +112,7 @@ def upgrade():
                 'dataset_lock',
                 sa.Column('datasetUri', sa.String(), primary_key=True),
                 sa.Column('isLocked', sa.Boolean(), nullable=False),
-                sa.Column('acquiredBy', sa.String(), nullable=False),
+                sa.Column('acquiredBy', sa.String(), nullable=True),
             )
 
             op.create_foreign_key(

@@ -1307,3 +1307,61 @@ class ShareObjectRepository:
             )
             .count()
         )
+
+
+class DatasetLockShareItemManagementSM:
+    def __init__(self, state):
+        self._state = state
+        self.transitionTable = {
+            ShareObjectActions.Start.value: Transition(
+                name=ShareObjectActions.Start.value,
+                transitions={
+                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
+                }
+            )
+        }
+
+    def run_transition(self, transition):
+        trans = self.transitionTable[transition]
+        new_state = trans.get_transition_target(self._state)
+        return new_state
+
+    def update_state_single_item(self, session, share_item, new_state):
+        logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
+        ShareObjectRepository.update_share_item_status(
+            session=session,
+            uri=share_item.shareItemUri,
+            status=new_state
+        )
+        self._state = new_state
+        return True
+
+
+class DatasetLockShareObjectManagementSM:
+    def __init__(self, state):
+        self._state = state
+        self.transitionTable = {
+            ShareObjectActions.Start.value: Transition(
+                name=ShareObjectActions.Start.value,
+                transitions={
+                    ShareObjectStatus.Processed.value: [
+                        ShareObjectStatus.Share_In_Progress.value
+                    ]
+                }
+            ),
+        }
+
+    def run_transition(self, transition):
+        trans = self.transitionTable[transition]
+        new_state = trans.get_transition_target(self._state)
+        return new_state
+
+    def update_state(self, session, share, new_state):
+        logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
+        ShareObjectRepository.update_share_object_status(
+            session=session,
+            share_uri=share.shareUri,
+            status=new_state
+        )
+        self._state = new_state
+        return True
