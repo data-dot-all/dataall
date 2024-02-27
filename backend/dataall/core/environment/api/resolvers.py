@@ -12,7 +12,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
@@ -365,7 +365,7 @@ def get_parent_organization(context: Context, source, **kwargs):
 def are_policies_attached(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        list_attached = ManagedPolicy(
+        list_attached = PolicyManager(
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
@@ -377,7 +377,7 @@ def are_policies_attached(context: Context, source, **kwargs):
 def get_policies(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        list_policies = ManagedPolicy(
+        list_policies = PolicyManager(
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,

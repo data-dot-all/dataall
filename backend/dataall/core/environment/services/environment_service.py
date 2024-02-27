@@ -30,7 +30,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
-from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
 log = logging.getLogger(__name__)
 
@@ -270,7 +270,7 @@ class EnvironmentService:
             resource_type=Environment.__name__,
         )
 
-        ManagedPolicy(
+        PolicyManager(
             role_name=env_group_iam_role_name,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
@@ -459,7 +459,7 @@ class EnvironmentService:
             permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=ConsumptionRole.__name__,
         )
-        ManagedPolicy(
+        PolicyManager(
             role_name=consumption_role.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
@@ -493,7 +493,7 @@ class EnvironmentService:
         )
 
         environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        ManagedPolicy(
+        PolicyManager(
             role_name=consumption_role.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,

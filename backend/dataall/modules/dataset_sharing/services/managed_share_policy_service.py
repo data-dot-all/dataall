@@ -12,6 +12,17 @@ FAKE_S3_PLACEHOLDER = "arn:aws:s3:::initial-fake-empty-bucket"
 
 
 class SharePolicyService(ManagedPolicy):
+    def __init__(
+            self,
+            role_name,
+            account,
+            environmentUri,
+            resource_prefix
+    ):
+        self.role_name = role_name
+        self.account = account
+        self.environmentUri = environmentUri
+        self.resource_prefix = resource_prefix
 
     def generate_policy_name(self) -> str:
         # In this case it is not possible to build a too long policy because the IAM role can be max 64 chars
