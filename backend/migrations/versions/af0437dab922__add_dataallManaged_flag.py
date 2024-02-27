@@ -7,7 +7,6 @@ Create Date: 2024-02-15 10:42:06.833990
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'af0437dab922'
@@ -17,7 +16,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False, default=True))
+    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False, server_default=sa.sql.expression.true()))
 
 
 def downgrade():
