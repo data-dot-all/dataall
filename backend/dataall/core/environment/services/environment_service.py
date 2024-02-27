@@ -30,7 +30,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
-from dataall.core.environment.services.env_share_policy_service import SharePolicyService
+from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 
 log = logging.getLogger(__name__)
 
@@ -270,10 +270,12 @@ class EnvironmentService:
             resource_type=Environment.__name__,
         )
 
-        SharePolicyService.create_managed_share_policies_for_role(environment.environmentUri,
-                                                                  environment.AwsAccountId,
-                                                                  env_group_iam_role_name,
-                                                                  True)
+        ManagedPolicy(
+            role_name=env_group_iam_role_name,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=True)
 
         return environment, environment_group
 
@@ -457,11 +459,12 @@ class EnvironmentService:
             permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=ConsumptionRole.__name__,
         )
-
-        SharePolicyService.create_managed_share_policies_for_role(environment.environmentUri,
-                                                                  environment.AwsAccountId,
-                                                                  consumption_role.IAMRoleName,
-                                                                  consumption_role.dataallManaged)
+        ManagedPolicy(
+            role_name=consumption_role.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=consumption_role.dataallManaged)
 
         return consumption_role
 
@@ -490,9 +493,12 @@ class EnvironmentService:
         )
 
         environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        SharePolicyService.delete_managed_share_policies(environment.environmentUri,
-                                                         environment.AwsAccountId,
-                                                         consumption_role.IAMRoleName)
+        ManagedPolicy(
+            role_name=consumption_role.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).delete_all_policies()
 
         return True
 

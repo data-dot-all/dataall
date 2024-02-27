@@ -12,7 +12,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.core.environment.services.env_share_policy_service import SharePolicyService
+from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
@@ -362,16 +362,28 @@ def get_parent_organization(context: Context, source, **kwargs):
     return org
 
 
-def is_share_policy_attached(context: Context, source, **kwargs):
+def are_policies_attached(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
         environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        name, status = SharePolicyService.get_share_policy_status(source.IAMRoleName, environment.environmentUri,
-                                                                  environment.AwsAccountId)
-        return status
+        list_attached = ManagedPolicy(
+            role_name=source.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            managed=source.dataallManaged
+        ).check_all_policies_attached()
+        return (False not in list_attached)
 
 
-def get_share_policy_role_name(context: Context, source, **kwargs):
-    return SharePolicyService.generate_share_policy_name(source.environmentUri, source.IAMRoleName)
+def get_policies(context: Context, source, **kwargs):
+    with context.engine.scoped_session() as session:
+        environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+        list_policies = ManagedPolicy(
+            role_name=source.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            managed=source.dataallManaged
+        ).list_all_policies()
+    return str(list_policies)
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):

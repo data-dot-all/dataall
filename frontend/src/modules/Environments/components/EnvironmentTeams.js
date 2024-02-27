@@ -649,7 +649,7 @@ export const EnvironmentTeams = ({ environment }) => {
                   },
                   {
                     field: 'dataallManaged',
-                    headerName: 'Sharing Policy Management',
+                    headerName: 'Policy Management',
                     valueGetter: (params) => {
                       return `${
                         params.row.dataallManaged
@@ -660,27 +660,25 @@ export const EnvironmentTeams = ({ environment }) => {
                     flex: 0.6
                   },
                   {
-                    field: 'sharePolicyRoleName',
-                    headerName: 'Sharing Policy',
+                    field: 'policiesNames',
+                    headerName: 'IAM Policy',
                     flex: 0.5,
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
                       <Box>
                         <Label
                           sx={{ ml: 5 }}
                           color={
-                            params.row.isSharePolicyAttached
-                              ? 'success'
-                              : 'error'
+                            params.row.arePoliciesAttached ? 'success' : 'error'
                           }
                         >
-                          {params.row.isSharePolicyAttached
+                          {params.row.arePoliciesAttached
                             ? 'Attached'
                             : 'Not Attached'}
                         </Label>
                         <LoadingButton
                           onClick={async () => {
                             await navigator.clipboard.writeText(
-                              params.row.sharePolicyRoleName
+                              params.row.policiesNames
                             );
                             enqueueSnackbar(
                               'Policy Name is copied to clipboard',

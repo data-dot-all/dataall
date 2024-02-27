@@ -167,14 +167,14 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
         gql.Field(
-            name='sharePolicyRoleName',
+            name='policiesNames',
             type=gql.String,
-            resolver=get_share_policy_role_name,
+            resolver=get_policies,
         ),
         gql.Field(
-            name='isSharePolicyAttached',
+            name='arePoliciesAttached',
             type=gql.Boolean,
-            resolver=is_share_policy_attached,
+            resolver=are_policies_attached,
         ),
 
     ],

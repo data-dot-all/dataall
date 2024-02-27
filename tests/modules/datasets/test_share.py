@@ -446,7 +446,7 @@ def test_init(tables1, tables2):
 
 
 # Queries & mutations
-def create_share_object(client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
+def create_share_object(mocker, client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -474,6 +474,7 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
         }
       }
     """
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     response = client.query(
         q,
@@ -898,11 +899,12 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
 
 
 # Tests
-def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2group):
+def test_create_share_object_unauthorized(mocker, client, group3, dataset1, env2, env2group):
     # Given
     # Existing dataset, target environment and group
     # When a user that does not belong to environment and group creates request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username='anonymous',
         group=group3,
@@ -914,11 +916,12 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     assert 'Unauthorized' in create_share_object_response.errors[0].message
 
 
-def test_create_share_object_as_requester(client, user2, group2, env2group, env2, dataset1):
+def test_create_share_object_as_requester(mocker, client, user2, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
     # When a user that belongs to environment and group creates request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,
@@ -932,11 +935,12 @@ def test_create_share_object_as_requester(client, user2, group2, env2group, env2
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_as_approver_and_requester(client, user, group2, env2group, env2, dataset1):
+def test_create_share_object_as_approver_and_requester(mocker, client, user, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
     # When a user that belongs to environment and group creates request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user.username,
         group=group2,
@@ -950,11 +954,12 @@ def test_create_share_object_as_approver_and_requester(client, user, group2, env
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'ApproversAndRequesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
+def test_create_share_object_with_item_authorized(mocker, client, user2, group2, env2group, env2, dataset1, table1):
     # Given
     # Existing dataset, table, target environment and group
     # When a user that belongs to environment and group creates request with table in the request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,

@@ -14,7 +14,7 @@ from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
-from dataall.core.environment.services.env_share_policy_service import SharePolicyService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -147,12 +147,26 @@ class S3AccessPointShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
 
-        share_resource_policy_name = SharePolicyService.generate_share_policy_name(
-            self.target_environment.environmentUri,
-            self.target_requester_IAMRoleName)
+        # we check if a managed share policy exists
+        # if False, the role was introduced to data.all before this update
+        # to ensure backwards compatibility we attach the share policy
+        share_policy_service = SharePolicyService(
+            environmentUri=self.target_environment.environmentUri,
+            account=self.target_environment.AwsAccountId,
+            role_name=self.target_requester_IAMRoleName,
+            resource_prefix=self.target_environment.resourcePrefix
+        )
+
+        # Backwards compatibility. Create the missing policy
+        if not share_policy_service.check_if_policy_exists():
+            share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+            share_policy_service.attach_policy()
+
+        share_resource_policy_name = share_policy_service.generate_policy_name()
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id,
-            share_resource_policy_name)
+            share_resource_policy_name
+        )
 
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
@@ -181,7 +195,7 @@ class S3AccessPointShareManager:
             share_resource_policy_name
         )
 
-        SharePolicyService.remove_empty_statement(policy_document)
+        SharePolicyService.remove_empty_fake_resource(policy_document)
 
         if kms_key_id:
             kms_target_resources = [
@@ -407,20 +421,22 @@ class S3AccessPointShareManager:
             'Deleting target role IAM policy...'
         )
 
-        # if somehow by this point the policy does not exist,
-        # it means, the role was introducrs to data.all before this update
-        # for the sake of backwors compatibility, let's attache the policy
+        # we check if a managed share policy exists
+        # if False, the role was introduced to data.all before this update
+        # to ensure backwards compatibility we attach the share policy
+        share_policy_service = SharePolicyService(
+            role_name=share.principalIAMRoleName,
+            account=target_environment.AwsAccountId,
+            environmentUri=target_environment.environmentUri,
+            resource_prefix=target_environment.resourcePrefix
+        )
 
-        if_exists_managed_share_policy = SharePolicyService.check_if_share_policy_exists(share.principalIAMRoleName,
-                                                                                         target_environment.environmentUri,
-                                                                                         target_environment.AwsAccountId)
-        if not if_exists_managed_share_policy:
-            SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
-                                                                                target_environment.environmentUri,
-                                                                                target_environment.AwsAccountId)
+        # Backwards compatibility. Create the missing policy
+        if not share_policy_service.check_if_policy_exists():
+            share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+            share_policy_service.attach_policy()
 
-        share_resource_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
-                                                                                   share.principalIAMRoleName)
+        share_resource_policy_name = share_policy_service.generate_policy_name()
         version_id, policy_document = IAM.get_managed_policy_default_version(
             target_environment.AwsAccountId,
             share_resource_policy_name)
@@ -455,7 +471,7 @@ class S3AccessPointShareManager:
         policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
 
         if len(policy_document["Statement"]) == 0:
-            policy_document = SharePolicyService.empty_share_policy_document()
+            policy_document = share_policy_service.generate_empty_policy()
 
         IAM.update_managed_policy_default_version(
             target_environment.AwsAccountId,

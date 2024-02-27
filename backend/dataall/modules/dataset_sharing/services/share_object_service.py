@@ -18,11 +18,11 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import ShareOb
     ShareItemSM
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
     SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
     GET_SHARE_OBJECT
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.core.environment.services.env_share_policy_service import SharePolicyService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -71,13 +71,7 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
-                SharePolicyService.ensure_share_policy_attached(
-                    consumption_role.IAMRoleName,
-                    consumption_role.dataallManaged,
-                    environment.environmentUri,
-                    environment.AwsAccountId,
-                    attachMissingPolicies
-                )
+                managed = consumption_role.dataallManaged
 
             else:
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
@@ -86,13 +80,7 @@ class ShareObjectService:
                     environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
-                SharePolicyService.ensure_share_policy_attached(
-                    principal_iam_role_name,
-                    True,
-                    environment.environmentUri,
-                    environment.AwsAccountId,
-                    True
-                )
+                managed = True
 
             if (
                     dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri
@@ -104,6 +92,23 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
+            # Ensure policy is attached if customer managed
+            share_policy_service = SharePolicyService(
+                account=environment.AwsAccountId,
+                role_name=principal_iam_role_name,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix
+            )
+            # Backwards compatibility. Create the missing policy
+            if not share_policy_service.check_if_policy_exists():
+                share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+
+            attached = share_policy_service.check_if_policy_attached()
+            if not attached and not managed and not attachMissingPolicies:
+                raise Exception(
+                    f"Required customer managed policy {share_policy_service.generate_policy_name()} is not attached to role {principal_iam_role_name}")
+            elif not attached:
+                share_policy_service.attach_policy()
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             if not share:
                 share = ShareObject(
@@ -205,18 +210,6 @@ class ShareObjectService:
                 )
 
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-
-            # if somehow by this point the policy does not exist,
-            # it means, the role was introducrs to data.all before this update
-            # for the sake of backwors compatibility, let's attache the policy
-
-            if_exists_managed_share_policy = SharePolicyService.check_if_share_policy_exists(share.principalIAMRoleName,
-                                                                                             env.environmentUri,
-                                                                                             env.AwsAccountId)
-            if not if_exists_managed_share_policy:
-                SharePolicyService.create_and_attach_share_policy_for_existing_role(share.principalIAMRoleName,
-                                                                                    env.environmentUri,
-                                                                                    env.AwsAccountId)
 
             dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
             if dashboard_enabled:

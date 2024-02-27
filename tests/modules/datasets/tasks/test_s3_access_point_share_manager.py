@@ -5,7 +5,7 @@ import json
 
 from typing import Callable
 
-from dataall.core.environment.services.env_share_policy_service import SharePolicyService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
@@ -337,6 +337,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -393,6 +394,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -456,6 +458,7 @@ def test_grant_target_role_access_policy_test_no_policy(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     expected_policy = {
         "Version": "2012-10-17",
@@ -500,8 +503,12 @@ def test_grant_target_role_access_policy_test_no_policy(
         # When
         manager.grant_target_role_access_policy()
 
-        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName)
+        expected_policy_name = SharePolicyService(
+            environmentUri=target_environment.environmentUri,
+            role_name=share1.principalIAMRoleName,
+            account=target_environment.AwsAccountId,
+            resource_prefix=target_environment.resourcePrefix
+        ).generate_policy_name()
         # Then
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
@@ -1157,6 +1164,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     # Given
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
                  return_value=('v1', existing_target_role_policy))
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -1182,8 +1190,12 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         # When
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
-        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
-                                                                             share1.principalIAMRoleName)
+        expected_policy_name = SharePolicyService(
+            environmentUri=target_environment.environmentUri,
+            role_name=share1.principalIAMRoleName,
+            account=target_environment.AwsAccountId,
+            resource_prefix = target_environment.resourcePrefix
+        ).generate_policy_name()
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
@@ -1255,6 +1267,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     # Given
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
                  return_value=('v1', existing_target_role_policy))
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -1281,8 +1294,12 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
         # Then
-        expected_policy_name = SharePolicyService.generate_share_policy_name(target_environment.environmentUri,
-                                                                    share1.principalIAMRoleName)
+        expected_policy_name = SharePolicyService(
+            environmentUri=target_environment.environmentUri,
+            role_name=share1.principalIAMRoleName,
+            account=target_environment.AwsAccountId,
+            resource_prefix=target_environment.resourcePrefix
+        ).generate_policy_name()
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
