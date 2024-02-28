@@ -9,10 +9,12 @@ from ariadne import (
     gql as GQL,
     make_executable_schema,
 )
+from aws_lambda_powertools.event_handler import AppSyncResolver
 
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper
 
+appSyncResolver = AppSyncResolver()
 
 def bootstrap():
     classes = {
@@ -77,18 +79,21 @@ def get_executable_schema():
             for field in _type.fields:
                 if field.resolver:
                     query.field(field.name)(resolver_adapter(field.resolver))
+                    appSyncResolver.resolver(type_name=_type.name, field_name=field.name)(field.resolver)
         elif _type.name == 'Mutation':
             mutation = MutationType()
             _types.append(mutation)
             for field in _type.fields:
                 if field.resolver:
                     mutation.field(field.name)(resolver_adapter(field.resolver))
+                    appSyncResolver.resolver(type_name=_type.name, field_name=field.name)(field.resolver)
         else:
             object_type = ObjectType(name=_type.name)
 
             for field in _type.fields:
                 if field.resolver:
                     object_type.field(field.name)(resolver_adapter(field.resolver))
+                    appSyncResolver.resolver(type_name=_type.name, field_name=field.name)(field.resolver)
             _types.append(object_type)
 
     _enums = []

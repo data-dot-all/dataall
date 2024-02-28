@@ -25,6 +25,7 @@ class RequestContext:
     username: str
     groups: List[str]
     user_id: str
+    is_appsync: bool = False
 
 
 def get_context() -> RequestContext:

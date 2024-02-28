@@ -27,6 +27,7 @@ from aws_cdk.aws_ec2 import (
     Peer,
 )
 
+from .appsync import AppSyncStack
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
@@ -265,6 +266,8 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
+
+        AppSyncStack(scope, 'AppSyncAPI', user_pool, self.api_handler)
 
     def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(

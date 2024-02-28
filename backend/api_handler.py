@@ -10,6 +10,7 @@ from ariadne import (
     graphql_sync,
 )
 
+import appsync_handler
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.tasks.service_handlers import Worker
@@ -73,8 +74,10 @@ def get_cognito_groups(claims):
     saml_groups = claims.get('custom:saml.groups', '')
     if len(saml_groups):
         groups: list = saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
-    cognito_groups = claims.get('cognito:groups', '')
-    if len(cognito_groups):
+    cognito_groups = claims.get('cognito:groups', None)
+    if isinstance(cognito_groups, list):
+        groups.extend(cognito_groups)
+    elif isinstance(cognito_groups, str):
         groups.extend(cognito_groups.split(','))
     return groups
 
@@ -110,7 +113,7 @@ def handler(event, context):
     log.debug('Env name %s', ENVNAME)
     log.debug('Engine %s', ENGINE.engine.url)
 
-    if event['httpMethod'] == 'OPTIONS':
+    if event.get('httpMethod', None) == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
@@ -121,6 +124,8 @@ def handler(event, context):
             },
         }
 
+    if 'identity' in event:
+        event['requestContext'] = {'authorizer': event['identity']}
     if 'authorizer' in event['requestContext']:
         if 'claims' not in event['requestContext']['authorizer']:
             claims = event['requestContext']['authorizer']
@@ -154,10 +159,10 @@ def handler(event, context):
                         )
 
         except Exception as e:
-            print(f'Error managing groups due to: {e}')
+            log.error(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, groups, user_id))
+        set_context(RequestContext(ENGINE, username, groups, user_id, 'info' in event))
 
         app_context = {
             'engine': ENGINE,
@@ -177,7 +182,7 @@ def handler(event, context):
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
-    query = json.loads(event.get('body'))
+    query = json.loads(event.get('body', '{}'))
 
     # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
@@ -210,20 +215,23 @@ def handler(event, context):
                 'body': json.dumps(response),
             }
 
-    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
+    if query:
+        success, response = graphql_sync(
+            schema=executable_schema, data=query, context_value=app_context
+        )
+        response = {
+            'statusCode': 200 if success else 400,
+            'headers': {
+                'content-type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': '*',
+            },
+            'body': json.dumps(response),
+        }
+    else:
+        response = appsync_handler.handler(event, context, app_context)
 
     dispose_context()
-    response = json.dumps(response)
-
     log.info('Lambda Response %s', response)
-
-    return {
-        'statusCode': 200 if success else 400,
-        'headers': {
-            'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Methods': '*',
-        },
-        'body': response,
-    }
+    return response

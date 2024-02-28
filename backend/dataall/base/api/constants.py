@@ -1,5 +1,8 @@
 from enum import Enum
+from types import DynamicClassAttribute
+
 from dataall.base.api import gql
+from dataall.base.context import get_context
 
 
 class GraphQLEnumMapper(Enum):
@@ -20,6 +23,17 @@ class GraphQLEnumMapper(Enum):
             if getattr(cls, c.name).value == value:
                 return c.name
         return None
+
+    # temporary hack to return enum names when request comes from AppSync and enum values when request comes from APIGW
+    @DynamicClassAttribute
+    def value(self):
+        try:
+            if get_context().is_appsync:
+                return self.name
+            else:
+                return super().value
+        except AttributeError:
+            return super().value
 
 
 class SortDirection(GraphQLEnumMapper):
