@@ -139,6 +139,15 @@ class ShareObjectSM:
                     ]
                 }
             ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareObjectStatus.Processed.value: [
+                        ShareObjectStatus.Share_In_Progress.value,
+                        ShareObjectStatus.Revoke_In_Progress.value
+                    ]
+                }
+            ),
         }
 
     def run_transition(self, transition):
@@ -258,6 +267,13 @@ class ShareItemSM:
                         ShareItemStatus.Share_Failed.value,
                         ShareItemStatus.Revoke_Succeeded.value
                     ]
+                }
+            ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Approved.value],
                 }
             )
         }

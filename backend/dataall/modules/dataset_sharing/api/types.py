@@ -2,7 +2,7 @@ from dataall.base.api import gql
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType, ShareItemHealthStatus
 from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
     resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
-    resolve_group, list_shareable_objects, resolve_user_role
+    resolve_group, list_shareable_objects, resolve_user_role, resolve_shared_database_name
 from dataall.core.environment.api.resolvers import resolve_environment
 
 ShareableObject = gql.Union(
@@ -195,6 +195,11 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='GlueDatabaseName', type=gql.String),
         gql.Field(name='GlueTableName', type=gql.String),
         gql.Field(name='S3AccessPointName', type=gql.String),
+        gql.Field(
+            'sharedGlueDatabaseName',
+            type=gql.String,
+            resolver=resolve_shared_database_name,
+        ),
     ],
 )
 

@@ -6,6 +6,7 @@ from dataall.core.environment.db.environment_models import EnvironmentGroup, Con
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.permissions.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -43,6 +44,13 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 
 class ShareObjectService:
+
+    @staticmethod
+    @has_resource_permission(GET_ENVIRONMENT)
+    def get_share_object_in_environment(uri, shareUri):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectRepository.get_share_by_uri(session, shareUri)
+
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):

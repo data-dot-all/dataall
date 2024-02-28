@@ -1,6 +1,5 @@
 import logging
 
-from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -10,6 +9,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
@@ -246,6 +246,25 @@ def list_shareable_objects(
         is_revokable=is_revokable,
         filter=filter
     )
+
+
+def resolve_shared_database_name(
+    context: Context, source
+):
+    if not source:
+        return None
+    old_shared_db_name = (source.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
+    with context.engine.scoped_session() as session:
+        share = ShareObjectService.get_share_object_in_environment(uri=source.environmentUri, shareUri=source.shareUri)
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        database = GlueClient(
+            account_id=env.AwsAccountId,
+            database=old_shared_db_name,
+            region=env.region
+        ).get_glue_database()
+        if database:
+            return old_shared_db_name
+        return source.GlueDatabaseName + '_shared'
 
 
 def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
