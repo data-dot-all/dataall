@@ -54,5 +54,6 @@ class DataSharingCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.dataset_sharing.cdk
+        from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
         log.info("CDK module data_sharing has been imported")

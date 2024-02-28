@@ -54,28 +54,6 @@ class SharePolicyService(ManagedPolicy):
             ]
         }
 
-    def check_if_policy_exists(self) -> bool:
-        policy_name = self.generate_policy_name()
-        share_policy = IAM.get_policy_by_name(self.account, policy_name)
-        return (share_policy is not None)
-
-    def check_if_policy_attached(self):
-        policy_name = self.generate_policy_name()
-        return IAM.is_policy_attached(self.account, policy_name, self.role_name)
-
-    def attach_policy(self):
-        policy_arn = f"arn:aws:iam::{self.account}:policy/{self.generate_policy_name()}"
-        try:
-            log.info(f'Attaching policy {policy_arn}')
-            IAM.attach_role_policy(
-                self.account,
-                self.role_name,
-                policy_arn
-            )
-        except Exception as e:
-            raise Exception(
-                f"Required customer managed policy {policy_arn} can't be attached: {e}")
-
     @staticmethod
     def remove_empty_fake_resource(policy_doc):
         # TODO remove this fake resource in a more elegant way
@@ -113,20 +91,20 @@ class SharePolicyService(ManagedPolicy):
         return: IAM policy document
         """
         new_policy = self.generate_empty_policy()
-        existing_bucket_s3, existing_bucket_kms = self._get_policy_resources(OLD_IAM_S3BUCKET_ROLE_POLICY)
+        existing_s3, existing_kms = self._get_policy_resources(OLD_IAM_S3BUCKET_ROLE_POLICY)
         existing_access_points_s3, existing_access_points_kms = self._get_policy_resources(OLD_IAM_S3BUCKET_ROLE_POLICY)
-        s3_resources = existing_bucket_s3.extend(existing_access_points_s3)
-        kms_resources = existing_bucket_kms.extend(existing_access_points_kms)
-        if len(s3_resources) > 0:
-            new_policy["Statement"][0]["Resource"] = s3_resources
+        existing_s3.extend(existing_access_points_s3)
+        existing_kms.extend(existing_access_points_kms)
+        if len(existing_s3) > 0:
+            new_policy["Statement"][0]["Resource"] = existing_s3
             SharePolicyService.remove_empty_fake_resource(new_policy)
-        if len(kms_resources) > 0:
+        if len(existing_kms) > 0:
             additional_policy = {
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
                 ],
-                "Resource": kms_resources
+                "Resource": existing_kms
             }
             new_policy["Statement"].append(additional_policy)
         return new_policy
@@ -138,8 +116,11 @@ class SharePolicyService(ManagedPolicy):
                 self.role_name,
                 policy_name
             )
-            kms_resources = existing_policy["Statement"][1]["Resource"] if len(existing_policy["Statement"]) > 1 else []
-            return existing_policy["Statement"][0]["Resource"], kms_resources
+            if existing_policy is not None:
+                kms_resources = existing_policy["Statement"][1]["Resource"] if len(existing_policy["Statement"]) > 1 else []
+                return existing_policy["Statement"][0]["Resource"], kms_resources
+            else:
+                return [], []
         except Exception as e:
             log.error(
                 f'Failed to retrieve the existing policy {policy_name}: {e} '

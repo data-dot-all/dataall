@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class ManagedPolicy(ABC):
+    """
+    Abstract class for any IAM Managed policy that needs to be atached to data.all team IAM roles and consumption roles
+    """
 
     @abstractmethod
     def __init__(
@@ -43,6 +46,27 @@ class ManagedPolicy(ABC):
         Returns dict and needs to be implemented in the ManagedPolicies inherited classes
         """
         raise NotImplementedError
+
+    def check_if_policy_exists(self) -> bool:
+        policy_name = self.generate_policy_name()
+        share_policy = IAM.get_policy_by_name(self.account, policy_name)
+        return (share_policy is not None)
+
+    def check_if_policy_attached(self):
+        policy_name = self.generate_policy_name()
+        return IAM.is_policy_attached(self.account, policy_name, self.role_name)
+
+    def attach_policy(self):
+        policy_arn = f"arn:aws:iam::{self.account}:policy/{self.generate_policy_name()}"
+        try:
+            IAM.attach_role_policy(
+                self.account,
+                self.role_name,
+                policy_arn
+            )
+        except Exception as e:
+            raise Exception(
+                f"Required customer managed policy {policy_arn} can't be attached: {e}")
 
 
 class PolicyManager(object):
@@ -124,7 +148,8 @@ class PolicyManager(object):
             policy_dict = {
                 "policy_name": Policy.generate_policy_name(),
                 "policy_type": Policy.policy_type,
-                "attached": IAM.is_policy_attached(self.account, Policy.generate_policy_name(), self.role_name)
+                "exists": Policy.check_if_policy_exists(),
+                "attached": Policy.check_if_policy_attached()
             }
             all_policies.append(policy_dict)
         logger.info(f'All policies currently added to role {str(all_policies)}')

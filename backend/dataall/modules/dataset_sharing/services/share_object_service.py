@@ -92,16 +92,18 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            # Ensure policy is attached if customer managed
             share_policy_service = SharePolicyService(
                 account=environment.AwsAccountId,
                 role_name=principal_iam_role_name,
                 environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix
             )
-            # Backwards compatibility. Create the missing policy
+            # Backwards compatibility
+            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+            # We create the policy from the inline statements
             if not share_policy_service.check_if_policy_exists():
                 share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+            # End of backwards compatibility
 
             attached = share_policy_service.check_if_policy_attached()
             if not attached and not managed and not attachMissingPolicies:

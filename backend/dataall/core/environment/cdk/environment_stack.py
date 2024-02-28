@@ -440,10 +440,18 @@ class EnvironmentSetup(Stack):
             account=self._environment.AwsAccountId
         )
         for policy in policy_manager.get_all_policies():
-            external_managed_policies.append(iam.Policy.from_policy_name(
+            # Backwards compatibility
+            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+            # We create the policy from the inline statements
+            if not policy.get("exists") and policy.get("policy_type") == "SharePolicy":
+                share_policy = next((x for x in policy_manager.initializedPolicies if x.policy_type == "SharePolicy"), None)
+                share_policy.create_managed_policy_from_inline_and_delete_inline()
+            # End of backwards compatibility
+
+            external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
                 self,
-                id=f'{self._environment.resourcePrefix}--managed-policy-{policy.get("policy_name")}',
-                policy_name=policy.get("policy_name")
+                id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
+                managed_policy_name=policy.get("policy_name")
             ))
 
         with self.engine.scoped_session() as session:

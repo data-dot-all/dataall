@@ -73,9 +73,6 @@ class S3BucketShareManager:
             f'Grant target role {self.target_requester_IAMRoleName} access policy'
         )
 
-        # we check if a managed share policy exists
-        # if False, the role was introduced to data.all before this update
-        # to ensure backwards compatibility we attach the share policy
         share_policy_service = SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
@@ -83,10 +80,13 @@ class S3BucketShareManager:
             resource_prefix=self.target_environment.resourcePrefix
         )
 
-        # Backwards compatibility. Create the missing policy
+        # Backwards compatibility
+        # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+        # We create the policy from the inline statements and attach it to the role
         if not share_policy_service.check_if_policy_exists():
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
+        # End of backwards compatibility
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
 
@@ -343,9 +343,6 @@ class S3BucketShareManager:
             'Deleting target role IAM policy...'
         )
 
-        # we check if a managed share policy exists
-        # if False, the role was introduced to data.all before this update
-        # to ensure backwards compatibility we attach the share policy
         share_policy_service = SharePolicyService(
             role_name=share.principalIAMRoleName,
             account=target_environment.AwsAccountId,
@@ -353,10 +350,13 @@ class S3BucketShareManager:
             resource_prefix=target_environment.resourcePrefix
         )
 
-        # Backwards compatibility. Create the missing policy
+        # Backwards compatibility
+        # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+        # We create the policy from the inline statements and attach it to the role
         if not share_policy_service.check_if_policy_exists():
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
+        # End of backwards compatibility
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
         version_id, policy_document = IAM.get_managed_policy_default_version(
