@@ -18,7 +18,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                     'iam:PutRolePolicy',
                     'iam:DeleteRolePolicy'
                 ],
-                resources=['*'],
+                resources=[f'arn:aws:iam::{self.account}:role/dataall-*', f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*', f'arn:aws:iam::{self.account}:role/targetDatasetAccessControlPolicy'],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',
