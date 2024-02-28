@@ -351,7 +351,7 @@ class DataSharingService:
                         ~DatasetLock.isLocked
                     )
                 )
-                .with_for_update().one()
+                .with_for_update().first()
             )
 
             # Check if dataset_lock is not None before attempting to update
@@ -367,6 +367,7 @@ class DataSharingService:
                 return False
 
         except Exception as e:
+            session.expunge_all()
             session.rollback()
             log.error("Error occurred while acquiring lock:", e)
             return False
@@ -415,7 +416,7 @@ class DataSharingService:
                         DatasetLock.acquiredBy == share_uri
                     )
                 )
-                .with_for_update().one()
+                .with_for_update().first()
             )
 
             if dataset_lock:
@@ -429,6 +430,7 @@ class DataSharingService:
                 return False
 
         except Exception as e:
+            session.expunge_all()
             session.rollback()
             log.error("Error occurred while releasing lock:", e)
             return False
