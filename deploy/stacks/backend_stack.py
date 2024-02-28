@@ -189,6 +189,7 @@ class BackendStack(Stack):
             email_notification_sender_email_id=email_sender,
             email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
             ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
+            custom_domain=custom_domain,
             custom_auth=custom_auth,
             **kwargs,
         )

@@ -42,7 +42,10 @@ class ShareNotificationService:
         self.notification_target_users = self._get_share_object_targeted_users()
 
     def notify_share_object_submission(self, email_id: str):
-        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId} \n\n Please visit Data.all Share link - {os.environ.get("domain_url")}"/shares/{self.share.shareUri}'
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}' + share_link_text
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
 
         notifications = self._register_notifications(
@@ -52,7 +55,10 @@ class ShareNotificationService:
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
-        msg = f'User {email_id} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+        msg = f'User {email_id} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}' + share_link_text
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
 
         notifications = self._register_notifications(
@@ -62,14 +68,17 @@ class ShareNotificationService:
         return notifications
 
     def notify_share_object_rejection(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
         if self.share.status == ShareObjectStatus.Rejected.value:
-            msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}' + share_link_text
             subject = f'Data.all | Share Request Rejected for {self.dataset.label}'
         elif self.share.status == ShareObjectStatus.Revoked.value:
-            msg = f'User {email_id} REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}' + share_link_text
             subject = f'Data.all | Share Request Revoked for {self.dataset.label}'
         else:
-            msg = f'User {email_id} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}' + share_link_text
             subject = f'Data.all | Share Request Rejected / Revoked for {self.dataset.label}'
 
         notifications = self._register_notifications(

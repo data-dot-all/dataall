@@ -29,7 +29,7 @@ class Ses:
                 'ToAddresses': toList,
             }
             body_dict = {
-                'Text': {
+                'Html': {
                     'Data': message,
                     'Charset': 'UTF-8'
                 }
