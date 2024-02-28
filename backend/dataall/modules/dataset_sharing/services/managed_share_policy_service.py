@@ -106,21 +106,20 @@ class SharePolicyService(ManagedPolicy):
             }
             policy_document["Statement"].append(additional_policy)
         else:
-            policy_statement = policy_document["Statement"][index]
             for target_resource in target_resources:
-                if target_resource not in policy_statement["Resource"]:
+                if target_resource not in policy_document["Statement"][index]["Resource"]:
                     log.info(
                         f'{statement_sid} exists for Managed policy {policy_name} '
                         f'but {target_resource} is not included, updating...'
                     )
-                    policy_statement["Resource"].extend([target_resource])
+                    policy_document["Statement"][index]["Resource"].extend([target_resource])
                 else:
                     log.info(
                         f'{statement_sid} exists for Managed policy {policy_name} '
                         f'and {target_resource} is included, skipping...'
                     )
 
-    def remove_resource_from_statement(self, target_resources, statement_sid, policy_document):
+    def remove_resource_from_statement(self, resource_type, target_resources, statement_sid, policy_document):
         policy_name = self.generate_policy_name()
         index = self._get_statement_by_sid(policy_document, statement_sid)
         log.info(
@@ -141,13 +140,24 @@ class SharePolicyService(ManagedPolicy):
                         f'and {target_resource} is included, removing...'
                     )
                     policy_statement["Resource"].remove(target_resource)
+                if len(policy_statement["Resource"]) == 0:
+                    if resource_type == "s3":
+                        log.info(
+                            f'No more resources in {statement_sid}, appending {FAKE_S3_PLACEHOLDER}...'
+                        )
+                        policy_statement["Resource"].append(FAKE_S3_PLACEHOLDER)
+                    if resource_type == "kms":
+                        log.info(
+                            f'No more resources in {statement_sid}, removing statement...'
+                        )
+                        policy_document["Statement"].pop(index)
 
     @staticmethod
     def _get_statement_by_sid(policy, sid):
         for index, statement in enumerate(policy["Statement"]):
             if statement["Sid"] == sid:
                 return index
-        return False
+        return None
 
     # Backwards compatibility
 

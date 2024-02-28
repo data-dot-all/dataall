@@ -5,13 +5,12 @@ import json
 
 from typing import Callable
 
-from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_ACCESS_POINTS_STATEMENT_SID, IAM_S3_BUCKETS_STATEMENT_SID, FAKE_S3_PLACEHOLDER
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -198,6 +197,7 @@ def target_dataset_access_control_policy(request):
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": [
@@ -208,12 +208,23 @@ def target_dataset_access_control_policy(request):
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
                 ],
                 "Resource": [
                     f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112"
+                ]
+            },
+            {
+                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    FAKE_S3_PLACEHOLDER,
                 ]
             }
         ],
@@ -337,7 +348,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
-    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -367,13 +378,18 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
 
         # Iam function is called with str from object so we transform back to object
         policy_object = iam_policy
+        s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3")
+        kms_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS")
 
         # Assert that bucket_name is inside the resource array of policy object
-        assert location1.S3BucketName in ",".join(policy_object["Statement"][0]["Resource"])
+        assert location1.S3BucketName in ",".join(policy_object["Statement"][s3_index]["Resource"])
         assert f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key" in \
-               iam_policy["Statement"][1]["Resource"] \
-               and "kms:*" in iam_policy["Statement"][1]["Action"]
+               iam_policy["Statement"][kms_index]["Resource"] \
+               and "kms:*" in iam_policy["Statement"][kms_index]["Action"]
 
+        # Assert that statements for S3 bucket sharing are unaffected
+        s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3")
+        assert FAKE_S3_PLACEHOLDER in ",".join(policy_object["Statement"][s3_index]["Resource"])
 
 @pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]),
                          indirect=True)
@@ -394,7 +410,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     iam_policy = target_dataset_access_control_policy
 
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', iam_policy))
-    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -436,19 +452,30 @@ def test_grant_target_role_access_policy_test_no_policy(
         target_environment: Environment,
 ):
     initial_policy_document = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    "arn:aws:s3:::initial-fake-empty-bucket",
-                ]
-            }
-        ]
-    }
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        FAKE_S3_PLACEHOLDER,
+                    ]
+                },
+                {
+                    "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        FAKE_S3_PLACEHOLDER,
+                    ]
+                }
+            ]
+        }
 
     # Given
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
@@ -458,12 +485,13 @@ def test_grant_target_role_access_policy_test_no_policy(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
-    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists", return_value=True)
 
     expected_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": [
@@ -474,6 +502,17 @@ def test_grant_target_role_access_policy_test_no_policy(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    FAKE_S3_PLACEHOLDER,
+                ]
+            },
+            {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -481,7 +520,7 @@ def test_grant_target_role_access_policy_test_no_policy(
                 "Resource": [
                     f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
                 ]
-            }
+            },
         ],
     }
 
@@ -1120,13 +1159,16 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         source_environment: Environment,
         target_environment: Environment,
 ):
-    # Given ap policy that only includes AllowAllToAdminStatement
+    # Given IAM policy with no bucket shares
     existing_target_role_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
-                "Action": ["s3:*"],
+                "Action": [
+                    "s3:*"
+                ],
                 "Resource": [
                     f"arn:aws:s3:::{location1.S3BucketName}",
                     f"arn:aws:s3:::{location1.S3BucketName}/*",
@@ -1135,6 +1177,17 @@ def test_delete_target_role_access_policy_no_remaining_statement(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    FAKE_S3_PLACEHOLDER,
+                ]
+            },
+            {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -1146,16 +1199,27 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         ],
     }
 
-    initial_policy_document = {
+    expected_remaining_target_role_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": [
                     "s3:*"
                 ],
                 "Resource": [
-                    "arn:aws:s3:::initial-fake-empty-bucket",
+                    FAKE_S3_PLACEHOLDER,
+                ]
+            },
+            {
+                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": [
+                    FAKE_S3_PLACEHOLDER,
                 ]
             }
         ]
@@ -1164,7 +1228,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     # Given
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
                  return_value=('v1', existing_target_role_policy))
-    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -1199,7 +1263,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
         iam_update_role_policy_mock.assert_called_with(
             target_environment.AwsAccountId, expected_policy_name,
-            "v1", json.dumps(initial_policy_document)
+            "v1", json.dumps(expected_remaining_target_role_policy)
         )
 
 
@@ -1221,6 +1285,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": [
@@ -1232,6 +1297,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -1248,11 +1314,13 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": ["arn:aws:s3:::UNRELATED_BUCKET_ARN"],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -1267,7 +1335,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     # Given
     mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
                  return_value=('v1', existing_target_role_policy))
-    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists", return_value=True)
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",

@@ -10,7 +10,7 @@ from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_BUCKETS_STATEMENT_SID
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
@@ -20,7 +20,6 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
-IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
 
 
 class S3BucketShareManager:
@@ -323,7 +322,7 @@ class S3BucketShareManager:
             target_environment: Environment,
     ):
         logger.info(
-            'Deleting target role IAM policy...'
+            'Deleting target role IAM statements...'
         )
 
         share_policy_service = SharePolicyService(
@@ -354,6 +353,7 @@ class S3BucketShareManager:
             f"arn:aws:s3:::{target_bucket.S3BucketName}/*"
         ]
         share_policy_service.remove_resource_from_statement(
+            resource_type="s3",
             target_resources=s3_target_resources,
             statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
             policy_document=policy_document
@@ -363,14 +363,11 @@ class S3BucketShareManager:
                 f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}"
             ]
             share_policy_service.remove_resource_from_statement(
+                resource_type="kms",
                 target_resources=kms_target_resources,
                 statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS",
                 policy_document=policy_document
             )
-        policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
-
-        if len(policy_document["Statement"]) == 0:
-            policy_document = share_policy_service.generate_empty_policy()
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
