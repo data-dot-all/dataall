@@ -552,7 +552,7 @@ class DataSharingService:
                 (reapply_tables, reapply_folders, reapply_buckets) = ShareObjectRepository.get_share_data_items(
                     session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
                 )
-                
+
                 lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
                 if not lock_acquired:
                     log.error(f"Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...")
