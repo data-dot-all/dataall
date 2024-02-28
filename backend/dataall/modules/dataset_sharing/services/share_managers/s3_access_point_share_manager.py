@@ -13,7 +13,6 @@ from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
@@ -24,6 +23,7 @@ ACCESS_POINT_CREATION_RETRIES = 5
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
+IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
 
 
 class S3AccessPointShareManager:
@@ -179,44 +179,28 @@ class S3AccessPointShareManager:
             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
         ]
 
-        share_manager = ShareManagerUtils(
-            self.session,
-            self.dataset,
-            self.share,
-            self.source_environment,
-            self.target_environment,
-            self.source_env_group,
-            self.env_group
-        )
-        share_manager.add_missing_resources_to_policy_statement(
-            self.bucket_name,
-            s3_target_resources,
-            policy_document["Statement"][0],
-            share_resource_policy_name
+        share_policy_service.add_missing_resources_to_policy_statement(
+            resource_type="s3",
+            target_resources=s3_target_resources,
+            statement_sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+            policy_document=policy_document
         )
 
-        SharePolicyService.remove_empty_fake_resource(policy_document)
+        share_policy_service.remove_empty_fake_resource(
+            policy_doc=policy_document,
+            statement_sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3"
+        )
 
         if kms_key_id:
             kms_target_resources = [
                 f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"
             ]
-            if len(policy_document["Statement"]) > 1:
-                share_manager.add_missing_resources_to_policy_statement(
-                    kms_key_id,
-                    kms_target_resources,
-                    policy_document["Statement"][1],
-                    share_resource_policy_name
-                )
-            else:
-                additional_policy = {
-                    "Effect": "Allow",
-                    "Action": [
-                        "kms:*"
-                    ],
-                    "Resource": kms_target_resources
-                }
-                policy_document["Statement"].append(additional_policy)
+            share_policy_service.add_missing_resources_to_policy_statement(
+                resource_type="kms",
+                target_resources=kms_target_resources,
+                statement_sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
+                policy_document=policy_document,
+            )
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
@@ -454,19 +438,20 @@ class S3AccessPointShareManager:
             f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
         ]
 
-        ShareManagerUtils.remove_resource_from_statement(
-            policy_document["Statement"][0],
-            s3_target_resources
+        share_policy_service.remove_resource_from_statement(
+            target_resources=s3_target_resources,
+            statement_sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+            policy_document=policy_document
         )
         if kms_key_id:
             kms_target_resources = [
                 f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}"
             ]
-            if len(policy_document["Statement"]) > 1:
-                ShareManagerUtils.remove_resource_from_statement(
-                    policy_document["Statement"][1],
-                    kms_target_resources
-                )
+            share_policy_service.remove_resource_from_statement(
+                target_resources=kms_target_resources,
+                statement_sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
+                policy_document=policy_document
+            )
 
         policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
 

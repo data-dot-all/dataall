@@ -9,7 +9,6 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareManagerUtils
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
@@ -21,6 +20,7 @@ DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
 DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
+IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
 
 
 class S3BucketShareManager:
@@ -104,45 +104,28 @@ class S3BucketShareManager:
             f"arn:aws:s3:::{self.bucket_name}/*"
         ]
 
-        share_manager = ShareManagerUtils(
-            self.session,
-            self.dataset,
-            self.share,
-            self.source_environment,
-            self.target_environment,
-            self.source_env_group,
-            self.env_group
-        )
-
-        share_manager.add_missing_resources_to_policy_statement(
-            resource_type=self.bucket_name,
+        share_policy_service.add_missing_resources_to_policy_statement(
+            resource_type="s3",
             target_resources=s3_target_resources,
-            existing_policy_statement=policy_document["Statement"][0],
-            iam_role_policy_name=share_resource_policy_name
+            statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+            policy_document=policy_document
         )
 
-        SharePolicyService.remove_empty_fake_resource(policy_document)
+        share_policy_service.remove_empty_fake_resource(
+            policy_doc=policy_document,
+            statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3"
+        )
 
         if kms_key_id:
             kms_target_resources = [
                 f"arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}"
             ]
-            if len(policy_document["Statement"]) > 1:
-                share_manager.add_missing_resources_to_policy_statement(
-                    resource_type=kms_key_id,
-                    target_resources=kms_target_resources,
-                    existing_policy_statement=policy_document["Statement"][1],
-                    iam_role_policy_name=share_resource_policy_name
-                )
-            else:
-                additional_policy = {
-                    "Effect": "Allow",
-                    "Action": [
-                        "kms:*"
-                    ],
-                    "Resource": kms_target_resources
-                }
-                policy_document["Statement"].append(additional_policy)
+            share_policy_service.add_missing_resources_to_policy_statement(
+                resource_type="kms",
+                target_resources=kms_target_resources,
+                statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS",
+                policy_document=policy_document,
+            )
 
         IAM.update_managed_policy_default_version(
             self.target_account_id,
@@ -349,7 +332,6 @@ class S3BucketShareManager:
             environmentUri=target_environment.environmentUri,
             resource_prefix=target_environment.resourcePrefix
         )
-
         # Backwards compatibility
         # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
         # We create the policy from the inline statements and attach it to the role
@@ -371,24 +353,20 @@ class S3BucketShareManager:
             f"arn:aws:s3:::{target_bucket.S3BucketName}",
             f"arn:aws:s3:::{target_bucket.S3BucketName}/*"
         ]
-        share_manager = ShareManagerUtils(
-            self.session,
-            self.dataset,
-            self.share,
-            self.source_environment,
-            self.target_environment,
-            self.source_env_group,
-            self.env_group
+        share_policy_service.remove_resource_from_statement(
+            target_resources=s3_target_resources,
+            statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
+            policy_document=policy_document
         )
-        share_manager.remove_resource_from_statement(policy_document["Statement"][0], s3_target_resources)
-
         if kms_key_id:
             kms_target_resources = [
                 f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}"
             ]
-            if len(policy_document["Statement"]) > 1:
-                share_manager.remove_resource_from_statement(policy_document["Statement"][1], kms_target_resources)
-
+            share_policy_service.remove_resource_from_statement(
+                target_resources=kms_target_resources,
+                statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS",
+                policy_document=policy_document
+            )
         policy_document["Statement"] = [s for s in policy_document["Statement"] if len(s['Resource']) > 0]
 
         if len(policy_document["Statement"]) == 0:

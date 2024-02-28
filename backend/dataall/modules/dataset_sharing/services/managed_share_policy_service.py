@@ -10,6 +10,9 @@ OLD_IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 OLD_IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
 FAKE_S3_PLACEHOLDER = "arn:aws:s3:::initial-fake-empty-bucket"
 
+IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
+IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
+
 
 class SharePolicyService(ManagedPolicy):
     def __init__(
@@ -43,6 +46,17 @@ class SharePolicyService(ManagedPolicy):
             "Version": "2012-10-17",
             "Statement": [
                 {
+                    "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        FAKE_S3_PLACEHOLDER,
+                    ]
+                },
+                {
+                    "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                     "Effect": "Allow",
                     "Action": [
                         "s3:*"
@@ -55,11 +69,85 @@ class SharePolicyService(ManagedPolicy):
         }
 
     @staticmethod
-    def remove_empty_fake_resource(policy_doc):
+    def remove_empty_fake_resource(policy_doc, statement_sid):
         # TODO remove this fake resource in a more elegant way
-        if FAKE_S3_PLACEHOLDER in policy_doc["Statement"][0]["Resource"]:
-            policy_doc["Statement"][0]["Resource"].remove(FAKE_S3_PLACEHOLDER)
+        statement_index = SharePolicyService._get_statement_by_sid(policy_doc, statement_sid)
+        if FAKE_S3_PLACEHOLDER in policy_doc["Statement"][statement_index]["Resource"]:
+            policy_doc["Statement"][statement_index]["Resource"].remove(FAKE_S3_PLACEHOLDER)
         return policy_doc
+
+    def add_missing_resources_to_policy_statement(
+            self,
+            resource_type,
+            target_resources,
+            statement_sid,
+            policy_document
+    ):
+        """
+        Checks if the resources are in the existing statement. Otherwise, it will add it.
+        :param target_resources: list
+        :param existing_policy_statement: dict
+        :return
+        """
+        policy_name = self.generate_policy_name()
+        index = self._get_statement_by_sid(policy_document, statement_sid)
+        if index is None:
+            log.info(
+                f'{statement_sid} does NOT exists for Managed policy {policy_name} '
+                f'creating statement...'
+            )
+            additional_policy = {
+                "Sid": statement_sid,
+                "Effect": "Allow",
+                "Action": [
+                    f"{resource_type}:*"
+                ],
+                "Resource": target_resources
+            }
+            policy_document["Statement"].append(additional_policy)
+        else:
+            policy_statement = policy_document["Statement"][index]
+            for target_resource in target_resources:
+                if target_resource not in policy_statement["Resource"]:
+                    log.info(
+                        f'{statement_sid} exists for Managed policy {policy_name} '
+                        f'but {target_resource} is not included, updating...'
+                    )
+                    policy_statement["Resource"].extend([target_resource])
+                else:
+                    log.info(
+                        f'{statement_sid} exists for Managed policy {policy_name} '
+                        f'and {target_resource} is included, skipping...'
+                    )
+
+    def remove_resource_from_statement(self, target_resources, statement_sid, policy_document):
+        policy_name = self.generate_policy_name()
+        index = self._get_statement_by_sid(policy_document, statement_sid)
+        log.info(
+            f'Removing {target_resources} from Statement[{index}] in Managed policy {policy_name} '
+            f'skipping...'
+        )
+        if index is None:
+            log.info(
+                f'{statement_sid} does NOT exists for Managed policy {policy_name} '
+                f'skipping...'
+            )
+        else:
+            policy_statement = policy_document["Statement"][index]
+            for target_resource in target_resources:
+                if target_resource in policy_statement["Resource"]:
+                    log.info(
+                        f'{statement_sid} exists for Managed policy {policy_name} '
+                        f'and {target_resource} is included, removing...'
+                    )
+                    policy_statement["Resource"].remove(target_resource)
+
+    @staticmethod
+    def _get_statement_by_sid(policy, sid):
+        for index, statement in enumerate(policy["Statement"]):
+            if statement["Sid"] == sid:
+                return index
+        return False
 
     # Backwards compatibility
 
@@ -91,25 +179,26 @@ class SharePolicyService(ManagedPolicy):
         return: IAM policy document
         """
         new_policy = self.generate_empty_policy()
-        existing_s3, existing_kms = self._get_policy_resources(OLD_IAM_S3BUCKET_ROLE_POLICY)
-        existing_access_points_s3, existing_access_points_kms = self._get_policy_resources(OLD_IAM_S3BUCKET_ROLE_POLICY)
-        existing_s3.extend(existing_access_points_s3)
-        existing_kms.extend(existing_access_points_kms)
-        if len(existing_s3) > 0:
-            new_policy["Statement"][0]["Resource"] = existing_s3
-            SharePolicyService.remove_empty_fake_resource(new_policy)
-        if len(existing_kms) > 0:
-            additional_policy = {
-                "Effect": "Allow",
-                "Action": [
-                    "kms:*"
-                ],
-                "Resource": existing_kms
-            }
-            new_policy["Statement"].append(additional_policy)
-        return new_policy
+        existing_bucket_s3, existing_bucket_kms = self._get_policy_resources_from_inline_policy(OLD_IAM_S3BUCKET_ROLE_POLICY)
+        existing_access_points_s3, existing_access_points_kms = self._get_policy_resources_from_inline_policy(OLD_IAM_S3BUCKET_ROLE_POLICY)
 
-    def _get_policy_resources(self, policy_name):
+        updated_policy = self._update_policy_resources_from_inline_policy(
+            policy=new_policy,
+            statement_sid=IAM_S3_BUCKETS_STATEMENT_SID,
+            existing_s3=existing_bucket_s3,
+            existing_kms=existing_bucket_kms
+        )
+        updated_policy = self._update_policy_resources_from_inline_policy(
+            policy=updated_policy,
+            statement_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
+            existing_s3=existing_access_points_s3,
+            existing_kms=existing_access_points_kms
+        )
+        return updated_policy
+
+    def _get_policy_resources_from_inline_policy(self, policy_name):
+        # This function can only be used for backwards compatibility where policies had statement[0] for s3
+        # and statement[1] for KMS permissions
         try:
             existing_policy = IAM.get_role_policy(
                 self.account,
@@ -126,3 +215,22 @@ class SharePolicyService(ManagedPolicy):
                 f'Failed to retrieve the existing policy {policy_name}: {e} '
             )
             return [], []
+
+    def _update_policy_resources_from_inline_policy(self, policy, statement_sid, existing_s3, existing_kms):
+        # This function can only be used for backwards compatibility where policies had statement[0] for s3
+        # and statement[1] for KMS permissions
+        if len(existing_s3) > 0:
+            s3_index = self._get_statement_by_sid(policy, f"{statement_sid}-S3")
+            policy["Statement"][s3_index]["Resource"] = existing_s3
+            SharePolicyService.remove_empty_fake_resource(policy, s3_index)
+        if len(existing_kms) > 0:
+            additional_policy = {
+                "Sid": f"{statement_sid}KMS",
+                "Effect": "Allow",
+                "Action": [
+                    "kms:*"
+                ],
+                "Resource": existing_kms
+            }
+            policy["Statement"].append(additional_policy)
+        return policy
