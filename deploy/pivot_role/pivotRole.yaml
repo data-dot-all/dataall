@@ -435,7 +435,10 @@ Resources:
               - 'iam:PutRolePolicy'
               - 'iam:DeleteRolePolicy'
             Effect: Allow
-            Resource: '*'
+            Resource: 
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/dataall-*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/targetDatasetAccessControlPolicy'
           - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'
