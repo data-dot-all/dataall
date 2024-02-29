@@ -17,7 +17,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import format_error_message
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class LFShareManager:
             self.check_table_exists_in_source_database(share_item, table)
         except Exception:
             self.tbl_level_errors.append(
-                format_error_message(None, None, None, "Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
+                ShareErrorFormatter.dne_error_msg("Glue Table", f"{table.GlueDatabaseName}.{table.GlueTableName}")
             )
 
     def check_table_exists_in_source_database(self, share_item: ShareObjectItem, table: DatasetTable) -> True:
@@ -164,10 +164,7 @@ class LFShareManager:
         """
         if not self.check_resource_link_table_exists_in_target_database(table):
             self.tbl_level_errors.append(
-                format_error_message(
-                    None,
-                    None,
-                    None,
+                ShareErrorFormatter.dne_error_msg(
                     "Resource Link Table",
                     f"{self.target_environment.AwsAccountId}/{table.GlueDatabaseName}.{table.GlueTableName}",
                 )
@@ -223,7 +220,7 @@ class LFShareManager:
         """
         if not self.glue_client_in_target.get_glue_database():
             self.db_level_errors.append(
-                format_error_message(None, None, None, "Glue DB", self.shared_db_name)
+                ShareErrorFormatter.dne_error_msg("Glue DB", self.shared_db_name)
             )
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
@@ -261,7 +258,7 @@ class LFShareManager:
             permissions=["ALL"],
         ):
             self.db_level_errors.append(
-                format_error_message(principal, "LF", ["ALL"], "Glue DB", self.source_database_name)
+                ShareErrorFormatter.missing_permission_error_msg(principal, "LF", ["ALL"], "Glue DB", self.source_database_name)
             )
 
     def check_pivot_role_permissions_to_shared_database(self) -> None:
@@ -276,7 +273,7 @@ class LFShareManager:
             database_name=self.shared_db_name,
             permissions=["ALL"],
         ):
-            self.db_level_errors.append(format_error_message(principal, "LF", ["ALL"], "Glue DB", self.shared_db_name))
+            self.db_level_errors.append(ShareErrorFormatter.missing_permission_error_msg(principal, "LF", ["ALL"], "Glue DB", self.shared_db_name))
 
     def check_principals_permissions_to_shared_database(self) -> None:
         """
@@ -290,7 +287,7 @@ class LFShareManager:
             permissions=["DESCRIBE"],
         ):
             self.db_level_errors.append(
-                format_error_message(self.principals, "LF", ["DESCRIBE"], "Glue DB", self.shared_db_name)
+                ShareErrorFormatter.missing_permission_error_msg(self.principals, "LF", ["DESCRIBE"], "Glue DB", self.shared_db_name)
             )
 
     def check_target_account_permissions_to_source_table(self, table: DatasetTable) -> None:
@@ -309,7 +306,7 @@ class LFShareManager:
             permissions_with_grant_options=["DESCRIBE", "SELECT"],
         ):
             self.tbl_level_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_environment.AwsAccountId,
                     "LF",
                     ["DESCRIBE", "SELECT"],
@@ -423,7 +420,7 @@ class LFShareManager:
             permissions=["DESCRIBE", "SELECT"],
         ):
             self.tbl_level_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.principals,
                     "LF",
                     ["DESCRIBE", "SELECT"],
@@ -447,7 +444,7 @@ class LFShareManager:
             permissions=["DESCRIBE"],
         ):
             self.tbl_level_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.principals, "LF", ["DESCRIBE"], "Glue Table", f"{self.shared_db_name}.{table.GlueTableName}"
                 )
             )

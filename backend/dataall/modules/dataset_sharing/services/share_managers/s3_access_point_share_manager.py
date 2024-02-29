@@ -15,7 +15,7 @@ from dataall.modules.dataset_sharing.services.dataset_alarm_service import Datas
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import (
     ShareManagerUtils,
-    format_error_message,
+    ShareErrorFormatter,
 )
 
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
@@ -116,8 +116,8 @@ class S3AccessPointShareManager:
                 error = True
         if error:
             self.folder_errors.append(
-                format_error_message(
-                    None, None, None, f"Bucket Policy {DATAALL_DELEGATE_TO_ACCESS_POINT}", f"{self.bucket_name}"
+                ShareErrorFormatter.dne_error_msg(
+                    f"Bucket Policy {DATAALL_DELEGATE_TO_ACCESS_POINT}", f"{self.bucket_name}"
                 )
             )
 
@@ -182,7 +182,7 @@ class S3AccessPointShareManager:
         )
         if not existing_policy:
             self.folder_errors.append(
-                format_error_message(None, None, None, IAM_ACCESS_POINT_ROLE_POLICY, self.target_requester_IAMRoleName)
+                ShareErrorFormatter.dne_error_msg(IAM_ACCESS_POINT_ROLE_POLICY, self.target_requester_IAMRoleName)
             )
             return
 
@@ -204,7 +204,7 @@ class S3AccessPointShareManager:
         ]
         if not share_manager.check_resource_in_policy_statement(s3_target_resources, existing_policy["Statement"][0]):
             self.folder_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "IAM Policy",
                     IAM_ACCESS_POINT_ROLE_POLICY,
@@ -226,7 +226,7 @@ class S3AccessPointShareManager:
 
             if kms_error:
                 self.folder_errors.append(
-                    format_error_message(
+                    ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         "IAM Policy",
                         IAM_ACCESS_POINT_ROLE_POLICY,
@@ -323,13 +323,13 @@ class S3AccessPointShareManager:
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
         if not access_point_arn:
-            self.folder_errors.append(format_error_message(None, None, None, "Access Point", self.access_point_name))
+            self.folder_errors.append(ShareErrorFormatter.dne_error_msg("Access Point", self.access_point_name))
             return
 
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         if not existing_policy:
             self.folder_errors.append(
-                format_error_message(None, None, None, "Access Point Policy", self.access_point_name)
+                ShareErrorFormatter.dne_error_msg("Access Point Policy", self.access_point_name)
             )
             return
 
@@ -347,7 +347,7 @@ class S3AccessPointShareManager:
                 error = True
         if error:
             self.folder_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "Policy",
                     f"{target_requester_id}0",
@@ -367,7 +367,7 @@ class S3AccessPointShareManager:
                 error1 = True
         if error1:
             self.folder_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "Policy",
                     f"{target_requester_id}1",
@@ -471,7 +471,7 @@ class S3AccessPointShareManager:
         existing_policy = kms_client.get_key_policy(kms_key_id)
 
         if not existing_policy:
-            self.folder_errors.append(format_error_message(None, None, None, "KMS Key Policy", kms_key_id))
+            self.folder_errors.append(ShareErrorFormatter.dne_error_msg("KMS Key Policy", kms_key_id))
             return
 
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
@@ -487,7 +487,7 @@ class S3AccessPointShareManager:
 
         if error:
             self.folder_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "KMS Key Policy",
                     DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,

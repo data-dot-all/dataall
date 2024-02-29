@@ -14,7 +14,7 @@ from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import format_error_message
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 
 log = logging.getLogger(__name__)
 
@@ -312,7 +312,7 @@ class ProcessLakeFormationShare(LFShareManager):
                             source_table_name=table.GlueTableName,
                         ):
                             self.tbl_level_errors.append(
-                                format_error_message(
+                                ShareErrorFormatter.missing_permission_error_msg(
                                     self.target_environment.AwsAccountId,
                                     "RAM Invitation",
                                     "ASSOCIATED",

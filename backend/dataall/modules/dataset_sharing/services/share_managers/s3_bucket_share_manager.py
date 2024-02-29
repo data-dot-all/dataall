@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Cli
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import (
     ShareManagerUtils,
-    format_error_message,
+    ShareErrorFormatter,
 )
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
@@ -86,7 +86,7 @@ class S3BucketShareManager:
         )
         if not existing_policy:
             self.bucket_errors.append(
-                format_error_message(None, None, None, IAM_S3BUCKET_ROLE_POLICY, self.target_requester_IAMRoleName)
+                ShareErrorFormatter.dne_error_msg(IAM_S3BUCKET_ROLE_POLICY, self.target_requester_IAMRoleName)
             )
             return
 
@@ -111,7 +111,7 @@ class S3BucketShareManager:
             existing_policy_statement=existing_policy["Statement"][0],
         ):
             self.bucket_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "IAM Policy",
                     IAM_S3BUCKET_ROLE_POLICY,
@@ -133,7 +133,7 @@ class S3BucketShareManager:
 
             if kms_error:
                 self.bucket_errors.append(
-                    format_error_message(
+                    ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         "IAM Policy",
                         IAM_S3BUCKET_ROLE_POLICY,
@@ -276,7 +276,7 @@ class S3BucketShareManager:
                 error = True
         if error:
             self.bucket_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     target_requester_arn, "Bucket Policy", DATAALL_READ_ONLY_SID, "S3 Bucket", f"{self.bucket_name}"
                 )
             )
@@ -357,7 +357,7 @@ class S3BucketShareManager:
         existing_policy = kms_client.get_key_policy(kms_key_id)
 
         if not existing_policy:
-            self.bucket_errors.append(format_error_message(None, None, None, "KMS Key Policy", kms_key_id))
+            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg("KMS Key Policy", kms_key_id))
             return
 
         target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
@@ -372,7 +372,7 @@ class S3BucketShareManager:
             error = True
         if error:
             self.bucket_errors.append(
-                format_error_message(
+                ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     "KMS Key Policy",
                     DATAALL_BUCKET_KMS_DECRYPT_SID,

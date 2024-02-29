@@ -9,15 +9,21 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 logger = logging.getLogger(__name__)
 
 
-def format_error_message(requestor, permission_type, permissions, resource_type, target_resource):
-    if isinstance(requestor, list):
-        requestor = ",".join(requestor)
-    if isinstance(permissions, list):
-        permissions = ",".join(permissions)
+class ShareErrorFormatter: 
+    @staticmethod
+    def _stringify(param):
+        if isinstance(param, list):
+            param = ",".join(param)
+        return param 
 
-    if not requestor and not permissions:
+    @staticmethod
+    def dne_error_msg(resource_type, target_resource):
         return f"{resource_type} Target Resource does not exist: {target_resource}"
-    else:
+
+    @staticmethod
+    def missing_permission_error_msg(requestor, permission_type, permissions, resource_type, target_resource):
+        requestor = ShareErrorFormatter._stringify(requestor)
+        permissions = ShareErrorFormatter._stringify(permissions)
         return f"Requestor {requestor} missing {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}"
 
 
