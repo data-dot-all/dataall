@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class AthenaTableClient:
 
     def __init__(self, env: Environment, table: DatasetTable):
-        session = SessionHelper.remote_session(accountid=table.AWSAccountId)
+        session = SessionHelper.remote_session(accountid=table.AWSAccountId, region=env.region)
         self._client = session.client('athena', region_name=env.region)
         self._creds = session.get_credentials()
         self._env = env

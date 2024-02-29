@@ -3,6 +3,7 @@ from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
+from dataall.base.config import config as config_json
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class PivotRoleStatementSet(object):
                 iam.ManagedPolicy(
                     self.stack,
                     f'PivotRolePolicy-{index+1}',
-                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{index+1}',
+                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index+1}',
                     statements=chunk,
                 )
             )

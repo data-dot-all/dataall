@@ -12,7 +12,7 @@ class SagemakerClient:
     A Sagemaker notebooks proxy client that is used to send requests to AWS
     """
     def __init__(self, notebook: SagemakerNotebook):
-        session = SessionHelper.remote_session(notebook.AWSAccountId)
+        session = SessionHelper.remote_session(notebook.AWSAccountId, notebook.region)
         self._client = session.client('sagemaker', region_name=notebook.region)
         self._instance_name = notebook.NotebookInstanceName
 

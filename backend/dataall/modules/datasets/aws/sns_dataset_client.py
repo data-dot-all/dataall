@@ -14,7 +14,8 @@ class SnsDatasetClient:
 
     def __init__(self, environment: Environment, dataset: Dataset):
         aws_session = SessionHelper.remote_session(
-            accountid=environment.AwsAccountId
+            accountid=environment.AwsAccountId,
+            region=environment.region
         )
 
         self._client = aws_session.client('sns', region_name=environment.region)

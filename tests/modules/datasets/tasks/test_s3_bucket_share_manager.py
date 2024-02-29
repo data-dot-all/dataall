@@ -530,7 +530,7 @@ def test_grant_s3_iam_access_with_no_policy(
 
         iam_update_role_policy_mock.assert_called()
 
-        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[4])
 
         # Assert if the IAM role policy with S3 and KMS permissions was created
         assert len(iam_policy["Statement"]) == 2
@@ -608,7 +608,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
 
         iam_update_role_policy_mock.assert_called()
 
-        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[4])
 
         # Assert that new resources were appended
         assert len(policy["Statement"]) == 2
@@ -682,7 +682,7 @@ def test_grant_s3_iam_access_with_complete_policy_present(
         # Assert that the IAM Policy is the same as the existing complete policy
         iam_update_role_policy_mock.assert_called()
 
-        created_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        created_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[4])
 
         assert len(created_iam_policy["Statement"]) == 2
         assert policy["Statement"][0]["Resource"] == created_iam_policy["Statement"][0]["Resource"] and policy["Statement"][0]["Action"] == created_iam_policy["Statement"][0]["Action"]
@@ -1155,7 +1155,7 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         iam_delete_role_policy_mock.assert_not_called()
 
         # Get the updated IAM policy and compare it with the existing one
-        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[4])
         assert len(updated_iam_policy["Statement"]) == 2
         assert "arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*" == ",".join(updated_iam_policy["Statement"][0]["Resource"])
         assert "arn:aws:kms:us-east-1:121231131212:key/some-key-2112" == ",".join(
@@ -1238,7 +1238,7 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
         iam_update_role_policy_mock.assert_called()
         iam_delete_role_policy_mock.assert_not_called()
 
-        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[3])
+        updated_iam_policy = json.loads(iam_update_role_policy_mock.call_args.args[4])
 
         assert f"arn:aws:s3:::{dataset2.S3BucketName}" not in updated_iam_policy["Statement"][0]["Resource"]
         assert f"arn:aws:s3:::{dataset2.S3BucketName}/*" not in updated_iam_policy["Statement"][0]["Resource"]

@@ -32,24 +32,26 @@ class QuicksightClient:
         pass
 
     @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
+    def get_quicksight_client(AwsAccountId, region, session_region='eu-west-1'):
         """Returns a boto3 quicksight client in the provided account/region
         Args:
             AwsAccountId(str) : aws account id
-            region(str) : aws region
+            region(str) : aws region of the environment
+            session_region(str) : region to create the session
         Returns : boto3.client ("quicksight")
         """
-        session = SessionHelper.remote_session(accountid=AwsAccountId)
-        return session.client('quicksight', region_name=region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, region=region)
+        return session.client('quicksight', region_name=session_region)
 
     @staticmethod
-    def get_identity_region(AwsAccountId):
+    def get_identity_region(AwsAccountId, region):
         """Quicksight manages identities in one region, and there is no API to retrieve it
         However, when using Quicksight user/group apis in the wrong region,
         the client will throw and exception showing the region Quicksight's using as its
         identity region.
         Args:
             AwsAccountId(str) : aws account id
+            AwsAccountId(str) : aws region of environment
         Returns: str
             the region quicksight uses as identity region
         """
@@ -60,7 +62,7 @@ class QuicksightClient:
             try:
                 identity_region = QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS[index].get("code")
                 index += 1
-                client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
+                client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=region, session_region=identity_region)
                 response = client.describe_account_settings(AwsAccountId=AwsAccountId)
                 logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
                 return identity_region
@@ -79,15 +81,16 @@ class QuicksightClient:
         raise Exception(f'Quicksight subscription is inactive or the identity region has SCPs preventing access from data.all to account {AwsAccountId}')
 
     @staticmethod
-    def get_quicksight_client_in_identity_region(AwsAccountId):
+    def get_quicksight_client_in_identity_region(AwsAccountId, region):
         """Returns a boto3 quicksight client in the Quicksight identity region for the provided account
         Args:
             AwsAccountId(str) : aws account id
+            region(str) : aws region of the environment
         Returns : boto3.client ("quicksight")
 
         """
-        identity_region = QuicksightClient.get_identity_region(AwsAccountId)
-        session = SessionHelper.remote_session(accountid=AwsAccountId)
+        identity_region = QuicksightClient.get_identity_region(AwsAccountId, region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, region=region)
         return session.client('quicksight', region_name=identity_region)
 
     @staticmethod
@@ -100,7 +103,7 @@ class QuicksightClient:
             True if Quicksight Enterprise Edition is enabled in the AWS Account
         """
         logger.info(f'Checking Quicksight subscription in AWS account = {AwsAccountId}')
-        client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=region)
+        client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=region, session_region=region)
         try:
             response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
             if not response['AccountInfo']:
@@ -134,8 +137,8 @@ class QuicksightClient:
         Returns:dict
             quicksight.describe_group response
         """
-        client = QuicksightClient.get_quicksight_client_in_identity_region(AwsAccountId)
-        group = QuicksightClient.describe_group(client, AwsAccountId, GroupName)
+        client = QuicksightClient.get_quicksight_client_in_identity_region(AwsAccountId, region)
+        group = QuicksightClient.describe_group(client, AwsAccountId, region, GroupName)
         if not group:
             if GroupName == QuicksightClient.DEFAULT_GROUP_NAME:
                 logger.info(f'Initializing data.all default group = {GroupName}')
@@ -156,18 +159,18 @@ class QuicksightClient:
         return group
 
     @staticmethod
-    def describe_group(client, AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
+    def describe_group(client, AwsAccountId, region, GroupName=DEFAULT_GROUP_NAME):
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
             )
             logger.info(
                 f'Quicksight {GroupName} group already exists in {AwsAccountId} '
-                f'(using identity region {QuicksightClient.get_identity_region(AwsAccountId)}): '
+                f'(using identity region {QuicksightClient.get_identity_region(AwsAccountId, region)}): '
                 f'{response}'
             )
             return response
         except client.exceptions.ResourceNotFoundException:
             logger.info(
-                f'Creating Quicksight group in {AwsAccountId} (using identity region {QuicksightClient.get_identity_region(AwsAccountId)})'
+                f'Creating Quicksight group in {AwsAccountId} (using identity region {QuicksightClient.get_identity_region(AwsAccountId, region)})'
             )

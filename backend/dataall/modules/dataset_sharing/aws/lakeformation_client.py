@@ -11,7 +11,7 @@ log = logging.getLogger('aws:lakeformation')
 
 class LakeFormationClient:
     def __init__(self, account_id, region):
-        self._session = SessionHelper.remote_session(accountid=account_id)
+        self._session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = self._session.client(
             'lakeformation', region_name=region
         )
