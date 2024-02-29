@@ -9,16 +9,34 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 logger = logging.getLogger(__name__)
 
 
+class ShareErrorFormatter:
+    @staticmethod
+    def _stringify(param):
+        if isinstance(param, list):
+            param = ",".join(param)
+        return param
+
+    @staticmethod
+    def dne_error_msg(resource_type, target_resource):
+        return f"{resource_type} Target Resource does not exist: {target_resource}"
+
+    @staticmethod
+    def missing_permission_error_msg(requestor, permission_type, permissions, resource_type, target_resource):
+        requestor = ShareErrorFormatter._stringify(requestor)
+        permissions = ShareErrorFormatter._stringify(permissions)
+        return f"Requestor {requestor} missing {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}"
+
+
 class ShareManagerUtils:
     def __init__(
-            self,
-            session,
-            dataset: Dataset,
-            share: ShareObject,
-            source_environment: Environment,
-            target_environment: Environment,
-            source_env_group: EnvironmentGroup,
-            env_group: EnvironmentGroup,
+        self,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
     ):
         self.target_requester_IAMRoleName = share.principalIAMRoleName
         self.session = session
@@ -30,11 +48,7 @@ class ShareManagerUtils:
         self.env_group = env_group
 
     def add_missing_resources_to_policy_statement(
-            self,
-            resource_type,
-            target_resources,
-            existing_policy_statement,
-            iam_role_policy_name
+        self, resource_type, target_resources, existing_policy_statement, iam_role_policy_name
     ):
         """
         Checks if the resources are in the existing policy. Otherwise, it will add it.
@@ -45,17 +59,33 @@ class ShareManagerUtils:
         :return
         """
         for target_resource in target_resources:
-            if target_resource not in existing_policy_statement["Resource"]:
+            if not self.check_resource_in_policy_statement([target_resource], existing_policy_statement):
                 logger.info(
-                    f'{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName}, '
-                    f'but {resource_type} is not included, updating...'
+                    f"{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName}, "
+                    f"but {resource_type} is not included, updating..."
                 )
                 existing_policy_statement["Resource"].extend([target_resource])
         else:
             logger.info(
-                f'{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName} '
-                f'and {resource_type} is included, skipping...'
+                f"{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName} "
+                f"and {resource_type} is included, skipping..."
             )
+
+    def check_resource_in_policy_statement(
+        self,
+        target_resources: list,
+        existing_policy_statement: dict,
+    ):
+        """
+        Checks if the resources are in the existing policy
+        :param target_resources: list
+        :param existing_policy_statement: dict
+        :return True if all target_resources in the existing policy else False
+        """
+        for target_resource in target_resources:
+            if target_resource not in existing_policy_statement["Resource"]:
+                return False
+        return True
 
     @staticmethod
     def remove_resource_from_statement(policy_statement, target_resources):

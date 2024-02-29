@@ -20,7 +20,8 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
+from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
@@ -227,15 +228,16 @@ class DatasetService:
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
-                for k in data.keys():
-                    if k != 'stewards':
-                        setattr(dataset, k, data.get(k))
-                if data.get('KmsAlias') not in ["Undefined"]:
-                    dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
-                    dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
-
                 if data.get('imported', False):
                     DatasetService.check_imported_resources(dataset)
+
+                for k in data.keys():
+                    if k not in ['stewards', 'KmsAlias']:
+                        setattr(dataset, k, data.get(k))
+
+                if data.get('KmsAlias') not in ["Undefined"] and data.get('KmsAlias') != dataset.KmsAlias:
+                    dataset.KmsAlias = "SSE-S3" if data.get('KmsAlias') == "" else data.get('KmsAlias')
+                    dataset.importedKmsKey = False if data.get('KmsAlias') == "" else True
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
@@ -583,3 +585,16 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+
+    @staticmethod
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET)
+    def verify_dataset_share_objects(uri: str, share_uris: list):
+        with get_context().db_engine.scoped_session() as session:
+            for share_uri in share_uris:
+                share = ShareObjectRepository.get_share_by_uri(session, share_uri)
+                states = ShareItemSM.get_share_item_revokable_states()
+                items = ShareObjectRepository.list_shareable_items(session, share, states, {"pageSize": 1000, "isShared": True})
+                item_uris = [item.shareItemUri for item in items.get("nodes", [])]
+                ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
+        return True

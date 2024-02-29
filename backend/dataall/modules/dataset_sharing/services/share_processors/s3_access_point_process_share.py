@@ -1,9 +1,15 @@
 import logging
+from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareItemHealthStatus,
+    ShareItemStatus,
+    ShareObjectActions,
+    ShareItemActions,
+)
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
@@ -21,10 +27,8 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
-        existing_shared_buckets: bool = False
-
+        existing_shared_buckets: bool = False,
     ):
-
         super().__init__(
             session,
             dataset,
@@ -46,7 +50,8 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         source_environment: Environment,
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup
+        env_group: EnvironmentGroup,
+        reapply: bool = False,
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -60,20 +65,19 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         -------
         True if share is granted successfully
         """
-        log.info(
-            '##### Starting Sharing folders #######'
-        )
+        log.info("##### Starting Sharing folders #######")
         success = True
         for folder in share_folders:
-            log.info(f'sharing folder: {folder}')
+            log.info(f"sharing folder: {folder}")
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
                 share.shareUri,
                 folder.locationUri,
             )
-            shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
-            new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
-            shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+            if not reapply:
+                shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+                new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
+                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             sharing_folder = cls(
                 session,
@@ -93,31 +97,37 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 if not dataset.imported or dataset.importedKmsKey:
                     sharing_folder.update_dataset_bucket_key_policy()
 
-                new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                if not reapply:
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
+                    shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                ShareObjectRepository.update_share_item_health_status(
+                    session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                )
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
-                new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
-                shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                if not reapply:
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
+                    shared_item_SM.update_state_single_item(session, sharing_item, new_state)
+                else:
+                    ShareObjectRepository.update_share_item_health_status(
+                        session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                    )
                 success = False
-
-                # statements which can throw exceptions but are not critical
                 sharing_folder.handle_share_failure(e)
-
         return success
 
     @classmethod
     def process_revoked_shares(
-            cls,
-            session,
-            dataset: Dataset,
-            share: ShareObject,
-            revoke_folders: [DatasetStorageLocation],
-            source_environment: Environment,
-            target_environment: Environment,
-            source_env_group: EnvironmentGroup,
-            env_group: EnvironmentGroup,
+        cls,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        revoke_folders: [DatasetStorageLocation],
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -129,12 +139,10 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         True if share is revoked successfully
         """
 
-        log.info(
-            '##### Starting Revoking folders #######'
-        )
+        log.info("##### Starting Revoking folders #######")
         success = True
         for folder in revoke_folders:
-            log.info(f'revoking access to folder: {folder}')
+            log.info(f"revoking access to folder: {folder}")
             removing_item = ShareObjectRepository.find_sharable_item(
                 session,
                 share.shareUri,
@@ -161,6 +169,9 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
+                ShareObjectRepository.update_share_item_health_status(
+                    session, removing_item, None, None, removing_item.lastVerificationTime
+                )
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
@@ -175,15 +186,15 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
 
     @classmethod
     def clean_up_share(
-            cls,
-            session,
-            dataset: Dataset,
-            share: ShareObject,
-            folder: DatasetStorageLocation,
-            source_environment: Environment,
-            target_environment: Environment,
-            source_env_group: EnvironmentGroup,
-            env_group: EnvironmentGroup,
+        cls,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        folder: DatasetStorageLocation,
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
     ):
         """
         1) deletes S3 access point for this share in this Dataset S3 Bucket
@@ -204,18 +215,68 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             source_env_group,
             env_group,
         )
-        clean_up = clean_up_folder.delete_access_point(
-            share=share,
-            dataset=dataset
-        )
+        clean_up = clean_up_folder.delete_access_point(share=share, dataset=dataset)
 
         if clean_up:
             clean_up_folder.delete_target_role_access_policy(
-                share=share,
-                dataset=dataset,
-                target_environment=target_environment
+                share=share, dataset=dataset, target_environment=target_environment
             )
             if not dataset.imported or dataset.importedKmsKey:
                 clean_up_folder.delete_dataset_bucket_key_policy(dataset=dataset)
 
+        return True
+
+    @classmethod
+    def verify_shares(
+        cls,
+        session,
+        dataset: Dataset,
+        share: ShareObject,
+        share_folders: [DatasetStorageLocation],
+        source_environment: Environment,
+        target_environment: Environment,
+        source_env_group: EnvironmentGroup,
+        env_group: EnvironmentGroup,
+    ) -> bool:
+        log.info("##### Verifying folders shares #######")
+        for folder in share_folders:
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                session,
+                share.shareUri,
+                folder.locationUri,
+            )
+
+            sharing_folder = cls(
+                session,
+                dataset,
+                share,
+                folder,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group,
+            )
+
+            try:
+                sharing_folder.check_bucket_policy()
+                sharing_folder.check_target_role_access_policy()
+                sharing_folder.check_access_point_and_policy()
+
+                if not dataset.imported or dataset.importedKmsKey:
+                    sharing_folder.check_dataset_bucket_key_policy()
+            except Exception as e:
+                sharing_folder.folder_errors = [str(e)]
+
+            if len(sharing_folder.folder_errors):
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_folder.session,
+                    sharing_item,
+                    ShareItemHealthStatus.Unhealthy.value,
+                    " | ".join(sharing_folder.folder_errors),
+                    datetime.now(),
+                )
+            else:
+                ShareObjectRepository.update_share_item_health_status(
+                    sharing_folder.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                )
         return True

@@ -1,7 +1,7 @@
 """implement_resource_locking_mechanism
 
 Revision ID: a1049d854e29
-Revises: f6cd4ba7dd8d
+Revises: 6c9a8afee4e4
 Create Date: 2024-02-01 16:38:32.533228
 
 """
