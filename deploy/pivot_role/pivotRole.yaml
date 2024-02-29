@@ -439,19 +439,25 @@ Resources:
               - 'iam:ListRoles'
             Effect: Allow
             Resource: '*'
-          - Sid: IAMRolePolicy
+          - Sid: IAMRolePolicy1
             Action:
               - 'iam:PutRolePolicy'
               - 'iam:DeleteRolePolicy'
-              - 'iam:CreatePolicy'
-              - 'iam:DeletePolicy'
               - 'iam:AttachRolePolicy'
               - 'iam:DetachRolePolicy'
               - 'iam:ListAttachedRolePolicies'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
+          - Sid: IAMRolePolicy2
+            Action:
+              - 'iam:CreatePolicy'
+              - 'iam:DeletePolicy'
               - 'iam:CreatePolicyVersion'
               - 'iam:DeletePolicyVersion'
             Effect: Allow
-            Resource: '*'
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
           - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'

@@ -12,20 +12,27 @@ class DataSharingPivotRole(PivotRoleStatementSet):
         statements = [
             # For access point sharing and S3 bucket sharing
             iam.PolicyStatement(
-                sid='IAMRolePolicy',
+                sid='IAMRolePolicy1',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'iam:PutRolePolicy',
                     'iam:DeleteRolePolicy',
-                    'iam:CreatePolicy',
                     'iam:AttachRolePolicy',
                     'iam:DetachRolePolicy',
-                    'iam:DeletePolicy',
                     'iam:ListAttachedRolePolicies',
+                ],
+                resources=[f'arn:aws:iam::{self.account}:role/*'],
+            ),
+            iam.PolicyStatement(
+                sid='IAMRolePolicy2',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'iam:CreatePolicy',
+                    'iam:DeletePolicy',
                     'iam:CreatePolicyVersion',
                     'iam:DeletePolicyVersion'
                 ],
-                resources=['*'],
+                resources=[f'arn:aws:iam:*:{self.account}:policy/{self.env_resource_prefix}*'],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',
