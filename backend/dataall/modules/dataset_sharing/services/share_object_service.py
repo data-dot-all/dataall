@@ -6,22 +6,37 @@ from dataall.core.environment.db.environment_models import EnvironmentGroup, Con
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.permissions.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, \
-    ShareItemStatus, \
-    ShareObjectStatus, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareObjectActions,
+    ShareableType,
+    ShareItemStatus,
+    ShareObjectStatus,
+    PrincipalType,
+)
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, \
-    ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repositories import (
+    ShareObjectRepository,
+    ShareObjectSM,
+    ShareItemSM,
+)
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
-from dataall.modules.dataset_sharing.services.share_permissions import REJECT_SHARE_OBJECT, APPROVE_SHARE_OBJECT, \
-    SUBMIT_SHARE_OBJECT, SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER, CREATE_SHARE_OBJECT, DELETE_SHARE_OBJECT, \
-    GET_SHARE_OBJECT
+from dataall.modules.dataset_sharing.services.share_permissions import (
+    REJECT_SHARE_OBJECT,
+    APPROVE_SHARE_OBJECT,
+    SUBMIT_SHARE_OBJECT,
+    SHARE_OBJECT_APPROVER,
+    SHARE_OBJECT_REQUESTER,
+    CREATE_SHARE_OBJECT,
+    DELETE_SHARE_OBJECT,
+    GET_SHARE_OBJECT,
+)
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
@@ -32,6 +47,13 @@ log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
+
+    @staticmethod
+    @has_resource_permission(GET_ENVIRONMENT)
+    def get_share_object_in_environment(uri, shareUri):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectRepository.get_share_by_uri(session, shareUri)
+
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):
@@ -41,16 +63,16 @@ class ShareObjectService:
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
-            cls,
-            uri: str,
-            dataset_uri: str,
-            item_uri: str,
-            item_type: str,
-            group_uri,
-            principal_id,
-            principal_type,
-            requestPurpose,
-            attachMissingPolicies
+        cls,
+        uri: str,
+        dataset_uri: str,
+        item_uri: str,
+        item_type: str,
+        group_uri,
+        principal_id,
+        principal_type,
+        requestPurpose,
+        attachMissingPolicies
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -60,34 +82,32 @@ class ShareObjectService:
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
-                    message=f'Requester Team {group_uri} works in region {environment.region} '
-                            f'and the requested dataset is stored in region {dataset.region}',
+                    message=f"Requester Team {group_uri} works in region {environment.region} "
+                    f"and the requested dataset is stored in region {dataset.region}",
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
                 consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
-                    session,
-                    principal_id,
-                    environment.environmentUri
+                    session, principal_id, environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
                 managed = consumption_role.dataallManaged
 
             else:
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
-                    session,
-                    group_uri,
-                    environment.environmentUri
+                    session, group_uri, environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
                 managed = True
 
             if (
-                    dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri
-            ) and environment.environmentUri == dataset.environmentUri and principal_type == PrincipalType.Group.value:
+                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
+                and environment.environmentUri == dataset.environmentUri
+                and principal_type == PrincipalType.Group.value
+            ):
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
-                    message=f'Team: {group_uri} is managing the dataset {dataset.name}',
+                    message=f"Team: {group_uri} is managing the dataset {dataset.name}",
                 )
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
@@ -123,7 +143,7 @@ class ShareObjectService:
                     principalType=principal_type,
                     principalIAMRoleName=principal_iam_role_name,
                     status=ShareObjectStatus.Draft.value,
-                    requestPurpose=requestPurpose
+                    requestPurpose=requestPurpose,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -132,8 +152,11 @@ class ShareObjectService:
                 share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
 
                 s3_access_point_name = utils.slugify(
-                    share.datasetUri + '-' + share.principalId,
-                    max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+                    share.datasetUri + "-" + share.principalId,
+                    max_length=50,
+                    lowercase=True,
+                    regex_pattern="[^a-zA-Z0-9-]",
+                    separator="-",
                 )
 
                 if not share_item and item:
@@ -144,25 +167,21 @@ class ShareObjectService:
                         itemName=item.name,
                         status=ShareItemStatus.PendingApproval.value,
                         owner=context.username,
-                        GlueDatabaseName=dataset.GlueDatabaseName
-                        if item_type == ShareableType.Table.value
-                        else '',
-                        GlueTableName=item.GlueTableName
-                        if item_type == ShareableType.Table.value
-                        else '',
+                        GlueDatabaseName=dataset.GlueDatabaseName if item_type == ShareableType.Table.value else "",
+                        GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else "",
                         S3AccessPointName=s3_access_point_name
                         if item_type == ShareableType.StorageLocation.value
-                        else '',
+                        else "",
                     )
                     session.add(new_share_item)
 
             activity = Activity(
-                action='SHARE_OBJECT:CREATE',
-                label='SHARE_OBJECT:CREATE',
+                action="SHARE_OBJECT:CREATE",
+                label="SHARE_OBJECT:CREATE",
                 owner=context.username,
-                summary=f'{context.username} created a share object for the {dataset.name} in {environment.name} for the principal: {principal_id}',
+                summary=f"{context.username} created a share object for the {dataset.name} in {environment.name} for the principal: {principal_id}",
                 targetUri=dataset.datasetUri,
-                targetType='dataset',
+                targetType="dataset",
             )
             session.add(activity)
 
@@ -208,26 +227,24 @@ class ShareObjectService:
 
             if not valid_share_items_states:
                 raise ShareItemsFound(
-                    action='Submit Share Object',
-                    message='The request is empty of pending items. Add items to share request.',
+                    action="Submit Share Object",
+                    message="The request is empty of pending items. Add items to share request.",
                 )
 
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-
             dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
             if dashboard_enabled:
                 share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
                 if share_table_items:
-                    QuicksightClient.check_quicksight_enterprise_subscription(AwsAccountId=env.AwsAccountId,
-                                                                              region=env.region)
+                    QuicksightClient.check_quicksight_enterprise_subscription(
+                        AwsAccountId=env.AwsAccountId, region=env.region
+                    )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 
-            ShareNotificationService(
-                session=session,
-                dataset=dataset,
-                share=share
-            ).notify_share_object_submission(email_id=context.username)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_submission(
+                email_id=context.username
+            )
 
             # if parent dataset has auto-approve flag, we trigger the next transition to approved state
             if dataset.autoApprovalEnabled:
@@ -248,7 +265,6 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
@@ -268,16 +284,14 @@ class ShareObjectService:
             share.rejectPurpose = ""
             session.commit()
 
-            ShareNotificationService(
-                session=session,
-                dataset=dataset,
-                share=share
-            ).notify_share_object_approval(email_id=context.username)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_approval(
+                email_id=context.username
+            )
 
             approve_share_task: Task = Task(
-                action='ecs.share.approve',
+                action="ecs.share.approve",
                 targetUri=uri,
-                payload={'environmentUri': share.environmentUri},
+                payload={"environmentUri": share.environmentUri},
             )
             session.add(approve_share_task)
 
@@ -314,11 +328,9 @@ class ShareObjectService:
             share.rejectPurpose = reject_purpose
             session.commit()
 
-            ShareNotificationService(
-                session=session,
-                dataset=dataset,
-                share=share
-            ).notify_share_object_rejection(email_id=context.username)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
+                email_id=context.username
+            )
 
             return share
 
@@ -332,9 +344,9 @@ class ShareObjectService:
             new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states:
                 raise ShareItemsFound(
-                    action='Delete share object',
-                    message='There are shared items in this request. '
-                            'Revoke access to these items before deleting the request.',
+                    action="Delete share object",
+                    message="There are shared items in this request. "
+                    "Revoke access to these items before deleting the request.",
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
@@ -367,27 +379,27 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_statistics(uri):
         with get_context().db_engine.scoped_session() as session:
-            tables = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetTable')
-            locations = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
+            tables = ShareObjectRepository.count_sharable_items(session, uri, "DatasetTable")
+            locations = ShareObjectRepository.count_sharable_items(session, uri, "DatasetStorageLocation")
             shared_items = ShareObjectRepository.count_items_in_states(
                 session, uri, ShareItemSM.get_share_item_shared_states()
             )
             revoked_items = ShareObjectRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.Revoke_Succeeded.value]
             )
-            failed_states = [
-                ShareItemStatus.Share_Failed.value,
-                ShareItemStatus.Revoke_Failed.value
-            ]
-            failed_items = ShareObjectRepository.count_items_in_states(
-                session, uri, failed_states
-            )
+            failed_states = [ShareItemStatus.Share_Failed.value, ShareItemStatus.Revoke_Failed.value]
+            failed_items = ShareObjectRepository.count_items_in_states(session, uri, failed_states)
             pending_items = ShareObjectRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
-            return {'tables': tables, 'locations': locations, 'sharedItems': shared_items,
-                    'revokedItems': revoked_items,
-                    'failedItems': failed_items, 'pendingItems': pending_items}
+            return {
+                "tables": tables,
+                "locations": locations,
+                "sharedItems": shared_items,
+                "revokedItems": revoked_items,
+                "failedItems": failed_items,
+                "pendingItems": pending_items,
+            }
 
     @staticmethod
     def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
@@ -461,20 +473,18 @@ class ShareObjectService:
         return share, dataset, share_items_states
 
     @staticmethod
-    def _validate_group_membership(
-            session, share_object_group, environment_uri
-    ):
+    def _validate_group_membership(session, share_object_group, environment_uri):
         context = get_context()
         if share_object_group and share_object_group not in context.groups:
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
-                message=f'User: {context.username} is not a member of the team {share_object_group}',
+                message=f"User: {context.username} is not a member of the team {share_object_group}",
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
-                session=session,
-                uri=environment_uri,
+            session=session,
+            uri=environment_uri,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
-                message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
+                message=f"Team: {share_object_group} is not a member of the environment {environment_uri}",
             )

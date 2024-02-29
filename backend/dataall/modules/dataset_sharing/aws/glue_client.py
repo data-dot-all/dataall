@@ -91,7 +91,7 @@ class GlueClient:
                     CatalogId=self._account_id, DatabaseName=self._database, Name=table_name
                 )
             )
-            log.info(f'Glue table {table_name} not found in account {self._account_id} in database {self._database}')
+            log.info(f'Glue table {table_name} found in account {self._account_id} in database {self._database}')
             return table
         except ClientError:
             log.info(f'Glue table not found: {table_name}')

@@ -1,6 +1,7 @@
 from dataall.base.api.constants import *
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, ShareSortField
 
+
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
     arguments=[
@@ -13,6 +14,7 @@ NewShareObjectInput = gql.InputType(
     ],
 )
 
+
 AddSharedItemInput = gql.InputType(
     name='AddSharedItemInput',
     arguments=[
@@ -23,13 +25,15 @@ AddSharedItemInput = gql.InputType(
     ],
 )
 
-RevokeItemsInput = gql.InputType(
-    name='RevokeItemsInput',
+
+ShareItemSelectorInput = gql.InputType(
+    name='ShareItemSelectorInput',
     arguments=[
         gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
+
 
 ShareSortCriteria = gql.InputType(
     name='ShareSortCriteria',
@@ -58,6 +62,7 @@ ShareObjectFilter = gql.InputType(
     ],
 )
 
+
 ShareableObjectFilter = gql.InputType(
     name='ShareableObjectFilter',
     arguments=[
@@ -65,6 +70,7 @@ ShareableObjectFilter = gql.InputType(
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument(name='isShared', type=gql.Boolean),
         gql.Argument(name='isRevokable', type=gql.Boolean),
+        gql.Argument(name='isHealthy', type=gql.Boolean),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
     ],
