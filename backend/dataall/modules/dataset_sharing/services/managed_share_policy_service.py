@@ -12,6 +12,7 @@ FAKE_S3_PLACEHOLDER = "arn:aws:s3:::initial-fake-empty-bucket"
 
 IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
 IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
+EMPTY_STATEMENT_SID = "EmptyStatement"
 
 
 class SharePolicyService(ManagedPolicy):
@@ -46,34 +47,19 @@ class SharePolicyService(ManagedPolicy):
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                    "Sid": EMPTY_STATEMENT_SID,
                     "Effect": "Allow",
-                    "Action": [
-                        "s3:*"
-                    ],
-                    "Resource": [
-                        FAKE_S3_PLACEHOLDER,
-                    ]
-                },
-                {
-                    "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:*"
-                    ],
-                    "Resource": [
-                        FAKE_S3_PLACEHOLDER,
-                    ]
+                    "Action": "none:null",
+                    "Resource": "*"
                 }
             ]
         }
 
     @staticmethod
-    def remove_empty_fake_resource(policy_doc, statement_sid):
-        # TODO remove this fake resource in a more elegant way
+    def remove_empty_statement(policy_doc, statement_sid):
         statement_index = SharePolicyService._get_statement_by_sid(policy_doc, statement_sid)
-        if FAKE_S3_PLACEHOLDER in policy_doc["Statement"][statement_index]["Resource"]:
-            policy_doc["Statement"][statement_index]["Resource"].remove(FAKE_S3_PLACEHOLDER)
+        if statement_index is not None:
+            policy_doc["Statement"].pop(statement_index)
         return policy_doc
 
     def add_missing_resources_to_policy_statement(
@@ -119,7 +105,7 @@ class SharePolicyService(ManagedPolicy):
                         f'and {target_resource} is included, skipping...'
                     )
 
-    def remove_resource_from_statement(self, resource_type, target_resources, statement_sid, policy_document):
+    def remove_resource_from_statement(self, target_resources, statement_sid, policy_document):
         policy_name = self.generate_policy_name()
         index = self._get_statement_by_sid(policy_document, statement_sid)
         log.info(
@@ -141,16 +127,16 @@ class SharePolicyService(ManagedPolicy):
                     )
                     policy_statement["Resource"].remove(target_resource)
                 if len(policy_statement["Resource"]) == 0:
-                    if resource_type == "s3":
-                        log.info(
-                            f'No more resources in {statement_sid}, appending {FAKE_S3_PLACEHOLDER}...'
-                        )
-                        policy_statement["Resource"].append(FAKE_S3_PLACEHOLDER)
-                    if resource_type == "kms":
-                        log.info(
-                            f'No more resources in {statement_sid}, removing statement...'
-                        )
-                        policy_document["Statement"].pop(index)
+                    log.info(
+                        f'No more resources in {statement_sid}, removing statement...'
+                    )
+                    policy_document["Statement"].pop(index)
+                if len(policy_document["Statement"]) == 0:
+                    log.info(
+                        f'No more statements in {policy_document}, adding empty statement...'
+                    )
+                    empty_policy_document = self.generate_empty_policy()
+                    policy_document["Statement"] = empty_policy_document["Statement"]
 
     @staticmethod
     def _get_statement_by_sid(policy, sid):
@@ -230,9 +216,15 @@ class SharePolicyService(ManagedPolicy):
         # This function can only be used for backwards compatibility where policies had statement[0] for s3
         # and statement[1] for KMS permissions
         if len(existing_s3) > 0:
-            s3_index = self._get_statement_by_sid(policy, f"{statement_sid}-S3")
-            policy["Statement"][s3_index]["Resource"] = existing_s3
-            SharePolicyService.remove_empty_fake_resource(policy, s3_index)
+            additional_policy = {
+                "Sid": f"{statement_sid}S3",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": existing_s3
+            }
+            policy["Statement"].append(additional_policy)
         if len(existing_kms) > 0:
             additional_policy = {
                 "Sid": f"{statement_sid}KMS",

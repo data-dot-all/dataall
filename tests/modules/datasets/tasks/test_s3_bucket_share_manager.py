@@ -9,7 +9,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
-from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_ACCESS_POINTS_STATEMENT_SID, IAM_S3_BUCKETS_STATEMENT_SID, FAKE_S3_PLACEHOLDER
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 
 SOURCE_ENV_ACCOUNT = "111111111111"
@@ -24,6 +24,9 @@ DATAALL_ALLOW_ALL_ADMINS_SID = "AllowAllToAdmin"
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 
+IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
+IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
+EMPTY_STATEMENT_SID = "EmptyStatement"
 
 @pytest.fixture(scope="module")
 def source_environment(env: Callable, org_fixture: Organization, group: Group):
@@ -519,24 +522,10 @@ def test_grant_s3_iam_access_with_no_policy(
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                "Sid": EMPTY_STATEMENT_SID,
                 "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
-            {
-                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
+                "Action": "none:null",
+                "Resource": "*"
             }
         ]
     }
@@ -568,7 +557,7 @@ def test_grant_s3_iam_access_with_no_policy(
 
 
         # Assert if the IAM role policy with S3 and KMS permissions was created
-        assert len(iam_policy["Statement"]) == 3
+        assert len(iam_policy["Statement"]) == 2
         assert len(iam_policy["Statement"][s3_index]["Resource"]) == 2
         assert len(iam_policy["Statement"][kms_index]["Resource"]) == 1
         assert f"arn:aws:s3:::{dataset2.S3BucketName}" in iam_policy["Statement"][s3_index]["Resource"] and "s3:*" in \
@@ -595,16 +584,6 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
     policy = {
         "Version": "2012-10-17",
         "Statement": [
-            {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
             {
                 "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                 "Effect": "Allow",
@@ -635,7 +614,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
     s3_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3")
     kms_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS")
 
-    assert len(policy["Statement"]) == 3
+    assert len(policy["Statement"]) == 2
     assert len(policy["Statement"][s3_index]["Resource"]) == 2
     assert len(policy["Statement"][kms_index]["Resource"]) == 1
 
@@ -663,7 +642,7 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
         iam_policy = policy
 
         # Assert that new resources were appended
-        assert len(policy["Statement"]) == 3
+        assert len(policy["Statement"]) == 2
         assert len(iam_policy["Statement"][s3_index]["Resource"]) == 4
         assert f'arn:aws:s3:::{dataset2.S3BucketName}' in iam_policy["Statement"][s3_index]["Resource"]
         assert len(iam_policy["Statement"][kms_index]["Resource"]) == 2
@@ -1171,16 +1150,6 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
-            {
                 "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": [
@@ -1243,7 +1212,7 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         kms_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS")
 
 
-        assert len(updated_iam_policy["Statement"]) == 3
+        assert len(updated_iam_policy["Statement"]) == 2
         assert "arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*" == ",".join(
             updated_iam_policy["Statement"][s3_index]["Resource"])
         assert "arn:aws:kms:us-east-1:121231131212:key/some-key-2112" == ",".join(
@@ -1268,16 +1237,6 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
     iam_policy = {
         "Version": "2012-10-17",
         "Statement": [
-            {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
             {
                 "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                 "Effect": "Allow",
@@ -1371,16 +1330,6 @@ def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resourc
     iam_policy = {
         "Version": "2012-10-17",
         "Statement": [
-            {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
             {
                 "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                 "Effect": "Allow",

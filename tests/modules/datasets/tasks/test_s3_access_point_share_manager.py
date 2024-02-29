@@ -10,7 +10,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_ACCESS_POINTS_STATEMENT_SID, IAM_S3_BUCKETS_STATEMENT_SID, FAKE_S3_PLACEHOLDER
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -22,6 +22,10 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
+
+IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
+IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
+EMPTY_STATEMENT_SID = "EmptyStatement"
 
 
 @pytest.fixture(scope="module")
@@ -216,16 +220,6 @@ def target_dataset_access_control_policy(request):
                 "Resource": [
                     f"arn:aws:kms:us-east-1:121231131212:key/some-key-2112"
                 ]
-            },
-            {
-                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
             }
         ],
     }
@@ -389,7 +383,6 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
 
         # Assert that statements for S3 bucket sharing are unaffected
         s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3")
-        assert FAKE_S3_PLACEHOLDER in ",".join(policy_object["Statement"][s3_index]["Resource"])
 
 @pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]),
                          indirect=True)
@@ -455,24 +448,10 @@ def test_grant_target_role_access_policy_test_no_policy(
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                    "Sid": EMPTY_STATEMENT_SID,
                     "Effect": "Allow",
-                    "Action": [
-                        "s3:*"
-                    ],
-                    "Resource": [
-                        FAKE_S3_PLACEHOLDER,
-                    ]
-                },
-                {
-                    "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:*"
-                    ],
-                    "Resource": [
-                        FAKE_S3_PLACEHOLDER,
-                    ]
+                    "Action": "none:null",
+                    "Resource": "*"
                 }
             ]
         }
@@ -500,16 +479,6 @@ def test_grant_target_role_access_policy_test_no_policy(
                     f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}",
                     f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}/*",
                 ],
-            },
-            {
-                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
             },
             {
                 "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
@@ -1177,16 +1146,6 @@ def test_delete_target_role_access_policy_no_remaining_statement(
                 ],
             },
             {
-                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
-            {
                 "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
@@ -1203,24 +1162,10 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                "Sid": EMPTY_STATEMENT_SID,
                 "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
-            },
-            {
-                "Sid": f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": [
-                    "s3:*"
-                ],
-                "Resource": [
-                    FAKE_S3_PLACEHOLDER,
-                ]
+                "Action": "none:null",
+                "Resource": "*"
             }
         ]
     }

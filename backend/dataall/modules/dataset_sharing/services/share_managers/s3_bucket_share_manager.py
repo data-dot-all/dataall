@@ -10,7 +10,7 @@ from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_BUCKETS_STATEMENT_SID
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_BUCKETS_STATEMENT_SID, EMPTY_STATEMENT_SID
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
@@ -110,9 +110,9 @@ class S3BucketShareManager:
             policy_document=policy_document
         )
 
-        share_policy_service.remove_empty_fake_resource(
+        share_policy_service.remove_empty_statement(
             policy_doc=policy_document,
-            statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3"
+            statement_sid=EMPTY_STATEMENT_SID
         )
 
         if kms_key_id:
@@ -353,7 +353,6 @@ class S3BucketShareManager:
             f"arn:aws:s3:::{target_bucket.S3BucketName}/*"
         ]
         share_policy_service.remove_resource_from_statement(
-            resource_type="s3",
             target_resources=s3_target_resources,
             statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
             policy_document=policy_document
@@ -363,7 +362,6 @@ class S3BucketShareManager:
                 f"arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}"
             ]
             share_policy_service.remove_resource_from_statement(
-                resource_type="kms",
                 target_resources=kms_target_resources,
                 statement_sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS",
                 policy_document=policy_document
