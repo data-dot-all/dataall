@@ -443,16 +443,16 @@ class EnvironmentSetup(Stack):
             # Backwards compatibility
             # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
             # We create the policy from the inline statements
-            if not policy.get("exists") and policy.get("policy_type") == "SharePolicy":
+            if not policy.get("exists", False) and policy.get("policy_type", None) == "SharePolicy":
                 share_policy = next((x for x in policy_manager.initializedPolicies if x.policy_type == "SharePolicy"), None)
                 share_policy.create_managed_policy_from_inline_and_delete_inline()
             # End of backwards compatibility
-
-            external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
-                self,
-                id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
-                managed_policy_name=policy.get("policy_name")
-            ))
+            if policy.get("exists", False):
+                external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
+                    self,
+                    id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
+                    managed_policy_name=policy.get("policy_name")
+                ))
 
         with self.engine.scoped_session() as session:
             data_policy = S3Policy(

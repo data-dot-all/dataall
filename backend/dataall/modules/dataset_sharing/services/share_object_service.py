@@ -101,6 +101,7 @@ class ShareObjectService:
             # Backwards compatibility
             # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
             # We create the policy from the inline statements
+            # In this case it could also happen that the role is the Admin of the environment
             if not share_policy_service.check_if_policy_exists():
                 share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             # End of backwards compatibility

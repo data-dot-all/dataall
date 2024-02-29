@@ -100,15 +100,6 @@ class EnvironmentService:
             env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
-        # If environment role is imported, then data.all should attach the policies at import time
-        # If environment role is created in environment stack, then data.all should attach the policies in the env stack
-        PolicyManager(
-            role_name=env.EnvironmentDefaultIAMRoleName,
-            environmentUri=env.environmentUri,
-            account=env.AwsAccountId,
-            resource_prefix=env.resourcePrefix
-        ).create_all_policies(managed=env.EnvironmentDefaultIAMRoleImported)
-
         env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
