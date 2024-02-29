@@ -62,6 +62,10 @@ class LFShareManager:
     def process_revoked_shares(self) -> [str]:
         return NotImplementedError
 
+    @abc.abstractmethod
+    def verify_shares(self) -> bool:
+        raise NotImplementedError
+
     def init_source_account_details(self):
         """
         Check if the catalog account is present and update the source account, source database and source region accordingly

@@ -68,6 +68,10 @@ class S3BucketShareManager:
     def process_revoked_shares(self, *kwargs) -> bool:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def verify_shares(self, *kwargs) -> bool:
+        raise NotImplementedError
+
     def check_s3_iam_access(self) -> None:
         """
         Checks if requester IAM role policy includes requested S3 bucket and kms key permissions

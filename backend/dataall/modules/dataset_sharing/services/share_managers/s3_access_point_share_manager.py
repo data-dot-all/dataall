@@ -77,6 +77,10 @@ class S3AccessPointShareManager:
         raise NotImplementedError
 
     @abc.abstractmethod
+    def verify_shares(self, *kwargs) -> bool:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def clean_up_share(self, *kwargs):
         raise NotImplementedError
 

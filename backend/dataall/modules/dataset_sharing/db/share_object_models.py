@@ -58,6 +58,6 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
-    healthStatus = Column(String, nullable=True, default=ShareItemHealthStatus.Healthy.value)
+    healthStatus = Column(String, nullable=True)
     healthMessage = Column(String, nullable=True)
     lastVerificationTime = Column(DateTime, nullable=True)

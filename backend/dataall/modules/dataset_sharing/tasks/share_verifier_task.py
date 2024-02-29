@@ -15,6 +15,10 @@ log = logging.getLogger(__name__)
 
 
 def verify_shares(engine):
+    """
+    A method used by the scheduled ECS Task to run verify_shares() process against ALL shared items in ALL
+    active share objects within data.all and update the health status of those shared items.
+    """
     with engine.scoped_session() as session:
         processed_share_objects = []
         all_share_objects: [ShareObject] = ShareObjectRepository.list_all_active_share_objects(session)
