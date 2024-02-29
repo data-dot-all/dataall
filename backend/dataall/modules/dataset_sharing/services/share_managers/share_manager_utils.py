@@ -9,12 +9,12 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 logger = logging.getLogger(__name__)
 
 
-class ShareErrorFormatter: 
+class ShareErrorFormatter:
     @staticmethod
     def _stringify(param):
         if isinstance(param, list):
             param = ",".join(param)
-        return param 
+        return param
 
     @staticmethod
     def dne_error_msg(resource_type, target_resource):
