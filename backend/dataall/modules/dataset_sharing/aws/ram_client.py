@@ -64,7 +64,47 @@ class RamClient:
                 raise e
 
     @staticmethod
-    def accept_ram_invitation(source_account_id, source_region, target_account_id, target_region, source_database, source_table):
+    def check_ram_invitation_status(source_account_id, source_region, target_account_id, source_database, source_table_name):
+        source_ram = RamClient(source_account_id, source_region)
+
+        resource_arn = (
+            f'arn:aws:glue:{source_region}:{source_account_id}:'
+            f'table/{source_database}/{source_table_name}'
+        )
+        associations = source_ram._list_resource_share_associations(resource_arn)
+        resource_share_arns = [a['resourceShareArn'] for a in associations if a['status'] == "ASSOCIATED"]
+
+        if not len(resource_share_arns):
+            return False
+
+        resource_share_associations = []
+
+        paginator = source_ram._client.get_paginator('get_resource_share_associations')
+        association_pages = paginator.paginate(
+            resourceShareArns=resource_share_arns,
+            associationType="PRINCIPAL",
+            principal=target_account_id
+        )
+        for page in association_pages:
+            resource_share_associations.extend(page.get('resourceShareAssociations'))
+
+        filtered_associations = [
+            i
+            for i in resource_share_associations
+            if i["status"] == "ASSOCIATED"
+        ]
+
+        log.info(
+            f'Found {len(filtered_associations)} RAM associations for resourceShareArn: {resource_arn}'
+            f'From Source Account {source_account_id} to Target Account {target_account_id}'
+        )
+        if not len(filtered_associations):
+            return False
+        return True
+
+    @staticmethod
+    def accept_ram_invitation(source_account_id, source_region, source_database, source_table_name, target_account_id,
+                              target_region):
         """
         Accepts RAM invitations on the target account
         """
@@ -80,7 +120,7 @@ class RamClient:
 
         resource_arn = (
             f'arn:aws:glue:{source_region}:{source_account_id}:'
-            f'table/{source_database}/{source_table}'
+            f'table/{source_database}/{source_table_name}'
         )
         associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]

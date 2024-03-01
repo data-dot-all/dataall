@@ -1,6 +1,5 @@
 import logging
 
-from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -10,10 +9,33 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
+
+
+class RequestValidator:
+    @staticmethod
+    def validate_creation_request(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('principalId'):
+            raise RequiredParameter('principalId')
+        if not data.get('principalType'):
+            raise RequiredParameter('principalType')
+        if not data.get('groupUri'):
+            raise RequiredParameter('groupUri')
+
+    @staticmethod
+    def validate_item_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('shareUri'):
+            raise RequiredParameter('shareUri')
+        if not data.get('itemUris'):
+            raise RequiredParameter('itemUris')
 
 
 def create_share_object(
@@ -24,14 +46,7 @@ def create_share_object(
     itemType: str = None,
     input: dict = None,
 ):
-    if not input:
-        raise RequiredParameter(input)
-    if 'principalId' not in input:
-        raise RequiredParameter('principalId')
-    if 'principalType' not in input:
-        raise RequiredParameter('principalType')
-    if 'groupUri' not in input:
-        raise RequiredParameter('groupUri')
+    RequestValidator.validate_creation_request(input)
 
     return ShareObjectService.create_share_object(
         uri=input['environmentUri'],
@@ -58,9 +73,24 @@ def reject_share_object(context: Context, source, shareUri: str = None, rejectPu
 
 
 def revoke_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
     share_uri = input.get("shareUri")
-    revoked_uris = input.get("revokedItemUris")
+    revoked_uris = input.get("itemUris")
     return ShareItemService.revoke_items_share_object(uri=share_uri, revoked_uris=revoked_uris)
+
+
+def verify_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
+    share_uri = input.get("shareUri")
+    verify_item_uris = input.get("itemUris")
+    return ShareItemService.verify_items_share_object(uri=share_uri, item_uris=verify_item_uris)
+
+
+def reapply_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
+    share_uri = input.get("shareUri")
+    reapply_item_uris = input.get("itemUris")
+    return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
 def delete_share_object(context: Context, source, shareUri: str = None):
@@ -216,6 +246,25 @@ def list_shareable_objects(
         is_revokable=is_revokable,
         filter=filter
     )
+
+
+def resolve_shared_database_name(
+    context: Context, source
+):
+    if not source:
+        return None
+    old_shared_db_name = (source.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
+    with context.engine.scoped_session() as session:
+        share = ShareObjectService.get_share_object_in_environment(uri=source.environmentUri, shareUri=source.shareUri)
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        database = GlueClient(
+            account_id=env.AwsAccountId,
+            database=old_shared_db_name,
+            region=env.region
+        ).get_glue_database()
+        if database:
+            return old_shared_db_name
+        return source.GlueDatabaseName + '_shared'
 
 
 def list_shares_in_my_inbox(context: Context, source, filter: dict = None):

@@ -109,3 +109,11 @@ ImportDatasetInput = gql.InputType(
 
     ],
 )
+
+ShareObjectSelectorInput = gql.InputType(
+    name='ShareObjectSelectorInput',
+    arguments=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='shareUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+    ],
+)

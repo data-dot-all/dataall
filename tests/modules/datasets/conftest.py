@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJ
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
-
+from dataall.modules.datasets.services.dataset_permissions import DATASET_ALL
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_dataset_methods(module_mocker):
@@ -309,6 +309,14 @@ def dataset_model(db):
             )
             session.add(dataset)
             session.commit()
+
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=environment.SamlGroupName,
+                permissions=DATASET_ALL,
+                resource_uri=dataset.datasetUri,
+                resource_type=Dataset.__name__,
+            )
             return dataset
 
     yield factory
@@ -344,7 +352,8 @@ def share_item(db):
     def factory(
             share: ShareObject,
             table: DatasetTable,
-            status: str
+            status: str,
+            healthStatus: str = None,
     ) -> ShareObjectItem:
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
@@ -354,6 +363,7 @@ def share_item(db):
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
+                healthStatus=healthStatus
             )
             session.add(share_item)
             session.commit()
