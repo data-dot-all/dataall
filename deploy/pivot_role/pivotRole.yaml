@@ -206,14 +206,9 @@ Resources:
             Action:
               - 'logs:CreateLogGroup'
               - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
             Resource:
               - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
-          - Sid: Logging
-            Action:
-              - 'logs:PutLogEvents'
-            Effect: Allow
-            Resource: 
               - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-0
       Roles:
