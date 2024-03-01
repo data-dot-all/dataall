@@ -524,6 +524,9 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
 
     assert response.data.listAllEnvironmentGroups.count == 2
 
+    mocker.patch("dataall.base.aws.iam.IAM.detach_policy_from_role", return_value=True)
+    mocker.patch("dataall.base.aws.iam.IAM.delete_managed_policy_by_name", return_value=True)
+
     response = client.query(
         """
         mutation removeGroupFromEnvironment($environmentUri: String!, $groupUri: String!){
