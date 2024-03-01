@@ -52,7 +52,7 @@ def downgrade():
     op.drop_constraint('environment_parameters_environmentUri_fkey', 'environment_parameters', type_='foreignkey')
     op.drop_constraint('dataset_bucket_datasetUri_fkey', 'dataset_bucket', type_='foreignkey')
     op.create_foreign_key('dataset_bucket_datasetUri_fkey', 'dataset_bucket', 'dataset', ['datasetUri'], ['datasetUri'])
-    
+
     if not has_table('group_member', engine):
         op.create_table('group_member',
                         sa.Column('groupUri', sa.VARCHAR(), autoincrement=False, nullable=False),
