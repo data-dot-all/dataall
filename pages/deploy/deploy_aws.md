@@ -62,7 +62,7 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/data-dot-all/dataall.git
+git clone https://github.com/data-dot-all/dataall.git --branch v2.3.0
 cd dataall
 ```
 ## 2. Setup Python virtualenv <a name="env"></a>
