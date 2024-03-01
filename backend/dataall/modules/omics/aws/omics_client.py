@@ -69,6 +69,10 @@ class OmicsClient:
                 roleArn=group.environmentIAMRoleArn,
                 parameters=json.loads(omics_run.parameterTemplate),
                 outputUri=omics_run.outputUri
+                # TODO: Add tag for scoped permissions
+                #tags={
+                   #'string': 'string'
+                #}
             )
             return response
         except ClientError as e:
