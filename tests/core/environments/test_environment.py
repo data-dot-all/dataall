@@ -382,8 +382,8 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
-    mocker.patch("dataall.base.aws.iam.IAM.create_managed_policy", return_value=True)
-    mocker.patch("dataall.base.aws.iam.IAM.attach_role_policy", return_value=True)
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies",
+                 return_value=True)
 
     response = client.query(
         """
@@ -524,9 +524,8 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
 
     assert response.data.listAllEnvironmentGroups.count == 2
 
-    mocker.patch("dataall.base.aws.iam.IAM.detach_policy_from_role", return_value=True)
-    mocker.patch("dataall.base.aws.iam.IAM.delete_managed_policy_by_name", return_value=True)
-
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies",
+                 return_value=True)
     response = client.query(
         """
         mutation removeGroupFromEnvironment($environmentUri: String!, $groupUri: String!){
@@ -625,8 +624,10 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     ]
 
 
-def test_archive_env(client, org_fixture, env, group, group2):
+def test_archive_env(client, org_fixture, env, group, group2, mocker):
     env_fixture = env(org_fixture, 'dev-delete', 'alice', 'testadmins', '111111111111', 'eu-west-2')
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies",
+                 return_value=True)
     response = client.query(
         """
         mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean!){

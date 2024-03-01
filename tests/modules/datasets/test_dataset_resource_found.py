@@ -34,6 +34,10 @@ def get_env(client, env_fixture, group):
 
 
 def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, user, group3, group, dataset, mocker):
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies",
+                 return_value=True)
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies",
+                 return_value=True)
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
@@ -53,9 +57,6 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
     assert CREATE_DATASET in env_permissions
-
-    mocker.patch("dataall.base.aws.iam.IAM.create_managed_policy", return_value=True)
-    mocker.patch("dataall.base.aws.iam.IAM.attach_role_policy", return_value=True)
 
     response = client.query(
         """
