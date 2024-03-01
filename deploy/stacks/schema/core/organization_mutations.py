@@ -8,7 +8,7 @@ from stacks.schema.core.organization_types import OrganizationTypes
 
 
 @singleton
-class OrganizationQueries(SchemaBase):
+class OrganizationMutations(SchemaBase):
     @inject
     def __init__(
             self,

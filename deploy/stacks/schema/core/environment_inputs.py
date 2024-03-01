@@ -10,7 +10,12 @@ from stacks.schema.core.environment_types import EnvironmentTypes
 @singleton
 class EnvironmentInputs(SchemaBase):
     @inject
-    def __init__(self, api: GraphqlApi, common_types: CommonTypes, environment_types: EnvironmentTypes):
+    def __init__(
+            self,
+            api: GraphqlApi,
+            common_types: CommonTypes,
+            environment_types: EnvironmentTypes
+    ):
         schema: CodeFirstSchema = api.schema
 
         environment_sort_criteria = InputType('EnvironmentSortCriteria', definition={
@@ -25,3 +30,8 @@ class EnvironmentInputs(SchemaBase):
             'sort': environment_sort_criteria.attribute(is_list=True),
         })
         schema.add_type(self.environment_filter)
+
+        self.vpc_filter = InputType('VpcFilter', definition={
+            **common_types.filter_args,
+        })
+        schema.add_type(self.vpc_filter)
