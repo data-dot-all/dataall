@@ -343,6 +343,14 @@ class EnvironmentService:
         group_membership = EnvironmentService.find_environment_group(
             session, group, environment.environmentUri
         )
+
+        PolicyManager(
+            role_name=group_membership.environmentIAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).delete_all_policies()
+
         if group_membership:
             session.delete(group_membership)
             session.commit()
@@ -353,12 +361,6 @@ class EnvironmentService:
             resource_uri=environment.environmentUri,
             resource_type=Environment.__name__,
         )
-        PolicyManager(
-            role_name=group_membership.environmentIAMRoleName,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            resource_prefix=environment.resourcePrefix
-        ).delete_all_policies()
         return environment
 
     @staticmethod
@@ -456,6 +458,13 @@ class EnvironmentService:
             dataallManaged=data['dataallManaged']
         )
 
+        PolicyManager(
+            role_name=consumption_role.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=consumption_role.dataallManaged)
+
         session.add(consumption_role)
         session.commit()
 
@@ -466,13 +475,6 @@ class EnvironmentService:
             permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=ConsumptionRole.__name__,
         )
-        PolicyManager(
-            role_name=consumption_role.IAMRoleName,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            resource_prefix=environment.resourcePrefix
-        ).create_all_policies(managed=consumption_role.dataallManaged)
-
         return consumption_role
 
     @staticmethod
@@ -480,6 +482,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
     def remove_consumption_role(session, uri, env_uri):
         consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
 
         num_resources = EnvironmentResourceManager.count_consumption_role_resources(session, uri)
         if num_resources > 0:
@@ -489,23 +492,22 @@ class EnvironmentService:
             )
 
         if consumption_role:
+            PolicyManager(
+                role_name=consumption_role.IAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix
+            ).delete_all_policies()
+
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=consumption_role.groupUri,
+                resource_uri=consumption_role.consumptionRoleUri,
+                resource_type=ConsumptionRole.__name__,
+            )
+
             session.delete(consumption_role)
             session.commit()
-
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=consumption_role.groupUri,
-            resource_uri=consumption_role.consumptionRoleUri,
-            resource_type=ConsumptionRole.__name__,
-        )
-
-        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        PolicyManager(
-            role_name=consumption_role.IAMRoleName,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            resource_prefix=environment.resourcePrefix
-        ).delete_all_policies()
 
         return True
 
@@ -975,6 +977,16 @@ class EnvironmentService:
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment related objects before proceeding',
             )
         else:
+            PolicyManager(
+                role_name=environment.EnvironmentDefaultIAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix
+            ).delete_all_policies()
+
+            KeyValueTag.delete_key_value_tags(
+                session, environment.environmentUri, 'environment'
+            )
             EnvironmentResourceManager.delete_env(session, environment)
             EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
@@ -989,16 +1001,6 @@ class EnvironmentService:
 
             for role in env_roles:
                 session.delete(role)
-
-            KeyValueTag.delete_key_value_tags(
-                session, environment.environmentUri, 'environment'
-            )
-            PolicyManager(
-                role_name=environment.EnvironmentDefaultIAMRoleName,
-                environmentUri=environment.environmentUri,
-                account=environment.AwsAccountId,
-                resource_prefix=environment.resourcePrefix
-            ).delete_all_policies()
 
             return session.delete(environment)
 

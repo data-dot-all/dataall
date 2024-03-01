@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 
 OLD_IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 OLD_IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
-FAKE_S3_PLACEHOLDER = "arn:aws:s3:::initial-fake-empty-bucket"
 
 IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
 IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"

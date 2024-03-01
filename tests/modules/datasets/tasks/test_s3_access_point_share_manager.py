@@ -300,6 +300,87 @@ def test_manage_bucket_policy_existing_policy(
     # Then
     s3_client.create_bucket_policy.assert_not_called()
 
+def test_grant_target_role_access_policy_test_empty_policy(
+    mocker,
+    dataset1: Dataset,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
+    location1: DatasetStorageLocation,
+    target_environment: Environment,
+    share_manager
+):
+    initial_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": EMPTY_STATEMENT_SID,
+                    "Effect": "Allow",
+                    "Action": "none:null",
+                    "Resource": "*"
+                }
+            ]
+        }
+
+    # Given
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', initial_policy_document)
+    )
+
+    iam_update_role_policy_mock = mocker.patch(
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
+        return_value=None,
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+
+    expected_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                "Effect": "Allow",
+                "Action": ["s3:*"],
+                "Resource": [
+                    f"arn:aws:s3:::{location1.S3BucketName}",
+                    f"arn:aws:s3:::{location1.S3BucketName}/*",
+                    f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}",
+                    f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}/*",
+                ],
+            },
+            {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
+                "Effect": "Allow",
+                "Action": [
+                    "kms:*"
+                ],
+                "Resource": [
+                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
+                ]
+            }
+        ],
+    }
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "kms-key"
+
+    # When
+    share_manager.grant_target_role_access_policy()
+
+    expected_policy_name = SharePolicyService(
+        environmentUri=target_environment.environmentUri,
+        role_name=share1.principalIAMRoleName,
+        account=target_environment.AwsAccountId,
+        resource_prefix=target_environment.resourcePrefix
+    ).generate_policy_name()
+    # Then
+    iam_update_role_policy_mock.assert_called_with(
+        target_environment.AwsAccountId, expected_policy_name,
+        "v1", json.dumps(expected_policy)
+    )
+
 
 @pytest.mark.parametrize("target_dataset_access_control_policy",
                          ([("bucketname", "aws_account_id", "access_point_name")]),
@@ -386,89 +467,6 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
     # Then
     iam_update_role_policy_mock.assert_called()
-
-
-def test_grant_target_role_access_policy_test_no_policy(
-    mocker,
-    dataset1: Dataset,
-    share1: ShareObject,
-    share_item_folder1: ShareObjectItem,
-    location1: DatasetStorageLocation,
-    target_environment: Environment,
-    share_manager
-):
-    initial_policy_document = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Sid": EMPTY_STATEMENT_SID,
-                    "Effect": "Allow",
-                    "Action": "none:null",
-                    "Resource": "*"
-                }
-            ]
-        }
-
-    # Given
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
-        return_value=('v1', initial_policy_document)
-    )
-
-    iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
-        return_value=None,
-    )
-    mocker.patch(
-        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
-        return_value=True
-    )
-
-    expected_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
-                "Effect": "Allow",
-                "Action": ["s3:*"],
-                "Resource": [
-                    f"arn:aws:s3:::{location1.S3BucketName}",
-                    f"arn:aws:s3:::{location1.S3BucketName}/*",
-                    f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}",
-                    f"arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_item_folder1.S3AccessPointName}/*",
-                ],
-            },
-            {
-                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
-                "Effect": "Allow",
-                "Action": [
-                    "kms:*"
-                ],
-                "Resource": [
-                    f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key"
-                ]
-            }
-        ],
-    }
-
-    kms_client = mock_kms_client(mocker)
-    kms_client().get_key_id.return_value = "kms-key"
-
-    # When
-    share_manager.grant_target_role_access_policy()
-
-    expected_policy_name = SharePolicyService(
-        environmentUri=target_environment.environmentUri,
-        role_name=share1.principalIAMRoleName,
-        account=target_environment.AwsAccountId,
-        resource_prefix=target_environment.resourcePrefix
-    ).generate_policy_name()
-    # Then
-    iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, expected_policy_name,
-        "v1", json.dumps(expected_policy)
-    )
-
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,

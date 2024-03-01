@@ -30,7 +30,7 @@ ShareItemSelectorInput = gql.InputType(
     name='ShareItemSelectorInput',
     arguments=[
         gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+        gql.Argument(name='itemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
 

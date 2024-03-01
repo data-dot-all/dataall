@@ -98,23 +98,26 @@ class PolicyManager(object):
         Manager that registers and calls all policies created by data.all modules and that
         need to be created for consumption roles and team roles
         """
-        for Policy in self.initializedPolicies:
-            empty_policy = Policy.generate_empty_policy()
-            policy_name = Policy.generate_policy_name()
-            logger.info(f'Creating policy {policy_name}')
+        try:
+            for Policy in self.initializedPolicies:
+                empty_policy = Policy.generate_empty_policy()
+                policy_name = Policy.generate_policy_name()
+                logger.info(f'Creating policy {policy_name}')
 
-            IAM.create_managed_policy(
-                account_id=self.account,
-                policy_name=policy_name,
-                policy=json.dumps(empty_policy)
-            )
-
-            if managed:
-                IAM.attach_role_policy(
+                IAM.create_managed_policy(
                     account_id=self.account,
-                    role_name=self.role_name,
-                    policy_arn=f"arn:aws:iam::{self.account}:policy/{policy_name}"
+                    policy_name=policy_name,
+                    policy=json.dumps(empty_policy)
                 )
+
+                if managed:
+                    IAM.attach_role_policy(
+                        account_id=self.account,
+                        role_name=self.role_name,
+                        policy_arn=f"arn:aws:iam::{self.account}:policy/{policy_name}"
+                    )
+        except Exception as e:
+            raise e
         return True
 
     def delete_all_policies(self) -> bool:
@@ -122,20 +125,23 @@ class PolicyManager(object):
         Manager that registers and calls all policies created by data.all modules and that
         need to be deleted for consumption roles and team roles
         """
-        for Policy in self.initializedPolicies:
-            policy_name = Policy.generate_policy_name()
-            logger.info(f'Deleting policy {policy_name}')
-
-            IAM.detach_policy_from_role(
-                account_id=self.account,
-                role_name=self.role_name,
-                policy_name=policy_name
-            )
-
-            IAM.delete_managed_policy_by_name(
-                account_id=self.account,
-                policy_name=policy_name
-            )
+        try:
+            for Policy in self.initializedPolicies:
+                policy_name = Policy.generate_policy_name()
+                logger.info(f'Deleting policy {policy_name}')
+                if Policy.check_if_policy_attached():
+                    IAM.detach_policy_from_role(
+                        account_id=self.account,
+                        role_name=self.role_name,
+                        policy_name=policy_name
+                    )
+                if Policy.check_if_policy_exists():
+                    IAM.delete_managed_policy_by_name(
+                        account_id=self.account,
+                        policy_name=policy_name
+                    )
+        except Exception as e:
+            raise e
         return True
 
     def get_all_policies(self) -> List[dict]:

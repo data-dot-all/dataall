@@ -215,7 +215,7 @@ class S3AccessPointShareManager:
                 )
             )
 
-        if not share_policy_service.check_resource_in_policy_statement(
+        elif not share_policy_service.check_resource_in_policy_statement(
             target_resources=s3_target_resources,
             existing_policy_statement=policy_document["Statement"][s3_statement_index],
         ):
@@ -223,7 +223,7 @@ class S3AccessPointShareManager:
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
-                    "IAM Policy Statement",
+                    "IAM Policy Resource",
                     f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                     "S3 Bucket",
                     f"{self.bucket_name}",
@@ -245,7 +245,7 @@ class S3AccessPointShareManager:
                     )
                 )
 
-            if not share_policy_service.check_resource_in_policy_statement(
+            elif not share_policy_service.check_resource_in_policy_statement(
                     target_resources=kms_target_resources,
                     existing_policy_statement=policy_document["Statement"][kms_statement_index],
             ):
@@ -254,7 +254,7 @@ class S3AccessPointShareManager:
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
-                        "IAM Policy Statement",
+                        "IAM Policy Resource",
                         f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                         "KMS Key",
                         f"{kms_key_id}",

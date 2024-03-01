@@ -1,4 +1,5 @@
 import logging
+from botocore.exceptions import ClientError
 
 from .sts import SessionHelper
 
@@ -20,7 +21,9 @@ class IAM:
                 RoleName=role_arn.split("/")[-1]
             )
             assert response['Role']['Arn'] == role_arn, "Arn doesn't match the role name. Check Arn and try again."
-        except Exception as e:
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to get role {role_arn}: {e}')
             log.error(
                 f'Failed to get role {role_arn} due to: {e}'
             )
@@ -36,33 +39,14 @@ class IAM:
             response = iamcli.get_role(
                 RoleName=role_name
             )
-        except Exception as e:
+            return response["Role"]["Arn"]
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to get role {role_name}: {e}')
             log.error(
                 f'Failed to get role {role_name} due to: {e}'
             )
             return None
-        else:
-            return response["Role"]["Arn"]
-
-    @staticmethod
-    def update_role_policy(
-            account_id: str,
-            role_name: str,
-            policy_name: str,
-            policy: str,
-    ):
-        try:
-            iamcli = IAM.client(account_id)
-            iamcli.put_role_policy(
-                RoleName=role_name,
-                PolicyName=policy_name,
-                PolicyDocument=policy,
-            )
-        except Exception as e:
-            log.error(
-                f'Failed to add S3 bucket access to target role {account_id}/{role_name} : {e}'
-            )
-            raise e
 
     @staticmethod
     def get_role_policy(
@@ -76,13 +60,14 @@ class IAM:
                 RoleName=role_name,
                 PolicyName=policy_name,
             )
-        except Exception as e:
+            return response["PolicyDocument"]
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to get policy {policy_name} of role {role_name}: {e}')
             log.error(
                 f'Failed to get policy {policy_name} of role {role_name} : {e}'
             )
             return None
-        else:
-            return response["PolicyDocument"]
 
     @staticmethod
     def delete_role_policy(
@@ -96,7 +81,9 @@ class IAM:
                 RoleName=role_name,
                 PolicyName=policy_name,
             )
-        except Exception as e:
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to delete policy {policy_name} of role {role_name}: {e}')
             log.error(
                 f'Failed to delete policy {policy_name} of role {role_name} : {e}'
             )
@@ -118,11 +105,10 @@ class IAM:
                 f'Created managed policy {arn}'
             )
             return arn
-        except Exception as e:
-            log.error(
-                f'Failed to create managed policy {policy_name} : {e}'
-            )
-            return None
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to create managed policy {policy_name}: {e}')
+            raise Exception(f'Failed to create managed policy {policy_name} : {e}')
 
     @staticmethod
     def delete_managed_policy_by_name(
@@ -134,10 +120,10 @@ class IAM:
             iamcli.delete_policy(
                 PolicyArn=arn
             )
-        except Exception as e:
-            log.error(
-                f'Failed to delete managed policy {policy_name} : {e}'
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to delete managed policy {policy_name}: {e}')
+            raise Exception(f'Failed to delete managed policy {policy_name} : {e}')
 
     @staticmethod
     def get_managed_policy_default_version(
@@ -151,11 +137,11 @@ class IAM:
             policyVersion = iamcli.get_policy_version(PolicyArn=arn, VersionId=versionId)
             policyDocument = policyVersion['PolicyVersion']['Document']
             return versionId, policyDocument
-        except Exception as e:
-            log.error(
-                f'Failed to get policy {policy_name} : {e}'
-            )
-            return None
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to get policy {policy_name}: {e}')
+            log.error(f'Failed to get policy {policy_name} : {e}')
+            return None, None
 
     @staticmethod
     def update_managed_policy_default_version(
@@ -173,17 +159,17 @@ class IAM:
             )
 
             iamcli.delete_policy_version(PolicyArn=arn, VersionId=old_version_id)
-        except Exception as e:
-            log.error(
-                f'Failed to update policy {policy_name} : {e}'
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to update policy {policy_name}: {e}')
+            raise Exception(f'Failed to update policy {policy_name} : {e}')
 
     @staticmethod
     def detach_policy_from_role(
             account_id: str,
             role_name: str,
             policy_name: str):
-
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
@@ -191,10 +177,11 @@ class IAM:
                 RoleName=role_name,
                 PolicyArn=arn
             )
-        except Exception as e:
-            log.error(
-                f'Failed to detach policy {policy_name} from role {role_name} : {e}'
-            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from role {role_name}: {e}')
+            raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')
 
     @staticmethod
     def get_policy_by_name(
@@ -206,9 +193,12 @@ class IAM:
             iamcli = IAM.client(account_id)
             response = iamcli.get_policy(PolicyArn=arn)
             return response['Policy']
-        except Exception as e:
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to to get policy {policy_name}: {e}')
             log.error(
-                f'Failed to get policy {policy_name} : {e}'
+                f'Failed to get policy {policy_name}: {e}'
             )
             return None
 
@@ -222,7 +212,10 @@ class IAM:
             iamcli = IAM.client(account_id)
             response = iamcli.list_attached_role_policies(RoleName=role_name)
             return policy_name in [p['PolicyName'] for p in response['AttachedPolicies']]
-        except Exception as e:
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to to get the list of attached policies to the role {role_name}: {e}')
             log.error(
                 f'Failed to get the list of attached policies to the role {role_name}: {e}'
             )
@@ -240,7 +233,12 @@ class IAM:
                 RoleName=role_name,
                 PolicyArn=policy_arn
             )
-        except Exception as e:
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissionsto to attach policy {policy_arn} to the role {role_name}: {e}')
             log.error(
                 f'Failed to attach policy {policy_arn} to the role {role_name}: {e}'
             )
+            raise e

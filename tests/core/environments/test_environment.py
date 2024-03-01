@@ -363,7 +363,7 @@ def test_paging(db, client, org_fixture, env_fixture, user, group):
         first_id = response.data.listEnvironments.nodes[0].environmentUri
 
 
-def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, group3, group):
+def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, group3, group, mocker):
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
@@ -382,6 +382,8 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
+    mocker.patch("dataall.base.aws.iam.IAM.create_managed_policy", return_value=True)
+    mocker.patch("dataall.base.aws.iam.IAM.attach_role_policy", return_value=True)
 
     response = client.query(
         """

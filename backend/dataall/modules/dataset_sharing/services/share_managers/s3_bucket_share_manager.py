@@ -115,16 +115,15 @@ class S3BucketShareManager:
                     f"{self.bucket_name}",
                 )
             )
-
-        if not share_policy_service.check_resource_in_policy_statement(
-            target_resources=s3_target_resources,
-            existing_policy_statement=policy_document["Statement"][s3_statement_index],
+        elif not share_policy_service.check_resource_in_policy_statement(
+                target_resources=s3_target_resources,
+                existing_policy_statement=policy_document["Statement"][s3_statement_index],
         ):
             logger.info(f"IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {s3_target_resources}")
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
-                    "IAM Policy Statement",
+                    "IAM Policy Resource",
                     f"{IAM_S3_BUCKETS_STATEMENT_SID}S3",
                     "S3 Bucket",
                     f"{self.bucket_name}",
@@ -146,7 +145,7 @@ class S3BucketShareManager:
                     )
                 )
 
-            if not share_policy_service.check_resource_in_policy_statement(
+            elif not share_policy_service.check_resource_in_policy_statement(
                     target_resources=kms_target_resources,
                     existing_policy_statement=policy_document["Statement"][kms_statement_index],
             ):
@@ -155,7 +154,7 @@ class S3BucketShareManager:
                 self.bucket_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
-                        "IAM Policy Statement",
+                        "IAM Policy Resource",
                         f"{IAM_S3_BUCKETS_STATEMENT_SID}KMS",
                         "KMS Key",
                         f"{kms_key_id}",
