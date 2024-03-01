@@ -169,30 +169,25 @@ class S3AccessPointShareManager:
         and add to folder errors if check fails
         :return: None
         """
-        # TODO: review after merge
+        logger.info(f"Check target role {self.target_requester_IAMRoleName} access policy")
+
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        existing_policy = IAM.get_role_policy(
-            self.target_account_id,
-            self.target_requester_IAMRoleName,
-            IAM_ACCESS_POINT_ROLE_POLICY,
+        share_policy_service = SharePolicyService(
+            environmentUri=self.target_environment.environmentUri,
+            account=self.target_environment.AwsAccountId,
+            role_name=self.target_requester_IAMRoleName,
+            resource_prefix=self.target_environment.resourcePrefix
         )
-        if not existing_policy:
+        share_resource_policy_name = share_policy_service.generate_policy_name()
+
+        if not share_policy_service.check_if_policy_exists():
+            logger.info(f"IAM Policy {share_resource_policy_name} does not exist")
             self.folder_errors.append(
-                ShareErrorFormatter.dne_error_msg(IAM_ACCESS_POINT_ROLE_POLICY, self.target_requester_IAMRoleName)
+                ShareErrorFormatter.dne_error_msg("IAM Policy", share_resource_policy_name)
             )
             return
-
-        share_manager = ShareManagerUtils(
-            self.session,
-            self.dataset,
-            self.share,
-            self.source_environment,
-            self.target_environment,
-            self.source_env_group,
-            self.env_group,
-        )
 
         s3_target_resources = [
             f"arn:aws:s3:::{self.bucket_name}",
@@ -200,34 +195,67 @@ class S3AccessPointShareManager:
             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
             f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*",
         ]
-        if not share_manager.check_resource_in_policy_statement(s3_target_resources, existing_policy["Statement"][0]):
+
+        version_id, policy_document = IAM.get_managed_policy_default_version(
+            self.target_environment.AwsAccountId,
+            share_resource_policy_name
+        )
+
+        s3_statement_index = SharePolicyService._get_statement_by_sid(policy_document, f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3")
+
+        if s3_statement_index is None:
+            logger.info(f"IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 does not exist")
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
-                    "IAM Policy",
-                    IAM_ACCESS_POINT_ROLE_POLICY,
+                    "IAM Policy Statement",
+                    f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
+                    "S3 Bucket",
+                    f"{self.bucket_name}",
+                )
+            )
+
+        if not share_policy_service.check_resource_in_policy_statement(
+            target_resources=s3_target_resources,
+            existing_policy_statement=policy_document["Statement"][s3_statement_index],
+        ):
+            logger.info(f"IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 does not contain resources {s3_target_resources}")
+            self.folder_errors.append(
+                ShareErrorFormatter.missing_permission_error_msg(
+                    self.target_requester_IAMRoleName,
+                    "IAM Policy Statement",
+                    f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                     "S3 Bucket",
                     f"{self.bucket_name}",
                 )
             )
 
         if kms_key_id:
-            kms_error = False
+            kms_statement_index = SharePolicyService._get_statement_by_sid(policy_document, f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS")
             kms_target_resources = [f"arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}"]
-            if len(existing_policy["Statement"]) <= 1:
-                kms_error = True
-            elif not share_manager.check_resource_in_policy_statement(
-                kms_target_resources,
-                existing_policy["Statement"][1],
-            ):
-                kms_error = True
-
-            if kms_error:
+            if not kms_statement_index:
+                logger.info(f"IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS does not exist")
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
-                        "IAM Policy",
-                        IAM_ACCESS_POINT_ROLE_POLICY,
+                        "IAM Policy Statement",
+                        f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
+                        "KMS Key",
+                        f"{kms_key_id}",
+                    )
+                )
+
+            if not share_policy_service.check_resource_in_policy_statement(
+                    target_resources=kms_target_resources,
+                    existing_policy_statement=policy_document["Statement"][kms_statement_index],
+            ):
+                logger.info(
+                    f"IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS does not contain resources {kms_target_resources}")
+                self.folder_errors.append(
+                    ShareErrorFormatter.missing_permission_error_msg(
+                        self.target_requester_IAMRoleName,
+                        "IAM Policy Statement",
+                        f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                         "KMS Key",
                         f"{kms_key_id}",
                     )

@@ -29,7 +29,7 @@ class SharePolicyService(ManagedPolicy):
         self.resource_prefix = resource_prefix
 
     @property
-    def policy_type(self):
+    def policy_type(self) -> str:
         return "SharePolicy"
 
     def generate_policy_name(self) -> str:
@@ -56,7 +56,7 @@ class SharePolicyService(ManagedPolicy):
         }
 
     @staticmethod
-    def remove_empty_statement(policy_doc, statement_sid):
+    def remove_empty_statement(policy_doc: dict, statement_sid: str) -> dict:
         statement_index = SharePolicyService._get_statement_by_sid(policy_doc, statement_sid)
         if statement_index is not None:
             policy_doc["Statement"].pop(statement_index)
@@ -64,10 +64,10 @@ class SharePolicyService(ManagedPolicy):
 
     def add_missing_resources_to_policy_statement(
             self,
-            resource_type,
-            target_resources,
-            statement_sid,
-            policy_document
+            resource_type: str,
+            target_resources: list,
+            statement_sid: str,
+            policy_document: dict
     ):
         """
         Checks if the resources are in the existing statement. Otherwise, it will add it.
@@ -105,7 +105,12 @@ class SharePolicyService(ManagedPolicy):
                         f'and {target_resource} is included, skipping...'
                     )
 
-    def remove_resource_from_statement(self, target_resources, statement_sid, policy_document):
+    def remove_resource_from_statement(
+            self,
+            target_resources: list,
+            statement_sid: str,
+            policy_document: dict
+    ):
         policy_name = self.generate_policy_name()
         index = self._get_statement_by_sid(policy_document, statement_sid)
         log.info(
@@ -137,6 +142,22 @@ class SharePolicyService(ManagedPolicy):
                     )
                     empty_policy_document = self.generate_empty_policy()
                     policy_document["Statement"] = empty_policy_document["Statement"]
+
+    @staticmethod
+    def check_resource_in_policy_statement(
+            target_resources: list,
+            existing_policy_statement: dict
+    ) -> bool:
+        """
+        Checks if the resources are in the existing policy
+        :param target_resources: list
+        :param existing_policy_statement: dict
+        :return True if all target_resources in the existing policy else False
+        """
+        for target_resource in target_resources:
+            if target_resource not in existing_policy_statement["Resource"]:
+                return False
+        return True
 
     @staticmethod
     def _get_statement_by_sid(policy, sid):

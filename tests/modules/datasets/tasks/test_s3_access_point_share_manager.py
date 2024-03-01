@@ -1256,10 +1256,11 @@ def test_check_target_role_access_policy(
     share_manager
 ):
     # Given
-    iam_get_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=target_dataset_access_control_policy,
-    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True)
+    iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+                                       return_value=('v1', target_dataset_access_control_policy))
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "some-key-2112"
@@ -1267,7 +1268,7 @@ def test_check_target_role_access_policy(
     # When
     share_manager.check_target_role_access_policy()
     # Then
-    iam_get_role_policy_mock.assert_called()
+    iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
     assert len(share_manager.folder_errors) == 0
 
@@ -1281,10 +1282,11 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     share_manager
 ):
     # Given
-    iam_get_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=target_dataset_access_control_policy,
-    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True)
+    # Gets policy with other S3 and KMS
+    iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', target_dataset_access_control_policy))
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -1292,7 +1294,7 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     # When
     share_manager.check_target_role_access_policy()
     # Then
-    iam_get_role_policy_mock.assert_called()
+    iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
     assert len(share_manager.folder_errors) == 2
 
@@ -1304,8 +1306,8 @@ def test_check_target_role_access_policy_test_no_policy(
 
     # Given
     mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=None,
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=False
     )
 
     kms_client = mock_kms_client(mocker)
