@@ -74,7 +74,17 @@ Resources:
               - 'quicksight:SetGroupMapping'
               - 'quicksight:RegisterUser'
               - 'quicksight:Describe*'
-            Resource: '*'
+            Resource: 
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:analysis/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dashboard/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:group/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:folder/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:template/*'
+              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:theme/*'
+              - !Sub 'arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:user/*'
 
           - Sid: QuicksightDeny
             Effect: Deny
@@ -196,9 +206,7 @@ Resources:
             Effect: Allow
             Action:
               - 'cloudformation:*'
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
-              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*'
+            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
 
           - Sid: ECR
             Effect: Allow
@@ -253,13 +261,16 @@ Resources:
               - 'codepipeline:GetPipeline*'
               - 'codepipeline:List*'
               - 'codepipeline:DeletePipeline'
-              - 'codestar-notifications:List*'
-              - 'codestar-notifications:DescribeNotificationRule'
               - 'codecommit:Create*'
               - 'codecommit:DeleteRepository'
               - 'codecommit:*Tag*'
               - 'codebuild:*Project*'
-            Resource: '*'
+            Resource: 
+               - !Sub 'arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+               - !Sub 'arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${EnvironmentResourcePrefix}*'
+               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineBuildSynthCd*'
+               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineUpdatePipelineSelfMutation'
 
           - Sid: Events
             Effect: Allow
@@ -269,4 +280,5 @@ Resources:
               - 'events:PutTargets'
               - 'events:RemoveTargets'
               - 'events:DeleteRule'
-            Resource: '*'
+            Resource: 
+              - !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${EnvironmentResourcePrefix}*'
