@@ -30,6 +30,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +149,7 @@ class EnvironmentService:
     @staticmethod
     def _validate_resource_prefix(data):
         if data.get('resourcePrefix') and not bool(
-            re.match(r'^[a-z-]+$', data.get('resourcePrefix'))
+                re.match(r'^[a-z-]+$', data.get('resourcePrefix'))
         ):
             raise exceptions.InvalidInput(
                 'resourcePrefix',
@@ -158,7 +159,9 @@ class EnvironmentService:
 
     @staticmethod
     def _validate_account_region(data, session):
-        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
+        environment = EnvironmentRepository.find_environment_by_account_region(session=session,
+                                                                               account_id=data.get('AwsAccountId'),
+                                                                               region=data.get('region'))
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
@@ -226,7 +229,6 @@ class EnvironmentService:
                 action='INVITE_TEAM',
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
-
         if data.get('environmentIAMRoleArn'):
             env_group_iam_role_arn = data['environmentIAMRoleArn']
             env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
@@ -240,6 +242,15 @@ class EnvironmentService:
             ).build_compliant_name()
             env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
+
+        # If environment role is imported, then data.all should attach the policies at import time
+        # If environment role is created in environment stack, then data.all should attach the policies in the env stack
+        PolicyManager(
+            role_name=env_group_iam_role_name,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=env_role_imported)
 
         athena_workgroup = NamingConventionService(
             target_uri=environment.environmentUri,
@@ -266,6 +277,7 @@ class EnvironmentService:
             permissions=data['permissions'],
             resource_type=Environment.__name__,
         )
+
         return environment, environment_group
 
     @staticmethod
@@ -331,6 +343,14 @@ class EnvironmentService:
         group_membership = EnvironmentService.find_environment_group(
             session, group, environment.environmentUri
         )
+
+        PolicyManager(
+            role_name=group_membership.environmentIAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).delete_all_policies()
+
         if group_membership:
             session.delete(group_membership)
             session.commit()
@@ -398,7 +418,7 @@ class EnvironmentService:
 
     @staticmethod
     def list_group_invitation_permissions(
-        session, username, groups, uri, data=None, check_perm=None
+            session, username, groups, uri, data=None, check_perm=None
     ):
         group_invitation_permissions = []
         for p in permissions.ENVIRONMENT_INVITATION_REQUEST:
@@ -435,7 +455,15 @@ class EnvironmentService:
             groupUri=group,
             IAMRoleArn=IAMRoleArn,
             IAMRoleName=IAMRoleArn.split("/")[-1],
+            dataallManaged=data['dataallManaged']
         )
+
+        PolicyManager(
+            role_name=consumption_role.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix
+        ).create_all_policies(managed=consumption_role.dataallManaged)
 
         session.add(consumption_role)
         session.commit()
@@ -454,6 +482,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
     def remove_consumption_role(session, uri, env_uri):
         consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
 
         num_resources = EnvironmentResourceManager.count_consumption_role_resources(session, uri)
         if num_resources > 0:
@@ -463,15 +492,23 @@ class EnvironmentService:
             )
 
         if consumption_role:
+            PolicyManager(
+                role_name=consumption_role.IAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix
+            ).delete_all_policies()
+
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=consumption_role.groupUri,
+                resource_uri=consumption_role.consumptionRoleUri,
+                resource_type=ConsumptionRole.__name__,
+            )
+
             session.delete(consumption_role)
             session.commit()
 
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=consumption_role.groupUri,
-            resource_uri=consumption_role.consumptionRoleUri,
-            resource_type=ConsumptionRole.__name__,
-        )
         return True
 
     @staticmethod
@@ -776,7 +813,7 @@ class EnvironmentService:
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_all_environment_consumption_roles(
-        session, uri, data=None
+            session, uri, data=None
     ) -> dict:
         return paginate(
             query=EnvironmentService.query_all_environment_consumption_roles(
@@ -940,6 +977,16 @@ class EnvironmentService:
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment related objects before proceeding',
             )
         else:
+            PolicyManager(
+                role_name=environment.EnvironmentDefaultIAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix
+            ).delete_all_policies()
+
+            KeyValueTag.delete_key_value_tags(
+                session, environment.environmentUri, 'environment'
+            )
             EnvironmentResourceManager.delete_env(session, environment)
             EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
@@ -954,10 +1001,6 @@ class EnvironmentService:
 
             for role in env_roles:
                 session.delete(role)
-
-            KeyValueTag.delete_key_value_tags(
-                session, environment.environmentUri, 'environment'
-            )
 
             return session.delete(environment)
 

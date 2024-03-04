@@ -67,9 +67,23 @@ rejectShareObject = gql.MutationField(
 
 revokeItemsShareObject = gql.MutationField(
     name='revokeItemsShareObject',
-    args=[gql.Argument(name='input', type=gql.Ref('RevokeItemsInput'))],
+    args=[gql.Argument(name='input', type=gql.Ref('ShareItemSelectorInput'))],
     type=gql.Ref('ShareObject'),
     resolver=revoke_items_share_object,
+)
+
+verifyItemsShareObject = gql.MutationField(
+    name='verifyItemsShareObject',
+    args=[gql.Argument(name='input', type=gql.Ref('ShareItemSelectorInput'))],
+    type=gql.Ref('ShareObject'),
+    resolver=verify_items_share_object,
+)
+
+reApplyItemsShareObject = gql.MutationField(
+    name='reApplyItemsShareObject',
+    args=[gql.Argument(name='input', type=gql.Ref('ShareItemSelectorInput'))],
+    type=gql.Ref('ShareObject'),
+    resolver=reapply_items_share_object,
 )
 
 updateShareRejectReason = gql.MutationField(

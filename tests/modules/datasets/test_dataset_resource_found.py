@@ -33,7 +33,11 @@ def get_env(client, env_fixture, group):
     )
 
 
-def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, user, group3, group, dataset):
+def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, user, group3, group, dataset, mocker):
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies",
+                 return_value=True)
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies",
+                 return_value=True)
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
