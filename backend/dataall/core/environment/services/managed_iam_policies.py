@@ -49,7 +49,7 @@ class ManagedPolicy(ABC):
 
     def check_if_policy_exists(self) -> bool:
         policy_name = self.generate_policy_name()
-        share_policy = IAM.get_policy_by_name(self.account, policy_name)
+        share_policy = IAM.get_managed_policy_by_name(self.account, policy_name)
         return (share_policy is not None)
 
     def check_if_policy_attached(self):

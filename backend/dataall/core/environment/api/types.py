@@ -155,9 +155,10 @@ EnvironmentSimplifiedSearchResult = gql.ObjectType(
 RoleManagedPolicy = gql.ObjectType(
     name='RoleManagedPolicy',
     fields=[
-        gql.Field(name='policy_type', type=gql.String),
-        gql.Field(name='attached', type=gql.Boolean),
         gql.Field(name='policy_name', type=gql.String),
+        gql.Field(name='policy_type', type=gql.String),
+        gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name='attached', type=gql.Boolean),
     ],
 )
 

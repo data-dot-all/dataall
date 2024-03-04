@@ -89,6 +89,25 @@ class IAM:
             )
 
     @staticmethod
+    def get_managed_policy_by_name(
+            account_id: str,
+            policy_name: str
+    ):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            iamcli = IAM.client(account_id)
+            response = iamcli.get_policy(PolicyArn=arn)
+            return response['Policy']
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to to get policy {policy_name}: {e}')
+            log.error(
+                f'Failed to get policy {policy_name}: {e}'
+            )
+            return None
+
+    @staticmethod
     def create_managed_policy(
             account_id: str,
             policy_name: str,
@@ -113,7 +132,8 @@ class IAM:
     @staticmethod
     def delete_managed_policy_by_name(
             account_id: str,
-            policy_name):
+            policy_name
+    ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
@@ -128,7 +148,8 @@ class IAM:
     @staticmethod
     def get_managed_policy_default_version(
             account_id: str,
-            policy_name: str):
+            policy_name: str
+    ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
             iamcli = IAM.client(account_id)
@@ -164,43 +185,6 @@ class IAM:
                 raise Exception(
                     f'Data.all Environment Pivot Role does not have permissions to update policy {policy_name}: {e}')
             raise Exception(f'Failed to update policy {policy_name} : {e}')
-
-    @staticmethod
-    def detach_policy_from_role(
-            account_id: str,
-            role_name: str,
-            policy_name: str):
-        try:
-            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            iamcli.detach_role_policy(
-                RoleName=role_name,
-                PolicyArn=arn
-            )
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from role {role_name}: {e}')
-            raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')
-
-    @staticmethod
-    def get_policy_by_name(
-            account_id: str,
-            policy_name: str
-    ):
-        try:
-            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            response = iamcli.get_policy(PolicyArn=arn)
-            return response['Policy']
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissions to to get policy {policy_name}: {e}')
-            log.error(
-                f'Failed to get policy {policy_name}: {e}'
-            )
-            return None
 
     @staticmethod
     def is_policy_attached(
@@ -242,3 +226,21 @@ class IAM:
                 f'Failed to attach policy {policy_arn} to the role {role_name}: {e}'
             )
             raise e
+
+    @staticmethod
+    def detach_policy_from_role(
+            account_id: str,
+            role_name: str,
+            policy_name: str):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            iamcli = IAM.client(account_id)
+            iamcli.detach_role_policy(
+                RoleName=role_name,
+                PolicyArn=arn
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from role {role_name}: {e}')
+            raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')

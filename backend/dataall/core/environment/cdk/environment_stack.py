@@ -403,13 +403,13 @@ class EnvironmentSetup(Stack):
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
                 group_role = self.create_group_environment_role(group=group, id=f'{group.environmentIAMRoleName}')
-                group_roles.append(group_role)
             else:
-                iam.Role.from_role_arn(
+                group_role = iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
                     role_arn=group.environmentIAMRoleArn,
                 )
+            group_roles.append(group_role)
         return group_roles
 
     def create_group_environment_role(self, group: EnvironmentGroup, id: str):
