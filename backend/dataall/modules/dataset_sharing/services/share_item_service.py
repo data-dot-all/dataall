@@ -137,7 +137,7 @@ class ShareItemService:
             item_uri = data.get("itemUri")
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            dataset_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
@@ -147,12 +147,12 @@ class ShareItemService:
             if not item:
                 raise ObjectNotFound("ShareObjectItem", item_uri)
 
-            if item_type == ShareableType.Table.value and item.region != dataset_environment.region:
+            if item_type == ShareableType.Table.value and item.region != target_environment.region:
                 raise UnauthorizedOperation(
                     action=ADD_ITEM,
                     message=f"Lake Formation cross region sharing is not supported. "
                     f"Table {item.GlueTableName} is in {item.region} and target environment "
-                    f"{dataset_environment.name} is in {dataset_environment.region} ",
+                    f"{target_environment.name} is in {target_environment.region} ",
                 )
 
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
