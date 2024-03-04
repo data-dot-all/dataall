@@ -1,42 +1,44 @@
-import datetime
 import json
-from enum import Enum
+import logging
 from typing import Dict, Any
 
 from aws_lambda_powertools.utilities.data_classes import AppSyncResolverEvent
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Query
 
 from dataall.base.api import appSyncResolver
 from dataall.base.db import Base
 
-
-def todict(obj, parent_obj=None):
-    if isinstance(obj, dict):
-        # if parent_obj is SQLAlchemy model then don't recurse into dicts and return them as strings
-        if isinstance(parent_obj, Base):
-            return json.dumps(obj)
-        return {k: todict(v, obj) for (k, v) in obj.items()}
-    elif isinstance(obj, Enum):
-        return obj.name
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    elif hasattr(obj, "mock_calls"):
-        return obj
-    elif hasattr(obj, "_ast"):
-        return todict(obj._ast(), obj)
-    elif hasattr(obj, "__iter__") and not isinstance(obj, str):
-        log.info('hasattr dict %s', hasattr(obj, "__dict__"))
-        log.info('__iter__ %s', obj)
-        if hasattr(obj, "__dict__"):
-            log.info('__dict__ %s', obj.__dict__.items())
-        return [todict(v, obj) for v in obj]
-    elif hasattr(obj, "__dict__"):
-        log.info('__dict__ %s', obj)
-        return {k: todict(v, obj) for k, v in obj.__dict__.items() if not callable(v) and not k.startswith('_')}
-    else:
-        return obj
+logger = logging.getLogger()
+logger.setLevel('DEBUG')
+log = logging.getLogger(__name__)
 
 
-class dotdict(dict):
+def sqa_query_encoder(obj: Query):
+    log.warning('raw query returned by resolver %s', obj)
+    return jsonable_encoder(obj.all(), custom_encoder=CUSTOM_ENCODERS)
+
+
+def sqa_base_encoder(obj: Base):
+    return jsonable_encoder(
+        {k: (json.dumps(v) if isinstance(v, dict) else v) for k, v in vars(obj).items()},
+        custom_encoder=CUSTOM_ENCODERS
+    )
+
+
+CUSTOM_ENCODERS = {
+    # Convert SQA JSON columns to str for compatibility with GQL
+    Base: sqa_base_encoder,
+    # Some resolvers return raw un-executed Query
+    Query: sqa_query_encoder,
+}
+
+
+def todict(obj):
+    return jsonable_encoder(obj, custom_encoder=CUSTOM_ENCODERS)
+
+
+class DotDict(dict):
     """dot.notation access to dictionary attributes"""
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
@@ -52,13 +54,14 @@ def handler(event, context, app_context):
             """
             source = None
             if super().source:
-                source = dotdict(super().source)
+                source = DotDict(super().source)
             extra_arguments = {
-                'context': dotdict(app_context),
+                'context': DotDict(app_context),
                 'source': source
             }
             extra_arguments.update(super().arguments)
             return extra_arguments
 
     response = appSyncResolver.resolve(event=event, context=context, data_model=CustomModel)
+    log.info('raw appsync response %s', response)
     return todict(response)
