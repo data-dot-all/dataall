@@ -1374,8 +1374,7 @@ def test_list_shares_from_me_requester(
 
 
 def test_add_share_item(
-        client, user2, group2, share1_draft,
-
+        client, user2, group2, share1_draft, mock_glue_client
 ):
     # Given
     # Existing share object in status Draft (-> fixture share1_draft)
