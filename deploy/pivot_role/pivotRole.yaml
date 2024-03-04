@@ -425,15 +425,28 @@ Resources:
               - 'iam:ListRoles'
             Effect: Allow
             Resource: '*'
-          - Sid: IAMRolePolicy
+          - Sid: IAMRolePolicy1
             Action:
               - 'iam:PutRolePolicy'
               - 'iam:DeleteRolePolicy'
+              - 'iam:AttachRolePolicy'
+              - 'iam:DetachRolePolicy'
+              - 'iam:ListAttachedRolePolicies'
             Effect: Allow
-            Resource: 
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/dataall-*'
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/targetDatasetAccessControlPolicy'
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
+          - Sid: IAMRolePolicy2
+            Action:
+              - 'iam:ListPolicyVersions'
+              - 'iam:CreatePolicy'
+              - 'iam:DeletePolicy'
+              - 'iam:CreatePolicyVersion'
+              - 'iam:DeletePolicyVersion'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/targetDatasetAccessControlPolicy'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy'
           - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'

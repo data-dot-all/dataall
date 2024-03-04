@@ -12,13 +12,32 @@ class DataSharingPivotRole(PivotRoleStatementSet):
         statements = [
             # For access point sharing and S3 bucket sharing
             iam.PolicyStatement(
-                sid='IAMRolePolicy',
+                sid='IAMRolePolicy1',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'iam:PutRolePolicy',
-                    'iam:DeleteRolePolicy'
+                    'iam:DeleteRolePolicy',
+                    'iam:AttachRolePolicy',
+                    'iam:DetachRolePolicy',
+                    'iam:ListAttachedRolePolicies',
                 ],
-                resources=[f'arn:aws:iam::{self.account}:role/dataall-*', f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*', f'arn:aws:iam::{self.account}:role/targetDatasetAccessControlPolicy'],
+                resources=[f'arn:aws:iam::{self.account}:role/*'],
+            ),
+            iam.PolicyStatement(
+                sid='IAMRolePolicy2',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'iam:ListPolicyVersions',
+                    'iam:CreatePolicy',
+                    'iam:DeletePolicy',
+                    'iam:CreatePolicyVersion',
+                    'iam:DeletePolicyVersion'
+                ],
+                resources=[
+                    f'arn:aws:iam::{self.account}:policy/{self.env_resource_prefix}*',
+                    f'arn:aws:iam::{self.account}:policy/targetDatasetAccessControlPolicy',
+                    f'arn:aws:iam::{self.account}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy',
+                ],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',

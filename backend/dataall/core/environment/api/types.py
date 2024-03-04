@@ -152,6 +152,15 @@ EnvironmentSimplifiedSearchResult = gql.ObjectType(
     ],
 )
 
+RoleManagedPolicy = gql.ObjectType(
+    name='RoleManagedPolicy',
+    fields=[
+        gql.Field(name='policy_name', type=gql.String),
+        gql.Field(name='policy_type', type=gql.String),
+        gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name='attached', type=gql.Boolean),
+    ],
+)
 
 ConsumptionRole = gql.ObjectType(
     name='ConsumptionRole',
@@ -162,9 +171,15 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='IAMRoleArn', type=gql.String),
         gql.Field(name='IAMRoleName', type=gql.String),
+        gql.Field(name='dataallManaged', type=gql.Boolean),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
+        gql.Field(
+            name='managedPolicies',
+            type=gql.ArrayType(RoleManagedPolicy),
+            resolver=get_policies
+        ),
     ],
 )
 

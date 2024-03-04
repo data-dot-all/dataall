@@ -470,7 +470,7 @@ def test_init(tables1, tables2):
 
 
 # Queries & mutations
-def create_share_object(client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
+def create_share_object(mocker, client, username, group, groupUri, environmentUri, datasetUri, itemUri=None, attachMissingPolicies=True, principalId=None, principalType=PrincipalType.Group.value):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -494,9 +494,11 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
             datasetUri
             datasetName
           }
+          
         }
       }
     """
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     response = client.query(
         q,
@@ -508,9 +510,10 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
         input={
             'environmentUri': environmentUri,
             'groupUri': groupUri,
-            'principalId': groupUri,
-            'principalType': PrincipalType.Group.value,
+            'principalId': principalId if principalId else groupUri,
+            'principalType': principalType,
             'requestPurpose': 'testShare',
+            'attachMissingPolicies': attachMissingPolicies
         },
     )
 
@@ -987,11 +990,12 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
 
 
 # Tests
-def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2group):
+def test_create_share_object_unauthorized(mocker, client, group3, dataset1, env2, env2group):
     # Given
     # Existing dataset, target environment and group
     # When a user that does not belong to environment and group creates request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username='anonymous',
         group=group3,
@@ -1003,11 +1007,21 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     assert 'Unauthorized' in create_share_object_response.errors[0].message
 
 
-def test_create_share_object_as_requester(client, user2, group2, env2group, env2, dataset1):
+def test_create_share_object_as_requester(mocker, client, user2, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,
@@ -1021,11 +1035,21 @@ def test_create_share_object_as_requester(client, user2, group2, env2group, env2
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_as_approver_and_requester(client, user, group2, env2group, env2, dataset1):
+def test_create_share_object_as_approver_and_requester(mocker, client, user, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user.username,
         group=group2,
@@ -1039,11 +1063,21 @@ def test_create_share_object_as_approver_and_requester(client, user, group2, env
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'ApproversAndRequesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
+def test_create_share_object_with_item_authorized(mocker, client, user2, group2, env2group, env2, dataset1, table1):
     # Given
     # Existing dataset, table, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request with table in the request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,
@@ -1070,6 +1104,111 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
 
     assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemUri == table1.tableUri
     assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemType == ShareableType.Table.name
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_enabled(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    attach_mocker = mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.attach_policy",
+        return_value=True
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=True
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    attach_mocker.assert_called_once()
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallManaged(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True but principal=Group so managed=Trye
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    attach_mocker = mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.attach_policy",
+        return_value=True
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=False
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    attach_mocker.assert_called_once()
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallNotManaged(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    consumption_role = type('consumption_role', (object,), {})()
+    consumption_role.IAMRoleName="randomName"
+    consumption_role.dataallManaged = False
+    mocker.patch(
+        "dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role",
+        return_value=consumption_role
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=False,
+        principalId=consumption_role.IAMRoleName,
+        principalType=PrincipalType.ConsumptionRole.value
+    )
+    # Then share object is not created and an error appears
+    assert 'Required customer managed policy' in create_share_object_response.errors[0].message
+    assert 'is not attached to role randomName' in create_share_object_response.errors[0].message
 
 
 def test_get_share_object(client, share1_draft, user, group):
