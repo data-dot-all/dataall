@@ -446,13 +446,7 @@ class EnvironmentSetup(Stack):
             # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
             managed_policies = []
         for policy in managed_policies:
-            # Backwards compatibility
-            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-            # We create the policy from the inline statements
-            if not policy.get("exists", False) and policy.get("policy_type", None) == "SharePolicy":
-                share_policy = next((x for x in policy_manager.initializedPolicies if x.policy_type == "SharePolicy"), None)
-                share_policy.create_managed_policy_from_inline_and_delete_inline()
-            # End of backwards compatibility
+            # If there is a managed policy that exist it should be attached to the IAM role
             if policy.get("exists", False):
                 external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
                     self,

@@ -6,6 +6,12 @@ import logging
 
 log = logging.getLogger(__name__)
 
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s  ',
+    datefmt='%d-%b-%y %H:%M:%S',
+    level=logging.INFO
+)
+
 OLD_IAM_ACCESS_POINT_ROLE_POLICY = "targetDatasetAccessControlPolicy"
 OLD_IAM_S3BUCKET_ROLE_POLICY = "dataall-targetDatasetS3Bucket-AccessControlPolicy"
 
@@ -192,22 +198,34 @@ class SharePolicyService(ManagedPolicy):
         If there are already shared resources, add them to the empty policy and remove the fake statement
         return: IAM policy document
         """
-        new_policy = self.generate_empty_policy()
         existing_bucket_s3, existing_bucket_kms = self._get_policy_resources_from_inline_policy(OLD_IAM_S3BUCKET_ROLE_POLICY)
-        existing_access_points_s3, existing_access_points_kms = self._get_policy_resources_from_inline_policy(OLD_IAM_S3BUCKET_ROLE_POLICY)
-
-        updated_policy = self._update_policy_resources_from_inline_policy(
-            policy=new_policy,
-            statement_sid=IAM_S3_BUCKETS_STATEMENT_SID,
-            existing_s3=existing_bucket_s3,
-            existing_kms=existing_bucket_kms
+        existing_access_points_s3, existing_access_points_kms = self._get_policy_resources_from_inline_policy(OLD_IAM_ACCESS_POINT_ROLE_POLICY)
+        log.info(
+            f"Back-filling S3BUCKET sharing resources: S3={existing_bucket_s3}, KMS={existing_bucket_kms}"
         )
-        updated_policy = self._update_policy_resources_from_inline_policy(
-            policy=updated_policy,
-            statement_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
-            existing_s3=existing_access_points_s3,
-            existing_kms=existing_access_points_kms
+        log.info(
+            f"Back-filling S3ACCESS POINTS sharing resources: S3={existing_access_points_s3}, KMS={existing_access_points_kms}"
         )
+        if len(existing_bucket_s3+existing_access_points_s3) > 0:
+            new_policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                ]
+            }
+            updated_policy = self._update_policy_resources_from_inline_policy(
+                policy=new_policy,
+                statement_sid=IAM_S3_BUCKETS_STATEMENT_SID,
+                existing_s3=existing_bucket_s3,
+                existing_kms=existing_bucket_kms
+            )
+            updated_policy = self._update_policy_resources_from_inline_policy(
+                policy=updated_policy,
+                statement_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
+                existing_s3=existing_access_points_s3,
+                existing_kms=existing_access_points_kms
+            )
+        else:
+            updated_policy = self.generate_empty_policy()
         return updated_policy
 
     def _get_policy_resources_from_inline_policy(self, policy_name):
@@ -256,7 +274,7 @@ class SharePolicyService(ManagedPolicy):
         return policy
 
     def _delete_old_inline_policies(self):
-        for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_S3BUCKET_ROLE_POLICY]:
+        for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_ACCESS_POINT_ROLE_POLICY]:
             try:
                 existing_policy = IAM.get_role_policy(
                     self.account,
@@ -264,6 +282,9 @@ class SharePolicyService(ManagedPolicy):
                     policy_name
                 )
                 if existing_policy is not None:
+                    log.info(
+                        f'Deleting inline policy {policy_name}...'
+                    )
                     IAM.delete_role_policy(self.account, self.role_name, policy_name)
                 else:
                     pass

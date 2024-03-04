@@ -33,7 +33,11 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                     'iam:CreatePolicyVersion',
                     'iam:DeletePolicyVersion'
                 ],
-                resources=[f'arn:aws:iam::{self.account}:policy/{self.env_resource_prefix}*'],
+                resources=[
+                    f'arn:aws:iam::{self.account}:policy/{self.env_resource_prefix}*',
+                    f'arn:aws:iam::{self.account}:policy/targetDatasetAccessControlPolicy',
+                    f'arn:aws:iam::{self.account}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy',
+                ],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',

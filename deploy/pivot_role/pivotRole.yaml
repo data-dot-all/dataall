@@ -459,6 +459,8 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/targetDatasetAccessControlPolicy'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy'
           - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'
