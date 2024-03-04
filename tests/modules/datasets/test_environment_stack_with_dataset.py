@@ -93,8 +93,9 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     )
 
 
-def test_resources_created(env_fixture, org_fixture):
+def test_resources_created(env_fixture, org_fixture, mocker):
     app = App()
+    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.get_all_policies", return_value=[])
 
     # Create the Stack
     stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)

@@ -22,6 +22,7 @@ class SharingApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
+        from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
         log.info("API of dataset sharing has been imported")
@@ -53,5 +54,6 @@ class DataSharingCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.dataset_sharing.cdk
+        from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
         log.info("CDK module data_sharing has been imported")

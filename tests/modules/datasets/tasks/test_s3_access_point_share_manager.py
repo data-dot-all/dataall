@@ -6,11 +6,11 @@ import json
 from typing import Callable
 
 from dataall.core.groups.db.group_models import Group
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -24,6 +24,10 @@ TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
+
+IAM_S3_ACCESS_POINTS_STATEMENT_SID = "AccessPointsStatement"
+IAM_S3_BUCKETS_STATEMENT_SID = "BucketStatement"
+EMPTY_STATEMENT_SID = "EmptyStatement"
 
 
 @pytest.fixture(scope="module")
@@ -214,6 +218,7 @@ def target_dataset_access_control_policy(request):
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": [
@@ -224,6 +229,7 @@ def target_dataset_access_control_policy(request):
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -294,81 +300,7 @@ def test_manage_bucket_policy_existing_policy(
     # Then
     s3_client.create_bucket_policy.assert_not_called()
 
-
-@pytest.mark.parametrize("target_dataset_access_control_policy",
-                         ([("bucketname", "aws_account_id", "access_point_name")]),
-                         indirect=True)
-def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
-    mocker,
-    dataset1,
-    location1,
-    target_dataset_access_control_policy,
-    share_manager
-):
-
-    # Given
-    iam_policy = target_dataset_access_control_policy
-
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=iam_policy,
-    )
-
-    iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
-        return_value=None,
-    )
-
-    kms_client = mock_kms_client(mocker)
-    kms_client().get_key_id.return_value = "kms-key"
-
-    # When
-    share_manager.grant_target_role_access_policy()
-
-    # Then
-    iam_update_role_policy_mock.assert_called()
-
-    # Iam function is called with str from object so we transform back to object
-    policy_object = json.loads(iam_update_role_policy_mock.call_args.args[3])
-
-    # Assert that bucket_name is inside the resource array of policy object
-    assert location1.S3BucketName in ",".join(policy_object["Statement"][0]["Resource"])
-    assert f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key" in \
-            iam_policy["Statement"][1]["Resource"] \
-            and "kms:*" in iam_policy["Statement"][1]["Action"]
-
-
-@pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]), indirect=True)
-def test_grant_target_role_access_policy_existing_policy_bucket_included(
-    mocker,
-    target_dataset_access_control_policy,
-    share_manager
-):
-
-    # Given
-    iam_policy = target_dataset_access_control_policy
-
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=iam_policy,
-    )
-
-    iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
-        return_value=None,
-    )
-
-    kms_client = mock_kms_client(mocker)
-    kms_client().get_key_id.return_value = "kms-key"
-
-    # When
-    share_manager.grant_target_role_access_policy()
-
-    # Then
-    iam_update_role_policy_mock.assert_called()
-
-
-def test_grant_target_role_access_policy_test_no_policy(
+def test_grant_target_role_access_policy_test_empty_policy(
     mocker,
     dataset1: Dataset,
     share1: ShareObject,
@@ -377,22 +309,38 @@ def test_grant_target_role_access_policy_test_no_policy(
     target_environment: Environment,
     share_manager
 ):
+    initial_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": EMPTY_STATEMENT_SID,
+                    "Effect": "Allow",
+                    "Action": "none:null",
+                    "Resource": "*"
+                }
+            ]
+        }
 
     # Given
     mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=None,
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', initial_policy_document)
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
     )
 
     expected_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
                 "Action": ["s3:*"],
                 "Resource": [
@@ -403,6 +351,7 @@ def test_grant_target_role_access_policy_test_no_policy(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -420,12 +369,104 @@ def test_grant_target_role_access_policy_test_no_policy(
     # When
     share_manager.grant_target_role_access_policy()
 
+    expected_policy_name = SharePolicyService(
+        environmentUri=target_environment.environmentUri,
+        role_name=share1.principalIAMRoleName,
+        account=target_environment.AwsAccountId,
+        resource_prefix=target_environment.resourcePrefix
+    ).generate_policy_name()
     # Then
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, share1.principalIAMRoleName,
-        "targetDatasetAccessControlPolicy", json.dumps(expected_policy)
+        target_environment.AwsAccountId, expected_policy_name,
+        "v1", json.dumps(expected_policy)
     )
 
+
+@pytest.mark.parametrize("target_dataset_access_control_policy",
+                         ([("bucketname", "aws_account_id", "access_point_name")]),
+                         indirect=True)
+def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
+    mocker,
+    dataset1,
+    location1,
+    target_dataset_access_control_policy,
+    share_manager
+):
+
+    # Given
+    iam_policy = target_dataset_access_control_policy
+
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', iam_policy)
+
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+
+    iam_update_role_policy_mock = mocker.patch(
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
+        return_value=None,
+    )
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "kms-key"
+
+    # When
+    share_manager.grant_target_role_access_policy()
+
+    # Then
+    iam_update_role_policy_mock.assert_called()
+
+    # Iam function is called with str from object so we transform back to object
+    policy_object = iam_policy
+    s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3")
+    kms_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS")
+
+    # Assert that bucket_name is inside the resource array of policy object
+    assert location1.S3BucketName in ",".join(policy_object["Statement"][s3_index]["Resource"])
+    assert f"arn:aws:kms:{dataset1.region}:{dataset1.AwsAccountId}:key/kms-key" in \
+           iam_policy["Statement"][kms_index]["Resource"] \
+           and "kms:*" in iam_policy["Statement"][kms_index]["Action"]
+
+    # Assert that statements for S3 bucket sharing are unaffected
+    s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f"{IAM_S3_BUCKETS_STATEMENT_SID}S3")
+
+@pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]), indirect=True)
+def test_grant_target_role_access_policy_existing_policy_bucket_included(
+    mocker,
+    target_dataset_access_control_policy,
+    share_manager
+):
+
+    # Given
+    iam_policy = target_dataset_access_control_policy
+
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', iam_policy)
+    )
+
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+
+    iam_update_role_policy_mock = mocker.patch(
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
+        return_value=None,
+    )
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "kms-key"
+
+    # When
+    share_manager.grant_target_role_access_policy()
+
+    # Then
+    iam_update_role_policy_mock.assert_called()
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
@@ -855,13 +896,16 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     target_environment: Environment,
     share_manager
 ):
-    # Given ap policy that only includes AllowAllToAdminStatement
+    # Given IAM policy with no bucket shares
     existing_target_role_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
-                "Action": ["s3:*"],
+                "Action": [
+                    "s3:*"
+                ],
                 "Resource": [
                     f"arn:aws:s3:::{location1.S3BucketName}",
                     f"arn:aws:s3:::{location1.S3BucketName}/*",
@@ -870,6 +914,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -881,18 +926,30 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         ],
     }
 
-    mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=existing_target_role_policy,
-    )
+    expected_remaining_target_role_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": EMPTY_STATEMENT_SID,
+                "Effect": "Allow",
+                "Action": "none:null",
+                "Resource": "*"
+            }
+        ]
+    }
 
-    iam_delete_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.delete_role_policy",
-        return_value=None,
+    # Given
+    mocker.patch(
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', existing_target_role_policy)
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -902,9 +959,17 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     # When
     share_manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
-    # Then
-    iam_delete_role_policy_mock.assert_called()
-    iam_update_role_policy_mock.assert_not_called()
+    expected_policy_name = SharePolicyService(
+        environmentUri=target_environment.environmentUri,
+        role_name=share1.principalIAMRoleName,
+        account=target_environment.AwsAccountId,
+        resource_prefix = target_environment.resourcePrefix
+    ).generate_policy_name()
+
+    iam_update_role_policy_mock.assert_called_with(
+        target_environment.AwsAccountId, expected_policy_name,
+        "v1", json.dumps(expected_remaining_target_role_policy)
+    )
 
 
 def test_delete_target_role_access_policy_with_remaining_statement(
@@ -921,8 +986,11 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
-                "Action": ["s3:*"],
+                "Action": [
+                    "s3:*"
+                ],
                 "Resource": [
                     "arn:aws:s3:::UNRELATED_BUCKET_ARN",
                     f"arn:aws:s3:::{location1.S3BucketName}",
@@ -932,6 +1000,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
                 ],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -948,11 +1017,15 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3",
                 "Effect": "Allow",
-                "Action": ["s3:*"],
+                "Action": [
+                    "s3:*"
+                ],
                 "Resource": ["arn:aws:s3:::UNRELATED_BUCKET_ARN"],
             },
             {
+                "Sid": f"{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS",
                 "Effect": "Allow",
                 "Action": [
                     "kms:*"
@@ -964,18 +1037,19 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         ],
     }
 
+    # Given
     mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=existing_target_role_policy,
+        "dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+        return_value=('v1', existing_target_role_policy)
     )
 
-    iam_delete_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.delete_role_policy",
-        return_value=None,
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
     )
 
     iam_update_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.update_role_policy",
+        "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
     )
 
@@ -986,13 +1060,16 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     share_manager.delete_target_role_access_policy(share1, dataset1, target_environment)
 
     # Then
-    iam_delete_role_policy_mock.assert_not_called()
+    expected_policy_name = SharePolicyService(
+        environmentUri=target_environment.environmentUri,
+        role_name=share1.principalIAMRoleName,
+        account=target_environment.AwsAccountId,
+        resource_prefix=target_environment.resourcePrefix
+    ).generate_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId,
-        share1.principalIAMRoleName,
-        "targetDatasetAccessControlPolicy",
-        json.dumps(expected_remaining_target_role_policy),
+        target_environment.AwsAccountId, expected_policy_name,
+        "v1", json.dumps(expected_remaining_target_role_policy)
     )
 
 
@@ -1177,10 +1254,11 @@ def test_check_target_role_access_policy(
     share_manager
 ):
     # Given
-    iam_get_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=target_dataset_access_control_policy,
-    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True)
+    iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
+                                       return_value=('v1', target_dataset_access_control_policy))
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "some-key-2112"
@@ -1188,7 +1266,7 @@ def test_check_target_role_access_policy(
     # When
     share_manager.check_target_role_access_policy()
     # Then
-    iam_get_role_policy_mock.assert_called()
+    iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
     assert len(share_manager.folder_errors) == 0
 
@@ -1202,10 +1280,11 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     share_manager
 ):
     # Given
-    iam_get_role_policy_mock = mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=target_dataset_access_control_policy,
-    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True)
+    # Gets policy with other S3 and KMS
+    iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', target_dataset_access_control_policy))
 
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
@@ -1213,7 +1292,7 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     # When
     share_manager.check_target_role_access_policy()
     # Then
-    iam_get_role_policy_mock.assert_called()
+    iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
     assert len(share_manager.folder_errors) == 2
 
@@ -1225,8 +1304,8 @@ def test_check_target_role_access_policy_test_no_policy(
 
     # Given
     mocker.patch(
-        "dataall.base.aws.iam.IAM.get_role_policy",
-        return_value=None,
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=False
     )
 
     kms_client = mock_kms_client(mocker)
@@ -1247,7 +1326,7 @@ def test_check_access_point_and_policy(
     access_point_arn = "existing-access-point-arn"
     s3_control_client = mock_s3_control_client(mocker)
     s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
-    
+
     # target_env_admin is already in policy but current folder is NOT yet in prefix_list
     existing_ap_policy = _generate_ap_policy_object(access_point_arn, [[target_environment.SamlGroupName, [location1.S3Prefix]]])
     # Existing access point policy

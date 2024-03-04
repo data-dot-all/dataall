@@ -21,6 +21,7 @@ from aws_cdk import (
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
@@ -402,13 +403,13 @@ class EnvironmentSetup(Stack):
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
                 group_role = self.create_group_environment_role(group=group, id=f'{group.environmentIAMRoleName}')
-                group_roles.append(group_role)
             else:
-                iam.Role.from_role_arn(
+                group_role = iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
                     role_arn=group.environmentIAMRoleArn,
                 )
+            group_roles.append(group_role)
         return group_roles
 
     def create_group_environment_role(self, group: EnvironmentGroup, id: str):
@@ -431,6 +432,28 @@ class EnvironmentSetup(Stack):
             permissions=group_permissions,
         ).generate_policies()
 
+        external_managed_policies = []
+        policy_manager = PolicyManager(
+            environmentUri=self._environment.environmentUri,
+            resource_prefix=self._environment.resourcePrefix,
+            role_name=group.environmentIAMRoleName,
+            account=self._environment.AwsAccountId
+        )
+        try:
+            managed_policies = policy_manager.get_all_policies()
+        except Exception as e:
+            logger.info(f"Not adding any managed policy because of exception: {e}")
+            # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
+            managed_policies = []
+        for policy in managed_policies:
+            # If there is a managed policy that exist it should be attached to the IAM role
+            if policy.get("exists", False):
+                external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
+                    self,
+                    id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
+                    managed_policy_name=policy.get("policy_name")
+                ))
+
         with self.engine.scoped_session() as session:
             data_policy = S3Policy(
                 stack=self,
@@ -452,7 +475,7 @@ class EnvironmentSetup(Stack):
             inline_policies={
                 f'{group.environmentIAMRoleName}DataPolicy': data_policy.document,
             },
-            managed_policies=services_policies,
+            managed_policies=services_policies + external_managed_policies,
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),

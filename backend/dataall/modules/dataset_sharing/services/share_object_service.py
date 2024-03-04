@@ -9,7 +9,6 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.permissions.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
-from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
@@ -27,6 +26,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
 )
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
@@ -41,6 +41,9 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
@@ -69,6 +72,7 @@ class ShareObjectService:
         principal_id,
         principal_type,
         requestPurpose,
+        attachMissingPolicies
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -87,11 +91,14 @@ class ShareObjectService:
                     session, principal_id, environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
+                managed = consumption_role.dataallManaged
+
             else:
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session, group_uri, environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
+                managed = True
 
             if (
                 (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
@@ -105,6 +112,26 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
+            share_policy_service = SharePolicyService(
+                account=environment.AwsAccountId,
+                role_name=principal_iam_role_name,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix
+            )
+            # Backwards compatibility
+            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+            # We create the policy from the inline statements
+            # In this case it could also happen that the role is the Admin of the environment
+            if not share_policy_service.check_if_policy_exists():
+                share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+            # End of backwards compatibility
+
+            attached = share_policy_service.check_if_policy_attached()
+            if not attached and not managed and not attachMissingPolicies:
+                raise Exception(
+                    f"Required customer managed policy {share_policy_service.generate_policy_name()} is not attached to role {principal_iam_role_name}")
+            elif not attached:
+                share_policy_service.attach_policy()
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             if not share:
                 share = ShareObject(
