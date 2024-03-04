@@ -256,7 +256,7 @@ class IAM:
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissionsto to attach policy {policy_arn} to the role {role_name}: {e}')
+                    f'Data.all Environment Pivot Role does not have permissions to to attach policy {policy_arn} to the role {role_name}: {e}')
             log.error(
                 f'Failed to attach policy {policy_arn} to the role {role_name}: {e}'
             )
