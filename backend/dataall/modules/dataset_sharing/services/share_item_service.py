@@ -15,6 +15,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemActions,
     ShareItemHealthStatus,
 )
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectRepository,
@@ -136,7 +137,7 @@ class ShareItemService:
             item_uri = data.get("itemUri")
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            target_environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
@@ -173,7 +174,7 @@ class ShareItemService:
                     itemName=item.name,
                     status=ShareItemStatus.PendingApproval.value,
                     owner=context.username,
-                    GlueDatabaseName=dataset.GlueDatabaseName if item_type == ShareableType.Table.value else "",
+                    GlueDatabaseName=ShareItemService._get_glue_database_for_share(dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region) if item_type == ShareableType.Table.value else "",
                     GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else "",
                     S3AccessPointName=s3_access_point_name if item_type == ShareableType.StorageLocation.value else "",
                 )
@@ -225,3 +226,20 @@ class ShareItemService:
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+
+    @staticmethod
+    def _get_glue_database_for_share(glueDatabase, account_id, region):
+        # Check if a catalog account exists and return database accordingly
+        try:
+            catalog_dict = GlueClient(
+                account_id=account_id,
+                region=region,
+                database=glueDatabase,
+            ).get_source_catalog()
+
+            if catalog_dict is not None:
+                return catalog_dict.get('database_name')
+            else:
+                return glueDatabase
+        except Exception as e:
+            raise e
