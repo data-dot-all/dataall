@@ -439,7 +439,13 @@ class EnvironmentSetup(Stack):
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId
         )
-        for policy in policy_manager.get_all_policies():
+        try:
+            managed_policies = policy_manager.get_all_policies()
+        except Exception as e:
+            logger.info(f"Not adding any managed policy because of exception: {e}")
+            # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
+            managed_policies = []
+        for policy in managed_policies:
             # Backwards compatibility
             # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
             # We create the policy from the inline statements

@@ -181,9 +181,7 @@ class SharePolicyService(ManagedPolicy):
 
             # Delete obsolete inline policies
             log.info(f'Deleting {OLD_IAM_ACCESS_POINT_ROLE_POLICY} and {OLD_IAM_S3BUCKET_ROLE_POLICY}')
-            IAM.delete_role_policy(self.account, self.role_name, OLD_IAM_ACCESS_POINT_ROLE_POLICY)
-            IAM.delete_role_policy(self.account, self.role_name, OLD_IAM_S3BUCKET_ROLE_POLICY)
-
+            self._delete_old_inline_policies()
         except Exception as e:
             raise Exception(f"Error creating policy from inline policies: {e}")
         return policy_arn
@@ -256,3 +254,21 @@ class SharePolicyService(ManagedPolicy):
             }
             policy["Statement"].append(additional_policy)
         return policy
+
+    def _delete_old_inline_policies(self):
+        for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_S3BUCKET_ROLE_POLICY]:
+            try:
+                existing_policy = IAM.get_role_policy(
+                    self.account,
+                    self.role_name,
+                    policy_name
+                )
+                if existing_policy is not None:
+                    IAM.delete_role_policy(self.account, self.role_name, policy_name)
+                else:
+                    pass
+            except Exception as e:
+                log.error(
+                    f'Failed to retrieve the existing policy {policy_name}: {e} '
+                )
+        return True

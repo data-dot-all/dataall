@@ -136,6 +136,10 @@ class PolicyManager(object):
                         policy_name=policy_name
                     )
                 if Policy.check_if_policy_exists():
+                    IAM.delete_managed_policy_non_default_versions(
+                        account_id=self.account,
+                        policy_name=policy_name
+                    )
                     IAM.delete_managed_policy_by_name(
                         account_id=self.account,
                         policy_name=policy_name

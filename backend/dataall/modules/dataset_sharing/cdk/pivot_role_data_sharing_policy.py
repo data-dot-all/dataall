@@ -27,12 +27,13 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 sid='IAMRolePolicy2',
                 effect=iam.Effect.ALLOW,
                 actions=[
+                    'iam:ListPolicyVersions',
                     'iam:CreatePolicy',
                     'iam:DeletePolicy',
                     'iam:CreatePolicyVersion',
                     'iam:DeletePolicyVersion'
                 ],
-                resources=[f'arn:aws:iam:*:{self.account}:policy/{self.env_resource_prefix}*'],
+                resources=[f'arn:aws:iam::{self.account}:policy/{self.env_resource_prefix}*'],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',

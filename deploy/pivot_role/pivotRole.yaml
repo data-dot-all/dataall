@@ -451,6 +451,7 @@ Resources:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
           - Sid: IAMRolePolicy2
             Action:
+              - 'iam:ListPolicyVersions'
               - 'iam:CreatePolicy'
               - 'iam:DeletePolicy'
               - 'iam:CreatePolicyVersion'

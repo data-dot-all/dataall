@@ -16,8 +16,8 @@ class IAM:
     def get_role(account_id: str, role_arn: str, role=None):
         log.info(f"Getting IAM role = {role_arn}")
         try:
-            iamcli = IAM.client(account_id=account_id, role=role)
-            response = iamcli.get_role(
+            client = IAM.client(account_id=account_id, role=role)
+            response = client.get_role(
                 RoleName=role_arn.split("/")[-1]
             )
             assert response['Role']['Arn'] == role_arn, "Arn doesn't match the role name. Check Arn and try again."
@@ -35,8 +35,8 @@ class IAM:
     def get_role_arn_by_name(account_id: str, role_name: str, role=None):
         log.info(f"Getting IAM role name= {role_name}")
         try:
-            iamcli = IAM.client(account_id=account_id, role=role)
-            response = iamcli.get_role(
+            client = IAM.client(account_id=account_id, role=role)
+            response = client.get_role(
                 RoleName=role_name
             )
             return response["Role"]["Arn"]
@@ -55,8 +55,8 @@ class IAM:
             policy_name: str,
     ):
         try:
-            iamcli = IAM.client(account_id)
-            response = iamcli.get_role_policy(
+            client = IAM.client(account_id)
+            response = client.get_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
             )
@@ -76,8 +76,8 @@ class IAM:
             policy_name: str,
     ):
         try:
-            iamcli = IAM.client(account_id)
-            iamcli.delete_role_policy(
+            client = IAM.client(account_id)
+            client.delete_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
             )
@@ -95,8 +95,8 @@ class IAM:
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            response = iamcli.get_policy(PolicyArn=arn)
+            client = IAM.client(account_id)
+            response = client.get_policy(PolicyArn=arn)
             return response['Policy']
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
@@ -114,8 +114,8 @@ class IAM:
             policy: str
     ):
         try:
-            iamcli = IAM.client(account_id)
-            response = iamcli.create_policy(
+            client = IAM.client(account_id)
+            response = client.create_policy(
                 PolicyName=policy_name,
                 PolicyDocument=policy,
             )
@@ -136,8 +136,8 @@ class IAM:
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            iamcli.delete_policy(
+            client = IAM.client(account_id)
+            client.delete_policy(
                 PolicyArn=arn
             )
         except ClientError as e:
@@ -152,10 +152,10 @@ class IAM:
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            response = iamcli.get_policy(PolicyArn=arn)
+            client = IAM.client(account_id)
+            response = client.get_policy(PolicyArn=arn)
             versionId = response['Policy']['DefaultVersionId']
-            policyVersion = iamcli.get_policy_version(PolicyArn=arn, VersionId=versionId)
+            policyVersion = client.get_policy_version(PolicyArn=arn, VersionId=versionId)
             policyDocument = policyVersion['PolicyVersion']['Document']
             return versionId, policyDocument
         except ClientError as e:
@@ -172,19 +172,48 @@ class IAM:
             policy_document: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            iamcli.create_policy_version(
+            client = IAM.client(account_id)
+            client.create_policy_version(
                 PolicyArn=arn,
                 PolicyDocument=policy_document,
                 SetAsDefault=True
             )
 
-            iamcli.delete_policy_version(PolicyArn=arn, VersionId=old_version_id)
+            client.delete_policy_version(PolicyArn=arn, VersionId=old_version_id)
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
                     f'Data.all Environment Pivot Role does not have permissions to update policy {policy_name}: {e}')
             raise Exception(f'Failed to update policy {policy_name} : {e}')
+
+    @staticmethod
+    def delete_managed_policy_non_default_versions(
+            account_id: str,
+            policy_name: str,
+    ):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            client = IAM.client(account_id)
+
+            # List all policy versions
+            paginator = client.get_paginator('list_policy_versions')
+            pages = paginator.paginate(
+                PolicyArn=arn
+            )
+            versions = []
+            for page in pages:
+                versions += page['Versions']
+            non_default_versions = [version['VersionId'] for version in versions if version['IsDefaultVersion'] is False]
+            # Delete all non-default versions
+            for version_id in non_default_versions:
+                client.delete_policy_version(PolicyArn=arn, VersionId=version_id)
+
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to get policy {policy_name}: {e}')
+            log.error(f'Failed to get policy {policy_name} : {e}')
+            return None, None
 
     @staticmethod
     def is_policy_attached(
@@ -193,9 +222,15 @@ class IAM:
             role_name: str
     ):
         try:
-            iamcli = IAM.client(account_id)
-            response = iamcli.list_attached_role_policies(RoleName=role_name)
-            return policy_name in [p['PolicyName'] for p in response['AttachedPolicies']]
+            client = IAM.client(account_id)
+            paginator = client.get_paginator('list_attached_role_policies')
+            pages = paginator.paginate(
+                RoleName=role_name
+            )
+            policies = []
+            for page in pages:
+                policies += page['AttachedPolicies']
+            return policy_name in [p['PolicyName'] for p in policies]
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
@@ -212,8 +247,8 @@ class IAM:
             policy_arn
     ):
         try:
-            iamcli = IAM.client(account_id)
-            response = iamcli.attach_role_policy(
+            client = IAM.client(account_id)
+            response = client.attach_role_policy(
                 RoleName=role_name,
                 PolicyArn=policy_arn
             )
@@ -234,8 +269,8 @@ class IAM:
             policy_name: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            iamcli = IAM.client(account_id)
-            iamcli.detach_role_policy(
+            client = IAM.client(account_id)
+            client.detach_role_policy(
                 RoleName=role_name,
                 PolicyArn=arn
             )
