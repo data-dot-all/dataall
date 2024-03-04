@@ -206,7 +206,7 @@ class SharePolicyService(ManagedPolicy):
         log.info(
             f"Back-filling S3ACCESS POINTS sharing resources: S3={existing_access_points_s3}, KMS={existing_access_points_kms}"
         )
-        if len(existing_bucket_s3+existing_access_points_s3) > 0:
+        if len(existing_bucket_s3 + existing_access_points_s3) > 0:
             new_policy = {
                 "Version": "2012-10-17",
                 "Statement": [
