@@ -54,6 +54,7 @@ class LambdaApiStack(pyNestedClass):
         email_notification_sender_email_id=None,
         email_custom_domain=None,
         ses_configuration_set=None,
+        custom_domain=None,
         custom_auth=None,
         **kwargs,
     ):
@@ -114,6 +115,13 @@ class LambdaApiStack(pyNestedClass):
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
         awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc)
+        awshandler_env = {
+            'envname': envname, 'LOG_LEVEL': 'INFO',
+            'email_sender_id': email_notification_sender_email_id
+        }
+        # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
+        if custom_domain and custom_domain.get('hosted_zone_name', None):
+            awshandler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
@@ -123,10 +131,7 @@ class LambdaApiStack(pyNestedClass):
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
-            environment={
-                'envname': envname, 'LOG_LEVEL': 'INFO',
-                'email_sender_id': email_notification_sender_email_id
-            },
+            environment=awshandler_env,
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
