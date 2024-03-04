@@ -28,15 +28,12 @@ class LoggingPivotRole(PivotRoleStatementSet):
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
+                    'logs:PutLogEvents',
                 ],
                 resources=[
-                    f'arn:aws:logs:*:{self.account}:log-group:/aws/lambda/*',
+                    f'arn:aws:logs:*:{self.account}:log-group:/aws/lambda/{self.env_resource_prefix}*',
                     f'arn:aws:logs:*:{self.account}:log-group:/{self.env_resource_prefix}*',
                 ],
-            ),
-            # Logging
-            iam.PolicyStatement(
-                sid='Logging', effect=iam.Effect.ALLOW, actions=['logs:PutLogEvents'], resources=['*']
             ),
         ]
         return statements
