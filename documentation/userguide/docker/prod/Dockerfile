@@ -25,6 +25,7 @@ RUN dnf -y install python$PYTHON_VERSION-pip
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -r -m -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /usr/local/
 RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /tmp
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /usr/share/nginx
 
 USER ${CONTAINER_USER}
 
@@ -33,10 +34,7 @@ RUN touch ~/.bashrc
 COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} . ./
 
 RUN python$PYTHON_VERSION -m pip install -r requirements.txt
-
-RUN mkdir -p /site
-RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /site
-RUN python$PYTHON_VERSION -m mkdocs build
+RUN python$PYTHON_VERSION -m mkdocs build -d /usr/local/site
 
 
 RUN curl -L https://github.com/a8m/envsubst/releases/download/$ENVSUBST_VERSION/envsubst-`uname -s`-`uname -m` -o /usr/local/bin/envsubst && \
@@ -45,6 +43,6 @@ COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./docker/prod/nginx.confi
 
 CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.template > /etc/nginx/conf.d/default.conf"]
 
-RUN cp -a site/. /usr/share/nginx/html/
+RUN cp -a usr/local/site/. /usr/share/nginx/html/
 
 CMD ["nginx", "-g", "daemon off;"]
