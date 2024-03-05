@@ -4,6 +4,24 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "us-east-1",
+    "git_branch": "dep1",
+    "resource_prefix": "dp",
+    "DeploymentEnvironments": [
+      {
+        "envname": "test",
+        "account": "225091619433",
+        "region": "us-east-1",
+        "enable_opensearch_serverless": true,
+        "enable_pivot_role_auto_create": true,
+        "enable_update_dataall_stacks_in_cicd_pipeline": true,
+        "cognito_user_session_timeout_inmins": 240,
+        "reauth_config": {
+          "reauth_apis": ["listOrg"],
+          "ttl": 3
+        }
+      }
+    ]
   }
 }
