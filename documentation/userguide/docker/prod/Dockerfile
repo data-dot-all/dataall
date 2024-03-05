@@ -40,11 +40,6 @@ RUN curl -L https://github.com/a8m/envsubst/releases/download/$ENVSUBST_VERSION/
     chmod +x /usr/local/bin/envsubst
 COPY --chown=${CONTAINER_USER}:root ./docker/prod/nginx.config /etc/nginx/nginx.template
 
-
-RUN curl -L https://github.com/a8m/envsubst/releases/download/$ENVSUBST_VERSION/envsubst-`uname -s`-`uname -m` -o /usr/local/bin/envsubst && \
-    chmod +x /usr/local/bin/envsubst
-COPY --chown=${CONTAINER_USER}:root ./docker/prod/nginx.config /etc/nginx/nginx.template
-
 CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.template > /etc/nginx/conf.d/default.conf"]
 
 RUN cp -a site/. /usr/share/nginx/html/
