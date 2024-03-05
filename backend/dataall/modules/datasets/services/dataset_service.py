@@ -120,6 +120,7 @@ class DatasetService:
                 dataset=dataset,
                 data=data
             )
+            DatasetRepository.create_dataset_lock(session=session, dataset=dataset)
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 

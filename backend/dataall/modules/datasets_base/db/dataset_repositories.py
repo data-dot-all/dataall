@@ -10,7 +10,7 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetLock
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -151,6 +151,16 @@ class DatasetRepository(EnvironmentResource):
         dataset.GlueDataQualitySchedule = None
         dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
         return dataset
+
+    @staticmethod
+    def create_dataset_lock(session, dataset: Dataset):
+        dataset_lock = DatasetLock(
+            datasetUri=dataset.datasetUri,
+            isLocked=False,
+            acquiredBy=''
+        )
+        session.add(dataset_lock)
+        session.commit()
 
     @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
