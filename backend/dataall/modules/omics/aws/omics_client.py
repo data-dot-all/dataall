@@ -68,10 +68,8 @@ class OmicsClient:
                 workflowType=workflow.type,
                 roleArn=group.environmentIAMRoleArn,
                 parameters=json.loads(omics_run.parameterTemplate),
-                outputUri=omics_run.outputUri
-                tags={
-                   'Team': f'{omics_run.SamlAdminGroupName}'
-                }
+                outputUri=omics_run.outputUri,
+                tags={'Team': f'{omics_run.SamlAdminGroupName}'}
             )
             return response
         except ClientError as e:
