@@ -163,6 +163,15 @@ class DatasetRepository(EnvironmentResource):
         session.commit()
 
     @staticmethod
+    def delete_dataset_lock(session, dataset: Dataset):
+        dataset_lock = (
+            session.query(DatasetLock)
+            .filter(DatasetLock.datasetUri == dataset.datasetUri)
+            .first()
+        )
+        session.delete(dataset_lock)
+
+    @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
         query = (
             session.query(DatasetTable)
