@@ -1,6 +1,7 @@
 import logging
 from warnings import warn
 from typing import List
+from datetime import datetime
 
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
@@ -9,7 +10,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus, ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
@@ -138,6 +139,15 @@ class ShareObjectSM:
                     ]
                 }
             ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareObjectStatus.Processed.value: [
+                        ShareObjectStatus.Share_In_Progress.value,
+                        ShareObjectStatus.Revoke_In_Progress.value
+                    ]
+                }
+            ),
         }
 
     def run_transition(self, transition):
@@ -258,6 +268,13 @@ class ShareItemSM:
                         ShareItemStatus.Revoke_Succeeded.value
                     ]
                 }
+            ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Approved.value],
+                }
             )
         }
 
@@ -335,6 +352,12 @@ class ShareObjectRepository:
     def save_and_commit(session, share):
         session.add(share)
         session.commit()
+
+    @staticmethod
+    def list_all_active_share_objects(session) -> [ShareObject]:
+        return (
+            session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
+        )
 
     @staticmethod
     def find_share(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
@@ -483,6 +506,9 @@ class ShareObjectRepository:
                 DatasetTable.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -510,6 +536,9 @@ class ShareObjectRepository:
                 DatasetStorageLocation.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -536,6 +565,9 @@ class ShareObjectRepository:
                 DatasetBucket.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -566,9 +598,15 @@ class ShareObjectRepository:
                         shareable_objects.c.description.ilike(term + '%'),
                     )
                 )
-            if 'isShared' in data.keys():
+            if 'isShared' in data:
                 is_shared = data.get('isShared')
                 query = query.filter(shareable_objects.c.isShared == is_shared)
+
+            if 'isHealthy' in data:
+                # healthy_status = ShareItemHealthStatus.Healthy.value
+                query = query.filter(shareable_objects.c.healthStatus == ShareItemHealthStatus.Healthy.value) \
+                    if data.get('isHealthy') \
+                    else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
@@ -705,6 +743,21 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
+    def update_share_item_health_status(
+        session,
+        share_item: ShareObjectItem,
+        healthStatus: str = None,
+        healthMessage: str = None,
+        timestamp: datetime = None
+    ) -> ShareObjectItem:
+
+        share_item.healthStatus = healthStatus
+        share_item.healthMessage = healthMessage
+        share_item.lastVerificationTime = timestamp
+        session.commit()
+        return share_item
+
+    @staticmethod
     def delete_share_item_status_batch(
         session,
         share_uri: str,
@@ -805,19 +858,19 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status):
+    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetTable, DatasetTable.tableUri
+            session, share, status, healthStatus, DatasetTable, DatasetTable.tableUri
         )
 
         folders = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetStorageLocation, DatasetStorageLocation.locationUri
+            session, share, status, healthStatus, DatasetStorageLocation, DatasetStorageLocation.locationUri
         )
 
         s3_buckets = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetBucket, DatasetBucket.bucketUri
+            session, share, status, healthStatus, DatasetBucket, DatasetBucket.bucketUri
         )
 
         return (
@@ -827,8 +880,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def _find_all_share_item(session, share, status, share_type_model, share_type_uri):
-        return (
+    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+        query = (
             session.query(share_type_model)
             .join(
                 ShareObjectItem,
@@ -843,11 +896,14 @@ class ShareObjectRepository:
                     ShareObject.datasetUri == share.datasetUri,
                     ShareObject.environmentUri == share.environmentUri,
                     ShareObject.shareUri == share.shareUri,
-                    ShareObjectItem.status == status,
                 )
             )
-            .all()
         )
+        if status:
+            query = query.filter(ShareObjectItem.status == status)
+        if healthStatus:
+            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
+        return query.all()
 
     @staticmethod
     def find_all_share_items(session, share_uri, share_type, status=None):

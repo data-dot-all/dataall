@@ -64,7 +64,7 @@ class EnvironmentParameter(Base):
     __tablename__ = 'environment_parameters'
     environmentUri = Column(String, ForeignKey("environment.environmentUri"), primary_key=True)
     key = Column('paramKey', String, primary_key=True)
-    value = Column('paramValue', String, nullable=True)
+    value = Column('paramValue', String, nullable=False)
 
     def __init__(self, env_uri, key, value):
         super().__init__()
@@ -84,6 +84,7 @@ class ConsumptionRole(Base):
     groupUri = Column(String, nullable=False)
     IAMRoleName = Column(String, nullable=False)
     IAMRoleArn = Column(String, nullable=False)
+    dataallManaged = Column(Boolean, nullable=False, default=True)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)

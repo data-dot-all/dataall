@@ -1,5 +1,7 @@
 import logging
 import enum
+import os
+
 from dataall.base.config import config
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
@@ -40,26 +42,37 @@ class ShareNotificationService:
         self.notification_target_users = self._get_share_object_targeted_users()
 
     def notify_share_object_submission(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
         msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
+        email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg)
 
-        self._create_notification_task(subject=subject, msg=msg)
+        self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
         msg = f'User {email_id} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
+        email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg)
 
-        self._create_notification_task(subject=subject, msg=msg)
+        self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_rejection(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
         if self.share.status == ShareObjectStatus.Rejected.value:
             msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
             subject = f'Data.all | Share Request Rejected for {self.dataset.label}'
@@ -69,11 +82,12 @@ class ShareNotificationService:
         else:
             msg = f'User {email_id} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
             subject = f'Data.all | Share Request Rejected / Revoked for {self.dataset.label}'
+        email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg)
 
-        self._create_notification_task(subject=subject, msg=msg)
+        self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_new_data_available_from_owners(self, s3_prefix):

@@ -207,6 +207,7 @@ class ContainerStack(pyNestedClass):
         self.add_sync_dataset_table_task()
         self.add_subscription_task()
         self.add_share_management_task()
+        self.add_share_verifier_task()
         self.add_omics_fetch_workflows_task()
 
     @run_if(["modules.datasets.active", "modules.dashboards.active"])
@@ -275,6 +276,28 @@ class ContainerStack(pyNestedClass):
             string_value=share_management_container.container_name,
         )
         self.ecs_task_definitions_families.append(share_management_task_definition.family)
+
+    @run_if(["modules.datasets.active"])
+    def add_share_verifier_task(self):
+        verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_verifier_task'],
+            container_id='container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='share-verifier'
+            ),
+            schedule_expression=Schedule.expression('rate(7 days)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-share-verifier-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-share-verifier',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(verify_shares_task.task_definition.family)
 
     @run_if(["modules.datasets.active"])
     def add_subscription_task(self):

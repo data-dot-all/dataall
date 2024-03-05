@@ -5,7 +5,9 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
+  FormControlLabel,
   MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -31,7 +33,8 @@ export const EnvironmentRoleAddForm = (props) => {
           groupUri: values.groupUri,
           consumptionRoleName: values.consumptionRoleName,
           IAMRoleArn: values.IAMRoleArn,
-          environmentUri: environment.environmentUri
+          environmentUri: environment.environmentUri,
+          dataallManaged: values.dataallManaged
         })
       );
       if (!response.errors) {
@@ -91,7 +94,8 @@ export const EnvironmentRoleAddForm = (props) => {
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
-              groupUri: ''
+              groupUri: '',
+              dataallManaged: true
             }}
             validationSchema={Yup.object().shape({
               groupUri: Yup.string()
@@ -167,6 +171,31 @@ export const EnvironmentRoleAddForm = (props) => {
                       </MenuItem>
                     ))}
                   </TextField>
+                </CardContent>
+                <CardContent>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={values.dataallManaged}
+                        onChange={handleChange}
+                        color="primary"
+                        edge="start"
+                        name="dataallManaged"
+                      />
+                    }
+                    label={
+                      <div>
+                        Data.all managed
+                        <Typography
+                          color="textSecondary"
+                          component="p"
+                          variant="caption"
+                        >
+                          Allow Data.all to attach IAM policies to this role
+                        </Typography>
+                      </div>
+                    }
+                  />
                 </CardContent>
                 <Box>
                   <CardContent>

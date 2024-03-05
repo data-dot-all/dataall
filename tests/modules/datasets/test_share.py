@@ -1,5 +1,6 @@
 import random
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -7,11 +8,16 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
-    ShareItemStatus
+    ShareItemStatus, ShareItemHealthStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
+@pytest.fixture(scope='function')
+def mock_glue_client(mocker):
+    glue_client = MagicMock()
+    mocker.patch('dataall.modules.dataset_sharing.services.share_item_service.GlueClient', return_value=glue_client)
+    glue_client.get_source_catalog.return_value = None
 
 def random_table_name():
     def cpltz(l):
@@ -74,6 +80,15 @@ def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
+        username='alice'
+    )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def table1_1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
+    yield table(
+        dataset=dataset1,
+        name="table5",
         username='alice'
     )
 
@@ -441,12 +456,27 @@ def share4_draft(
     )
 
 
+@pytest.fixture(scope='function')
+def share3_item_shared_unhealthy(
+        share_item: typing.Callable,
+        share3_processed: ShareObject,
+        table1_1:DatasetTable
+) -> ShareObjectItem:
+    # Cleaned up with share3
+    yield share_item(
+        share=share3_processed,
+        table=table1_1,
+        status=ShareItemStatus.Share_Succeeded.value,
+        healthStatus=ShareItemHealthStatus.Unhealthy.value
+    )
+
+
 def test_init(tables1, tables2):
     assert True
 
 
 # Queries & mutations
-def create_share_object(client, username, group, groupUri, environmentUri, datasetUri, itemUri=None):
+def create_share_object(mocker, client, username, group, groupUri, environmentUri, datasetUri, itemUri=None, attachMissingPolicies=True, principalId=None, principalType=PrincipalType.Group.value):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -470,9 +500,11 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
             datasetUri
             datasetName
           }
+          
         }
       }
     """
+    mocker.patch("dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline", return_value=True)
 
     response = client.query(
         q,
@@ -484,9 +516,10 @@ def create_share_object(client, username, group, groupUri, environmentUri, datas
         input={
             'environmentUri': environmentUri,
             'groupUri': groupUri,
-            'principalId': groupUri,
-            'principalType': PrincipalType.Group.value,
+            'principalId': principalId if principalId else groupUri,
+            'principalType': principalType,
             'requestPurpose': 'testShare',
+            'attachMissingPolicies': attachMissingPolicies
         },
     )
 
@@ -531,6 +564,9 @@ def get_share_object(client, user, group, shareUri, filter):
             itemName
             status
             action
+            healthStatus
+            healthMessage
+            lastVerificationTime
           }
         }
         dataset {
@@ -821,7 +857,7 @@ def reject_share_object(client, user, group, shareUri):
 
 def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris):
     q = """
-        mutation revokeItemsShareObject($input: RevokeItemsInput) {
+        mutation revokeItemsShareObject($input: ShareItemSelectorInput) {
             revokeItemsShareObject(input: $input) {
                 shareUri
                 status
@@ -835,10 +871,74 @@ def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris)
         groups=[group.name],
         input={
             'shareUri': shareUri,
-            'revokedItemUris': revoked_items_uris
+            'itemUris': revoked_items_uris
         },
     )
     print('Response from revokeItemsShareObject: ', response)
+    return response
+
+
+def verify_items_share_object(client, user, group, shareUri, verify_items_uris):
+    q = """
+        mutation verifyItemsShareObject($input: ShareItemSelectorInput) {
+          verifyItemsShareObject(input: $input) {
+            shareUri
+            status
+          }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'shareUri': shareUri,
+            'itemUris': verify_items_uris
+        },
+    )
+    print('Response from verifyItemsShareObject: ', response)
+    return response
+
+def verify_dataset_share_objects(client, user, group, dataset_uri, share_uris):
+    q = """
+        mutation verifyDatasetShareObjects($input: ShareObjectSelectorInput) {
+          verifyDatasetShareObjects(input: $input)
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'datasetUri': dataset_uri,
+            'shareUris': share_uris
+        },
+    )
+    print('Response from verifyDatasetShareObjects: ', response)
+    return response
+
+def reapply_items_share_object(client, user, group, shareUri, reapply_items_uris):
+    q = """
+        mutation reApplyItemsShareObject($input: ShareItemSelectorInput) {
+          reApplyItemsShareObject(input: $input) {
+            shareUri
+            status
+          }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'shareUri': shareUri,
+            'itemUris': reapply_items_uris
+        },
+    )
+    print('Response from reApplyItemsShareObject: ', response)
     return response
 
 
@@ -896,11 +996,12 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
 
 
 # Tests
-def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2group):
+def test_create_share_object_unauthorized(mocker, client, group3, dataset1, env2, env2group):
     # Given
     # Existing dataset, target environment and group
     # When a user that does not belong to environment and group creates request
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username='anonymous',
         group=group3,
@@ -912,11 +1013,21 @@ def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2gr
     assert 'Unauthorized' in create_share_object_response.errors[0].message
 
 
-def test_create_share_object_as_requester(client, user2, group2, env2group, env2, dataset1):
+def test_create_share_object_as_requester(mocker, client, user2, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,
@@ -930,11 +1041,21 @@ def test_create_share_object_as_requester(client, user2, group2, env2group, env2
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_as_approver_and_requester(client, user, group2, env2group, env2, dataset1):
+def test_create_share_object_as_approver_and_requester(mocker, client, user, group2, env2group, env2, dataset1):
     # Given
     # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user.username,
         group=group2,
@@ -948,11 +1069,21 @@ def test_create_share_object_as_approver_and_requester(client, user, group2, env
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'ApproversAndRequesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
-def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
+def test_create_share_object_with_item_authorized(mocker, client, user2, group2, env2group, env2, dataset1, table1, mock_glue_client):
     # Given
     # Existing dataset, table, target environment and group
+    # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request with table in the request
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
     create_share_object_response = create_share_object(
+        mocker=mocker,
         client=client,
         username=user2.username,
         group=group2,
@@ -979,6 +1110,111 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
 
     assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemUri == table1.tableUri
     assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemType == ShareableType.Table.name
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_enabled(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    attach_mocker = mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.attach_policy",
+        return_value=True
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=True
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    attach_mocker.assert_called_once()
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallManaged(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True but principal=Group so managed=Trye
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    attach_mocker = mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.attach_policy",
+        return_value=True
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=False
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    attach_mocker.assert_called_once()
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallNotManaged(mocker, client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=True
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+    consumption_role = type('consumption_role', (object,), {})()
+    consumption_role.IAMRoleName="randomName"
+    consumption_role.dataallManaged = False
+    mocker.patch(
+        "dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role",
+        return_value=consumption_role
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=False,
+        principalId=consumption_role.IAMRoleName,
+        principalType=PrincipalType.ConsumptionRole.value
+    )
+    # Then share object is not created and an error appears
+    assert 'Required customer managed policy' in create_share_object_response.errors[0].message
+    assert 'is not attached to role randomName' in create_share_object_response.errors[0].message
 
 
 def test_get_share_object(client, share1_draft, user, group):
@@ -1138,8 +1374,7 @@ def test_list_shares_from_me_requester(
 
 
 def test_add_share_item(
-        client, user2, group2, share1_draft,
-
+        client, user2, group2, share1_draft, mock_glue_client
 ):
     # Given
     # Existing share object in status Draft (-> fixture share1_draft)
@@ -1481,6 +1716,175 @@ def test_search_shared_items_in_environment(
     # Then we get the share information from the environment2
     assert list_datasets_published_in_environment_response.data.searchEnvironmentDataItems.nodes[
                0].principalId == group2.name
+
+
+def test_verify_items_share_request(
+        db, client, user2, group2, share3_processed, share3_item_shared
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared.shareItemUri
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+    verify_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # verifying items from share object
+    verify_items_share_object_response = verify_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        verify_items_uris=verify_items_uris
+    )
+
+    # Then share item health Status changes to PendingVerify
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+    print(get_share_object_response.data.getShareObject.get('items').nodes)
+    sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    status = sharedItem['healthStatus']
+    assert status == ShareItemHealthStatus.PendingVerify.value
+
+
+def test_reapply_items_share_request(
+        db, client, user, group, share3_processed, share3_item_shared_unhealthy
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True, "isHealthy": False}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared_unhealthy.shareItemUri
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+    reapply_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # re-applying share items from share object
+    reapply_items_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share3_processed.shareUri,
+        reapply_items_uris=reapply_items_uris
+    )
+
+    # Then share item health Status changes to PendingVerify
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True, "isHealthy": False}
+    )
+    sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    status = sharedItem['healthStatus']
+    assert status == ShareItemHealthStatus.PendingReApply.value
+
+
+def test_reapply_items_share_request_unauthorized(
+        db, client, user2, group2, share3_processed, share3_item_shared_unhealthy
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True, "isHealthy": False}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared_unhealthy.shareItemUri
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+    reapply_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # re-applying share items from share object
+    reapply_share_items_response = reapply_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        reapply_items_uris=reapply_items_uris
+    )
+    assert 'UnauthorizedOperation' in reapply_share_items_response.errors[0].message
+
+
+def test_verify_dataset_share_objects_request(
+        db, client, user, group, share3_processed, share3_item_shared, dataset1
+):
+    # Given
+    # Existing share objects in dataset1
+    list_dataset_share_objects_response = list_dataset_share_objects(
+        client=client,
+        user=user,
+        group=group,
+        datasetUri=dataset1.datasetUri
+    )
+
+    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
+    shareUris = [share.shareUri for share in list_dataset_share_objects_response.data.getDataset.shares.nodes]
+    assert len(shareUris)
+    assert share3_processed.shareUri in shareUris
+
+    # When
+    # verifying all items from all share objects in dataset1
+    list_dataset_share_objects_response = verify_dataset_share_objects(
+        client=client,
+        user=user,
+        group=group,
+        dataset_uri=dataset1.datasetUri,
+        share_uris=shareUris
+    )
+
+    # Then share items of successfully shared items of each shareObject health Status changes to PendingVerify
+
+    for shareUri in shareUris:
+        get_share_object_response = get_share_object(
+            client=client,
+            user=user,
+            group=group,
+            shareUri=shareUri,
+            filter={"isShared": True, "isRevokable": True}
+        )
+
+        sharedItems = get_share_object_response.data.getShareObject.get('items').nodes
+        for sharedItem in sharedItems:
+            status = sharedItem['healthStatus']
+            assert status == ShareItemHealthStatus.PendingVerify.value
 
 
 def test_revoke_items_share_request(

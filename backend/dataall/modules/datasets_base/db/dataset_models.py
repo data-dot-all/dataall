@@ -148,12 +148,12 @@ class Dataset(Resource, Base):
 
 class DatasetBucket(Resource, Base):
     __tablename__ = 'dataset_bucket'
-    datasetUri = Column(String, nullable=False)
+    datasetUri = Column(String, ForeignKey("dataset.datasetUri", ondelete='CASCADE'), nullable=False)
     bucketUri = Column(String, primary_key=True, default=utils.uuid('bucket'))
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
-    partition = Column(String, default='aws')
+    partition = Column(String, default='aws', nullable=False)
     KmsAlias = Column(String, nullable=False)
     imported = Column(Boolean, default=False)
     importedKmsKey = Column(Boolean, default=False)
@@ -164,3 +164,15 @@ class DatasetBucket(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.bucketUri
+
+
+class DatasetLock(Base):
+    __tablename__ = 'dataset_lock'
+    datasetUri = Column(String, ForeignKey("dataset.datasetUri"), nullable=False, primary_key=True)
+    isLocked = Column(Boolean, default=False)
+    acquiredBy = Column(String, nullable=True)
+
+    def __init__(self, datasetUri, isLocked=False, acquiredBy=None):
+        self.datasetUri = datasetUri
+        self.isLocked = isLocked
+        self.acquiredBy = acquiredBy

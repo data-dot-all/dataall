@@ -122,9 +122,8 @@ def get_engine(envname=ENVNAME):
             'schema': envname,
         }
     else:
-        hostname = 'db' if envname == 'dkrcompose' else 'localhost'
         db_params = {
-            'host': hostname,
+            'host': 'db' if envname == 'dkrcompose' and os.path.exists("/.dockerenv") else 'localhost',
             'db': 'dataall',
             'user': 'postgres',
             'pwd': 'docker',

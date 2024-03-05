@@ -30,8 +30,7 @@ class MLStudioPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:ListDomains',
-                    'sagemaker:ListApps',
-                    'sagemaker:DeleteApp',
+                    'sagemaker:ListApps'
                 ],
                 resources=['*'],
             ),
