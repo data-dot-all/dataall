@@ -170,6 +170,7 @@ class DatasetRepository(EnvironmentResource):
             .first()
         )
         session.delete(dataset_lock)
+        session.commit()
 
     @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
