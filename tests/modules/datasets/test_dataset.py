@@ -7,7 +7,7 @@ from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
 
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
@@ -358,7 +358,9 @@ def test_dataset_in_environment(client, env_fixture, dataset1, group):
 
 
 def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mocker, group, user):
+    # Delete any Dataset before effectuating the test
     with db.scoped_session() as session:
+        session.query(DatasetLock).delete()
         session.query(Dataset).delete()
         session.commit()
     deleted_dataset = dataset(
