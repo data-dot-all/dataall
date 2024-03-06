@@ -1,4 +1,4 @@
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetLock
 from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
@@ -118,6 +118,12 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
+        dataset_lock = (
+            session.query(DatasetLock)
+            .filter(DatasetLock.datasetUri == dataset.datasetUri)
+            .first()
+        )
+        session.delete(dataset_lock)
         dataset = session.query(Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()
