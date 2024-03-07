@@ -40,5 +40,6 @@ def paginate(query, page, page_size):
     if page_size <= 0:
         raise AttributeError('page_size needs to be >= 1')
     items = query.limit(page_size).offset((page - 1) * page_size).all()
-    total = query.order_by(None).count()
+    # nosemgrep: python.sqlalchemy.performance.performance-improvements.len-all-count
+    total = len(query.order_by(None).all())
     return Page(items, page, page_size, total)
