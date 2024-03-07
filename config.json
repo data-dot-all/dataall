@@ -17,7 +17,7 @@
                 "aws_actions": true,
                 "share_notifications": {
                     "email": {
-                        "active": true,
+                        "active": false,
                         "parameters": {
                             "group_notifications": true
                         }
