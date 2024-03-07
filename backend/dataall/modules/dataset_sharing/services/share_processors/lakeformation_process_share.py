@@ -83,7 +83,7 @@ class ProcessLakeFormationShare(LFShareManager):
             except Exception as e:
                 log.error(f"Failed to process approved tables due to {e}")
                 self.handle_share_failure_for_all_tables(tables=self.tables, error=e,
-                                                         share_item_status=ShareItemStatus.Share_Approved.value)
+                                                         share_item_status=ShareItemStatus.Share_Approved.value, reapply=self.reapply)
                 return False
 
             for table in self.tables:
@@ -287,6 +287,9 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to verify. Skipping...")
         else:
             try:
+                if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
+                    raise Exception(
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
                 self.initialize_clients()
                 self.check_pivot_role_permissions_to_source_database()
                 self.check_shared_database_in_target()
@@ -306,10 +309,10 @@ class ProcessLakeFormationShare(LFShareManager):
                         self.check_target_account_permissions_to_source_table(table)
 
                         if not RamClient.check_ram_invitation_status(
-                            source_account_id=self.source_environment.AwsAccountId,
-                            source_region=self.source_environment.region,
+                            source_account_id=self.source_account_id,
+                            source_region=self.source_account_region,
                             target_account_id=self.target_environment.AwsAccountId,
-                            source_database=self.dataset.GlueDatabaseName,
+                            source_database=self.source_database_name,
                             source_table_name=table.GlueTableName,
                         ):
                             self.tbl_level_errors.append(
@@ -318,7 +321,7 @@ class ProcessLakeFormationShare(LFShareManager):
                                     "RAM Invitation",
                                     "ASSOCIATED",
                                     "Glue Table",
-                                    f"{self.dataset.GlueDatabaseName}.{table.GlueTableName}",
+                                    f"{self.source_database_name}.{table.GlueTableName}",
                                 )
                             )
 
