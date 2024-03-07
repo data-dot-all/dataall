@@ -120,6 +120,7 @@ class DatasetService:
                 dataset=dataset,
                 data=data
             )
+            DatasetRepository.create_dataset_lock(session=session, dataset=dataset)
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
@@ -439,7 +440,7 @@ class DatasetService:
                 ResourcePolicy.delete_resource_policy(
                     session=session, resource_uri=uri, group=dataset.stewards
                 )
-
+            DatasetRepository.delete_dataset_lock(session=session, dataset=dataset)
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:
