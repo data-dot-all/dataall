@@ -251,9 +251,9 @@ def test_manage_bucket_policy_no_policy(
 ):
 
     # Given
-    bucket_policy = base_bucket_policy
+    # bucket_policy = base_bucket_policy
     s3_client = mock_s3_client(mocker)
-    s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
+    s3_client().get_bucket_policy.return_value = None
 
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
@@ -291,6 +291,16 @@ def test_manage_bucket_policy_existing_policy(
     # Given
     bucket_policy = admin_ap_delegation_bucket_policy
     s3_client = mock_s3_client(mocker)
+
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
+        return_value="arn:role",
+    )
+
+    mocker.patch(
+        "dataall.base.aws.sts.SessionHelper.get_role_ids",
+        return_value=[1, 2, 3],
+    )
 
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
 
