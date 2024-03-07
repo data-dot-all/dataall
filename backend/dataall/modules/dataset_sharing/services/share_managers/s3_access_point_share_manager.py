@@ -127,10 +127,54 @@ class S3AccessPointShareManager:
         logger.info(f"Manage Bucket policy for {self.bucket_name}")
 
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
-        bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-        for statement in bucket_policy["Statement"]:
-            if statement.get("Sid") in [DATAALL_DELEGATE_TO_ACCESS_POINT]:
-                return
+        bucket_policy = self.get_bucket_policy_or_default()
+        counter = count()
+        statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
+
+        if DATAALL_ALLOW_OWNER_SID not in statements.keys():
+            statements[DATAALL_ALLOW_OWNER_SID] = {
+                "Sid": DATAALL_ALLOW_OWNER_SID,
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
+                "Condition": {"StringLike": {"aws:userId": self.get_bucket_owner_roleid()}},
+            }
+
+        if DATAALL_DELEGATE_TO_ACCESS_POINT not in statements.keys():
+            statements[DATAALL_DELEGATE_TO_ACCESS_POINT] = {
+                "Sid": DATAALL_DELEGATE_TO_ACCESS_POINT,
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
+                "Condition": {"StringEquals": {"s3:DataAccessPointAccount": f"{self.source_account_id}"}},
+            }
+        bucket_policy["Statement"] = list(statements.values())
+        s3_client = S3Client(self.source_account_id, self.source_environment.region)
+        s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
+
+    def get_bucket_policy_or_default(self):
+        """
+        Fetches the existing bucket policy for the S3 bucket if one exists otherwise returns the default bucket policy
+        :return:
+        """
+        s3_client = S3Client(self.source_account_id, self.source_environment.region)
+        bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
+        if bucket_policy:
+            logger.info(
+                f"There is already an existing policy for bucket {self.bucket_name}, will be updating policy..."
+            )
+            bucket_policy = json.loads(bucket_policy)
+        else:
+            logger.info(f"Bucket policy for {self.bucket_name} does not exist, generating default policy...")
+            exceptions_roleId = self.get_bucket_owner_roleid()
+            bucket_policy = S3ControlClient.generate_default_bucket_policy(
+                self.bucket_name, exceptions_roleId, DATAALL_ALLOW_OWNER_SID
+            )
+        return bucket_policy
+
+    def get_bucket_owner_roleid(self):
         exceptions_roleId = [
             f"{item}:*"
             for item in SessionHelper.get_role_ids(
@@ -142,26 +186,7 @@ class S3AccessPointShareManager:
                 ],
             )
         ]
-        allow_owner_access = {
-            "Sid": DATAALL_ALLOW_OWNER_SID,
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:*",
-            "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
-            "Condition": {"StringLike": {"aws:userId": exceptions_roleId}},
-        }
-        delegated_to_accesspoint = {
-            "Sid": DATAALL_DELEGATE_TO_ACCESS_POINT,
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:*",
-            "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
-            "Condition": {"StringEquals": {"s3:DataAccessPointAccount": f"{self.source_account_id}"}},
-        }
-        bucket_policy["Statement"].append(allow_owner_access)
-        bucket_policy["Statement"].append(delegated_to_accesspoint)
-        s3_client = S3Client(self.source_account_id, self.source_environment.region)
-        s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
+        return exceptions_roleId
 
     def check_target_role_access_policy(self) -> None:
         """

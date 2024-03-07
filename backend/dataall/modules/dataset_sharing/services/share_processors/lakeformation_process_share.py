@@ -287,6 +287,7 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info("No tables to verify. Skipping...")
         else:
             try:
+                self.initialize_clients()
                 self.check_pivot_role_permissions_to_source_database()
                 self.check_shared_database_in_target()
                 self.check_pivot_role_permissions_to_shared_database()
