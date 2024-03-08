@@ -6,12 +6,14 @@ from itertools import count
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_BUCKETS_STATEMENT_SID, EMPTY_STATEMENT_SID
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
@@ -93,6 +95,13 @@ class S3BucketShareManager:
             logger.info(f"IAM Policy {share_resource_policy_name} does not exist")
             self.bucket_errors.append(
                 ShareErrorFormatter.dne_error_msg("IAM Policy", share_resource_policy_name)
+            )
+            return
+
+        if not share_policy_service.check_if_policy_attached():
+            logger.info(f"IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalIAMRoleName}")
+            self.bucket_errors.append(
+                ShareErrorFormatter.dne_error_msg("IAM Policy attached", share_resource_policy_name)
             )
             return
 
@@ -185,6 +194,14 @@ class S3BucketShareManager:
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
         # End of backwards compatibility
+
+        if not share_policy_service.check_if_policy_attached():
+            if self.share.principalType == PrincipalType.Group.value:
+                share_policy_service.attach_policy()
+            else:
+                consumption_role = EnvironmentService.get_consumption_role(session=self.session, uri=self.share.principalId)
+                if consumption_role.dataallManaged:
+                    share_policy_service.attach_policy()
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
 
