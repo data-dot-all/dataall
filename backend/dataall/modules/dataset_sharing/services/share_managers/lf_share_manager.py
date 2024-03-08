@@ -1,6 +1,7 @@
 import abc
 import logging
 import time
+from datetime import datetime
 from typing import Any
 from warnings import warn
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -13,7 +14,7 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareObjectActions, \
-    ShareItemActions
+    ShareItemActions, ShareItemHealthStatus
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
@@ -251,7 +252,7 @@ class LFShareManager:
         and add to db level errors if check fails
         :return: None
         """
-        principal = SessionHelper.get_delegation_role_arn(self.source_environment.AwsAccountId)
+        principal = SessionHelper.get_delegation_role_arn(self.source_account_id)
         if not self.lf_client_in_source.check_permissions_to_database(
             principals=[principal],
             database_name=self.source_database_name,
@@ -299,9 +300,9 @@ class LFShareManager:
         """
         if not self.lf_client_in_source.check_permissions_to_table(
             principals=[self.target_environment.AwsAccountId],
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=["DESCRIBE", "SELECT"],
             permissions_with_grant_options=["DESCRIBE", "SELECT"],
         ):
@@ -414,9 +415,9 @@ class LFShareManager:
         """
         if not self.lf_client_in_target.check_permissions_to_table_with_columns(
             principals=self.principals,
-            database_name=table.GlueDatabaseName,
+            database_name=self.source_database_name,
             table_name=table.GlueTableName,
-            catalog_id=self.source_environment.AwsAccountId,
+            catalog_id=self.source_account_id,
             permissions=["DESCRIBE", "SELECT"],
         ):
             self.tbl_level_errors.append(
@@ -583,7 +584,7 @@ class LFShareManager:
         DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(table, self.share, self.target_environment)
         return True
 
-    def handle_share_failure_for_all_tables(self, tables, error, share_item_status):
+    def handle_share_failure_for_all_tables(self, tables, error, share_item_status, reapply=False):
         """
         Handle table share failure for all tables
         :param tables - List[DatasetTable]
@@ -595,11 +596,16 @@ class LFShareManager:
             share_item = ShareObjectRepository.find_sharable_item(
                 self.session, self.share.shareUri, table.tableUri
             )
-            share_item_sm = ShareItemSM(share_item_status)
-            new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
-            share_item_sm.update_state_single_item(self.session, share_item, new_state)
-            new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
-            share_item_sm.update_state_single_item(self.session, share_item, new_state)
+            if not reapply:
+                share_item_sm = ShareItemSM(share_item_status)
+                new_state = share_item_sm.run_transition(ShareObjectActions.Start.value)
+                share_item_sm.update_state_single_item(self.session, share_item, new_state)
+                new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
+                share_item_sm.update_state_single_item(self.session, share_item, new_state)
+            else:
+                ShareObjectRepository.update_share_item_health_status(
+                    self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(error), datetime.now()
+                )
 
             if share_item_status == ShareItemStatus.Share_Approved.value:
                 self.handle_share_failure(table=table, error=error)
