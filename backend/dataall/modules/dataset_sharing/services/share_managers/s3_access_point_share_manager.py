@@ -126,7 +126,6 @@ class S3AccessPointShareManager:
         """
         logger.info(f"Manage Bucket policy for {self.bucket_name}")
 
-        s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = self.get_bucket_policy_or_default()
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
