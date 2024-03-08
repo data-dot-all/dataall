@@ -490,6 +490,10 @@ def test_grant_s3_iam_access_with_no_policy(
     share_policy_service_mock_2 = mocker.patch(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.attach_policy",
         return_value=True)
+    share_policy_service_mock_3 = mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
     iam_update_role_policy_mock_1 = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1',empty_policy_document))
     iam_update_role_policy_mock_2 = mocker.patch("dataall.base.aws.iam.IAM.update_managed_policy_default_version",
                                                  return_value=None)
@@ -498,6 +502,7 @@ def test_grant_s3_iam_access_with_no_policy(
     # Assert IAM and service calls called
     share_policy_service_mock_1.assert_called_once()
     share_policy_service_mock_2.assert_called()
+    share_policy_service_mock_3.assert_called_once()
     iam_update_role_policy_mock_1.assert_called_once()
     iam_update_role_policy_mock_2.assert_called_once()
 
