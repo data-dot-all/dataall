@@ -5,6 +5,7 @@ import time
 from itertools import count
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
@@ -15,7 +16,7 @@ from dataall.modules.dataset_sharing.services.dataset_alarm_service import Datas
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService, IAM_S3_ACCESS_POINTS_STATEMENT_SID, EMPTY_STATEMENT_SID
-
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
@@ -213,6 +214,13 @@ class S3AccessPointShareManager:
             )
             return
 
+        if not share_policy_service.check_if_policy_attached():
+            logger.info(f"IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalIAMRoleName}")
+            self.folder_errors.append(
+                ShareErrorFormatter.dne_error_msg("IAM Policy attached", share_resource_policy_name)
+            )
+            return
+
         s3_target_resources = [
             f"arn:aws:s3:::{self.bucket_name}",
             f"arn:aws:s3:::{self.bucket_name}/*",
@@ -308,6 +316,14 @@ class S3AccessPointShareManager:
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
         # End of backwards compatibility
+
+        if not share_policy_service.check_if_policy_attached():
+            if self.share.principalType == PrincipalType.Group.value:
+                share_policy_service.attach_policy()
+            else:
+                consumption_role = EnvironmentService.get_consumption_role(session=self.session, uri=self.share.principalId)
+                if consumption_role.dataallManaged:
+                    share_policy_service.attach_policy()
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
         version_id, policy_document = IAM.get_managed_policy_default_version(

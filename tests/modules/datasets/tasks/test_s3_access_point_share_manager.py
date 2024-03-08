@@ -345,6 +345,10 @@ def test_grant_target_role_access_policy_test_empty_policy(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
         return_value=True
     )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
 
     expected_policy = {
         "Version": "2012-10-17",
@@ -415,6 +419,10 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
         return_value=True
     )
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
 
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
@@ -461,6 +469,11 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
     mocker.patch(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
         return_value=True
     )
 
@@ -958,6 +971,11 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         return_value=True
     )
 
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
+
     iam_update_role_policy_mock = mocker.patch(
         "dataall.base.aws.iam.IAM.update_managed_policy_default_version",
         return_value=None,
@@ -1055,6 +1073,11 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 
     mocker.patch(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
         return_value=True
     )
 
@@ -1267,6 +1290,12 @@ def test_check_target_role_access_policy(
     mocker.patch(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
         return_value=True)
+
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
+
     iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version",
                                        return_value=('v1', target_dataset_access_control_policy))
 
@@ -1293,6 +1322,12 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     mocker.patch(
         "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
         return_value=True)
+
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
+
     # Gets policy with other S3 and KMS
     iam_get_policy_mock = mocker.patch("dataall.base.aws.iam.IAM.get_managed_policy_default_version", return_value=('v1', target_dataset_access_control_policy))
 
@@ -1318,6 +1353,11 @@ def test_check_target_role_access_policy_test_no_policy(
         return_value=False
     )
 
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=True
+    )
+
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = "kms-key"
 
@@ -1325,6 +1365,32 @@ def test_check_target_role_access_policy_test_no_policy(
     share_manager.check_target_role_access_policy()
     # Then
     assert len(share_manager.folder_errors) == 1
+
+
+def test_check_target_role_access_policy_test_policy_not_attached(
+    mocker,
+    share_manager
+):
+
+    # Given
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists",
+        return_value=True
+    )
+    # Policy is not attached
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached",
+        return_value=False
+    )
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = "kms-key"
+
+    # When
+    share_manager.check_target_role_access_policy()
+    # Then
+    assert len(share_manager.folder_errors) == 1
+
 
 def test_check_access_point_and_policy(
     mocker,

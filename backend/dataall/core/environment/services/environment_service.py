@@ -833,6 +833,14 @@ class EnvironmentService:
         ).first()
 
     @staticmethod
+    def get_consumption_role(session, uri) -> Query:
+        return session.query(ConsumptionRole).filter(
+            and_(
+                ConsumptionRole.consumptionRoleUri == uri,
+            )
+        ).first()
+
+    @staticmethod
     def query_environment_networks(session, uri, filter) -> Query:
         query = session.query(Vpc).filter(
             Vpc.environmentUri == uri,
