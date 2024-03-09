@@ -8,6 +8,60 @@ Parameters:
   EnvironmentResourcePrefix:
     Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
     Type: String
+  NotebooksEnabled:
+    Description: Whether Notebooks are enabled on this Data.all Environment.
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  MLStudioEnabled:
+    Description: Whether ML Studio is enabled on this Data.all Environment
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  PipelinesEnabled:
+    Description: Whether Pipelines are enabled on this Data.all Environment
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  DashboardsEnabled:
+    Description: Whether Dashboards are enabled on this Data.all Environment
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
+Conditions:
+    NotebooksEnabledCondition: 
+        !Equals 
+            - !Ref NotebooksEnabled 
+            - "true"
+    MLStudioEnabledCondition: 
+        !Equals 
+            - !Ref MLStudioEnabled 
+            - "true"
+    SagemakerComponentsEnabledCondition: !Or
+        - !Equals 
+            - !Ref NotebooksEnabled 
+            - "true"
+        - !Equals 
+            - !Ref MLStudioEnabled 
+            - "true"
+    PipelinesEnabledCondition: 
+        !Equals 
+            - !Ref PipelinesEnabled 
+            - "true"
+    DashboardsEnabledCondition: 
+        !Equals 
+            - !Ref DashboardsEnabled 
+            - "true"
+
 Resources:
   CDKCustomExecutionPolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -56,35 +110,38 @@ Resources:
               - 'iam:*Role*'
             Resource: !Sub 'arn:${AWS::Partition}:iam::*:role/cdk-*'
 
-          - Sid: Quicksight
-            Effect: Allow
-            Action:
-              - 'ds:AuthorizeApplication'
-              - 'ds:UnauthorizeApplication'
-              - 'ds:CheckAlias'
-              - 'ds:CreateAlias'
-              - 'ds:Describe*'
-              - 'ds:DeleteDirectory'
-              - 'ds:CreateIdentityPoolDirectory'
-              - 'quicksight:CreateAdmin'
-              - 'quicksight:CreateUser'
-              - 'quicksight:Subscribe'
-              - 'quicksight:Get*'
-              - 'quicksight:SearchDirectoryGroups'
-              - 'quicksight:SetGroupMapping'
-              - 'quicksight:RegisterUser'
-              - 'quicksight:Describe*'
-            Resource: 
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:analysis/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dashboard/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:group/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:folder/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:template/*'
-              - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:theme/*'
-              - !Sub 'arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:user/*'
+          - !If 
+            - DashboardsEnabledCondition
+            - Sid: Quicksight
+              Effect: Allow
+              Action:
+                - 'ds:AuthorizeApplication'
+                - 'ds:UnauthorizeApplication'
+                - 'ds:CheckAlias'
+                - 'ds:CreateAlias'
+                - 'ds:Describe*'
+                - 'ds:DeleteDirectory'
+                - 'ds:CreateIdentityPoolDirectory'
+                - 'quicksight:CreateAdmin'
+                - 'quicksight:CreateUser'
+                - 'quicksight:Subscribe'
+                - 'quicksight:Get*'
+                - 'quicksight:SearchDirectoryGroups'
+                - 'quicksight:SetGroupMapping'
+                - 'quicksight:RegisterUser'
+                - 'quicksight:Describe*'
+              Resource: 
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:analysis/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:dashboard/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:group/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:folder/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:template/*'
+                - !Sub 'arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:theme/*'
+                - !Sub 'arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:user/*'
+            - !Ref AWS::NoValue
 
           - Sid: QuicksightDeny
             Effect: Deny
@@ -162,20 +219,23 @@ Resources:
               - 'sqs:GetQueueAttributes'
             Resource: !Sub 'arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
 
-          - Sid: Sagemaker
-            Effect: Allow
-            Action:
-              - 'sagemaker:*Tag*'
-              - 'sagemaker:*Domain'
-              - 'sagemaker:CreateApp'
-              - 'sagemaker:CreateUserProfile'
-              - 'sagemaker:DescribeUserProfile'
-              - 'sagemaker:DeleteUserProfile'
-              - 'sagemaker:*NotebookInstance'
-            Resource:
-              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:domain/*'
-              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
-              - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
+          - !If 
+            - SagemakerComponentsEnabledCondition
+            - Sid: Sagemaker
+              Effect: Allow
+              Action:
+                - 'sagemaker:*Tag*'
+                - 'sagemaker:*Domain'
+                - 'sagemaker:CreateApp'
+                - 'sagemaker:CreateUserProfile'
+                - 'sagemaker:DescribeUserProfile'
+                - 'sagemaker:DeleteUserProfile'
+                - 'sagemaker:*NotebookInstance'
+              Resource:
+                - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:domain/*'
+                - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
+                - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
+            - !Ref AWS::NoValue
 
           - Sid: SSM
             Effect: Allow
@@ -208,7 +268,7 @@ Resources:
               - 'cloudformation:*'
             Resource: 
               - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
-              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/{EnvironmentResourcePrefix}*'
 
           - Sid: ECR
             Effect: Allow
@@ -228,24 +288,27 @@ Resources:
               - 'glue:*'
             Resource: '*'
 
-          - Sid: EC2
-            Effect: Allow
-            Action:
-              - 'ec2:Describe*'
-              - 'ec2:*SecurityGroup*'
-              - 'ec2:Create*'
-              - 'ec2:*InternetGateway*'
-              - 'ec2:Associate*'
-              - 'ec2:Disassociate*'
-              - 'ec2:Delete*'
-              - 'ec2:Modify*'
-              - 'ec2:Get*'
-              - 'ec2:*Address'
-              - 'elasticfilesystem:CreateFileSystem'
-              - 'elasticfilesystem:TagResource'
-              - 'elasticfilesystem:UntagResource'
-              - 'elasticfilesystem:DeleteFileSystem'
-            Resource: '*'
+          - !If 
+            - MLStudioEnabledCondition
+            - Sid: EC2
+              Effect: Allow
+              Action:
+                - 'ec2:Describe*'
+                - 'ec2:*SecurityGroup*'
+                - 'ec2:Create*'
+                - 'ec2:*InternetGateway*'
+                - 'ec2:Associate*'
+                - 'ec2:Disassociate*'
+                - 'ec2:Delete*'
+                - 'ec2:Modify*'
+                - 'ec2:Get*'
+                - 'ec2:*Address'
+                - 'elasticfilesystem:CreateFileSystem'
+                - 'elasticfilesystem:TagResource'
+                - 'elasticfilesystem:UntagResource'
+                - 'elasticfilesystem:DeleteFileSystem'
+              Resource: '*'
+            - !Ref AWS::NoValue
 
           - Sid: EC2Deny
             Effect: Deny
@@ -253,34 +316,40 @@ Resources:
               - 'ec2:*Instance*'
             Resource: '*'
 
-          - Sid: CodePipeline
-            Effect: Allow
-            Action:
-              - 'codepipeline:*Tag*'
-              - 'codepipeline:CreatePipeline'
-              - 'codepipeline:UpdatePipeline'
-              - 'codepipeline:StartPipelineExecution'
-              - 'codepipeline:GetPipeline*'
-              - 'codepipeline:List*'
-              - 'codepipeline:DeletePipeline'
-              - 'codecommit:Create*'
-              - 'codecommit:DeleteRepository'
-              - 'codecommit:*Tag*'
-              - 'codebuild:*Project*'
-            Resource: 
-               - !Sub 'arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
-               - !Sub 'arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
-               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${EnvironmentResourcePrefix}*'
-               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineBuildSynthCd*'
-               - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineUpdatePipelineSelfMutation'
+          - !If 
+            - PipelinesEnabledCondition
+            - Sid: CodePipeline
+              Effect: Allow
+              Action:
+                - 'codepipeline:*Tag*'
+                - 'codepipeline:CreatePipeline'
+                - 'codepipeline:UpdatePipeline'
+                - 'codepipeline:StartPipelineExecution'
+                - 'codepipeline:GetPipeline*'
+                - 'codepipeline:List*'
+                - 'codepipeline:DeletePipeline'
+                - 'codecommit:Create*'
+                - 'codecommit:DeleteRepository'
+                - 'codecommit:*Tag*'
+                - 'codebuild:*Project*'
+              Resource: 
+                 - !Sub 'arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+                 - !Sub 'arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+                 - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${EnvironmentResourcePrefix}*'
+                 - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineBuildSynthCd*'
+                 - !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/DDKCodePipelineUpdatePipelineSelfMutation'
+            - !Ref AWS::NoValue
 
-          - Sid: Events
-            Effect: Allow
-            Action:
-              - 'events:PutRule'
-              - 'events:DescribeRule'
-              - 'events:PutTargets'
-              - 'events:RemoveTargets'
-              - 'events:DeleteRule'
-            Resource: 
-              - !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${EnvironmentResourcePrefix}*'
+          - !If 
+            - PipelinesEnabledCondition
+            - Sid: Events
+              Effect: Allow
+              Action:
+                - 'events:PutRule'
+                - 'events:DescribeRule'
+                - 'events:PutTargets'
+                - 'events:RemoveTargets'
+                - 'events:DeleteRule'
+              Resource: 
+                - !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${EnvironmentResourcePrefix}*'
+            - !Ref AWS::NoValue
