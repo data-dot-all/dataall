@@ -41,6 +41,8 @@ def fetch_omics_workflows(engine):
                         arn=workflow['arn'],
                         type=workflow['type'],
                         environmentUri=env.environmentUri,
+                        label=workflow['name'],
+                        owner=env.environmentUri
                     )
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
             is_first_time = False
