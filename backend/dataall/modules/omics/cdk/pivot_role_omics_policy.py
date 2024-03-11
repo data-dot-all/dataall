@@ -6,10 +6,6 @@ class OmicsPolicy(PivotRoleStatementSet):
     """
     Creates an Omics policy for Pivot role accessing and interacting with Omics Projects
     """
-    # TODO: scope down omics permissions
-    # TODO: identify additional needed permissions
-    # Use {self.account} --> environment account
-    # Use {self.env_resource_prefix}*' --> selected prefix
     def get_statements(self):
         return [
             iam.PolicyStatement(
@@ -33,7 +29,7 @@ class OmicsPolicy(PivotRoleStatementSet):
                     "omics:CancelRun"
                 ],
                 resources=[
-                    f'arn:aws:omics:{self.region}:{self.account}:run/{self.resource_prefix}*',
+                    f'arn:aws:omics:{self.region}:{self.account}:run/{self.env_resource_prefix}*',
                 ]
             )
         ]
