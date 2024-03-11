@@ -39,7 +39,6 @@ def fetch_omics_workflows(engine):
                         id=workflow['id'],
                         name=workflow['name'],
                         arn=workflow['arn'],
-                        status=workflow['status'],
                         type=workflow['type'],
                         environmentUri=env.environmentUri,
                     )

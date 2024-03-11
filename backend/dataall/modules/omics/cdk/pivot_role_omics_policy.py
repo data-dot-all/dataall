@@ -9,9 +9,15 @@ class OmicsPolicy(PivotRoleStatementSet):
     def get_statements(self):
         return [
             iam.PolicyStatement(
+                sid='OmicsList',
+                actions=[
+                    "omics:List*"
+                ],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
                 sid='OmicsWorkflowActions',
                 actions=[
-                    "omics:ListWorkflows",
                     "omics:GetWorkflow"
                 ],
                 resources=[
@@ -22,10 +28,8 @@ class OmicsPolicy(PivotRoleStatementSet):
                 sid='OmicsRunActions',
                 actions=[
                     "omics:StartRun",
-                    "omics:ListRuns",
                     "omics:DeleteRun",
                     "omics:GetRun",
-                    "omics:ListRunTasks",
                     "omics:CancelRun"
                 ],
                 resources=[
