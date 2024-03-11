@@ -351,7 +351,7 @@ class ContainerStack(pyNestedClass):
     def add_omics_fetch_workflows_task(self):
         fetch_omics_workflows_task, fetch_omics_workflows_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.8', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
+            command=['python3.9', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
             container_id=f'container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('DEBUG'),
