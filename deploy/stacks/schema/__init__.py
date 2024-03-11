@@ -7,6 +7,10 @@ from injector import Injector, Module
 from stacks import schema
 
 
+class SchemaBase(object):
+    pass
+
+
 def import_submodules(package):
     """ Import all submodules of a module, recursively, including subpackages
     :param package: package (name or actual module)
@@ -33,7 +37,3 @@ def create_schema(modules: List[Module]):
     import_submodules(schema)
     for cls in SchemaBase.__subclasses__():
         injector.get(cls)
-
-
-class SchemaBase(object):
-    pass
