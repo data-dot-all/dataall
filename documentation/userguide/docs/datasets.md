@@ -91,7 +91,7 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 | Confidentiality  | Level of confidentiality: Unclassified, Oficial or Secret | Yes             | Yes      | Secret
 | Topics           | Topics that can later be used in the Catalog              | Yes, at least 1 | Yes       | Finance
 | Tags             | Tags that can later be used in the Catalog                | Yes, at least 1 | Yes      | deleteme, ds
-
+| Auto Approval             | Whether shares for this dataset need approval from dataset owners/stewards              | Yes (default `Disabled`) | Yes      | Disabled, Enabled
 
 ## :material-import: **Import a dataset**
 
@@ -99,7 +99,7 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
 the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database and a KMS key Alias. If the Glue database
 is left empty, data.all will create a Glue database pointing at the S3 Bucket. As for the KMS key Alias, data.all assumes that if nothing is specified
-the S3 Bucket is encrypted with SSE-S3 encryption.
+the S3 Bucket is encrypted with SSE-S3 encryption. Data.all performs a validation check to ensure the KMS Key Alias provided (if any) is the one that encrypts the S3 Bucket specified.
 
 !!! danger "Imported KMS key and S3 Bucket policies requirements"
     Data.all pivot role will handle data sharing on the imported Bucket and KMS key (if imported). Make sure that
@@ -107,8 +107,7 @@ the S3 Bucket is encrypted with SSE-S3 encryption.
 
 
 ### KMS key policy
-In the KMS key policy we need to grant explicit permission to the pivot role. Note that this block is needed even if
-permissions for the principal `"AWS": "arn:aws:iam::111122223333:root"` are given.
+In the KMS key policy we need to grant explicit permission to the pivot role. At a minimum the following permissions are needed for the pivotRole:
 
 ```
 {
@@ -126,22 +125,12 @@ permissions for the principal `"AWS": "arn:aws:iam::111122223333:root"` are give
     "kms:ReEncrypt*",
     "kms:TagResource",
     "kms:UntagResource"
+    'kms:DescribeKey'
    ],
   "Resource": "*"
 }
 
 ```
-
-
-
-
-
-
-| Field                  | Description                                                                                     | Required | Editable |Example
-|------------------------|-------------------------------------------------------------------------------------------------|----------|----------|-------------
-| Amazon S3 bucket name  | Name of the S3 bucket you want to import                                                        | Yes      | No    |DOC-EXAMPLE-BUCKET
-| Amazon KMS key Alias   | Alias of the KMS key used to encrypt the S3 Bucket (do not include alias/<ALIAS>, just <ALIAS>) | Yes      | No    |somealias
-| AWS Glue database name | Name of the Glue database tht you want to import                                                | No       | No      |anyDatabase
 
 !!!success "Update imported Datasets"
     Imported keys is an addition of V1.6.0 release. Any previously imported bucket will have a KMS Key Alias set to `Undefined`.
@@ -149,6 +138,13 @@ permissions for the principal `"AWS": "arn:aws:iam::111122223333:root"` are give
     **Edit** window.
 
 ![import_dataset](pictures/datasets/import_dataset.png#zoom#shadow)
+
+| Field                  | Description                                                                                     | Required | Editable |Example
+|------------------------|-------------------------------------------------------------------------------------------------|----------|----------|-------------
+| Amazon S3 bucket name  | Name of the S3 bucket you want to import                                                        | Yes      | No    |DOC-EXAMPLE-BUCKET
+| Amazon KMS key Alias   | Alias of the KMS key used to encrypt the S3 Bucket (do not include alias/<ALIAS>, just <ALIAS>) | No       | No    |somealias
+| AWS Glue database name | Name of the Glue database tht you want to import                                                | No       | No      |anyDatabase
+
 
 ## :material-card-search-outline: **Navigate dataset tabs**
 
@@ -182,7 +178,7 @@ Moreover, AWS information related to the resources created by the dataset CloudF
 AWS Account, Dataset S3 bucket, Glue database, IAM role and KMS Alias.
 
 You can also assume this IAM role to access the S3 bucket in the AWS console by clicking on the **S3 bucket** button.
-Alternatively, click on **AWS Credentials** to obtain programmatic access to the S3 bucket.
+Alternatively, click on **AWS Credentials** to obtain programmatic access to the S3 bucket (only available if `modules.dataset.features.aws_actions` is set to `True` in the `config.json` used for deployment of data.all).
 
 ![overview](pictures/datasets/dataset_overview.png#zoom#shadow)
 
@@ -241,11 +237,6 @@ Catalog and then click on Synchronize as we did in step 3.
 - Also, you can deploy Glue resources using <a href="https://docs.aws.amazon.com/glue/latest/dg/populate-with-cloudformation-templates.html">CloudFormation</a>
 - Or directly, <a href="https://github.com/aws-samples/aws-glue-samples/tree/master/utilities/Hive_metastore_migration">migrating from Hive Metastore.</a>
 - there are more for sure :)
-
-!!! abstract "Use data.all pipelines to register Glue tables"
-    data.all pipelines can be used to transform your data including the creation of Glue tables using
-    <a href="https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-dynamic-frame.html#aws-glue-api-crawler-pyspark-extensions-dynamic-frame-write"> AWS Glue pyspark extension </a>.
-    Visit the <a href="pipelines.html">pipelines section</a> for more details.
 
 
 ### Folders
