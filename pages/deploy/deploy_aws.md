@@ -678,16 +678,6 @@ If you enabled CloudWatch RUM in the **cdk.json** file:
 ![Screenshot](../img/rum_code_update.png#zoom#shadow)
 8. Commit and push your changes.
 
-
-## 🎉 Congratulations - What I have just done? 🎉 
-You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
-diagram.
-
-![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
-
-With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
-in the tooling account and check the status of your pipeline.
-
 ## 12. Setting SES for Email Notifications <a name="ses"></a>
 
 Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module.
@@ -704,6 +694,17 @@ When SES Stack is deployed during the pipeline stage, it will setup a <a href="h
 which will send any email bounces, delivery failures, rejects & complaints to an SNS topic. In this step, you can add subscriptions to this SNS topic to monitor email delivery problems
 In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to
 this SNS topic and monitor and take actions in case of any delivery failure.
+
+## 🎉 Congratulations - What I have just done? 🎉 
+You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
+diagram.
+
+![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
+
+With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
+in the tooling account and check the status of your pipeline.
+
+To learn more about how to get started using the data.all UI and get a holistic understanding of supported features please check out the <a class="nav-item"  href="{{ site.workshop_url }}" aria-haspopup="true">Getting Started Workshop</a> and the data.all UserGuide (available as [PDF](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) in the open-source repository or via the data.all UI).
 
 ## Best practices and recommendations <a name="best"></a>
 
