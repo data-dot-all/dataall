@@ -119,7 +119,10 @@ class SagemakernotebookPolicy(ServicePolicy):
             iam.PolicyStatement(
                 # sid="SageMakerDenyCreateDomainsUsers",
                 effect=iam.Effect.DENY,
-                actions=['sagemaker:Create*'],
+                actions=[
+                    'sagemaker:CreateDomain',
+                    'sagemaker:CreateUserProfile',
+                ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
