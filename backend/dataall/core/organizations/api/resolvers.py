@@ -1,3 +1,4 @@
+from dataall.base.api import appSyncResolver
 from dataall.base.api.context import Context
 from dataall.base.db import exceptions
 from dataall.core.organizations.db import organization_models as models
@@ -26,6 +27,7 @@ def get_organization(context: Context, source, organizationUri=None):
     return OrganizationService.get_organization(uri=organizationUri)
 
 
+@appSyncResolver.resolver(type_name='Query', field_name='listOrganizations')
 def list_organizations(context: Context, source, filter=None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
