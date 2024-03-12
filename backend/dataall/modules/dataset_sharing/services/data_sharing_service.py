@@ -267,13 +267,8 @@ class DataSharingService:
                     share_uri,
                     ShareableType.StorageLocation.value
                 )
-                existing_shared_buckets = ShareObjectRepository.check_existing_shared_items_of_type(
-                    session,
-                    share_uri,
-                    ShareableType.S3Bucket.value
-                )
-                existing_shared_items = existing_shared_folders or existing_shared_buckets
-                log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
+
+                log.info(f'Still remaining S3 folder resources shared = {existing_shared_folders}')
                 if not existing_shared_folders and revoked_folders:
                     log.info("Clean up S3 access points...")
                     clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
