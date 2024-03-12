@@ -96,7 +96,7 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 ## :material-import: **Import a dataset**
 
 
-If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
+If you already have data stored on Amazon S3 buckets in your data.all environment, data.all has got you covered with the import feature. In addition to
 the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database and a KMS key Alias. If the Glue database
 is left empty, data.all will create a Glue database pointing at the S3 Bucket. As for the KMS key Alias, data.all assumes that if nothing is specified
 the S3 Bucket is encrypted with SSE-S3 encryption. Data.all performs a validation check to ensure the KMS Key Alias provided (if any) is the one that encrypts the S3 Bucket specified.
@@ -145,6 +145,25 @@ In the KMS key policy we need to grant explicit permission to the pivot role. At
 | Amazon KMS key Alias   | Alias of the KMS key used to encrypt the S3 Bucket (do not include alias/<ALIAS>, just <ALIAS>) | No       | No    |somealias
 | AWS Glue database name | Name of the Glue database tht you want to import                                                | No       | No      |anyDatabase
 
+
+### (Going Further) Support for Datasets with Externally-Managed Glue Catalog 
+
+If the dataset you are trying to import relates to Glue Database that is managed in a separate account, data.all's import dataset feature can also handle importing and sharing these type of datasets in data.all. Assuming the following pre-requisites are copmlete:
+
+- There exists an AWS Account (i.e. the Catalog Account) which is:
+  - Onboarded as a data.all environment (e.g. Env A)
+  - Contains the Glue Database with Location URI (as S3 Path from Dataset Producer Account) AND Tables
+  - Glue Database has a resource tag `owner_account_id=<PRODUCER_ACCOUNT_ID>`
+  - Data Lake Location registered in LakeFormation with the role used to register having permissions to the S3 Bucket from Dataset Producer Account 
+  - Resource Link created on the Glue Database to grant permission for the Dataset Producer Account on the Database and Tables
+
+- There exists another AWS Account (i.e. the Dataset Producer Account) which is:
+  - Onboarded as a data.all environment (e.g. Env B)
+  - Contains the S3 Bucket that contains the data (used as S3 Path in Catalog Account)
+
+The data.all producer, a member of EnvB Team(s), would import the dataset specifying the S3 bucket as the bucket name that exists in the Dataset Producer Account and specifying the Glue database name as the Glue DB resource link name in the Dataset Producer Account. 
+
+This dataset will then be properly imported and can be discovered and shared the same way as any other dataset in data.all.
 
 ## :material-card-search-outline: **Navigate dataset tabs**
 
