@@ -62,7 +62,7 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/data-dot-all/dataall.git
+git clone https://github.com/data-dot-all/dataall.git --branch v2.3.0
 cd dataall
 ```
 ## 2. Setup Python virtualenv <a name="env"></a>
@@ -456,6 +456,8 @@ the different configuration options.
                         }
                     }
                 },
+                "confidentiality_dropdown" : true,
+                "topics_dropdown" : true
             },
         },
         "mlstudio": {
@@ -545,6 +547,29 @@ In the example config.json, the feature that enables file upload from data.all U
 | preview_data        | datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
 | glue_crawler        | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
 | share_notifications | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
+| confidentiality_dropdown | datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
+| topics_dropdown | datasets | Disable / Enable use of topics for a dataset | 
+
+### Customizing Module Features
+
+In addition to disabling / enabling, some module features allow for additional customization to create a tailored data.all for your needs. Below is one such example of how one could customize module features in the config.json. Please refer to the list for all customization options
+```json
+    "datasets": {
+        "features": {
+            "custom_confidentiality_mapping": {
+                 "Public" : "Unclassified",
+                 "Private" : "Official", 
+                 "Confidential" : "Secret",
+                 "Very Highly Confidential" : "Secret"
+             }
+        }
+    }
+```
+
+| **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
+|--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
+
 
 ### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
@@ -563,6 +588,7 @@ disable any other core feature.
 | **Feature**           | **Module**     | **Description**                                                                  |   
 |-----------------------|----------------|----------------------------------------------------------------------------------|
 | env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
+
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
 With this command, CDK will create a **cdk.context.json** file with key-value pairs that are checked at 
@@ -652,16 +678,6 @@ If you enabled CloudWatch RUM in the **cdk.json** file:
 ![Screenshot](../img/rum_code_update.png#zoom#shadow)
 8. Commit and push your changes.
 
-
-## 🎉 Congratulations - What I have just done? 🎉 
-You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
-diagram.
-
-![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
-
-With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
-in the tooling account and check the status of your pipeline.
-
 ## 12. Setting SES for Email Notifications <a name="ses"></a>
 
 Please follow instructions from below only if you have enabled email notifications on share workflow by switching the email.active config ( from `config.json` file ) to `true` in the `share_notifications` feature under `datasets` module.
@@ -678,6 +694,17 @@ When SES Stack is deployed during the pipeline stage, it will setup a <a href="h
 which will send any email bounces, delivery failures, rejects & complaints to an SNS topic. In this step, you can add subscriptions to this SNS topic to monitor email delivery problems
 In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to
 this SNS topic and monitor and take actions in case of any delivery failure.
+
+## 🎉 Congratulations - What I have just done? 🎉 
+You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
+diagram.
+
+![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
+
+With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
+in the tooling account and check the status of your pipeline.
+
+To learn more about how to get started using the data.all UI and get a holistic understanding of supported features please check out the <a class="nav-item"  href="{{ site.workshop_url }}" aria-haspopup="true">Getting Started Workshop</a> and the data.all UserGuide (available as [PDF](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) in the open-source repository or via the data.all UI).
 
 ## Best practices and recommendations <a name="best"></a>
 

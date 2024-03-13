@@ -25,7 +25,7 @@ data.all is fully dockerized with docker-compose, and can be fully run from your
 The first step is to clone the repo.
 
 ```bash
-git clone https://github.com/data-dot-all/dataall.git
+git clone https://github.com/data-dot-all/dataall.git --branch v2.3.0
 ```
 
 With docker compose we orchestrate the build of 5 containers: frontend, db, graphql, cdkproxy, opensearch.
@@ -92,6 +92,9 @@ you used in step 2 and 3.
 2) IAM Pivot Role trusting the data.all account used in 2 and 3. When we create the pivot role stack in the environment account, use
 the account specified in 2 and 3 and the externalId and pivotRole name defined in 3.
 
+## Going Further
+
+To learn more about how to get started using the data.all UI and get a holistic understanding of supported features please check out the <a class="nav-item"  href="{{ site.workshop_url }}" aria-haspopup="true">Getting Started Workshop</a> and the data.all UserGuide (available as [PDF](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) in the open-source repository or via the data.all UI).
 
 
 
