@@ -65,10 +65,10 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         -------
         True if share is granted successfully
         """
-        log.info("##### Starting Sharing folders #######")
+        log.info('##### Starting Sharing folders #######')
         success = True
         for folder in share_folders:
-            log.info(f"sharing folder: {folder}")
+            log.info(f'sharing folder: {folder}')
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
                 share.shareUri,
@@ -139,10 +139,10 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         True if share is revoked successfully
         """
 
-        log.info("##### Starting Revoking folders #######")
+        log.info('##### Starting Revoking folders #######')
         success = True
         for folder in revoke_folders:
-            log.info(f"revoking access to folder: {folder}")
+            log.info(f'revoking access to folder: {folder}')
             removing_item = ShareObjectRepository.find_sharable_item(
                 session,
                 share.shareUri,
@@ -215,7 +215,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             source_env_group,
             env_group,
         )
-        log.info("##### Cleaning up folder share resources #######")
+        log.info('##### Cleaning up folder share resources #######')
         success = True
         try:
             clean_up = clean_up_folder.delete_access_point(share=share, dataset=dataset)
@@ -226,7 +226,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 if not dataset.imported or dataset.importedKmsKey:
                     clean_up_folder.delete_dataset_bucket_key_policy(dataset=dataset)
         except Exception as e:
-            log.info(f"Failed to clean up folder share resources due to: {e}")
+            log.info(f'Failed to clean up folder share resources due to: {e}')
             success = False
         return success
 
@@ -242,7 +242,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
     ) -> bool:
-        log.info("##### Verifying folders shares #######")
+        log.info('##### Verifying folders shares #######')
         for folder in share_folders:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
@@ -276,7 +276,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                     sharing_folder.session,
                     sharing_item,
                     ShareItemHealthStatus.Unhealthy.value,
-                    " | ".join(sharing_folder.folder_errors),
+                    ' | '.join(sharing_folder.folder_errors),
                     datetime.now(),
                 )
             else:

@@ -29,9 +29,7 @@ def create_glossary(context: Context, source, input: dict = None):
     return GlossariesService.create_glossary(data=input)
 
 
-def create_category(
-    context: Context, source, parentUri: str = None, input: dict = None
-):
+def create_category(context: Context, source, parentUri: str = None, input: dict = None):
     _required_uri(parentUri)
     return GlossariesService.create_category(uri=parentUri, data=input)
 
@@ -107,24 +105,17 @@ def resolve_node_children(context: Context, source: GlossaryNode, filter: dict =
     return GlossariesService.list_node_children(path=source.path, filter=filter)
 
 
-def resolve_categories(
-    context: Context, source: GlossaryNode, filter: dict = None
-):
+def resolve_categories(context: Context, source: GlossaryNode, filter: dict = None):
     _required_uri(source.nodeUri)
     if not filter:
         filter = {}
     return GlossariesService.list_categories(uri=source.nodeUri, data=filter)
 
 
-def resolve_term_associations(
-        context, source: GlossaryNode, filter: dict = None
-):
+def resolve_term_associations(context, source: GlossaryNode, filter: dict = None):
     if not filter:
         filter = {}
-    return GlossariesService.list_term_associations(
-        node=source,
-        filter=filter
-    )
+    return GlossariesService.list_term_associations(node=source, filter=filter)
 
 
 def resolve_terms(context: Context, source: GlossaryNode, filter: dict = None):

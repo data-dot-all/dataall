@@ -22,9 +22,7 @@ def update_group_permissions(context, source, input=None):
 
 def list_tenant_permissions(context, source):
     with context.engine.scoped_session() as session:
-        return TenantPolicy.list_tenant_permissions(
-            session=session, username=context.username, groups=context.groups
-        )
+        return TenantPolicy.list_tenant_permissions(session=session, username=context.username, groups=context.groups)
 
 
 def list_tenant_groups(context, source, filter=None):
@@ -44,5 +42,10 @@ def list_tenant_groups(context, source, filter=None):
 def update_ssm_parameter(context, source, name: str = None, value: str = None):
     current_account = SessionHelper.get_account()
     region = os.getenv('AWS_REGION', 'eu-west-1')
-    response = ParameterStoreManager.update_parameter(AwsAccountId=current_account, region=region, parameter_name=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/{name}', parameter_value=value)
+    response = ParameterStoreManager.update_parameter(
+        AwsAccountId=current_account,
+        region=region,
+        parameter_name=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/{name}',
+        parameter_value=value,
+    )
     return response

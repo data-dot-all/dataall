@@ -20,17 +20,21 @@ class CloudfrontStack(Stack):
     ):
         super().__init__(scope, id, **kwargs)
 
-        auth_at_edge = AuthAtEdge(
-            self,
-            f'AuthAtEdge',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            **kwargs,
-        ) if custom_auth is None else None
+        auth_at_edge = (
+            AuthAtEdge(
+                self,
+                'AuthAtEdge',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                **kwargs,
+            )
+            if custom_auth is None
+            else None
+        )
 
         distro = CloudfrontDistro(
             self,
-            f'CloudFront',
+            'CloudFront',
             envname=envname,
             resource_prefix=resource_prefix,
             auth_at_edge=auth_at_edge,

@@ -41,7 +41,7 @@ class BackendStage(Stage):
 
         backend_stack = BackendStack(
             self,
-            f'backend-stack',
+            'backend-stack',
             envname=envname,
             resource_prefix=resource_prefix,
             tooling_account_id=tooling_account_id,

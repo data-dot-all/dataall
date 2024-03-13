@@ -17,9 +17,7 @@ from dataall.base.utils import Parameter
 log = logging.getLogger(__name__)
 
 
-def get_stack(
-    context: Context, source, environmentUri: str = None, stackUri: str = None
-):
+def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
         env: Environment = session.query(Environment).get(environmentUri)
         stack: StackModel = session.query(StackModel).get(stackUri)
@@ -69,15 +67,9 @@ def resolve_task_id(context, source: StackModel, **kwargs):
         return source.EcsTaskArn.split('/')[-1]
 
 
-def get_stack_logs(
-    context: Context, source, environmentUri: str = None, stackUri: str = None
-):
+def get_stack_logs(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
-        stack = EnvironmentService.get_stack(
-            session=session,
-            uri=environmentUri,
-            stack_uri=stackUri
-        )
+        stack = EnvironmentService.get_stack(session=session, uri=environmentUri, stack_uri=stackUri)
         if not stack.EcsTaskArn:
             raise exceptions.AWSResourceNotFound(
                 action='GET_STACK_LOGS',
@@ -98,22 +90,14 @@ def get_stack_logs(
         return results
 
 
-def update_stack(
-    context: Context, source, targetUri: str = None, targetType: str = None
-):
+def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
-        stack = Stack.update_stack(
-            session=session,
-            uri=targetUri,
-            target_type=targetType
-        )
+        stack = Stack.update_stack(session=session, uri=targetUri, target_type=targetType)
     stack_helper.deploy_stack(stack.targetUri)
     return stack
 
 
-def list_key_value_tags(
-    context: Context, source, targetUri: str = None, targetType: str = None
-):
+def list_key_value_tags(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
         return KeyValueTag.list_key_value_tags(
             session=session,

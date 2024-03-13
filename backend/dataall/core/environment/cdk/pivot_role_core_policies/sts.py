@@ -8,15 +8,14 @@ class STSPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
                 sid='STS',
                 effect=iam.Effect.ALLOW,
                 actions=['sts:AssumeRole'],
-                resources=[
-                    f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*'
-                ],
+                resources=[f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*'],
             ),
         ]
         return statements

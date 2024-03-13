@@ -1,6 +1,7 @@
-""""
+""" "
 Creates a CloudFormation stack for SageMaker notebooks using cdk
 """
+
 import logging
 import os
 
@@ -46,9 +47,7 @@ class NotebookStack(Stack):
             notebook = session.query(SagemakerNotebook).get(target_uri)
         return notebook
 
-    def get_env_group(
-        self, notebook: SagemakerNotebook
-    ) -> EnvironmentGroup:
+    def get_env_group(self, notebook: SagemakerNotebook) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
             env_group = EnvironmentService.get_environment_group(
@@ -57,14 +56,16 @@ class NotebookStack(Stack):
         return env_group
 
     def __init__(self, scope, id: str, target_uri: str = None, **kwargs) -> None:
-        super().__init__(scope,
-                         id,
-                         description="Cloud formation stack of NOTEBOOK: {}; URI: {}; DESCRIPTION: {}".format(
-                             self.get_target(target_uri=target_uri).label,
-                             target_uri,
-                             self.get_target(target_uri=target_uri).description,
-                         )[:1024],
-                         **kwargs)
+        super().__init__(
+            scope,
+            id,
+            description='Cloud formation stack of NOTEBOOK: {}; URI: {}; DESCRIPTION: {}'.format(
+                self.get_target(target_uri=target_uri).label,
+                target_uri,
+                self.get_target(target_uri=target_uri).description,
+            )[:1024],
+            **kwargs,
+        )
 
         # Required for dynamic stack tagging
         self.target_uri = target_uri
@@ -89,32 +90,26 @@ class NotebookStack(Stack):
                     iam.PolicyStatement(
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            iam.ArnPrincipal(notebook.RoleArn)
-                        ],
+                        principals=[iam.ArnPrincipal(notebook.RoleArn)],
                         actions=[
-                            "kms:Encrypt",
-                            "kms:Decrypt",
-                            "kms:ReEncrypt*",
-                            "kms:GenerateDataKey*",
-                            "kms:DescribeKey"
+                            'kms:Encrypt',
+                            'kms:Decrypt',
+                            'kms:ReEncrypt*',
+                            'kms:GenerateDataKey*',
+                            'kms:DescribeKey',
                         ],
-                        conditions={
-                            "StringEquals": {"kms:ViaService": f"sagemaker.{notebook.region}.amazonaws.com"}
-                        }
+                        conditions={'StringEquals': {'kms:ViaService': f'sagemaker.{notebook.region}.amazonaws.com'}},
                     ),
                     iam.PolicyStatement(
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            iam.ArnPrincipal(notebook.RoleArn)
-                        ],
+                        principals=[iam.ArnPrincipal(notebook.RoleArn)],
                         actions=[
-                            "kms:DescribeKey",
-                            "kms:List*",
-                            "kms:GetKeyPolicy",
-                        ]
-                    )
+                            'kms:DescribeKey',
+                            'kms:List*',
+                            'kms:GetKeyPolicy',
+                        ],
+                    ),
                 ],
             ),
         )
@@ -164,6 +159,6 @@ class NotebookStack(Stack):
             value=notebook.NotebookInstanceName,
         )
 
-        TagsUtil.add_tags(stack=self, model=SagemakerNotebook, target_type="notebook")
+        TagsUtil.add_tags(stack=self, model=SagemakerNotebook, target_type='notebook')
 
         CDKNagUtil.check_rules(self)

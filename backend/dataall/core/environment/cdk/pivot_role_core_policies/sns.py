@@ -8,6 +8,7 @@ class SNSPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -25,8 +26,6 @@ class SNSPivotRole(PivotRoleStatementSet):
                 ],
                 resources=[f'arn:aws:sns:*:{self.account}:{self.env_resource_prefix}*'],
             ),
-            iam.PolicyStatement(
-                sid='SNSList', effect=iam.Effect.ALLOW, actions=['sns:ListTopics'], resources=['*']
-            )
+            iam.PolicyStatement(sid='SNSList', effect=iam.Effect.ALLOW, actions=['sns:ListTopics'], resources=['*']),
         ]
         return statements

@@ -2,6 +2,7 @@
 DAO layer that encapsulates the logic and interaction with the database for ML Studio
 Provides the API to retrieve / update / delete ml studio
 """
+
 from typing import Optional
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
@@ -18,6 +19,7 @@ from dataall.base.utils.naming_convention import (
 
 class SageMakerStudioRepository:
     """DAO layer for ML Studio"""
+
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
@@ -38,12 +40,8 @@ class SageMakerStudioRepository:
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    SagemakerStudioUser.description.ilike(
-                        filter.get('term') + '%%'
-                    ),
-                    SagemakerStudioUser.label.ilike(
-                        filter.get('term') + '%%'
-                    ),
+                    SagemakerStudioUser.description.ilike(filter.get('term') + '%%'),
+                    SagemakerStudioUser.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -69,7 +67,7 @@ class SageMakerStudioRepository:
             .filter(
                 and_(
                     SagemakerStudioUser.environmentUri == environment.environmentUri,
-                    SagemakerStudioUser.SamlAdminGroupName == group_uri
+                    SagemakerStudioUser.SamlAdminGroupName == group_uri,
                 )
             )
             .count()
@@ -86,12 +84,12 @@ class SageMakerStudioRepository:
             environmentUri=environment.environmentUri,
             AWSAccountId=environment.AwsAccountId,
             region=environment.region,
-            SagemakerStudioStatus="PENDING",
-            DefaultDomainRoleName="DefaultMLStudioRole",
+            SagemakerStudioStatus='PENDING',
+            DefaultDomainRoleName='DefaultMLStudioRole',
             sagemakerStudioDomainName=slugify(data.get('label'), separator=''),
             vpcType=data.get('vpcType'),
             vpcId=data.get('vpcId'),
-            subnetIds=data.get('subnetIds', [])
+            subnetIds=data.get('subnetIds', []),
         )
         session.add(domain)
         session.commit()
@@ -114,17 +112,25 @@ class SageMakerStudioRepository:
 
     @staticmethod
     def get_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:
-        domain: SagemakerStudioDomain = session.query(SagemakerStudioDomain).filter(
-            SagemakerStudioDomain.environmentUri == env_uri,
-        ).first()
+        domain: SagemakerStudioDomain = (
+            session.query(SagemakerStudioDomain)
+            .filter(
+                SagemakerStudioDomain.environmentUri == env_uri,
+            )
+            .first()
+        )
         if not domain:
             return None
         return domain
 
     @staticmethod
     def delete_sagemaker_studio_domain_by_env_uri(session, env_uri) -> Optional[SagemakerStudioDomain]:
-        domain: SagemakerStudioDomain = session.query(SagemakerStudioDomain).filter(
-            SagemakerStudioDomain.environmentUri == env_uri,
-        ).first()
+        domain: SagemakerStudioDomain = (
+            session.query(SagemakerStudioDomain)
+            .filter(
+                SagemakerStudioDomain.environmentUri == env_uri,
+            )
+            .first()
+        )
         if domain:
             session.delete(domain)

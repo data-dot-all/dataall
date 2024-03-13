@@ -66,35 +66,40 @@ class ProcessLakeFormationShare(LFShareManager):
         False if share fails
         """
 
-        log.info("##### Starting Sharing tables #######")
+        log.info('##### Starting Sharing tables #######')
         success = True
         if not self.tables:
-            log.info("No tables to share. Skipping...")
+            log.info('No tables to share. Skipping...')
         else:
             try:
                 if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                     raise Exception(
-                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                    )
                 self.initialize_clients()
                 self.grant_pivot_role_all_database_permissions_to_source_database()
                 self.check_if_exists_and_create_shared_database_in_target()
                 self.grant_pivot_role_all_database_permissions_to_shared_database()
                 self.grant_principals_database_permissions_to_shared_database()
             except Exception as e:
-                log.error(f"Failed to process approved tables due to {e}")
-                self.handle_share_failure_for_all_tables(tables=self.tables, error=e,
-                                                         share_item_status=ShareItemStatus.Share_Approved.value, reapply=self.reapply)
+                log.error(f'Failed to process approved tables due to {e}')
+                self.handle_share_failure_for_all_tables(
+                    tables=self.tables,
+                    error=e,
+                    share_item_status=ShareItemStatus.Share_Approved.value,
+                    reapply=self.reapply,
+                )
                 return False
 
             for table in self.tables:
-                log.info(f"Sharing table {table.GlueTableName}...")
+                log.info(f'Sharing table {table.GlueTableName}...')
 
                 share_item = ShareObjectRepository.find_sharable_item(self.session, self.share.shareUri, table.tableUri)
 
                 if not share_item:
                     log.info(
-                        f"Share Item not found for {self.share.shareUri} "
-                        f"and Dataset Table {table.GlueTableName} continuing loop..."
+                        f'Share Item not found for {self.share.shareUri} '
+                        f'and Dataset Table {table.GlueTableName} continuing loop...'
                     )
                     continue
                 if not self.reapply:
@@ -106,26 +111,30 @@ class ProcessLakeFormationShare(LFShareManager):
                     self.check_table_exists_in_source_database(share_item, table)
 
                     if self.cross_account:
-                        log.info(f"Processing cross-account permissions for table {table.GlueTableName}...")
+                        log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
                         self.revoke_iam_allowed_principals_from_table(table)
                         self.grant_target_account_permissions_to_source_table(table)
                         (
                             retry_share_table,
                             failed_invitations,
-                        ) = RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
-                                                            source_region=self.source_account_region,
-                                                            source_database=self.source_database_name,
-                                                            source_table_name=table.GlueTableName,
-                                                            target_account_id=self.target_environment.AwsAccountId,
-                                                            target_region=self.target_environment.region)
+                        ) = RamClient.accept_ram_invitation(
+                            source_account_id=self.source_account_id,
+                            source_region=self.source_account_region,
+                            source_database=self.source_database_name,
+                            source_table_name=table.GlueTableName,
+                            target_account_id=self.target_environment.AwsAccountId,
+                            target_region=self.target_environment.region,
+                        )
                         if retry_share_table:
                             self.grant_target_account_permissions_to_source_table(table)
-                            RamClient.accept_ram_invitation(source_account_id=self.source_account_id,
-                                                            source_region=self.source_account_region,
-                                                            source_database=self.source_database_name,
-                                                            source_table_name=table.GlueTableName,
-                                                            target_account_id=self.target_environment.AwsAccountId,
-                                                            target_region=self.target_environment.region)
+                            RamClient.accept_ram_invitation(
+                                source_account_id=self.source_account_id,
+                                source_region=self.source_account_region,
+                                source_database=self.source_database_name,
+                                source_table_name=table.GlueTableName,
+                                target_account_id=self.target_environment.AwsAccountId,
+                                target_region=self.target_environment.region,
+                            )
                     self.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     self.grant_principals_permissions_to_table_in_target(table)
                     self.grant_principals_permissions_to_resource_link_table(table)
@@ -169,31 +178,31 @@ class ProcessLakeFormationShare(LFShareManager):
         True if share is revoked successfully
         False if revoke fails
         """
-        log.info("##### Starting Revoking tables #######")
+        log.info('##### Starting Revoking tables #######')
         success = True
         try:
             if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                 raise Exception(
-                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
+                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                )
             self.initialize_clients()
             self.grant_pivot_role_all_database_permissions_to_shared_database()
         except Exception as e:
-            log.error(f"Failed to process revoked tables due to {e}")
-            self.handle_share_failure_for_all_tables(tables=self.tables, error=e,
-                                                     share_item_status=ShareItemStatus.Revoke_Approved.value)
+            log.error(f'Failed to process revoked tables due to {e}')
+            self.handle_share_failure_for_all_tables(
+                tables=self.tables, error=e, share_item_status=ShareItemStatus.Revoke_Approved.value
+            )
             return False
 
         for table in self.tables:
-            share_item = ShareObjectRepository.find_sharable_item(
-                self.session, self.share.shareUri, table.tableUri
-            )
+            share_item = ShareObjectRepository.find_sharable_item(self.session, self.share.shareUri, table.tableUri)
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
-                log.info(f"Revoking access to table: {table.GlueTableName} ")
+                log.info(f'Revoking access to table: {table.GlueTableName} ')
                 self.check_table_exists_in_source_database(share_item, table)
 
                 resource_link_table_exists = self.check_resource_link_table_exists_in_target_database(table)
@@ -238,15 +247,15 @@ class ProcessLakeFormationShare(LFShareManager):
                 existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
                     session=self.session, uri=self.share.shareUri, item_type=ShareableType.Table.value
                 )
-                log.info(f"Remaining tables shared in this share object = {existing_shared_tables_in_share}")
+                log.info(f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
 
                 if not existing_shared_tables_in_share:
-                    log.info("Revoking permissions to target shared database...")
+                    log.info('Revoking permissions to target shared database...')
                     self.revoke_principals_database_permissions_to_shared_database()
 
                     if not self.is_new_share:
-                        log.info("Deleting OLD target shared database...")
-                        warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
+                        log.info('Deleting OLD target shared database...')
+                        warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                         self.delete_shared_database_in_target()
 
                 existing_shares_with_shared_tables_in_environment = (
@@ -258,38 +267,39 @@ class ProcessLakeFormationShare(LFShareManager):
                     )
                 )
                 warn(
-                    "ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0",
+                    'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
                     DeprecationWarning,
                     stacklevel=2,
                 )
                 existing_old_shares_bool = [
-                    self.glue_client_in_target.database_exists(item["databaseName"])
+                    self.glue_client_in_target.database_exists(item['databaseName'])
                     for item in existing_shares_with_shared_tables_in_environment
                 ]
                 log.info(
-                    f"Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}"
+                    f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}'
                 )
                 if self.is_new_share and False not in existing_old_shares_bool:
-                    log.info("Deleting target shared database...")
-                    warn("self.is_new_share will be deprecated in v2.6.0", DeprecationWarning, stacklevel=2)
+                    log.info('Deleting target shared database...')
+                    warn('self.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
                     self.delete_shared_database_in_target()
         except Exception as e:
             log.error(
-                f"Failed to clean-up database permissions or delete shared database {self.shared_db_name} "
-                f"due to: {e}"
+                f'Failed to clean-up database permissions or delete shared database {self.shared_db_name} '
+                f'due to: {e}'
             )
             success = False
         return success
 
     def verify_shares(self) -> bool:
-        log.info("##### Starting Verify tables #######")
+        log.info('##### Starting Verify tables #######')
         if not self.tables:
-            log.info("No tables to verify. Skipping...")
+            log.info('No tables to verify. Skipping...')
         else:
             try:
                 if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                     raise Exception(
-                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all')
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                    )
                 self.initialize_clients()
                 self.check_pivot_role_permissions_to_source_database()
                 self.check_shared_database_in_target()
@@ -318,10 +328,10 @@ class ProcessLakeFormationShare(LFShareManager):
                             self.tbl_level_errors.append(
                                 ShareErrorFormatter.missing_permission_error_msg(
                                     self.target_environment.AwsAccountId,
-                                    "RAM Invitation",
-                                    "ASSOCIATED",
-                                    "Glue Table",
-                                    f"{self.source_database_name}.{table.GlueTableName}",
+                                    'RAM Invitation',
+                                    'ASSOCIATED',
+                                    'Glue Table',
+                                    f'{self.source_database_name}.{table.GlueTableName}',
                                 )
                             )
 
@@ -337,7 +347,7 @@ class ProcessLakeFormationShare(LFShareManager):
                         self.session,
                         share_item,
                         ShareItemHealthStatus.Unhealthy.value,
-                        " | ".join(self.db_level_errors) + " | " + " | ".join(self.tbl_level_errors),
+                        ' | '.join(self.db_level_errors) + ' | ' + ' | '.join(self.tbl_level_errors),
                         datetime.now(),
                     )
                 else:

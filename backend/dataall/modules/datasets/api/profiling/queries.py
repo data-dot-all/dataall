@@ -1,8 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.profiling.resolvers import (
-    list_table_profiling_runs,
-    get_dataset_table_profiling_run
-)
+from dataall.modules.datasets.api.profiling.resolvers import list_table_profiling_runs, get_dataset_table_profiling_run
 
 listDatasetTableProfilingRuns = gql.QueryField(
     name='listDatasetTableProfilingRuns',

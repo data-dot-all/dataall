@@ -5,10 +5,9 @@ from dataall.base.db.exceptions import UnauthorizedOperation
 
 class GroupPolicy:
     """Checks permission of environment group"""
+
     @staticmethod
-    def check_group_environment_permission(
-            session, username, groups, uri, group, permission_name
-    ):
+    def check_group_environment_permission(session, username, groups, uri, group, permission_name):
         GroupPolicy.check_group_environment_membership(
             session=session,
             username=username,
@@ -27,9 +26,7 @@ class GroupPolicy:
         )
 
     @staticmethod
-    def check_group_environment_membership(
-            session, environment_uri, group, username, user_groups, permission_name
-    ):
+    def check_group_environment_membership(session, environment_uri, group, username, user_groups, permission_name):
         if group and group not in user_groups:
             raise UnauthorizedOperation(
                 action=permission_name,

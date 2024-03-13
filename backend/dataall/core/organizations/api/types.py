@@ -1,5 +1,6 @@
-from .input_types import *
-from .resolvers import *
+from dataall.base.api import gql
+from dataall.core.organizations.api.resolvers import resolve_user_role, list_organization_environments, stats
+from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 
 OrganizationStats = gql.ObjectType(
     name='OrganizationStats',
@@ -35,7 +36,6 @@ Organization = gql.ObjectType(
         gql.Field(name='stats', type=OrganizationStats, resolver=stats),
     ],
 )
-
 
 OrganizationSearchResult = gql.ObjectType(
     name='OrganizationSearchResult',

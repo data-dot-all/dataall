@@ -91,9 +91,7 @@ class CloudWatchRumStack(pyNestedClass):
         cross_account_rum_config_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['rum:GetAppMonitor', 'rum:UpdateAppMonitor'],
-                resources=[
-                    f'arn:aws:rum:{self.region}:{self.account}:appmonitor/{monitor_name}'
-                ],
+                resources=[f'arn:aws:rum:{self.region}:{self.account}:appmonitor/{monitor_name}'],
             ),
         )
         ssm.StringParameter(

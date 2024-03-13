@@ -24,7 +24,7 @@ from dataall.core.permissions.permissions import (
     RESOURCES_ALL,
     ENVIRONMENT_INVITATION_REQUEST,
     TENANT_ALL,
-    TENANT_ALL_WITH_DESC
+    TENANT_ALL_WITH_DESC,
 )
 
 # Definition of TENANT_PERMISSIONS for SageMaker ML Studio
@@ -59,8 +59,8 @@ RESOURCES_ALL.extend(SGMSTUDIO_USER_ALL)
 RESOURCES_ALL.append(CREATE_SGMSTUDIO_USER)
 
 
-RESOURCES_ALL_WITH_DESC[GET_SGMSTUDIO_USER] = "General permission to get a SageMaker Studio user"
-RESOURCES_ALL_WITH_DESC[UPDATE_SGMSTUDIO_USER] = "Permission to get a SageMaker Studio user"
-RESOURCES_ALL_WITH_DESC[DELETE_SGMSTUDIO_USER] = "Permission to delete a SageMaker Studio user"
-RESOURCES_ALL_WITH_DESC[SGMSTUDIO_USER_URL] = "Permission to generate the URL for a SageMaker Studio user"
-RESOURCES_ALL_WITH_DESC[CREATE_SGMSTUDIO_USER] = "Create SageMaker Studio users on this environment"
+RESOURCES_ALL_WITH_DESC[GET_SGMSTUDIO_USER] = 'General permission to get a SageMaker Studio user'
+RESOURCES_ALL_WITH_DESC[UPDATE_SGMSTUDIO_USER] = 'Permission to get a SageMaker Studio user'
+RESOURCES_ALL_WITH_DESC[DELETE_SGMSTUDIO_USER] = 'Permission to delete a SageMaker Studio user'
+RESOURCES_ALL_WITH_DESC[SGMSTUDIO_USER_URL] = 'Permission to generate the URL for a SageMaker Studio user'
+RESOURCES_ALL_WITH_DESC[CREATE_SGMSTUDIO_USER] = 'Create SageMaker Studio users on this environment'

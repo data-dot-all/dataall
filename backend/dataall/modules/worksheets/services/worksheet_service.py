@@ -8,8 +8,14 @@ from dataall.base.db import exceptions
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
-from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
-    WORKSHEET_ALL, GET_WORKSHEET, DELETE_WORKSHEET, RUN_ATHENA_QUERY
+from dataall.modules.worksheets.services.worksheet_permissions import (
+    MANAGE_WORKSHEETS,
+    UPDATE_WORKSHEET,
+    WORKSHEET_ALL,
+    GET_WORKSHEET,
+    DELETE_WORKSHEET,
+    RUN_ATHENA_QUERY,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -112,7 +118,7 @@ class WorksheetService:
             env_group=env_group,
             s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
             region=environment.region,
-            sql=sqlQuery
+            sql=sqlQuery,
         )
 
         return AthenaClient.convert_query_output(cursor)

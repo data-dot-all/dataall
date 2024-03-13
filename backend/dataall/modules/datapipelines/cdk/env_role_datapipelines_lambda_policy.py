@@ -5,12 +5,13 @@ from aws_cdk import aws_iam as iam
 
 class Lambda(ServicePolicy):
     """
-        Class including all permissions needed to work with AWS Lambda.
-        It allows data.all users to:
-        - List Lambda resources
-        - Create and manage team Lambda resources
-        - Log Lambda executions
-        """
+    Class including all permissions needed to work with AWS Lambda.
+    It allows data.all users to:
+    - List Lambda resources
+    - Create and manage team Lambda resources
+    - Log Lambda executions
+    """
+
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_PIPELINE not in group_permissions:
             return []
@@ -51,11 +52,7 @@ class Lambda(ServicePolicy):
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="ManageTeamLambda",
@@ -66,13 +63,9 @@ class Lambda(ServicePolicy):
                 ],
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*'
+                    f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="ManageLambdaLayers",
@@ -83,7 +76,7 @@ class Lambda(ServicePolicy):
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*:*',
-                ]
+                ],
             ),
             iam.PolicyStatement(
                 # sid="LoggingLambda",
@@ -97,6 +90,6 @@ class Lambda(ServicePolicy):
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/lambda/*',
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/lambda/*:log-stream:*',
                 ],
-            )
+            ),
         ]
         return statements

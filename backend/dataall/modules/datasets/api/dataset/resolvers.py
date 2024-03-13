@@ -46,22 +46,14 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
         return DatasetRole.DataSteward.value
     else:
         with context.engine.scoped_session() as session:
-            share = (
-                session.query(ShareObject)
-                .filter(ShareObject.datasetUri == source.datasetUri)
-                .first()
-            )
-            if share and (
-                share.owner == context.username or share.principalId in context.groups
-            ):
+            share = session.query(ShareObject).filter(ShareObject.datasetUri == source.datasetUri).first()
+            if share and (share.owner == context.username or share.principalId in context.groups):
                 return DatasetRole.Shared.value
     return DatasetRole.NoPermission.value
 
 
 @is_feature_enabled('modules.datasets.features.file_uploads')
-def get_file_upload_presigned_url(
-        context, source, datasetUri: str = None, input: dict = None
-):
+def get_file_upload_presigned_url(context, source, datasetUri: str = None, input: dict = None):
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
@@ -161,9 +153,7 @@ def get_dataset_stack(context: Context, source: Dataset, **kwargs):
     )
 
 
-def delete_dataset(
-        context: Context, source, datasetUri: str = None, deleteFromAWS: bool = False
-):
+def delete_dataset(context: Context, source, datasetUri: str = None, deleteFromAWS: bool = False):
     return DatasetService.delete_dataset(uri=datasetUri, delete_from_aws=deleteFromAWS)
 
 
@@ -174,16 +164,14 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
         return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, 'Dataset')
 
 
-def list_datasets_created_in_environment(
-        context: Context, source, environmentUri: str = None, filter: dict = None
-):
+def list_datasets_created_in_environment(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     return DatasetService.list_datasets_created_in_environment(uri=environmentUri, data=filter)
 
 
 def list_datasets_owned_by_env_group(
-        context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
+    context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
 ):
     if not filter:
         filter = {}
@@ -192,8 +180,8 @@ def list_datasets_owned_by_env_group(
 
 def verify_dataset_share_objects(context: Context, source, input):
     RequestValidator.validate_dataset_share_selector_input(input)
-    dataset_uri = input.get("datasetUri")
-    verify_share_uris = input.get("shareUris")
+    dataset_uri = input.get('datasetUri')
+    verify_share_uris = input.get('shareUris')
     return DatasetService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
 
 
@@ -210,9 +198,7 @@ class RequestValidator:
             raise RequiredParameter('label')
         ConfidentialityClassification.validate_confidentiality_level(data.get('confidentiality', ''))
         if len(data['label']) > 52:
-            raise InvalidInput(
-                'Dataset name', data['label'], 'less than 52 characters'
-            )
+            raise InvalidInput('Dataset name', data['label'], 'less than 52 characters')
 
     @staticmethod
     def validate_import_request(data):

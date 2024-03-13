@@ -6,6 +6,4 @@ class pyNestedClass(NestedStack):
     preventing passing unexpected parameter  env  from **kwargs to NestedStack constructor."""
 
     def __init__(self, scope, id, **kwargs):
-        super().__init__(
-            scope, id, **{p: kwargs[p] for p in kwargs.keys() if p not in ['env']}
-        )
+        super().__init__(scope, id, **{p: kwargs[p] for p in kwargs.keys() if p not in ['env']})

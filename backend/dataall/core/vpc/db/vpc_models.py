@@ -7,9 +7,7 @@ from dataall.base.db import Base, Resource, utils
 class Vpc(Resource, Base):
     __tablename__ = 'vpc'
     environmentUri = Column(String, nullable=False)
-    vpcUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('vpcUri')
-    )
+    vpcUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('vpcUri'))
     region = Column(String, default='eu-west-1')
     AwsAccountId = Column(String, nullable=False)
     SamlGroupName = Column(String)

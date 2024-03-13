@@ -11,8 +11,8 @@ log = logging.getLogger(__name__)
 
 class DatasetCatalogIndexer(CatalogIndexer):
     """
-       Dataset indexer for the catalog. Indexes all tables and folders of datasets
-       Register automatically itself when CatalogIndexer instance is created
+    Dataset indexer for the catalog. Indexes all tables and folders of datasets
+    Register automatically itself when CatalogIndexer instance is created
     """
 
     def index(self, session) -> int:
