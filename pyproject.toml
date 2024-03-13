@@ -1,21 +1,31 @@
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py37", "py38", "py39", "py310"]
-extend_exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.env
-  | _build
-  | buck-out
-  | build
-  | dist
-  | .vscode
-  | dev
-  | .coverage
-)/
-'''
+src = ["backend", "deploy"]
+
+
+[tool.ruff.lint]
+exclude = [ "backend/migrations","tests/**", "**/input_types.py", "**/mutations.py", "**/queries.py", "**/types.py", "**/api/__init__.py"]
+#select = ["D", "E", "F", "I", "PL", "RUF100", "W", "FA", "UP", "PYI036"]
+ignore=[
+    "E501",
+    "F841",
+    "F403",
+    "F401",
+    "E712",
+    "E203",
+    "E741"
+]
+
+
+[tool.ruff.lint.pylint]
+max-args = 25  # Maximum number of arguments for function / method.
+max-bool-expr = 5  # Maximum number of boolean expressions in an if statement (see R0916).
+max-branches = 15  # Maximum number of branch for function / method body.
+max-locals = 30  # Maximum number of locals for function / method body.
+max-public-methods = 20  # Maximum number of public methods for a class (see R0904).
+max-returns = 6  # Maximum number of return / yield for function / method body.
+max-statements = 50  # Maximum number of statements in function / method body.
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
