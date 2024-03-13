@@ -33,9 +33,9 @@ install-cdkproxy:
 install-tests:
 	pip install -r tests/requirements.txt
 
-lint:
-	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+ruff:
+	pip install ruff
+	ruff check --fix
 
 bandit:
 	pip install bandit
