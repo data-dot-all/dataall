@@ -1,4 +1,4 @@
-import { CloudDownloadOutlined } from '@mui/icons-material';
+// import { CloudDownloadOutlined } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -9,7 +9,7 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -23,9 +23,19 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { listDatasets } from '../services';
-import { DatasetListItem } from '../components';
+import { DatasetCreateWindow, DatasetListItem } from '../components';
 
 function DatasetsPageHeader() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const handleCreateModalOpen = () => {
+    /* eslint-disable no-console */
+    console.log('open modal');
+    /* eslint-disable no-console */
+    setIsCreateModalOpen(true);
+  };
+  const handleCreateModalClose = () => {
+    setIsCreateModalOpen(false);
+  };
   return (
     <Grid
       alignItems="center"
@@ -60,24 +70,20 @@ function DatasetsPageHeader() {
         <Box sx={{ m: -1 }}>
           <Button
             color="primary"
-            component={RouterLink}
-            startIcon={<CloudDownloadOutlined fontSize="small" />}
-            sx={{ m: 1 }}
-            to="/console/datasets/import"
-            variant="outlined"
-          >
-            Import
-          </Button>
-          <Button
-            color="primary"
-            component={RouterLink}
             startIcon={<PlusIcon fontSize="small" />}
             sx={{ m: 1 }}
-            to="/console/datasets/new"
+            onClick={handleCreateModalOpen}
             variant="contained"
           >
             Create
           </Button>
+          {isCreateModalOpen && (
+            <DatasetCreateWindow
+              open
+              //TODO: maybe merge with DatasetList and send reload=fetchItems
+              onClose={handleCreateModalClose}
+            />
+          )}
         </Box>
       </Grid>
     </Grid>

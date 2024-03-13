@@ -48,17 +48,17 @@ const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 const DatasetList = Loadable(
   lazy(() => import('./modules/Datasets/views/DatasetList'))
 );
-const DatasetView = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetView'))
+const S3DatasetView = Loadable(
+  lazy(() => import('./modules/S3Datasets/views/DatasetView'))
 );
 const DatasetCreateForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetCreateForm'))
+  lazy(() => import('./modules/S3Datasets/views/DatasetCreateForm'))
 );
-const DatasetImportForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetImportForm'))
+const S3DatasetImportForm = Loadable(
+  lazy(() => import('./modules/S3Datasets/views/DatasetImportForm'))
 );
-const DatasetEditForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
+const S3DatasetEditForm = Loadable(
+  lazy(() => import('./modules/S3Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
   lazy(() => import('./modules/Tables/views/TableView'))
@@ -141,6 +141,14 @@ const WorksheetView = Loadable(
 );
 const WorksheetCreateForm = Loadable(
   lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))
+);
+
+const WarehousesList = Loadable(
+  lazy(() => import('./modules/Warehouses/views/WarehousesList'))
+);
+
+const WarehouseDatasetImportForm = Loadable(
+  lazy(() => import('./modules/Warehouses/views/WarehousesDatasetImportForm'))
 );
 
 const GlossaryList = Loadable(
@@ -227,15 +235,20 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      isModuleEnabled(ModuleNames.DATASETS) && {
+      (isModuleEnabled(ModuleNames.S3DATASETS) ||
+        isModuleEnabled(ModuleNames.WAREHOUSES)) && {
         children: [
           {
             path: 'datasets',
             element: <DatasetList />
-          },
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.S3DATASETS) && {
+        children: [
           {
             path: 'datasets/:uri',
-            element: <DatasetView />
+            element: <S3DatasetView />
           },
           {
             path: 'datasets/new',
@@ -243,15 +256,15 @@ const routes = [
           },
           {
             path: 'datasets/import',
-            element: <DatasetImportForm />
+            element: <S3DatasetImportForm />
           },
           {
             path: 'datasets/:uri/edit',
-            element: <DatasetEditForm />
+            element: <S3DatasetEditForm />
           },
           {
             path: 'datasets/:uri/edit',
-            element: <DatasetEditForm />
+            element: <S3DatasetEditForm />
           },
           {
             path: 'datasets/table/:uri',
@@ -272,6 +285,18 @@ const routes = [
           {
             path: 'datasets/folder/:uri/edit',
             element: <FolderEditForm />
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.WAREHOUSES) && {
+        children: [
+          {
+            path: 'warehouses',
+            element: <WarehousesList />
+          },
+          {
+            path: 'warehouseDatasets/import',
+            element: <WarehouseDatasetImportForm />
           }
         ]
       },
