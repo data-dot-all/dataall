@@ -36,7 +36,7 @@ class EnvironmentQueries(SchemaBase):
             data_source=data_source,
         )
         schema.add_query('listEnvironments', self.list_environments)
-        org_types.organization.add_field(field_name='environment', field=self.list_environments)
+        org_types.organization.add_field(field_name='environments', field=self.list_environments)
 
         self.list_environment_networks = ResolvableField(
             return_type=env_types.vpc_search_result.attribute(),
