@@ -539,14 +539,6 @@ def _generate_ap_policy_object(
     new_ap_policy = {
         "Version": "2012-10-17",
         "Statement": [
-            {
-                "Sid": "AllowAllToAdmin",
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:*",
-                "Resource": "access-point-arn",
-                "Condition": {"StringLike": {"aws:userId": ["dataset_admin_role_id:*", "source_env_admin_role_id:*", "source_account_pivot_role_id:*"]}},
-            },
         ],
     }
 
@@ -686,9 +678,6 @@ def test_manage_access_point_and_policy_1(
     assert "s3:ListBucket" in [
         statement["Action"] for statement in new_ap_policy["Statement"] if statement["Sid"].startswith(target_environment.SamlGroupName)
     ]
-
-    # Assert AllowAllToAdmin "Sid" exists
-    assert len([statement for statement in new_ap_policy["Statement"] if statement["Sid"] == "AllowAllToAdmin"]) > 0
 
 
 # Existing Access point and ap policy
@@ -895,7 +884,7 @@ def test_delete_access_point_without_policy(
     share1: ShareObject,
     share_manager
 ):
-    # Given ap policy that only includes AllowAllToAdminStatement
+    # Given ap policy that contains no statements
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [])
 
     s3_control_client = mock_s3_control_client(mocker)

@@ -22,7 +22,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
-DATAALL_ALLOW_OWNER_SID = "AllowAllToAdmin"
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = "DataAll-Access-Point-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
 DATAALL_DELEGATE_TO_ACCESS_POINT = "DelegateAccessToAccessPoint"
@@ -466,26 +465,6 @@ class S3AccessPointShareManager:
                 access_point_arn,
                 self.s3_prefix,
             )
-            exceptions_roleId = [
-                f"{item}:*"
-                for item in SessionHelper.get_role_ids(
-                    self.source_account_id,
-                    [
-                        self.dataset_admin,
-                        self.source_env_admin,
-                        SessionHelper.get_delegation_role_arn(self.source_account_id),
-                    ],
-                )
-            ]
-            admin_statement = {
-                "Sid": DATAALL_ALLOW_OWNER_SID,
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:*",
-                "Resource": f"{access_point_arn}",
-                "Condition": {"StringLike": {"aws:userId": exceptions_roleId}},
-            }
-            access_point_policy["Statement"].append(admin_statement)
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
@@ -616,8 +595,7 @@ class S3AccessPointShareManager:
 
         s3_client = S3ControlClient(dataset.AwsAccountId, dataset.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(access_point_name))
-        if len(access_point_policy["Statement"]) <= 1:
-            # At least we have the 'AllowAllToAdmin' statement
+        if len(access_point_policy["Statement"]) == 0:
             s3_client.delete_bucket_access_point(access_point_name)
             return True
         else:
