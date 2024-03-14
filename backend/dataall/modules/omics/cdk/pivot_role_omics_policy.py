@@ -21,7 +21,8 @@ class OmicsPolicy(PivotRoleStatementSet):
                     "omics:GetWorkflow"
                 ],
                 resources=[
-                    f'arn:aws:omics:{self.region}:{self.account}:workflow/*'
+                    f'arn:aws:omics:{self.region}:{self.account}:workflow/*',
+                    f'arn:aws:omics:{self.region}::workflow/*'
                 ]
             ),
             iam.PolicyStatement(
