@@ -55,7 +55,6 @@ def test_enum_in_input_type(episode):
 
 
 def test_schema_with_enums(episode):
-
     s = gql.Schema(
         types=[
             gql.ObjectType(

@@ -29,4 +29,3 @@ max-statements = 50  # Maximum number of statements in function / method body.
 [tool.ruff.format]
 quote-style = "single"
 docstring-code-format = true
-exclude = [ "tests/**"]

@@ -5,4 +5,3 @@ from pathlib import Path
 def test_glue_profiler_exist():
     path = DatasetGlueProfilerExtension.get_path_to_asset()
     assert Path(path).exists()
-

@@ -10,9 +10,7 @@ def test_base_object():
         ],
     )
 
-    Shape = gql.ObjectType(
-        name='Shape', fields=[gql.Field(name='point', type=gql.ArrayType(Point))]
-    )
+    Shape = gql.ObjectType(name='Shape', fields=[gql.Field(name='point', type=gql.ArrayType(Point))])
     assert 'type Point' in Point.gql()
     assert 'x : String' in Point.gql()
     assert 'y : String' in Point.gql()
