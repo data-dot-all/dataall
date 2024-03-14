@@ -1,7 +1,7 @@
 [tool.ruff]
 line-length = 120
 src = ["backend", "deploy"]
-
+target-version = "py39"
 
 [tool.ruff.lint]
 exclude = [ "backend/migrations","tests/**", "**/input_types.py", "**/mutations.py", "**/queries.py", "**/types.py", "**/api/__init__.py"]
