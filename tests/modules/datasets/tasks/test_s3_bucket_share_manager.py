@@ -19,7 +19,6 @@ TARGET_ACCOUNT_ENV = "222222222222"
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 DATAALL_READ_ONLY_SID = "DataAll-Bucket-ReadOnly"
-DATAALL_ALLOW_ALL_ADMINS_SID = "AllowAllToAdmin"
 
 DATAALL_BUCKET_KMS_DECRYPT_SID = "DataAll-Bucket-KMS-Decrypt"
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = "KMSPivotRolePermissions"
@@ -213,21 +212,6 @@ def complete_access_bucket_policy(target_requester_arn, s3_bucket_name, owner_ro
                 }
             },
             {
-                "Sid": f"{DATAALL_ALLOW_ALL_ADMINS_SID}",
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:*",
-                "Resource": [
-                    f"arn:aws:s3:::{s3_bucket_name}",
-                    f"arn:aws:s3:::{s3_bucket_name}/*"
-                ],
-                "Condition": {
-                    "StringLike": {
-                        "aws:userId": owner_roleId
-                    }
-                }
-            },
-            {
                 "Sid": f"{DATAALL_READ_ONLY_SID}",
                 "Effect": "Allow",
                 "Principal": {
@@ -289,7 +273,7 @@ def test_grant_role_bucket_policy_with_no_policy_present(
         share2_manager
 ):
     # Given
-    # No Bucket policy. A Default bucket policy should be formed with DataAll-Bucket-ReadOnly, AllowAllToAdmin & RequiredSecureTransport Sids
+    # No Bucket policy. A Default bucket policy should be formed with DataAll-Bucket-ReadOnly & RequiredSecureTransport Sids
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = None
     iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
@@ -297,11 +281,6 @@ def test_grant_role_bucket_policy_with_no_policy_present(
     mocker.patch(
         "dataall.base.aws.sts.SessionHelper.get_delegation_role_arn",
         return_value="arn:role",
-    )
-
-    mocker.patch(
-        "dataall.base.aws.sts.SessionHelper.get_role_ids",
-        return_value=[1, 2, 3],
     )
 
     share2_manager.grant_role_bucket_policy()
@@ -312,17 +291,13 @@ def test_grant_role_bucket_policy_with_no_policy_present(
     modified_bucket_policy = json.loads(s3_client().create_bucket_policy.call_args.args[1])
     # Check all the Sids are present
     # Check that the S3 bucket resources are also present
-    assert f"{DATAALL_ALLOW_ALL_ADMINS_SID}" in modified_bucket_policy["Statement"][0]["Sid"]
+    assert "RequiredSecureTransport" in modified_bucket_policy["Statement"][0]["Sid"]
     assert modified_bucket_policy["Statement"][0]["Resource"] == [f'arn:aws:s3:::{dataset2.S3BucketName}',
                                                                   f'arn:aws:s3:::{dataset2.S3BucketName}/*']
-    assert modified_bucket_policy["Statement"][0]["Condition"]["StringLike"]["aws:userId"] == ['1:*', '2:*', '3:*']
-    assert "RequiredSecureTransport" in modified_bucket_policy["Statement"][1]["Sid"]
+    assert f"{DATAALL_READ_ONLY_SID}" in modified_bucket_policy["Statement"][1]["Sid"]
     assert modified_bucket_policy["Statement"][1]["Resource"] == [f'arn:aws:s3:::{dataset2.S3BucketName}',
                                                                   f'arn:aws:s3:::{dataset2.S3BucketName}/*']
-    assert f"{DATAALL_READ_ONLY_SID}" in modified_bucket_policy["Statement"][2]["Sid"]
-    assert modified_bucket_policy["Statement"][2]["Resource"] == [f'arn:aws:s3:::{dataset2.S3BucketName}',
-                                                                  f'arn:aws:s3:::{dataset2.S3BucketName}/*']
-    assert modified_bucket_policy["Statement"][2]["Principal"]["AWS"] == [
+    assert modified_bucket_policy["Statement"][1]["Principal"]["AWS"] == [
         f"arn:aws:iam::{target_environment.AwsAccountId}:role/{target_environment.EnvironmentDefaultIAMRoleName}"]
 
 
@@ -334,7 +309,7 @@ def test_grant_role_bucket_policy_with_default_complete_policy(
         share2_manager
 ):
     # Given
-    # Bucket Policy containing required "AllowAllToAdmin" and "DataAll-Bucket-ReadOnly" Sid's
+    # Bucket Policy containing required "DataAll-Bucket-ReadOnly" Sid's
     # Bucket Policy shouldn't be modified after calling "grant_role_bucket_policy" function
 
     target_arn = f"arn:aws:iam::{target_environment.AwsAccountId}:role/{target_environment.EnvironmentDefaultIAMRoleName}"
@@ -358,7 +333,7 @@ def test_grant_role_bucket_policy_with_default_complete_policy(
         assert policy["Sid"] in json.dumps(bucket_policy)
 
 
-def test_grant_role_bucket_policy_with_policy_and_no_allow_owner_sid_and_no_read_only_sid(
+def test_grant_role_bucket_policy_with_policy_and_no_read_only_sid(
         mocker,
         share2: ShareObject,
         target_environment: Environment,
@@ -367,7 +342,7 @@ def test_grant_role_bucket_policy_with_policy_and_no_allow_owner_sid_and_no_read
 ):
     # Given
     # base bucket policy
-    # Check if both "AllowAllToAdmin" and "DataAll-Bucket-ReadOnly" Sid's Statements are added to the policy
+    # Check if "DataAll-Bucket-ReadOnly" Sid's Statement is added to the policy
 
     bucket_policy = base_bucket_policy
 
@@ -392,10 +367,10 @@ def test_grant_role_bucket_policy_with_policy_and_no_allow_owner_sid_and_no_read
     # Get the Bucket Policy
     modified_bucket_policy = json.loads(s3_client().create_bucket_policy.call_args.args[1])
 
-    # AllowToAdmin, DataAll-Bucket-ReadOnly Sid's should be attached now
+    # DataAll-Bucket-ReadOnly Sid's should be attached now
     for policy in modified_bucket_policy["Statement"]:
         if "Sid" in policy:
-            assert policy["Sid"] in [f"{DATAALL_ALLOW_ALL_ADMINS_SID}", f"{DATAALL_READ_ONLY_SID}"]
+            assert policy["Sid"] in [f"{DATAALL_READ_ONLY_SID}"]
 
 
 def test_grant_role_bucket_policy_with_another_read_only_role(
@@ -449,10 +424,10 @@ def test_grant_role_bucket_policy_with_another_read_only_role(
     # Get the Bucket Policy and it should be the same
     modified_bucket_policy = json.loads(s3_client().create_bucket_policy.call_args.args[1])
 
-    # AllowToAdmin Sid should be attached now. Also DataAll-Bucket-ReadOnly Sid should be present
+    # DataAll-Bucket-ReadOnly Sid should be present
     for policy in modified_bucket_policy["Statement"]:
         if "Sid" in policy:
-            assert policy["Sid"] in [f"{DATAALL_ALLOW_ALL_ADMINS_SID}", f"{DATAALL_READ_ONLY_SID}"]
+            assert policy["Sid"] in [f"{DATAALL_READ_ONLY_SID}"]
 
     # Check if the principal was appended and not overridden into the DataAll-Bucket-ReadOnly
     assert len(modified_bucket_policy["Statement"][1]["Principal"]["AWS"]) == 2
@@ -650,7 +625,6 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(
         "Resource"]
 
 
-# Tests to check if
 def test_grant_s3_iam_access_with_complete_policy_present(
         mocker,
         dataset2,

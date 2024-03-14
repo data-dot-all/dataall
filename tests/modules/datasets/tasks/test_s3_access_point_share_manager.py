@@ -278,7 +278,6 @@ def test_manage_bucket_policy_no_policy(
     sid_list = [statement.get("Sid") for statement in
                 created_bucket_policy["Statement"] if statement.get("Sid")]
 
-    assert "AllowAllToAdmin" in sid_list
     assert "DelegateAccessToAccessPoint" in sid_list
 
 

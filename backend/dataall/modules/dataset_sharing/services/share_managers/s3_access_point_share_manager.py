@@ -131,16 +131,6 @@ class S3AccessPointShareManager:
         counter = count()
         statements = {item.get("Sid", next(counter)): item for item in bucket_policy.get("Statement", {})}
 
-        if DATAALL_ALLOW_OWNER_SID not in statements.keys():
-            statements[DATAALL_ALLOW_OWNER_SID] = {
-                "Sid": DATAALL_ALLOW_OWNER_SID,
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:*",
-                "Resource": [f"arn:aws:s3:::{self.bucket_name}", f"arn:aws:s3:::{self.bucket_name}/*"],
-                "Condition": {"StringLike": {"aws:userId": self.get_bucket_owner_roleid()}},
-            }
-
         if DATAALL_DELEGATE_TO_ACCESS_POINT not in statements.keys():
             statements[DATAALL_DELEGATE_TO_ACCESS_POINT] = {
                 "Sid": DATAALL_DELEGATE_TO_ACCESS_POINT,
@@ -168,25 +158,8 @@ class S3AccessPointShareManager:
             bucket_policy = json.loads(bucket_policy)
         else:
             logger.info(f"Bucket policy for {self.bucket_name} does not exist, generating default policy...")
-            exceptions_roleId = self.get_bucket_owner_roleid()
-            bucket_policy = S3ControlClient.generate_default_bucket_policy(
-                self.bucket_name, exceptions_roleId, DATAALL_ALLOW_OWNER_SID
-            )
+            bucket_policy = S3ControlClient.generate_default_bucket_policy(self.bucket_name)
         return bucket_policy
-
-    def get_bucket_owner_roleid(self):
-        exceptions_roleId = [
-            f"{item}:*"
-            for item in SessionHelper.get_role_ids(
-                self.source_account_id,
-                [
-                    self.dataset_admin,
-                    self.source_env_admin,
-                    SessionHelper.get_delegation_role_arn(self.source_account_id),
-                ],
-            )
-        ]
-        return exceptions_roleId
 
     def check_target_role_access_policy(self) -> None:
         """
