@@ -33,9 +33,10 @@ install-cdkproxy:
 install-tests:
 	pip install -r tests/requirements.txt
 
-ruff:
+lint:
 	pip install ruff
 	ruff check --fix
+	ruff format
 
 bandit:
 	pip install bandit

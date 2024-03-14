@@ -452,7 +452,7 @@ class PipelineStack(Stack):
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
-                        'make ruff',
+                        'make lint',
                         'cd frontend',
                         f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
