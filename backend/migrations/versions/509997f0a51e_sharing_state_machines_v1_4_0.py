@@ -5,6 +5,7 @@ Revises: 04d92886fabe
 Create Date: 2023-01-04 10:28:17.842210
 
 """
+
 from alembic import op
 from sqlalchemy import orm, Column, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
@@ -25,9 +26,7 @@ Base = declarative_base()
 
 class ShareObject(Base):
     __tablename__ = 'share_object'
-    shareUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('share')
-    )
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
     groupUri = Column(String)
@@ -45,9 +44,7 @@ class ShareObject(Base):
 class ShareObjectItem(Base):
     __tablename__ = 'share_object_item'
     shareUri = Column(String, nullable=False)
-    shareItemUri = Column(
-        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
-    )
+    shareItemUri = Column(String, default=utils.uuid('shareitem'), nullable=False, primary_key=True)
     itemType = Column(String, nullable=False)
     itemUri = Column(String, nullable=False)
     itemName = Column(String, nullable=False)
@@ -70,40 +67,18 @@ def upgrade():
         print('Updating share Objects in PendingApproval...')
         (
             session.query(ShareObject)
-            .filter(
-                ShareObject.status == 'PendingApproval'
-            )
-            .update(
-                {
-                    ShareObject.status: 'Submitted'
-                }
-            )
+            .filter(ShareObject.status == 'PendingApproval')
+            .update({ShareObject.status: 'Submitted'})
         )
         print('Updating share Objects in Approved...')
-        (
-            session.query(ShareObject)
-            .filter(
-                ShareObject.status == 'Approved'
-            )
-            .update(
-                {
-                    ShareObject.status: 'Processed'
-                }
-            )
-        )
+        (session.query(ShareObject).filter(ShareObject.status == 'Approved').update({ShareObject.status: 'Processed'}))
 
         print('Share Objects updated successfully')
         print('Updating share Items in Draft..')
         (
             session.query(ShareObjectItem)
-            .filter(
-                ShareObjectItem.status == 'Draft'
-            )
-            .update(
-                {
-                    ShareObjectItem.status: 'PendingApproval'
-                }
-            )
+            .filter(ShareObjectItem.status == 'Draft')
+            .update({ShareObjectItem.status: 'PendingApproval'})
         )
 
         print('Share Items updated successfully')
@@ -119,40 +94,18 @@ def downgrade():
         print('Updating share Objects in PendingApproval...')
         (
             session.query(ShareObject)
-            .filter(
-                ShareObject.status == 'Submitted'
-            )
-            .update(
-                {
-                    ShareObject.status: 'PendingApproval'
-                }
-            )
+            .filter(ShareObject.status == 'Submitted')
+            .update({ShareObject.status: 'PendingApproval'})
         )
         print('Updating share Objects in Approved...')
-        (
-            session.query(ShareObject)
-            .filter(
-                ShareObject.status == 'Processed'
-            )
-            .update(
-                {
-                    ShareObject.status: 'Approved'
-                }
-            )
-        )
+        (session.query(ShareObject).filter(ShareObject.status == 'Processed').update({ShareObject.status: 'Approved'}))
 
         print('Share Objects updated successfully')
         print('Updating share Items in Draft..')
         (
             session.query(ShareObjectItem)
-            .filter(
-                ShareObjectItem.status == 'PendingApproval'
-            )
-            .update(
-                {
-                    ShareObjectItem.status: 'Draft'
-                }
-            )
+            .filter(ShareObjectItem.status == 'PendingApproval')
+            .update({ShareObjectItem.status: 'Draft'})
         )
 
         print('Share Items updated successfully')

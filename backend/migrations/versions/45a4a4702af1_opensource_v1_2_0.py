@@ -5,6 +5,7 @@ Revises: ec6ab02aa0cc
 Create Date: 2022-09-15 17:53:13.455441
 
 """
+
 from alembic import op
 from sqlalchemy.dialects import postgresql
 import sqlalchemy as sa
@@ -48,14 +49,8 @@ def upgrade():
 
 
 def downgrade():
-    op.add_column(
-        'datapipeline', sa.Column('inputDatasetUri', sa.String(), nullable=True)
-    )
-    op.add_column(
-        'datapipeline', sa.Column('outputDatasetUri', sa.String(), nullable=True)
-    )
-    op.add_column(
-        'datapipeline', sa.Column('devStages', postgresql.ARRAY(sa.String()), nullable=True)
-    )
+    op.add_column('datapipeline', sa.Column('inputDatasetUri', sa.String(), nullable=True))
+    op.add_column('datapipeline', sa.Column('outputDatasetUri', sa.String(), nullable=True))
+    op.add_column('datapipeline', sa.Column('devStages', postgresql.ARRAY(sa.String()), nullable=True))
     op.drop_table('datapipelineenvironments')
     pass

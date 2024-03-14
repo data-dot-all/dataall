@@ -5,6 +5,7 @@ Revises: 917b923f74bd
 Create Date: 2023-10-20 15:04:15.061516
 
 """
+
 import os
 
 from alembic import op
@@ -28,14 +29,8 @@ def upgrade():
     # semgrep finding ignored as no upstream user input is passed to the statement function
     # Only code admins will have access to the envname parameter of the f-string
 
-    op.alter_column(
-        'notification',
-        'username',
-        new_column_name='recipient',
-        nullable=False,
-        existing_type=sa.String()
-    )
-    print("Notification columns updated")
+    op.alter_column('notification', 'username', new_column_name='recipient', nullable=False, existing_type=sa.String())
+    print('Notification columns updated')
 
 
 def downgrade():
@@ -56,12 +51,6 @@ def downgrade():
             'DATASET_VERSION',
             name='notificationtype',
         ),
-        nullable=True
+        nullable=True,
     )
-    op.alter_column(
-        'notification',
-        'recipient',
-        new_column_name='username',
-        nullable=False,
-        existing_type=sa.String()
-    )
+    op.alter_column('notification', 'recipient', new_column_name='username', nullable=False, existing_type=sa.String())

@@ -4,7 +4,7 @@ src = ["backend", "deploy"]
 target-version = "py39"
 
 [tool.ruff.lint]
-exclude = [ "backend/migrations","tests/**", "**/input_types.py", "**/mutations.py", "**/queries.py", "**/types.py", "**/api/__init__.py"]
+exclude = [ "tests/**", "**/input_types.py", "**/mutations.py", "**/queries.py", "**/types.py", "**/api/__init__.py"]
 #select = ["D", "E", "F", "I", "PL", "RUF100", "W", "FA", "UP", "PYI036"]
 ignore=[
     "E501",
@@ -29,4 +29,4 @@ max-statements = 50  # Maximum number of statements in function / method body.
 [tool.ruff.format]
 quote-style = "single"
 docstring-code-format = true
-exclude = [ "backend/migrations/**","tests/**"]
+exclude = [ "tests/**"]
