@@ -90,11 +90,6 @@ const WorksheetView = () => {
 
   const fetchEnvironments = useCallback(
     async (group) => {
-      /* eslint-disable no-console */
-      console.log('Calling fetch environment...');
-      console.log(worksheet);
-      console.log(group);
-      /* eslint-enable no-console */
       setLoadingEnvs(true);
       const response = await client.query(
         listValidEnvironments({
