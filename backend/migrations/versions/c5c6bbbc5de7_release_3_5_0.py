@@ -5,6 +5,7 @@ Revises: b6e0ac8f6d3f
 Create Date: 2021-11-15 08:47:40.128047
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
@@ -74,9 +75,7 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     print('Adding environment resourcePrefix...')
-    op.add_column(
-        'environment', sa.Column('resourcePrefix', sa.String(), nullable=False)
-    )
+    op.add_column('environment', sa.Column('resourcePrefix', sa.String(), nullable=False))
     op.add_column(
         'environment',
         sa.Column('EnvironmentDefaultIAMRoleImported', sa.Boolean(), nullable=True),

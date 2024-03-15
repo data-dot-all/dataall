@@ -44,9 +44,7 @@ def test_resolver():
         return {'id': data['id']}
 
     Foo = gql.ObjectType(name='Foo', fields=[gql.Field(name='id', type=gql.String)])
-    Query = gql.ObjectType(
-        name='Query', fields=[gql.Field(name='getMeFoo', type=Foo, resolver=getMeFoo)]
-    )
+    Query = gql.ObjectType(name='Query', fields=[gql.Field(name='getMeFoo', type=Foo, resolver=getMeFoo)])
     schema = gql.Schema(types=[Foo, Query])
 
     result = schema.resolve(context=None, path='Query/getMeFoo', source=None, id='1')

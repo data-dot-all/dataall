@@ -1,5 +1,3 @@
-
-
 class ShareItemsFound(Exception):
     def __init__(self, action, message):
         self.action = action

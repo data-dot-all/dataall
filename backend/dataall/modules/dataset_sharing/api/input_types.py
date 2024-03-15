@@ -1,4 +1,4 @@
-from dataall.base.api.constants import *
+from dataall.base.api.constants import SortDirection, gql
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, ShareSortField
 
 
@@ -10,7 +10,7 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
-        gql.Argument(name='attachMissingPolicies', type=gql.NonNullableType(gql.Boolean))
+        gql.Argument(name='attachMissingPolicies', type=gql.NonNullableType(gql.Boolean)),
     ],
 )
 
@@ -19,9 +19,7 @@ AddSharedItemInput = gql.InputType(
     name='AddSharedItemInput',
     arguments=[
         gql.Argument(name='itemUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(
-            name='itemType', type=gql.NonNullableType(ShareableType.toGraphQLEnum())
-        ),
+        gql.Argument(name='itemType', type=gql.NonNullableType(ShareableType.toGraphQLEnum())),
     ],
 )
 
@@ -38,12 +36,8 @@ ShareItemSelectorInput = gql.InputType(
 ShareSortCriteria = gql.InputType(
     name='ShareSortCriteria',
     arguments=[
-        gql.Argument(
-            name='field', type=gql.NonNullableType(ShareSortField.toGraphQLEnum())
-        ),
-        gql.Argument(
-            name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())
-        ),
+        gql.Argument(name='field', type=gql.NonNullableType(ShareSortField.toGraphQLEnum())),
+        gql.Argument(name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())),
     ],
 )
 
@@ -83,7 +77,7 @@ EnvironmentDataItemFilter = gql.InputType(
         gql.Argument('term', gql.String),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
-        gql.Argument('uniqueShares', gql.Boolean)
+        gql.Argument('uniqueShares', gql.Boolean),
     ],
 )
 

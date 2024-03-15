@@ -45,9 +45,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
         groups=[group.name, 'DAAdministrators'],
     )
 
-    assert group.name in [
-        node.groupUri for node in response.data.listTenantGroups.nodes
-    ]
+    assert group.name in [node.groupUri for node in response.data.listTenantGroups.nodes]
 
 
 def test_update_permissions(client, user, group, tenant):

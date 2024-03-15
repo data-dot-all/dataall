@@ -38,8 +38,4 @@ class DatasetColumnRepository:
                 )
             ).order_by(DatasetTableColumn.columnType.asc())
 
-        return paginate(
-            query=q,
-            page=filter.get('page', 1),
-            page_size=filter.get('pageSize', 10)
-        ).to_dict()
+        return paginate(query=q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)).to_dict()

@@ -1,7 +1,4 @@
-
-from aws_cdk import (
-    aws_wafv2 as wafv2
-)
+from aws_cdk import aws_wafv2 as wafv2
 
 
 def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
@@ -105,7 +102,7 @@ def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
             override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
         )
     )
-    if name != "Cognito":
+    if name != 'Cognito':
         priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
@@ -160,7 +157,7 @@ def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
-    if name != "Cloudfront":
+    if name != 'Cloudfront':
         priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(

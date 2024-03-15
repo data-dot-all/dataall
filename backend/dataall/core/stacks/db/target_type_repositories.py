@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 class TargetType:
     """Resolves the read/write permissions for different type of resources (target types)"""
+
     _TARGET_TYPES = {}
 
     def __init__(self, name, read_permission, write_permission):
@@ -37,4 +38,4 @@ class TargetType:
             )
 
 
-TargetType("environment", permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)
+TargetType('environment', permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)

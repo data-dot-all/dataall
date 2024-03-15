@@ -20,8 +20,9 @@ def env_params():
 def get_cdk_look_up_role_arn(module_mocker):
     module_mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_cdk_look_up_role_arn',
-        return_value="arn:aws:iam::1111111111:role/cdk-hnb659fds-lookup-role-1111111111-eu-west-1",
+        return_value='arn:aws:iam::1111111111:role/cdk-hnb659fds-lookup-role-1111111111-eu-west-1',
     )
+
 
 @pytest.fixture(scope='module', autouse=True)
 def check_default_vpc(module_mocker):
@@ -69,9 +70,9 @@ def sagemaker_studio_user(client, tenant, group, env_with_mlstudio) -> Sagemaker
 
 @pytest.fixture(scope='module')
 def multiple_sagemaker_studio_users(client, db, env_with_mlstudio, group):
-        for i in range(0, 10):
-            response = client.query(
-                """
+    for i in range(0, 10):
+        response = client.query(
+            """
                 mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput){
                 createSagemakerStudioUser(input:$input){
                     sagemakerStudioUserUri
@@ -85,23 +86,18 @@ def multiple_sagemaker_studio_users(client, db, env_with_mlstudio, group):
                 }
             }
                 """,
-                input={
-                    'label': f'test{i}',
-                    'SamlAdminGroupName': group.name,
-                    'environmentUri': env_with_mlstudio.environmentUri,
-                },
-                username='alice',
-                groups=[group.name],
-            )
-            assert response.data.createSagemakerStudioUser.label == f'test{i}'
-            assert (
-                    response.data.createSagemakerStudioUser.SamlAdminGroupName
-                    == group.name
-            )
-            assert (
-                    response.data.createSagemakerStudioUser.environmentUri
-                    == env_with_mlstudio.environmentUri
-            )
+            input={
+                'label': f'test{i}',
+                'SamlAdminGroupName': group.name,
+                'environmentUri': env_with_mlstudio.environmentUri,
+            },
+            username='alice',
+            groups=[group.name],
+        )
+        assert response.data.createSagemakerStudioUser.label == f'test{i}'
+        assert response.data.createSagemakerStudioUser.SamlAdminGroupName == group.name
+        assert response.data.createSagemakerStudioUser.environmentUri == env_with_mlstudio.environmentUri
+
 
 @pytest.fixture(scope='module')
 def env_with_mlstudio(client, org_fixture, user, group, parameters=None, vpcId='', subnetIds=[]):
@@ -138,7 +134,7 @@ def env_with_mlstudio(client, org_fixture, user, group, parameters=None, vpcId='
             'SamlGroupName': 'testadmins',
             'parameters': [{'key': k, 'value': v} for k, v in parameters.items()],
             'vpcId': vpcId,
-            'subnetIds': subnetIds
+            'subnetIds': subnetIds,
         },
     )
     yield response.data.createEnvironment
@@ -188,4 +184,3 @@ def org_fixture(org, user, group):
 def env_mlstudio_fixture(env, org_fixture, user, group, tenant):
     env1 = env_with_mlstudio(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
-

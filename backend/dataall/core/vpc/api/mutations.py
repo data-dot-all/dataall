@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from .resolvers import create_network, delete_network
 
 createNetwork = gql.MutationField(
     name='createNetwork',

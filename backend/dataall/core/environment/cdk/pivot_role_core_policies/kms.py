@@ -10,6 +10,7 @@ class KMSPivotRole(PivotRoleStatementSet):
     manage data.all alias KMS keys
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -34,12 +35,8 @@ class KMSPivotRole(PivotRoleStatementSet):
                     'kms:TagResource',
                     'kms:UntagResource',
                 ],
-                resources=[f"arn:aws:kms:{self.region}:{self.account}:key/*"],
-                conditions={
-                    'ForAnyValue:StringLike': {
-                        'kms:ResourceAliases': [f"alias/{self.env_resource_prefix}*"]
-                    }
-                },
-            )
+                resources=[f'arn:aws:kms:{self.region}:{self.account}:key/*'],
+                conditions={'ForAnyValue:StringLike': {'kms:ResourceAliases': [f'alias/{self.env_resource_prefix}*']}},
+            ),
         ]
         return statements

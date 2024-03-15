@@ -19,9 +19,7 @@ class CloudWatch:
         pass
 
     @staticmethod
-    def run_query(
-        query: str, log_group_name: str, days: int, timeout_min: int = 5
-    ) -> List[dict]:
+    def run_query(query: str, log_group_name: str, days: int, timeout_min: int = 5) -> List[dict]:
         """
         Runs a query against a given log group name via Cloudwatch insights
         Args:
