@@ -517,6 +517,8 @@ class EnvironmentService:
 
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
+        if filter and filter.get('SamlGroupName'):
+            groups = [filter.get('SamlGroupName')]
         query = (
             session.query(Environment)
             .outerjoin(
