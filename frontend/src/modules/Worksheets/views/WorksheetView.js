@@ -33,7 +33,6 @@ import {
   getSharedDatasetTables,
   listDatasetTableColumns,
   listDatasetsOwnedByEnvGroup,
-  listEnvironmentGroups,
   listValidEnvironments,
   searchEnvironmentDataItems,
   useClient
@@ -57,7 +56,6 @@ const WorksheetView = () => {
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [worksheet, setWorksheet] = useState({ worksheetUri: '' });
   const [results, setResults] = useState({ rows: [], fields: [] });
   const [loading, setLoading] = useState(true);
@@ -65,7 +63,6 @@ const WorksheetView = () => {
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
   const [currentEnv, setCurrentEnv] = useState();
-  const [currentTeam, setCurrentTeam] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseOptions, setDatabaseOptions] = useState([]);
@@ -109,29 +106,6 @@ const WorksheetView = () => {
     }
     setLoadingEnvs(false);
   }, [client, dispatch]);
-
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
 
   const fetchDatabases = useCallback(
     async (environment, team) => {
@@ -369,22 +343,9 @@ const WorksheetView = () => {
     setSelectedTable('');
     setDatabaseOptions([]);
     setTableOptions([]);
-    setCurrentTeam('');
     setCurrentEnv(event.target.value);
-    fetchGroups(event.target.value.environmentUri).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
-    );
-  }
-
-  function handleTeamChange(event) {
-    setColumns([]);
-    setSelectedDatabase('');
-    setSelectedTable('');
-    setDatabaseOptions([]);
-    setTableOptions([]);
-    setCurrentTeam(event.target.value);
-    fetchDatabases(currentEnv, event.target.value).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
+    fetchDatabases(event.target.value, worksheet.SamlAdminGroupName).catch(
+      (e) => dispatch({ type: SET_ERROR, error: e.message })
     );
   }
 
@@ -474,31 +435,13 @@ const WorksheetView = () => {
                 </Box>
                 <Box sx={{ p: 2, mt: 2 }}>
                   <TextField
+                    disabled
                     fullWidth
                     label="Team"
                     name="team"
-                    onChange={(event) => {
-                      handleTeamChange(event);
-                    }}
-                    select
-                    value={currentTeam}
+                    value={worksheet ? worksheet.SamlAdminGroupName : ''}
                     variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingEnvs ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {groupOptions.map((group) => (
-                      <MenuItem key={group.value} value={group.value}>
-                        {group.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  />
                 </Box>
                 <Box sx={{ p: 2 }}>
                   <TextField
