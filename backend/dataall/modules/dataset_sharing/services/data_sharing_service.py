@@ -259,24 +259,6 @@ class DataSharingService:
                     env_group,
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-                existing_shared_folders = ShareObjectRepository.check_existing_shared_items_of_type(
-                    session, share_uri, ShareableType.StorageLocation.value
-                )
-
-                log.info(f'Still remaining S3 folder resources shared = {existing_shared_folders}')
-                if not existing_shared_folders and revoked_folders:
-                    log.info('Clean up S3 access points...')
-                    clean_up_folders = ProcessS3AccessPointShare.clean_up_share(
-                        session,
-                        dataset=dataset,
-                        share=share,
-                        folder=revoked_folders[0],
-                        source_environment=source_environment,
-                        target_environment=target_environment,
-                        source_env_group=source_env_group,
-                        env_group=env_group,
-                    )
-                    log.info(f'Clean up S3 successful = {clean_up_folders}')
 
                 log.info('Revoking permissions to S3 buckets')
 

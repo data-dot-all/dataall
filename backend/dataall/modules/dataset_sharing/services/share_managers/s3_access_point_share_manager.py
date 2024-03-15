@@ -82,10 +82,6 @@ class S3AccessPointShareManager:
     def verify_shares(self, *kwargs) -> bool:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def clean_up_share(self, *kwargs):
-        raise NotImplementedError
-
     @staticmethod
     def build_access_point_name(share):
         S3AccessPointName = utils.slugify(
@@ -565,8 +561,8 @@ class S3AccessPointShareManager:
             }
         kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
-    def delete_access_point_policy(self):
-        logger.info(f'Deleting access point policy for access point {self.access_point_name}...')
+    def revoke_access_in_access_point_policy(self):
+        logger.info(f'Generating new access point policy for access point {self.access_point_name}...')
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(self.access_point_name))
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
@@ -575,48 +571,43 @@ class S3AccessPointShareManager:
         if f'{target_requester_id}0' in statements.keys():
             prefix_list = statements[f'{target_requester_id}0']['Condition']['StringLike']['s3:prefix']
             if isinstance(prefix_list, list) and f'{self.s3_prefix}/*' in prefix_list:
+                logger.info(f'Removing folder {self.s3_prefix} from access point policy...')
                 prefix_list.remove(f'{self.s3_prefix}/*')
                 statements[f'{target_requester_id}1']['Resource'].remove(
                     f'{access_point_arn}/object/{self.s3_prefix}/*'
                 )
                 access_point_policy['Statement'] = list(statements.values())
             else:
+                logger.info(f'Folder {self.s3_prefix} already removed from access point policy, skipping...')
+
+            if len(prefix_list) == 0:
+                logger.info('Removing empty statements from access point policy...')
                 access_point_policy['Statement'].remove(statements[f'{target_requester_id}0'])
                 access_point_policy['Statement'].remove(statements[f'{target_requester_id}1'])
+                # # We need to handle DATAALL_ALLOW_OWNER_SID for backwards compatibility
+                access_point_policy['Statement'].remove(statements[DATAALL_ALLOW_OWNER_SID])
+        return access_point_policy
+
+    def attach_new_access_point_policy(self, access_point_policy):
+        logger.info(f'Attaching access point policy {access_point_policy} for access point {self.access_point_name}...')
+        s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
 
-    @staticmethod
-    def delete_access_point(
-        share: ShareObject,
-        dataset: Dataset,
-    ):
-        access_point_name = S3AccessPointShareManager.build_access_point_name(share)
-        logger.info(f'Deleting access point {access_point_name}...')
+    def delete_access_point(self):
+        logger.info(f'Deleting access point {self.access_point_name}...')
+        s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
+        s3_client.delete_bucket_access_point(self.access_point_name)
 
-        s3_client = S3ControlClient(dataset.AwsAccountId, dataset.region)
-        access_point_policy = json.loads(s3_client.get_access_point_policy(access_point_name))
-        # We need to handle DATAALL_ALLOW_OWNER_SID for backwards compatibility
-        if len([statement for statement in access_point_policy['Statement'] if statement['Sid'] != DATAALL_ALLOW_OWNER_SID]) == 0:
-            s3_client.delete_bucket_access_point(access_point_name)
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def delete_target_role_access_policy(
-        share: ShareObject,
-        dataset: Dataset,
-        target_environment: Environment,
-    ):
+    def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
         share_policy_service = SharePolicyService(
-            role_name=share.principalIAMRoleName,
-            account=target_environment.AwsAccountId,
-            environmentUri=target_environment.environmentUri,
-            resource_prefix=target_environment.resourcePrefix,
+            environmentUri=self.target_environment.environmentUri,
+            account=self.target_environment.AwsAccountId,
+            role_name=self.target_requester_IAMRoleName,
+            resource_prefix=self.target_environment.resourcePrefix,
         )
 
         # Backwards compatibility
@@ -628,21 +619,21 @@ class S3AccessPointShareManager:
         # End of backwards compatibility
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
+
         version_id, policy_document = IAM.get_managed_policy_default_version(
-            target_environment.AwsAccountId, share_resource_policy_name
+            self.target_account_id, share_resource_policy_name
         )
+        # TODO: optimize duplicated code between grant and revoke
 
-        access_point_name = S3AccessPointShareManager.build_access_point_name(share)
-
-        key_alias = f'alias/{dataset.KmsAlias}'
-        kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
+        key_alias = f'alias/{self.dataset.KmsAlias}'
+        kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
 
         s3_target_resources = [
-            f'arn:aws:s3:::{dataset.S3BucketName}',
-            f'arn:aws:s3:::{dataset.S3BucketName}/*',
-            f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}',
-            f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*',
+            f'arn:aws:s3:::{self.bucket_name}',
+            f'arn:aws:s3:::{self.bucket_name}/*',
+            f'arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}',
+            f'arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*',
         ]
 
         share_policy_service.remove_resource_from_statement(
@@ -651,14 +642,14 @@ class S3AccessPointShareManager:
             policy_document=policy_document,
         )
         if kms_key_id:
-            kms_target_resources = [f'arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{kms_key_id}']
+            kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
             share_policy_service.remove_resource_from_statement(
                 target_resources=kms_target_resources,
                 statement_sid=f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
                 policy_document=policy_document,
             )
         IAM.update_managed_policy_default_version(
-            target_environment.AwsAccountId, share_resource_policy_name, version_id, json.dumps(policy_document)
+            self.target_account_id, share_resource_policy_name, version_id, json.dumps(policy_document)
         )
 
     def delete_dataset_bucket_key_policy(

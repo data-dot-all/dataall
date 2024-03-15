@@ -356,7 +356,7 @@ def test_grant_role_bucket_policy_with_policy_and_no_read_only_sid(
     # Get the Bucket Policy
     modified_bucket_policy = json.loads(s3_client().create_bucket_policy.call_args.args[1])
 
-    #DataAll-Bucket-ReadOnly Sid's should be attached now
+    # DataAll-Bucket-ReadOnly Sid's should be attached now
     for policy in modified_bucket_policy['Statement']:
         if 'Sid' in policy:
             assert policy['Sid'] in [f'{DATAALL_READ_ONLY_SID}']

@@ -95,9 +95,7 @@ class S3ControlClient:
         return policy
 
     @staticmethod
-    def generate_default_bucket_policy(
-        s3_bucket_name: str
-    ):
+    def generate_default_bucket_policy(s3_bucket_name: str):
         policy = {
             'Version': '2012-10-17',
             'Statement': [
