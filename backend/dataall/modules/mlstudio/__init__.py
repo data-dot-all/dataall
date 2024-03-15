@@ -1,4 +1,5 @@
 """Contains the code related to SageMaker ML Studio user profiles"""
+
 import logging
 
 from dataall.base.loader import ImportMode, ModuleInterface
@@ -19,11 +20,12 @@ class MLStudioApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.mlstudio.api
         from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
-        TargetType("mlstudio", GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
+
+        TargetType('mlstudio', GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
 
         EnvironmentResourceManager.register(SagemakerStudioEnvironmentResource())
 
-        log.info("API of sagemaker mlstudio has been imported")
+        log.info('API of sagemaker mlstudio has been imported')
 
 
 class MLStudioCdkModuleInterface(ModuleInterface):
@@ -39,4 +41,4 @@ class MLStudioCdkModuleInterface(ModuleInterface):
         from dataall.modules.mlstudio.cdk.mlstudio_extension import SageMakerDomainExtension
 
         EnvironmentSetup.register(SageMakerDomainExtension)
-        log.info("API of sagemaker mlstudio has been imported")
+        log.info('API of sagemaker mlstudio has been imported')

@@ -5,19 +5,19 @@ from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 
 class MockSagemakerClient:
     def start_instance(self):
-        return "Starting"
+        return 'Starting'
 
     def stop_instance(self):
         return True
 
     def get_notebook_instance_status(self):
-        return "INSERVICE"
+        return 'INSERVICE'
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_aws(module_mocker):
     module_mocker.patch(
-        "dataall.modules.notebooks.services.notebook_service.client",
+        'dataall.modules.notebooks.services.notebook_service.client',
         return_value=MockSagemakerClient(),
     )
 

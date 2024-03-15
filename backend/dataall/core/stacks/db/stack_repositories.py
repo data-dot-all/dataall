@@ -24,11 +24,7 @@ class Stack:
 
     @staticmethod
     def find_stack_by_target_uri(session, target_uri):
-        stack: models.Stack = (
-            session.query(models.Stack)
-            .filter(models.Stack.targetUri == target_uri)
-            .first()
-        )
+        stack: models.Stack = session.query(models.Stack).filter(models.Stack.targetUri == target_uri).first()
         return stack
 
     @staticmethod
@@ -44,12 +40,8 @@ class Stack:
         return stack
 
     @staticmethod
-    def create_stack(
-        session, environment_uri, target_label, target_uri, target_type, payload=None
-    ) -> models.Stack:
-        environment: Environment = session.query(Environment).get(
-            environment_uri
-        )
+    def create_stack(session, environment_uri, target_label, target_uri, target_type, payload=None) -> models.Stack:
+        environment: Environment = session.query(Environment).get(environment_uri)
         if not environment:
             raise exceptions.ObjectNotFound('Environment', environment_uri)
 
@@ -71,12 +63,7 @@ class Stack:
         return stack
 
     @staticmethod
-    def update_stack(
-        session,
-        uri: str,
-        target_type: str
-    ) -> [models.Stack]:
-
+    def update_stack(session, uri: str, target_type: str) -> [models.Stack]:
         if not uri:
             raise exceptions.RequiredParameter('targetUri')
         if not target_type:
@@ -88,9 +75,7 @@ class Stack:
             username=context.username,
             groups=context.groups,
             resource_uri=uri,
-            permission_name=TargetType.get_resource_update_permission_name(
-                target_type
-            ),
+            permission_name=TargetType.get_resource_update_permission_name(target_type),
         )
         stack = Stack.get_stack_by_target_uri(session, target_uri=uri)
         return stack

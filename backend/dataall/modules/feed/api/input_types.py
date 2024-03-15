@@ -1,8 +1,6 @@
 from dataall.base.api import gql
 
-FeedMessageInput = gql.InputType(
-    name='FeedMessageInput', arguments=[gql.Argument(name='content', type=gql.String)]
-)
+FeedMessageInput = gql.InputType(name='FeedMessageInput', arguments=[gql.Argument(name='content', type=gql.String)])
 
 FeedMessageFilter = gql.InputType(
     name='FeedMessageFilter',

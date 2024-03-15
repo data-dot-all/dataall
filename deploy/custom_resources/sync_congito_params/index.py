@@ -21,9 +21,7 @@ def on_event(event, context):
 
 def on_create(event):
     print('**Sync Cognito Parameters')
-    parameters = get_parameters(
-        ssm, f"/dataall/{event['ResourceProperties']['envname']}/cognito"
-    )
+    parameters = get_parameters(ssm, f"/dataall/{event['ResourceProperties']['envname']}/cognito")
     print('all cognito params', parameters)
     response_data = sync_parameter_store(parameters)
     return response_data
@@ -35,7 +33,6 @@ def on_update(event):
 
 def on_delete(event):
     print('Received delete event')
-    pass
 
 
 def sync_parameter_store(parameters):
@@ -62,13 +59,9 @@ def get_parameters(client, path):
     token = None
     while more:
         if token is None:
-            response = client.get_parameters_by_path(
-                Path=path, Recursive=True, MaxResults=10
-            )
+            response = client.get_parameters_by_path(Path=path, Recursive=True, MaxResults=10)
         else:
-            response = client.get_parameters_by_path(
-                Path=path, Recursive=True, MaxResults=10, NextToken=token
-            )
+            response = client.get_parameters_by_path(Path=path, Recursive=True, MaxResults=10, NextToken=token)
         for param in response['Parameters']:
             parameters.append(param)
         token = response.get('NextToken')

@@ -2,12 +2,17 @@ import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareableType,
+    ShareItemStatus,
+    ShareObjectStatus,
+    PrincipalType,
+)
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def create_dataset(db):
     def factory(
         organization: Organization,
@@ -23,15 +28,15 @@ def create_dataset(db):
                 label=label,
                 owner=environment.owner,
                 SamlAdminGroupName=environment.SamlGroupName,
-                businessOwnerDelegationEmails=["foo@amazon.com"],
+                businessOwnerDelegationEmails=['foo@amazon.com'],
                 name=label,
                 S3BucketName=label,
-                GlueDatabaseName="gluedatabase",
-                KmsAlias="kmsalias",
+                GlueDatabaseName='gluedatabase',
+                KmsAlias='kmsalias',
                 AwsAccountId=environment.AwsAccountId,
                 region=environment.region,
-                IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
-                IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
+                IAMDatasetAdminUserArn=f'arn:aws:iam::{environment.AwsAccountId}:user/dataset',
+                IAMDatasetAdminRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/dataset',
                 imported=imported,
                 importedKmsKey=imported,
                 autoApprovalEnabled=autoApprovalEnabled,
@@ -43,10 +48,9 @@ def create_dataset(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def location(db):
     def factory(dataset: Dataset, label: str) -> DatasetStorageLocation:
-
         with db.scoped_session() as session:
             ds_location = DatasetStorageLocation(
                 name=label,
@@ -56,7 +60,7 @@ def location(db):
                 S3BucketName=dataset.S3BucketName,
                 region=dataset.region,
                 AWSAccountId=dataset.AwsAccountId,
-                S3Prefix=f"{label}",
+                S3Prefix=f'{label}',
             )
             session.add(ds_location)
         return ds_location
@@ -67,7 +71,6 @@ def location(db):
 @pytest.fixture(scope='module')
 def table(db):
     def factory(dataset: Dataset, label: str) -> DatasetTable:
-
         with db.scoped_session() as session:
             table = DatasetTable(
                 name=label,
@@ -116,18 +119,14 @@ def bucket(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share(db):
-    def factory(
-        dataset: Dataset,
-        environment: Environment,
-        env_group: EnvironmentGroup
-    ) -> ShareObject:
+    def factory(dataset: Dataset, environment: Environment, env_group: EnvironmentGroup) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
-                owner="bob",
+                owner='bob',
                 principalId=environment.SamlGroupName,
                 principalType=PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
@@ -141,7 +140,7 @@ def share(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share_item_folder(db):
     def factory(
         share: ShareObject,
@@ -150,12 +149,12 @@ def share_item_folder(db):
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
                 shareUri=share.shareUri,
-                owner="alice",
+                owner='alice',
                 itemUri=location.locationUri,
                 itemType=ShareableType.StorageLocation.value,
                 itemName=location.name,
                 status=ShareItemStatus.Share_Approved.value,
-                S3AccessPointName=location.name
+                S3AccessPointName=location.name,
             )
             session.add(share_item)
             session.commit()
@@ -164,7 +163,7 @@ def share_item_folder(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share_item_table(db):
     def factory(
         share: ShareObject,
@@ -174,7 +173,7 @@ def share_item_table(db):
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
                 shareUri=share.shareUri,
-                owner="alice",
+                owner='alice',
                 itemUri=table.tableUri,
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
@@ -187,16 +186,16 @@ def share_item_table(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share_item_bucket(db):
     def factory(
-            share: ShareObject,
-            bucket: DatasetBucket,
+        share: ShareObject,
+        bucket: DatasetBucket,
     ) -> ShareObjectItem:
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
                 shareUri=share.shareUri,
-                owner="alice",
+                owner='alice',
                 itemUri=bucket.bucketUri,
                 itemType=ShareableType.StorageLocation.value,
                 itemName=bucket.name,

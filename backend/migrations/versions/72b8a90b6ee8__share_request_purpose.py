@@ -5,6 +5,7 @@ Revises: 509997f0a51e
 Create Date: 2023-06-05 12:28:56.221364
 
 """
+
 from alembic import op
 from sqlalchemy import orm, Column, String, and_
 from sqlalchemy.ext.declarative import declarative_base
@@ -48,7 +49,9 @@ def upgrade():
                     group=environment.SamlGroupName,
                     resource_uri=share.shareUri,
                 )
-                print(f"Delete SHARE_OBJECT Permissions for Env Owner {environment.SamlGroupName} on Share {share.shareUri}")
+                print(
+                    f'Delete SHARE_OBJECT Permissions for Env Owner {environment.SamlGroupName} on Share {share.shareUri}'
+                )
 
             # Dataset Admins
             # Delete and Recreate Dataset Share Object Permissions to be Share Object Approver Permission Set
@@ -64,7 +67,9 @@ def upgrade():
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}")
+            print(
+                f'Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}'
+            )
 
             # Dataset Stewards
             # Delete and Recreate Dataset Share Object Permissions to be Share Object Approver Permission Set
@@ -81,7 +86,9 @@ def upgrade():
                     resource_uri=share.shareUri,
                     resource_type=ShareObject.__name__,
                 )
-                print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Steward {dataset.stewards} on Share {share.shareUri}")
+                print(
+                    f'Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Steward {dataset.stewards} on Share {share.shareUri}'
+                )
 
     except Exception as e:
         print(e)
@@ -111,7 +118,9 @@ def downgrade():
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            print(f"Adding SHARE_OBJECT_REQUESTER Permissions for Share Env Admin {environment.SamlGroupName} on Share {share.shareUri}")
+            print(
+                f'Adding SHARE_OBJECT_REQUESTER Permissions for Share Env Admin {environment.SamlGroupName} on Share {share.shareUri}'
+            )
 
             # Dataset Admins
             # Remove SHARE_OBJECT_APPROVER Permissions if Exists Separate from Stewards(i.e. if steward != owner)
@@ -129,7 +138,9 @@ def downgrade():
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            print(f"Adding SHARE_OBJECT_REQUESTER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}")
+            print(
+                f'Adding SHARE_OBJECT_REQUESTER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}'
+            )
     except Exception as e:
         print(e)
         print(f'Failed to update share object approver permissions due to: {e}')

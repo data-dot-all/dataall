@@ -10,6 +10,7 @@ class Cloudformation(ServicePolicy):
     - Create an S3 Bucket for codepipeline prefixed by "cf-templates-"
     - Read/Write to and from S3 Buckets prefixed by "cf-templates-"
     """
+
     def get_statements(self, group_permissions, **kwargs):
         statements = [
             iam.PolicyStatement(
@@ -40,14 +41,8 @@ class Cloudformation(ServicePolicy):
                 actions=[
                     'cloudformation:DeleteStack',
                 ],
-                resources=[
-                    f'arn:aws:cloudformation:{self.region}:{self.account}:*/{self.resource_prefix}*'
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                resources=[f'arn:aws:cloudformation:{self.region}:{self.account}:*/{self.resource_prefix}*'],
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
         ]
         return statements

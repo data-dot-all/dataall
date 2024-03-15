@@ -2,6 +2,7 @@
 A service layer for Votes
 Central part for working with Votes
 """
+
 from typing import Dict, Type
 from dataall.base.context import get_context
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
@@ -26,29 +27,16 @@ class VoteService:
     @staticmethod
     def upvote(targetUri: str, targetType: str, upvote: bool):
         with _session() as session:
-            vote = VoteRepository.upvote(
-                session=session,
-                targetUri=targetUri,
-                targetType=targetType,
-                upvote=upvote
-            )
+            vote = VoteRepository.upvote(session=session, targetUri=targetUri, targetType=targetType, upvote=upvote)
             _VOTE_TYPES[vote.targetType].upsert(session, vote.targetUri)
             return vote
 
     @staticmethod
     def get_vote(targetUri: str, targetType: str):
         with _session() as session:
-            return VoteRepository.get_vote(
-                session=session,
-                targetUri=targetUri,
-                targetType=targetType
-            )
+            return VoteRepository.get_vote(session=session, targetUri=targetUri, targetType=targetType)
 
     @staticmethod
     def count_upvotes(targetUri: str, targetType: str):
         with _session() as session:
-            return VoteRepository.count_upvotes(
-                session=session,
-                targetUri=targetUri,
-                target_type=targetType
-            )
+            return VoteRepository.count_upvotes(session=session, targetUri=targetUri, target_type=targetType)

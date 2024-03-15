@@ -6,8 +6,13 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import ShareOb
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER, MANAGE_DATASETS, \
-    CREATE_DATASET_FOLDER, LIST_DATASET_FOLDERS, DELETE_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_permissions import (
+    UPDATE_DATASET_FOLDER,
+    MANAGE_DATASETS,
+    CREATE_DATASET_FOLDER,
+    LIST_DATASET_FOLDERS,
+    DELETE_DATASET_FOLDER,
+)
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 
 
@@ -46,9 +51,7 @@ class DatasetLocationService:
     @has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(uri: str, filter: dict = None):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetLocationRepository.list_dataset_locations(
-                session=session, uri=uri, data=filter
-            )
+            return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
@@ -99,9 +102,5 @@ class DatasetLocationService:
     @staticmethod
     def _create_glossary_links(session, location, terms):
         GlossaryRepository.set_glossary_terms_links(
-            session,
-            get_context().username,
-            location.locationUri,
-            'Folder',
-            terms
+            session, get_context().username, location.locationUri, 'Folder', terms
         )

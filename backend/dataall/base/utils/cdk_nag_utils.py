@@ -43,9 +43,7 @@ class CDKNagUtil:
         NagSuppressions.add_stack_suppressions(
             stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed['id'], reason=rule_suppressed['reason'])
                 for rule_suppressed in CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

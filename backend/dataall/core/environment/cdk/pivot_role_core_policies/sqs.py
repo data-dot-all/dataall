@@ -8,20 +8,16 @@ class SQSPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # SQS - support SQS queues
-            iam.PolicyStatement(
-                sid='SQSList', effect=iam.Effect.ALLOW, actions=['sqs:ListQueues'], resources=['*']
-            ),
+            iam.PolicyStatement(sid='SQSList', effect=iam.Effect.ALLOW, actions=['sqs:ListQueues'], resources=['*']),
             iam.PolicyStatement(
                 sid='SQS',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'sqs:ReceiveMessage',
-                    'sqs:SendMessage'
-                ],
+                actions=['sqs:ReceiveMessage', 'sqs:SendMessage'],
                 resources=[f'arn:aws:sqs:*:{self.account}:{self.env_resource_prefix}*'],
-            )
+            ),
         ]
         return statements

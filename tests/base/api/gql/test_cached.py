@@ -2,7 +2,6 @@ from dataall.base.api import gql
 
 
 def test_cached_types():
-
     foo = gql.ObjectType(name='foo', fields=[gql.Field(name='id', type=gql.ID)])
 
     bar = gql.ObjectType(name='bar', fields=[gql.Field(name='id', type=gql.ID)])
@@ -15,7 +14,6 @@ def test_cached_types():
 
 
 def test_cached_query_fields():
-
     foo = gql.QueryField(name='foo', type=gql.String)
 
     bar = gql.QueryField(name='bar', type=gql.String)

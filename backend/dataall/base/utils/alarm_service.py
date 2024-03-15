@@ -61,9 +61,7 @@ Alarm Details:
             session = SessionHelper.get_session()
             ssm = session.client('ssm', region_name=region)
             sns = session.client('sns', region_name=region)
-            alarms_topic_arn = ssm.get_parameter(
-                Name=f'/dataall/{self.envname}/sns/alarmsTopic'
-            )['Parameter']['Value']
+            alarms_topic_arn = ssm.get_parameter(Name=f'/dataall/{self.envname}/sns/alarmsTopic')['Parameter']['Value']
             try:
                 logger.info('Sending deployment failure notification')
                 response = sns.publish(

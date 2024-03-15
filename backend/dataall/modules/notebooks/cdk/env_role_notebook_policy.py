@@ -14,6 +14,7 @@ class SagemakernotebookPolicy(ServicePolicy):
     - Allow any action besides the above listed ones on resources that are not notebooks, domains, apps and user-profiles
     - Allow support permissions on ECR, Service Catalog and logging
     """
+
     # TODO (in cleanup tasks): Remove those policies that are only needed for SM studio, right now we have both
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_NOTEBOOK not in group_permissions:
@@ -56,12 +57,11 @@ class SagemakernotebookPolicy(ServicePolicy):
                 actions=['sagemaker:CreateNotebookInstance'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-
                 ],
                 conditions={
                     'StringEquals': {
                         f'aws:RequestTag/{self.tag_key}': [self.tag_value],
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
                     },
                 },
             ),
@@ -73,9 +73,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                 ],
                 conditions={
-                    'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
-                    },
+                    'StringEquals': {f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]},
                 },
             ),
             iam.PolicyStatement(
@@ -88,9 +86,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                 ],
                 conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    },
+                    'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]},
                 },
             ),
             # SageMaker Studio permissions
@@ -107,11 +103,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_key]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
             ),
             # For everything that is not domains and user-profiles we allow permissions if the resource is tagged
             # Deny on creation of domains and users, generic allow for prefixed and tagged resources
@@ -146,11 +138,8 @@ class SagemakernotebookPolicy(ServicePolicy):
             iam.PolicyStatement(
                 # sid="SageMakerApps",
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:CreateApp',
-                    'sagemaker:DeleteApp'
-                ],
-                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*']
+                actions=['sagemaker:CreateApp', 'sagemaker:DeleteApp'],
+                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*'],
             ),
             iam.PolicyStatement(
                 # sid="SageMakerCreatePresignedDomainUrl",
@@ -158,9 +147,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                 actions=['sagemaker:CreatePresignedDomainUrl'],
                 resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*'],
                 conditions={
-                    'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
-                    },
+                    'StringEquals': {f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]},
                 },
             ),
             iam.PolicyStatement(
@@ -172,7 +159,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                     'sagemaker:Start*',
                     'sagemaker:Stop*',
                     'sagemaker:InvokeEndpoint',
-                    'sagemaker:InvokeEndpointAsync'
+                    'sagemaker:InvokeEndpointAsync',
                 ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*',
@@ -188,15 +175,11 @@ class SagemakernotebookPolicy(ServicePolicy):
             iam.PolicyStatement(
                 # sid="SageMakerLogging",
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'logs:CreateLogGroup',
-                    'logs:CreateLogStream',
-                    'logs:PutLogEvents'
-                ],
+                actions=['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
                 resources=[
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/sagemaker/*',
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/sagemaker/*:log-stream:*',
-                ]
+                ],
             ),
             iam.PolicyStatement(
                 # sid="SageMakerSupport",
@@ -209,6 +192,6 @@ class SagemakernotebookPolicy(ServicePolicy):
                     'servicecatalog:ListAcceptedPortfolioShares',
                     'servicecatalog:ListPrincipalsForPortfolio',
                 ],
-                resources=['*']
-            )
+                resources=['*'],
+            ),
         ]

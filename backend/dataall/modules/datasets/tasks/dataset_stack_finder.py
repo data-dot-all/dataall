@@ -13,6 +13,7 @@ class DatasetStackFinder(StackFinder):
     Dataset stack finder. Looks for datasets stack to update
     Register automatically itself when StackFinder instance is created
     """
+
     def find_stack_uris(self, session) -> List[str]:
         all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         log.info(f'Found {len(all_datasets)} datasets')

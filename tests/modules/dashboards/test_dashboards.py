@@ -1,6 +1,4 @@
-def test_update_dashboard(
-    client, env_fixture, group, patch_es, dashboard
-):
+def test_update_dashboard(client, env_fixture, group, patch_es, dashboard):
     response = client.query(
         """
             mutation updateDashboard(
@@ -297,9 +295,7 @@ def test_request_dashboard_share(
     assert len(response.data.searchDashboards['nodes']) == 1
 
 
-def test_delete_dashboard(
-    client, env_fixture, db, user, group, module_mocker, dashboard, patch_es
-):
+def test_delete_dashboard(client, env_fixture, db, user, group, module_mocker, dashboard, patch_es):
     response = client.query(
         """
         mutation deleteDashboard($dashboardUri:String!){

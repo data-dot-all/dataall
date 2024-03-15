@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 
 if __name__ == '__main__':
-
     try:
         ENVNAME = os.environ.get('envname', 'local')
         ENGINE = get_engine(envname=ENVNAME)

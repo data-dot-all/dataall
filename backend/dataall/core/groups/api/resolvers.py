@@ -16,11 +16,7 @@ def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(
-            session=session,
-            uri=environmentUri,
-            group_uri=source.groupUri
-        )
+        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=source.groupUri)
 
 
 def resolve_group_tenant_permissions(context, source):
@@ -46,11 +42,17 @@ def get_group(context, source, groupUri):
 def list_groups(context, source, filter: dict = None):
     envname = os.getenv('envname', 'local')
     if envname in ['dkrcompose']:
-        return [{"groupName": 'Engineers'}, {"groupName": 'Scientists'}, {"groupName": 'Requesters'}, {"groupName": 'Producers'}, {"groupName": 'Consumers'}]
+        return [
+            {'groupName': 'Engineers'},
+            {'groupName': 'Scientists'},
+            {'groupName': 'Requesters'},
+            {'groupName': 'Producers'},
+            {'groupName': 'Consumers'},
+        ]
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
     service_provider = ServiceProviderFactory.get_service_provider_instance()
     groups = service_provider.list_groups(envname=envname, region=current_region)
-    category, category_uri = filter.get("type"), filter.get("uri")
+    category, category_uri = filter.get('type'), filter.get('uri')
     if category and category_uri:
         if category == 'environment':
             with context.engine.scoped_session() as session:
@@ -71,7 +73,7 @@ def list_groups(context, source, filter: dict = None):
     res = []
     for group in groups:
         if group not in invited_group_uris:
-            res.append({"groupName": group})
+            res.append({'groupName': group})
     return res
 
 
@@ -81,8 +83,13 @@ def get_groups_for_user(context, source, userid):
         raise Exception("User Id doesn't match user id from context")
     envname = os.getenv('envname', 'local')
     if envname in ['local', 'dkrcompose']:
-        return [{"groupName": 'Engineers'}, {"groupName": 'Scientists'}, {"groupName": 'Requesters'},
-                {"groupName": 'Producers'}, {"groupName": 'Consumers'}]
+        return [
+            {'groupName': 'Engineers'},
+            {'groupName': 'Scientists'},
+            {'groupName': 'Requesters'},
+            {'groupName': 'Producers'},
+            {'groupName': 'Consumers'},
+        ]
     service_provider = ServiceProviderFactory.get_service_provider_instance()
     groups = service_provider.get_groups_for_user(userid)
     return groups

@@ -1,9 +1,13 @@
 repos:
-    -   repo: https://github.com/psf/black
-        rev: 22.8.0
-        hooks:
-            - id: black
-              entry: black --skip-string-normalization backend/dataall
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+        # Ruff version.
+      rev: v0.3.2
+      hooks:
+          # Run the linter.
+          - id: ruff
+            args: [ --fix ]
+          # Run the formatter.
+          - id: ruff-format
     -   repo: https://github.com/pre-commit/pre-commit-hooks
         rev: v2.5.0
         hooks:

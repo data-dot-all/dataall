@@ -29,18 +29,12 @@ class Engine:
             dbconfig.url,
             echo=False,
             pool_size=1,
-            connect_args={'options': f"-csearch_path={dbconfig.schema}"},
+            connect_args={'options': f'-csearch_path={dbconfig.schema}'},
         )
         try:
-            if not self.engine.dialect.has_schema(
-                self.engine, dbconfig.schema
-            ):
-                log.info(
-                    f"Schema not found - init the schema {dbconfig.schema}"
-                )
-                self.engine.execute(
-                    sqlalchemy.schema.CreateSchema(dbconfig.schema)
-                )
+            if not self.engine.dialect.has_schema(self.engine, dbconfig.schema):
+                log.info(f'Schema not found - init the schema {dbconfig.schema}')
+                self.engine.execute(sqlalchemy.schema.CreateSchema(dbconfig.schema))
             log.info('-- Using schema: %s --', dbconfig.schema)
         except Exception as e:
             log.error(f'Could not create schema: {e}')
@@ -50,9 +44,7 @@ class Engine:
 
     def session(self):
         if self._session is None:
-            self._session = sessionmaker(
-                bind=self.engine, autoflush=True, expire_on_commit=False
-            )()
+            self._session = sessionmaker(bind=self.engine, autoflush=True, expire_on_commit=False)()
 
         return self._session
 
@@ -123,7 +115,7 @@ def get_engine(envname=ENVNAME):
         }
     else:
         db_params = {
-            'host': 'db' if envname == 'dkrcompose' and os.path.exists("/.dockerenv") else 'localhost',
+            'host': 'db' if envname == 'dkrcompose' and os.path.exists('/.dockerenv') else 'localhost',
             'db': 'dataall',
             'user': 'postgres',
             'pwd': 'docker',

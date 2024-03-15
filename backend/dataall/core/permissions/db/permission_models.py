@@ -36,9 +36,7 @@ class TenantPolicy(Base):
         default='GROUP',
     )
 
-    permissions = relationship(
-        'TenantPolicyPermission', uselist=True, backref='tenant_policy'
-    )
+    permissions = relationship('TenantPolicyPermission', uselist=True, backref='tenant_policy')
 
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
@@ -48,9 +46,7 @@ class TenantPolicyPermission(Base):
     __tablename__ = 'tenant_policy_permission'
 
     sid = Column(String, ForeignKey(TenantPolicy.sid), primary_key=True)
-    permissionUri = Column(
-        String, ForeignKey(Permission.permissionUri), primary_key=True
-    )
+    permissionUri = Column(String, ForeignKey(Permission.permissionUri), primary_key=True)
     permission = relationship('Permission')
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
@@ -65,13 +61,9 @@ class ResourcePolicy(Base):
     resourceType = Column(String, nullable=False, index=True)
 
     principalId = Column(String, nullable=False, index=True)
-    principalType = Column(
-        DBEnum('USER', 'GROUP', 'SERVICE', name='rp_principal_type'), default='GROUP'
-    )
+    principalType = Column(DBEnum('USER', 'GROUP', 'SERVICE', name='rp_principal_type'), default='GROUP')
 
-    permissions = relationship(
-        'ResourcePolicyPermission', uselist=True, backref='resource_policy'
-    )
+    permissions = relationship('ResourcePolicyPermission', uselist=True, backref='resource_policy')
 
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
@@ -81,9 +73,7 @@ class ResourcePolicyPermission(Base):
     __tablename__ = 'resource_policy_permission'
 
     sid = Column(String, ForeignKey(ResourcePolicy.sid), primary_key=True)
-    permissionUri = Column(
-        String, ForeignKey(Permission.permissionUri), primary_key=True
-    )
+    permissionUri = Column(String, ForeignKey(Permission.permissionUri), primary_key=True)
     permission = relationship('Permission')
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)

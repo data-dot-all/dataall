@@ -9,7 +9,6 @@ log.setLevel(logging.INFO)
 
 
 class NotificationHandler:
-
     @staticmethod
     @Worker.handler(path='notification.service')
     def notification_service(engine, task: Task):
@@ -24,7 +23,9 @@ class NotificationHandler:
             message = task.payload.get('message')
             recipient_groups_list = task.payload.get('recipientGroupsList', [])
             recipient_email_list = task.payload.get('recipientEmailList', [])
-            return SESEmailNotificationService.send_email_task(subject, message, recipient_groups_list, recipient_email_list)
+            return SESEmailNotificationService.send_email_task(
+                subject, message, recipient_groups_list, recipient_email_list
+            )
         except Exception as e:
             log.error(f'Error while sending email in the notification service -  {e})')
             raise e

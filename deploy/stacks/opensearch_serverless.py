@@ -1,6 +1,6 @@
 import json
-import os 
-import sys 
+import os
+import sys
 
 from typing import Any, Dict, List, Optional
 from aws_cdk import (
@@ -13,16 +13,19 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
-BACKEND_UTILS_PATH = "/backend/dataall/base"
+BACKEND_UTILS_PATH = '/backend/dataall/base'
 parent_dir = os.path.dirname(os.path.realpath(__file__))
-backend_dir = parent_dir.rsplit("/", 2)[0] + BACKEND_UTILS_PATH
+backend_dir = parent_dir.rsplit('/', 2)[0] + BACKEND_UTILS_PATH
 sys.path.insert(0, backend_dir)
 
+
+# ruff: noqa: E402
 from utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
+# ruff: noqa: E402
 from .pyNestedStack import pyNestedClass
 
 
@@ -46,15 +49,13 @@ class OpenSearchServerlessStack(pyNestedClass):
             self,
             f'OpenSearchCollection{envname}',
             name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='collection'),
-            type="SEARCH",
+            type='SEARCH',
         )
 
         key = aws_kms.Key(
             self,
-            f'AOSSKMSKey',
-            removal_policy=RemovalPolicy.DESTROY
-            if not prod_sizing
-            else RemovalPolicy.RETAIN,
+            'AOSSKMSKey',
+            removal_policy=RemovalPolicy.DESTROY if not prod_sizing else RemovalPolicy.RETAIN,
             alias=f'{resource_prefix}-{envname}-opensearch-serverless',
             enable_key_rotation=True,
         )
@@ -70,14 +71,18 @@ class OpenSearchServerlessStack(pyNestedClass):
             ),
         )
 
-        cfn_vpc_endpoint = opensearchserverless.CfnVpcEndpoint(
-            self,
-            f'OpenSearchCollectionVpcEndpoint{envname}',
-            name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='vpc-endpoint'),
-            vpc_id=vpc.vpc_id,
-            security_group_ids=[vpc_endpoints_sg.security_group_id],
-            subnet_ids=[subnet.subnet_id for subnet in vpc.private_subnets],
-        ) if vpc and vpc_endpoints_sg else None
+        cfn_vpc_endpoint = (
+            opensearchserverless.CfnVpcEndpoint(
+                self,
+                f'OpenSearchCollectionVpcEndpoint{envname}',
+                name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='vpc-endpoint'),
+                vpc_id=vpc.vpc_id,
+                security_group_ids=[vpc_endpoints_sg.security_group_id],
+                subnet_ids=[subnet.subnet_id for subnet in vpc.private_subnets],
+            )
+            if vpc and vpc_endpoints_sg
+            else None
+        )
 
         cfn_network_policy = opensearchserverless.CfnSecurityPolicy(
             self,
@@ -140,72 +145,72 @@ class OpenSearchServerlessStack(pyNestedClass):
     @staticmethod
     def _get_encryption_policy(collection_name: str, kms_key_arn: Optional[str] = None) -> str:
         policy: Dict[str, Any] = {
-            "Rules": [
+            'Rules': [
                 {
-                    "ResourceType": "collection",
-                    "Resource": [
-                        f"collection/{collection_name}",
-                    ]
+                    'ResourceType': 'collection',
+                    'Resource': [
+                        f'collection/{collection_name}',
+                    ],
                 }
             ],
         }
         if kms_key_arn:
-            policy["KmsARN"] = kms_key_arn
+            policy['KmsARN'] = kms_key_arn
         else:
-            policy["AWSOwnedKey"] = True
+            policy['AWSOwnedKey'] = True
         return json.dumps(policy)
 
     @staticmethod
     def _get_network_policy(collection_name: str, vpc_endpoints: Optional[List[str]] = None) -> str:
         policy: List[Dict[str, Any]] = [
             {
-                "Rules": [
+                'Rules': [
                     {
-                        "ResourceType": "dashboard",
-                        "Resource": [
-                            f"collection/{collection_name}",
+                        'ResourceType': 'dashboard',
+                        'Resource': [
+                            f'collection/{collection_name}',
                         ],
                     },
                     {
-                        "ResourceType": "collection",
-                        "Resource": [
-                            f"collection/{collection_name}",
+                        'ResourceType': 'collection',
+                        'Resource': [
+                            f'collection/{collection_name}',
                         ],
                     },
                 ],
             }
         ]
         if vpc_endpoints:
-            policy[0]["SourceVPCEs"] = vpc_endpoints
+            policy[0]['SourceVPCEs'] = vpc_endpoints
         else:
-            policy[0]["AllowFromPublic"] = True
+            policy[0]['AllowFromPublic'] = True
         return json.dumps(policy)
 
     @staticmethod
     def _get_access_policy(collection_name: str, principal_arns: List[str]) -> str:
         policy = [
             {
-                "Rules": [
+                'Rules': [
                     {
-                        "ResourceType": "index",
-                        "Resource": [
-                            f"index/{collection_name}/*",
+                        'ResourceType': 'index',
+                        'Resource': [
+                            f'index/{collection_name}/*',
                         ],
-                        "Permission": [
-                            "aoss:*",
+                        'Permission': [
+                            'aoss:*',
                         ],
                     },
                     {
-                        "ResourceType": "collection",
-                        "Resource": [
-                            f"collection/{collection_name}",
+                        'ResourceType': 'collection',
+                        'Resource': [
+                            f'collection/{collection_name}',
                         ],
-                        "Permission": [
-                            "aoss:*",
+                        'Permission': [
+                            'aoss:*',
                         ],
                     },
                 ],
-                "Principal": principal_arns
+                'Principal': principal_arns,
             }
         ]
         return json.dumps(policy)
