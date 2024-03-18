@@ -126,6 +126,10 @@ const PipelineEditForm = Loadable(
   lazy(() => import('./modules/Pipelines/views/PipelineEditForm'))
 );
 
+const WarehousesList = Loadable(
+  lazy(() => import('./modules/Warehouses/views/WarehousesList'))
+);
+
 const ShareList = Loadable(
   lazy(() => import('./modules/Shares/views/ShareList'))
 );
@@ -348,6 +352,14 @@ const routes = [
           {
             path: 'pipelines/:uri/edit',
             element: <PipelineEditForm />
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.WAREHOUSES) && {
+        children: [
+          {
+            path: 'warehouses',
+            element: <WarehousesList />
           }
         ]
       },

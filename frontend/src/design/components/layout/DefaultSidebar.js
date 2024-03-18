@@ -51,6 +51,13 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       icon: <BsIcons.BsTag size={15} />,
       active: isModuleEnabled(ModuleNames.GLOSSARIES)
     };
+    //TODO: choose better icon for warehouses
+    const warehousesSection = {
+      title: 'Warehouses',
+      path: '/console/warehouses',
+      icon: <BsIcons.BsGear size={15} />,
+      active: isModuleEnabled(ModuleNames.WAREHOUSES)
+    };
 
     const worksheetsSection = {
       title: 'Worksheets',
@@ -124,7 +131,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
         },
         {
           title: 'Admin',
-          items: [organizationsSection, environmentsSection]
+          items: [organizationsSection, environmentsSection, warehousesSection]
         }
       ];
     } else {
