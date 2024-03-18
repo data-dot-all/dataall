@@ -11,9 +11,9 @@ from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy import orm
 
-from dataall.core.permissions.db.tenant_repositories import Tenant
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
-from dataall.core.permissions.permissions import TENANT_ALL
+from dataall.core.permissions.db.tenant.tenant_repositories import Tenant
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.constants.permissions import TENANT_ALL
 
 revision = 'e177eb044b31'
 down_revision = '033c3d6c1849'

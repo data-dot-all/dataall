@@ -1,4 +1,4 @@
-from dataall.core.permissions.permissions import (
+from dataall.core.permissions.constants.permissions import (
     ENVIRONMENT_INVITED,
     ENVIRONMENT_INVITATION_REQUEST,
     ENVIRONMENT_ALL,

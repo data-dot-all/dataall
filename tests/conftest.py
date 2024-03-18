@@ -9,8 +9,8 @@ from glob import glob
 
 from dataall.core.groups.db.group_models import Group
 from dataall.core.permissions.db import Tenant, Permission
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
-from dataall.core.permissions.permissions import TENANT_ALL
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.constants.permissions import TENANT_ALL
 from tests.client import create_app, ClientWrapper
 
 load_modules(modes=ImportMode.all())

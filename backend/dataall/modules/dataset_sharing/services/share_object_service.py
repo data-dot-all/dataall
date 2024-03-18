@@ -4,9 +4,9 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission
-from dataall.core.permissions.permissions import GET_ENVIRONMENT
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.decorators.permission_checker import has_resource_permission
+from dataall.core.permissions.constants.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient

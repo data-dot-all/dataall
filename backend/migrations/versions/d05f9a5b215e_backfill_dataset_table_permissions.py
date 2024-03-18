@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (

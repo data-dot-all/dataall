@@ -10,13 +10,12 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.permission.permission_repositories import Permission
 from dataall.base.db import Resource
-from dataall.core.permissions.db.permission_models import (
-    PermissionType,
-    ResourcePolicyPermission,
-    TenantPolicyPermission,
-)
+from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicyPermission
+from dataall.core.permissions.api.enums import PermissionType
+from dataall.core.permissions.db.tenant.tenant_models import  TenantPolicyPermission
+
 
 
 # revision identifiers, used by Alembic.

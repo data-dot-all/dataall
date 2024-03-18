@@ -1,6 +1,6 @@
 from dataall.base.context import get_context
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient

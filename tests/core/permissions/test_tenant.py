@@ -1,4 +1,4 @@
-from dataall.core.permissions import permissions
+from dataall.core.permissions.constants import permissions
 
 
 def test_list_tenant_permissions(client, user, group, tenant):

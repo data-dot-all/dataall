@@ -16,13 +16,13 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.services.vpc_service import VpcService
 from dataall.base.aws.ec2_client import EC2
-from dataall.core.permissions import permissions
+from dataall.core.permissions.constants import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
     NamingConventionService,

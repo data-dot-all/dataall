@@ -7,11 +7,11 @@ Create Date: 2023-06-05 12:28:56.221364
 """
 
 from alembic import op
-from sqlalchemy import orm, Column, String, and_
+from sqlalchemy import orm, Column, String
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository

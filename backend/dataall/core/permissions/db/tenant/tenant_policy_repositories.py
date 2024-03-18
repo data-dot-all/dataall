@@ -2,12 +2,13 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.api.enums import PermissionType
 from dataall.base.db import exceptions, paginate
-from dataall.core.permissions import permissions
-from dataall.core.permissions.db import permission_models as models
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.tenant_repositories import Tenant as TenantService
+from dataall.core.permissions.constants import permissions
+from dataall.core.permissions.db.permission import permission_models
+from dataall.core.permissions.db.tenant import tenant_models as models
+from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.db.tenant.tenant_repositories import Tenant as TenantService
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +64,12 @@ class TenantPolicy:
                 models.Tenant.tenantUri == models.TenantPolicy.tenantUri,
             )
             .join(
-                models.Permission,
-                models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
+                permission_models.Permission,
+                permission_models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
             )
             .filter(
                 models.TenantPolicy.principalId.in_(groups),
-                models.Permission.name == permission_name,
+                permission_models.Permission.name == permission_name,
                 models.Tenant.name == tenant_name,
             )
             .first()
@@ -91,13 +92,13 @@ class TenantPolicy:
                 models.Tenant.tenantUri == models.TenantPolicy.tenantUri,
             )
             .join(
-                models.Permission,
-                models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
+                permission_models.Permission,
+                permission_models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
             )
             .filter(
                 and_(
                     models.TenantPolicy.principalId == group_uri,
-                    models.Permission.name == permission_name,
+                    permission_models.Permission.name == permission_name,
                     models.Tenant.name == tenant_name,
                 )
             )

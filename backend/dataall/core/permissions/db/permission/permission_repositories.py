@@ -1,10 +1,9 @@
 import logging
 
-from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.api.enums import PermissionType
 from dataall.base.db import exceptions
-from dataall.core.permissions import permissions
-from dataall.core.permissions.db import permission_models as models
-
+from dataall.core.permissions.constants import permissions
+from dataall.core.permissions.db.permission import permission_models as models
 
 logger = logging.getLogger(__name__)
 

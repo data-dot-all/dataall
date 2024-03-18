@@ -1,6 +1,6 @@
 from itertools import chain
 
-from dataall.core.permissions.permissions import (
+from dataall.core.permissions.constants.permissions import (
     TENANT_ALL,
     TENANT_ALL_WITH_DESC,
     RESOURCES_ALL,

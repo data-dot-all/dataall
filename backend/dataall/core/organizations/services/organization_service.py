@@ -6,9 +6,9 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
-from dataall.core.permissions import permissions
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.constants import permissions
+from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 
 
 class OrganizationService:

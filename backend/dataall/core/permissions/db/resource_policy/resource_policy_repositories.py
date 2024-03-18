@@ -3,10 +3,11 @@ from typing import Optional
 
 from sqlalchemy.sql import and_
 
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.api.enums import PermissionType
 from dataall.base.db import exceptions
-from dataall.core.permissions.db import permission_models as models
+from dataall.core.permissions.db.permission import permission_models
+from dataall.core.permissions.db.resource_policy import resource_policy_models as models
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +45,14 @@ class ResourcePolicy:
                 models.ResourcePolicy.sid == models.ResourcePolicyPermission.sid,
             )
             .join(
-                models.Permission,
-                models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
+                permission_models.Permission,
+                permission_models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
             )
             .filter(
                 and_(
                     models.ResourcePolicy.principalId.in_(groups),
                     models.ResourcePolicy.principalType == 'GROUP',
-                    models.Permission.name == permission_name,
+                    permission_models.Permission.name == permission_name,
                     models.ResourcePolicy.resourceUri == resource_uri,
                 )
             )
@@ -77,14 +78,14 @@ class ResourcePolicy:
                 models.ResourcePolicy.sid == models.ResourcePolicyPermission.sid,
             )
             .join(
-                models.Permission,
-                models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
+                permission_models.Permission,
+                permission_models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
             )
             .filter(
                 and_(
                     models.ResourcePolicy.principalId == group_uri,
                     models.ResourcePolicy.principalType == 'GROUP',
-                    models.Permission.name == permission_name,
+                    permission_models.Permission.name == permission_name,
                     models.ResourcePolicy.resourceUri == resource_uri,
                 )
             )

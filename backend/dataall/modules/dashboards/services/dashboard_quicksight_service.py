@@ -4,10 +4,10 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
-from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
-from dataall.core.permissions.permissions import TENANT_ALL
+from dataall.core.permissions.constants.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD

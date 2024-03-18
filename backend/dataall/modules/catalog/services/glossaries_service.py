@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.core.permissions.permission_checker import has_tenant_permission
+from dataall.core.permissions.decorators.permission_checker import has_tenant_permission
 
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.catalog.db.glossary_models import GlossaryNode

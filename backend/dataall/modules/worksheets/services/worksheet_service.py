@@ -2,8 +2,8 @@ import logging
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db import exceptions
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet

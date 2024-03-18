@@ -1,8 +1,8 @@
 import logging
 
-from dataall.core.permissions.db import permission_models
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.tenant_repositories import Tenant
+from dataall.core.permissions.db.permission import permission_models
+from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.db.tenant.tenant_repositories import Tenant
 
 log = logging.getLogger('Permissions')
 

@@ -6,7 +6,7 @@ from dataall.base.services.service_provider_factory import ServiceProviderFactor
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
 from dataall.base.db import exceptions
 
 log = logging.getLogger()

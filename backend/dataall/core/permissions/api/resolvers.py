@@ -3,7 +3,7 @@ import os
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +26,13 @@ def list_tenant_permissions(context, source):
 
 
 def list_tenant_groups(context, source, filter=None):
-    if not filter:
-        filter = {}
     with context.engine.scoped_session() as session:
         return TenantPolicy.list_tenant_groups(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=None,
-            data=filter,
+            data=filter if filter else {},
             check_perm=True,
         )
 

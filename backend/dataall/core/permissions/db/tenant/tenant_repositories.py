@@ -1,6 +1,6 @@
 import logging
 
-from dataall.core.permissions.db import permission_models as models
+from dataall.core.permissions.db.tenant import tenant_models as models
 
 logger = logging.getLogger(__name__)
 

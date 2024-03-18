@@ -3,8 +3,8 @@ from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard

@@ -1,8 +1,8 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.constants.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
 
 
 def get_env(client, env_fixture, group):
