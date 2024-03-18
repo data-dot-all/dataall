@@ -53,14 +53,14 @@ def delete_warehouse_consumer(context, source, consumerUri: str):
     )
 
 
-def list_warehouse_connections(context, source, input: dict = None):
+def list_warehouse_connections(context, source, filter: dict = None):
     """Lists user Warehouse connections"""
-    return WarehouseService.list_warehouse_connections()
+    return WarehouseService.list_warehouse_connections(filter)
 
 
-def list_warehouse_consumers(context, source, input: dict = None):
+def list_warehouse_consumers(context, source, filter: dict = None):
     """Lists user Warehouse consumers"""
-    return WarehouseService.list_warehouse_consumers()
+    return WarehouseService.list_warehouse_consumers(filter)
 
 
 class RequestValidator:

@@ -13,6 +13,7 @@ import { AiOutlineExperiment } from 'react-icons/ai';
 import * as BiIcons from 'react-icons/bi';
 import * as BsIcons from 'react-icons/bs';
 import { FiCodesandbox, FiPackage } from 'react-icons/fi';
+import { CiDatabase } from 'react-icons/ci';
 import { MdShowChart } from 'react-icons/md';
 import { SiJupyter } from 'react-icons/si';
 import { VscBook } from 'react-icons/vsc';
@@ -51,11 +52,11 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       icon: <BsIcons.BsTag size={15} />,
       active: isModuleEnabled(ModuleNames.GLOSSARIES)
     };
-    //TODO: choose better icon for warehouses
+
     const warehousesSection = {
       title: 'Warehouses',
       path: '/console/warehouses',
-      icon: <BsIcons.BsGear size={15} />,
+      icon: <CiDatabase size={15} />,
       active: isModuleEnabled(ModuleNames.WAREHOUSES)
     };
 

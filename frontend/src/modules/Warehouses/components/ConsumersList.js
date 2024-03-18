@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, PlusIcon, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-//import { listWarehousesRoles } from '../services';
+import { listWarehouseConsumers } from '../services';
 import { ConsumersListItem } from './ConsumersListItem';
 
 // TODO posibility to merge both ConsumerList and RolesList into a single component with conditions. Leaving it as is for demo purposes
@@ -40,44 +40,12 @@ export const ConsumersList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setItems({
-      nodes: [
-        {
-          name: 'consumer1',
-          consumerUri: 'item1',
-          type: 'Redshift Role',
-          content: 'role1',
-          warehouseType: 'RedshiftCluster',
-          warehouseId: 'clusterId1',
-          SamlAdminGroupName: 'Engineers'
-        },
-        {
-          name: 'consumer2',
-          consumerUri: 'item2',
-          type: 'Redshift Role',
-          content: 'role2',
-          warehouseType: 'RedshiftServerless',
-          warehouseId: 'namespaceId1',
-          SamlAdminGroupName: 'Engineers'
-        },
-        {
-          name: 'consumer3',
-          consumerUri: 'item3',
-          type: 'Redshift Namespace',
-          content: 'namespaceId1',
-          warehouseType: 'RedshiftServerless',
-          warehouseId: 'namespaceId1',
-          SamlAdminGroupName: 'Engineers'
-        }
-      ]
-    });
-    // TODO: implement methods
-    // const response = await client.query(listWarehousesRoles(filter));
-    // if (!response.errors) {
-    //   setItems(response.data.listWarehousesRoles);
-    // } else {
-    //   dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    // }
+    const response = await client.query(listWarehouseConsumers(filter));
+    if (!response.errors) {
+      setItems(response.data.listWarehouseConsumers);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
     setLoading(false);
   }, [client, dispatch, filter]);
 

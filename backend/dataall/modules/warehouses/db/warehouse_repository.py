@@ -26,6 +26,19 @@ class WarehouseRepository:  # TODO: DECIDE: SHOULD IT BE AN EnvironmentResource?
         self._session.add(item)
         self._session.commit()
 
+    def delete_item(self, item):
+        """Delete connection or consumer to the database"""
+        self._session.delete(item)
+        self._session.commit()
+
+    def find_warehouse_connection(self, uri):
+        """Finds a warehouse connection. Returns None if it doesn't exist"""
+        return self._session.query(WarehouseConnection).get(uri)
+
+    def find_warehouse_consumer(self, uri):
+        """Finds a warehouse consumer. Returns None if it doesn't exist"""
+        return self._session.query(WarehouseConsumer).get(uri)
+
     def paginated_user_connections(self, username, groups, filter=None) -> dict:
         """Returns a page of user warehouse connections"""
         return paginate(

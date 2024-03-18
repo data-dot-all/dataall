@@ -5,10 +5,8 @@ import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, PlusIcon, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-//import { listWarehousesConnections } from '../services';
+import { listWarehouseConnections } from '../services';
 import { ConnectionsListItem } from './ConnectionsListItem';
-
-//TODO: we could also use DataGrid, but then the filtering is not that nice, to decide
 
 export const ConnectionsList = () => {
   const dispatch = useDispatch();
@@ -40,44 +38,12 @@ export const ConnectionsList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setItems({
-      nodes: [
-        {
-          name: 'item1',
-          connectionUri: 'item1',
-          type: 'Secrets Manager',
-          content: 'arn:aws:secretsmanager:Region:AccountId:secret:SecretName1',
-          warehouseType: 'RedshiftCluster',
-          warehouseId: 'clusterId1',
-          SamlAdminGroupName: 'Engineers'
-        },
-        {
-          name: 'item2',
-          connectionUri: 'item2',
-          type: 'Secrets Manager',
-          content: 'arn:aws:secretsmanager:Region:AccountId:secret:SecretName2',
-          warehouseType: 'RedshiftServerless',
-          warehouseId: 'namespaceId1',
-          SamlAdminGroupName: 'Engineers'
-        },
-        {
-          name: 'item3',
-          connectionUri: 'item3',
-          type: 'Federated user',
-          content: 'arn:aws:iam::AccountId:role/role3',
-          warehouseType: 'RedshiftServerless',
-          warehouseId: 'namespaceId1',
-          SamlAdminGroupName: 'Engineers'
-        }
-      ]
-    });
-    // TODO: implement methods
-    // const response = await client.query(listWarehousesConnections(filter));
-    // if (!response.errors) {
-    //   setItems(response.data.listWarehousesConnections);
-    // } else {
-    //   dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    // }
+    const response = await client.query(listWarehouseConnections(filter));
+    if (!response.errors) {
+      setItems(response.data.listWarehouseConnections);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
     setLoading(false);
   }, [client, dispatch, filter]);
 

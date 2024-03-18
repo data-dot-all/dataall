@@ -9,7 +9,8 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { FaDna, FaGear } from 'react-icons/fa6';
+import { MdOutlinePrivateConnectivity } from 'react-icons/md';
+import { LiaUserLockSolid } from 'react-icons/lia';
 import { useSettings } from 'design';
 
 import { ConnectionsList, ConsumersList } from '../components';
@@ -18,9 +19,13 @@ const tabs = [
   {
     label: 'Producer Connections',
     value: 'connections',
-    icon: <FaDna size={20} />
+    icon: <MdOutlinePrivateConnectivity size={20} />
   },
-  { label: 'Consumers', value: 'consumers', icon: <FaGear size={20} /> }
+  {
+    label: 'Consumers',
+    value: 'consumers',
+    icon: <LiaUserLockSolid size={20} />
+  }
 ];
 
 const WarehouseList = () => {
