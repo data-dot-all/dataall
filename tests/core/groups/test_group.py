@@ -11,7 +11,7 @@ def mock_cognito_client(module_mocker):
 def test_list_groups_env(client, env_fixture, group, module_mocker):
     cognito_client = mock_cognito_client(module_mocker)
     module_mocker.patch(
-        'dataall.core.groups.api.resolvers.ServiceProviderFactory.get_service_provider_instance',
+        'dataall.base.services.service_provider_factory.ServiceProviderFactory.get_service_provider_instance',
         return_value=cognito_client(),
     )
     response = client.query(
@@ -29,4 +29,5 @@ def test_list_groups_env(client, env_fixture, group, module_mocker):
         username='alice',
         filter={'type': 'environment', 'uri': env_fixture.environmentUri},
     )
+    print(response)
     assert response.data.listGroups[0].groupName == 'cognitos'
