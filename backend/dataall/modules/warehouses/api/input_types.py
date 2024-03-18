@@ -32,3 +32,12 @@ ModifyWarehouseConsumerInput = gql.InputType(
     arguments=[
     ],
 )
+
+WarehouseFilter = gql.InputType(
+    name='WarehouseFilter',
+    arguments=[
+        gql.Argument('term', gql.String),
+        gql.Argument('page', gql.Integer),
+        gql.Argument('pageSize', gql.Integer),
+    ],
+)
