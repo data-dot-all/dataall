@@ -18,7 +18,8 @@ class OmicsPolicy(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='OmicsWorkflowActions',
                 actions=[
-                    "omics:GetWorkflow"
+                    "omics:GetWorkflow",
+                    "omics:StartRun"
                 ],
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:workflow/*',
@@ -28,7 +29,6 @@ class OmicsPolicy(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='OmicsRunActions',
                 actions=[
-                    "omics:StartRun",
                     "omics:DeleteRun",
                     "omics:GetRun",
                     "omics:CancelRun"
