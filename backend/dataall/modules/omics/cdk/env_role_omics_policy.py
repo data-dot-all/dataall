@@ -20,7 +20,8 @@ class OmicsPolicy(ServicePolicy):
                 sid='OmicsWorkflowActions',
                 actions=[
                     "omics:ListWorkflows",
-                    "omics:GetWorkflow"
+                    "omics:GetWorkflow",
+                    "omics:StartRun"
                 ],
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:workflow/*',
@@ -30,7 +31,6 @@ class OmicsPolicy(ServicePolicy):
             iam.PolicyStatement(
                 sid='OmicsRunActions',
                 actions=[
-                    "omics:StartRun",
                     "omics:ListRuns",
                     "omics:DeleteRun",
                     "omics:GetRun",
