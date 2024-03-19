@@ -759,20 +759,17 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
     )
 
     # When
-    share_manager.delete_access_point_policy()
+    new_ap_policy = share_manager.revoke_access_in_access_point_policy()
 
-    # Then
-    s3_control_client().attach_access_point_policy.assert_called()
 
     # Assert statements for share have been removed
-    new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
     deleted_statements = {
         item['Sid']: item
         for item in new_ap_policy['Statement']
         if item['Sid'].startswith(f'{target_environment.SamlGroupName}')
     }
 
-    assert len(deleted_statements) == 0
+    assert len(deleted_statements) == 2
 
     # Assert other statements are remaining
     remaining_statements = {
@@ -781,7 +778,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
         if not item['Sid'].startswith(f'{target_environment.SamlGroupName}')
     }
 
-    assert len(remaining_statements) > 0
+    assert len(remaining_statements) == 2
 
 
 def test_delete_access_point_policy_with_env_admin_multiple_prefix(
@@ -808,13 +805,9 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     )
 
     # When
-    share_manager.delete_access_point_policy()
-
-    # Then
-    s3_control_client().attach_access_point_policy.assert_called()
+    new_ap_policy = share_manager.revoke_access_in_access_point_policy()
 
     # Assert statements for share have been removed
-    new_ap_policy = json.loads(s3_control_client().attach_access_point_policy.call_args.kwargs.get('policy'))
     statements = {item['Sid']: item for item in new_ap_policy['Statement']}
 
     remaining_prefix_list = statements[f'{target_environment.SamlGroupName}0']['Condition']['StringLike']['s3:prefix']
@@ -833,29 +826,39 @@ def test_dont_delete_access_point_with_policy(
 
     s3_control_client = mock_s3_control_client(mocker)
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
+    s3_control_client().get_bucket_access_point_arn.return_value = 'access-point-arn'
+
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_role_id',
+        return_value=target_environment.SamlGroupName,
+    )
 
     # When
-    is_deleted = share_manager.delete_access_point(share1, dataset1)
+    new_ap_policy = share_manager.revoke_access_in_access_point_policy()
 
     # Then
-    assert not is_deleted
-    assert not s3_control_client().delete_bucket_access_point.called
+    assert len(new_ap_policy['Statement']) > 0
 
 
-def test_delete_access_point_without_policy(mocker, dataset1: Dataset, share1: ShareObject, share_manager):
+def test_delete_access_point_without_policy(mocker, dataset1: Dataset, share1: ShareObject, share_manager, target_environment):
     # Given ap policy that contains no statements
     existing_ap_policy = _generate_ap_policy_object('access-point-arn', [])
 
     s3_control_client = mock_s3_control_client(mocker)
+    s3_control_client().get_bucket_access_point_arn.return_value = 'access-point-arn'
     s3_control_client().get_access_point_policy.return_value = json.dumps(existing_ap_policy)
     s3_control_client().delete_bucket_access_point.return_value = None
 
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_role_id',
+        return_value=target_environment.SamlGroupName,
+    )
+
     # When
-    is_deleted = share_manager.delete_access_point(share1, dataset1)
+    new_ap_policy = share_manager.revoke_access_in_access_point_policy()
 
     # Then
-    assert is_deleted
-    assert s3_control_client().delete_bucket_access_point.called
+    assert len(new_ap_policy['Statement']) == 0
 
 
 def test_delete_target_role_access_policy_no_remaining_statement(
@@ -877,8 +880,8 @@ def test_delete_target_role_access_policy_no_remaining_statement(
                 'Resource': [
                     f'arn:aws:s3:::{location1.S3BucketName}',
                     f'arn:aws:s3:::{location1.S3BucketName}/*',
-                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{S3AccessPointShareManager.build_access_point_name(share1)}',
-                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{S3AccessPointShareManager.build_access_point_name(share1)}/*',
+                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_manager.access_point_name}',
+                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_manager.access_point_name}/*',
                 ],
             },
             {
@@ -917,8 +920,8 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
 
-    # When
-    share_manager.delete_target_role_access_policy(share1, dataset1, target_environment)
+    # When we revoke IAM access to the target IAM role
+    share_manager.revoke_target_role_access_policy()
 
     expected_policy_name = SharePolicyService(
         environmentUri=target_environment.environmentUri,
@@ -953,8 +956,8 @@ def test_delete_target_role_access_policy_with_remaining_statement(
                     'arn:aws:s3:::UNRELATED_BUCKET_ARN',
                     f'arn:aws:s3:::{location1.S3BucketName}',
                     f'arn:aws:s3:::{location1.S3BucketName}/*',
-                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{S3AccessPointShareManager.build_access_point_name(share1)}',
-                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{S3AccessPointShareManager.build_access_point_name(share1)}/*',
+                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_manager.access_point_name}',
+                    f'arn:aws:s3:{dataset1.region}:{dataset1.AwsAccountId}:accesspoint/{share_manager.access_point_name}/*',
                 ],
             },
             {
@@ -1011,7 +1014,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     kms_client().get_key_id.return_value = 'kms-key'
 
     # When
-    share_manager.delete_target_role_access_policy(share1, dataset1, target_environment)
+    share_manager.revoke_target_role_access_policy()
 
     # Then
     expected_policy_name = SharePolicyService(

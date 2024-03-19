@@ -623,7 +623,6 @@ class S3AccessPointShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id, share_resource_policy_name
         )
-        # TODO: optimize duplicated code between grant and revoke
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
