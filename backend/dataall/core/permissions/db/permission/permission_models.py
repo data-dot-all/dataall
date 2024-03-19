@@ -14,7 +14,3 @@ class Permission(Base):
     description = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
-
-
-
-

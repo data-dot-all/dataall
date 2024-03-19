@@ -14,6 +14,7 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 from tests.core.permissions.test_permission import *
 from dataall.core.organizations.services.organization_service import OrganizationService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 
 def test_attach_resource_policy(db, user, group, dataset_fixture):
@@ -37,14 +38,14 @@ def test_attach_resource_policy(db, user, group, dataset_fixture):
 
 def test_attach_tenant_policy(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=[MANAGE_DATASETS],
             tenant_name='dataall',
         )
 
-        assert TenantPolicy.check_user_tenant_permission(
+        assert TenantPolicyService.check_user_tenant_permission(
             session=session,
             username=user.username,
             groups=[group.name],
@@ -69,7 +70,7 @@ def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
         set_context(RequestContext(db, user.username, [group.name], user_id=user.username))
 
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=TENANT_ALL,

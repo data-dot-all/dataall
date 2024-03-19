@@ -14,8 +14,7 @@ from dataall.core.permissions.db.permission.permission_repositories import Permi
 from dataall.base.db import Resource
 from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicyPermission
 from dataall.core.permissions.api.enums import PermissionType
-from dataall.core.permissions.db.tenant.tenant_models import  TenantPolicyPermission
-
+from dataall.core.permissions.db.tenant.tenant_models import TenantPolicyPermission
 
 
 # revision identifiers, used by Alembic.

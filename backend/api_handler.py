@@ -18,6 +18,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import get_engine
 from dataall.core.permissions.constants import permissions
 from dataall.base.loader import load_modules, ImportMode
@@ -143,10 +144,10 @@ def handler(event, context):
             log.debug('groups are %s', ','.join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = TenantPolicy.find_tenant_policy(session, group, 'dataall')
+                    policy = TenantPolicyService.find_tenant_policy(session, group, 'dataall')
                     if not policy:
                         print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
-                        TenantPolicy.attach_group_tenant_policy(
+                        TenantPolicyService.attach_group_tenant_policy(
                             session=session,
                             group=group,
                             permissions=permissions.TENANT_ALL,

@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 
 from dataall.base.db import Base, utils
 
-from  dataall.core.permissions.db.permission.permission_models import Permission
+from dataall.core.permissions.db.permission.permission_models import Permission
 
 
 class ResourcePolicy(Base):

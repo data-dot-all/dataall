@@ -2,9 +2,10 @@ import pytest
 
 from dataall.core.permissions.db.permission.permission_repositories import Permission
 from dataall.core.permissions.db.permission.permission_models import PermissionType
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import exceptions
 from dataall.core.permissions.constants.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL, TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 
 def permissions(db, all_perms):
@@ -34,14 +35,14 @@ def permissions(db, all_perms):
 def test_attach_tenant_policy(db, group, tenant):
     permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=[MANAGE_GROUPS],
             tenant_name='dataall',
         )
 
-        assert TenantPolicy.check_user_tenant_permission(
+        assert TenantPolicyService.check_user_tenant_permission(
             session=session,
             username='alice',
             groups=[group.name],
@@ -53,7 +54,7 @@ def test_attach_tenant_policy(db, group, tenant):
 def test_unauthorized_tenant_policy(db, group):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
-            assert TenantPolicy.check_user_tenant_permission(
+            assert TenantPolicyService.check_user_tenant_permission(
                 session=session,
                 username='alice',
                 groups=[group.name],

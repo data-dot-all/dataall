@@ -7,7 +7,7 @@ from typing import Protocol, Callable
 
 from dataall.base.context import RequestContext, get_context
 from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.utils.decorator_utls import process_func
 
 
@@ -19,7 +19,7 @@ class Identifiable(Protocol):
 
 def _check_tenant_permission(session, permission):
     context: RequestContext = get_context()
-    TenantPolicy.check_user_tenant_permission(
+    TenantPolicyService.check_user_tenant_permission(
         session=session,
         username=context.username,
         groups=context.groups,

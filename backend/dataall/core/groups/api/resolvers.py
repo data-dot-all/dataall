@@ -6,7 +6,7 @@ from dataall.base.services.service_provider_factory import ServiceProviderFactor
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import exceptions
 
 log = logging.getLogger()
@@ -23,7 +23,7 @@ def resolve_group_tenant_permissions(context, source):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return TenantPolicy.list_group_tenant_permissions(
+        return TenantPolicyService.list_group_tenant_permissions(
             session=session,
             username=context.username,
             groups=context.groups,

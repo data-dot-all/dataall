@@ -9,7 +9,7 @@ from glob import glob
 
 from dataall.core.groups.db.group_models import Group
 from dataall.core.permissions.db import Tenant, Permission
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.constants.permissions import TENANT_ALL
 from tests.client import create_app, ClientWrapper
 
@@ -97,7 +97,7 @@ def _create_group(db, tenant, name, user):
         session.add(group)
         session.commit()
 
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=name,
             permissions=TENANT_ALL,
