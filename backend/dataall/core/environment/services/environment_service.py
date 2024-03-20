@@ -6,7 +6,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -557,7 +557,7 @@ class EnvironmentService:
         query = EnvironmentService.query_user_environments(session, context.username, context.groups, data)
         valid_environments = []
         for env in query:
-            stack = stack_helper.get_stack_with_cfn_resources(
+            stack = StackService.get_stack_with_cfn_resources(
                 targetUri=env.environmentUri,
                 environmentUri=env.environmentUri,
             )
@@ -902,8 +902,9 @@ class EnvironmentService:
 
     @staticmethod
     @has_resource_permission(permissions.GET_ENVIRONMENT)
+    # uri param is required by the decorator
     def get_stack(session, uri, stack_uri) -> Stack:
-        return session.query(Stack).get(stack_uri)
+        return Stack.find_stack_by_target_uri(session, target_uri=stack_uri)
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_ENVIRONMENT)

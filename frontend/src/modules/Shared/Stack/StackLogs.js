@@ -25,9 +25,7 @@ export const StackLogs = (props) => {
   const getLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await client.query(
-        getStackLogs(environmentUri, stack.stackUri)
-      );
+      const response = await client.query(getStackLogs(stack.stackUri));
       if (response && !response.errors) {
         setLogs(response.data.getStackLogs.map((l) => l.message));
       } else {

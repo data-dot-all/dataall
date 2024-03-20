@@ -3,7 +3,6 @@ from . import (
     mutations,
     queries,
     resolvers,
-    stack_helper,
     types,
 )
 

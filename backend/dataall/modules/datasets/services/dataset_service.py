@@ -12,7 +12,7 @@ from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
@@ -367,7 +367,7 @@ class DatasetService:
 
     @staticmethod
     def get_dataset_stack(dataset: Dataset):
-        return stack_helper.get_stack_with_cfn_resources(
+        return StackService.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,
             environmentUri=dataset.environmentUri,
         )
@@ -417,13 +417,13 @@ class DatasetService:
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
+            StackService.delete_stack(
                 target_uri=uri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
             )
-            stack_helper.deploy_stack(dataset.environmentUri)
+            StackService.deploy_stack(dataset.environmentUri)
         return True
 
     @staticmethod
@@ -432,12 +432,12 @@ class DatasetService:
         Each dataset stack deployment triggers environment stack update
         to rebuild teams IAM roles data access policies
         """
-        stack_helper.deploy_stack(dataset.datasetUri)
-        stack_helper.deploy_stack(dataset.environmentUri)
+        StackService.deploy_stack(dataset.datasetUri)
+        StackService.deploy_stack(dataset.environmentUri)
 
     @staticmethod
     def _create_dataset_stack(session, dataset: Dataset) -> Stack:
-        return Stack.create_stack(
+        return StackService.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,

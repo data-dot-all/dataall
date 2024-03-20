@@ -1,13 +1,12 @@
 import { gql } from 'apollo-boost';
 
-export const getStackLogs = (environmentUri, stackUri) => ({
+export const getStackLogs = (stackUri) => ({
   variables: {
-    environmentUri,
     stackUri
   },
   query: gql`
-    query getStackLogs($environmentUri: String!, $stackUri: String!) {
-      getStackLogs(environmentUri: $environmentUri, stackUri: $stackUri) {
+    query getStackLogs($stackUri: String!) {
+      getStackLogs(stackUri: $stackUri) {
         message
         timestamp
       }

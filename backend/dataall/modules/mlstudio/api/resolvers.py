@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.base.db import exceptions
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
@@ -119,7 +119,7 @@ def resolve_sagemaker_studio_user_stack(context: Context, source: SagemakerStudi
     """
     if not source:
         return None
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.sagemakerStudioUserUri,
         environmentUri=source.environmentUri,
     )

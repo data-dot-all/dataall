@@ -6,7 +6,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permissions import ENVIRONMENT_ALL
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.stack_models import KeyValueTag
 
 
@@ -65,7 +65,7 @@ def _create_env_stack(session, env):
     )
     session.add(tags)
 
-    Stack.create_stack(
+    StackService.create_stack(
         session=session,
         environment_uri=env.environmentUri,
         target_type='environment',

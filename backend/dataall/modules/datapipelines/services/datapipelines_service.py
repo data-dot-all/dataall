@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
@@ -79,7 +79,7 @@ class DataPipelineService:
                 )
 
             if data['devStrategy'] == 'cdk-trunk':
-                Stack.create_stack(
+                StackService.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
@@ -88,7 +88,7 @@ class DataPipelineService:
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
-                Stack.create_stack(
+                StackService.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
@@ -97,7 +97,7 @@ class DataPipelineService:
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
 
-            stack_helper.deploy_stack(pipeline.DataPipelineUri)
+            StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
@@ -152,7 +152,7 @@ class DataPipelineService:
                     for k in data.keys():
                         setattr(pipeline, k, data.get(k))
             if pipeline.template == '':
-                stack_helper.deploy_stack(pipeline.DataPipelineUri)
+                StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
@@ -218,7 +218,7 @@ class DataPipelineService:
                     region=env.region,
                     repo_name=pipeline.repo,
                 )
-                stack_helper.delete_stack(
+                StackService.delete_stack(
                     target_uri=pipeline.DataPipelineUri,
                     accountid=env.AwsAccountId,
                     cdk_role_arn=env.CDKRoleArn,

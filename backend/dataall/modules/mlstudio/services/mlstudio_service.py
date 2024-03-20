@@ -13,7 +13,7 @@ from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
@@ -165,7 +165,7 @@ class SagemakerStudioService:
                     resource_type=SagemakerStudioUser.__name__,
                 )
 
-            Stack.create_stack(
+            StackService.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='mlstudio',
@@ -173,7 +173,7 @@ class SagemakerStudioService:
                 target_label=sagemaker_studio_user.label,
             )
 
-        stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
+        StackService.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
 
         return sagemaker_studio_user
 
@@ -275,7 +275,7 @@ class SagemakerStudioService:
             )
 
             if delete_from_aws:
-                stack_helper.delete_stack(
+                StackService.delete_stack(
                     target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
                 )
             return True
