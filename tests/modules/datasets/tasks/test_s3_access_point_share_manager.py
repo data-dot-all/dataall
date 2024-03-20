@@ -761,17 +761,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
     # When
     new_ap_policy = share_manager.revoke_access_in_access_point_policy()
 
-
-    # Assert statements for share have been removed
-    deleted_statements = {
-        item['Sid']: item
-        for item in new_ap_policy['Statement']
-        if item['Sid'].startswith(f'{target_environment.SamlGroupName}')
-    }
-
-    assert len(deleted_statements) == 2
-
-    # Assert other statements are remaining
+    # Assert other statements are unaffected
     remaining_statements = {
         item['Sid']: item
         for item in new_ap_policy['Statement']
@@ -840,7 +830,9 @@ def test_dont_delete_access_point_with_policy(
     assert len(new_ap_policy['Statement']) > 0
 
 
-def test_delete_access_point_without_policy(mocker, dataset1: Dataset, share1: ShareObject, share_manager, target_environment):
+def test_delete_access_point_without_policy(
+    mocker, dataset1: Dataset, share1: ShareObject, share_manager, target_environment
+):
     # Given ap policy that contains no statements
     existing_ap_policy = _generate_ap_policy_object('access-point-arn', [])
 

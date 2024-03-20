@@ -570,13 +570,16 @@ class S3AccessPointShareManager:
         statements = {item['Sid']: item for item in access_point_policy['Statement']}
         if f'{target_requester_id}0' in statements.keys():
             prefix_list = statements[f'{target_requester_id}0']['Condition']['StringLike']['s3:prefix']
-            if isinstance(prefix_list, list) and f'{self.s3_prefix}/*' in prefix_list:
+            if f'{self.s3_prefix}/*' in prefix_list:
                 logger.info(f'Removing folder {self.s3_prefix} from access point policy...')
-                prefix_list.remove(f'{self.s3_prefix}/*')
-                statements[f'{target_requester_id}1']['Resource'].remove(
-                    f'{access_point_arn}/object/{self.s3_prefix}/*'
-                )
-                access_point_policy['Statement'] = list(statements.values())
+                if isinstance(prefix_list, list):
+                    prefix_list.remove(f'{self.s3_prefix}/*')
+                    statements[f'{target_requester_id}1']['Resource'].remove(
+                        f'{access_point_arn}/object/{self.s3_prefix}/*'
+                    )
+                    access_point_policy['Statement'] = list(statements.values())
+                elif isinstance(prefix_list, str):
+                    prefix_list = []
             else:
                 logger.info(f'Folder {self.s3_prefix} already removed from access point policy, skipping...')
 
@@ -584,8 +587,9 @@ class S3AccessPointShareManager:
                 logger.info('Removing empty statements from access point policy...')
                 access_point_policy['Statement'].remove(statements[f'{target_requester_id}0'])
                 access_point_policy['Statement'].remove(statements[f'{target_requester_id}1'])
-                # # We need to handle DATAALL_ALLOW_OWNER_SID for backwards compatibility
-                access_point_policy['Statement'].remove(statements[DATAALL_ALLOW_OWNER_SID])
+                # We need to handle DATAALL_ALLOW_OWNER_SID for backwards compatibility
+                if statements.get(DATAALL_ALLOW_OWNER_SID, None) is not None:
+                    access_point_policy['Statement'].remove(statements[DATAALL_ALLOW_OWNER_SID])
         return access_point_policy
 
     def attach_new_access_point_policy(self, access_point_policy):
