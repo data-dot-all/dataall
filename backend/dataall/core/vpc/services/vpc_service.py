@@ -3,7 +3,7 @@ from dataall.base.db import exceptions
 from dataall.core.permissions import permissions
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.decorators.env_permission_checker import has_group_permission
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.vpc.db.vpc_repositories import VpcRepository

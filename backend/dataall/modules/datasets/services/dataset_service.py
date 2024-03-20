@@ -8,7 +8,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.decorators.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission

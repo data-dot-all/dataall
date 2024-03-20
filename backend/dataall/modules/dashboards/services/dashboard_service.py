@@ -1,6 +1,6 @@
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.environment.decorators.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
