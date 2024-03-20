@@ -5,16 +5,24 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
+from dataall.base.aws.ec2_client import EC2
+from dataall.base.aws.iam import IAM
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
-from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
+from dataall.core.environment.db.environment_repositories import (
+    EnvironmentParameterRepository,
+    EnvironmentRepository,
+    EnvironmentGroupRepository,
+)
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.vpc.db.vpc_models import Vpc
 from dataall.base.db.paginator import paginate
 from dataall.base.utils.naming_convention import (
@@ -37,6 +45,48 @@ log = logging.getLogger(__name__)
 
 class EnvironmentService:
     @staticmethod
+    def check_environment(pivotRoleAsPartOfEnvironmen, account_id, region, data):
+        """Checks necessary resources for environment deployment.
+        - Check CDKToolkit exists in Account assuming cdk_look_up_role
+        - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
+        """
+        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
+        cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region)
+        if not pivotRoleAsPartOfEnvironmen:
+            log.info('Check if PivotRole exist in the account')
+            pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
+            role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
+            if not role:
+                raise exceptions.AWSResourceNotFound(
+                    action='CHECK_PIVOT_ROLE',
+                    message='Pivot Role has not been created in the Environment AWS Account',
+                )
+        mlStudioEnabled = None
+        for parameter in data.get('parameters', []):
+            if parameter['key'] == 'mlStudiosEnabled':
+                mlStudioEnabled = parameter['value']
+
+        if mlStudioEnabled and data.get('vpcId', None) and data.get('subnetIds', []):
+            log.info('Check if ML Studio VPC Exists in the Account')
+            EC2.check_vpc_exists(
+                AwsAccountId=account_id,
+                region=region,
+                role=cdk_look_up_role_arn,
+                vpc_id=data.get('vpcId', None),
+                subnet_ids=data.get('subnetIds', []),
+            )
+
+        return cdk_role_name
+
+    @staticmethod
+    def get_enviromment_groups_from_list(session, envUri, groups):
+        return EnvironmentGroupRepository.get_group_by_uri_from_group_list(session, envUri, groups)
+
+    @staticmethod
+    def get_enviromment_group_by_uri(session, envUri, groupUri):
+        return EnvironmentGroupRepository.get_group_by_uri(session, envUri, groupUri)
+
+    @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
     def create_environment(session, uri, data=None):
@@ -55,12 +105,13 @@ class EnvironmentService:
             SamlGroupName=data['SamlGroupName'],
             validated=False,
             isOrganizationDefaultEnvironment=False,
-            userRoleInEnvironment=EnvironmentPermission.Owner.value,
             EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
             EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             resourcePrefix=data.get('resourcePrefix'),
         )
+        # userRoleInEnvironment -- query expression, can not be set via constructor
+        env.userRoleInEnvironment = EnvironmentPermission.Owner.value
 
         session.add(env)
         session.commit()
@@ -124,6 +175,7 @@ class EnvironmentService:
             targetType='env',
         )
         session.add(activity)
+
         return env
 
     @staticmethod
@@ -958,3 +1010,54 @@ class EnvironmentService:
     def get_boolean_env_param(session, env: Environment, param: str) -> bool:
         param = EnvironmentParameterRepository(session).get_param(env.environmentUri, param)
         return param is not None and param.value.lower() == 'true'
+
+    @staticmethod
+    def enable_subscriptions(session, environmentUri, username, groups, producersTopicArn):
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=username,
+            groups=groups,
+            resource_uri=environmentUri,
+            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+        )
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+        if producersTopicArn:
+            environment.subscriptionsProducersTopicName = producersTopicArn
+            environment.subscriptionsProducersTopicImported = True
+
+        else:
+            environment.subscriptionsProducersTopicName = NamingConventionService(
+                target_label=f'{environment.label}-producers-topic',
+                target_uri=environment.environmentUri,
+                pattern=NamingConventionPattern.DEFAULT,
+                resource_prefix=environment.resourcePrefix,
+            ).build_compliant_name()
+
+        environment.subscriptionsConsumersTopicName = NamingConventionService(
+            target_label=f'{environment.label}-consumers-topic',
+            target_uri=environment.environmentUri,
+            pattern=NamingConventionPattern.DEFAULT,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        environment.subscriptionsConsumersTopicImported = False
+        environment.subscriptionsEnabled = True
+        session.commit()
+
+    @staticmethod
+    def disable_subscriptions(session, environmentUri, username, groups):
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=username,
+            groups=groups,
+            resource_uri=environmentUri,
+            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+        )
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+
+        environment.subscriptionsConsumersTopicName = None
+        environment.subscriptionsConsumersTopicImported = False
+        environment.subscriptionsProducersTopicName = None
+        environment.subscriptionsProducersTopicImported = False
+        environment.subscriptionsEnabled = False
+        session.commit()

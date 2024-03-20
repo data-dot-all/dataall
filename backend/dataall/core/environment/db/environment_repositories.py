@@ -1,4 +1,4 @@
-from dataall.core.environment.db.environment_models import EnvironmentParameter, Environment
+from dataall.core.environment.db.environment_models import EnvironmentParameter, Environment, EnvironmentGroup
 from sqlalchemy.sql import and_
 
 from dataall.base.db import exceptions
@@ -67,3 +67,31 @@ class EnvironmentRepository:
         if not environment:
             return None
         return environment
+
+
+class EnvironmentGroupRepository:
+    @staticmethod
+    def get_group_by_uri_from_group_list(session, environmentUri, groups) -> EnvironmentGroup:
+        return (
+            session.query(EnvironmentGroup)
+            .filter(
+                and_(
+                    EnvironmentGroup.environmentUri == environmentUri,
+                    EnvironmentGroup.groupUri.in_(groups),
+                )
+            )
+            .first()
+        )
+
+    @staticmethod
+    def get_group_by_uri(session, environmentUri, groupUri) -> EnvironmentGroup:
+        return (
+            session.query(EnvironmentGroup)
+            .filter(
+                and_(
+                    EnvironmentGroup.environmentUri == environmentUri,
+                    EnvironmentGroup.groupUri == groupUri,
+                )
+            )
+            .first()
+        )

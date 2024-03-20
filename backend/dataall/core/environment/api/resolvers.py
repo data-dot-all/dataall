@@ -18,10 +18,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.services.vpc_service import VpcService
-from dataall.base.aws.ec2_client import EC2
 from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
@@ -44,7 +42,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
         region=os.getenv('AWS_REGION', 'eu-west-1'),
         parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
     )
-    return True if ssm_param == 'True' else False
+    return ssm_param == 'True'
 
 
 def check_environment(context: Context, source, account_id, region, data):
@@ -55,38 +53,12 @@ def check_environment(context: Context, source, account_id, region, data):
         input: environment creation input
     """
     pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
-    log.info(f'Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}')
+    log.info(f'Check environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}')
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
 
-    cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region)
-    if not pivot_role_as_part_of_environment:
-        log.info('Check if PivotRole exist in the account')
-        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
-        role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
-        if not role:
-            raise exceptions.AWSResourceNotFound(
-                action='CHECK_PIVOT_ROLE',
-                message='Pivot Role has not been created in the Environment AWS Account',
-            )
-    mlStudioEnabled = None
-    for parameter in data.get('parameters', []):
-        if parameter['key'] == 'mlStudiosEnabled':
-            mlStudioEnabled = parameter['value']
-
-    if mlStudioEnabled and data.get('vpcId', None) and data.get('subnetIds', []):
-        log.info('Check if ML Studio VPC Exists in the Account')
-        EC2.check_vpc_exists(
-            AwsAccountId=account_id,
-            region=region,
-            role=cdk_look_up_role_arn,
-            vpc_id=data.get('vpcId', None),
-            subnet_ids=data.get('subnetIds', []),
-        )
-
-    return cdk_role_name
+    return EnvironmentService.check_environment(get_pivot_role_as_part_of_environment, account_id, region, data)
 
 
 def create_environment(context: Context, source, input={}):
@@ -107,6 +79,7 @@ def create_environment(context: Context, source, input={}):
             uri=input.get('organizationUri'),
             data=input,
         )
+
         Stack.create_stack(
             session=session,
             environment_uri=env.environmentUri,
@@ -114,8 +87,8 @@ def create_environment(context: Context, source, input={}):
             target_uri=env.environmentUri,
             target_label=env.label,
         )
-    stack_helper.deploy_stack(targetUri=env.environmentUri)
-    env.userRoleInEnvironment = EnvironmentPermission.Owner.value
+        stack_helper.deploy_stack(targetUri=env.environmentUri)
+
     return env
 
 
@@ -368,15 +341,8 @@ def resolve_user_role(context: Context, source: Environment):
         return EnvironmentPermission.Admin.value
     else:
         with context.engine.scoped_session() as session:
-            env_group = (
-                session.query(EnvironmentGroup)
-                .filter(
-                    and_(
-                        EnvironmentGroup.environmentUri == source.environmentUri,
-                        EnvironmentGroup.groupUri.in_(context.groups),
-                    )
-                )
-                .first()
+            env_group = EnvironmentService.get_enviromment_groups_from_list(
+                session, source.environmentUri, context.groups
             )
             if env_group:
                 return EnvironmentPermission.Invited.value
@@ -408,14 +374,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group: EnvironmentGroup = (
-            session.query(EnvironmentGroup)
-            .filter(
-                EnvironmentGroup.environmentUri == environment.environmentUri,
-                EnvironmentGroup.groupUri == groupUri,
-            )
-            .first()
-        )
+        env_group = EnvironmentService.get_enviromment_group_by_uri(session, environment.environmentUri, groupUri)
         if not env_group:
             raise exceptions.UnauthorizedOperation(
                 action='ENVIRONMENT_AWS_ACCESS',
@@ -514,57 +473,24 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
 
 def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
+        EnvironmentService.enable_subscriptions(
+            session,
+            environmentUri,
             username=context.username,
             groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+            producersTopicArn=input.get('producersTopicArn'),
         )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        if input.get('producersTopicArn'):
-            environment.subscriptionsProducersTopicName = input.get('producersTopicArn')
-            environment.subscriptionsProducersTopicImported = True
 
-        else:
-            environment.subscriptionsProducersTopicName = NamingConventionService(
-                target_label=f'{environment.label}-producers-topic',
-                target_uri=environment.environmentUri,
-                pattern=NamingConventionPattern.DEFAULT,
-                resource_prefix=environment.resourcePrefix,
-            ).build_compliant_name()
-
-        environment.subscriptionsConsumersTopicName = NamingConventionService(
-            target_label=f'{environment.label}-consumers-topic',
-            target_uri=environment.environmentUri,
-            pattern=NamingConventionPattern.DEFAULT,
-            resource_prefix=environment.resourcePrefix,
-        ).build_compliant_name()
-        environment.subscriptionsConsumersTopicImported = False
-        environment.subscriptionsEnabled = True
-        session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environmentUri)
         return True
 
 
 def disable_subscriptions(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+        EnvironmentService.disable_subscriptions(
+            session, environmentUri, username=context.username, groups=context.groups
         )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-
-        environment.subscriptionsConsumersTopicName = None
-        environment.subscriptionsConsumersTopicImported = False
-        environment.subscriptionsProducersTopicName = None
-        environment.subscriptionsProducersTopicImported = False
-        environment.subscriptionsEnabled = False
-        session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environmentUri)
         return True
 
 
