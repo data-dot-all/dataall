@@ -7,6 +7,7 @@ from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
 from dataall.core.stacks.services.stack_service import StackService
+from dataall.core.stacks.db.stack_repositories import Stack as StackRepo
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -904,7 +905,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.GET_ENVIRONMENT)
     # uri param is required by the decorator
     def get_stack(session, uri, stack_uri) -> Stack:
-        return Stack.find_stack_by_target_uri(session, target_uri=stack_uri)
+        return StackRepo.find_stack_by_target_uri(session, target_uri=stack_uri)
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_ENVIRONMENT)
