@@ -905,7 +905,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.GET_ENVIRONMENT)
     # uri param is required by the decorator
     def get_stack(session, uri, stack_uri) -> Stack:
-        return StackRepo.find_stack_by_target_uri(session, target_uri=stack_uri)
+        return StackRepo.get_stack_by_uri(session, stack_uri=stack_uri)
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_ENVIRONMENT)

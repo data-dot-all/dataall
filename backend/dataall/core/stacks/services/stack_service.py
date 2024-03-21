@@ -114,7 +114,7 @@ class StackService:
 
     @staticmethod
     def get_stack_logs(session, stackUri):
-        stack = Stack.find_stack_by_target_uri(session, target_uri=stackUri)
+        stack = Stack.get_stack_by_uri(session, stack_uri=stackUri)
         if not stack.EcsTaskArn:
             raise exceptions.AWSResourceNotFound(
                 action='GET_STACK_LOGS',
