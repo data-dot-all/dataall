@@ -22,7 +22,6 @@ def fetch_omics_workflows(engine):
     log.info('Starting omics workflows fetcher')
     with engine.scoped_session() as session:
         environments = session.query(Environment)
-        is_first_time = True
         for env in environments:
             ready_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.READY2RUN.value)
             private_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.PRIVATE.value)
@@ -33,7 +32,7 @@ def fetch_omics_workflows(engine):
                 existing_workflow = OmicsRepository(session).get_workflow(workflow['id'])
                 if existing_workflow is not None:
                     log.info(f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping...")
-                elif is_first_time or workflow['type'] == OmicsWorkflowType.PRIVATE.value:
+                else:
                     log.info(f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering...")
                     omicsWorkflow = OmicsWorkflow(
                         id=workflow['id'],
@@ -45,7 +44,6 @@ def fetch_omics_workflows(engine):
                         owner=env.environmentUri
                     )
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
-            is_first_time = False
     return True
 
 
