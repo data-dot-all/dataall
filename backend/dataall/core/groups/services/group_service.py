@@ -3,6 +3,7 @@ import os
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
+from dataall.base.context import get_context
 
 
 class GroupService:
@@ -15,19 +16,7 @@ class GroupService:
     ]
 
     @staticmethod
-    def get_groups_for_user(userId):
-        # for test environment
-        envname = os.getenv('envname', 'local')
-        if envname in ['local', 'dkrcompose']:
-            return GroupService.LOCAL_TEST_GROUPS
-
-        # for real environment
-        service_provider = ServiceProviderFactory.get_service_provider_instance()
-        groups = service_provider.get_groups_for_user(userId)
-        return groups
-
-    @staticmethod
-    def list_cognito_groups():
+    def _list_cognito_groups():
         # for test environment
         envname = os.getenv('envname', 'local')
         if envname in ['dkrcompose']:
@@ -40,7 +29,7 @@ class GroupService:
         return groups
 
     @staticmethod
-    def list_invited_groups(session, filter: dict = None):
+    def _list_invited_groups(session, filter: dict = None):
         category, category_uri = filter.get('type'), filter.get('uri')
         if not (category and category_uri):
             return []
@@ -63,13 +52,26 @@ class GroupService:
         return [item.groupUri for item in invited_groups]
 
     @staticmethod
-    def list_groups_without_invited(session, filter: dict = None):
-        cognito_groups = GroupService.list_cognito_groups()
-        invited_groups = GroupService.list_invited_groups(session, filter)
+    def get_groups_for_user(userId):
+        # for test environment
+        envname = os.getenv('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+            return GroupService.LOCAL_TEST_GROUPS
 
-        groups = []
-        for group in cognito_groups:
-            if group not in invited_groups:
-                groups.append({'groupName': group})
-
+        # for real environment
+        service_provider = ServiceProviderFactory.get_service_provider_instance()
+        groups = service_provider.get_groups_for_user(userId)
         return groups
+
+    @staticmethod
+    def list_groups_without_invited(filter: dict = None):
+        with get_context().db_engine.scoped_session() as session:
+            cognito_groups = GroupService._list_cognito_groups()
+            invited_groups = GroupService._list_invited_groups(session, filter)
+
+            groups = []
+            for group in cognito_groups:
+                if group not in invited_groups:
+                    groups.append({'groupName': group})
+
+            return groups

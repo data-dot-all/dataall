@@ -29,5 +29,4 @@ def test_list_groups_env(client, env_fixture, group, module_mocker):
         username='alice',
         filter={'type': 'environment', 'uri': env_fixture.environmentUri},
     )
-    print(response)
     assert response.data.listGroups[0].groupName == 'cognitos'

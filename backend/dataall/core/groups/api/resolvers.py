@@ -39,8 +39,9 @@ def get_group(context, source, groupUri):
 
 
 def list_groups(context, source, filter: dict = None):
-    with context.engine.scoped_session() as session:
-        return GroupService.list_groups_without_invited(session, filter)
+    if not filter:
+        filter = {}
+    return GroupService.list_groups_without_invited(filter)
 
 
 def get_groups_for_user(context, source, userid):
