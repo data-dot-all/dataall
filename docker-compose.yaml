@@ -97,15 +97,15 @@ services:
     restart:
       on-failure:60
 
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/docker/dev/Dockerfile
-    deploy:
-      resources:
-        limits:
-          memory: 4096M
-        reservations:
-          memory: 128M
-    ports:
-      - "8080:80"
+#  frontend:
+#    build:
+#      context: .
+#      dockerfile: frontend/docker/dev/Dockerfile
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 4096M
+#        reservations:
+#          memory: 128M
+#    ports:
+#      - "8080:80"
