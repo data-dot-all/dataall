@@ -21,9 +21,7 @@ class GlossaryNode(Base):
     nodeUri = Column(String, primary_key=True, default=utils.uuid('glossary_node'))
     parentUri = Column(String, nullable=True)
     nodeType = Column(String, default='G')
-    status = Column(
-        String, Enum(GlossaryNodeStatus), default=GlossaryNodeStatus.draft.value
-    )
+    status = Column(String, Enum(GlossaryNodeStatus), default=GlossaryNodeStatus.draft.value)
     path = Column(String, nullable=False)
     label = Column(String, nullable=False)
     readme = Column(String, nullable=False)

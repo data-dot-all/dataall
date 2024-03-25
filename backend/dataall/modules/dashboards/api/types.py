@@ -1,5 +1,11 @@
 from dataall.base.api import gql
-from dataall.modules.dashboards.api.resolvers import *
+from dataall.modules.dashboards.api.resolvers import (
+    DashboardRole,
+    get_dashboard_organization,
+    resolve_glossary_terms,
+    resolve_upvotes,
+    resolve_user_role,
+)
 
 from dataall.core.environment.api.resolvers import resolve_environment
 

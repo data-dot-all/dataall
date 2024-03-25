@@ -25,15 +25,11 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(
-            session
-        )
+        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         log.info(f'Found {len(all_datasets)} datasets for tables sync')
         dataset: Dataset
         for dataset in all_datasets:
-            log.info(
-                f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables'
-            )
+            log.info(f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables')
             env: Environment = (
                 session.query(Environment)
                 .filter(
@@ -44,33 +40,20 @@ def sync_tables(engine):
                 )
                 .first()
             )
-            env_group: EnvironmentGroup = (
-                EnvironmentService.get_environment_group(
-                    session, dataset.SamlAdminGroupName, env.environmentUri
-                )
+            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
+                session, dataset.SamlAdminGroupName, env.environmentUri
             )
             try:
                 if not env or not is_assumable_pivot_role(env):
-                    log.info(
-                        f'Dataset {dataset.GlueDatabaseName} has an invalid environment'
-                    )
+                    log.info(f'Dataset {dataset.GlueDatabaseName} has an invalid environment')
                 else:
-
                     tables = DatasetCrawler(dataset).list_glue_database_tables(dataset.S3BucketName)
 
-                    log.info(
-                        f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'
-                    )
+                    log.info(f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}')
 
-                    DatasetTableService.sync_existing_tables(
-                        session, dataset.datasetUri, glue_tables=tables
-                    )
+                    DatasetTableService.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
 
-                    tables = (
-                        session.query(DatasetTable)
-                        .filter(DatasetTable.datasetUri == dataset.datasetUri)
-                        .all()
-                    )
+                    tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
 
                     log.info('Updating tables permissions on Lake Formation...')
 
@@ -98,9 +81,7 @@ def sync_tables(engine):
 def is_assumable_pivot_role(env: Environment):
     aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId)
     if not aws_session:
-        log.error(
-            f'Failed to assume dataall pivot role in environment {env.AwsAccountId}'
-        )
+        log.error(f'Failed to assume dataall pivot role in environment {env.AwsAccountId}')
         return False
     return True
 

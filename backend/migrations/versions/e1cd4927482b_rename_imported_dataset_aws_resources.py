@@ -5,6 +5,7 @@ Revises: 72b8a90b6ee8
 Create Date: 2023-07-13 09:20:20.091639
 
 """
+
 from alembic import op
 from sqlalchemy import orm, Column, String, Boolean
 from sqlalchemy.dialects import postgresql
@@ -87,24 +88,24 @@ def upgrade():
         print('Updating imported dataset aws resources names...')
         imported_datasets: [Dataset] = session.query(Dataset).filter(Dataset.imported.is_(True))
         for dataset in imported_datasets:
-            print(f"Updating dataset {dataset.datasetUri}")
-            environment: [Environment] = session.query(Environment).filter(
-                Environment.environmentUri == dataset.environmentUri
-            ).first()
+            print(f'Updating dataset {dataset.datasetUri}')
+            environment: [Environment] = (
+                session.query(Environment).filter(Environment.environmentUri == dataset.environmentUri).first()
+            )
             glue_etl_basename = NamingConventionService(
                 target_uri=dataset.datasetUri,
                 target_label=dataset.label,
                 pattern=NamingConventionPattern.GLUE_ETL,
                 resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
-            dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
-            dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
-            dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
-            dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
-            dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
+            dataset.GlueCrawlerName = f'{glue_etl_basename}-crawler'
+            dataset.GlueProfilingJobName = f'{glue_etl_basename}-profiler'
+            dataset.GlueProfilingTriggerName = f'{glue_etl_basename}-trigger'
+            dataset.GlueDataQualityJobName = f'{glue_etl_basename}-dataquality'
+            dataset.GlueDataQualityTriggerName = f'{glue_etl_basename}-dqtrigger'
             if not dataset.importedKmsKey:
                 # Not adding downgrade for this line because this is a fix not an upgrade
-                dataset.KmsAlias = "Undefined"
+                dataset.KmsAlias = 'Undefined'
             session.commit()
         print('imported Datasets resources updated successfully')
     except Exception as e:
@@ -118,13 +119,13 @@ def downgrade():
         print('Updating imported dataset aws resources names to previous...')
         imported_datasets: [Dataset] = session.query(Dataset).filter(Dataset.imported.is_(True))
         for dataset in imported_datasets:
-            print(f"Updating dataset {dataset.datasetUri}")
-            glue_etl_basename = f"{dataset.S3BucketName}-{dataset.datasetUri}"
-            dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
-            dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
-            dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
-            dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
-            dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
+            print(f'Updating dataset {dataset.datasetUri}')
+            glue_etl_basename = f'{dataset.S3BucketName}-{dataset.datasetUri}'
+            dataset.GlueCrawlerName = f'{glue_etl_basename}-crawler'
+            dataset.GlueProfilingJobName = f'{glue_etl_basename}-profiler'
+            dataset.GlueProfilingTriggerName = f'{glue_etl_basename}-trigger'
+            dataset.GlueDataQualityJobName = f'{glue_etl_basename}-dataquality'
+            dataset.GlueDataQualityTriggerName = f'{glue_etl_basename}-dqtrigger'
             session.commit()
         print('imported Datasets resources updated successfully')
     except Exception as e:

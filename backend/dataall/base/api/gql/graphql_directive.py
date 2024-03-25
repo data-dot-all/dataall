@@ -22,6 +22,5 @@ class DirectiveArgs:
 
 
 if __name__ == '__main__':
-
     uri = DirectiveArgs(name='uri', model='X', param=2, bool=True)
     print(uri.gql())

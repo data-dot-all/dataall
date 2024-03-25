@@ -10,7 +10,6 @@ log = logging.getLogger(__name__)
 
 
 class SESEmailNotificationService(BaseEmailNotificationService):
-
     def __init__(self, email_client, recipient_group_list, recipient_email_list) -> None:
         super().__init__()
         self.email_client = email_client
@@ -35,11 +34,15 @@ class SESEmailNotificationService(BaseEmailNotificationService):
     @staticmethod
     def send_email_task(subject, message, recipient_groups_list, recipient_email_list):
         # Get instance of the email provider
-        email_provider = SESEmailNotificationService.get_email_provider_instance(recipient_groups_list, recipient_email_list)
+        email_provider = SESEmailNotificationService.get_email_provider_instance(
+            recipient_groups_list, recipient_email_list
+        )
         try:
             identityProvider = ServiceProviderFactory.get_service_provider_instance()
 
-            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(email_provider.recipient_group_list, identityProvider)
+            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
+                email_provider.recipient_group_list, identityProvider
+            )
 
             if len(recipient_email_list) > 0:
                 email_ids_to_send_emails.update(recipient_email_list)

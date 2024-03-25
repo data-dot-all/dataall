@@ -1,8 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.storage_location.resolvers import (
-    resolve_glossary_terms,
-    resolve_dataset
-)
+from dataall.modules.datasets.api.storage_location.resolvers import resolve_glossary_terms, resolve_dataset
 
 DatasetStorageLocation = gql.ObjectType(
     name='DatasetStorageLocation',

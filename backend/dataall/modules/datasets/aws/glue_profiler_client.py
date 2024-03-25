@@ -30,9 +30,7 @@ class GlueDatasetProfilerClient:
         """Run glue job. Returns id of the job"""
         args = {'--table': profiling.GlueTableName} if profiling.GlueTableName else {}
         try:
-            response = self._client.start_job_run(
-                JobName=self._name, Arguments=args
-            )
+            response = self._client.start_job_run(JobName=self._name, Arguments=args)
 
             return response['JobRunId']
         except ClientError as e:

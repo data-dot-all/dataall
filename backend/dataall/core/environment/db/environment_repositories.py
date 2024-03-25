@@ -11,17 +11,14 @@ class EnvironmentParameterRepository:
         self._session = session
 
     def get_param(self, env_uri, param_key):
-        return self._session.query(EnvironmentParameter).filter(
-            and_(
-                EnvironmentParameter.environmentUri == env_uri,
-                EnvironmentParameter.key == param_key
-            )
-        ).first()
+        return (
+            self._session.query(EnvironmentParameter)
+            .filter(and_(EnvironmentParameter.environmentUri == env_uri, EnvironmentParameter.key == param_key))
+            .first()
+        )
 
     def get_params(self, env_uri):
-        return self._session.query(EnvironmentParameter).filter(
-            EnvironmentParameter.environmentUri == env_uri
-        )
+        return self._session.query(EnvironmentParameter).filter(EnvironmentParameter.environmentUri == env_uri)
 
     def update_params(self, env_uri, params):
         """Rewrite all parameters for the environment"""
@@ -30,9 +27,7 @@ class EnvironmentParameterRepository:
 
     def delete_params(self, env_uri):
         """Erase all environment parameters"""
-        self._session.query(EnvironmentParameter).filter(
-            EnvironmentParameter.environmentUri == env_uri
-        ).delete()
+        self._session.query(EnvironmentParameter).filter(EnvironmentParameter.environmentUri == env_uri).delete()
 
 
 class EnvironmentRepository:
@@ -51,21 +46,24 @@ class EnvironmentRepository:
 
     @staticmethod
     def count_environments_with_organization_and_group(session, organization, group):
-        return session.query(Environment).filter(
-            and_(
-                Environment.organizationUri == organization.organizationUri,
-                Environment.SamlGroupName == group,
+        return (
+            session.query(Environment)
+            .filter(
+                and_(
+                    Environment.organizationUri == organization.organizationUri,
+                    Environment.SamlGroupName == group,
+                )
             )
-        ).count()
+            .count()
+        )
 
     @staticmethod
     def find_environment_by_account_region(session, account_id, region):
-        environment: Environment = session.query(Environment).filter(
-            and_(
-                Environment.AwsAccountId == account_id,
-                Environment.region == region
-            )
-        ).first()
+        environment: Environment = (
+            session.query(Environment)
+            .filter(and_(Environment.AwsAccountId == account_id, Environment.region == region))
+            .first()
+        )
         if not environment:
             return None
         return environment

@@ -2,6 +2,7 @@
 Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
+
 from typing import Protocol, Callable
 
 from dataall.base.context import RequestContext, get_context
@@ -12,8 +13,8 @@ from dataall.base.utils.decorator_utls import process_func
 
 class Identifiable(Protocol):
     """Protocol to identify resources for checking permissions"""
-    def get_resource_uri(self) -> str:
-        ...
+
+    def get_resource_uri(self) -> str: ...
 
 
 def _check_tenant_permission(session, permission):
@@ -23,7 +24,7 @@ def _check_tenant_permission(session, permission):
         username=context.username,
         groups=context.groups,
         tenant_name='dataall',
-        permission_name=permission
+        permission_name=permission,
     )
 
 
@@ -39,10 +40,7 @@ def _check_resource_permission(session, uri, permission):
 
 
 def has_resource_permission(
-        permission: str,
-        param_name: str = None,
-        resource_name: str = None,
-        parent_resource: Callable = None
+    permission: str, param_name: str = None, resource_name: str = None, parent_resource: Callable = None
 ):
     """
     Decorator that check if a user has access to the resource.
@@ -51,7 +49,7 @@ def has_resource_permission(
     hence it has URI - it must be decorated with this decorator
     """
     if not param_name:
-        param_name = "uri"
+        param_name = 'uri'
 
     def decorator(f):
         fn, fn_decorator = process_func(f)
@@ -87,6 +85,7 @@ def has_tenant_permission(permission: str):
     Decorator to check if a user has a permission to do some action.
     All the information about the user is retrieved from RequestContext
     """
+
     def decorator(f):
         fn, fn_decorator = process_func(f)
 

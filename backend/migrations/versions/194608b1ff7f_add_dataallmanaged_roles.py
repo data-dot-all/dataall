@@ -5,6 +5,7 @@ Revises: af702716568f
 Create Date: 2024-02-29 23:14:07.686581
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -17,7 +18,10 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('consumptionrole', sa.Column('dataallManaged', sa.Boolean(), nullable=False, server_default=sa.sql.expression.true()))
+    op.add_column(
+        'consumptionrole',
+        sa.Column('dataallManaged', sa.Boolean(), nullable=False, server_default=sa.sql.expression.true()),
+    )
 
 
 def downgrade():

@@ -1,4 +1,5 @@
 """The package contains the database models that are related to the environment"""
+
 import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
@@ -54,15 +55,14 @@ class EnvironmentGroup(Base):
     deleted = Column(DateTime)
 
     # environmentRole is the role of the entity (group or user) in the Environment
-    groupRoleInEnvironment = Column(
-        String, nullable=False, default=EnvironmentPermission.Invited.value
-    )
+    groupRoleInEnvironment = Column(String, nullable=False, default=EnvironmentPermission.Invited.value)
 
 
 class EnvironmentParameter(Base):
     """Represent the parameter of the environment"""
+
     __tablename__ = 'environment_parameters'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), primary_key=True)
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), primary_key=True)
     key = Column('paramKey', String, primary_key=True)
     value = Column('paramValue', String, nullable=False)
 

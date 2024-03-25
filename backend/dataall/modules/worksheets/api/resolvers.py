@@ -23,15 +23,10 @@ def create_worksheet(context: Context, source, input: dict = None):
         )
 
 
-def update_worksheet(
-    context: Context, source, worksheetUri: str = None, input: dict = None
-):
+def update_worksheet(context: Context, source, worksheetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.update_worksheet(
-            session=session,
-            username=context.username,
-            uri=worksheetUri,
-            data=input
+            session=session, username=context.username, uri=worksheetUri, data=input
         )
 
 
@@ -65,21 +60,13 @@ def list_worksheets(context, source, filter: dict = None):
         )
 
 
-def run_sql_query(
-    context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None
-):
+def run_sql_query(context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.run_sql_query(
-            session=session,
-            uri=environmentUri,
-            worksheetUri=worksheetUri,
-            sqlQuery=sqlQuery
+            session=session, uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery
         )
 
 
 def delete_worksheet(context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
-        return WorksheetService.delete_worksheet(
-            session=session,
-            uri=worksheetUri
-        )
+        return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)

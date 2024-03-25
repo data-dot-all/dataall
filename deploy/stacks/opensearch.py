@@ -1,5 +1,5 @@
-import os 
-import sys 
+import os
+import sys
 
 from aws_cdk import (
     aws_ec2 as ec2,
@@ -12,16 +12,18 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
-BACKEND_UTILS_PATH = "/backend/dataall/base"
+BACKEND_UTILS_PATH = '/backend/dataall/base'
 parent_dir = os.path.dirname(os.path.realpath(__file__))
-backend_dir = parent_dir.rsplit("/", 2)[0] + BACKEND_UTILS_PATH
+backend_dir = parent_dir.rsplit('/', 2)[0] + BACKEND_UTILS_PATH
 sys.path.insert(0, backend_dir)
 
+# ruff: noqa: E402
 from utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
+# ruff: noqa: E402
 from .pyNestedStack import pyNestedClass
 
 
@@ -51,10 +53,8 @@ class OpenSearchStack(pyNestedClass):
 
         key = aws_kms.Key(
             self,
-            f'ESKMSKey',
-            removal_policy=RemovalPolicy.DESTROY
-            if not prod_sizing
-            else RemovalPolicy.RETAIN,
+            'ESKMSKey',
+            removal_policy=RemovalPolicy.DESTROY if not prod_sizing else RemovalPolicy.RETAIN,
             alias=f'{resource_prefix}-{envname}-elasticsearch',
             enable_key_rotation=True,
         )
@@ -74,9 +74,7 @@ class OpenSearchStack(pyNestedClass):
             f'OpenSearchDomain{envname}',
             domain_name=self._set_os_compliant_name(prefix=f'{resource_prefix}-{envname}', name='domain'),
             version=opensearch.EngineVersion.OPENSEARCH_1_1,
-            capacity=opensearch.CapacityConfig(
-                data_nodes=2, master_nodes=3 if prod_sizing else 0
-            ),
+            capacity=opensearch.CapacityConfig(data_nodes=2, master_nodes=3 if prod_sizing else 0),
             enforce_https=True,
             ebs=opensearch.EbsOptions(volume_size=30 if prod_sizing else 20),
             enable_version_upgrade=True,
@@ -91,15 +89,11 @@ class OpenSearchStack(pyNestedClass):
             zone_awareness=opensearch.ZoneAwarenessConfig(enabled=True),
             vpc_subnets=[
                 ec2.SubnetSelection(
-                    subnets=vpc.select_subnets(
-                        subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True
-                    ).subnets[:2]
+                    subnets=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True).subnets[:2]
                 )
             ],
             security_groups=[db_security_group],
-            encryption_at_rest=opensearch.EncryptionAtRestOptions(
-                enabled=True, kms_key=key
-            ),
+            encryption_at_rest=opensearch.EncryptionAtRestOptions(enabled=True, kms_key=key),
             access_policies=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -125,7 +119,7 @@ class OpenSearchStack(pyNestedClass):
                 self.domain.connections.allow_from(
                     sg_connection,
                     ec2.Port.tcp(443),
-                    f'Allow dataall opensearch to ecs sg',
+                    'Allow dataall opensearch to ecs sg',
                 )
 
         ssm.StringParameter(

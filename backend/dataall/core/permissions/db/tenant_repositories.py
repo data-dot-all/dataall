@@ -9,11 +9,7 @@ class Tenant:
     @staticmethod
     def find_tenant_by_name(session, tenant_name: str) -> models.Tenant:
         if tenant_name:
-            tenant = (
-                session.query(models.Tenant)
-                .filter(models.Tenant.name == tenant_name)
-                .first()
-            )
+            tenant = session.query(models.Tenant).filter(models.Tenant.name == tenant_name).first()
             return tenant
 
     @staticmethod
@@ -34,9 +30,7 @@ class Tenant:
         if tenant:
             return tenant
         else:
-            tenant = models.Tenant(
-                name=name, description=description if description else f'Tenant {name}'
-            )
+            tenant = models.Tenant(name=name, description=description if description else f'Tenant {name}')
             session.add(tenant)
             session.commit()
         return tenant

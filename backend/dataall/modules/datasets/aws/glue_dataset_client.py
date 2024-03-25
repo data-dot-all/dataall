@@ -46,8 +46,8 @@ class DatasetCrawler:
             self._client.stop_crawler(Name=crawler_name)
         except ClientError as e:
             if (
-                    e.response['Error']['Code'] == 'CrawlerStoppingException'
-                    or e.response['Error']['Code'] == 'CrawlerNotRunningException'
+                e.response['Error']['Code'] == 'CrawlerStoppingException'
+                or e.response['Error']['Code'] == 'CrawlerNotRunningException'
             ):
                 log.error('Failed to stop crawler %s', e)
         try:
@@ -77,7 +77,7 @@ class DatasetCrawler:
                 return found_tables
 
             pages = self.get_pages(database, account_id)
-            dataset_s3_bucket = f"s3://{dataset_s3_bucket_name}/"
+            dataset_s3_bucket = f's3://{dataset_s3_bucket_name}/'
             found_tables = [
                 table
                 for page in pages

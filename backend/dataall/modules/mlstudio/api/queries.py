@@ -1,19 +1,16 @@
 """The module defines GraphQL queries for the SageMaker ML Studio"""
+
 from dataall.base.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     get_sagemaker_studio_user,
     list_sagemaker_studio_users,
     get_sagemaker_studio_user_presigned_url,
-    get_environment_sagemaker_studio_domain
+    get_environment_sagemaker_studio_domain,
 )
 
 getSagemakerStudioUser = gql.QueryField(
     name='getSagemakerStudioUser',
-    args=[
-        gql.Argument(
-            name='sagemakerStudioUserUri', type=gql.NonNullableType(gql.String)
-        )
-    ],
+    args=[gql.Argument(name='sagemakerStudioUserUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('SagemakerStudioUser'),
     resolver=get_sagemaker_studio_user,
 )
@@ -27,11 +24,7 @@ listSagemakerStudioUsers = gql.QueryField(
 
 getSagemakerStudioUserPresignedUrl = gql.QueryField(
     name='getSagemakerStudioUserPresignedUrl',
-    args=[
-        gql.Argument(
-            name='sagemakerStudioUserUri', type=gql.NonNullableType(gql.String)
-        )
-    ],
+    args=[gql.Argument(name='sagemakerStudioUserUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=get_sagemaker_studio_user_presigned_url,
 )

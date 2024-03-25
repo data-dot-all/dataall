@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from .resolvers import list_tenant_groups, list_tenant_permissions
 
 
 listTenantPermissions = gql.QueryField(

@@ -1,4 +1,3 @@
-
 import logging
 import os
 
@@ -37,9 +36,7 @@ class EcsShareHandler:
         if envname in ['local', 'dkrcompose']:
             return local_handler(engine, task.targetUri)
         else:
-            return EcsShareHandler._run_share_management_ecs_task(
-                share_uri=task.targetUri, handler=ecs_handler
-            )
+            return EcsShareHandler._run_share_management_ecs_task(share_uri=task.targetUri, handler=ecs_handler)
 
     @staticmethod
     def _run_share_management_ecs_task(share_uri, handler):

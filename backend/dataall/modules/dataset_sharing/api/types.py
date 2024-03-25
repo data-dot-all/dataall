@@ -1,8 +1,22 @@
 from dataall.base.api import gql
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType, ShareItemHealthStatus
-from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
-    resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
-    resolve_group, list_shareable_objects, resolve_user_role, resolve_shared_database_name
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareableType,
+    PrincipalType,
+    ShareItemHealthStatus,
+)
+from dataall.modules.dataset_sharing.api.resolvers import (
+    union_resolver,
+    resolve_shared_item,
+    resolve_dataset,
+    resolve_consumption_data,
+    resolve_existing_shared_items,
+    resolve_share_object_statistics,
+    resolve_principal,
+    resolve_group,
+    list_shareable_objects,
+    resolve_user_role,
+    resolve_shared_database_name,
+)
 from dataall.core.environment.api.resolvers import resolve_environment
 
 ShareableObject = gql.Union(
@@ -135,9 +149,7 @@ ShareObject = gql.ObjectType(
             type=gql.Ref('ShareObjectStatistic'),
             resolver=resolve_share_object_statistics,
         ),
-        gql.Field(
-            name='principal', resolver=resolve_principal, type=gql.Ref('Principal')
-        ),
+        gql.Field(name='principal', resolver=resolve_principal, type=gql.Ref('Principal')),
         gql.Field(
             name='environment',
             resolver=resolve_environment,

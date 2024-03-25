@@ -26,20 +26,20 @@ def ignore_module_tests_if_not_active():
     """
     modules = list_loaded_modules()
 
-    all_module_files = set(glob(os.path.join("tests", "modules", "[!_]*"), recursive=True))
+    all_module_files = set(glob(os.path.join('tests', 'modules', '[!_]*'), recursive=True))
     active_module_tests = set()
     for module in modules:
-        active_module_tests.update(glob(os.path.join("tests", "modules", module), recursive=True))
+        active_module_tests.update(glob(os.path.join('tests', 'modules', module), recursive=True))
 
     exclude_tests = all_module_files - active_module_tests
 
     # here is a small hack to satisfy both glob and pytest. glob is using os.getcwd() which is root of the project
     # while using "make test". pytest is using test directory. Here is why we add "tests" prefix for glob and
     # remove it for pytest
-    prefix_to_remove = f"tests{os.sep}"
+    prefix_to_remove = f'tests{os.sep}'
 
     # migrate to remove prefix when runtime > 3.8
-    exclude_tests = [excluded[len(prefix_to_remove):] for excluded in exclude_tests]
+    exclude_tests = [excluded[len(prefix_to_remove) :] for excluded in exclude_tests]
     collect_ignore_glob.extend(exclude_tests)
 
 
@@ -108,22 +108,22 @@ def _create_group(db, tenant, name, user):
 
 @pytest.fixture(scope='module')
 def group(db, tenant, user):
-    yield _create_group(db, tenant, "testadmins", user)
+    yield _create_group(db, tenant, 'testadmins', user)
 
 
 @pytest.fixture(scope='module')
 def group2(db, tenant, user2):
-    yield _create_group(db, tenant, "dataengineers", user2)
+    yield _create_group(db, tenant, 'dataengineers', user2)
 
 
 @pytest.fixture(scope='module')
 def group3(db, tenant, user3):
-    yield _create_group(db, tenant, "datascientists", user3)
+    yield _create_group(db, tenant, 'datascientists', user3)
 
 
 @pytest.fixture(scope='module')
 def group4(db, tenant, user3):
-    yield _create_group(db, tenant, "externals", user3)
+    yield _create_group(db, tenant, 'externals', user3)
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -147,9 +147,7 @@ def permissions(db):
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_ssm(mocker):
-    mocker.patch(
-        'dataall.base.utils.parameter.Parameter.get_parameter', return_value='param'
-    )
+    mocker.patch('dataall.base.utils.parameter.Parameter.get_parameter', return_value='param')
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -186,20 +184,11 @@ def mock_aws_client(module_mocker):
     session = MagicMock()
 
     # there can be other mocker clients
-    module_mocker.patch(
-        'dataall.modules.datasets.aws.s3_dataset_client.SessionHelper',
-        session_helper
-    )
+    module_mocker.patch('dataall.modules.datasets.aws.s3_dataset_client.SessionHelper', session_helper)
 
-    module_mocker.patch(
-        'dataall.modules.dataset_sharing.aws.kms_client.SessionHelper',
-        session_helper
-    )
+    module_mocker.patch('dataall.modules.dataset_sharing.aws.kms_client.SessionHelper', session_helper)
 
-    module_mocker.patch(
-        'dataall.base.aws.sts.SessionHelper',
-        session_helper
-    )
+    module_mocker.patch('dataall.base.aws.sts.SessionHelper', session_helper)
 
     session_helper.get_session.return_value = session
     session_helper.remote_session.return_value = session

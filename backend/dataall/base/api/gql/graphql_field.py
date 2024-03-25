@@ -2,7 +2,7 @@ import typing
 
 from .graphql_argument import Argument
 from .graphql_enum import GraphqlEnum
-from .graphql_scalar import *
+from .graphql_scalar import Scalar
 from .graphql_type import ObjectType
 from .graphql_type_modifiers import ArrayType, NonNullableType, TypeModifier
 from .graphql_union_type import Union
@@ -65,9 +65,7 @@ class Field:
                 return f'{gql}'
 
     def directive(self, directive_name):
-        return next(
-            filter(lambda d: d.name == directive_name, self.directives or []), None
-        )
+        return next(filter(lambda d: d.name == directive_name, self.directives or []), None)
 
     def has_directive(self, directive_name):
         return self.directive(directive_name=directive_name) is not None

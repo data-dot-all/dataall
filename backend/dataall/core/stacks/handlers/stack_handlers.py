@@ -40,13 +40,9 @@ class StackHandlers:
     @Worker.handler(path='ecs.cdkproxy.deploy')
     def deploy_stack(engine, task: Task):
         with engine.scoped_session() as session:
-            stack: models.Stack = Stack.get_stack_by_uri(
-                session, stack_uri=task.targetUri
-            )
+            stack: models.Stack = Stack.get_stack_by_uri(session, stack_uri=task.targetUri)
             envname = os.environ.get('envname', 'local')
-            cluster_name = Parameter().get_parameter(
-                env=envname, path='ecs/cluster/name'
-            )
+            cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
 
             while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{task.targetUri}'):
                 log.info(

@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class DatasetLocationRepository:
-
     @staticmethod
     def exists(session, dataset_uri: str, prefix: str):
         return (
@@ -24,11 +23,7 @@ class DatasetLocationRepository:
         )
 
     @staticmethod
-    def create_dataset_location(
-        session,
-        dataset: Dataset,
-        data: dict = None
-    ) -> DatasetStorageLocation:
+    def create_dataset_location(session, dataset: Dataset, data: dict = None) -> DatasetStorageLocation:
         location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
@@ -57,12 +52,8 @@ class DatasetLocationRepository:
         )
         if data.get('term'):
             term = data.get('term')
-            query = query.filter(
-                DatasetStorageLocation.label.ilike('%' + term + '%')
-            )
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+            query = query.filter(DatasetStorageLocation.label.ilike('%' + term + '%'))
+        return paginate(query, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def delete(session, location):
@@ -70,9 +61,7 @@ class DatasetLocationRepository:
 
     @staticmethod
     def get_location_by_uri(session, location_uri) -> DatasetStorageLocation:
-        location: DatasetStorageLocation = session.query(
-            DatasetStorageLocation
-        ).get(location_uri)
+        location: DatasetStorageLocation = session.query(DatasetStorageLocation).get(location_uri)
         if not location:
             raise exceptions.ObjectNotFound('Folder', location_uri)
         return location
@@ -98,19 +87,11 @@ class DatasetLocationRepository:
 
     @staticmethod
     def count_dataset_locations(session, dataset_uri):
-        return (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
-            .count()
-        )
+        return session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset_uri).count()
 
     @staticmethod
     def delete_dataset_locations(session, dataset_uri) -> bool:
-        locations = (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
-            .all()
-        )
+        locations = session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset_uri).all()
         for location in locations:
             session.delete(location)
         return True
@@ -118,30 +99,18 @@ class DatasetLocationRepository:
     @staticmethod
     def get_dataset_folders(session, dataset_uri):
         """return the dataset folders"""
-        return (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
-            .all()
-        )
+        return session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset_uri).all()
 
     @staticmethod
     def paginated_dataset_locations(session, uri, data=None) -> dict:
-        query = session.query(DatasetStorageLocation).filter(
-            DatasetStorageLocation.datasetUri == uri
-        )
+        query = session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == uri)
         if data and data.get('term'):
             query = query.filter(
                 or_(
                     *[
-                        DatasetStorageLocation.name.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
-                        DatasetStorageLocation.S3Prefix.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
+                        DatasetStorageLocation.name.ilike('%' + data.get('term') + '%'),
+                        DatasetStorageLocation.S3Prefix.ilike('%' + data.get('term') + '%'),
                     ]
                 )
             )
-        return paginate(
-            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
+        return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()

@@ -36,9 +36,7 @@ class DashboardQuicksightService:
 
             else:
                 shared_groups = DashboardRepository.query_all_user_groups_shareddashboard(
-                    session=session,
-                    groups=context.groups,
-                    uri=uri
+                    session=session, groups=context.groups, uri=uri
                 )
                 if not shared_groups:
                     raise UnauthorizedOperation(
@@ -74,7 +72,7 @@ class DashboardQuicksightService:
         dashboard_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
             region=DashboardQuicksightService._REGION,
-            parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/DashboardId'
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/DashboardId',
         )
 
         if not dashboard_id:
@@ -90,7 +88,7 @@ class DashboardQuicksightService:
         vpc_connection_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
             region=DashboardQuicksightService._REGION,
-            parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/VPCConnectionId'
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/VPCConnectionId',
         )
 
         if not vpc_connection_id:
@@ -140,20 +138,19 @@ class DashboardQuicksightService:
 
     @staticmethod
     def _get_domain_url():
-        envname = os.getenv("envname", "local")
-        if envname in ["local", "dkrcompose"]:
-            return "http://localhost:8080"
+        envname = os.getenv('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+            return 'http://localhost:8080'
 
         domain_name = DashboardQuicksightService._PARAM_STORE.get_parameter(
-            env=envname,
-            path="frontend/custom_domain_name"
+            env=envname, path='frontend/custom_domain_name'
         )
 
-        return f"https://{domain_name}"
+        return f'https://{domain_name}'
 
     @staticmethod
     def _check_dashboards_enabled(session, env, action):
-        enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+        enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
         if not enabled:
             raise UnauthorizedOperation(
                 action=action,
