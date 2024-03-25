@@ -16,6 +16,8 @@ export const AuthGuard = (props) => {
       setRequestedLocation(location.pathname);
     }
 
+    // If the user is not authenticated and if the session storage is empty for the key 'window-location'
+    // Also, another check of location.path is added to prevent overriding the window-location object when the user logs out and redirected to the landing page URL. Here, when the user is logged out the session storage stores '/' which is not needed
     if (
       !sessionStorage.getItem('window-location') &&
       location.pathname !== '/'
@@ -31,6 +33,8 @@ export const AuthGuard = (props) => {
     return <Navigate to={requestedLocation} />;
   }
 
+  // When session storage contained path is not same as the current location.pathname ( usually after authentication )
+  // Redirect the user to the session storage stored pathname.
   if (
     sessionStorage.getItem('window-location') &&
     location.pathname !== sessionStorage.getItem('window-location')
