@@ -89,7 +89,7 @@ class SharePolicyService(ManagedPolicy):
     def remove_resource_from_statement(self, target_resources: list, statement_sid: str, policy_document: dict):
         policy_name = self.generate_policy_name()
         index = self._get_statement_by_sid(policy_document, statement_sid)
-        log.info(f'Removing {target_resources} from Statement[{index}] in Managed policy {policy_name} ' f'skipping...')
+        log.info(f'Removing {target_resources} from Statement[{index}] in Managed policy {policy_name} ...')
         if index is None:
             log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'skipping...')
         else:
