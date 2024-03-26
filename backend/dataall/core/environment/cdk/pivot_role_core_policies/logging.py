@@ -8,17 +8,14 @@ class LoggingPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # CloudWatch Metrics
             iam.PolicyStatement(
                 sid='CWMetrics',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'cloudwatch:PutMetricData',
-                    'cloudwatch:GetMetricData',
-                    'cloudwatch:GetMetricStatistics'
-                ],
+                actions=['cloudwatch:PutMetricData', 'cloudwatch:GetMetricData', 'cloudwatch:GetMetricStatistics'],
                 resources=['*'],
             ),
             # Logs

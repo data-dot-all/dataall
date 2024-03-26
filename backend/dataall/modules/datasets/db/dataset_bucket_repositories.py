@@ -6,13 +6,8 @@ logger = logging.getLogger(__name__)
 
 
 class DatasetBucketRepository:
-
     @staticmethod
-    def create_dataset_bucket(
-        session,
-        dataset: Dataset,
-        data: dict = None
-    ) -> DatasetBucket:
+    def create_dataset_bucket(session, dataset: Dataset, data: dict = None) -> DatasetBucket:
         bucket = DatasetBucket(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
@@ -32,10 +27,6 @@ class DatasetBucketRepository:
 
     @staticmethod
     def delete_dataset_buckets(session, dataset_uri) -> bool:
-        buckets = (
-            session.query(DatasetBucket)
-            .filter(DatasetBucket.datasetUri == dataset_uri)
-            .all()
-        )
+        buckets = session.query(DatasetBucket).filter(DatasetBucket.datasetUri == dataset_uri).all()
         for bucket in buckets:
             session.delete(bucket)

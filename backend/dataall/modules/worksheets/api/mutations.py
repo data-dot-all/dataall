@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.worksheets.api.resolvers import *
+from dataall.modules.worksheets.api.resolvers import create_worksheet, delete_worksheet, update_worksheet
 
 
 createWorksheet = gql.MutationField(

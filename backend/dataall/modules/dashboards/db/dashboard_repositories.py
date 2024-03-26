@@ -12,22 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardRepository(EnvironmentResource):
-
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(Dashboard)
-            .filter(
-                and_(
-                    Dashboard.environmentUri == environment.environmentUri,
-                    Dashboard.SamlGroupName == group_uri
-                ))
+            .filter(and_(Dashboard.environmentUri == environment.environmentUri, Dashboard.SamlGroupName == group_uri))
             .count()
         )
 
     @staticmethod
     def update_env(session, environment, **kwargs):
-        return EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
+        return EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
 
     @staticmethod
     def create_dashboard(session, env, username: str, data: dict = None) -> Dashboard:
@@ -68,8 +63,7 @@ class DashboardRepository(EnvironmentResource):
                     Dashboard.SamlGroupName.in_(groups),
                     and_(
                         DashboardShare.SamlGroupName.in_(groups),
-                        DashboardShare.status
-                        == DashboardShareStatus.APPROVED.value,
+                        DashboardShare.status == DashboardShareStatus.APPROVED.value,
                     ),
                 )
             )
@@ -84,9 +78,7 @@ class DashboardRepository(EnvironmentResource):
         return query
 
     @staticmethod
-    def paginated_user_dashboards(
-        session, username, groups, data=None
-    ) -> dict:
+    def paginated_user_dashboards(session, username, groups, data=None) -> dict:
         return paginate(
             query=DashboardRepository._query_user_dashboards(session, username, groups, data),
             page=data.get('page', 1),
@@ -114,9 +106,7 @@ class DashboardRepository(EnvironmentResource):
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    DashboardShare.SamlGroupName.ilike(
-                        filter.get('term') + '%%'
-                    ),
+                    DashboardShare.SamlGroupName.ilike(filter.get('term') + '%%'),
                     Dashboard.label.ilike(filter.get('term') + '%%'),
                 )
             )
@@ -124,26 +114,19 @@ class DashboardRepository(EnvironmentResource):
 
     @staticmethod
     def query_all_user_groups_shareddashboard(session, groups, uri) -> [str]:
-        query = (
-            session.query(DashboardShare)
-            .filter(
-                and_(
-                    DashboardShare.dashboardUri == uri,
-                    DashboardShare.SamlGroupName.in_(groups),
-                )
+        query = session.query(DashboardShare).filter(
+            and_(
+                DashboardShare.dashboardUri == uri,
+                DashboardShare.SamlGroupName.in_(groups),
             )
         )
 
         return [share.SamlGroupName for share in query.all()]
 
     @staticmethod
-    def paginated_dashboard_shares(
-        session, username, groups, uri, data=None
-    ) -> dict:
+    def paginated_dashboard_shares(session, username, groups, uri, data=None) -> dict:
         return paginate(
-            query=DashboardRepository._query_dashboard_shares(
-                session, username, groups, uri, data
-            ),
+            query=DashboardRepository._query_dashboard_shares(session, username, groups, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -159,7 +142,7 @@ class DashboardRepository(EnvironmentResource):
         username: str,
         dashboard: Dashboard,
         principal_id: str,
-        init_status: DashboardShareStatus = DashboardShareStatus.REQUESTED
+        init_status: DashboardShareStatus = DashboardShareStatus.REQUESTED,
     ) -> DashboardShare:
         share = DashboardShare(
             owner=username,

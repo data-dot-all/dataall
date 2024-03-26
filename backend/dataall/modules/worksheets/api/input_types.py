@@ -71,11 +71,7 @@ WorksheetChartConfigInput = gql.InputType(
     name='WorksheetChartConfigInput',
     arguments=[
         gql.Argument(name='chartType', type=gql.String),
-        gql.Argument(
-            name='dimensions', type=gql.ArrayType(gql.Ref('WorksheetDimensionInput'))
-        ),
-        gql.Argument(
-            name='measures', type=gql.ArrayType(gql.Ref('WorksheetMeasureInput'))
-        ),
+        gql.Argument(name='dimensions', type=gql.ArrayType(gql.Ref('WorksheetDimensionInput'))),
+        gql.Argument(name='measures', type=gql.ArrayType(gql.Ref('WorksheetMeasureInput'))),
     ],
 )

@@ -1,4 +1,5 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
+
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -8,7 +9,6 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
 class DatasetLocationIndexer(BaseIndexer):
-
     @classmethod
     def upsert(cls, session, folder_uri: str):
         folder = DatasetLocationRepository.get_location_by_uri(session, folder_uri)

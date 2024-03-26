@@ -64,7 +64,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
         -------
         True if share is granted successfully
         """
-        log.info("##### Starting S3 bucket share #######")
+        log.info('##### Starting S3 bucket share #######')
         success = True
         for shared_bucket in shared_buckets:
             sharing_item = ShareObjectRepository.find_sharable_item(
@@ -137,7 +137,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
         False if revoke fails
         """
 
-        log.info("##### Starting Revoking S3 bucket share #######")
+        log.info('##### Starting Revoking S3 bucket share #######')
         success = True
         for revoked_bucket in revoked_buckets:
             removing_item = ShareObjectRepository.find_sharable_item(
@@ -197,7 +197,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
     ) -> bool:
-        log.info("##### Verifying S3 bucket share #######")
+        log.info('##### Verifying S3 bucket share #######')
         for shared_bucket in buckets_to_verify:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
@@ -230,7 +230,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                     sharing_bucket.session,
                     sharing_item,
                     ShareItemHealthStatus.Unhealthy.value,
-                    " | ".join(sharing_bucket.bucket_errors),
+                    ' | '.join(sharing_bucket.bucket_errors),
                     datetime.now(),
                 )
             else:

@@ -34,10 +34,12 @@ def get_env(client, env_fixture, group):
 
 
 def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, user, group3, group, dataset, mocker):
-    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies",
-                 return_value=True)
-    mocker.patch("dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies",
-                 return_value=True)
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies', return_value=True
+    )
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
+    )
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
@@ -53,9 +55,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
         filter={},
     )
 
-    env_permissions = [
-        p.name for p in response.data.listEnvironmentGroupInvitationPermissions
-    ]
+    env_permissions = [p.name for p in response.data.listEnvironmentGroupInvitationPermissions]
     assert CREATE_DATASET in env_permissions
 
     response = client.query(
@@ -96,9 +96,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
     assert CREATE_DATASET in env_permissions
 
-    dataset = dataset(
-        org=org_fixture, env=env_fixture, name='dataset1', owner='bob', group=group2.name
-    )
+    dataset = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner='bob', group=group2.name)
     assert dataset.datasetUri
 
     response = client.query(
@@ -118,11 +116,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset_lock = (
-            session.query(DatasetLock)
-            .filter(DatasetLock.datasetUri == dataset.datasetUri)
-            .first()
-        )
+        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
         session.delete(dataset_lock)
         dataset = session.query(Dataset).get(dataset.datasetUri)
         session.delete(dataset)
@@ -143,4 +137,3 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     )
     print(response)
     assert response.data.removeGroupFromEnvironment
-

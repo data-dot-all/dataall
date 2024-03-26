@@ -9,7 +9,6 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
 class DatasetTableIndexer(BaseIndexer):
-
     @classmethod
     def upsert(cls, session, table_uri: str):
         table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)

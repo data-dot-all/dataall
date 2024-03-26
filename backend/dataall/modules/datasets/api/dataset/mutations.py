@@ -11,7 +11,7 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     delete_dataset,
     import_dataset,
     start_crawler,
-    verify_dataset_share_objects
+    verify_dataset_share_objects,
 )
 
 createDataset = gql.MutationField(

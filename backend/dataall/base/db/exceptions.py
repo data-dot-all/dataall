@@ -41,9 +41,7 @@ class ResourceUnauthorized(Exception):
 class RequiredParameter(Exception):
     def __init__(self, param_name):
         self.param_name = param_name
-        self.message = (
-            f'An error occurred (RequiredParameter): {param_name} is required'
-        )
+        self.message = f'An error occurred (RequiredParameter): {param_name} is required'
 
     def __str__(self):
         return f'{self.message}'

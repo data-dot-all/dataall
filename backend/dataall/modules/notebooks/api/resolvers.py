@@ -11,9 +11,7 @@ def create_notebook(context: Context, source: SagemakerNotebook, input: dict = N
     RequestValidator.validate_creation_request(input)
     request = NotebookCreationRequest.from_dict(input)
     return NotebookService.create_notebook(
-        uri=input["environmentUri"],
-        admin_group=input["SamlAdminGroupName"],
-        request=request
+        uri=input['environmentUri'], admin_group=input['SamlAdminGroupName'], request=request
     )
 
 
@@ -97,6 +95,7 @@ def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs
 
 class RequestValidator:
     """Aggregates all validation logic for operating with notebooks"""
+
     @staticmethod
     def required_uri(uri):
         if not uri:
@@ -110,8 +109,8 @@ class RequestValidator:
         if not data.get('label'):
             raise exceptions.RequiredParameter('name')
 
-        required(data, "environmentUri")
-        required(data, "SamlAdminGroupName")
+        required(data, 'environmentUri')
+        required(data, 'SamlAdminGroupName')
 
     @staticmethod
     def _required(data: dict, name: str):

@@ -11,13 +11,20 @@ from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
-    DELETE_DATASET_TABLE, SYNC_DATASET
+from dataall.modules.datasets.services.dataset_permissions import (
+    UPDATE_DATASET_TABLE,
+    MANAGE_DATASETS,
+    DELETE_DATASET_TABLE,
+    SYNC_DATASET,
+)
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ, \
-    GET_DATASET_TABLE
+from dataall.modules.datasets_base.services.permissions import (
+    PREVIEW_DATASET_TABLE,
+    DATASET_TABLE_READ,
+    GET_DATASET_TABLE,
+)
 from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
@@ -80,12 +87,11 @@ class DatasetTableService:
     def preview(table_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
-                session, table_uri
-            )
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
-                ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality) != ConfidentialityClassification.Unclassified.value
+                ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
+                != ConfidentialityClassification.Unclassified.value
             ):
                 ResourcePolicy.check_user_resource_permission(
                     session=session,
@@ -109,7 +115,7 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return [
-                {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
+                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
                 for t in DatasetTableRepository.query_dataset_tables_shared_with_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
@@ -124,9 +130,7 @@ class DatasetTableService:
             S3Prefix = dataset.S3BucketName
             tables = DatasetCrawler(dataset).list_glue_database_tables(S3Prefix)
             cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
-            DatasetTableIndexer.upsert_all(
-                session=session, dataset_uri=dataset.datasetUri
-            )
+            DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             return DatasetRepository.paginated_dataset_tables(
                 session=session,
@@ -143,26 +147,16 @@ class DatasetTableService:
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
             DatasetTableRepository.update_existing_tables_status(existing_tables, glue_tables)
-            log.info(
-                f'existing_tables={glue_tables}'
-            )
+            log.info(f'existing_tables={glue_tables}')
             for table in glue_tables:
                 if table['Name'] not in existing_table_names:
-                    log.info(
-                        f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}'
-                    )
+                    log.info(f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}')
                     updated_table = DatasetTableRepository.create_synced_table(session, dataset, table)
                     DatasetTableService._attach_dataset_table_permission(session, dataset, updated_table.tableUri)
                 else:
-                    log.info(
-                        f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'
-                    )
-                    updated_table: DatasetTable = (
-                        existing_dataset_tables_map.get(table['Name'])
-                    )
-                    updated_table.GlueTableProperties = json_utils.to_json(
-                        table.get('Parameters', {})
-                    )
+                    log.info(f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}')
+                    updated_table: DatasetTable = existing_dataset_tables_map.get(table['Name'])
+                    updated_table.GlueTableProperties = json_utils.to_json(table.get('Parameters', {}))
 
                 DatasetTableRepository.sync_table_columns(session, updated_table, table)
 
@@ -172,8 +166,11 @@ class DatasetTableService:
     def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
         # ADD DATASET TABLE PERMISSIONS
         env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-        permission_group = {dataset.SamlAdminGroupName, env.SamlGroupName,
-                            dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName}
+        permission_group = {
+            dataset.SamlAdminGroupName,
+            env.SamlGroupName,
+            dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
+        }
         for group in permission_group:
             ResourcePolicy.attach_resource_policy(
                 session=session,

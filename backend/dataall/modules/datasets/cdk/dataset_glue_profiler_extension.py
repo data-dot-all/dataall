@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class DatasetGlueProfilerExtension(EnvironmentStackExtension):
-    """Extends an environment stack for glue profiler """
+    """Extends an environment stack for glue profiler"""
 
     @staticmethod
     def extent(setup: EnvironmentSetup):
@@ -26,16 +26,10 @@ class DatasetGlueProfilerExtension(EnvironmentStackExtension):
 
     @staticmethod
     def get_path_to_asset():
-        return os.path.realpath(
-            os.path.abspath(
-                os.path.join(__file__, '..', 'assets', 'glueprofilingjob')
-            )
-        )
+        return os.path.realpath(os.path.abspath(os.path.join(__file__, '..', 'assets', 'glueprofilingjob')))
 
     @staticmethod
     def zip_code(assets_path, s3_key='profiler'):
         log.info('Zipping code')
-        shutil.make_archive(
-            base_name=f'{assets_path}/{s3_key}', format='zip', root_dir=f'{assets_path}'
-        )
+        shutil.make_archive(base_name=f'{assets_path}/{s3_key}', format='zip', root_dir=f'{assets_path}')
         return assets_path

@@ -3,10 +3,7 @@ import random
 import string
 
 import boto3
-from aws_cdk import (
-    aws_ssm,
-    SecretValue
-)
+from aws_cdk import aws_ssm
 
 from .pyNestedStack import pyNestedClass
 from .deploy_config import deploy_config
@@ -94,23 +91,23 @@ class ParamStoreStack(pyNestedClass):
         aws_ssm.StringParameter(
             self,
             f'dataallQuicksightConfiguration{envname}',
-            parameter_name=f"/dataall/{envname}/quicksight/sharedDashboardsSessions",
+            parameter_name=f'/dataall/{envname}/quicksight/sharedDashboardsSessions',
             string_value=shared_dashboard_sessions,
         )
 
         aws_ssm.StringParameter(
             self,
             f'dataallCreationPivotRole{envname}',
-            parameter_name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate",
+            parameter_name=f'/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate',
             string_value=str(enable_pivot_role_auto_create),
         )
 
         aws_ssm.StringParameter(
             self,
             f'dataallPivotRoleName{envname}',
-            parameter_name=f"/dataall/{envname}/pivotRole/pivotRoleName",
+            parameter_name=f'/dataall/{envname}/pivotRole/pivotRoleName',
             string_value=str(pivot_role_name),
-            description=f"Stores dataall pivot role name for environment {envname}",
+            description=f'Stores dataall pivot role name for environment {envname}',
         )
 
         existing_external_id = _get_external_id_value(envname=envname, account_id=self.account, region=self.region)
@@ -119,9 +116,9 @@ class ParamStoreStack(pyNestedClass):
         aws_ssm.StringParameter(
             self,
             f'dataallExternalId{envname}',
-            parameter_name=f"/dataall/{envname}/pivotRole/externalId",
+            parameter_name=f'/dataall/{envname}/pivotRole/externalId',
             string_value=str(external_id_value),
-            description=f"Stores dataall external id for environment {envname}",
+            description=f'Stores dataall external id for environment {envname}',
         )
 
         aws_ssm.StringParameter(
@@ -129,8 +126,9 @@ class ParamStoreStack(pyNestedClass):
             f'dataall_{envname}_version',
             parameter_name=f'/dataall/{envname}/version',
             string_value=str(json.dumps(deploy_config.get_dataall_version())),
-            description='Deployed data all version'
+            description='Deployed data all version',
         )
+
 
 def _get_external_id_value(envname, account_id, region):
     """
@@ -143,12 +141,8 @@ def _get_external_id_value(envname, account_id, region):
         RoleArn=cdk_look_up_role,
         RoleSessionName=cdk_look_up_role.split('/')[1],
     )
-    sts = base_session.client(
-        'sts',
-        region_name=region,
-        endpoint_url=f"https://sts.{region}.amazonaws.com"
-    )
-    parameter_path = f"/dataall/{envname}/pivotRole/externalId"
+    sts = base_session.client('sts', region_name=region, endpoint_url=f'https://sts.{region}.amazonaws.com')
+    parameter_path = f'/dataall/{envname}/pivotRole/externalId'
 
     try:
         response = sts.assume_role(**assume_role_dict)
@@ -160,7 +154,8 @@ def _get_external_id_value(envname, account_id, region):
         ssm_client = session.client('ssm', region_name=region)
         parameter_value = ssm_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return parameter_value
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 

@@ -1,5 +1,6 @@
 def process_func(func):
     """Helper function that helps decorate methods/functions"""
+
     def no_decorated(f):
         return f
 

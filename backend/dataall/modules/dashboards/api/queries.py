@@ -1,5 +1,15 @@
 from dataall.base.api import gql
-from dataall.modules.dashboards.api.resolvers import *
+from dataall.modules.dashboards.api.resolvers import (
+    get_dashboard,
+    get_monitoring_dashboard_id,
+    get_monitoring_vpc_connection_id,
+    get_quicksight_author_session,
+    get_quicksight_designer_url,
+    get_quicksight_reader_session,
+    get_quicksight_reader_url,
+    list_dashboard_shares,
+    list_dashboards,
+)
 
 searchDashboards = gql.QueryField(
     name='searchDashboards',

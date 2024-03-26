@@ -32,9 +32,8 @@ def test_unsupported_target_type(db):
 
 
 def update_key_value_tags(client, target_uri, target_type, tags, group):
-    return (
-        client.query(
-            """
+    return client.query(
+        """
             mutation updateKeyValueTags($input:UpdateKeyValueTagsInput!){
                 updateKeyValueTags(input:$input){
                     tagUri
@@ -46,8 +45,7 @@ def update_key_value_tags(client, target_uri, target_type, tags, group):
                 }
             }
             """,
-            input=dict(targetUri=target_uri, targetType=target_type, tags=tags),
-            username='alice',
-            groups=[group],
-        )
+        input=dict(targetUri=target_uri, targetType=target_type, tags=tags),
+        username='alice',
+        groups=[group],
     )
