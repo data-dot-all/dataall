@@ -26,9 +26,9 @@ class WorksheetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets import DatasetApiModuleInterface
+        from dataall.modules.s3_datasets import S3DatasetApiModuleInterface
 
-        return [DatasetApiModuleInterface]
+        return [S3DatasetApiModuleInterface]
 
 
 class WorksheetCdkModuleInterface(ModuleInterface):
@@ -45,6 +45,6 @@ class WorksheetCdkModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets import DatasetCdkModuleInterface
+        from dataall.modules.s3_datasets import S3DatasetCdkModuleInterface
 
-        return [DatasetCdkModuleInterface]
+        return [S3DatasetCdkModuleInterface]
