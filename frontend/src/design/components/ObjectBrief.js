@@ -20,6 +20,7 @@ export const ObjectBrief = (props) => {
     topics,
     title,
     confidentiality,
+    parameterTemplate,
     ...other
   } = props;
 
@@ -43,14 +44,16 @@ export const ObjectBrief = (props) => {
               </Typography>
             </Box>
           )}
-          <Box sx={{ mt: 3 }}>
-            <Typography color="textSecondary" variant="subtitle2">
-              Name
-            </Typography>
-            <Typography color="textPrimary" variant="subtitle2">
-              {name}
-            </Typography>
-          </Box>
+          {name && (
+            <Box sx={{ mt: 3 }}>
+              <Typography color="textSecondary" variant="subtitle2">
+                Name
+              </Typography>
+              <Typography color="textPrimary" variant="subtitle2">
+                {name}
+              </Typography>
+            </Box>
+          )}
           {confidentiality && (
             <Box sx={{ mt: 3 }}>
               <Typography color="textSecondary" variant="subtitle2">
@@ -111,18 +114,32 @@ export const ObjectBrief = (props) => {
               </Box>
             </Box>
           )}
-        </Box>
-        <Box sx={{ mt: 3 }}>
-          <Typography color="textSecondary" variant="subtitle2">
-            Description
-          </Typography>
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-            style={{ whiteSpace: 'pre-line' }}
-          >
-            {description}
-          </Typography>
+          {parameterTemplate && (
+            <Box>
+              <Typography color="textSecondary" variant="subtitle2">
+                parameterTemplate
+              </Typography>
+              <Box sx={{ mt: 1 }}>
+                <Typography color="textPrimary" variant="subtitle2">
+                  {parameterTemplate}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+          {description && (
+            <Box sx={{ mt: 3 }}>
+              <Typography color="textSecondary" variant="subtitle2">
+                Description
+              </Typography>
+              <Typography
+                color="textPrimary"
+                variant="subtitle2"
+                style={{ whiteSpace: 'pre-line' }}
+              >
+                {description}
+              </Typography>
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>
