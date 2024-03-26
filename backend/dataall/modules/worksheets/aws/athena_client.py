@@ -3,7 +3,7 @@ from dataall.base.aws.sts import SessionHelper
 
 
 class AthenaClient:
-    """ Makes requests to AWS Athena """
+    """Makes requests to AWS Athena"""
 
     @staticmethod
     def run_athena_query(aws_account_id, env_group, s3_staging_dir, region, sql=None):

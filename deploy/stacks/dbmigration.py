@@ -89,26 +89,22 @@ class DBMigrationStack(pyNestedClass):
         self.build_project_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
-                    "codeartifact:GetAuthorizationToken",
-                    "codeartifact:ReadFromRepository",
-                    "codeartifact:GetRepositoryEndpoint",
-                    "codeartifact:GetRepositoryPermissionsPolicy"
+                    'codeartifact:GetAuthorizationToken',
+                    'codeartifact:ReadFromRepository',
+                    'codeartifact:GetRepositoryEndpoint',
+                    'codeartifact:GetRepositoryPermissionsPolicy',
                 ],
                 resources=[
-                    f"arn:aws:codeartifact:*:{tooling_account_id}:repository/{codeartifact_domain_name}/{codeartifact_pip_repo_name}",
-                    f"arn:aws:codeartifact:*:{tooling_account_id}:domain/{codeartifact_domain_name}",
+                    f'arn:aws:codeartifact:*:{tooling_account_id}:repository/{codeartifact_domain_name}/{codeartifact_pip_repo_name}',
+                    f'arn:aws:codeartifact:*:{tooling_account_id}:domain/{codeartifact_domain_name}',
                 ],
             ),
         )
         self.build_project_role.add_to_policy(
             iam.PolicyStatement(
-                actions=[
-                    'sts:GetServiceBearerToken'
-                ],
+                actions=['sts:GetServiceBearerToken'],
                 resources=['*'],
-                conditions={
-                    'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
-                },
+                conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
             ),
         )
         self.codebuild_sg = ec2.SecurityGroup(
@@ -117,23 +113,19 @@ class DBMigrationStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-cb-dbmigration-sg',
             vpc=vpc,
             allow_all_outbound=False,
-            disable_inline_rules=True
+            disable_inline_rules=True,
         )
         sg_connection = ec2.Connections(security_groups=[self.codebuild_sg])
-        sg_connection.allow_to(
-            vpce_connection,
-            ec2.Port.tcp(443),
-            'Allow DB Migration CodeBuild to VPC Endpoint SG'
-        )
+        sg_connection.allow_to(vpce_connection, ec2.Port.tcp(443), 'Allow DB Migration CodeBuild to VPC Endpoint SG')
         sg_connection.allow_from(
             vpce_connection,
             ec2.Port.tcp_range(start_port=1024, end_port=65535),
-            'Allow DB Migration CodeBuild from VPC Endpoint'
+            'Allow DB Migration CodeBuild from VPC Endpoint',
         )
         sg_connection.allow_to(
             ec2.Connections(peer=ec2.Peer.prefix_list(s3_prefix_list)),
             ec2.Port.tcp(443),
-            'Allow DB Migration CodeBuild to S3 Prefix List'
+            'Allow DB Migration CodeBuild to S3 Prefix List',
         )
 
         self.db_migration_project = codebuild.Project(
@@ -159,7 +151,7 @@ class DBMigrationStack(pyNestedClass):
                                 'pip install alembic',
                                 'export PYTHONPATH=backend',
                                 f'export envname={envname}',
-                                f'alembic -c backend/alembic.ini upgrade head',
+                                'alembic -c backend/alembic.ini upgrade head',
                             ]
                         },
                     },
@@ -167,9 +159,7 @@ class DBMigrationStack(pyNestedClass):
             ),
             vpc=vpc,
             subnet_selection=ec2.SubnetSelection(
-                subnets=vpc.select_subnets(
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT
-                ).subnets
+                subnets=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnets
             ),
             security_groups=[self.codebuild_sg],
         )

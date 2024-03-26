@@ -21,9 +21,7 @@ def start_profiling_run(context: Context, source, input: dict = None):
         raise RequiredParameter('datasetUri')
 
     return DatasetProfilingService.start_profiling_run(
-        uri=input['datasetUri'],
-        table_uri=input.get('tableUri'),
-        glue_table_name=input.get('GlueTableName')
+        uri=input['datasetUri'], table_uri=input.get('tableUri'), glue_table_name=input.get('GlueTableName')
     )
 
 

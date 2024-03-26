@@ -1,4 +1,3 @@
-
 import logging
 import os
 
@@ -22,14 +21,22 @@ class EcsShareHandler:
         return EcsShareHandler._manage_share(engine, task, DataSharingService.revoke_share, 'revoke_share')
 
     @staticmethod
+    @Worker.handler(path='ecs.share.verify')
+    def verify_share(engine, task: Task):
+        return EcsShareHandler._manage_share(engine, task, DataSharingService.verify_share, 'verify_share')
+
+    @staticmethod
+    @Worker.handler(path='ecs.share.reapply')
+    def reapply_share(engine, task: Task):
+        return EcsShareHandler._manage_share(engine, task, DataSharingService.reapply_share, 'reapply_share')
+
+    @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
             return local_handler(engine, task.targetUri)
         else:
-            return EcsShareHandler._run_share_management_ecs_task(
-                share_uri=task.targetUri, handler=ecs_handler
-            )
+            return EcsShareHandler._run_share_management_ecs_task(share_uri=task.targetUri, handler=ecs_handler)
 
     @staticmethod
     def _run_share_management_ecs_task(share_uri, handler):

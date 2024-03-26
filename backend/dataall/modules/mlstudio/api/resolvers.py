@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 class RequestValidator:
     """Aggregates all validation logic for operating with mlstudio"""
+
     @staticmethod
     def required_uri(uri):
         if not uri:
@@ -25,8 +26,8 @@ class RequestValidator:
         if not data.get('label'):
             raise exceptions.RequiredParameter('name')
 
-        required(data, "environmentUri")
-        required(data, "SamlAdminGroupName")
+        required(data, 'environmentUri')
+        required(data, 'SamlAdminGroupName')
 
     @staticmethod
     def _required(data: dict, name: str):
@@ -39,9 +40,7 @@ def create_sagemaker_studio_user(context: Context, source, input: dict = None):
     RequestValidator.validate_user_creation_request(input)
     request = SagemakerStudioCreationRequest.from_dict(input)
     return SagemakerStudioService.create_sagemaker_studio_user(
-        uri=input["environmentUri"],
-        admin_group=input["SamlAdminGroupName"],
-        request=request
+        uri=input['environmentUri'], admin_group=input['SamlAdminGroupName'], request=request
     )
 
 
@@ -55,9 +54,7 @@ def list_sagemaker_studio_users(context, source, filter: dict = None):
     return SagemakerStudioService.list_sagemaker_studio_users(filter=filter)
 
 
-def get_sagemaker_studio_user(
-    context, source, sagemakerStudioUserUri: str = None
-) -> SagemakerStudioUser:
+def get_sagemaker_studio_user(context, source, sagemakerStudioUserUri: str = None) -> SagemakerStudioUser:
     """Retrieve a SageMaker Studio user by URI."""
     RequestValidator.required_uri(sagemakerStudioUserUri)
     return SagemakerStudioService.get_sagemaker_studio_user(uri=sagemakerStudioUserUri)
@@ -85,8 +82,7 @@ def delete_sagemaker_studio_user(
     """
     RequestValidator.required_uri(sagemakerStudioUserUri)
     return SagemakerStudioService.delete_sagemaker_studio_user(
-        uri=sagemakerStudioUserUri,
-        delete_from_aws=deleteFromAWS
+        uri=sagemakerStudioUserUri, delete_from_aws=deleteFromAWS
     )
 
 
@@ -114,14 +110,10 @@ def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, *
     """
     if not source:
         return None
-    return SagemakerStudioService.get_sagemaker_studio_user_status(
-        uri=source.sagemakerStudioUserUri
-    )
+    return SagemakerStudioService.get_sagemaker_studio_user_status(uri=source.sagemakerStudioUserUri)
 
 
-def resolve_sagemaker_studio_user_stack(
-    context: Context, source: SagemakerStudioUser, **kwargs
-):
+def resolve_sagemaker_studio_user_stack(context: Context, source: SagemakerStudioUser, **kwargs):
     """
     Resolves the status of the CloudFormation stack of the SageMaker Studio User
     """

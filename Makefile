@@ -34,8 +34,9 @@ install-tests:
 	pip install -r tests/requirements.txt
 
 lint:
-	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+	pip install ruff
+	ruff check --fix
+	ruff format
 
 bandit:
 	pip install bandit
@@ -85,27 +86,11 @@ upgrade-db: upgrade-pip install-backend
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
 
-version-major:
-	pip install bump2version
-	git config --global user.email git-cicd@codecommit.com
-	git config --global user.name git-cicd
-	git checkout ${branch}
-	git reset --hard origin/${branch}
-	git pull origin ${branch}
-	bump2version major
-	git push --set-upstream origin ${branch}
-	git push --follow-tags
-
-version-minor:
-	pip install bump2version
-	git config --global user.email git-cicd@codecommit.com
-	git config --global user.name git-cicd
-	git checkout ${branch}
-	git reset --hard origin/${branch}
-	git pull origin ${branch}
-	bump2version minor
-	git push --set-upstream origin ${branch}
-	git push --follow-tags
+generate-migrations: upgrade-pip install-backend
+	pip install 'alembic'
+	export PYTHONPATH=./backend && \
+	alembic -c backend/alembic.ini upgrade head
+	alembic -c backend/alembic.ini revision -m "describe_changes_shortly" --autogenerate
 
 clean:
 	@rm -fr cdk_out/

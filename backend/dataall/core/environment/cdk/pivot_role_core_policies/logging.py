@@ -8,17 +8,14 @@ class LoggingPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # CloudWatch Metrics
             iam.PolicyStatement(
                 sid='CWMetrics',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'cloudwatch:PutMetricData',
-                    'cloudwatch:GetMetricData',
-                    'cloudwatch:GetMetricStatistics'
-                ],
+                actions=['cloudwatch:PutMetricData', 'cloudwatch:GetMetricData', 'cloudwatch:GetMetricStatistics'],
                 resources=['*'],
             ),
             # Logs
@@ -28,15 +25,12 @@ class LoggingPivotRole(PivotRoleStatementSet):
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
+                    'logs:PutLogEvents',
                 ],
                 resources=[
-                    f'arn:aws:logs:*:{self.account}:log-group:/aws/lambda/*',
+                    f'arn:aws:logs:*:{self.account}:log-group:/aws/lambda/{self.env_resource_prefix}*',
                     f'arn:aws:logs:*:{self.account}:log-group:/{self.env_resource_prefix}*',
                 ],
-            ),
-            # Logging
-            iam.PolicyStatement(
-                sid='Logging', effect=iam.Effect.ALLOW, actions=['logs:PutLogEvents'], resources=['*']
             ),
         ]
         return statements

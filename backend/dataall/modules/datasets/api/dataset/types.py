@@ -11,7 +11,7 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     list_dataset_share_objects,
     get_dataset_glossary_terms,
-    get_dataset_stack
+    get_dataset_stack,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -89,11 +89,7 @@ Dataset = gql.ObjectType(
         gql.Field(
             name='locations',
             type=gql.Ref('DatasetStorageLocationSearchResult'),
-            args=[
-                gql.Argument(
-                    name='filter', type=gql.Ref('DatasetStorageLocationFilter')
-                )
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('DatasetStorageLocationFilter'))],
             resolver=list_locations,
             test_scope='Dataset',
         ),
@@ -102,12 +98,8 @@ Dataset = gql.ObjectType(
             type=DatasetRole.toGraphQLEnum(),
             resolver=resolve_user_role,
         ),
-        gql.Field(
-            name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()
-        ),
-        gql.Field(
-            name='statistics', type=DatasetStatistics, resolver=get_dataset_statistics
-        ),
+        gql.Field(name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
+        gql.Field(name='statistics', type=DatasetStatistics, resolver=get_dataset_statistics),
         gql.Field(
             name='shares',
             args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
@@ -128,24 +120,16 @@ Dataset = gql.ObjectType(
             type=gql.Ref('TermSearchResult'),
         ),
         gql.Field(name='topics', type=gql.ArrayType(gql.Ref('Topic'))),
-        gql.Field(
-            name='confidentiality', type=gql.Ref('ConfidentialityClassification')
-        ),
+        gql.Field(name='confidentiality', type=gql.String),
         gql.Field(name='language', type=gql.Ref('Language')),
         gql.Field(
             name='projectPermission',
-            args=[
-                gql.Argument(name='projectUri', type=gql.NonNullableType(gql.String))
-            ],
+            args=[gql.Argument(name='projectUri', type=gql.NonNullableType(gql.String))],
             type=gql.Ref('DatasetRole'),
         ),
         gql.Field(
             name='isPublishedInEnvironment',
-            args=[
-                gql.Argument(
-                    name='environmentUri', type=gql.NonNullableType(gql.String)
-                )
-            ],
+            args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
             type=gql.Boolean,
         ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=get_dataset_stack),

@@ -1,4 +1,7 @@
 """Indexes Datasets in OpenSearch"""
+
+import re
+
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
@@ -8,7 +11,6 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
 class DatasetIndexer(BaseIndexer):
-
     @classmethod
     def upsert(cls, session, dataset_uri: str):
         dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
@@ -17,9 +19,7 @@ class DatasetIndexer(BaseIndexer):
 
         count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
         count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
-        count_upvotes = VoteRepository.count_upvotes(
-            session, dataset_uri, target_type='dataset'
-        )
+        count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='dataset')
 
         if dataset:
             glossary = BaseIndexer._get_target_glossary_terms(session, dataset_uri)
@@ -34,7 +34,7 @@ class DatasetIndexer(BaseIndexer):
                     'source': dataset.S3BucketName,
                     'resourceKind': 'dataset',
                     'description': dataset.description,
-                    'classification': dataset.confidentiality,
+                    'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [t.replace('-', '') for t in dataset.tags or []],
                     'topics': dataset.topics,
                     'region': dataset.region.replace('-', ''),

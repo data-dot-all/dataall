@@ -11,10 +11,12 @@ to create access permissions to tables, meaning that no data is copied between  
 Under-the-hood, folders are prefixes inside the dataset S3 bucket. To create sharing of folders in data.all,
 we create an S3 access point per requester group to handle its access to specific prefixes in the dataset.
 
+data.all also supports the sharing of the entire S3 Bucket to requestors using IAM permissions and S3/KMS policies if desired.
+
 **Concepts**
 
 - Share request or Share Object: one for each dataset and requester team.
-- Share Item refers to the individual tables and folders that are added to the Share request.
+- Share Item refers to the individual tables and folders or S3 Bucket that are added to the Share request.
 
 **Sharing workflow**
 
@@ -54,7 +56,9 @@ The following window will open. Choose your target environment and team and opti
 
 ![share_request_form](pictures/shares/shares_2_1.png#zoom#shadow)
 
-If instead of to a team, you want to request access for a Consumption role, add it to the request as in the picture below.
+If instead of to a team, you want to request access for a Consumption role, add it to the request as in the picture below. 
+
+<b><i>NOTE: </i></b> If the consumption role selected is not data.all managed - you will have the option to allow data.all to attach the share policies to the consumption role for this particular share object (if not enabled here you will have to manually attach the share policies to be given access to data).
 
 ![share_request_form](pictures/shares/shares_2_2.png#zoom#shadow)
 
@@ -122,6 +126,28 @@ regards to the dataset is `SHARED`.
 
 ![accept_share](pictures/shares/shares_dataset.png#zoom#shadow)
 
+## **Verify (and Re-apply) Items**
+
+As of V2.3 of data.all - share requestors or approvers are able to verify the health status of the share items within their share request from the data.all UI. Any set of share items that are in a shared state (i.e. `SHARE_SUCCEEDED` or `REVOKE_FAILED` state) will be able to be selected to start a verify share process.
+
+![share_verify](pictures/shares/share_verify.png#zoom#shadow)
+
+Upon completion of the verify share process, each share item's healthStatus will be updated with an updated healthStatus (i.e. `Healthy` or `Unhealthy`) as well as a timestamp representing the last verification time. If the share item is in an `Unhealthy` health status, there will also be included a health message detailing what part of the share is in an unhealthy state.
+
+In addition to running a verify share process on particular items, dataset owners can run the verify share process on multiple share objects associated with a particular dataset. Navigating to the Dataset --> Shares Tab, dataset owners can start a verify process on multiple share objects. For each share object selected, the share items that are in a shared state for the associated share object will verified and updated with a new health status and so on.
+
+![share_verify](pictures/shares/share_verify_dataset.png#zoom#shadow)
+
+!!! success "Scheduled Share Verify Task"
+    The share verifier process is run against all share object items that are in a shared state every 7 days by default
+    as a scheduled task which runs in the background of data.all.
+
+If any share items do end up in an `Unhealthy` status, the data.all approver will have the option to re-apply the share for the selected items that are in an unhealthy state.
+
+![share_reapply](pictures/shares/share_reapply.png#zoom#shadow)
+
+Upon successful re-apply process, the share items health status will revert back to a `Healthy` status with an updated timestamp.
+
 ## **Revoke Items**
 Both approvers and requesters can click on the button **Revoke items** to remove the share grant from chosen items.
 
@@ -155,6 +181,13 @@ the IAM role of the requester (same as with tables) and executing get calls to t
 For example:
 ```json
  aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/folder2/
+```
+
+For S3 bucket sharing, IAM policies, S3 bucket policies, and KMS Key policies (if applicable) are updated to enable sharing of the S3 Bucket resource.
+
+For example, access to the bucket would be similar to:
+```json
+ aws s3 ls s3://<BUCKET_NAME>
 ```
 
 ## **Email Notification on share requests**

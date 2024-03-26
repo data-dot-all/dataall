@@ -6,7 +6,6 @@ log = logging.getLogger(__name__)
 
 
 class Ses:
-
     def __init__(self, fromEmailId: str = None):
         self.fromEmailId = fromEmailId
         self.client = boto3.client('sesv2', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
@@ -28,27 +27,12 @@ class Ses:
             destination_dict = {
                 'ToAddresses': toList,
             }
-            body_dict = {
-                'Text': {
-                    'Data': message,
-                    'Charset': 'UTF-8'
-                }
-            }
-            subject_dict = {
-                'Data': subject,
-                'Charset': 'UTF-8'
-            }
-            message_dict = {
-                'Subject': subject_dict,
-                'Body': body_dict
-            }
+            body_dict = {'Html': {'Data': message, 'Charset': 'UTF-8'}}
+            subject_dict = {'Data': subject, 'Charset': 'UTF-8'}
+            message_dict = {'Subject': subject_dict, 'Body': body_dict}
 
             return ses_client.send_email(
-                FromEmailAddress=self.fromEmailId,
-                Destination=destination_dict,
-                Content={
-                    'Simple': message_dict
-                }
+                FromEmailAddress=self.fromEmailId, Destination=destination_dict, Content={'Simple': message_dict}
             )
         except Exception as e:
             envname = os.getenv('envname', 'local')

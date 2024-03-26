@@ -1,64 +1,21 @@
-import abc
 import logging
-
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.datasets_base.db.dataset_models import Dataset
-
 
 logger = logging.getLogger(__name__)
 
 
-class ShareManagerUtils:
-    def __init__(
-            self,
-            session,
-            dataset: Dataset,
-            share: ShareObject,
-            source_environment: Environment,
-            target_environment: Environment,
-            source_env_group: EnvironmentGroup,
-            env_group: EnvironmentGroup,
-    ):
-        self.target_requester_IAMRoleName = share.principalIAMRoleName
-        self.session = session
-        self.dataset = dataset
-        self.share = share
-        self.source_environment = source_environment
-        self.target_environment = target_environment
-        self.source_env_group = source_env_group
-        self.env_group = env_group
-
-    def add_missing_resources_to_policy_statement(
-            self,
-            resource_type,
-            target_resources,
-            existing_policy_statement,
-            iam_role_policy_name
-    ):
-        """
-        Checks if the resources are in the existing policy. Otherwise, it will add it.
-        :param resource_type: str
-        :param target_resources: list
-        :param existing_policy_statement: dict
-        :param iam_role_policy_name: str
-        :return
-        """
-        for target_resource in target_resources:
-            if target_resource not in existing_policy_statement["Resource"]:
-                logger.info(
-                    f'{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName}, '
-                    f'but {resource_type} is not included, updating...'
-                )
-                existing_policy_statement["Resource"].extend([target_resource])
-        else:
-            logger.info(
-                f'{iam_role_policy_name} exists for IAM role {self.target_requester_IAMRoleName} '
-                f'and {resource_type} is included, skipping...'
-            )
+class ShareErrorFormatter:
+    @staticmethod
+    def _stringify(param):
+        if isinstance(param, list):
+            param = ','.join(param)
+        return param
 
     @staticmethod
-    def remove_resource_from_statement(policy_statement, target_resources):
-        for target_resource in target_resources:
-            if target_resource in policy_statement["Resource"]:
-                policy_statement["Resource"].remove(target_resource)
+    def dne_error_msg(resource_type, target_resource):
+        return f'{resource_type} Target Resource does not exist: {target_resource}'
+
+    @staticmethod
+    def missing_permission_error_msg(requestor, permission_type, permissions, resource_type, target_resource):
+        requestor = ShareErrorFormatter._stringify(requestor)
+        permissions = ShareErrorFormatter._stringify(permissions)
+        return f'Requestor {requestor} missing {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}'

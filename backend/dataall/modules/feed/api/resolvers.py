@@ -32,11 +32,7 @@ def post_feed_message(
     targetType: str = None,
     input: dict = None,
 ):
-    return FeedService.post_feed_message(
-        targetUri=targetUri,
-        targetType=targetType,
-        content=input.get('content')
-    )
+    return FeedService.post_feed_message(targetUri=targetUri, targetType=targetType, content=input.get('content'))
 
 
 def resolve_feed_target_type(obj, *_):

@@ -12,6 +12,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJ
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets.services.dataset_permissions import DATASET_ALL
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -20,19 +21,29 @@ def patch_dataset_methods(module_mocker):
         'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
     )
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack',
-        return_value=True
+        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
     )
     s3_mock_client = MagicMock()
     glue_mock_client = MagicMock()
-    module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
-    )
+    module_mocker.patch('dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client)
     module_mocker.patch(
         'dataall.modules.datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
     )
     s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
     glue_mock_client().run_job.return_value = True
+
+    module_mocker.patch(
+        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification.validate_confidentiality_level',
+        return_value=True,
+    )
+
+    confidentiality_classification_mocker = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification',
+        return_value=confidentiality_classification_mocker,
+    )
+    # Return the input when mocking. This mock avoids checking the custom_confidentiality_mapping value in the actual function and just returns  whatever confidentiality value is supplied for pytests
+    confidentiality_classification_mocker().side_effect = lambda input: input
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -46,7 +57,7 @@ def dataset(client, patch_es, patch_dataset_methods):
         owner: str,
         group: str,
         confidentiality: str = None,
-        autoApprovalEnabled: bool = False
+        autoApprovalEnabled: bool = False,
     ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
@@ -152,8 +163,7 @@ def dataset(client, patch_es, patch_dataset_methods):
                 'SamlAdminGroupName': group or random_group(),
                 'organizationUri': org.organizationUri,
                 'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value,
-                'autoApprovalEnabled': autoApprovalEnabled
-
+                'autoApprovalEnabled': autoApprovalEnabled,
             },
         )
         print('==>', response)
@@ -191,7 +201,7 @@ def table(db):
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_TABLE_READ,
                 resource_uri=table.tableUri,
-                resource_type=DatasetTable.__name__
+                resource_type=DatasetTable.__name__,
             )
         return table
 
@@ -217,13 +227,13 @@ def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Da
         name='dataset2',
         owner=env_fixture.owner,
         group=group.name,
-        confidentiality=ConfidentialityClassification.Secret.value
+        confidentiality=ConfidentialityClassification.Secret.value,
     )
 
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
-    table1 = table(dataset=dataset_fixture, name="table1", username=user.username)
+    table1 = table(dataset=dataset_fixture, name='table1', username=user.username)
 
     with db.scoped_session() as session:
         ResourcePolicy.attach_resource_policy(
@@ -238,7 +248,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
 
 @pytest.fixture(scope='module')
 def table_confidential_fixture(db, dataset_confidential_fixture, table, group, user):
-    table2 = table(dataset=dataset_confidential_fixture, name="table2", username=user.username)
+    table2 = table(dataset=dataset_confidential_fixture, name='table2', username=user.username)
 
     with db.scoped_session() as session:
         ResourcePolicy.attach_resource_policy(
@@ -268,13 +278,10 @@ def folder_fixture(db, dataset_fixture):
     yield location
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def dataset_model(db):
     def factory(
-        organization: Organization,
-        environment: Environment,
-        label: str,
-        autoApprovalEnabled: bool = False
+        organization: Organization, environment: Environment, label: str, autoApprovalEnabled: bool = False
     ) -> Dataset:
         with db.scoped_session() as session:
             dataset = Dataset(
@@ -284,19 +291,27 @@ def dataset_model(db):
                 owner=environment.owner,
                 stewards=environment.SamlGroupName,
                 SamlAdminGroupName=environment.SamlGroupName,
-                businessOwnerDelegationEmails=["foo@amazon.com"],
+                businessOwnerDelegationEmails=['foo@amazon.com'],
                 name=label,
                 S3BucketName=label,
-                GlueDatabaseName="gluedatabase",
-                KmsAlias="kmsalias",
+                GlueDatabaseName='gluedatabase',
+                KmsAlias='kmsalias',
                 AwsAccountId=environment.AwsAccountId,
                 region=environment.region,
-                IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
-                IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
-                autoApprovalEnabled = autoApprovalEnabled
+                IAMDatasetAdminUserArn=f'arn:aws:iam::{environment.AwsAccountId}:user/dataset',
+                IAMDatasetAdminRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/dataset',
+                autoApprovalEnabled=autoApprovalEnabled,
             )
             session.add(dataset)
             session.commit()
+
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=environment.SamlGroupName,
+                permissions=DATASET_ALL,
+                resource_uri=dataset.datasetUri,
+                resource_type=Dataset.__name__,
+            )
             return dataset
 
     yield factory
@@ -327,21 +342,23 @@ def location(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share_item(db):
     def factory(
-            share: ShareObject,
-            table: DatasetTable,
-            status: str
+        share: ShareObject,
+        table: DatasetTable,
+        status: str,
+        healthStatus: str = None,
     ) -> ShareObjectItem:
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
                 shareUri=share.shareUri,
-                owner="alice",
+                owner='alice',
                 itemUri=table.tableUri,
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
+                healthStatus=healthStatus,
             )
             session.add(share_item)
             session.commit()
@@ -350,14 +367,10 @@ def share_item(db):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def share(db):
     def factory(
-            dataset: Dataset,
-            environment: Environment,
-            env_group: EnvironmentGroup,
-            owner: str,
-            status: str
+        dataset: Dataset, environment: Environment, env_group: EnvironmentGroup, owner: str, status: str
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
@@ -421,9 +434,7 @@ def random_group():
 
 
 def random_tag():
-    return random.choice(
-        ['sales', 'finances', 'sites', 'people', 'products', 'partners', 'operations']
-    )
+    return random.choice(['sales', 'finances', 'sites', 'people', 'products', 'partners', 'operations'])
 
 
 def random_tags():

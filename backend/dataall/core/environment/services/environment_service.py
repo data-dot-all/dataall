@@ -30,12 +30,12 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
 log = logging.getLogger(__name__)
 
 
 class EnvironmentService:
-
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
@@ -56,7 +56,7 @@ class EnvironmentService:
             validated=False,
             isOrganizationDefaultEnvironment=False,
             userRoleInEnvironment=EnvironmentPermission.Owner.value,
-            EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split("/")[-1],
+            EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
             EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             resourcePrefix=data.get('resourcePrefix'),
@@ -90,12 +90,10 @@ class EnvironmentService:
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
             env.EnvironmentDefaultIAMRoleName = env_role_name
-            env.EnvironmentDefaultIAMRoleArn = (
-                f'arn:aws:iam::{env.AwsAccountId}:role/{env_role_name}'
-            )
+            env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env_role_name}'
             env.EnvironmentDefaultIAMRoleImported = False
         else:
-            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split("/")[-1]
+            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split('/')[-1]
             env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
             env.EnvironmentDefaultIAMRoleImported = True
 
@@ -147,9 +145,7 @@ class EnvironmentService:
 
     @staticmethod
     def _validate_resource_prefix(data):
-        if data.get('resourcePrefix') and not bool(
-            re.match(r'^[a-z-]+$', data.get('resourcePrefix'))
-        ):
+        if data.get('resourcePrefix') and not bool(re.match(r'^[a-z-]+$', data.get('resourcePrefix'))):
             raise exceptions.InvalidInput(
                 'resourcePrefix',
                 data.get('resourcePrefix'),
@@ -158,7 +154,9 @@ class EnvironmentService:
 
     @staticmethod
     def _validate_account_region(data, session):
-        environment = EnvironmentRepository.find_environment_by_account_region(session=session, account_id=data.get('AwsAccountId'), region=data.get('region'))
+        environment = EnvironmentRepository.find_environment_by_account_region(
+            session=session, account_id=data.get('AwsAccountId'), region=data.get('region')
+        )
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
@@ -195,15 +193,12 @@ class EnvironmentService:
     @staticmethod
     def _update_env_parameters(session, env: Environment, data):
         """Removes old parameters and creates new parameters associated with the environment"""
-        params = data.get("parameters")
+        params = data.get('parameters')
         if not params:
             return
 
         env_uri = env.environmentUri
-        new_params = [
-            EnvironmentParameter(env_uri, param.get("key"), param.get("value"))
-            for param in params
-        ]
+        new_params = [EnvironmentParameter(env_uri, param.get('key'), param.get('value')) for param in params]
         EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod
@@ -218,18 +213,15 @@ class EnvironmentService:
 
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-        group_membership = EnvironmentService.find_environment_group(
-            session, group, environment.environmentUri
-        )
+        group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
         if group_membership:
             raise exceptions.UnauthorizedOperation(
                 action='INVITE_TEAM',
                 message=f'Team {group} is already a member of the environment {environment.name}',
             )
-
         if data.get('environmentIAMRoleArn'):
             env_group_iam_role_arn = data['environmentIAMRoleArn']
-            env_group_iam_role_name = data['environmentIAMRoleArn'].split("/")[-1]
+            env_group_iam_role_name = data['environmentIAMRoleArn'].split('/')[-1]
             env_role_imported = True
         else:
             env_group_iam_role_name = NamingConventionService(
@@ -240,6 +232,15 @@ class EnvironmentService:
             ).build_compliant_name()
             env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
             env_role_imported = False
+
+        # If environment role is imported, then data.all should attach the policies at import time
+        # If environment role is created in environment stack, then data.all should attach the policies in the env stack
+        PolicyManager(
+            role_name=env_group_iam_role_name,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix,
+        ).create_all_policies(managed=env_role_imported)
 
         athena_workgroup = NamingConventionService(
             target_uri=environment.environmentUri,
@@ -266,6 +267,7 @@ class EnvironmentService:
             permissions=data['permissions'],
             resource_type=Environment.__name__,
         )
+
         return environment, environment_group
 
     @staticmethod
@@ -281,9 +283,7 @@ class EnvironmentService:
         g_permissions = list(set(g_permissions))
 
         if g_permissions not in permissions.ENVIRONMENT_INVITED:
-            exceptions.PermissionUnauthorized(
-                action='INVITE_TEAM', group_name=group, resource_uri=uri
-            )
+            exceptions.PermissionUnauthorized(action='INVITE_TEAM', group_name=group, resource_uri=uri)
 
         env_group_permissions = []
         for p in g_permissions:
@@ -308,9 +308,7 @@ class EnvironmentService:
             )
 
         group_env_objects_count = EnvironmentResourceManager.count_group_resources(
-            session=session,
-            environment=environment,
-            group_uri=group
+            session=session, environment=environment, group_uri=group
         )
 
         if group_env_objects_count > 0:
@@ -328,9 +326,15 @@ class EnvironmentService:
                 message=f'Team: {group} has consumption role(s) on this environment.',
             )
 
-        group_membership = EnvironmentService.find_environment_group(
-            session, group, environment.environmentUri
-        )
+        group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
+
+        PolicyManager(
+            role_name=group_membership.environmentIAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix,
+        ).delete_all_policies()
+
         if group_membership:
             session.delete(group_membership)
             session.commit()
@@ -355,9 +359,7 @@ class EnvironmentService:
 
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-        group_membership = EnvironmentService.find_environment_group(
-            session, group, environment.environmentUri
-        )
+        group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
         if not group_membership:
             raise exceptions.UnauthorizedOperation(
                 action='UPDATE_TEAM_ENVIRONMENT_PERMISSIONS',
@@ -397,9 +399,7 @@ class EnvironmentService:
         )
 
     @staticmethod
-    def list_group_invitation_permissions(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_group_invitation_permissions(session, username, groups, uri, data=None, check_perm=None):
         group_invitation_permissions = []
         for p in permissions.ENVIRONMENT_INVITATION_REQUEST:
             group_invitation_permissions.append(
@@ -415,7 +415,6 @@ class EnvironmentService:
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES)
     def add_consumption_role(session, uri, data=None) -> (Environment, EnvironmentGroup):
-
         group: str = data['groupUri']
         IAMRoleArn: str = data['IAMRoleArn']
         environment = EnvironmentService.get_environment_by_uri(session, uri)
@@ -434,8 +433,16 @@ class EnvironmentService:
             environmentUri=environment.environmentUri,
             groupUri=group,
             IAMRoleArn=IAMRoleArn,
-            IAMRoleName=IAMRoleArn.split("/")[-1],
+            IAMRoleName=IAMRoleArn.split('/')[-1],
+            dataallManaged=data['dataallManaged'],
         )
+
+        PolicyManager(
+            role_name=consumption_role.IAMRoleName,
+            environmentUri=environment.environmentUri,
+            account=environment.AwsAccountId,
+            resource_prefix=environment.resourcePrefix,
+        ).create_all_policies(managed=consumption_role.dataallManaged)
 
         session.add(consumption_role)
         session.commit()
@@ -454,6 +461,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
     def remove_consumption_role(session, uri, env_uri):
         consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
 
         num_resources = EnvironmentResourceManager.count_consumption_role_resources(session, uri)
         if num_resources > 0:
@@ -463,15 +471,23 @@ class EnvironmentService:
             )
 
         if consumption_role:
+            PolicyManager(
+                role_name=consumption_role.IAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix,
+            ).delete_all_policies()
+
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=consumption_role.groupUri,
+                resource_uri=consumption_role.consumptionRoleUri,
+                resource_type=ConsumptionRole.__name__,
+            )
+
             session.delete(consumption_role)
             session.commit()
 
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=consumption_role.groupUri,
-            resource_uri=consumption_role.consumptionRoleUri,
-            resource_type=ConsumptionRole.__name__,
-        )
         return True
 
     @staticmethod
@@ -492,7 +508,7 @@ class EnvironmentService:
                 resource_type=ConsumptionRole.__name__,
                 old_group=consumption_role.groupUri,
                 new_group=input['groupUri'],
-                new_permissions=permissions.CONSUMPTION_ROLE_ALL
+                new_permissions=permissions.CONSUMPTION_ROLE_ALL,
             )
             for key, value in input.items():
                 setattr(consumption_role, key, value)
@@ -505,8 +521,7 @@ class EnvironmentService:
             session.query(Environment)
             .outerjoin(
                 EnvironmentGroup,
-                Environment.environmentUri
-                == EnvironmentGroup.environmentUri,
+                Environment.environmentUri == EnvironmentGroup.environmentUri,
             )
             .filter(
                 or_(
@@ -549,7 +564,7 @@ class EnvironmentService:
             if stack.status in [
                 StackStatus.CREATE_COMPLETE.value,
                 StackStatus.UPDATE_COMPLETE.value,
-                StackStatus.UPDATE_ROLLBACK_COMPLETE.value
+                StackStatus.UPDATE_ROLLBACK_COMPLETE.value,
             ]:
                 valid_environments.append(env)
 
@@ -598,7 +613,7 @@ class EnvironmentService:
                 )
             )
         if filter and filter.get('groupUri'):
-            print("filter group")
+            print('filter group')
             group = filter['groupUri']
             query = query.filter(
                 or_(
@@ -636,18 +651,14 @@ class EnvironmentService:
     @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_user_environment_groups(session, uri, data=None) -> dict:
         return paginate(
-            query=EnvironmentService.query_user_environment_groups(
-                session, get_context().groups, uri, data
-            ),
+            query=EnvironmentService.query_user_environment_groups(session, get_context().groups, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod
     def query_all_environment_groups(session, uri, filter) -> Query:
-        query = session.query(EnvironmentGroup).filter(
-            EnvironmentGroup.environmentUri == uri
-        )
+        query = session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri)
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
@@ -661,9 +672,7 @@ class EnvironmentService:
     @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_all_environment_groups(session, uri, data=None) -> dict:
         return paginate(
-            query=EnvironmentService.query_all_environment_groups(
-                session, uri, data
-            ),
+            query=EnvironmentService.query_all_environment_groups(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -673,9 +682,7 @@ class EnvironmentService:
     def list_environment_groups(session, uri) -> [str]:
         return [
             g.groupUri
-            for g in EnvironmentService.query_user_environment_groups(
-                session, get_context().groups, uri, {}
-            ).all()
+            for g in EnvironmentService.query_user_environment_groups(session, get_context().groups, uri, {}).all()
         ]
 
     @staticmethod
@@ -684,14 +691,12 @@ class EnvironmentService:
             session.query(EnvironmentGroup)
             .join(
                 Environment,
-                EnvironmentGroup.environmentUri
-                == Environment.environmentUri,
+                EnvironmentGroup.environmentUri == Environment.environmentUri,
             )
             .filter(
                 and_(
                     Environment.environmentUri == uri,
-                    EnvironmentGroup.groupUri
-                    != Environment.SamlGroupName,
+                    EnvironmentGroup.groupUri != Environment.SamlGroupName,
                 )
             )
         )
@@ -732,7 +737,7 @@ class EnvironmentService:
                 )
             )
         if filter and filter.get('groupUri'):
-            print("filter group")
+            print('filter group')
             group = filter['groupUri']
             query = query.filter(
                 or_(
@@ -745,18 +750,14 @@ class EnvironmentService:
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_user_environment_consumption_roles(session, uri, data=None) -> dict:
         return paginate(
-            query=EnvironmentService.query_user_environment_consumption_roles(
-                session, get_context().groups, uri, data
-            ),
+            query=EnvironmentService.query_user_environment_consumption_roles(session, get_context().groups, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod
     def query_all_environment_consumption_roles(session, uri, filter) -> Query:
-        query = session.query(ConsumptionRole).filter(
-            ConsumptionRole.environmentUri == uri
-        )
+        query = session.query(ConsumptionRole).filter(ConsumptionRole.environmentUri == uri)
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
@@ -775,25 +776,32 @@ class EnvironmentService:
 
     @staticmethod
     @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def paginated_all_environment_consumption_roles(
-        session, uri, data=None
-    ) -> dict:
+    def paginated_all_environment_consumption_roles(session, uri, data=None) -> dict:
         return paginate(
-            query=EnvironmentService.query_all_environment_consumption_roles(
-                session, uri, data
-            ),
+            query=EnvironmentService.query_all_environment_consumption_roles(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
     def find_consumption_roles_by_IAMArn(session, uri, arn) -> Query:
-        return session.query(ConsumptionRole).filter(
-            and_(
-                ConsumptionRole.environmentUri == uri,
-                ConsumptionRole.IAMRoleArn == arn
+        return (
+            session.query(ConsumptionRole)
+            .filter(and_(ConsumptionRole.environmentUri == uri, ConsumptionRole.IAMRoleArn == arn))
+            .first()
+        )
+
+    @staticmethod
+    def get_consumption_role(session, uri) -> Query:
+        return (
+            session.query(ConsumptionRole)
+            .filter(
+                and_(
+                    ConsumptionRole.consumptionRoleUri == uri,
+                )
             )
-        ).first()
+            .first()
+        )
 
     @staticmethod
     def query_environment_networks(session, uri, filter) -> Query:
@@ -851,9 +859,7 @@ class EnvironmentService:
             .first()
         )
         if not env_group:
-            raise exceptions.ObjectNotFound(
-                'EnvironmentGroup', f'({group_uri},{environment_uri})'
-            )
+            raise exceptions.ObjectNotFound('EnvironmentGroup', f'({group_uri},{environment_uri})')
         return env_group
 
     @staticmethod
@@ -871,9 +877,7 @@ class EnvironmentService:
             .first()
         )
         if not role:
-            raise exceptions.ObjectNotFound(
-                'ConsumptionRoleUri', f'({role_uri},{environment_uri})'
-            )
+            raise exceptions.ObjectNotFound('ConsumptionRoleUri', f'({role_uri},{environment_uri})')
         return role
 
     @staticmethod
@@ -892,14 +896,8 @@ class EnvironmentService:
         :param session:
         :return: [Environment]
         """
-        environments: [Environment] = (
-            session.query(Environment)
-            .filter(Environment.deleted.is_(None))
-            .all()
-        )
-        log.info(
-            f'Retrieved all active dataall environments {[e.AwsAccountId for e in environments]}'
-        )
+        environments: [Environment] = session.query(Environment).filter(Environment.deleted.is_(None)).all()
+        log.info(f'Retrieved all active dataall environments {[e.AwsAccountId for e in environments]}')
         return environments
 
     @staticmethod
@@ -910,28 +908,15 @@ class EnvironmentService:
     @staticmethod
     @has_resource_permission(permissions.DELETE_ENVIRONMENT)
     def delete_environment(session, uri, environment):
-        env_groups = (
-            session.query(EnvironmentGroup)
-            .filter(EnvironmentGroup.environmentUri == uri)
-            .all()
-        )
-        env_roles = (
-            session.query(ConsumptionRole)
-            .filter(ConsumptionRole.environmentUri == uri)
-            .all()
-        )
+        env_groups = session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()
+        env_roles = session.query(ConsumptionRole).filter(ConsumptionRole.environmentUri == uri).all()
 
         env_resources = 0
         for group in env_groups:
-            env_resources += EnvironmentResourceManager.count_group_resources(
-                session,
-                environment,
-                group.groupUri
-            )
+            env_resources += EnvironmentResourceManager.count_group_resources(session, environment, group.groupUri)
         for role in env_roles:
             env_resources += EnvironmentResourceManager.count_consumption_role_resources(
-                session,
-                role.consumptionRoleUri
+                session, role.consumptionRoleUri
             )
 
         if env_resources > 0:
@@ -940,6 +925,14 @@ class EnvironmentService:
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment related objects before proceeding',
             )
         else:
+            PolicyManager(
+                role_name=environment.EnvironmentDefaultIAMRoleName,
+                environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                resource_prefix=environment.resourcePrefix,
+            ).delete_all_policies()
+
+            KeyValueTag.delete_key_value_tags(session, environment.environmentUri, 'environment')
             EnvironmentResourceManager.delete_env(session, environment)
             EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
@@ -955,10 +948,6 @@ class EnvironmentService:
             for role in env_roles:
                 session.delete(role)
 
-            KeyValueTag.delete_key_value_tags(
-                session, environment.environmentUri, 'environment'
-            )
-
             return session.delete(environment)
 
     @staticmethod
@@ -968,4 +957,4 @@ class EnvironmentService:
     @staticmethod
     def get_boolean_env_param(session, env: Environment, param: str) -> bool:
         param = EnvironmentParameterRepository(session).get_param(env.environmentUri, param)
-        return param is not None and param.value.lower() == "true"
+        return param is not None and param.value.lower() == 'true'

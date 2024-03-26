@@ -5,6 +5,7 @@ Revises: 2ea02fe85af6
 Create Date: 2021-08-03 07:51:18.202980
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -22,9 +23,7 @@ def upgrade():
         'permission',
         sa.Column('permissionUri', sa.String(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
-        sa.Column(
-            'type', sa.Enum('TENANT', 'RESOURCE', name='permissiontype'), nullable=False
-        ),
+        sa.Column('type', sa.Enum('TENANT', 'RESOURCE', name='permissiontype'), nullable=False),
         sa.Column('description', sa.String(), nullable=False),
         sa.Column('created', sa.DateTime(), nullable=True),
         sa.Column('updated', sa.DateTime(), nullable=True),
@@ -150,15 +149,9 @@ def upgrade():
     )
     op.drop_column('group', 'organizationUri')
     op.drop_column('group', 'groupRoleInOrganization')
-    op.add_column(
-        'share_object', sa.Column('environmentUri', sa.String(), nullable=True)
-    )
-    op.add_column(
-        'tenant_administrator', sa.Column('tenantUri', sa.String(), nullable=False)
-    )
-    op.create_foreign_key(
-        None, 'tenant_administrator', 'tenant', ['tenantUri'], ['tenantUri']
-    )
+    op.add_column('share_object', sa.Column('environmentUri', sa.String(), nullable=True))
+    op.add_column('tenant_administrator', sa.Column('tenantUri', sa.String(), nullable=False))
+    op.create_foreign_key(None, 'tenant_administrator', 'tenant', ['tenantUri'], ['tenantUri'])
     # ### end Alembic commands ###
 
 
@@ -169,9 +162,7 @@ def downgrade():
     op.drop_column('share_object', 'environmentUri')
     op.add_column(
         'group',
-        sa.Column(
-            'groupRoleInOrganization', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
+        sa.Column('groupRoleInOrganization', sa.VARCHAR(), autoincrement=False, nullable=False),
     )
     op.add_column(
         'group',

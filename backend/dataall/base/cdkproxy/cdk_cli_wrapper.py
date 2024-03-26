@@ -32,11 +32,11 @@ class CDKCliWrapperExtension:
 
     @abstractmethod
     def extend_deployment(self, stack, session, env):
-        raise NotImplementedError("Method extend_deployment is not implemented")
+        raise NotImplementedError('Method extend_deployment is not implemented')
 
     @abstractmethod
     def post_deployment(self):
-        raise NotImplementedError("Method post_deployment is not implemented")
+        raise NotImplementedError('Method post_deployment is not implemented')
 
 
 _CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, CDKCliWrapperExtension] = {}
@@ -75,14 +75,11 @@ def update_stack_output(session, stack):
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
     from dataall.base.loader import load_modules, ImportMode
+
     load_modules(modes={ImportMode.CDK_CLI_EXTENSION})
     logger.warning(f'Starting new stack from  stackid {stackid}')
     region = os.getenv('AWS_REGION', 'eu-west-1')
-    sts = boto3.client(
-        'sts',
-        region_name=region,
-        endpoint_url=f"https://sts.{region}.amazonaws.com"
-    )
+    sts = boto3.client('sts', region_name=region, endpoint_url=f'https://sts.{region}.amazonaws.com')
     idnty = sts.get_caller_identity()
     this_aws_account = idnty['Account']
     creds = None
@@ -105,7 +102,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 'PYTHONPATH': python_path,
                 'CURRENT_AWS_ACCOUNT': this_aws_account,
                 'envname': os.environ.get('envname', 'local'),
-                'config_location': "/config.json"
+                'config_location': '/config.json',
             }
             if creds:
                 env.update(
@@ -120,27 +117,21 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             if extension:
                 logger.info(f'Extending CDK deployment process with steps for the following stack: {stack.stack}')
                 finish_deployment, path, app_path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
-                    stack=stack,
-                    session=session,
-                    env=env
+                    stack=stack, session=session, env=env
                 )
                 if finish_deployment:
                     return
             else:
-                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment')
+                logger.info(
+                    f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment'
+                )
 
-            cwd = (path if path else os.path.dirname(os.path.abspath(__file__)))
+            cwd = path if path else os.path.dirname(os.path.abspath(__file__))
 
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            input_args = [
-                stack.name,
-                stack.accountid,
-                stack.region,
-                stack.stack,
-                stack.targetUri
-            ]
+            input_args = [stack.name, stack.accountid, stack.region, stack.stack, stack.targetUri]
 
             CommandSanitizer(input_args)
 
@@ -188,7 +179,9 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             if extension:
                 _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].post_deployment()
             else:
-                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the post-deployment')
+                logger.info(
+                    f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the post-deployment'
+                )
 
             if process.returncode == 0:
                 meta = describe_stack(stack)

@@ -8,6 +8,7 @@ class PipelinesPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -38,19 +39,6 @@ class PipelinesPivotRole(PivotRoleStatementSet):
                 actions=['sts:AssumeRole'],
                 resources=[
                     f'arn:aws:iam::{self.account}:role/cdk-*',
-                ],
-            ),
-            iam.PolicyStatement(
-                sid='CloudFormationDataPipelines',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "cloudformation:DeleteStack",
-                    "cloudformation:DescribeStacks",
-                    "cloudformation:DescribeStackEvents",
-                    "cloudformation:DescribeStackResources"
-                ],
-                resources=[
-                    f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
                 ],
             ),
             iam.PolicyStatement(

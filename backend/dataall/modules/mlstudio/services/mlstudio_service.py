@@ -2,6 +2,7 @@
 A service layer for ml studio
 Central part for working with ml studio
 """
+
 import dataclasses
 import logging
 from dataclasses import dataclass, field
@@ -11,7 +12,6 @@ from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions import permissions
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -39,20 +39,18 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SagemakerStudioCreationRequest:
     """A request dataclass for ml studio user profile creation. Adds default values for missed parameters"""
+
     label: str
     SamlAdminGroupName: str
     environment: Dict = field(default_factory=dict)
-    description: str = "No description provided"
+    description: str = 'No description provided'
     tags: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, env):
         """Copies only required fields from the dictionary and creates an instance of class"""
         fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{
-            k: v for k, v in env.items()
-            if k in fields
-        })
+        return cls(**{k: v for k, v in env.items() if k in fields})
 
 
 def _session():
@@ -66,35 +64,40 @@ class SagemakerStudioEnvironmentResource(EnvironmentResource):
 
     @staticmethod
     def create_env(session, environment, **kwargs):
-        enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
+        enabled = EnvironmentService.get_boolean_env_param(session, environment, 'mlStudiosEnabled')
         if enabled:
             SagemakerStudioService.create_sagemaker_studio_domain(session, environment, **kwargs)
 
     @staticmethod
     def update_env(session, environment, **kwargs):
-        current_mlstudio_enabled = EnvironmentService.get_boolean_env_param(session, environment, "mlStudiosEnabled")
+        current_mlstudio_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'mlStudiosEnabled')
         domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, environment.environmentUri)
         previous_mlstudio_enabled = True if domain else False
-        if (current_mlstudio_enabled != previous_mlstudio_enabled and previous_mlstudio_enabled):
-            SageMakerStudioRepository.delete_sagemaker_studio_domain_by_env_uri(session=session, env_uri=environment.environmentUri)
+        if current_mlstudio_enabled != previous_mlstudio_enabled and previous_mlstudio_enabled:
+            SageMakerStudioRepository.delete_sagemaker_studio_domain_by_env_uri(
+                session=session, env_uri=environment.environmentUri
+            )
             return True
-        elif (current_mlstudio_enabled != previous_mlstudio_enabled and not previous_mlstudio_enabled):
+        elif current_mlstudio_enabled != previous_mlstudio_enabled and not previous_mlstudio_enabled:
             SagemakerStudioService.create_sagemaker_studio_domain(session, environment, **kwargs)
             return True
-        elif current_mlstudio_enabled and domain and domain.vpcType == "unknown":
+        elif current_mlstudio_enabled and domain and domain.vpcType == 'unknown':
             SagemakerStudioService.update_sagemaker_studio_domain(environment, domain, **kwargs)
             return True
         return False
 
     @staticmethod
     def delete_env(session, environment):
-        SageMakerStudioRepository.delete_sagemaker_studio_domain_by_env_uri(session=session, env_uri=environment.environmentUri)
+        SageMakerStudioRepository.delete_sagemaker_studio_domain_by_env_uri(
+            session=session, env_uri=environment.environmentUri
+        )
 
 
 class SagemakerStudioService:
     """
     Encapsulate the logic of interactions with sagemaker ml studio.
     """
+
     @staticmethod
     @has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @has_resource_permission(CREATE_SGMSTUDIO_USER)
@@ -107,7 +110,7 @@ class SagemakerStudioService:
         """
         with _session() as session:
             env = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, env, "mlStudiosEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, env, 'mlStudiosEnabled')
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -115,18 +118,18 @@ class SagemakerStudioService:
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
 
-            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, env_uri=env.environmentUri)
+            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(
+                session, env_uri=env.environmentUri
+            )
             response = get_sagemaker_studio_domain(
-                AwsAccountId=env.AwsAccountId,
-                region=env.region,
-                domain_name=domain.sagemakerStudioDomainName
+                AwsAccountId=env.AwsAccountId, region=env.region, domain_name=domain.sagemakerStudioDomainName
             )
             existing_domain = response.get('DomainId', False)
 
             if not existing_domain:
                 raise exceptions.AWSResourceNotAvailable(
                     action='Sagemaker Studio domain',
-                    message='Update the environment stack and enable ML Studio Environment Feature'
+                    message='Update the environment stack and enable ML Studio Environment Feature',
                 )
 
             sagemaker_studio_user = SagemakerStudioUser(
@@ -185,11 +188,9 @@ class SagemakerStudioService:
 
     @staticmethod
     def _update_sagemaker_studio_domain_vpc(account_id, region, data={}):
-        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
-            accountid=account_id, region=region
-        )
-        if data.get("vpcId", None):
-            data["vpcType"] = "imported"
+        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
+        if data.get('vpcId', None):
+            data['vpcType'] = 'imported'
         else:
             response = EC2.check_default_vpc_exists(
                 AwsAccountId=account_id,
@@ -198,11 +199,11 @@ class SagemakerStudioService:
             )
             if response:
                 vpcId, subnetIds = response
-                data["vpcType"] = "default"
-                data["vpcId"] = vpcId
-                data["subnetIds"] = subnetIds
+                data['vpcType'] = 'default'
+                data['vpcId'] = vpcId
+                data['subnetIds'] = subnetIds
             else:
-                data["vpcType"] = "created"
+                data['vpcType'] = 'created'
 
     @staticmethod
     def create_sagemaker_studio_domain(session, environment, data: dict = {}):
@@ -275,10 +276,7 @@ class SagemakerStudioService:
 
             if delete_from_aws:
                 stack_helper.delete_stack(
-                    target_uri=uri,
-                    accountid=env.AwsAccountId,
-                    cdk_role_arn=env.CDKRoleArn,
-                    region=env.region
+                    target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
                 )
             return True
 

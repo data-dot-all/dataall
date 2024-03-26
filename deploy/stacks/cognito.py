@@ -51,9 +51,7 @@ class IdpStack(pyNestedClass):
             ),
         )
         cfn_user_pool: cognito.CfnUserPool = self.user_pool.node.default_child
-        cfn_user_pool.user_pool_add_ons = cognito.CfnUserPool.UserPoolAddOnsProperty(
-            advanced_security_mode='ENFORCED'
-        )
+        cfn_user_pool.user_pool_add_ons = cognito.CfnUserPool.UserPoolAddOnsProperty(advanced_security_mode='ENFORCED')
 
         # Create IP set if IP filtering enabled in CDK.json
         ip_set_regional = None
@@ -67,7 +65,6 @@ class IdpStack(pyNestedClass):
                 ip_address_version='IPV4',
                 scope='REGIONAL',
             )
-            
 
         acl = wafv2.CfnWebACL(
             self,
@@ -121,9 +118,7 @@ class IdpStack(pyNestedClass):
                 statements=[
                     iam.PolicyStatement(
                         actions=['rum:PutRumEvents'],
-                        resources=[
-                            f'arn:aws:rum:{self.region}:{self.account}:appmonitor/{resource_prefix}*'
-                        ],
+                        resources=[f'arn:aws:rum:{self.region}:{self.account}:appmonitor/{resource_prefix}*'],
                     )
                 ],
             )
@@ -135,12 +130,8 @@ class IdpStack(pyNestedClass):
                 assumed_by=iam.FederatedPrincipal(
                     'cognito-identity.amazonaws.com',
                     conditions={
-                        'StringEquals': {
-                            'cognito-identity.amazonaws.com:aud': self.identity_pool.ref
-                        },
-                        'ForAnyValue:StringLike': {
-                            'cognito-identity.amazonaws.com:amr': 'unauthenticated'
-                        },
+                        'StringEquals': {'cognito-identity.amazonaws.com:aud': self.identity_pool.ref},
+                        'ForAnyValue:StringLike': {'cognito-identity.amazonaws.com:amr': 'unauthenticated'},
                     },
                     assume_role_action='sts:AssumeRoleWithWebIdentity',
                 ),
@@ -269,16 +260,12 @@ class IdpStack(pyNestedClass):
                 self,
                 f'CognitoSyncRole{envname}',
                 role_name=f'{resource_prefix}-{envname}-cognito-sync-role',
-                inline_policies={
-                    f'CognitoSyncInlinePolicy{envname}': role_inline_policy.document
-                },
+                inline_policies={f'CognitoSyncInlinePolicy{envname}': role_inline_policy.document},
                 assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
             )
 
             cognito_sync_role.add_managed_policy(
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    'service-role/AWSLambdaVPCAccessExecutionRole'
-                )
+                iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaVPCAccessExecutionRole')
             )
 
             cognito_assets = os.path.realpath(
@@ -310,9 +297,7 @@ class IdpStack(pyNestedClass):
                 runtime=_lambda.Runtime.PYTHON_3_9,
             )
 
-            sync_provider = cr.Provider(
-                self, f'CognitoProvider{envname}', on_event_handler=cognito_sync_handler
-            )
+            sync_provider = cr.Provider(self, f'CognitoProvider{envname}', on_event_handler=cognito_sync_handler)
 
             sync_cr = CustomResource(
                 self,

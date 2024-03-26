@@ -14,6 +14,7 @@ class S3Policy:
     It allows data.all users to:
     -
     """
+
     def __init__(
         self,
         stack,
@@ -60,16 +61,16 @@ class S3Policy:
     def get_statements(self, *args, **kwargs):
         statements = [
             iam.PolicyStatement(
-                sid="ListAll",
+                sid='ListAll',
                 actions=[
-                    "s3:ListAllMyBuckets",
-                    "s3:ListAccessPoints",
-                    "s3:GetBucketLocation",
+                    's3:ListAllMyBuckets',
+                    's3:ListAccessPoints',
+                    's3:GetBucketLocation',
                     'kms:ListAliases',
                     'kms:ListKeys',
                 ],
-                resources=["*"],
-                effect=iam.Effect.ALLOW
+                resources=['*'],
+                effect=iam.Effect.ALLOW,
             )
         ]
 

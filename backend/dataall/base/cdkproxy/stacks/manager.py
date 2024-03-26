@@ -1,7 +1,7 @@
+from tabulate import tabulate
 import logging
 
 logger = logging.getLogger('cdksass')
-from tabulate import tabulate
 
 
 class StackManagerFactory:
@@ -26,9 +26,7 @@ class StackManagerFactory:
     def instanciate_stack(self, stack, scope, id, **kwargs):
         if stack in self.stacks.keys():
             cls = self.stacks[stack]
-            logger.info(
-                f'instanciating task with  scope {scope}, id {id}, args {str(kwargs)}'
-            )
+            logger.info(f'instanciating task with  scope {scope}, id {id}, args {str(kwargs)}')
             return cls(scope, id, **kwargs)
         else:
             logger.warning(f'Could not find stack {stack}')
@@ -36,9 +34,7 @@ class StackManagerFactory:
 
     def registered_stacks(self):
         logger.info('Registered Stacks :')
-        table = [
-            [stack, self.stacks[stack].module_name] for stack in self.stacks.keys()
-        ]
+        table = [[stack, self.stacks[stack].module_name] for stack in self.stacks.keys()]
         tbl = tabulate(table, headers=['StackType', 'Module'], tablefmt='simple')
         logger.info(f'\n {tbl}')
         return self.stacks

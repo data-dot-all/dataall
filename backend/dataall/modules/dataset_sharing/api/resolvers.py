@@ -1,6 +1,5 @@
 import logging
 
-from dataall.base import utils
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -10,10 +9,33 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
+
+
+class RequestValidator:
+    @staticmethod
+    def validate_creation_request(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('principalId'):
+            raise RequiredParameter('principalId')
+        if not data.get('principalType'):
+            raise RequiredParameter('principalType')
+        if not data.get('groupUri'):
+            raise RequiredParameter('groupUri')
+
+    @staticmethod
+    def validate_item_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('shareUri'):
+            raise RequiredParameter('shareUri')
+        if not data.get('itemUris'):
+            raise RequiredParameter('itemUris')
 
 
 def create_share_object(
@@ -24,14 +46,7 @@ def create_share_object(
     itemType: str = None,
     input: dict = None,
 ):
-    if not input:
-        raise RequiredParameter(input)
-    if 'principalId' not in input:
-        raise RequiredParameter('principalId')
-    if 'principalType' not in input:
-        raise RequiredParameter('principalType')
-    if 'groupUri' not in input:
-        raise RequiredParameter('groupUri')
+    RequestValidator.validate_creation_request(input)
 
     return ShareObjectService.create_share_object(
         uri=input['environmentUri'],
@@ -41,7 +56,8 @@ def create_share_object(
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
         principal_type=input['principalType'],
-        requestPurpose=input.get('requestPurpose')
+        requestPurpose=input.get('requestPurpose'),
+        attachMissingPolicies=input.get('attachMissingPolicies'),
     )
 
 
@@ -53,14 +69,34 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
 
-def reject_share_object(context: Context, source, shareUri: str = None, rejectPurpose: str = None,):
+def reject_share_object(
+    context: Context,
+    source,
+    shareUri: str = None,
+    rejectPurpose: str = None,
+):
     return ShareObjectService.reject_share_object(uri=shareUri, reject_purpose=rejectPurpose)
 
 
 def revoke_items_share_object(context: Context, source, input):
-    share_uri = input.get("shareUri")
-    revoked_uris = input.get("revokedItemUris")
+    RequestValidator.validate_item_selector_input(input)
+    share_uri = input.get('shareUri')
+    revoked_uris = input.get('itemUris')
     return ShareItemService.revoke_items_share_object(uri=share_uri, revoked_uris=revoked_uris)
+
+
+def verify_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
+    share_uri = input.get('shareUri')
+    verify_item_uris = input.get('itemUris')
+    return ShareItemService.verify_items_share_object(uri=share_uri, item_uris=verify_item_uris)
+
+
+def reapply_items_share_object(context: Context, source, input):
+    RequestValidator.validate_item_selector_input(input)
+    share_uri = input.get('shareUri')
+    reapply_item_uris = input.get('itemUris')
+    return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
 def delete_share_object(context: Context, source, shareUri: str = None):
@@ -91,24 +127,30 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
 
-        can_approve = True if (
-            dataset and (
-                dataset.stewards in context.groups
-                or dataset.SamlAdminGroupName in context.groups
-                or dataset.owner == context.username
+        can_approve = (
+            True
+            if (
+                dataset
+                and (
+                    dataset.stewards in context.groups
+                    or dataset.SamlAdminGroupName in context.groups
+                    or dataset.owner == context.username
+                )
             )
-        ) else False
+            else False
+        )
 
-        can_request = True if (
-            source.owner == context.username
-            or source.groupUri in context.groups
-        ) else False
+        can_request = True if (source.owner == context.username or source.groupUri in context.groups) else False
 
         return (
-            ShareObjectPermission.ApproversAndRequesters.value if can_approve and can_request
-            else ShareObjectPermission.Approvers.value if can_approve
-            else ShareObjectPermission.Requesters.value if can_request
-            else ShareObjectPermission.NoPermission.value)
+            ShareObjectPermission.ApproversAndRequesters.value
+            if can_approve and can_request
+            else ShareObjectPermission.Approvers.value
+            if can_approve
+            else ShareObjectPermission.Requesters.value
+            if can_request
+            else ShareObjectPermission.NoPermission.value
+        )
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
@@ -126,7 +168,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
-                'description' : ds.description
+                'description': ds.description,
             }
 
 
@@ -144,19 +186,15 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         if source.principalType in ['Group', 'ConsumptionRole']:
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = OrganizationRepository.get_organization_by_uri(
-                session, environment.organizationUri
-            )
+            organization = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
             if source.principalType in ['ConsumptionRole']:
                 principal = EnvironmentService.get_environment_consumption_role(
-                    session,
-                    source.principalId,
-                    source.environmentUri
+                    session, source.principalId, source.environmentUri
                 )
-                principalName = f"{principal.consumptionRoleName} [{principal.IAMRoleArn}]"
+                principalName = f'{principal.consumptionRoleName} [{principal.IAMRoleArn}]'
             else:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
-                principalName = f"{source.groupUri} [{principal.environmentIAMRoleArn}]"
+                principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
 
             return {
                 'principalId': source.principalId,
@@ -186,7 +224,7 @@ def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
         uri=source.shareUri,
         datasetUri=source.datasetUri,
         principalId=source.principalId,
-        environmentUri=source.environmentUri
+        environmentUri=source.environmentUri,
     )
 
 
@@ -202,20 +240,29 @@ def resolve_existing_shared_items(context: Context, source: ShareObject, **kwarg
     return ShareItemService.check_existing_shared_items(source)
 
 
-def list_shareable_objects(
-    context: Context, source: ShareObject, filter: dict = None
-):
+def list_shareable_objects(context: Context, source: ShareObject, filter: dict = None):
     if not source:
         return None
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
 
     is_revokable = filter.get('isRevokable')
-    return ShareItemService.list_shareable_objects(
-        share=source,
-        is_revokable=is_revokable,
-        filter=filter
-    )
+    return ShareItemService.list_shareable_objects(share=source, is_revokable=is_revokable, filter=filter)
+
+
+def resolve_shared_database_name(context: Context, source):
+    if not source:
+        return None
+    old_shared_db_name = (source.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
+    with context.engine.scoped_session() as session:
+        share = ShareObjectService.get_share_object_in_environment(uri=source.targetEnvironmentUri, shareUri=source.shareUri)
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        database = GlueClient(
+            account_id=env.AwsAccountId, database=old_shared_db_name, region=env.region
+        ).get_glue_database()
+        if database:
+            return old_shared_db_name
+        return source.GlueDatabaseName + '_shared'
 
 
 def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
@@ -230,9 +277,7 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
     return ShareObjectService.list_shares_in_my_outbox(filter)
 
 
-def list_shared_with_environment_data_items(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
+def list_shared_with_environment_data_items(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -253,5 +298,6 @@ def update_share_request_purpose(context: Context, source, shareUri: str = None,
 def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
     with context.engine.scoped_session() as session:
         return ShareObjectService.update_share_reject_purpose(
-            uri=shareUri, reject_purpose=rejectPurpose,
+            uri=shareUri,
+            reject_purpose=rejectPurpose,
         )

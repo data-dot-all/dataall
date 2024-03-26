@@ -25,6 +25,8 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.base.config import config
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +34,14 @@ logger = logging.getLogger(__name__)
 @stack(stack='dataset')
 class DatasetStack(Stack):
     """Deploy common dataset resources:
-            - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
-            - dataset IAM role
-            - custom resource to create glue database and grant permissions
-            - custom resource to register S3 location in LF
-            - Glue crawler
-            - Glue profiling job
+    - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
+    - dataset IAM role
+    - custom resource to create glue database and grant permissions
+    - custom resource to register S3 location in LF
+    - Glue crawler
+    - Glue profiling job
     """
+
     module_name = __file__
 
     def get_engine(self) -> db.Engine:
@@ -55,9 +58,7 @@ class DatasetStack(Stack):
     def get_env_group(self, dataset) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = EnvironmentService.get_environment_group(
-                session, dataset.SamlAdminGroupName, dataset.environmentUri
-            )
+            env = EnvironmentService.get_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
         return env
 
     def get_target_with_uri(self, target_uri) -> Dataset:
@@ -78,18 +79,19 @@ class DatasetStack(Stack):
 
     def has_quicksight_enabled(self, env) -> bool:
         with self.get_engine().scoped_session() as session:
-            return EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+            return EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(
             scope,
             id,
-            description="Cloud formation stack of DATASET: {}; URI: {}; DESCRIPTION: {}".format(
+            description='Cloud formation stack of DATASET: {}; URI: {}; DESCRIPTION: {}'.format(
                 self.get_target_with_uri(target_uri=target_uri).label,
                 target_uri,
                 self.get_target_with_uri(target_uri=target_uri).description,
             )[:1024],
-            **kwargs)
+            **kwargs,
+        )
 
         # Read input
         self.target_uri = target_uri
@@ -100,7 +102,7 @@ class DatasetStack(Stack):
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
-            quicksight_default_group_arn = f"arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{QuicksightClient.DEFAULT_GROUP_NAME}"
+            quicksight_default_group_arn = f'arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{QuicksightClient.DEFAULT_GROUP_NAME}'
 
         # Dataset S3 Bucket and KMS key
         dataset_key = False
@@ -110,7 +112,7 @@ class DatasetStack(Stack):
             )
             if dataset.importedKmsKey:
                 dataset_key = kms.Key.from_lookup(
-                    self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
+                    self, f'ImportedKey{dataset.datasetUri}', alias_name=f'alias/{dataset.KmsAlias}'
                 )
         else:
             dataset_key = kms.Key(
@@ -121,20 +123,20 @@ class DatasetStack(Stack):
                 policy=iam.PolicyDocument(
                     statements=[
                         iam.PolicyStatement(
-                            sid="EnableDatasetOwnerKeyUsage",
+                            sid='EnableDatasetOwnerKeyUsage',
                             resources=['*'],
                             effect=iam.Effect.ALLOW,
                             principals=[
                                 iam.ArnPrincipal(env_group.environmentIAMRoleArn),
                             ],
                             actions=[
-                                "kms:Encrypt",
-                                "kms:Decrypt",
-                                "kms:ReEncrypt*",
-                                "kms:GenerateDataKey*",
-                                "kms:DescribeKey",
-                                "kms:List*",
-                                "kms:GetKeyPolicy",
+                                'kms:Encrypt',
+                                'kms:Decrypt',
+                                'kms:ReEncrypt*',
+                                'kms:GenerateDataKey*',
+                                'kms:DescribeKey',
+                                'kms:List*',
+                                'kms:GetKeyPolicy',
                             ],
                         ),
                         iam.PolicyStatement(
@@ -145,7 +147,7 @@ class DatasetStack(Stack):
                                 'kms:Encrypt',
                                 'kms:GenerateDataKey*',
                                 'kms:PutKeyPolicy',
-                                "kms:GetKeyPolicy",
+                                'kms:GetKeyPolicy',
                                 'kms:ReEncrypt*',
                                 'kms:TagResource',
                                 'kms:UntagResource',
@@ -158,12 +160,12 @@ class DatasetStack(Stack):
                             principals=[
                                 iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}')
                             ],
-                        )
+                        ),
                     ]
                 ),
                 admins=[
                     iam.ArnPrincipal(env.CDKRoleArn),
-                ]
+                ],
             )
 
             dataset_bucket = s3.Bucket(
@@ -230,39 +232,35 @@ class DatasetStack(Stack):
             policy_name=dataset.S3BucketName,
             statements=[
                 iam.PolicyStatement(
-                    sid="ListAll",
+                    sid='ListAll',
                     actions=[
-                        "s3:ListAllMyBuckets",
-                        "s3:ListAccessPoints",
+                        's3:ListAllMyBuckets',
+                        's3:ListAccessPoints',
                     ],
-                    resources=["*"],
-                    effect=iam.Effect.ALLOW
+                    resources=['*'],
+                    effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    sid="ListDatasetBucket",
-                    actions=[
-                        "s3:ListBucket",
-                        "s3:GetBucketLocation",
-                        "s3:GetBucketAcl"
-                    ],
+                    sid='ListDatasetBucket',
+                    actions=['s3:ListBucket', 's3:GetBucketLocation', 's3:GetBucketAcl'],
                     resources=[dataset_bucket.bucket_arn],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    sid="ReadWriteDatasetBucket",
+                    sid='ReadWriteDatasetBucket',
                     actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl",
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion",
-                        "s3:DeleteObject"
+                        's3:PutObject',
+                        's3:PutObjectAcl',
+                        's3:GetObject',
+                        's3:GetObjectAcl',
+                        's3:GetObjectVersion',
+                        's3:DeleteObject',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
                 iam.PolicyStatement(
-                    sid="ReadAccessPointsDatasetBucket",
+                    sid='ReadAccessPointsDatasetBucket',
                     actions=[
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
@@ -274,14 +272,14 @@ class DatasetStack(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    sid="GlueAccessCrawler",
+                    sid='GlueAccessCrawler',
                     actions=[
-                        "glue:Get*",
-                        "glue:BatchGet*",
-                        "glue:CreateTable",
-                        "glue:UpdateTable",
-                        "glue:DeleteTableVersion",
-                        "glue:DeleteTable",
+                        'glue:Get*',
+                        'glue:BatchGet*',
+                        'glue:CreateTable',
+                        'glue:UpdateTable',
+                        'glue:DeleteTableVersion',
+                        'glue:DeleteTable',
                         'glue:BatchCreatePartition',
                         'glue:BatchDeleteConnection',
                         'glue:BatchDeletePartition',
@@ -290,23 +288,23 @@ class DatasetStack(Stack):
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
-                        f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
-                    ]
+                        f'arn:aws:glue:*:{dataset.AwsAccountId}:catalog',
+                        f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}',
+                        f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*',
+                    ],
                 ),
                 iam.PolicyStatement(
-                    sid="GlueAccessDefault",
+                    sid='GlueAccessDefault',
                     actions=[
-                        "glue:GetDatabase",
+                        'glue:GetDatabase',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
-                    ]
+                        f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default',
+                    ],
                 ),
                 iam.PolicyStatement(
-                    sid="CreateLoggingGlue",
+                    sid='CreateLoggingGlue',
                     actions=[
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
@@ -318,7 +316,7 @@ class DatasetStack(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    sid="LoggingGlue",
+                    sid='LoggingGlue',
                     actions=[
                         'logs:PutLogEvents',
                     ],
@@ -331,29 +329,27 @@ class DatasetStack(Stack):
                 iam.PolicyStatement(
                     actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
-                    effect=iam.Effect.ALLOW
+                    effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    sid="ReadEnvironmentBucketProfiling",
-                    actions=[
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion"
-                    ],
+                    sid='ReadEnvironmentBucketProfiling',
+                    actions=['s3:GetObject', 's3:GetObjectAcl', 's3:GetObjectVersion'],
                     effect=iam.Effect.ALLOW,
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/code/*'],
                 ),
                 iam.PolicyStatement(
-                    sid="ReadWriteEnvironmentBucketProfiling",
+                    sid='ReadWriteEnvironmentBucketProfiling',
                     actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl",
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion",
-                        "s3:DeleteObject"
+                        's3:PutObject',
+                        's3:PutObjectAcl',
+                        's3:GetObject',
+                        's3:GetObjectAcl',
+                        's3:GetObjectVersion',
+                        's3:DeleteObject',
                     ],
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/results/{dataset.datasetUri}/*'],
+                    resources=[
+                        f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/results/{dataset.datasetUri}/*'
+                    ],
                     effect=iam.Effect.ALLOW,
                 ),
             ],
@@ -361,12 +357,8 @@ class DatasetStack(Stack):
         if dataset_key:
             dataset_admin_policy.add_statements(
                 iam.PolicyStatement(
-                    sid="KMSAccess",
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:Encrypt",
-                        "kms:GenerateDataKey"
-                    ],
+                    sid='KMSAccess',
+                    actions=['kms:Decrypt', 'kms:Encrypt', 'kms:GenerateDataKey'],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_key.key_arn],
                 )
@@ -378,9 +370,7 @@ class DatasetStack(Stack):
             'DatasetAdminRole',
             role_name=dataset.IAMDatasetAdminRoleArn.split('/')[-1],
             assumed_by=iam.CompositePrincipal(
-                iam.ArnPrincipal(
-                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
-                ),
+                iam.ArnPrincipal(f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'),
                 iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lakeformation.amazonaws.com'),
             ),
@@ -391,17 +381,11 @@ class DatasetStack(Stack):
         if not dataset.imported:
             dataset_key.add_to_resource_policy(
                 iam.PolicyStatement(
-                    sid="EnableDatasetIAMRoleKeyUsage",
+                    sid='EnableDatasetIAMRoleKeyUsage',
                     resources=['*'],
                     effect=iam.Effect.ALLOW,
                     principals=[dataset_admin_role],
-                    actions=[
-                        "kms:Encrypt",
-                        "kms:Decrypt",
-                        "kms:ReEncrypt*",
-                        "kms:GenerateDataKey*",
-                        "kms:DescribeKey"
-                    ],
+                    actions=['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
                 )
             )
 
@@ -444,13 +428,11 @@ class DatasetStack(Stack):
             properties={
                 'CatalogId': dataset.AwsAccountId,
                 'DatabaseInput': {
-                    'Description': 'dataall database {} '.format(
-                        dataset.GlueDatabaseName
-                    ),
+                    'Description': 'dataall database {} '.format(dataset.GlueDatabaseName),
                     'LocationUri': f's3://{dataset.S3BucketName}/',
                     'Name': f'{dataset.GlueDatabaseName}',
                     'CreateTableDefaultPermissions': [],
-                    'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-'
+                    'Imported': 'IMPORTED-' if dataset.imported else 'CREATED-',
                 },
                 'DatabaseAdministrators': dataset_admins,
             },
@@ -463,14 +445,10 @@ class DatasetStack(Stack):
             description=f'datall Glue Crawler for S3 Bucket {dataset.S3BucketName}',
             name=dataset.GlueCrawlerName,
             database_name=dataset.GlueDatabaseName,
-            schedule={'scheduleExpression': f'{dataset.GlueCrawlerSchedule}'}
-            if dataset.GlueCrawlerSchedule
-            else None,
+            schedule={'scheduleExpression': f'{dataset.GlueCrawlerSchedule}'} if dataset.GlueCrawlerSchedule else None,
             role=dataset_admin_role.role_arn,
             targets=CfnCrawler.TargetsProperty(
-                s3_targets=[
-                    CfnCrawler.S3TargetProperty(path=f's3://{dataset.S3BucketName}')
-                ]
+                s3_targets=[CfnCrawler.S3TargetProperty(path=f's3://{dataset.S3BucketName}')]
             ),
         )
         crawler.node.add_dependency(dataset_bucket)
@@ -487,8 +465,7 @@ class DatasetStack(Stack):
             '--apiUrl': 'None',
             '--snsTopicArn': 'None',
             '--extra-jars': (
-                f's3://{env.EnvironmentDefaultBucketName}'
-                f'/profiling/code/jars/deequ-2.0.0-spark-3.1.jar'
+                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.0-spark-3.1.jar'
             ),
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
@@ -503,16 +480,11 @@ class DatasetStack(Stack):
             description=f'datall Glue Profiling job for dataset {dataset.label}',
             role=dataset_admin_role.role_arn,
             allocated_capacity=10,
-            execution_property=glue.CfnJob.ExecutionPropertyProperty(
-                max_concurrent_runs=100
-            ),
+            execution_property=glue.CfnJob.ExecutionPropertyProperty(max_concurrent_runs=100),
             command=glue.CfnJob.JobCommandProperty(
                 name='glueetl',
                 python_version='3',
-                script_location=(
-                    f's3://{env.EnvironmentDefaultBucketName}'
-                    f'/profiling/code/glue_script.py'
-                ),
+                script_location=(f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/glue_script.py'),
             ),
             default_arguments=job_args,
             glue_version='3.0',
@@ -527,16 +499,13 @@ class DatasetStack(Stack):
                 type='SCHEDULED',
                 schedule=dataset.GlueProfilingTriggerSchedule,
                 start_on_creation=True,
-                actions=[
-                    glue.CfnTrigger.ActionProperty(
-                        job_name=dataset.GlueProfilingJobName, arguments=job_args
-                    )
-                ],
+                actions=[glue.CfnTrigger.ActionProperty(job_name=dataset.GlueProfilingJobName, arguments=job_args)],
             )
             trigger.node.add_dependency(job)
 
-        Tags.of(self).add('Classification', dataset.confidentiality)
+        if config.get_property('modules.datasets.features.confidentiality_dropdown', False):
+            Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(stack=self, model=Dataset, target_type="dataset")
+        TagsUtil.add_tags(stack=self, model=Dataset, target_type='dataset')
 
         CDKNagUtil.check_rules(self)

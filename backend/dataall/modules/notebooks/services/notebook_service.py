@@ -2,6 +2,7 @@
 A service layer for sagemaker notebooks
 Central part for working with notebooks
 """
+
 import dataclasses
 import logging
 from dataclasses import dataclass, field
@@ -20,8 +21,14 @@ from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
-    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
+from dataall.modules.notebooks.services.notebook_permissions import (
+    MANAGE_NOTEBOOKS,
+    CREATE_NOTEBOOK,
+    NOTEBOOK_ALL,
+    GET_NOTEBOOK,
+    UPDATE_NOTEBOOK,
+    DELETE_NOTEBOOK,
+)
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -34,24 +41,22 @@ logger = logging.getLogger(__name__)
 @dataclass
 class NotebookCreationRequest:
     """A request dataclass for notebook creation. Adds default values for missed parameters"""
+
     label: str
     VpcId: str
     SubnetId: str
     SamlAdminGroupName: str
     environment: Dict = field(default_factory=dict)
-    description: str = "No description provided"
+    description: str = 'No description provided'
     VolumeSizeInGB: int = 32
-    InstanceType: str = "ml.t3.medium"
+    InstanceType: str = 'ml.t3.medium'
     tags: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, env):
         """Copies only required fields from the dictionary and creates an instance of class"""
         fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{
-            k: v for k, v in env.items()
-            if k in fields
-        })
+        return cls(**{k: v for k, v in env.items() if k in fields})
 
 
 class NotebookService:
@@ -59,7 +64,7 @@ class NotebookService:
     Encapsulate the logic of interactions with sagemaker notebooks.
     """
 
-    _NOTEBOOK_RESOURCE_TYPE = "notebook"
+    _NOTEBOOK_RESOURCE_TYPE = 'notebook'
 
     @staticmethod
     @has_tenant_permission(MANAGE_NOTEBOOKS)
@@ -73,7 +78,7 @@ class NotebookService:
 
         with _session() as session:
             env = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, env, "notebooksEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, env, 'notebooksEnabled')
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -150,9 +155,7 @@ class NotebookService:
         """List existed user notebooks. Filters only required notebooks by the filter param"""
         with _session() as session:
             return NotebookRepository(session).paginated_user_notebooks(
-                username=context().username,
-                groups=context().groups,
-                filter=filter
+                username=context().username, groups=context().groups, filter=filter
             )
 
     @staticmethod
@@ -205,16 +208,11 @@ class NotebookService:
                 group=notebook.SamlAdminGroupName,
             )
 
-            env: Environment = EnvironmentService.get_environment_by_uri(
-                session, notebook.environmentUri
-            )
+            env: Environment = EnvironmentService.get_environment_by_uri(session, notebook.environmentUri)
 
         if delete_from_aws:
             stack_helper.delete_stack(
-                target_uri=uri,
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region
+                target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
             )
 
     @staticmethod

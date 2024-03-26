@@ -14,7 +14,7 @@ class Thunk:
 
 if __name__ == '__main__':
     from ..gql import Field
-    from ..gql import *
+    from ..gql import String
 
     Foo = Field(name='foo', type=String)
     t = Thunk(lambda: Foo)

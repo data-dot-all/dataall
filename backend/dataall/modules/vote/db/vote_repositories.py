@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class VoteRepository:
-
     @staticmethod
     def get_vote(session, targetUri, targetType) -> [models.Vote]:
         return (

@@ -1,6 +1,7 @@
 import logging
 from warnings import warn
 from typing import List
+from datetime import datetime
 
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
@@ -9,8 +10,15 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
-    ShareItemStatus, ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareItemHealthStatus,
+    ShareObjectActions,
+    ShareObjectStatus,
+    ShareItemActions,
+    ShareItemStatus,
+    ShareableType,
+    PrincipalType,
+)
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
@@ -33,7 +41,7 @@ class Transition:
             raise exceptions.UnauthorizedOperation(
                 action=self._name,
                 message=f'This transition is not possible, {prev_state} cannot go to {self._all_target_states}. '
-                        f'If there is a sharing or revoking in progress wait until it is complete and try again.',
+                f'If there is a sharing or revoking in progress wait until it is complete and try again.',
             )
         else:
             return True
@@ -56,27 +64,16 @@ class ShareObjectSM:
             ShareObjectActions.Submit.value: Transition(
                 name=ShareObjectActions.Submit.value,
                 transitions={
-                    ShareObjectStatus.Submitted.value: [
-                        ShareObjectStatus.Draft.value,
-                        ShareObjectStatus.Rejected.value
-                    ]
-                }
+                    ShareObjectStatus.Submitted.value: [ShareObjectStatus.Draft.value, ShareObjectStatus.Rejected.value]
+                },
             ),
             ShareObjectActions.Approve.value: Transition(
                 name=ShareObjectActions.Approve.value,
-                transitions={
-                    ShareObjectStatus.Approved.value: [
-                        ShareObjectStatus.Submitted.value
-                    ]
-                }
+                transitions={ShareObjectStatus.Approved.value: [ShareObjectStatus.Submitted.value]},
             ),
             ShareObjectActions.Reject.value: Transition(
                 name=ShareObjectActions.Reject.value,
-                transitions={
-                    ShareObjectStatus.Rejected.value: [
-                        ShareObjectStatus.Submitted.value
-                    ]
-                }
+                transitions={ShareObjectStatus.Rejected.value: [ShareObjectStatus.Submitted.value]},
             ),
             ShareObjectActions.RevokeItems.value: Transition(
                 name=ShareObjectActions.RevokeItems.value,
@@ -85,29 +82,25 @@ class ShareObjectSM:
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Processed.value
+                        ShareObjectStatus.Processed.value,
                     ]
-                }
+                },
             ),
             ShareObjectActions.Start.value: Transition(
                 name=ShareObjectActions.Start.value,
                 transitions={
-                    ShareObjectStatus.Share_In_Progress.value: [
-                        ShareObjectStatus.Approved.value
-                    ],
-                    ShareObjectStatus.Revoke_In_Progress.value: [
-                        ShareObjectStatus.Revoked.value
-                    ]
-                }
+                    ShareObjectStatus.Share_In_Progress.value: [ShareObjectStatus.Approved.value],
+                    ShareObjectStatus.Revoke_In_Progress.value: [ShareObjectStatus.Revoked.value],
+                },
             ),
             ShareObjectActions.Finish.value: Transition(
                 name=ShareObjectActions.Finish.value,
                 transitions={
                     ShareObjectStatus.Processed.value: [
                         ShareObjectStatus.Share_In_Progress.value,
-                        ShareObjectStatus.Revoke_In_Progress.value
+                        ShareObjectStatus.Revoke_In_Progress.value,
                     ],
-                }
+                },
             ),
             ShareObjectActions.FinishPending.value: Transition(
                 name=ShareObjectActions.FinishPending.value,
@@ -115,7 +108,7 @@ class ShareObjectSM:
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Revoke_In_Progress.value,
                     ],
-                }
+                },
             ),
             ShareObjectActions.Delete.value: Transition(
                 name=ShareObjectActions.Delete.value,
@@ -124,9 +117,9 @@ class ShareObjectSM:
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
-                        ShareObjectStatus.Processed.value
+                        ShareObjectStatus.Processed.value,
                     ]
-                }
+                },
             ),
             ShareItemActions.AddItem.value: Transition(
                 name=ShareItemActions.AddItem.value,
@@ -134,9 +127,18 @@ class ShareObjectSM:
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Processed.value
+                        ShareObjectStatus.Processed.value,
                     ]
-                }
+                },
+            ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareObjectStatus.Processed.value: [
+                        ShareObjectStatus.Share_In_Progress.value,
+                        ShareObjectStatus.Revoke_In_Progress.value,
+                    ]
+                },
             ),
         }
 
@@ -146,12 +148,8 @@ class ShareObjectSM:
         return new_state
 
     def update_state(self, session, share, new_state):
-        logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
-        ShareObjectRepository.update_share_object_status(
-            session=session,
-            share_uri=share.shareUri,
-            status=new_state
-        )
+        logger.info(f'Updating share object {share.shareUri} in DB from {self._state} to state {new_state}')
+        ShareObjectRepository.update_share_object_status(session=session, share_uri=share.shareUri, status=new_state)
         self._state = new_state
         return True
 
@@ -162,16 +160,14 @@ class ShareItemSM:
         self.transitionTable = {
             ShareItemActions.AddItem.value: Transition(
                 name=ShareItemActions.AddItem.value,
-                transitions={
-                    ShareItemStatus.PendingApproval.value: [ShareItemStatus.Deleted.value]
-                }
+                transitions={ShareItemStatus.PendingApproval.value: [ShareItemStatus.Deleted.value]},
             ),
             ShareObjectActions.Submit.value: Transition(
                 name=ShareObjectActions.Submit.value,
                 transitions={
                     ShareItemStatus.PendingApproval.value: [
                         ShareItemStatus.Share_Rejected.value,
-                        ShareItemStatus.Share_Failed.value
+                        ShareItemStatus.Share_Failed.value,
                     ],
                     ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
                     ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Failed.value],
@@ -180,7 +176,7 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
                     ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_In_Progress.value],
-                }
+                },
             ),
             ShareObjectActions.Approve.value: Transition(
                 name=ShareObjectActions.Approve.value,
@@ -192,7 +188,7 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
                     ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_In_Progress.value],
-                }
+                },
             ),
             ShareObjectActions.Reject.value: Transition(
                 name=ShareObjectActions.Reject.value,
@@ -204,28 +200,28 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
                     ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_In_Progress.value],
-                }
+                },
             ),
             ShareObjectActions.Start.value: Transition(
                 name=ShareObjectActions.Start.value,
                 transitions={
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_Approved.value],
                     ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_Approved.value],
-                }
+                },
             ),
             ShareItemActions.Success.value: Transition(
                 name=ShareItemActions.Success.value,
                 transitions={
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_In_Progress.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_In_Progress.value],
-                }
+                },
             ),
             ShareItemActions.Failure.value: Transition(
                 name=ShareItemActions.Failure.value,
                 transitions={
                     ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_In_Progress.value],
                     ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_In_Progress.value],
-                }
+                },
             ),
             ShareItemActions.RemoveItem.value: Transition(
                 name=ShareItemActions.RemoveItem.value,
@@ -234,9 +230,9 @@ class ShareItemSM:
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value
+                        ShareItemStatus.Revoke_Succeeded.value,
                     ]
-                }
+                },
             ),
             ShareObjectActions.RevokeItems.value: Transition(
                 name=ShareObjectActions.RevokeItems.value,
@@ -244,9 +240,9 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Approved.value: [
                         ShareItemStatus.Share_Succeeded.value,
                         ShareItemStatus.Revoke_Failed.value,
-                        ShareItemStatus.Revoke_Approved.value
+                        ShareItemStatus.Revoke_Approved.value,
                     ]
-                }
+                },
             ),
             ShareObjectActions.Delete.value: Transition(
                 name=ShareObjectActions.Delete.value,
@@ -255,10 +251,17 @@ class ShareItemSM:
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value
+                        ShareItemStatus.Revoke_Succeeded.value,
                     ]
-                }
-            )
+                },
+            ),
+            ShareObjectActions.AcquireLockFailure.value: Transition(
+                name=ShareObjectActions.AcquireLockFailure.value,
+                transitions={
+                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Approved.value],
+                },
+            ),
         }
 
     def run_transition(self, transition):
@@ -269,32 +272,23 @@ class ShareItemSM:
     def update_state(self, session, share_uri, new_state):
         if share_uri and (new_state != self._state):
             if new_state == ShareItemStatus.Deleted.value:
-                logger.info(f"Deleting share items in DB in {self._state} state")
+                logger.info(f'Deleting share items in DB in {self._state} state')
                 ShareObjectRepository.delete_share_item_status_batch(
-                    session=session,
-                    share_uri=share_uri,
-                    status=self._state
+                    session=session, share_uri=share_uri, status=self._state
                 )
             else:
-                logger.info(f"Updating share items in DB from {self._state} to state {new_state}")
+                logger.info(f'Updating share items in DB from {self._state} to state {new_state}')
                 ShareObjectRepository.update_share_item_status_batch(
-                    session=session,
-                    share_uri=share_uri,
-                    old_status=self._state,
-                    new_status=new_state
+                    session=session, share_uri=share_uri, old_status=self._state, new_status=new_state
                 )
             self._state = new_state
         else:
-            logger.info(f"Share Items in DB already in target state {new_state} or no update is required")
+            logger.info(f'Share Items in DB already in target state {new_state} or no update is required')
             return True
 
     def update_state_single_item(self, session, share_item, new_state):
-        logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
-        ShareObjectRepository.update_share_item_status(
-            session=session,
-            uri=share_item.shareItemUri,
-            status=new_state
-        )
+        logger.info(f'Updating share item in DB {share_item.shareItemUri} status to {new_state}')
+        ShareObjectRepository.update_share_item_status(session=session, uri=share_item.shareItemUri, status=new_state)
         self._state = new_state
         return True
 
@@ -305,7 +299,7 @@ class ShareItemSM:
             ShareItemStatus.Share_In_Progress.value,
             ShareItemStatus.Revoke_Failed.value,
             ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Approved.value
+            ShareItemStatus.Revoke_Approved.value,
         ]
 
     @staticmethod
@@ -319,7 +313,9 @@ class ShareItemSM:
 class ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
-        return ShareObjectRepository.count_principal_shares(session, group_uri, environment.environmentUri, PrincipalType.Group)
+        return ShareObjectRepository.count_principal_shares(
+            session, group_uri, environment.environmentUri, PrincipalType.Group
+        )
 
     @staticmethod
     def count_role_resources(session, role_uri):
@@ -335,6 +331,10 @@ class ShareObjectRepository:
     def save_and_commit(session, share):
         session.add(share)
         session.commit()
+
+    @staticmethod
+    def list_all_active_share_objects(session) -> [ShareObject]:
+        return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
     def find_share(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
@@ -386,12 +386,13 @@ class ShareObjectRepository:
     def check_existing_shared_items(session, uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = session.query(ShareObjectItem).filter(
-            and_(
-                ShareObjectItem.shareUri == share.shareUri,
-                ShareObjectItem.status.in_(share_item_shared_states)
+        shared_items = (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(ShareObjectItem.shareUri == share.shareUri, ShareObjectItem.status.in_(share_item_shared_states))
             )
-        ).all()
+            .all()
+        )
         if shared_items:
             return True
         return False
@@ -439,13 +440,17 @@ class ShareObjectRepository:
     def check_existing_shared_items_of_type(session, uri, item_type):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = session.query(ShareObjectItem).filter(
-            and_(
-                ShareObjectItem.shareUri == share.shareUri,
-                ShareObjectItem.itemType == item_type,
-                ShareObjectItem.status.in_(share_item_shared_states)
+        shared_items = (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.itemType == item_type,
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
             )
-        ).all()
+            .all()
+        )
         if shared_items:
             return True
         return False
@@ -453,12 +458,16 @@ class ShareObjectRepository:
     @staticmethod
     def check_pending_share_items(session, uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        shared_items = session.query(ShareObjectItem).filter(
-            and_(
-                ShareObjectItem.shareUri == share.shareUri,
-                ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
+        shared_items = (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value]),
+                )
             )
-        ).all()
+            .all()
+        )
         if shared_items:
             return True
         return False
@@ -483,6 +492,9 @@ class ShareObjectRepository:
                 DatasetTable.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -510,6 +522,9 @@ class ShareObjectRepository:
                 DatasetStorageLocation.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -519,8 +534,7 @@ class ShareObjectRepository:
                 ShareObjectItem,
                 and_(
                     ShareObjectItem.shareUri == share.shareUri,
-                    DatasetStorageLocation.locationUri
-                    == ShareObjectItem.itemUri,
+                    DatasetStorageLocation.locationUri == ShareObjectItem.itemUri,
                 ),
             )
             .filter(DatasetStorageLocation.datasetUri == share.datasetUri)
@@ -536,6 +550,9 @@ class ShareObjectRepository:
                 DatasetBucket.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
+                ShareObjectItem.healthStatus.label('healthStatus'),
+                ShareObjectItem.healthMessage.label('healthMessage'),
+                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
@@ -545,8 +562,7 @@ class ShareObjectRepository:
                 ShareObjectItem,
                 and_(
                     ShareObjectItem.shareUri == share.shareUri,
-                    DatasetBucket.bucketUri
-                    == ShareObjectItem.itemUri,
+                    DatasetBucket.bucketUri == ShareObjectItem.itemUri,
                 ),
             )
             .filter(DatasetBucket.datasetUri == share.datasetUri)
@@ -566,9 +582,17 @@ class ShareObjectRepository:
                         shareable_objects.c.description.ilike(term + '%'),
                     )
                 )
-            if 'isShared' in data.keys():
+            if 'isShared' in data:
                 is_shared = data.get('isShared')
                 query = query.filter(shareable_objects.c.isShared == is_shared)
+
+            if 'isHealthy' in data:
+                # healthy_status = ShareItemHealthStatus.Healthy.value
+                query = (
+                    query.filter(shareable_objects.c.healthStatus == ShareItemHealthStatus.Healthy.value)
+                    if data.get('isHealthy')
+                    else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
+                )
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
@@ -583,9 +607,7 @@ class ShareObjectRepository:
             .filter(
                 or_(
                     Dataset.businessOwnerEmail == username,
-                    Dataset.businessOwnerDelegationEmails.contains(
-                        f'{{{username}}}'
-                    ),
+                    Dataset.businessOwnerDelegationEmails.contains(f'{{{username}}}'),
                     Dataset.stewards.in_(groups),
                     Dataset.SamlAdminGroupName.in_(groups),
                 )
@@ -594,29 +616,19 @@ class ShareObjectRepository:
 
         if data and data.get('status'):
             if len(data.get('status')) > 0:
-                query = query.filter(
-                    ShareObject.status.in_(data.get('status'))
-                )
+                query = query.filter(ShareObject.status.in_(data.get('status')))
         if data and data.get('dataset_owners'):
             if len(data.get('dataset_owners')) > 0:
-                query = query.filter(
-                    Dataset.SamlAdminGroupName.in_(data.get('dataset_owners'))
-                )
+                query = query.filter(Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
         if data and data.get('datasets_uris'):
             if len(data.get('datasets_uris')) > 0:
-                query = query.filter(
-                    ShareObject.datasetUri.in_(data.get('datasets_uris'))
-                )
+                query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
         if data and data.get('share_requesters'):
             if len(data.get('share_requesters')) > 0:
-                query = query.filter(
-                    ShareObject.groupUri.in_(data.get('share_requesters'))
-                )
+                query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(
-                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
-                )
+                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -636,43 +648,31 @@ class ShareObjectRepository:
                     ShareObject.owner == username,
                     and_(
                         ShareObject.groupUri.in_(groups),
-                        ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value])
+                        ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value]),
                     ),
                 )
             )
         )
         if data and data.get('status'):
             if len(data.get('status')) > 0:
-                query = query.filter(
-                    ShareObject.status.in_(data.get('status'))
-                )
+                query = query.filter(ShareObject.status.in_(data.get('status')))
         if data and data.get('dataset_owners'):
             if len(data.get('dataset_owners')) > 0:
-                query = query.filter(
-                    Dataset.SamlAdminGroupName.in_(data.get('dataset_owners'))
-                )
+                query = query.filter(Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
         if data and data.get('datasets_uris'):
             if len(data.get('datasets_uris')) > 0:
-                query = query.filter(
-                    ShareObject.datasetUri.in_(data.get('datasets_uris'))
-                )
+                query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
         if data and data.get('share_requesters'):
             if len(data.get('share_requesters')) > 0:
-                query = query.filter(
-                    ShareObject.groupUri.in_(data.get('share_requesters'))
-                )
+                query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(
-                    ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles'))
-                )
+                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
-        environment_groups = session.query(EnvironmentGroup).filter(
-            EnvironmentGroup.environmentUri == environment_uri
-        )
+        environment_groups = session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == environment_uri)
         groups = [g.groupUri for g in environment_groups]
         share = session.query(ShareObject).filter(
             and_(
@@ -698,9 +698,22 @@ class ShareObjectRepository:
         uri: str,
         status: str,
     ) -> ShareObjectItem:
-
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share_item.status = status
+        session.commit()
+        return share_item
+
+    @staticmethod
+    def update_share_item_health_status(
+        session,
+        share_item: ShareObjectItem,
+        healthStatus: str = None,
+        healthMessage: str = None,
+        timestamp: datetime = None,
+    ) -> ShareObjectItem:
+        share_item.healthStatus = healthStatus
+        share_item.healthMessage = healthMessage
+        share_item.lastVerificationTime = timestamp
         session.commit()
         return share_item
 
@@ -712,12 +725,7 @@ class ShareObjectRepository:
     ):
         (
             session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.shareUri == share_uri,
-                    ShareObjectItem.status == status
-                )
-            )
+            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == status))
             .delete()
         )
 
@@ -728,15 +736,9 @@ class ShareObjectRepository:
         old_status: str,
         new_status: str,
     ) -> bool:
-
         (
             session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.shareUri == share_uri,
-                    ShareObjectItem.status == old_status
-                )
-            )
+            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status))
             .update(
                 {
                     ShareObjectItem.status: new_status,
@@ -751,15 +753,11 @@ class ShareObjectRepository:
 
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
-        source_environment: Environment = session.query(Environment).get(
-            dataset.environmentUri
-        )
+        source_environment: Environment = session.query(Environment).get(dataset.environmentUri)
         if not source_environment:
             raise exceptions.ObjectNotFound('SourceEnvironment', dataset.environmentUri)
 
-        target_environment: Environment = session.query(Environment).get(
-            share.environmentUri
-        )
+        target_environment: Environment = session.query(Environment).get(share.environmentUri)
         if not target_environment:
             raise exceptions.ObjectNotFound('TargetEnvironment', share.environmentUri)
 
@@ -805,19 +803,19 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status):
+    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetTable, DatasetTable.tableUri
+            session, share, status, healthStatus, DatasetTable, DatasetTable.tableUri
         )
 
         folders = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetStorageLocation, DatasetStorageLocation.locationUri
+            session, share, status, healthStatus, DatasetStorageLocation, DatasetStorageLocation.locationUri
         )
 
         s3_buckets = ShareObjectRepository._find_all_share_item(
-            session, share, status, DatasetBucket, DatasetBucket.bucketUri
+            session, share, status, healthStatus, DatasetBucket, DatasetBucket.bucketUri
         )
 
         return (
@@ -827,8 +825,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def _find_all_share_item(session, share, status, share_type_model, share_type_uri):
-        return (
+    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+        query = (
             session.query(share_type_model)
             .join(
                 ShareObjectItem,
@@ -843,25 +841,21 @@ class ShareObjectRepository:
                     ShareObject.datasetUri == share.datasetUri,
                     ShareObject.environmentUri == share.environmentUri,
                     ShareObject.shareUri == share.shareUri,
-                    ShareObjectItem.status == status,
                 )
             )
-            .all()
         )
+        if status:
+            query = query.filter(ShareObjectItem.status == status)
+        if healthStatus:
+            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
+        return query.all()
 
     @staticmethod
     def find_all_share_items(session, share_uri, share_type, status=None):
-        query = (
-            session.query(ShareObjectItem).filter(
-                (
-                    and_(
-                        ShareObjectItem.shareUri == share_uri,
-                        ShareObjectItem.itemType == share_type
-                    )
-                )
-            )
+        query = session.query(ShareObjectItem).filter(
+            (and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.itemType == share_type))
         )
-        if status :
+        if status:
             query = query.filter(ShareObjectItem.status.in_(status))
         return query.all()
 
@@ -908,12 +902,7 @@ class ShareObjectRepository:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         return (
             session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri == item_uri,
-                    ShareObjectItem.status.in_(share_item_shared_states)
-                )
-            )
+            .filter(and_(ShareObjectItem.itemUri == item_uri, ShareObjectItem.status.in_(share_item_shared_states)))
             .count()
         )
 
@@ -926,10 +915,7 @@ class ShareObjectRepository:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shares = (
             session.query(ShareObject)
-            .outerjoin(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset_uri,
@@ -939,19 +925,11 @@ class ShareObjectRepository:
             .all()
         )
         for share in shares:
-            share_items = (
-                session.query(ShareObjectItem)
-                .filter(ShareObjectItem.shareUri == share.shareUri)
-                .all()
-            )
+            share_items = session.query(ShareObjectItem).filter(ShareObjectItem.shareUri == share.shareUri).all()
             for item in share_items:
                 session.delete(item)
 
-            share_obj = (
-                session.query(ShareObject)
-                .filter(ShareObject.shareUri == share.shareUri)
-                .first()
-            )
+            share_obj = session.query(ShareObject).filter(ShareObject.shareUri == share.shareUri).first()
             session.delete(share_obj)
 
     @staticmethod
@@ -963,10 +941,7 @@ class ShareObjectRepository:
                 ShareObject,
                 ShareObject.datasetUri == Dataset.datasetUri,
             )
-            .outerjoin(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 or_(
                     Dataset.owner == username,
@@ -993,9 +968,7 @@ class ShareObjectRepository:
         return query.distinct(Dataset.datasetUri)
 
     @staticmethod
-    def paginated_user_datasets(
-            session, username, groups, data=None
-    ) -> dict:
+    def paginated_user_datasets(session, username, groups, data=None) -> dict:
         return paginate(
             query=ShareObjectRepository._query_user_datasets(session, username, groups, data),
             page=data.get('page', 1),
@@ -1004,11 +977,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):
-        return (
-            session.query(ShareObject)
-            .filter(ShareObject.datasetUri == dataset_uri)
-            .all()
-        )
+        return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
 
     @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
@@ -1022,19 +991,16 @@ class ShareObjectRepository:
     @staticmethod
     def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
         query = ShareObjectRepository.query_dataset_shares(session, uri)
-        return paginate(
-            query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
-        ).to_dict()
+        return paginate(query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)).to_dict()
 
     @staticmethod
-    def list_dataset_shares_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
+    def list_dataset_shares_with_existing_shared_items(
+        session, dataset_uri, environment_uri=None, item_type=None
+    ) -> [ShareObject]:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(ShareObject)
-            .outerjoin(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset_uri,
@@ -1050,18 +1016,19 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def list_dataset_shares_and_datasets_with_existing_shared_items(session, dataset_uri, environment_uri=None, item_type=None) -> [ShareObject]:
+    def list_dataset_shares_and_datasets_with_existing_shared_items(
+        session, dataset_uri, environment_uri=None, item_type=None
+    ) -> [ShareObject]:
         warn(
             'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
-            DeprecationWarning, stacklevel=2)
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # When deprecated, use ist_dataset_shares_with_existing_shared_items instead
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(ShareObject)
-            .outerjoin(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset_uri,
@@ -1077,22 +1044,16 @@ class ShareObjectRepository:
         shares_datasets = []
         for share in query.all():
             dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            shares_datasets.append({"shareUri": share.shareUri, "databaseName": f"{dataset.GlueDatabaseName}_shared_{share.shareUri}"})
+            shares_datasets.append(
+                {'shareUri': share.shareUri, 'databaseName': f'{dataset.GlueDatabaseName}_shared_{share.shareUri}'}
+            )
         return shares_datasets
 
     @staticmethod
     def delete_all_share_items(session, env_uri):
-        env_shared_with_objects = (
-            session.query(ShareObject)
-            .filter(ShareObject.environmentUri == env_uri)
-            .all()
-        )
+        env_shared_with_objects = session.query(ShareObject).filter(ShareObject.environmentUri == env_uri).all()
         for share in env_shared_with_objects:
-            (
-                session.query(ShareObjectItem)
-                .filter(ShareObjectItem.shareUri == share.shareUri)
-                .delete()
-            )
+            (session.query(ShareObjectItem).filter(ShareObjectItem.shareUri == share.shareUri).delete())
             session.delete(share)
 
     @staticmethod
@@ -1109,6 +1070,7 @@ class ShareObjectRepository:
                 ShareObject.created.label('created'),
                 ShareObject.principalId.label('principalId'),
                 ShareObject.principalType.label('principalType'),
+                ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
                 ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 ShareObjectItem.GlueTableName.label('GlueTableName'),
@@ -1118,8 +1080,7 @@ class ShareObjectRepository:
                 case(
                     [
                         (
-                            ShareObjectItem.itemType
-                            == ShareableType.Table.value,
+                            ShareObjectItem.itemType == ShareableType.Table.value,
                             func.concat(
                                 DatasetTable.GlueDatabaseName,
                                 '.',
@@ -1127,8 +1088,7 @@ class ShareObjectRepository:
                             ),
                         ),
                         (
-                            ShareObjectItem.itemType
-                            == ShareableType.StorageLocation.value,
+                            ShareObjectItem.itemType == ShareableType.StorageLocation.value,
                             func.concat(DatasetStorageLocation.name),
                         ),
                     ],
@@ -1149,8 +1109,7 @@ class ShareObjectRepository:
             )
             .join(
                 Organization,
-                Organization.organizationUri
-                == Environment.organizationUri,
+                Organization.organizationUri == Environment.organizationUri,
             )
             .outerjoin(
                 DatasetTable,
@@ -1158,8 +1117,7 @@ class ShareObjectRepository:
             )
             .outerjoin(
                 DatasetStorageLocation,
-                ShareObjectItem.itemUri
-                == DatasetStorageLocation.locationUri,
+                ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
@@ -1175,11 +1133,9 @@ class ShareObjectRepository:
 
         if data.get('itemTypes', None):
             item_types = data.get('itemTypes')
-            q = q.filter(
-                or_(*[ShareObjectItem.itemType == t for t in item_types])
-            )
+            q = q.filter(or_(*[ShareObjectItem.itemType == t for t in item_types]))
 
-        if data.get("uniqueShares", False):
+        if data.get('uniqueShares', False):
             q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
             q = q.distinct(ShareObject.shareUri)
 
@@ -1187,17 +1143,11 @@ class ShareObjectRepository:
             term = data.get('term')
             q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
 
-        return paginate(
-            query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def find_share_items_by_item_uri(session, item_uri):
-        return (
-            session.query(ShareObjectItem)
-            .filter(ShareObjectItem.itemUri == item_uri)
-            .all()
-        )
+        return session.query(ShareObjectItem).filter(ShareObjectItem.itemUri == item_uri).all()
 
     @staticmethod
     def get_approved_share_object(session, item):
@@ -1227,9 +1177,7 @@ class ShareObjectRepository:
             )
             .join(
                 ShareObjectItem,
-                and_(
-                    ShareObjectItem.itemUri == DatasetTable.tableUri
-                ),
+                and_(ShareObjectItem.itemUri == DatasetTable.tableUri),
             )
             .join(
                 ShareObject,
@@ -1260,9 +1208,7 @@ class ShareObjectRepository:
             )
             .join(
                 ShareObjectItem,
-                and_(
-                    ShareObjectItem.itemUri == DatasetStorageLocation.locationUri
-                ),
+                and_(ShareObjectItem.itemUri == DatasetStorageLocation.locationUri),
             )
             .join(
                 ShareObject,
@@ -1289,7 +1235,7 @@ class ShareObjectRepository:
                 and_(
                     ShareObject.principalId == principal_id,
                     ShareObject.principalType == principal_type.value,
-                    ShareObject.environmentUri == environment_uri
+                    ShareObject.environmentUri == environment_uri,
                 )
             )
             .count()

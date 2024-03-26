@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class Cognito(ServiceProvider):
-
     def __init__(self):
         self.client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
 
@@ -19,10 +18,7 @@ class Cognito(ServiceProvider):
             ssm = boto3.client('ssm', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
             user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
             paginator = self.client.get_paginator('list_users_in_group')
-            pages = paginator.paginate(
-                UserPoolId=user_pool_id,
-                GroupName=groupName
-            )
+            pages = paginator.paginate(UserPoolId=user_pool_id, GroupName=groupName)
             cognito_user_list = []
             for page in pages:
                 cognito_user_list += page['Users']
@@ -38,9 +34,7 @@ class Cognito(ServiceProvider):
             if envname in ['local', 'dkrcompose']:
                 log.error('Local development environment does not support Cognito')
                 return ['anonymous@amazon.com']
-            log.error(
-                f'Failed to get email ids for Cognito group {groupName} due to {e}'
-            )
+            log.error(f'Failed to get email ids for Cognito group {groupName} due to {e}')
             raise e
         else:
             return group_email_ids
@@ -58,9 +52,7 @@ class Cognito(ServiceProvider):
             for page in pages:
                 groups += [gr['GroupName'] for gr in page['Groups']]
         except Exception as e:
-            log.error(
-                f'Failed to list groups of user pool {user_pool_id} due to {e}'
-            )
+            log.error(f'Failed to list groups of user pool {user_pool_id} due to {e}')
             raise e
         return groups
 

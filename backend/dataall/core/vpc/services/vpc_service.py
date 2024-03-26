@@ -81,17 +81,10 @@ class VpcService:
     def delete_network(uri):
         with _session() as session:
             vpc = VpcRepository.get_vpc_by_uri(session=session, vpc_uri=uri)
-            ResourcePolicy.delete_resource_policy(
-                session=session, resource_uri=uri, group=vpc.SamlGroupName
-            )
-            return VpcRepository.delete_network(
-                session=session,
-                uri=uri
-            )
+            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=vpc.SamlGroupName)
+            return VpcRepository.delete_network(session=session, uri=uri)
 
     @staticmethod
     def get_environment_networks(environment_uri):
         with _session() as session:
-            return VpcRepository.get_environment_networks(
-                session=session, environment_uri=environment_uri
-            )
+            return VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
