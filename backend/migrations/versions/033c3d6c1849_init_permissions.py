@@ -12,7 +12,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from dataall.core.permissions.db import PermissionRepository
 from dataall.core.permissions.services.permission_service import PermissionService
 
 # revision identifiers, used by Alembic.
