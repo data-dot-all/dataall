@@ -2,8 +2,8 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import UnauthorizedOperation
@@ -99,7 +99,9 @@ class DashboardService:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
             DashboardRepository.delete_dashboard(session, dashboard)
 
-            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dashboard.SamlGroupName)
+            ResourcePolicyService.delete_resource_policy(
+                session=session, resource_uri=uri, group=dashboard.SamlGroupName
+            )
             GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
             )
@@ -116,7 +118,7 @@ class DashboardService:
 
     @staticmethod
     def _attach_dashboard_policy(session, group: str, dashboard: Dashboard):
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group,
             permissions=DASHBOARD_ALL,

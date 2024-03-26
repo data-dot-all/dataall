@@ -1,6 +1,5 @@
 import datetime
 
-from dataall.core.permissions.api.enums import PermissionType
 from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as DBEnum
 from sqlalchemy.orm import relationship
 

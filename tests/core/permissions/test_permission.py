@@ -1,7 +1,8 @@
 import pytest
 
-from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.db.permission.permission_models import PermissionType
+from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import exceptions
 from dataall.core.permissions.constants.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL, TENANT_ALL
@@ -13,7 +14,7 @@ def permissions(db, all_perms):
         permissions = []
         for p in all_perms:
             permissions.append(
-                Permission.save_permission(
+                PermissionService.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -22,7 +23,7 @@ def permissions(db, all_perms):
             )
         for p in TENANT_ALL:
             permissions.append(
-                Permission.save_permission(
+                PermissionService.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -39,7 +40,7 @@ def test_attach_tenant_policy(db, group, tenant):
             session=session,
             group=group.name,
             permissions=[MANAGE_GROUPS],
-            tenant_name='dataall',
+            tenant_name=TenantPolicyService.TENANT_NAME,
         )
 
         assert TenantPolicyService.check_user_tenant_permission(
@@ -47,7 +48,7 @@ def test_attach_tenant_policy(db, group, tenant):
             username='alice',
             groups=[group.name],
             permission_name=MANAGE_GROUPS,
-            tenant_name='dataall',
+            tenant_name=TenantPolicyService.TENANT_NAME,
         )
 
 

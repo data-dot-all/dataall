@@ -6,7 +6,7 @@ and interact with resources or do some actions in the app
 from typing import Protocol, Callable
 
 from dataall.base.context import RequestContext, get_context
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.utils.decorator_utls import process_func
 
@@ -23,14 +23,14 @@ def _check_tenant_permission(session, permission):
         session=session,
         username=context.username,
         groups=context.groups,
-        tenant_name='dataall',
+        tenant_name=TenantPolicyService.TENANT_NAME,
         permission_name=permission,
     )
 
 
 def _check_resource_permission(session, uri, permission):
     context: RequestContext = get_context()
-    ResourcePolicy.check_user_resource_permission(
+    ResourcePolicyService.check_user_resource_permission(
         session=session,
         username=context.username,
         groups=context.groups,

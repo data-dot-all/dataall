@@ -5,8 +5,8 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -61,7 +61,7 @@ class DataPipelineService:
                 data=data,
             )
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=admin_group,
                 permissions=PIPELINE_ALL,
@@ -70,7 +70,7 @@ class DataPipelineService:
             )
 
             if environment.SamlGroupName != pipeline.SamlGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
                     permissions=PIPELINE_ALL,
@@ -230,7 +230,7 @@ class DataPipelineService:
 
             session.delete(pipeline)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=pipeline.DataPipelineUri,
                 group=pipeline.SamlGroupName,

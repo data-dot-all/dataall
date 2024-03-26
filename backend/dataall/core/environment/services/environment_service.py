@@ -6,14 +6,14 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.db.permission.permission_models import PermissionType
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.vpc.db.vpc_models import Vpc
 from dataall.base.db.paginator import paginate
@@ -106,7 +106,7 @@ class EnvironmentService:
             environmentAthenaWorkGroup=env.EnvironmentDefaultAthenaWorkGroup,
         )
         session.add(env_group)
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             resource_uri=env.environmentUri,
             group=data['SamlGroupName'],
@@ -181,7 +181,7 @@ class EnvironmentService:
 
         EnvironmentService._update_env_parameters(session, environment, data)
 
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             resource_uri=environment.environmentUri,
             group=environment.SamlGroupName,
@@ -260,7 +260,7 @@ class EnvironmentService:
         )
         session.add(environment_group)
         session.commit()
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
@@ -288,7 +288,7 @@ class EnvironmentService:
         env_group_permissions = []
         for p in g_permissions:
             env_group_permissions.append(
-                Permission.find_permission_by_name(
+                PermissionRepository.find_permission_by_name(
                     session=session,
                     permission_name=p,
                     permission_type=PermissionType.RESOURCE.name,
@@ -339,7 +339,7 @@ class EnvironmentService:
             session.delete(group_membership)
             session.commit()
 
-        ResourcePolicy.delete_resource_policy(
+        ResourcePolicyService.delete_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
@@ -366,13 +366,13 @@ class EnvironmentService:
                 message=f'Team {group.name} is not a member of the environment {environment.name}',
             )
 
-        ResourcePolicy.delete_resource_policy(
+        ResourcePolicyService.delete_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
             resource_type=Environment.__name__,
         )
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
@@ -392,7 +392,7 @@ class EnvironmentService:
         """No permission check, only for internal usages"""
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-        return ResourcePolicy.get_resource_policy_permissions(
+        return ResourcePolicyService.get_resource_policy_permissions(
             session=session,
             group_uri=group_uri,
             resource_uri=environment.environmentUri,
@@ -403,7 +403,7 @@ class EnvironmentService:
         group_invitation_permissions = []
         for p in permissions.ENVIRONMENT_INVITATION_REQUEST:
             group_invitation_permissions.append(
-                Permission.find_permission_by_name(
+                PermissionRepository.find_permission_by_name(
                     session=session,
                     permission_name=p,
                     permission_type=PermissionType.RESOURCE.name,
@@ -447,7 +447,7 @@ class EnvironmentService:
         session.add(consumption_role)
         session.commit()
 
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=consumption_role.consumptionRoleUri,
@@ -478,7 +478,7 @@ class EnvironmentService:
                 resource_prefix=environment.resourcePrefix,
             ).delete_all_policies()
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=consumption_role.groupUri,
                 resource_uri=consumption_role.consumptionRoleUri,
@@ -502,7 +502,7 @@ class EnvironmentService:
             raise exceptions.RequiredParameter('consumptionRoleName')
         consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
         if consumption_role:
-            ResourcePolicy.update_resource_policy(
+            ResourcePolicyService.update_resource_policy(
                 session=session,
                 resource_uri=uri,
                 resource_type=ConsumptionRole.__name__,
@@ -939,7 +939,7 @@ class EnvironmentService:
             for group in env_groups:
                 session.delete(group)
 
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     resource_uri=uri,
                     group=group.groupUri,

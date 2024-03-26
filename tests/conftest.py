@@ -8,7 +8,7 @@ from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
 
 from dataall.core.groups.db.group_models import Group
-from dataall.core.permissions.db import Tenant, Permission
+from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.constants.permissions import TENANT_ALL
 from tests.client import create_app, ClientWrapper
@@ -129,7 +129,7 @@ def group4(db, tenant, user3):
 @pytest.fixture(scope='module', autouse=True)
 def tenant(db, permissions):
     with db.scoped_session() as session:
-        tenant = Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        tenant = TenantPolicyService.save_tenant(session, name='dataall', description='Tenant dataall')
         yield tenant
 
 
@@ -142,7 +142,7 @@ def patch_request(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield Permission.init_permissions(session)
+        yield PermissionService.init_permissions(session)
 
 
 @pytest.fixture(scope='function', autouse=True)

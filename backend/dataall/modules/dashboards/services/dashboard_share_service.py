@@ -1,7 +1,7 @@
 from dataall.base.context import get_context
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db.exceptions import InvalidInput, UnauthorizedOperation
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dashboards import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import DashboardShareStatus, Dashboard
 from dataall.modules.dashboards.services.dashboard_permissions import (
@@ -60,7 +60,7 @@ class DashboardShareService:
             share = DashboardRepository.get_dashboard_share_by_uri(session, uri)
             DashboardShareService._change_share_status(share, DashboardShareStatus.REJECTED)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=share.SamlGroupName,
                 resource_uri=share.dashboardUri,
@@ -118,7 +118,7 @@ class DashboardShareService:
 
     @staticmethod
     def _create_share_policy(session, principal_id, dashboard_uri):
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=principal_id,
             permissions=[GET_DASHBOARD],

@@ -1,6 +1,6 @@
 import json
 
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
@@ -108,7 +108,7 @@ class DatasetProfilingService:
             ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
             != ConfidentialityClassification.Unclassified.value
         ):
-            ResourcePolicy.check_user_resource_permission(
+            ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
                 groups=context.groups,

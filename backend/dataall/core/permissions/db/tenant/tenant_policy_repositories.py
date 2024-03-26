@@ -2,41 +2,36 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from dataall.core.permissions.api.enums import PermissionType
-from dataall.base.db import exceptions, paginate
-from dataall.core.permissions.constants import permissions
-from dataall.core.permissions.db.permission import permission_models
-from dataall.core.permissions.db.tenant import tenant_models as models
-from dataall.core.permissions.db.permission.permission_repositories import Permission
+from dataall.base.db import paginate
+from dataall.core.permissions.db.permission.permission_models import Permission
+from dataall.core.permissions.db.tenant.tenant_models import TenantPolicy, Tenant, TenantPolicyPermission
 
 logger = logging.getLogger(__name__)
 
 
-class TenantPolicy:
-    TENANT_NAME = 'dataall'
+class TenantPolicyRepository:
+    ADMIN_GROUP = 'DAAdministrators'
 
     @staticmethod
-    def has_user_tenant_permission(session, username: str, groups: [str], tenant_name: str, permission_name: str):
-        if not username or not permission_name:
-            return False
-        tenant_policy: models.TenantPolicy = (
-            session.query(models.TenantPolicy)
+    def has_user_tenant_permission(session, groups: [str], tenant_name: str, permission_name: str):
+        tenant_policy: TenantPolicy = (
+            session.query(TenantPolicy)
             .join(
-                models.TenantPolicyPermission,
-                models.TenantPolicy.sid == models.TenantPolicyPermission.sid,
+                TenantPolicyPermission,
+                TenantPolicy.sid == TenantPolicyPermission.sid,
             )
             .join(
-                models.Tenant,
-                models.Tenant.tenantUri == models.TenantPolicy.tenantUri,
+                Tenant,
+                Tenant.tenantUri == TenantPolicy.tenantUri,
             )
             .join(
-                permission_models.Permission,
-                permission_models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
+                Permission,
+                Permission.permissionUri == TenantPolicyPermission.permissionUri,
             )
             .filter(
-                models.TenantPolicy.principalId.in_(groups),
-                permission_models.Permission.name == permission_name,
-                models.Tenant.name == tenant_name,
+                TenantPolicy.principalId.in_(groups),
+                Permission.name == permission_name,
+                Tenant.name == tenant_name,
             )
             .first()
         )
@@ -47,25 +42,25 @@ class TenantPolicy:
         if not group_uri or not permission_name:
             return False
 
-        tenant_policy: models.TenantPolicy = (
-            session.query(models.TenantPolicy)
+        tenant_policy: TenantPolicy = (
+            session.query(TenantPolicy)
             .join(
-                models.TenantPolicyPermission,
-                models.TenantPolicy.sid == models.TenantPolicyPermission.sid,
+                TenantPolicyPermission,
+                TenantPolicy.sid == TenantPolicyPermission.sid,
             )
             .join(
-                models.Tenant,
-                models.Tenant.tenantUri == models.TenantPolicy.tenantUri,
+                Tenant,
+                Tenant.tenantUri == TenantPolicy.tenantUri,
             )
             .join(
-                permission_models.Permission,
-                permission_models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
+                Permission,
+                Permission.permissionUri == TenantPolicyPermission.permissionUri,
             )
             .filter(
                 and_(
-                    models.TenantPolicy.principalId == group_uri,
-                    permission_models.Permission.name == permission_name,
-                    models.Tenant.name == tenant_name,
+                    TenantPolicy.principalId == group_uri,
+                    Permission.name == permission_name,
+                    Tenant.name == tenant_name,
                 )
             )
             .first()
@@ -79,12 +74,12 @@ class TenantPolicy:
     @staticmethod
     def find_tenant_policy(session, group_uri: str, tenant_name: str):
         tenant_policy = (
-            session.query(models.TenantPolicy)
-            .join(models.Tenant, models.Tenant.tenantUri == models.TenantPolicy.tenantUri)
+            session.query(TenantPolicy)
+            .join(Tenant, Tenant.tenantUri == TenantPolicy.tenantUri)
             .filter(
                 and_(
-                    models.TenantPolicy.principalId == group_uri,
-                    models.Tenant.name == tenant_name,
+                    TenantPolicy.principalId == group_uri,
+                    Tenant.name == tenant_name,
                 )
             )
             .first()
@@ -94,17 +89,17 @@ class TenantPolicy:
     @staticmethod
     def list_tenant_groups(session, data=None):
         query = session.query(
-            models.TenantPolicy.principalId.label('name'),
-            models.TenantPolicy.principalId.label('groupUri'),
+            TenantPolicy.principalId.label('name'),
+            TenantPolicy.principalId.label('groupUri'),
         ).filter(
             and_(
-                models.TenantPolicy.principalType == 'GROUP',
-                models.TenantPolicy.principalId != 'DAAdministrators',
+                TenantPolicy.principalType == 'GROUP',
+                TenantPolicy.principalId != TenantPolicyRepository.ADMIN_GROUP,
             )
         )
 
         if data and data.get('term'):
-            query = query.filter(models.TenantPolicy.principalId.ilike('%' + data.get('term') + '%'))
+            query = query.filter(TenantPolicy.principalId.ilike('%' + data.get('term') + '%'))
 
         return paginate(
             query=query,

@@ -16,7 +16,7 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -442,7 +442,7 @@ def get_environment_assume_role_url(
     groupUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -466,7 +466,7 @@ def get_environment_assume_role_url(
 @is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(context, source, environmentUri: str = None, groupUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -514,7 +514,7 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
 
 def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -549,7 +549,7 @@ def enable_subscriptions(context: Context, source, environmentUri: str = None, i
 
 def disable_subscriptions(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -572,7 +572,7 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
     from dataall.base.utils import Parameter
 
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -612,7 +612,7 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
 
 def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -652,7 +652,7 @@ def get_cdk_exec_policy_template(context: Context, source, organizationUri=None)
 
 def get_external_id(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -670,7 +670,7 @@ def get_external_id(context: Context, source, organizationUri=None):
 
 def get_pivot_role_name(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,

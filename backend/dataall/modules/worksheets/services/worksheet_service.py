@@ -2,9 +2,9 @@ import logging
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db import exceptions
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
@@ -56,7 +56,7 @@ class WorksheetService:
         )
         session.add(activity)
 
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=data['SamlAdminGroupName'],
             permissions=WORKSHEET_ALL,
@@ -95,7 +95,7 @@ class WorksheetService:
     def delete_worksheet(session, uri) -> bool:
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         session.delete(worksheet)
-        ResourcePolicy.delete_resource_policy(
+        ResourcePolicyService.delete_resource_policy(
             session=session,
             group=worksheet.SamlAdminGroupName,
             resource_uri=uri,

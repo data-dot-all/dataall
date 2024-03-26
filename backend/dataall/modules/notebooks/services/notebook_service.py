@@ -12,8 +12,8 @@ from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -121,7 +121,7 @@ class NotebookService:
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=NOTEBOOK_ALL,
@@ -130,7 +130,7 @@ class NotebookService:
             )
 
             if env.SamlGroupName != admin_group:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
                     permissions=NOTEBOOK_ALL,
@@ -202,7 +202,7 @@ class NotebookService:
             KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
             session.delete(notebook)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=notebook.notebookUri,
                 group=notebook.SamlAdminGroupName,

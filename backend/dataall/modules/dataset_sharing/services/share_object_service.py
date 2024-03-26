@@ -1,10 +1,11 @@
 from warnings import warn
+
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.core.permissions.constants.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
@@ -193,7 +194,7 @@ class ShareObjectService:
             # Attaching REQUESTER permissions to:
             # requester group (groupUri)
             # environment.SamlGroupName (if not dataset admins)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group_uri,
                 permissions=SHARE_OBJECT_REQUESTER,
@@ -203,7 +204,7 @@ class ShareObjectService:
 
             # Attaching APPROVER permissions to:
             # dataset.stewards (includes the dataset Admins)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 permissions=SHARE_OBJECT_APPROVER,
@@ -211,7 +212,7 @@ class ShareObjectService:
                 resource_type=ShareObject.__name__,
             )
             if dataset.stewards != dataset.SamlAdminGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     permissions=SHARE_OBJECT_APPROVER,
@@ -253,7 +254,7 @@ class ShareObjectService:
 
             # if parent dataset has auto-approve flag, we trigger the next transition to approved state
             if dataset.autoApprovalEnabled:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=share.groupUri,
                     permissions=SHARE_OBJECT_APPROVER,
@@ -278,7 +279,7 @@ class ShareObjectService:
                     session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
                 )
                 for table in share_table_items:
-                    ResourcePolicy.attach_resource_policy(
+                    ResourcePolicyService.attach_resource_policy(
                         session=session,
                         group=share.groupUri,
                         permissions=DATASET_TABLE_READ,
@@ -357,20 +358,20 @@ class ShareObjectService:
             if new_state == ShareObjectStatus.Deleted.value:
                 # Delete share resource policy permissions
                 # Deleting REQUESTER permissions
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=share.groupUri,
                     resource_uri=share.shareUri,
                 )
 
                 # Deleting APPROVER permissions
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=dataset.SamlAdminGroupName,
                     resource_uri=share.shareUri,
                 )
                 if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicy.delete_resource_policy(
+                    ResourcePolicyService.delete_resource_policy(
                         session=session,
                         group=dataset.stewards,
                         resource_uri=share.shareUri,

@@ -9,7 +9,6 @@ from flask_cors import CORS
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.permissions.constants import permissions
-from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 from dataall.base.db import get_engine, Base
@@ -36,7 +35,7 @@ Base.metadata.create_all(engine.engine)
 CDKPROXY_URL = 'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
 config.set_property('cdk_proxy_url', CDKPROXY_URL)
 
-save_permissions_with_tenant(engine)
+TenantPolicyService.save_permissions_with_tenant(engine)
 
 
 class Context:
@@ -77,7 +76,7 @@ def request_context(headers, mock=False):
                 session=session,
                 group=group,
                 permissions=permissions.TENANT_ALL,
-                tenant_name='dataall',
+                tenant_name=TenantPolicyService.TENANT_NAME,
             )
 
     set_context(RequestContext(db_engine=engine, username=username, groups=groups, user_id=username))

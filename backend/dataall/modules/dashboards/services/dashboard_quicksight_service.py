@@ -4,7 +4,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
 from dataall.core.permissions.constants.permissions import TENANT_ALL
@@ -127,7 +127,7 @@ class DashboardQuicksightService:
     @staticmethod
     def _check_user_must_be_admin():
         context = get_context()
-        admin = TenantPolicy.is_tenant_admin(context.groups)
+        admin = TenantPolicyRepository.is_tenant_admin(context.groups)
 
         if not admin:
             raise TenantUnauthorized(

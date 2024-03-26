@@ -14,12 +14,13 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission.permission_repositories import Permission
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.base.db import utils
 from dataall.core.permissions.constants import permissions
 from datetime import datetime
 
+from dataall.core.permissions.services.permission_service import PermissionService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
 
 # revision identifiers, used by Alembic.
@@ -111,7 +112,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        Permission.init_permissions(session)
+        PermissionService.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -127,7 +128,7 @@ def upgrade():
                 session=session, uri=env.environmentUri, filter=None
             )
             for group in groups:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,

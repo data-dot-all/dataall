@@ -1,9 +1,9 @@
 import logging
 
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
@@ -107,7 +107,7 @@ class ShareItemService:
                     session, uri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
                 )
                 for item in revoke_table_items:
-                    ResourcePolicy.delete_resource_policy(
+                    ResourcePolicyService.delete_resource_policy(
                         session=session,
                         group=share.groupUri,
                         resource_uri=item.itemUri,
@@ -195,7 +195,7 @@ class ShareItemService:
                 and share_item.status == ShareItemStatus.Share_Failed.value
             ):
                 share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=share.groupUri,
                     resource_uri=share_item.itemUri,

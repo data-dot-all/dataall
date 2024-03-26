@@ -11,8 +11,8 @@ from typing import List, Dict
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
@@ -148,7 +148,7 @@ class SagemakerStudioService:
             )
             SageMakerStudioRepository.save_sagemaker_studio_user(session, sagemaker_studio_user)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=SGMSTUDIO_USER_ALL,
@@ -157,7 +157,7 @@ class SagemakerStudioService:
             )
 
             if env.SamlGroupName != sagemaker_studio_user.SamlAdminGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
                     permissions=SGMSTUDIO_USER_ALL,
@@ -268,7 +268,7 @@ class SagemakerStudioService:
             env = EnvironmentService.get_environment_by_uri(session, user.environmentUri)
             session.delete(user)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=user.sagemakerStudioUserUri,
                 group=user.SamlAdminGroupName,

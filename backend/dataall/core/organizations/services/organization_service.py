@@ -8,7 +8,7 @@ from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions.constants import permissions
 from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 
 class OrganizationService:
@@ -47,7 +47,7 @@ class OrganizationService:
             )
             session.add(activity)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=data['SamlGroupName'],
                 permissions=permissions.ORGANIZATION_ALL,
@@ -76,7 +76,7 @@ class OrganizationService:
                 targetType='org',
             )
             session.add(activity)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=organization.SamlGroupName,
                 permissions=permissions.ORGANIZATION_ALL,
@@ -151,7 +151,7 @@ class OrganizationService:
                     message='The organization you tried to delete has linked environments',
                 )
             session.delete(org)
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=org.SamlGroupName,
                 resource_uri=org.organizationUri,
@@ -182,7 +182,7 @@ class OrganizationService:
                 invitedBy=context.username,
             )
             session.add(org_group)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=organization.organizationUri,
@@ -220,7 +220,7 @@ class OrganizationService:
                 session.delete(group_membership)
                 session.commit()
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=organization.organizationUri,

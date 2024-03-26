@@ -9,7 +9,7 @@ Create Date: 2023-05-17 13:39:00.974409
 from alembic import op
 from sqlalchemy import String, orm, and_
 
-from dataall.core.permissions.db.permission.permission_repositories import Permission as PermissionService
+from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.db.permission.permission_models import Permission
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.db.tenant.tenant_models import TenantPolicyPermission

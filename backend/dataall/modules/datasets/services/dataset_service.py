@@ -4,13 +4,13 @@ import logging
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
@@ -128,7 +128,7 @@ class DatasetService:
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_ALL,
@@ -136,7 +136,7 @@ class DatasetService:
                 resource_type=Dataset.__name__,
             )
             if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     permissions=DATASET_READ,
@@ -145,7 +145,7 @@ class DatasetService:
                 )
 
             if environment.SamlGroupName != dataset.SamlAdminGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
                     permissions=DATASET_ALL,
@@ -246,7 +246,7 @@ class DatasetService:
                         DatasetService._transfer_stewardship_to_owners(session, dataset)
                         dataset.stewards = dataset.SamlAdminGroupName
 
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=dataset.SamlAdminGroupName,
                     permissions=DATASET_ALL,
@@ -407,12 +407,14 @@ class DatasetService:
             KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
-            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dataset.SamlAdminGroupName)
+            ResourcePolicyService.delete_resource_policy(
+                session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
+            )
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             if dataset.SamlAdminGroupName != env.SamlGroupName:
-                ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
+                ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
             if dataset.stewards:
-                ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
+                ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
             DatasetRepository.delete_dataset_lock(session=session, dataset=dataset)
             DatasetRepository.delete_dataset(session, dataset)
 
@@ -475,7 +477,7 @@ class DatasetService:
     def _transfer_stewardship_to_owners(session, dataset):
         env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
         if dataset.stewards != env.SamlGroupName:
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=dataset.stewards,
                 resource_uri=dataset.datasetUri,
@@ -485,7 +487,7 @@ class DatasetService:
         dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
             if dataset.stewards != env.SamlGroupName:
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     resource_uri=tableUri,
@@ -495,7 +497,7 @@ class DatasetService:
         dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     resource_uri=share.shareUri,
@@ -506,12 +508,12 @@ class DatasetService:
     def _transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
         env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
         if dataset.stewards != dataset.SamlAdminGroupName:
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=dataset.stewards,
                 resource_uri=dataset.datasetUri,
             )
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=new_stewards,
             permissions=DATASET_READ,
@@ -522,12 +524,12 @@ class DatasetService:
         dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
             if dataset.stewards != dataset.SamlAdminGroupName:
-                ResourcePolicy.delete_resource_policy(
+                ResourcePolicyService.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
                     resource_uri=tableUri,
                 )
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=new_stewards,
                 permissions=DATASET_TABLE_READ,
@@ -538,7 +540,7 @@ class DatasetService:
         dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=new_stewards,
                     permissions=SHARE_OBJECT_APPROVER,
@@ -546,7 +548,7 @@ class DatasetService:
                     resource_type=ShareObject.__name__,
                 )
                 if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicy.delete_resource_policy(
+                    ResourcePolicyService.delete_resource_policy(
                         session=session,
                         group=dataset.stewards,
                         resource_uri=share.shareUri,

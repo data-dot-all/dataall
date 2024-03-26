@@ -2,10 +2,10 @@ from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.core.permissions.constants import permissions
 from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicy
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
 
@@ -56,7 +56,7 @@ class VpcService:
             )
             session.add(activity)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=vpc.SamlGroupName,
                 permissions=permissions.NETWORK_ALL,
@@ -65,7 +65,7 @@ class VpcService:
             )
 
             if environment.SamlGroupName != vpc.SamlGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
                     permissions=permissions.NETWORK_ALL,
@@ -81,7 +81,7 @@ class VpcService:
     def delete_network(uri):
         with _session() as session:
             vpc = VpcRepository.get_vpc_by_uri(session=session, vpc_uri=uri)
-            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=vpc.SamlGroupName)
+            ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=vpc.SamlGroupName)
             return VpcRepository.delete_network(session=session, uri=uri)
 
     @staticmethod
