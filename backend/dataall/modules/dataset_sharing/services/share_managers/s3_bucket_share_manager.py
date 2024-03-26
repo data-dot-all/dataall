@@ -24,7 +24,6 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import ShareOb
 logger = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
-DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
 DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
 
@@ -262,25 +261,8 @@ class S3BucketShareManager:
             bucket_policy = json.loads(bucket_policy)
         else:
             logger.info(f'Bucket policy for {self.bucket_name} does not exist, generating default policy...')
-            exceptions_roleId = self.get_bucket_owner_roleid()
-            bucket_policy = S3ControlClient.generate_default_bucket_policy(
-                self.bucket_name, exceptions_roleId, DATAALL_ALLOW_OWNER_SID
-            )
+            bucket_policy = S3ControlClient.generate_default_bucket_policy(self.bucket_name)
         return bucket_policy
-
-    def get_bucket_owner_roleid(self):
-        exceptions_roleId = [
-            f'{item}:*'
-            for item in SessionHelper.get_role_ids(
-                self.source_account_id,
-                [
-                    self.dataset_admin,
-                    self.source_env_admin,
-                    SessionHelper.get_delegation_role_arn(self.source_account_id),
-                ],
-            )
-        ]
-        return exceptions_roleId
 
     def check_role_bucket_policy(self) -> None:
         """
@@ -335,11 +317,6 @@ class S3BucketShareManager:
                     self.bucket_name, target_requester_arn
                 )
 
-            if DATAALL_ALLOW_OWNER_SID not in statements.keys():
-                statements[DATAALL_ALLOW_OWNER_SID] = self.generate_owner_access_statement(
-                    self.bucket_name, self.get_bucket_owner_roleid()
-                )
-
             bucket_policy['Statement'] = list(statements.values())
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
             s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
@@ -353,18 +330,6 @@ class S3BucketShareManager:
             principal_list.append(f'{target_requester_arn}')
         statement['Principal']['AWS'] = principal_list
         return statement
-
-    @staticmethod
-    def generate_owner_access_statement(s3_bucket_name, owner_roleId):
-        owner_policy_statement = {
-            'Sid': DATAALL_ALLOW_OWNER_SID,
-            'Effect': 'Allow',
-            'Principal': '*',
-            'Action': 's3:*',
-            'Resource': [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*'],
-            'Condition': {'StringLike': {'aws:userId': owner_roleId}},
-        }
-        return owner_policy_statement
 
     @staticmethod
     def get_principal_list(statement):
