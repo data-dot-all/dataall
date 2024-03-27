@@ -159,14 +159,17 @@ const WorksheetView = () => {
             value: d.datasetUri,
             label: d.sharedGlueDatabaseName,
             GlueDatabaseName: d.sharedGlueDatabaseName,
-            environmentUri: d.environmentUri
+            environmentUri: d.environmentUri,
+            principalId: d.principalId
           }));
         // Remove duplicates based on GlueDatabaseName
         sharedWithDatabases = sharedWithDatabases.filter(
           (database, index, self) =>
             index ===
             self.findIndex(
-              (d) => d.GlueDatabaseName === database.GlueDatabaseName
+              (d) =>
+                d.GlueDatabaseName === database.GlueDatabaseName &&
+                d.principalId === team
             )
         );
       }
