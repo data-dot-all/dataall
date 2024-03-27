@@ -20,15 +20,6 @@ class PermissionService:
         return permission
 
     @staticmethod
-    def get_permission_by_uri(session, permission_uri: str, permission_type: str) -> Permission:
-        if not permission_uri:
-            raise exceptions.RequiredParameter(param_name='permission_uri')
-        permission = PermissionRepository.find_permission_by_uri(session, permission_uri, permission_type)
-        if not permission:
-            raise exceptions.ObjectNotFound('Permission', permission_uri)
-        return permission
-
-    @staticmethod
     def save_permission(session, name: str, description: str, permission_type: str) -> Permission:
         if not name:
             raise exceptions.RequiredParameter('name')

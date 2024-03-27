@@ -1,11 +1,11 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.core.permissions.constants import permissions
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
 
@@ -16,8 +16,8 @@ def _session():
 
 class VpcService:
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_permission(permissions.CREATE_NETWORK)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(permissions.CREATE_NETWORK)
     @has_group_permission(permissions.CREATE_NETWORK)
     def create_network(uri: str, admin_group: str, data: dict):
         with _session() as session:
@@ -76,8 +76,8 @@ class VpcService:
             return vpc
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_permission(permissions.DELETE_NETWORK)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(permissions.DELETE_NETWORK)
     def delete_network(uri):
         with _session() as session:
             vpc = VpcRepository.get_vpc_by_uri(session=session, vpc_uri=uri)

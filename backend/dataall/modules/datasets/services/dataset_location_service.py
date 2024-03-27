@@ -1,6 +1,7 @@
 from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
@@ -23,8 +24,8 @@ class DatasetLocationService:
         return location.datasetUri
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET_FOLDER)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(CREATE_DATASET_FOLDER)
     def create_storage_location(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             exists = DatasetLocationRepository.exists(session, uri, data['prefix'])
@@ -47,22 +48,22 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(uri: str, filter: dict = None):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(LIST_DATASET_FOLDERS, parent_resource=_get_dataset_uri)
     def get_storage_location(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.get_location_by_uri(session, uri)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
     def update_storage_location(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
@@ -77,8 +78,8 @@ class DatasetLocationService:
             return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(DELETE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(DELETE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
     def remove_storage_location(uri: str = None):
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)

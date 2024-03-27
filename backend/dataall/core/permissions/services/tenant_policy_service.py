@@ -9,6 +9,8 @@ from dataall.core.permissions.db.tenant.tenant_repositories import TenantReposit
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.db.tenant.tenant_models import Tenant
 import logging
+from functools import wraps
+
 
 log = logging.getLogger('Permissions')
 
@@ -60,11 +62,13 @@ class RequestValidationService:
             raise exceptions.RequiredParameter(param_name='policy')
 
     @staticmethod
-    def validate_params(data):
+    def validate_update_group_permission_params(data):
         if not data:
             raise exceptions.RequiredParameter('data')
         if not data.get('permissions'):
             raise exceptions.RequiredParameter('permissions')
+        if not data.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
 
 
 class TenantPolicyValidationService:
@@ -114,13 +118,14 @@ class TenantPolicyService:
 
     @staticmethod
     def update_group_permissions(data, check_perm=None):
+        RequestValidationService.validate_update_group_permission_params(data)
+
         context = get_context()
         username = context.username
         groups = context.groups
 
         uri = data.get('groupUri')
 
-        RequestValidationService.validate_params(data)
         new_permissions = data['permissions']
 
         # raises UnauthorizedOperation exception, if there is no admin access
@@ -242,12 +247,18 @@ class TenantPolicyService:
         )
 
         for permission in permissions:
-            if not TenantPolicyRepository.has_group_tenant_permission(
-                session,
-                group_uri=group,
-                permission_name=permission,
-                tenant_name=tenant_name,
-            ):
+            already_associated = True
+            if not group or not permission:
+                already_associated = False
+            else:
+                already_associated = TenantPolicyRepository.has_group_tenant_permission(
+                    session,
+                    group_uri=group,
+                    permission_name=permission,
+                    tenant_name=tenant_name,
+                )
+
+            if not already_associated:
                 TenantPolicyService.associate_permission_to_tenant_policy(session, policy, permission)
 
     @staticmethod
@@ -325,3 +336,27 @@ class TenantPolicyService:
             log.info('Initiating permissions')
             TenantPolicyService.save_tenant(session, name=TenantPolicyService.TENANT_NAME, description='Tenant dataall')
             PermissionService.init_permissions(session)
+
+    def has_tenant_permission(permission: str):
+        """
+        Decorator to check if a user has a permission to do some action.
+        All the information about the user is retrieved from RequestContext
+        """
+
+        def decorator(f):
+            @wraps(f)
+            def wrapper(*args, **kwds):
+                context = get_context()
+                with context.db_engine.scoped_session() as session:
+                    TenantPolicyService.check_user_tenant_permission(
+                        session=session,
+                        username=context.username,
+                        groups=context.groups,
+                        tenant_name=TenantPolicyService.TENANT_NAME,
+                        permission_name=permission,
+                    )
+                return f(*args, **kwds)
+
+            return wrapper
+
+        return decorator

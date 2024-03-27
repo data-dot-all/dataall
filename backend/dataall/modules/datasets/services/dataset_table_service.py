@@ -2,9 +2,9 @@ import logging
 
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
@@ -37,14 +37,14 @@ class DatasetTableService:
         return table.datasetUri
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
     def update_table(uri: str, table_data: dict = None):
         with get_context().db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -62,8 +62,8 @@ class DatasetTableService:
         return table
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(DELETE_DATASET_TABLE, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(DELETE_DATASET_TABLE, parent_resource=_get_dataset_uri)
     def delete_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -104,7 +104,7 @@ class DatasetTableService:
             return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
 
     @staticmethod
-    @has_resource_permission(GET_DATASET_TABLE)
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_glue_table_properties(uri: str):
         with get_context().db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -122,7 +122,7 @@ class DatasetTableService:
             ]
 
     @classmethod
-    @has_resource_permission(SYNC_DATASET)
+    @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
     def sync_tables_for_dataset(cls, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:

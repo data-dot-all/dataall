@@ -5,13 +5,13 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -110,8 +110,8 @@ class DatasetService:
         return True
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(CREATE_DATASET)
     @has_group_permission(CREATE_DATASET)
     def create_dataset(uri, admin_group, data: dict):
         context = get_context()
@@ -169,7 +169,7 @@ class DatasetService:
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -216,8 +216,8 @@ class DatasetService:
             )
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def update_dataset(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -276,7 +276,7 @@ class DatasetService:
         }
 
     @staticmethod
-    @has_resource_permission(CREDENTIALS_DATASET)
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -307,7 +307,7 @@ class DatasetService:
         return url
 
     @staticmethod
-    @has_resource_permission(CRAWL_DATASET)
+    @ResourcePolicyService.has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
         with engine.scoped_session() as session:
@@ -349,7 +349,7 @@ class DatasetService:
             return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
 
     @staticmethod
-    @has_resource_permission(CREDENTIALS_DATASET)
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -373,7 +373,7 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_resource_permission(DELETE_DATASET)
+    @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -454,7 +454,7 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
     def list_datasets_created_in_environment(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_datasets(
@@ -563,8 +563,8 @@ class DatasetService:
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def verify_dataset_share_objects(uri: str, share_uris: list):
         with get_context().db_engine.scoped_session() as session:
             for share_uri in share_uris:

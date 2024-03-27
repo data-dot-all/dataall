@@ -39,9 +39,6 @@ class TenantPolicyRepository:
 
     @staticmethod
     def has_group_tenant_permission(session, group_uri: str, tenant_name: str, permission_name: str):
-        if not group_uri or not permission_name:
-            return False
-
         tenant_policy: TenantPolicy = (
             session.query(TenantPolicy)
             .join(

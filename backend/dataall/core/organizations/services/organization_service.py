@@ -7,15 +7,15 @@ from dataall.core.organizations.services.organizations_enums import Organisation
 from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions.constants import permissions
-from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 
 class OrganizationService:
     """Service that serves request related to organization"""
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
     def create_organization(data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -58,7 +58,7 @@ class OrganizationService:
             return org
 
     @staticmethod
-    @has_resource_permission(permissions.UPDATE_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(permissions.UPDATE_ORGANIZATION)
     def update_organization(uri, data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -86,7 +86,7 @@ class OrganizationService:
             return organization
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(permissions.GET_ORGANIZATION)
     def get_organization(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -102,7 +102,7 @@ class OrganizationService:
             )
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(permissions.GET_ORGANIZATION)
     def list_organization_environments(filter, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -138,8 +138,8 @@ class OrganizationService:
         return OrganisationUserRole.NoPermission.value
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.DELETE_ORGANIZATION)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(permissions.DELETE_ORGANIZATION)
     def archive_organization(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -161,8 +161,8 @@ class OrganizationService:
             return True
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
     def invite_group(uri, data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -193,8 +193,8 @@ class OrganizationService:
             return organization
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.REMOVE_ORGANIZATION_GROUP)
+    @TenantPolicyService.has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(permissions.REMOVE_ORGANIZATION_GROUP)
     def remove_group(uri, group):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -229,7 +229,7 @@ class OrganizationService:
             return organization
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(permissions.GET_ORGANIZATION)
     def list_organization_groups(filter, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:

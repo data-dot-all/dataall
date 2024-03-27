@@ -4,7 +4,6 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
@@ -45,7 +44,7 @@ class ShareItemService:
         return share.shareUri
 
     @staticmethod
-    @has_resource_permission(GET_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def verify_items_share_object(uri, item_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -60,7 +59,7 @@ class ShareItemService:
         return True
 
     @staticmethod
-    @has_resource_permission(APPROVE_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def reapply_items_share_object(uri, item_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -75,7 +74,7 @@ class ShareItemService:
         return True
 
     @staticmethod
-    @has_resource_permission(GET_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def revoke_items_share_object(uri, revoked_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -129,7 +128,7 @@ class ShareItemService:
         return share
 
     @staticmethod
-    @has_resource_permission(ADD_ITEM)
+    @ResourcePolicyService.has_resource_permission(ADD_ITEM)
     def add_shared_item(uri: str, data: dict = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -186,7 +185,7 @@ class ShareItemService:
         return share_item
 
     @staticmethod
-    @has_resource_permission(REMOVE_ITEM, parent_resource=_get_share_uri)
+    @ResourcePolicyService.has_resource_permission(REMOVE_ITEM, parent_resource=_get_share_uri)
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
@@ -207,7 +206,7 @@ class ShareItemService:
         return True
 
     @staticmethod
-    @has_resource_permission(GET_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def resolve_shared_item(uri, item: ShareObjectItem):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_item(session, item.itemType, item.itemUri)
@@ -227,7 +226,7 @@ class ShareItemService:
             return ShareObjectRepository.list_shareable_items(session, share, states, filter)
 
     @staticmethod
-    @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
 

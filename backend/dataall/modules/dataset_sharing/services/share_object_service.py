@@ -6,7 +6,6 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.decorators.permission_checker import has_resource_permission
 from dataall.core.permissions.constants.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
@@ -50,19 +49,19 @@ log = logging.getLogger(__name__)
 
 class ShareObjectService:
     @staticmethod
-    @has_resource_permission(GET_ENVIRONMENT)
+    @ResourcePolicyService.has_resource_permission(GET_ENVIRONMENT)
     def get_share_object_in_environment(uri, shareUri):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, shareUri)
 
     @staticmethod
-    @has_resource_permission(GET_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, uri)
 
     @classmethod
-    @has_resource_permission(CREATE_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
         cls,
         uri: str,
@@ -222,7 +221,7 @@ class ShareObjectService:
             return share
 
     @classmethod
-    @has_resource_permission(SUBMIT_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def submit_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -266,7 +265,7 @@ class ShareObjectService:
             return share
 
     @classmethod
-    @has_resource_permission(APPROVE_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -305,7 +304,7 @@ class ShareObjectService:
         return share
 
     @staticmethod
-    @has_resource_permission(SUBMIT_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(uri: str, request_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
@@ -314,7 +313,7 @@ class ShareObjectService:
             return True
 
     @staticmethod
-    @has_resource_permission(REJECT_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def update_share_reject_purpose(uri: str, reject_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
@@ -323,7 +322,7 @@ class ShareObjectService:
             return True
 
     @classmethod
-    @has_resource_permission(REJECT_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(cls, uri: str, reject_purpose: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -341,7 +340,7 @@ class ShareObjectService:
             return share
 
     @classmethod
-    @has_resource_permission(DELETE_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
     def delete_share_object(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)

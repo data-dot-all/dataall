@@ -10,8 +10,6 @@ log = logging.getLogger(__name__)
 
 
 def update_group_permissions(context, source, input=None):
-    if not input['groupUri']:
-        raise RequiredParameter('groupUri')
     return TenantPolicyService.update_group_permissions(
         data=input,
         check_perm=True,
@@ -23,9 +21,7 @@ def list_tenant_permissions(context, source):
 
 
 def list_tenant_groups(context, source, filter=None):
-    if filter is None:
-        filter = {}
-    return TenantPolicyService.list_tenant_groups(filter)
+    return TenantPolicyService.list_tenant_groups(filter if filter else {})
 
 
 def update_ssm_parameter(context, source, name: str = None, value: str = None):

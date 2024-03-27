@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
-from dataall.core.permissions.constants import permissions
+from dataall.core.permissions.constants.permissions import TENANT_ALL
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 from dataall.base.db import get_engine, Base
@@ -75,7 +75,7 @@ def request_context(headers, mock=False):
             TenantPolicyService.attach_group_tenant_policy(
                 session=session,
                 group=group,
-                permissions=permissions.TENANT_ALL,
+                permissions=TENANT_ALL,
                 tenant_name=TenantPolicyService.TENANT_NAME,
             )
 

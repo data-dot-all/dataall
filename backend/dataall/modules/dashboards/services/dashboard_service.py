@@ -3,8 +3,8 @@ from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.decorators.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
@@ -24,15 +24,15 @@ class DashboardService:
     """Service that serves request related to dashboard"""
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(GET_DASHBOARD)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(GET_DASHBOARD)
     def get_dashboard(uri: str) -> Dashboard:
         with get_context().db_engine.scoped_session() as session:
             return DashboardRepository.get_dashboard_by_uri(session, uri)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(CREATE_DASHBOARD)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(CREATE_DASHBOARD)
     @has_group_permission(CREATE_DASHBOARD)
     def import_dashboard(uri: str, admin_group: str, data: dict = None) -> Dashboard:
         context = get_context()
@@ -76,8 +76,8 @@ class DashboardService:
             return dashboard
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(UPDATE_DASHBOARD)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DASHBOARD)
     def update_dashboard(uri: str, data: dict = None) -> Dashboard:
         with get_context().db_engine.scoped_session() as session:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
@@ -92,8 +92,8 @@ class DashboardService:
             return dashboard
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(DELETE_DASHBOARD)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(DELETE_DASHBOARD)
     def delete_dashboard(uri) -> bool:
         with get_context().db_engine.scoped_session() as session:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)

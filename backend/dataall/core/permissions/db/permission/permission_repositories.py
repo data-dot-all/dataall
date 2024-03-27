@@ -21,19 +21,6 @@ class PermissionRepository:
             return permission
 
     @staticmethod
-    def find_permission_by_uri(session, permission_uri: str, permission_type: str) -> Permission:
-        if permission_uri:
-            permission = (
-                session.query(Permission)
-                .filter(
-                    Permission.permissionUri == permission_uri,
-                    Permission.type == permission_type,
-                )
-                .first()
-            )
-            return permission
-
-    @staticmethod
     def count_resource_permissions(session):
         return session.query(Permission).filter(Permission.type == PermissionType.RESOURCE.name).count()
 
