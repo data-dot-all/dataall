@@ -2,7 +2,7 @@ import logging
 
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.db import stack_models as models
 from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.base.db import exceptions
@@ -70,7 +70,7 @@ class Stack:
             raise exceptions.RequiredParameter('targetType')
 
         context = get_context()
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,

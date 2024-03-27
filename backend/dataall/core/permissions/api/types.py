@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.api.enums import PermissionType
 
 
 def resolve_enum(context, source: PermissionType):

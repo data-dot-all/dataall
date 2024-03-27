@@ -3,40 +3,25 @@ import os
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.base.db.exceptions import RequiredParameter
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 log = logging.getLogger(__name__)
 
 
 def update_group_permissions(context, source, input=None):
-    with context.engine.scoped_session() as session:
-        return TenantPolicy.update_group_permissions(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=input['groupUri'],
-            data=input,
-            check_perm=True,
-        )
+    return TenantPolicyService.update_group_permissions(
+        data=input,
+        check_perm=True,
+    )
 
 
 def list_tenant_permissions(context, source):
-    with context.engine.scoped_session() as session:
-        return TenantPolicy.list_tenant_permissions(session=session, username=context.username, groups=context.groups)
+    return TenantPolicyService.list_tenant_permissions()
 
 
 def list_tenant_groups(context, source, filter=None):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return TenantPolicy.list_tenant_groups(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=filter,
-            check_perm=True,
-        )
+    return TenantPolicyService.list_tenant_groups(filter if filter else {})
 
 
 def update_ssm_parameter(context, source, name: str = None, value: str = None):

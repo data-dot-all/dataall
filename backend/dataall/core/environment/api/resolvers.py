@@ -16,19 +16,19 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.vpc.services.vpc_service import VpcService
 from dataall.base.aws.ec2_client import EC2
-from dataall.core.permissions import permissions
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization
+from dataall.core.permissions.services import core_permissions
 
 log = logging.getLogger()
 
@@ -92,7 +92,7 @@ def check_environment(context: Context, source, account_id, region, data):
 def create_environment(context: Context, source, input={}):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
-            action=permissions.LINK_ENVIRONMENT,
+            action=core_permissions.LINK_ENVIRONMENT,
             message=f'User: {context.username} is not a member of the group {input["SamlGroupName"]}',
         )
 
@@ -122,7 +122,7 @@ def create_environment(context: Context, source, input={}):
 def update_environment(context: Context, source, environmentUri: str = None, input: dict = None):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
-            action=permissions.LINK_ENVIRONMENT,
+            action=core_permissions.LINK_ENVIRONMENT,
             message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
         )
 
@@ -442,12 +442,12 @@ def get_environment_assume_role_url(
     groupUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=permissions.CREDENTIALS_ENVIRONMENT,
+            permission_name=core_permissions.CREDENTIALS_ENVIRONMENT,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         url = SessionHelper.get_console_access_url(
@@ -466,12 +466,12 @@ def get_environment_assume_role_url(
 @is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(context, source, environmentUri: str = None, groupUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=permissions.CREDENTIALS_ENVIRONMENT,
+            permission_name=core_permissions.CREDENTIALS_ENVIRONMENT,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         c = _get_environment_group_aws_session(
@@ -514,12 +514,12 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
 
 def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+            permission_name=core_permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         if input.get('producersTopicArn'):
@@ -549,12 +549,12 @@ def enable_subscriptions(context: Context, source, environmentUri: str = None, i
 
 def disable_subscriptions(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+            permission_name=core_permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
 
@@ -572,12 +572,12 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
     from dataall.base.utils import Parameter
 
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=permissions.GET_ORGANIZATION,
+            permission_name=core_permissions.GET_ORGANIZATION,
         )
         pivot_role_bucket = Parameter().get_parameter(
             env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
@@ -612,12 +612,12 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
 
 def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=permissions.GET_ORGANIZATION,
+            permission_name=core_permissions.GET_ORGANIZATION,
         )
         cdk_exec_policy_bucket = Parameter().get_parameter(
             env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
@@ -652,12 +652,12 @@ def get_cdk_exec_policy_template(context: Context, source, organizationUri=None)
 
 def get_external_id(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=permissions.GET_ORGANIZATION,
+            permission_name=core_permissions.GET_ORGANIZATION,
         )
         external_id = SessionHelper.get_external_id_secret()
         if not external_id:
@@ -670,12 +670,12 @@ def get_external_id(context: Context, source, organizationUri=None):
 
 def get_pivot_role_name(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=permissions.GET_ORGANIZATION,
+            permission_name=core_permissions.GET_ORGANIZATION,
         )
         pivot_role_name = SessionHelper.get_delegation_role_name()
         if not pivot_role_name:
