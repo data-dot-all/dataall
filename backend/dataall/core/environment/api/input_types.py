@@ -76,6 +76,7 @@ EnvironmentFilter = gql.InputType(
         gql.Argument('displayArchived', gql.Boolean),
         gql.Argument('roles', gql.ArrayType(gql.Ref('EnvironmentPermission'))),
         gql.Argument('quicksight', gql.Boolean),
+        gql.Argument('SamlGroupName', gql.String),
         gql.Argument('sort', gql.ArrayType(EnvironmentSortCriteria)),
         gql.Argument('pageSize', gql.Integer),
     ],
