@@ -1,4 +1,4 @@
-from dataall.core.permissions.constants.permissions import (
+from dataall.core.permissions.services.core_permissions import (
     TENANT_ALL,
     TENANT_ALL_WITH_DESC,
     RESOURCES_ALL,

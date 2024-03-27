@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
-from dataall.core.permissions.constants.permissions import TENANT_ALL
+from dataall.core.permissions.services.core_permissions import TENANT_ALL
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 from dataall.base.db import get_engine, Base

@@ -2,7 +2,7 @@ from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.base.db import exceptions
 from dataall.core.permissions.db.permission.permission_models import Permission
-from dataall.core.permissions.constants.permissions import RESOURCES_ALL_WITH_DESC, TENANT_ALL_WITH_DESC
+from dataall.core.permissions.services.core_permissions import RESOURCES_ALL_WITH_DESC, TENANT_ALL_WITH_DESC
 
 import logging
 

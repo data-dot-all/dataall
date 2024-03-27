@@ -14,14 +14,13 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.base.db import utils
-from dataall.core.permissions.constants import permissions
 from datetime import datetime
 
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
+from dataall.core.permissions.services.core_permissions import CONSUMPTION_ENVIRONMENT_ROLE_ALL
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'
@@ -132,7 +131,7 @@ def upgrade():
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,
-                    permissions=permissions.CONSUMPTION_ENVIRONMENT_ROLE_ALL,
+                    permissions=CONSUMPTION_ENVIRONMENT_ROLE_ALL,
                     resource_type=Environment.__name__,
                 )
         print('Consumer Role Permissions created successfully')

@@ -12,7 +12,7 @@ from alembic import op
 from sqlalchemy import orm
 
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.permissions.constants.permissions import TENANT_ALL
+from dataall.core.permissions.services.core_permissions import TENANT_ALL
 
 revision = 'e177eb044b31'
 down_revision = '033c3d6c1849'

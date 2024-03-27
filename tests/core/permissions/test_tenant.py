@@ -1,5 +1,5 @@
-from dataall.core.permissions.constants import permissions
 from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
+from dataall.core.permissions.services.core_permissions import MANAGE_GROUPS, MANAGE_ORGANIZATIONS
 
 
 def test_list_tenant_permissions(client, user, group, tenant):
@@ -60,7 +60,7 @@ def test_update_permissions(client, user, group, tenant):
         username='alice',
         input=dict(
             groupUri=group.name,
-            permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_GROUPS],
+            permissions=[MANAGE_ORGANIZATIONS, MANAGE_GROUPS],
         ),
         groups=[group.name, TenantPolicyRepository.ADMIN_GROUP],
     )
@@ -92,7 +92,7 @@ def test_update_permissions(client, user, group, tenant):
         username='alice',
         input=dict(
             groupUri=group.name,
-            permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_GROUPS],
+            permissions=[MANAGE_ORGANIZATIONS, MANAGE_GROUPS],
         ),
         groups=[group.name, TenantPolicyRepository.ADMIN_GROUP],
     )

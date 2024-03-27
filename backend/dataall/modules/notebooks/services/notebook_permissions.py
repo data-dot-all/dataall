@@ -3,7 +3,7 @@ Add module's permissions to the global permissions.
 Contains permissions for sagemaker notebooks
 """
 
-from dataall.core.permissions.constants.permissions import (
+from dataall.core.permissions.services.core_permissions import (
     ENVIRONMENT_ALL,
     ENVIRONMENT_INVITED,
     RESOURCES_ALL_WITH_DESC,

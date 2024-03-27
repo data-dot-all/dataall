@@ -1,5 +1,5 @@
 from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
-from dataall.core.permissions.constants.permissions import TENANT_ALL
+from dataall.core.permissions.services.core_permissions import TENANT_ALL
 from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.base.db import exceptions

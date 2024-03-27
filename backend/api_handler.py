@@ -18,7 +18,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import get_engine
-from dataall.core.permissions.constants import permissions
+from dataall.core.permissions.services.core_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
@@ -148,7 +148,7 @@ def handler(event, context):
                         TenantPolicyService.attach_group_tenant_policy(
                             session=session,
                             group=group,
-                            permissions=permissions.TENANT_ALL,
+                            permissions=TENANT_ALL,
                             tenant_name=TenantPolicyService.TENANT_NAME,
                         )
 
