@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import exceptions, paginate
 from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import (
     ShareItemHealthStatus,
@@ -145,7 +146,7 @@ class ShareObjectSM:
 
     def update_state(self, session, share, new_state):
         logger.info(f'Updating share object {share.shareUri} in DB from {self._state} to state {new_state}')
-        ShareObjectRepository.update_share_object_status(session=session, share_uri=share.shareUri, status=new_state)
+        ShareObjectBaseRepository.update_share_object_status(session=session, share_uri=share.shareUri, status=new_state)
         self._state = new_state
         return True
 
@@ -269,12 +270,12 @@ class ShareItemSM:
         if share_uri and (new_state != self._state):
             if new_state == ShareItemStatus.Deleted.value:
                 logger.info(f'Deleting share items in DB in {self._state} state')
-                ShareObjectRepository.delete_share_item_status_batch(
+                ShareObjectBaseRepository.delete_share_item_status_batch(
                     session=session, share_uri=share_uri, status=self._state
                 )
             else:
                 logger.info(f'Updating share items in DB from {self._state} to state {new_state}')
-                ShareObjectRepository.update_share_item_status_batch(
+                ShareObjectBaseRepository.update_share_item_status_batch(
                     session=session, share_uri=share_uri, old_status=self._state, new_status=new_state
                 )
             self._state = new_state
@@ -284,7 +285,7 @@ class ShareItemSM:
 
     def update_state_single_item(self, session, share_item, new_state):
         logger.info(f'Updating share item in DB {share_item.shareItemUri} status to {new_state}')
-        ShareObjectRepository.update_share_item_status(session=session, uri=share_item.shareItemUri, status=new_state)
+        ShareObjectBaseRepository.update_share_item_status(session=session, uri=share_item.shareItemUri, status=new_state)
         self._state = new_state
         return True
 
@@ -305,8 +306,23 @@ class ShareItemSM:
             ShareItemStatus.Revoke_Failed.value,
         ]
 
+class S3ShareEnvironmentResource(EnvironmentResource):
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
+        return ShareObjectBaseRepository.count_principal_shares(
+            session, group_uri, environment.environmentUri, PrincipalType.Group
+        )
 
-class ShareObjectRepository:
+    @staticmethod
+    def count_role_resources(session, role_uri):
+        return S3ShareObjectBaseRepository.count_role_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
+
+    @staticmethod
+    def delete_env(session, environment):
+        S3ShareObjectBaseRepository.delete_all_share_items(session, environment.environmentUri)
+
+
+class ShareObjectBaseRepository:
     @staticmethod
     def save_and_commit(session, share):
         session.add(share)
@@ -364,7 +380,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def check_existing_shared_items(session, uri):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectBaseRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = (
             session.query(ShareObjectItem)
@@ -418,7 +434,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectBaseRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = (
             session.query(ShareObjectItem)
@@ -437,7 +453,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def check_pending_share_items(session, uri):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectBaseRepository.get_share_by_uri(session, uri)
         shared_items = (
             session.query(ShareObjectItem)
             .filter(
@@ -667,7 +683,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def update_share_object_status(session, share_uri: str, status: str) -> ShareObject:
-        share = ShareObjectRepository.get_share_by_uri(session, share_uri)
+        share = ShareObjectBaseRepository.get_share_by_uri(session, share_uri)
         share.status = status
         session.commit()
         return share
@@ -678,7 +694,7 @@ class ShareObjectRepository:
         uri: str,
         status: str,
     ) -> ShareObjectItem:
-        share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+        share_item = ShareObjectBaseRepository.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
         return share_item
@@ -729,7 +745,7 @@ class ShareObjectRepository:
 
     # @staticmethod
     # def get_share_data(session, share_uri):
-    #     share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
+    #     share: ShareObject = ShareObjectBaseRepository.get_share_by_uri(session, share_uri)
     #
     #     dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
     #
@@ -784,17 +800,17 @@ class ShareObjectRepository:
 
     # @staticmethod
     # def get_share_data_items(session, share_uri, status=None, healthStatus=None):
-    #     share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
+    #     share: ShareObject = ShareObjectBaseRepository.get_share_by_uri(session, share_uri)
     #
-    #     tables = ShareObjectRepository._find_all_share_item(
+    #     tables = ShareObjectBaseRepository._find_all_share_item(
     #         session, share, status, healthStatus, DatasetTable, DatasetTable.tableUri
     #     )
     #
-    #     folders = ShareObjectRepository._find_all_share_item(
+    #     folders = ShareObjectBaseRepository._find_all_share_item(
     #         session, share, status, healthStatus, DatasetStorageLocation, DatasetStorageLocation.locationUri
     #     )
     #
-    #     s3_buckets = ShareObjectRepository._find_all_share_item(
+    #     s3_buckets = ShareObjectBaseRepository._find_all_share_item(
     #         session, share, status, healthStatus, DatasetBucket, DatasetBucket.bucketUri
     #     )
     #
@@ -950,7 +966,7 @@ class ShareObjectRepository:
     @staticmethod
     def paginated_user_datasets(session, username, groups, data=None) -> dict:
         return paginate(
-            query=ShareObjectRepository._query_user_datasets(session, username, groups, data),
+            query=ShareObjectBaseRepository._query_user_datasets(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -970,7 +986,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
-        query = ShareObjectRepository.query_dataset_shares(session, uri)
+        query = ShareObjectBaseRepository.query_dataset_shares(session, uri)
         return paginate(query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)).to_dict()
 
     @staticmethod
@@ -1000,7 +1016,7 @@ class ShareObjectRepository:
     #     session, dataset_uri, environment_uri=None, item_type=None
     # ) -> [ShareObject]:
     #     warn(
-    #         'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+    #         'ShareObjectBaseRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
     #         DeprecationWarning,
     #         stacklevel=2,
     #     )

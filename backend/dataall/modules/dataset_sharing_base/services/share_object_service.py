@@ -11,24 +11,24 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.s3_dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import (
     ShareObjectActions,
     ShareableType,
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.modules.s3_dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_dataset_sharing.db.share_object_repositories import (
-    ShareObjectRepository,
+from dataall.modules.dataset_sharing_base.db.share_object_base_models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing_base.db.share_object_base_repositories import (
+    ShareObjectBaseRepository,
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.s3_dataset_sharing.services.share_exceptions import ShareItemsFound
-from dataall.modules.s3_dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.s3_dataset_sharing.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_dataset_sharing.services.managed_share_policy_service import SharePolicyService
-from dataall.modules.s3_dataset_sharing.services.share_permissions import (
+from dataall.modules.dataset_sharing_base.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing_base.services.share_item_service import ShareItemService
+from dataall.modules.dataset_sharing_base.services.share_notification_service import ShareNotificationService
+#from dataall.modules.dataset_sharing_base.services.managed_share_policy_service import SharePolicyService #todo
+from dataall.modules.dataset_sharing_base.services.share_base_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
     SUBMIT_SHARE_OBJECT,
@@ -38,10 +38,11 @@ from dataall.modules.s3_dataset_sharing.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
 )
-from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+#from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient
+from dataall.modules.datasets_base.db.dataset_base_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.db.dataset_base_models import Dataset
+#from dataall.modules.datasets_base.db.dataset_models import DatasetTable # TODO: remove
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ #TODO: remove this dependency of S3
 import logging
 
 log = logging.getLogger(__name__)
@@ -52,13 +53,13 @@ class ShareObjectService:
     @has_resource_permission(GET_ENVIRONMENT)
     def get_share_object_in_environment(uri, shareUri):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_by_uri(session, shareUri)
+            return ShareObjectBaseRepository.get_share_by_uri(session, shareUri)
 
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_by_uri(session, uri)
+            return ShareObjectBaseRepository.get_share_by_uri(session, uri)
 
     @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
@@ -76,7 +77,7 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            dataset: Dataset = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
@@ -133,7 +134,7 @@ class ShareObjectService:
                 )
             elif not attached:
                 share_policy_service.attach_policy()
-            share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+            share = ShareObjectBaseRepository.find_share(session, dataset, environment, principal_id, group_uri)
             if not share:
                 share = ShareObject(
                     datasetUri=dataset.datasetUri,
@@ -146,11 +147,11 @@ class ShareObjectService:
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
                 )
-                ShareObjectRepository.save_and_commit(session, share)
+                ShareObjectBaseRepository.save_and_commit(session, share)
 
             if item_uri:
-                item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
-                share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
+                item = ShareObjectBaseRepository.get_share_item(session, item_type, item_uri)
+                share_item = ShareObjectBaseRepository.find_sharable_item(session, share.shareUri, item_uri)
 
                 s3_access_point_name = utils.slugify(
                     share.datasetUri + '-' + share.principalId,
@@ -161,6 +162,7 @@ class ShareObjectService:
                 )
 
                 if not share_item and item:
+                    #TODO: this cannot be in the generic datasharing base
                     new_share_item: ShareObjectItem = ShareObjectItem(
                         shareUri=share.shareUri,
                         itemUri=item_uri,
@@ -239,7 +241,7 @@ class ShareObjectService:
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
             dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
             if dashboard_enabled:
-                share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
+                share_table_items = ShareObjectBaseRepository.find_all_share_items(session, uri, ShareableType.Table.value)
                 if share_table_items:
                     QuicksightClient.check_quicksight_enterprise_subscription(
                         AwsAccountId=env.AwsAccountId, region=env.region
@@ -273,18 +275,19 @@ class ShareObjectService:
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-            if share.groupUri != dataset.SamlAdminGroupName:
-                share_table_items = ShareObjectRepository.find_all_share_items(
-                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
-                )
-                for table in share_table_items:
-                    ResourcePolicy.attach_resource_policy(
-                        session=session,
-                        group=share.groupUri,
-                        permissions=DATASET_TABLE_READ,
-                        resource_uri=table.itemUri,
-                        resource_type=DatasetTable.__name__,
-                    )
+            # TODO: move to S3_data sharing
+            # if share.groupUri != dataset.SamlAdminGroupName:
+            #     share_table_items = ShareObjectBaseRepository.find_all_share_items(
+            #         session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
+            #     )
+            #     for table in share_table_items:
+            #         ResourcePolicy.attach_resource_policy(
+            #             session=session,
+            #             group=share.groupUri,
+            #             permissions=DATASET_TABLE_READ,
+            #             resource_uri=table.itemUri,
+            #             resource_type=DatasetTable.__name__,
+            #         )
 
             share.rejectPurpose = ''
             session.commit()
@@ -307,7 +310,7 @@ class ShareObjectService:
     @has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(uri: str, request_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share = ShareObjectBaseRepository.get_share_by_uri(session, uri)
             share.requestPurpose = request_purpose
             session.commit()
             return True
@@ -316,7 +319,7 @@ class ShareObjectService:
     @has_resource_permission(REJECT_SHARE_OBJECT)
     def update_share_reject_purpose(uri: str, reject_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share = ShareObjectBaseRepository.get_share_by_uri(session, uri)
             share.rejectPurpose = reject_purpose
             session.commit()
             return True
@@ -383,18 +386,19 @@ class ShareObjectService:
 
     @staticmethod
     def resolve_share_object_statistics(uri):
+        #TODO: make it generic from type!
         with get_context().db_engine.scoped_session() as session:
-            tables = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetTable')
-            locations = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
-            shared_items = ShareObjectRepository.count_items_in_states(
+            tables = ShareObjectBaseRepository.count_sharable_items(session, uri, 'DatasetTable')
+            locations = ShareObjectBaseRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
+            shared_items = ShareObjectBaseRepository.count_items_in_states(
                 session, uri, ShareItemSM.get_share_item_shared_states()
             )
-            revoked_items = ShareObjectRepository.count_items_in_states(
+            revoked_items = ShareObjectBaseRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.Revoke_Succeeded.value]
             )
             failed_states = [ShareItemStatus.Share_Failed.value, ShareItemStatus.Revoke_Failed.value]
-            failed_items = ShareObjectRepository.count_items_in_states(session, uri, failed_states)
-            pending_items = ShareObjectRepository.count_items_in_states(
+            failed_items = ShareObjectBaseRepository.count_items_in_states(session, uri, failed_states)
+            pending_items = ShareObjectBaseRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
             return {
@@ -409,31 +413,32 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, datasetUri)
             if dataset:
                 environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-                S3AccessPointName = utils.slugify(
-                    datasetUri + '-' + principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern='[^a-zA-Z0-9-]',
-                    separator='-',
-                )
-                # Check if the share was made with a Glue Database
-                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
-                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                )
-                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
-                database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
-                ).get_glue_database()
-                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
-                return {
-                    's3AccessPointName': S3AccessPointName,
-                    'sharedGlueDatabase': sharedGlueDatabase,
-                    's3bucketName': dataset.S3BucketName,
-                }
+                # TODO: MAKE THIS GENERIC FOR ANY TECHNOLOGY
+                # S3AccessPointName = utils.slugify(
+                #     datasetUri + '-' + principalId,
+                #     max_length=50,
+                #     lowercase=True,
+                #     regex_pattern='[^a-zA-Z0-9-]',
+                #     separator='-',
+                # )
+                # # Check if the share was made with a Glue Database
+                # datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
+                #     dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
+                # )
+                # old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
+                # database = GlueClient(
+                #     account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
+                # ).get_glue_database()
+                # warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                # sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
+                # return {
+                #     's3AccessPointName': S3AccessPointName,
+                #     'sharedGlueDatabase': sharedGlueDatabase,
+                #     's3bucketName': dataset.S3BucketName,
+                # }
             return {
                 's3AccessPointName': 'Not Created',
                 'sharedGlueDatabase': 'Not Created',
@@ -444,7 +449,7 @@ class ShareObjectService:
     def list_shares_in_my_inbox(filter: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.list_user_received_share_requests(
+            return ShareObjectBaseRepository.list_user_received_share_requests(
                 session=session,
                 username=context.username,
                 groups=context.groups,
@@ -455,7 +460,7 @@ class ShareObjectService:
     def list_shares_in_my_outbox(filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.list_user_sent_share_requests(
+            return ShareObjectBaseRepository.list_user_sent_share_requests(
                 session=session,
                 username=context.username,
                 groups=context.groups,
@@ -477,9 +482,9 @@ class ShareObjectService:
 
     @staticmethod
     def _get_share_data(session, uri):
-        share = ShareObjectRepository.get_share_by_uri(session, uri)
-        dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
+        share = ShareObjectBaseRepository.get_share_by_uri(session, uri)
+        dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
+        share_items_states = ShareObjectBaseRepository.get_share_items_states(session, uri)
         return share, dataset, share_items_states
 
     @staticmethod

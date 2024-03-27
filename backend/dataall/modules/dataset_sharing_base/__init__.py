@@ -17,3 +17,5 @@ class DatasetSharingBaseModuleInterface(ModuleInterface):
             ImportMode.CATALOG_INDEXER_TASK,
         }
         return modes & supported_modes
+    def __init__(self):
+        import dataall.modules.dataset_sharing_base.api

@@ -5,7 +5,7 @@ from dataall.modules.datasets_base.api.resolvers import (
     get_dataset_organization,
     get_dataset_owners_group,
     get_dataset_stewards_group,
-    resolve_user_role, #TODO: decide whether we want to include it
+    #resolve_user_role, #TODO: decide whether we want to include it
     get_dataset_glossary_terms,
     get_dataset_stack,
 )
@@ -49,11 +49,11 @@ Dataset = gql.ObjectType(
             type=gql.String,
             resolver=get_dataset_stewards_group,
         ),
-        gql.Field(
-            name='userRoleForDataset',
-            type=DatasetRole.toGraphQLEnum(),
-            resolver=resolve_user_role,
-        ),
+        # gql.Field(
+        #     name='userRoleForDataset',
+        #     type=DatasetRole.toGraphQLEnum(),
+        #     resolver=resolve_user_role,
+        # ),
         gql.Field(name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
         gql.Field(
             name='terms',

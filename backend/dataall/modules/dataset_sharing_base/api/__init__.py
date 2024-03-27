@@ -1,4 +1,4 @@
-from dataall.modules.s3_dataset_sharing.api import (
+from dataall.modules.dataset_sharing_base.api import (
     input_types,
     mutations,
     queries,

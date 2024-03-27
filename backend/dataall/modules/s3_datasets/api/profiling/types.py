@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.profiling.resolvers import (
+from dataall.modules.s3_datasets.api.profiling.resolvers import (
     resolve_dataset,
     resolve_profiling_run_status,
     resolve_profiling_results,

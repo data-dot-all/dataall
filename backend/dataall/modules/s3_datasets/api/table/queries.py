@@ -1,7 +1,7 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.table.input_types import DatasetTableFilter
-from dataall.modules.datasets.api.table.resolvers import get_table, list_shared_tables_by_env_dataset, preview
-from dataall.modules.datasets.api.table.types import (
+from dataall.modules.s3_datasets.api.table.input_types import DatasetTableFilter
+from dataall.modules.s3_datasets.api.table.resolvers import get_table, list_shared_tables_by_env_dataset, preview
+from dataall.modules.s3_datasets.api.table.types import (
     DatasetTable,
     DatasetTableSearchResult,
 )

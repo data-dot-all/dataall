@@ -2,7 +2,7 @@ import logging
 from typing import List, Type, Set
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.modules.s3_dataset_sharing.db.share_object_repositories import ShareEnvironmentResource
+from dataall.modules.s3_dataset_sharing.db.share_object_repositories import S3ShareEnvironmentResource
 from dataall.base.loader import ModuleInterface, ImportMode
 
 
@@ -25,7 +25,7 @@ class S3SharingApiModuleInterface(ModuleInterface):
         from dataall.modules.s3_dataset_sharing import api
         from dataall.modules.s3_dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
-        EnvironmentResourceManager.register(ShareEnvironmentResource())
+        EnvironmentResourceManager.register(S3ShareEnvironmentResource())
         log.info('API of dataset sharing has been imported')
 
 

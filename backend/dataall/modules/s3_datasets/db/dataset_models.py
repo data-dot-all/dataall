@@ -8,7 +8,7 @@ from dataall.modules.datasets_base.services.datasets_base_enums import DatasetTy
 
 class S3Dataset(Dataset):
     __tablename__ = 's3_dataset'
-    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
+    datasetUri = Column(String, ForeignKey(Dataset.datasetUri), primary_key=True)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
     GlueCrawlerName = Column(String)
@@ -31,15 +31,11 @@ class S3Dataset(Dataset):
     lakeformationLocationCreated = Column(Boolean, default=False)
     bucketPolicyCreated = Column(Boolean, default=False)
 
-    SamlAdminGroupName = Column(String, nullable=True)
-
-    autoApprovalEnabled = Column(Boolean, default=False)
-
     __mapper_args__ = {
         "polymorphic_identity": DatasetType.S3.value,
     }
 
-#todo: MIGRATION SCRIPT TO RENAME TABLES
+#todo: MIGRATION SCRIPT TO RENAME TABLES (if possible, otherwise keep the same names)
 
 class DatasetTableColumn(Resource, Base):
     __tablename__ = 's3_dataset_table_column'

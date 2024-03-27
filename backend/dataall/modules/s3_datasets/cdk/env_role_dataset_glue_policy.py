@@ -1,7 +1,7 @@
 from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
 
-from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
+from dataall.modules.datasets_base.services.dataset_base_permissions import CREATE_DATASET
 
 
 class DatasetGlueCatalogServicePolicy(ServicePolicy):

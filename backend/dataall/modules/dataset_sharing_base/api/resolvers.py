@@ -5,13 +5,15 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
-from dataall.modules.s3_dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
-from dataall.modules.s3_dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.s3_dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
+from dataall.modules.datasets_base.db.dataset_base_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.db.dataset_base_models import Dataset
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import ShareObjectPermission
+from dataall.modules.dataset_sharing_base.db.share_object_base_models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing_base.services.share_item_service import ShareItemService
+from dataall.modules.dataset_sharing_base.services.share_object_service import ShareObjectService
+#TODO: move S3 logic
+#from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient
+#from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -125,7 +127,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        dataset: Dataset = DatasetBaseRepository.get_dataset_by_uri(session, source.datasetUri)
 
         can_approve = (
             True
@@ -157,7 +159,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        ds: Dataset = DatasetBaseRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             env: Environment = EnvironmentService.get_environment_by_uri(session, ds.environmentUri)
             return {
@@ -171,12 +173,13 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'description': ds.description,
             }
 
-
+#TODO: move to S3 datasetsharing
 def union_resolver(object, *_):
-    if isinstance(object, DatasetTable):
-        return 'DatasetTable'
-    elif isinstance(object, DatasetStorageLocation):
-        return 'DatasetStorageLocation'
+    return 'Temp'
+    # if isinstance(object, DatasetTable):
+    #     return 'DatasetTable'
+    # elif isinstance(object, DatasetStorageLocation):
+    #     return 'DatasetStorageLocation'
 
 
 def resolve_principal(context: Context, source: ShareObject, **kwargs):
@@ -249,7 +252,7 @@ def list_shareable_objects(context: Context, source: ShareObject, filter: dict =
     is_revokable = filter.get('isRevokable')
     return ShareItemService.list_shareable_objects(share=source, is_revokable=is_revokable, filter=filter)
 
-
+#TODO: MOVE THIS RESOLVER TO S3_DATASHARING
 def resolve_shared_database_name(context: Context, source):
     if not source:
         return None
@@ -257,11 +260,12 @@ def resolve_shared_database_name(context: Context, source):
     with context.engine.scoped_session() as session:
         share = ShareObjectService.get_share_object_in_environment(uri=source.environmentUri, shareUri=source.shareUri)
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        database = GlueClient(
-            account_id=env.AwsAccountId, database=old_shared_db_name, region=env.region
-        ).get_glue_database()
-        if database:
-            return old_shared_db_name
+        # TODO: remove S3 logic
+        # database = GlueClient(
+        #     account_id=env.AwsAccountId, database=old_shared_db_name, region=env.region
+        # ).get_glue_database()
+        # if database:
+        #     return old_shared_db_name
         return source.GlueDatabaseName + '_shared'
 
 

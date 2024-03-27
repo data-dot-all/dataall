@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.s3_dataset_sharing.api.resolvers import (
+from dataall.modules.dataset_sharing_base.api.resolvers import (
     get_share_object,
     list_shared_with_environment_data_items,
     list_shares_in_my_inbox,
@@ -28,6 +28,7 @@ getShareRequestsToMe = gql.QueryField(
     resolver=list_shares_in_my_inbox,
 )
 
+#TODO: REVIEW THIS LAST QUERY
 searchEnvironmentDataItems = gql.QueryField(
     name='searchEnvironmentDataItems',
     args=[

@@ -8,31 +8,31 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.modules.s3_dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import (
     ShareObjectActions,
     ShareableType,
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.s3_dataset_sharing.db.share_object_models import ShareObjectItem
-from dataall.modules.s3_dataset_sharing.db.share_object_repositories import (
-    ShareObjectRepository,
+#from dataall.modules.s3_dataset_sharing.aws.glue_client import GlueClient #TODO
+from dataall.modules.dataset_sharing_base.db.share_object_base_models import ShareObjectItem
+from dataall.modules.dataset_sharing_base.db.share_object_base_repositories import (
+    ShareObjectBaseRepository, #TODO: review all methods used!
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.s3_dataset_sharing.services.share_exceptions import ShareItemsFound
-from dataall.modules.s3_dataset_sharing.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_dataset_sharing.services.share_permissions import (
+from dataall.modules.dataset_sharing_base.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing_base.services.share_notification_service import ShareNotificationService
+from dataall.modules.dataset_sharing_base.services.share_base_permissions import (
     GET_SHARE_OBJECT,
     ADD_ITEM,
     REMOVE_ITEM,
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
     APPROVE_SHARE_OBJECT,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets_base.db.dataset_base_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.db.dataset_base_models import Dataset
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +40,8 @@ log = logging.getLogger(__name__)
 class ShareItemService:
     @staticmethod
     def _get_share_uri(session, uri):
-        share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-        share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
+        share_item = ShareObjectBaseRepository.get_share_item_by_uri(session, uri)
+        share = ShareObjectBaseRepository.get_share_by_uri(session, share_item.shareUri)
         return share.shareUri
 
     @staticmethod
@@ -49,7 +49,7 @@ class ShareItemService:
     def verify_items_share_object(uri, item_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            verify_items = [ShareObjectBaseRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
             for item in verify_items:
                 setattr(item, 'healthStatus', ShareItemHealthStatus.PendingVerify.value)
 
@@ -64,7 +64,7 @@ class ShareItemService:
     def reapply_items_share_object(uri, item_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            verify_items = [ShareObjectBaseRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
             for item in verify_items:
                 setattr(item, 'healthStatus', ShareItemHealthStatus.PendingReApply.value)
 
@@ -79,10 +79,10 @@ class ShareItemService:
     def revoke_items_share_object(uri, revoked_uris):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            revoked_items_states = ShareObjectRepository.get_share_items_states(session, uri, revoked_uris)
-            revoked_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in revoked_uris]
+            share = ShareObjectBaseRepository.get_share_by_uri(session, uri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
+            revoked_items_states = ShareObjectBaseRepository.get_share_items_states(session, uri, revoked_uris)
+            revoked_items = [ShareObjectBaseRepository.get_share_item_by_uri(session, uri) for uri in revoked_uris]
 
             if not revoked_items_states:
                 raise ShareItemsFound(
@@ -103,7 +103,7 @@ class ShareItemService:
             share_sm.update_state(session, share, new_share_state)
 
             if share.groupUri != dataset.SamlAdminGroupName:
-                revoke_table_items = ShareObjectRepository.find_all_share_items(
+                revoke_table_items = ShareObjectBaseRepository.find_all_share_items(
                     session, uri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
                 )
                 for item in revoke_table_items:
@@ -135,15 +135,15 @@ class ShareItemService:
         with context.db_engine.scoped_session() as session:
             item_type = data.get('itemType')
             item_uri = data.get('itemUri')
-            share = ShareObjectRepository.get_share_by_uri(session, uri)
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            share = ShareObjectBaseRepository.get_share_by_uri(session, uri)
+            dataset: Dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
             target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
             share_sm.update_state(session, share, new_share_state)
 
-            item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
+            item = ShareObjectBaseRepository.get_share_item(session, item_type, item_uri)
             if not item:
                 raise ObjectNotFound('ShareObjectItem', item_uri)
 
@@ -155,7 +155,7 @@ class ShareItemService:
                     f'{target_environment.name} is in {target_environment.region} ',
                 )
 
-            share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
+            share_item: ShareObjectItem = ShareObjectBaseRepository.find_sharable_item(session, uri, item_uri)
 
             s3_access_point_name = utils.slugify(
                 share.datasetUri + '-' + share.principalId,
@@ -189,12 +189,12 @@ class ShareItemService:
     @has_resource_permission(REMOVE_ITEM, parent_resource=_get_share_uri)
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
-            share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            share_item = ShareObjectBaseRepository.get_share_item_by_uri(session, uri)
             if (
                 share_item.itemType == ShareableType.Table.value
                 and share_item.status == ShareItemStatus.Share_Failed.value
             ):
-                share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
+                share = ShareObjectBaseRepository.get_share_by_uri(session, share_item.shareUri)
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=share.groupUri,
@@ -203,19 +203,19 @@ class ShareItemService:
 
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
-            ShareObjectRepository.remove_share_object_item(session, share_item)
+            ShareObjectBaseRepository.remove_share_object_item(session, share_item)
         return True
 
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def resolve_shared_item(uri, item: ShareObjectItem):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_item(session, item.itemType, item.itemUri)
+            return ShareObjectBaseRepository.get_share_item(session, item.itemType, item.itemUri)
 
     @staticmethod
     def check_existing_shared_items(share):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.check_existing_shared_items(session, share.shareUri)
+            return ShareObjectBaseRepository.check_existing_shared_items(session, share.shareUri)
 
     @staticmethod
     def list_shareable_objects(share, filter, is_revokable=False):
@@ -224,26 +224,27 @@ class ShareItemService:
             states = ShareItemSM.get_share_item_revokable_states()
 
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.list_shareable_items(session, share, states, filter)
+            return ShareObjectBaseRepository.list_shareable_items(session, share, states, filter)
 
     @staticmethod
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+        return ShareObjectBaseRepository.paginate_shared_datasets(session, uri, data)
 
-    @staticmethod
-    def _get_glue_database_for_share(glueDatabase, account_id, region):
-        # Check if a catalog account exists and return database accordingly
-        try:
-            catalog_dict = GlueClient(
-                account_id=account_id,
-                region=region,
-                database=glueDatabase,
-            ).get_source_catalog()
-
-            if catalog_dict is not None:
-                return catalog_dict.get('database_name')
-            else:
-                return glueDatabase
-        except Exception as e:
-            raise e
+    # todo: part of S3 data sharing
+    # @staticmethod
+    # def _get_glue_database_for_share(glueDatabase, account_id, region):
+    #     # Check if a catalog account exists and return database accordingly
+    #     try:
+    #         catalog_dict = GlueClient(
+    #             account_id=account_id,
+    #             region=region,
+    #             database=glueDatabase,
+    #         ).get_source_catalog()
+    #
+    #         if catalog_dict is not None:
+    #             return catalog_dict.get('database_name')
+    #         else:
+    #             return glueDatabase
+    #     except Exception as e:
+    #         raise e

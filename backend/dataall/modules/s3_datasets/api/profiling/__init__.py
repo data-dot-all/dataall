@@ -1,4 +1,4 @@
-from dataall.modules.datasets.api.profiling import (
+from dataall.modules.s3_datasets.api.profiling import (
     input_types,
     mutations,
     queries,

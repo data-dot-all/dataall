@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 from dataall.base.db import get_engine, has_table
 from dataall.base.db import utils, Resource
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import ShareObjectStatus
 from datetime import datetime
 
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language

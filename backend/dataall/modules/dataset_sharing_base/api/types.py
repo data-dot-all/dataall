@@ -1,10 +1,10 @@
 from dataall.base.api import gql
-from dataall.modules.s3_dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import (
     ShareableType,
     PrincipalType,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_dataset_sharing.api.resolvers import (
+from dataall.modules.dataset_sharing_base.api.resolvers import (
     union_resolver,
     resolve_shared_item,
     resolve_dataset,
@@ -94,6 +94,7 @@ SharedItemSearchResult = gql.ObjectType(
     ],
 )
 
+#TODO: review this objects that are specific to S3 datasets
 ShareObjectStatistic = gql.ObjectType(
     name='ShareObjectStatistic',
     fields=[

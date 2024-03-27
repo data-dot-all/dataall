@@ -13,3 +13,5 @@ class DatasetBaseModuleInterface(ModuleInterface):
             ImportMode.CATALOG_INDEXER_TASK,
         }
         return modes & supported_modes
+    def __init__(self):
+        import dataall.modules.datasets_base.api

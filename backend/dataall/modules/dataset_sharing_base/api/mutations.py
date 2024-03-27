@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.s3_dataset_sharing.api.resolvers import (
+from dataall.modules.dataset_sharing_base.api.resolvers import (
     add_shared_item,
     approve_share_object,
     create_share_object,

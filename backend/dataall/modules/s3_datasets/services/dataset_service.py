@@ -46,7 +46,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.dataset_sharing_base.db.share_object_base_models import ShareObject
-from dataall.modules.dataset_sharing_base.db.share_object_base_repositories import ShareObjectRepository
+from dataall.modules.dataset_sharing_base.db.share_object_base_repositories import ShareObjectBaseRepository
 from dataall.modules.dataset_sharing_base.services.share_base_permissions import SHARE_OBJECT_APPROVER
 
 log = logging.getLogger(__name__)
@@ -277,7 +277,7 @@ class S3DatasetService(DatasetBaseService):
         with context.db_engine.scoped_session() as session:
             dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName not in context.groups:
-                share = ShareObjectRepository.get_share_by_dataset_attributes(
+                share = ShareObjectBaseRepository.get_share_by_dataset_attributes(
                     session=session, dataset_uri=uri, dataset_owner=context.username
                 )
                 shared_environment = EnvironmentService.get_environment_by_uri(
@@ -369,7 +369,7 @@ class S3DatasetService(DatasetBaseService):
         with context.db_engine.scoped_session() as session:
             dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+            shares = ShareObjectBaseRepository.list_dataset_shares_with_existing_shared_items(
                 session=session, dataset_uri=uri
             )
             if shares:
@@ -389,7 +389,7 @@ class S3DatasetService(DatasetBaseService):
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            ShareObjectBaseRepository.delete_shares_with_no_shared_items(session, uri)
             S3DatasetService._delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
@@ -462,7 +462,7 @@ class S3DatasetService(DatasetBaseService):
                 )
 
         # Remove Steward Resource Policy on Dataset Share Objects
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = ShareObjectBaseRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 ResourcePolicy.delete_resource_policy(
@@ -505,7 +505,7 @@ class S3DatasetService(DatasetBaseService):
                 resource_type=DatasetTable.__name__,
             )
 
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = ShareObjectBaseRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 ResourcePolicy.attach_resource_policy(
@@ -538,9 +538,9 @@ class S3DatasetService(DatasetBaseService):
     # def verify_dataset_share_objects(uri: str, share_uris: list):
     #     with get_context().db_engine.scoped_session() as session:
     #         for share_uri in share_uris:
-    #             share = ShareObjectRepository.get_share_by_uri(session, share_uri)
+    #             share = ShareObjectBaseRepository.get_share_by_uri(session, share_uri)
     #             states = ShareItemSM.get_share_item_revokable_states()
-    #             items = ShareObjectRepository.list_shareable_items(
+    #             items = ShareObjectBaseRepository.list_shareable_items(
     #                 session, share, states, {'pageSize': 1000, 'isShared': True}
     #             )
     #             item_uris = [item.shareItemUri for item in items.get('nodes', [])]

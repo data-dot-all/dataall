@@ -17,14 +17,14 @@ from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import utils, Resource
 from datetime import datetime
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.dataset_sharing_base.services.dataset_sharing_base_enums import (
     ShareObjectStatus,
     ShareableType,
     ShareItemStatus,
 )
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.dataset_sharing_base.db.share_object_base_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'
@@ -93,7 +93,7 @@ def upgrade():
         print('Back-filling dataset table permissions for owners/stewards...')
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
 
             groups = set(

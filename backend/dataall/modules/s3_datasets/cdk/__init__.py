@@ -1,4 +1,4 @@
-from dataall.modules.datasets.cdk import (
+from dataall.modules.s3_datasets.cdk import (
     dataset_stack,
     env_role_dataset_databrew_policy,
     env_role_dataset_glue_policy,

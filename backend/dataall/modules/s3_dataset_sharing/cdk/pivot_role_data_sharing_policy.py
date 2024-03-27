@@ -2,7 +2,7 @@ from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from aws_cdk import aws_iam as iam
 
 
-class DataSharingPivotRole(PivotRoleStatementSet):
+class S3DataSharingPivotRole(PivotRoleStatementSet):
     """
     Class including all permissions needed  by the pivot role to work with Athena
     It allows pivot role to:

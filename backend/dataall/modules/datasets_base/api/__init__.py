@@ -1,3 +1,3 @@
-from dataall.modules.datasets.api.dataset import input_types, mutations, queries, resolvers, types
+from dataall.modules.datasets_base.api import input_types, queries, resolvers, types
 
-__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations']
+__all__ = ['resolvers', 'types', 'input_types', 'queries']

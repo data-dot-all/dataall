@@ -5,12 +5,12 @@ from dataall.base.utils.iam_policy_utils import (
     split_policy_with_mutiple_value_condition_in_statements,
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from aws_cdk import aws_iam as iam
 
 
-class DatasetsPivotRole(PivotRoleStatementSet):
+class S3DatasetsPivotRole(PivotRoleStatementSet):
     """
     Class including all permissions needed  by the pivot role to work with Datasets based in S3 and Glue databases
     It allows pivot role access to:
@@ -142,11 +142,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
 
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
-            datasets = DatasetRepository.query_environment_imported_datasets(
+            datasets = S3DatasetRepository.query_environment_imported_datasets(
                 session, uri=self.environmentUri, filter=None
             )
             if datasets:
-                dataset: Dataset
+                dataset: S3Dataset
                 for dataset in datasets:
                     imported_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
                     if dataset.importedKmsKey:

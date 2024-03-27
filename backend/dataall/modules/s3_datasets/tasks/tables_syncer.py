@@ -9,10 +9,10 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.base.db import get_engine
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.lf_table_client import LakeFormationTableClient
-from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService ##TODO
+from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
-from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer ##TODO
+from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer ##TODO
 from dataall.modules.s3_dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 
 root = logging.getLogger()

@@ -1,4 +1,4 @@
-from dataall.modules.datasets.api.table import (
+from dataall.modules.s3_datasets.api.table import (
     input_types,
     mutations,
     queries,

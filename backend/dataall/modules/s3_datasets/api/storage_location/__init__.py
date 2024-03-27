@@ -1,4 +1,4 @@
-from dataall.modules.datasets.api.storage_location import (
+from dataall.modules.s3_datasets.api.storage_location import (
     input_types,
     mutations,
     queries,

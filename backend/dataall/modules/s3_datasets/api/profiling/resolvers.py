@@ -3,9 +3,9 @@ import logging
 
 from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
-from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
-from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun
+from dataall.modules.s3_datasets.services.dataset_profiling_service import DatasetProfilingService
+from dataall.modules.s3_datasets.services.dataset_service import S3DatasetService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 def resolve_dataset(context, source: DatasetProfilingRun):
     if not source:
         return None
-    return DatasetService.get_dataset(uri=source.datasetUri)
+    return S3DatasetService.get_dataset(uri=source.datasetUri)
 
 
 def start_profiling_run(context: Context, source, input: dict = None):
