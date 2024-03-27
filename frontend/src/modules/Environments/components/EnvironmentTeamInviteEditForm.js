@@ -42,9 +42,7 @@ export const EnvironmentTeamInviteEditForm = (props) => {
     try {
       setLoading(true);
       const response = await client.query(
-        listEnvironmentGroupInvitationPermissions({
-          environmentUri: environment.environmentUri
-        })
+        listEnvironmentGroupInvitationPermissions()
       );
       if (!response.errors) {
         setItems(response.data.listEnvironmentGroupInvitationPermissions);

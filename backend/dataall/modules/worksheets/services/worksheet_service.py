@@ -109,7 +109,7 @@ class WorksheetService:
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
-        env_group = EnvironmentService.get_environment_group(
+        env_group = EnvironmentService.find_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
 

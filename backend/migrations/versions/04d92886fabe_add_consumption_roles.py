@@ -13,6 +13,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.permission_repositories import Permission
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
@@ -123,7 +124,7 @@ def upgrade():
         print('Back-filling consumer role permissions for environments...')
         envs = EnvironmentService.list_all_active_environments(session=session)
         for env in envs:
-            groups = EnvironmentService.query_all_environment_groups(
+            groups = EnvironmentRepository.query_all_environment_groups(
                 session=session, uri=env.environmentUri, filter=None
             )
             for group in groups:

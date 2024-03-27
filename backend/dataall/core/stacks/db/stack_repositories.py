@@ -40,27 +40,27 @@ class Stack:
         return stack
 
     @staticmethod
-    def create_stack(session, environment_uri, target_label, target_uri, target_type, payload=None) -> models.Stack:
-        environment: Environment = session.query(Environment).get(environment_uri)
-        if not environment:
-            raise exceptions.ObjectNotFound('Environment', environment_uri)
+    def create_stack(session,environment_uri, target_uri, target_type, payload=None) -> models.Stack:
+            environment: Environment = session.query(Environment).get(environment_uri)
+            if not environment:
+                raise exceptions.ObjectNotFound('Environment', environment_uri)
 
-        stack = models.Stack(
-            targetUri=target_uri,
-            accountid=environment.AwsAccountId,
-            region=environment.region,
-            stack=target_type,
-            payload=payload,
-            name=NamingConventionService(
-                target_label=target_type,
-                target_uri=target_uri,
-                pattern=NamingConventionPattern.DEFAULT,
-                resource_prefix=environment.resourcePrefix,
-            ).build_compliant_name(),
-        )
-        session.add(stack)
-        session.commit()
-        return stack
+            stack = models.Stack(
+                targetUri=target_uri,
+                accountid=environment.AwsAccountId,
+                region=environment.region,
+                stack=target_type,
+                payload=payload,
+                name=NamingConventionService(
+                    target_label=target_type,
+                    target_uri=target_uri,
+                    pattern=NamingConventionPattern.DEFAULT,
+                    resource_prefix=environment.resourcePrefix,
+                ).build_compliant_name(),
+            )
+            session.add(stack)
+            session.commit()
+            return stack
 
     @staticmethod
     def update_stack(session, uri: str, target_type: str) -> [models.Stack]:

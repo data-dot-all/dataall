@@ -42,7 +42,7 @@ class SagemakerStudioUserProfile(Stack):
     def get_env_group(self, sm_user: SagemakerStudioUser) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env_group = EnvironmentService.get_environment_group(
+            env_group = EnvironmentService.find_environment_group(
                 session,
                 sm_user.SamlAdminGroupName,
                 sm_user.environmentUri,

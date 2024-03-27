@@ -88,7 +88,7 @@ class NotebookService:
 
             env_group = request.environment
             if not env_group:
-                env_group = EnvironmentService.get_environment_group(
+                env_group = EnvironmentService.find_environment_group(
                     session,
                     group_uri=admin_group,
                     environment_uri=env.environmentUri,
@@ -143,7 +143,6 @@ class NotebookService:
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',
                 target_uri=notebook.notebookUri,
-                target_label=notebook.label,
             )
 
         stack_helper.deploy_stack(targetUri=notebook.notebookUri)

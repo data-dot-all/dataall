@@ -1,10 +1,9 @@
 from dataall.base.context import get_context
-from dataall.base.db import exceptions
+from dataall.base.db import exceptions, paginate
 from dataall.core.permissions import permissions
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.environment.decorators.env_permission_checker import has_group_permission
-from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
@@ -19,7 +18,7 @@ class VpcService:
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.CREATE_NETWORK)
     @has_group_permission(permissions.CREATE_NETWORK)
-    def create_network(uri: str, admin_group: str, data: dict):
+    def create_network(uri, environment, admin_group: str, data: dict):
         with _session() as session:
             username = get_context().username
             vpc = VpcRepository.find_vpc_by_id_environment(session=session, vpc_id=data['vpcId'], environment_uri=uri)
@@ -30,7 +29,6 @@ class VpcService:
                     message=f'Vpc {data["vpcId"]} is already associated to environment {uri}',
                 )
 
-            environment = EnvironmentRepository.get_environment_by_uri(session, uri)
             vpc = Vpc(
                 environmentUri=environment.environmentUri,
                 region=environment.region,
@@ -88,3 +86,14 @@ class VpcService:
     def get_environment_networks(environment_uri):
         with _session() as session:
             return VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+
+
+    @staticmethod
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_NETWORKS)
+    def paginated_environment_networks(uri, data=None) -> dict:
+        with get_context().db_engine.scoped_session() as session:
+            return paginate(
+                query=VpcRepository.query_filetered_environment_networks(session, uri, data),
+                page=data.get('page', 1),
+                page_size=data.get('pageSize', 10),
+            ).to_dict()

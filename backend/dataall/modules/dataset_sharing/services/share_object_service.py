@@ -94,7 +94,7 @@ class ShareObjectService:
                 managed = consumption_role.dataallManaged
 
             else:
-                env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
+                env_group: EnvironmentGroup = EnvironmentService.find_environment_group(
                     session, group_uri, environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName

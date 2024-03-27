@@ -329,7 +329,7 @@ class S3AccessPointShareManager:
             if self.share.principalType == PrincipalType.Group.value:
                 share_policy_service.attach_policy()
             else:
-                consumption_role = EnvironmentService.get_consumption_role(
+                consumption_role = s.get_consumption_role(
                     session=self.session, uri=self.share.principalId
                 )
                 if consumption_role.dataallManaged:

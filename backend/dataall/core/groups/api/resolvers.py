@@ -3,6 +3,7 @@ import logging
 
 from dataall.base.context import get_context
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -15,8 +16,7 @@ log = logging.getLogger()
 def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=source.groupUri)
+    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=source.groupUri)
 
 
 def resolve_group_tenant_permissions(context, source):
@@ -56,7 +56,7 @@ def list_groups(context, source, filter: dict = None):
     if category and category_uri:
         if category == 'environment':
             with context.engine.scoped_session() as session:
-                invited_groups = EnvironmentService.query_all_environment_groups(
+                invited_groups = EnvironmentRepository.query_all_environment_groups(
                     session=session,
                     uri=category_uri,
                     filter=None,

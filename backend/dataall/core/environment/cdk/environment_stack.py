@@ -90,17 +90,15 @@ class EnvironmentSetup(Stack):
 
     @staticmethod
     def get_environment_groups(engine, environment: Environment) -> [EnvironmentGroup]:
-        with engine.scoped_session() as session:
-            return EnvironmentService.list_environment_invited_groups(
-                session,
-                uri=environment.environmentUri,
-            )
+        return EnvironmentService.list_environment_invited_groups(
+            uri=environment.environmentUri,
+        )
 
     @staticmethod
     def get_environment_admins_group(engine, environment: Environment) -> [EnvironmentGroup]:
         with engine.scoped_session() as session:
-            return EnvironmentService.get_environment_group(
-                session,
+            return EnvironmentService.find_environment_group(
+                session = session,
                 environment_uri=environment.environmentUri,
                 group_uri=environment.SamlGroupName,
             )

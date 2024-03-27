@@ -1,5 +1,6 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.core.permissions.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
@@ -353,8 +354,8 @@ def test_paging(db, client, org_fixture, env_fixture, user, group):
 def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, group3, group, mocker):
     response = client.query(
         """
-        query listEnvironmentGroupInvitationPermissions($environmentUri:String){
-            listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
+        query listEnvironmentGroupInvitationPermissions{
+            listEnvironmentGroupInvitationPermissions{
                     permissionUri
                     name
                     type
@@ -675,8 +676,9 @@ def test_create_environment(db, client, org_fixture, user, group):
     assert body.EnvironmentDefaultIAMRoleImported
     assert body.resourcePrefix == 'customer-prefix'
 
+
     with db.scoped_session() as session:
-        env = EnvironmentService.get_environment_by_uri(session, response.data.createEnvironment.environmentUri)
+        env = EnvironmentRepository.get_environment_by_uri(session,response.data.createEnvironment.environmentUri)
         session.delete(env)
         session.commit()
 

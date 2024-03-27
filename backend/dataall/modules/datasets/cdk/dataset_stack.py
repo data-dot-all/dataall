@@ -58,7 +58,7 @@ class DatasetStack(Stack):
     def get_env_group(self, dataset) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = EnvironmentService.get_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
+            env = EnvironmentService.find_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
         return env
 
     def get_target_with_uri(self, target_uri) -> Dataset:

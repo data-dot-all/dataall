@@ -1,4 +1,5 @@
 import logging
+import os
 
 from botocore.exceptions import ClientError
 
@@ -51,3 +52,11 @@ class ParameterStoreManager:
             raise Exception(e)
         else:
             return str(response)
+
+    @staticmethod
+    def get_pivot_role_as_part_of_environment():
+        ssm_param = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+        )
+        return ssm_param == 'True'

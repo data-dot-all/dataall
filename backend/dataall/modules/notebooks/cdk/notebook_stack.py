@@ -50,7 +50,7 @@ class NotebookStack(Stack):
     def get_env_group(self, notebook: SagemakerNotebook) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env_group = EnvironmentService.get_environment_group(
+            env_group = EnvironmentService.find_environment_group(
                 session, notebook.SamlAdminGroupName, notebook.environmentUri
             )
         return env_group

@@ -193,7 +193,7 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 )
                 principalName = f'{principal.consumptionRoleName} [{principal.IAMRoleArn}]'
             else:
-                principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
+                principal = EnvironmentService.find_environment_group(session, source.groupUri, source.environmentUri)
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
 
             return {

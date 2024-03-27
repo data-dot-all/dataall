@@ -68,7 +68,7 @@ class PipelineStack(Stack):
     def get_env_team(self, pipeline: DataPipeline) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = EnvironmentService.get_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
+            env = EnvironmentService.find_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
         return env
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):

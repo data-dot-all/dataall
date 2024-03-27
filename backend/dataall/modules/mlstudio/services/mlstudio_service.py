@@ -170,7 +170,6 @@ class SagemakerStudioService:
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='mlstudio',
                 target_uri=sagemaker_studio_user.sagemakerStudioUserUri,
-                target_label=sagemaker_studio_user.label,
             )
 
         stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)

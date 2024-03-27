@@ -40,7 +40,7 @@ def sync_tables(engine):
                 )
                 .first()
             )
-            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
+            env_group: EnvironmentGroup = EnvironmentService.find_environment_group(
                 session, dataset.SamlAdminGroupName, env.environmentUri
             )
             try:

@@ -2,8 +2,8 @@ import logging
 
 from dataall.base.api.context import Context
 from dataall.base.db import exceptions
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.vpc.services.vpc_service import VpcService
-
 
 log = logging.getLogger(__name__)
 
@@ -21,8 +21,9 @@ def _validate_input(data):
 
 def create_network(context: Context, source, input):
     _validate_input(input)
+    environment = EnvironmentService.get_environment_by_uri(uri=input.get('environmentUri'))
     return VpcService.create_network(
-        uri=input.get('environmentUri'), admin_group=input.get('SamlGroupName'), data=input
+        uri=environment.environmentUri, environment=environment, admin_group=input.get('SamlGroupName'), data=input
     )
 
 

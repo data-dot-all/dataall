@@ -288,7 +288,7 @@ class DatasetService:
                 shared_environment = EnvironmentService.get_environment_by_uri(
                     session=session, uri=share.environmentUri
                 )
-                env_group = EnvironmentService.get_environment_group(
+                env_group = EnvironmentService.find_environment_group(
                     session=session, group_uri=share.principalId, environment_uri=share.environmentUri
                 )
                 role_arn = env_group.environmentIAMRoleArn
@@ -441,7 +441,6 @@ class DatasetService:
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,
-            target_label=dataset.label,
             target_type='dataset',
             payload={
                 'bucket_name': dataset.S3BucketName,
