@@ -24,7 +24,10 @@ class OrganizationQueries(SchemaBase):
         schema.add_query('listOrganizations', ResolvableField(
             return_type=org_types.organization_search_result.attribute(),
             args={'filter': org_inputs.organization_filter.attribute()},
+            # pipeline_config=[data_source_func],
             data_source=data_source,
+            # code=Code.from_asset(str(Path(__file__).parent.parent.parent.joinpath('schema/function_code.js'))),
+            # runtime=FunctionRuntime.JS_1_0_0,
         ))
 
         get_organization = ResolvableField(

@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from aws_cdk import aws_appsync
 from aws_cdk import aws_logs
 from aws_cdk.aws_cognito import IUserPool
 from aws_cdk.aws_lambda import IFunction
 from awscdk.appsync_utils import CodeFirstSchema
 from injector import singleton, Module, provider
+from typing_extensions import Annotated
 
 from .pyNestedStack import pyNestedClass
 from .schema import create_schema
@@ -43,4 +46,17 @@ class AppSyncStack(pyNestedClass, Module):
             'CommonLambdaDataSource',
             api=api,
             lambda_function=self.api_handler,
+        )
+
+    @provider
+    @singleton
+    def data_source_func(self, api: aws_appsync.GraphqlApi, data_source: aws_appsync.LambdaDataSource) -> aws_appsync.AppsyncFunction:
+        return aws_appsync.AppsyncFunction(
+            self,
+            'CommonAppsyncFunction',
+            api=api,
+            data_source=data_source,
+            code=aws_appsync.Code.from_asset(str(Path(__file__).parent.joinpath('schema/function_code.js'))),
+            name='CommonAppsyncFunction',
+            runtime=aws_appsync.FunctionRuntime.JS_1_0_0,
         )
