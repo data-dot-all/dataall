@@ -1070,6 +1070,7 @@ class ShareObjectRepository:
                 ShareObject.created.label('created'),
                 ShareObject.principalId.label('principalId'),
                 ShareObject.principalType.label('principalType'),
+                ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
                 ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 ShareObjectItem.GlueTableName.label('GlueTableName'),

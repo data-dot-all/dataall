@@ -13,6 +13,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 
+
 log = logging.getLogger(__name__)
 
 
@@ -165,8 +166,16 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             )
 
             try:
-                removing_folder.delete_access_point_policy()
+                access_point_policy = removing_folder.revoke_access_in_access_point_policy()
 
+                if len(access_point_policy['Statement']) > 0:
+                    removing_folder.attach_new_access_point_policy(access_point_policy)
+                else:
+                    log.info('Cleaning up folder share resources...')
+                    removing_folder.delete_access_point()
+                    removing_folder.revoke_target_role_access_policy()
+                    if not dataset.imported or dataset.importedKmsKey:
+                        removing_folder.delete_dataset_bucket_key_policy(dataset=dataset)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 ShareObjectRepository.update_share_item_health_status(
@@ -182,52 +191,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 # statements which can throw exceptions but are not critical
                 removing_folder.handle_revoke_failure(e)
 
-        return success
-
-    @classmethod
-    def clean_up_share(
-        cls,
-        session,
-        dataset: Dataset,
-        share: ShareObject,
-        folder: DatasetStorageLocation,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
-    ):
-        """
-        1) deletes S3 access point for this share in this Dataset S3 Bucket
-        2) delete_target_role_access_policy to access the above deleted access point
-        3) delete_dataset_bucket_key_policy to remove access to the requester IAM role
-
-        Returns
-        -------
-        True if share is cleaned-up successfully
-        """
-        clean_up_folder = cls(
-            session,
-            dataset,
-            share,
-            folder,
-            source_environment,
-            target_environment,
-            source_env_group,
-            env_group,
-        )
-        log.info('##### Cleaning up folder share resources #######')
-        success = True
-        try:
-            clean_up = clean_up_folder.delete_access_point(share=share, dataset=dataset)
-            if clean_up:
-                clean_up_folder.delete_target_role_access_policy(
-                    share=share, dataset=dataset, target_environment=target_environment
-                )
-                if not dataset.imported or dataset.importedKmsKey:
-                    clean_up_folder.delete_dataset_bucket_key_policy(dataset=dataset)
-        except Exception as e:
-            log.info(f'Failed to clean up folder share resources due to: {e}')
-            success = False
         return success
 
     @classmethod
