@@ -1,0 +1,19 @@
+# Those settings keeps the PostgreSQL behavior.
+# To scale out the active tables, you can move them out of colocation
+# but this requires to define the hash or range sharding
+
+# postgres-like (range indexes) without distribution
+--ysql_colocate_database_by_default
+# same default as PostgreSQL
+--ysql_sequence_cache_minval=1
+
+# Read Committed with PostgreSQL-like locking (wait on lock)
+--yb_enable_read_committed_isolation=true
+--enable_deadlock_detection=true
+--enable_wait_queues=true
+
+# Allow logging statements and execution plans
+--ysql_pg_conf_csv=shared_preload_libraries='auto_explain'
+
+# ignore warning when running ANALYZE
+--ysql_beta_features=true
