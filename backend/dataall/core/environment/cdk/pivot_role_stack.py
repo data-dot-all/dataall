@@ -4,6 +4,13 @@ from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
 
+# disable ruff-format, because this unused imports are important
+# pivot_role_core_policies is used to fill PivotRoleStatementSet subclasses (line 31)
+# fmt: off
+from dataall.core.environment.cdk import pivot_role_core_policies
+# fmt: on
+# enable ruff-format back
+
 logger = logging.getLogger(__name__)
 
 
