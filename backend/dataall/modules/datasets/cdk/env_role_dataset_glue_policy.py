@@ -10,9 +10,6 @@ class DatasetGlueCatalogServicePolicy(ServicePolicy):
     """
 
     def get_statements(self, group_permissions, **kwargs):
-        if CREATE_DATASET not in group_permissions:
-            return []
-
         statements = [
             iam.PolicyStatement(
                 # sid="GlueLFReadData",
