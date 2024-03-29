@@ -22,13 +22,9 @@ class DatasetCatalogIndexer(CatalogIndexer):
         all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         log.info(f'Found {len(all_datasets)} datasets')
         indexed = 0
-        dataset_count = 0
         for dataset in all_datasets:
             tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
             folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
-            # Upsert a dataset which doesn't have a table or folder
-            if not DatasetTableRepository.find_all_active_tables(session, dataset.datasetUri) and not DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri):
-                DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-                dataset_count += 1
-            indexed += len(tables) + len(folders) + dataset_count + 1
-        return indexed
+            DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
+            indexed += len(tables) + len(folders) + 1
+        return indexed + len(all_datasets)
