@@ -1,5 +1,8 @@
 import logging
 
+from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
@@ -22,5 +25,6 @@ class DatasetCatalogIndexer(CatalogIndexer):
         for dataset in all_datasets:
             tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
             folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
+            DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
             indexed += len(tables) + len(folders) + 1
-        return indexed
+        return indexed + len(all_datasets)
