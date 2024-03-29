@@ -51,5 +51,5 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch('dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all', return_value=[table])
     mocker.patch('dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset)
     indexed_objects_counter = index_objects(engine=db)
-    # Count should be One table + One Dataset + 1  = 3
-    assert indexed_objects_counter == 3
+    # Count should be One table + One Dataset  = 2
+    assert indexed_objects_counter == 2
