@@ -1,7 +1,5 @@
 import logging
 
-from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
-from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
