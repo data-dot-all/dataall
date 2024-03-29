@@ -27,4 +27,4 @@ class DatasetCatalogIndexer(CatalogIndexer):
             folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
             indexed += len(tables) + len(folders) + 1
-        return indexed + len(all_datasets)
+        return indexed
