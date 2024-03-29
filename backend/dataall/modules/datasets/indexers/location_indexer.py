@@ -1,4 +1,5 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
+import re
 
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -29,7 +30,7 @@ class DatasetLocationIndexer(BaseIndexer):
                     'resourceKind': 'folder',
                     'description': folder.description,
                     'source': dataset.S3BucketName,
-                    'classification': dataset.confidentiality,
+                    'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [f.replace('-', '') for f in folder.tags or []],
                     'topics': dataset.topics,
                     'region': folder.region.replace('-', ''),
