@@ -93,6 +93,12 @@ class OrganizationService:
             return OrganizationRepository.get_organization_by_uri(session=session, uri=uri)
 
     @staticmethod
+    def get_organization_simplified(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return OrganizationRepository.get_organization_by_uri(session=session, uri=uri)
+
+    @staticmethod
     def list_organizations(filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
