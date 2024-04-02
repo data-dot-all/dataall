@@ -54,6 +54,13 @@ class PivotRoleStatementSet(object):
         raise NotImplementedError('PivotRoleStatementSet subclasses need to implement the get_statements class method')
 
 
+# IT IS HERE TO AVOID CIRCULAR IMPORT
+# disable ruff-format, because this unused imports are important
+# pivot_role_core_policies is used to fill PivotRoleStatementSet subclasses (line 31)
+# ruff: noqa: E402
+from dataall.core.environment.cdk import pivot_role_core_policies
+
+
 class PivotRole(NestedStack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
