@@ -35,6 +35,11 @@ export const EnvironmentFeatures = (props) => {
       title: 'Pipelines',
       enabledEnvVariableName: 'pipelinesEnabled',
       active: isModuleEnabled(ModuleNames.DATAPIPELINES)
+    },
+    {
+      title: 'Omics',
+      enabledEnvVariableName: 'omicsEnabled',
+      active: isModuleEnabled(ModuleNames.OMICS)
     }
   ];
 

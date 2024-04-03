@@ -118,6 +118,10 @@ const EnvironmentEditForm = (props) => {
               {
                 key: 'dashboardsEnabled',
                 value: String(values.dashboardsEnabled)
+              },
+              {
+                key: 'omicsEnabled',
+                value: String(values.omicsEnabled)
               }
             ]
           }
@@ -241,6 +245,7 @@ const EnvironmentEditForm = (props) => {
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
                 dashboardsEnabled:
                   env.parameters['dashboardsEnabled'] === 'true',
+                omicsEnabled: env.parameters['omicsEnabled'] === 'true',
                 resourcePrefix: env.resourcePrefix
               }}
               validationSchema={Yup.object().shape({
@@ -600,6 +605,39 @@ const EnvironmentEditForm = (props) => {
                                       }
                                       labelPlacement="end"
                                       value={values.pipelinesEnabled}
+                                    />
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              {isModuleEnabled(ModuleNames.OMICS) && (
+                                <Box sx={{ ml: 2 }}>
+                                  <FormGroup>
+                                    <FormControlLabel
+                                      color="primary"
+                                      control={
+                                        <Switch
+                                          defaultChecked={values.omicsEnabled}
+                                          color="primary"
+                                          onChange={handleChange}
+                                          edge="start"
+                                          name="omicsEnabled"
+                                          value={values.omicsEnabled}
+                                        />
+                                      }
+                                      label={
+                                        <Typography
+                                          color="textSecondary"
+                                          gutterBottom
+                                          variant="subtitle2"
+                                        >
+                                          Omics{' '}
+                                          <small>
+                                            (Requires AWS HealthOmics)
+                                          </small>
+                                        </Typography>
+                                      }
+                                      labelPlacement="end"
+                                      value={values.omicsEnabled}
                                     />
                                   </FormGroup>
                                 </Box>
