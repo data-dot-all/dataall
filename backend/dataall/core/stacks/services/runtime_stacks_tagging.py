@@ -60,9 +60,7 @@ class TagsUtil:
             target_stack = cls.get_target(session, stack, model_name)
             environment = cls.get_environment(session, target_stack)
             organisation = cls.get_organization(session, environment)
-            key_value_tags: [KeyValueTagModel] = cls.get_model_key_value_tags(
-                session, stack, target_type
-            )
+            key_value_tags: [KeyValueTagModel] = cls.get_model_key_value_tags(session, stack, target_type)
             cascaded_tags: [KeyValueTagModel] = cls.get_environment_cascade_key_value_tags(
                 session, environment.environmentUri
             )
@@ -123,16 +121,12 @@ class TagsUtil:
 
     @classmethod
     def get_organization(cls, session, environment):
-        organisation = OrganizationRepository.get_organization_by_uri(
-            session, environment.organizationUri
-        )
+        organisation = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
         return organisation
 
     @classmethod
     def get_environment(cls, session, target_stack):
-        environment: Environment = EnvironmentService.get_environment_by_uri(
-            session, target_stack.environmentUri
-        )
+        environment: Environment = EnvironmentService.get_environment_by_uri(session, target_stack.environmentUri)
         return environment
 
     @classmethod

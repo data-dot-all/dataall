@@ -90,9 +90,7 @@ class OrganizationService:
     def get_organization(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return OrganizationRepository.get_organization_by_uri(
-                session=session, uri=uri
-            )
+            return OrganizationRepository.get_organization_by_uri(session=session, uri=uri)
 
     @staticmethod
     def list_organizations(filter):
@@ -118,13 +116,9 @@ class OrganizationService:
     def count_organization_resources(uri, group):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            environments = EnvironmentRepository.count_environments_with_organization_uri(
-                session=session, uri=uri
-            )
+            environments = EnvironmentRepository.count_environments_with_organization_uri(session=session, uri=uri)
 
-            groups = OrganizationRepository.count_organization_invited_groups(
-                session=session, uri=uri, group=group
-            )
+            groups = OrganizationRepository.count_organization_invited_groups(session=session, uri=uri, group=group)
 
             return {'environments': environments, 'groups': groups, 'users': 0}
 
@@ -138,7 +132,7 @@ class OrganizationService:
         else:
             with context.db_engine.scoped_session() as session:
                 if OrganizationRepository.find_organization_membership(
-                        session=session, uri=organization.organizationUri, groups=context.groups
+                    session=session, uri=organization.organizationUri, groups=context.groups
                 ):
                     return OrganisationUserRole.Invited.value
         return OrganisationUserRole.NoPermission.value
@@ -213,9 +207,7 @@ class OrganizationService:
                 )
 
             group_env_objects_count = EnvironmentRepository.count_environments_with_organization_and_group(
-                session=session,
-                organization=organization,
-                group=group
+                session=session, organization=organization, group=group
             )
             if group_env_objects_count > 0:
                 raise exceptions.OrganizationResourcesFound(

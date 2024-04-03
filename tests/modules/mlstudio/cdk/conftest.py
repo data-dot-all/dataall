@@ -24,6 +24,7 @@ def sgm_studio(db, env_fixture: Environment) -> SagemakerStudioUser:
         session.add(sm_user)
     yield sm_user
 
+
 @pytest.fixture(scope='module', autouse=True)
 def sgm_studio_domain(db, env_fixture: Environment) -> SagemakerStudioDomain:
     with db.scoped_session() as session:
@@ -33,10 +34,10 @@ def sgm_studio_domain(db, env_fixture: Environment) -> SagemakerStudioDomain:
             environmentUri=env_fixture.environmentUri,
             AWSAccountId=env_fixture.AwsAccountId,
             region=env_fixture.region,
-            SagemakerStudioStatus="PENDING",
-            DefaultDomainRoleName="DefaultMLStudioRole",
-            sagemakerStudioDomainName="DomainName",
-            vpcType="created",
+            SagemakerStudioStatus='PENDING',
+            DefaultDomainRoleName='DefaultMLStudioRole',
+            sagemakerStudioDomainName='DomainName',
+            vpcType='created',
             SamlGroupName=env_fixture.SamlGroupName,
         )
         session.add(sm_domain)

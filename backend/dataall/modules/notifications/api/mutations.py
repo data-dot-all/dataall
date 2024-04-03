@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from .resolvers import delete, mark_as_read
 
 
 markNotificationAsRead = gql.MutationField(

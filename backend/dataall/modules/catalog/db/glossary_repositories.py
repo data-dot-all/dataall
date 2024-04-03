@@ -56,9 +56,7 @@ class GlossaryRepository:
         if not parent:
             raise exceptions.ObjectNotFound('Glossary or Category', uri)
         if parent.nodeType not in ['G', 'C']:
-            raise exceptions.InvalidInput(
-                'Term', uri, 'Category or Glossary are required to create a term'
-            )
+            raise exceptions.InvalidInput('Term', uri, 'Category or Glossary are required to create a term')
 
         term = GlossaryNode(
             path=parent.path,
@@ -75,9 +73,7 @@ class GlossaryRepository:
 
     @staticmethod
     def list_glossaries(session, data=None):
-        q = session.query(GlossaryNode).filter(
-            GlossaryNode.nodeType == 'G', GlossaryNode.deleted.is_(None)
-        )
+        q = session.query(GlossaryNode).filter(GlossaryNode.nodeType == 'G', GlossaryNode.deleted.is_(None))
         term = data.get('term')
         if term:
             q = q.filter(
@@ -86,9 +82,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike('%' + term + '%'),
                 )
             )
-        return paginate(
-            q, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
+        return paginate(q, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
 
     @staticmethod
     def list_node_children(session, path, filter):
@@ -108,9 +102,7 @@ class GlossaryRepository:
             )
         if nodeType:
             q = q.filter(GlossaryNode.nodeType == nodeType)
-        return paginate(
-            q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
-        ).to_dict()
+        return paginate(q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
 
     @staticmethod
     def get_node_tree(session, path, filter):
@@ -132,9 +124,7 @@ class GlossaryRepository:
         if nodeType:
             q = q.filter(GlossaryNode.nodeType == nodeType)
 
-        return paginate(
-            q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
-        ).to_dict()
+        return paginate(q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
 
     @staticmethod
     def get_node_link_to_target(session, username, uri, targetUri):
@@ -228,9 +218,7 @@ class GlossaryRepository:
                 GlossaryNode,
                 GlossaryNode.nodeUri == TermLink.nodeUri,
             )
-            .join(
-                linked_objects, TermLink.targetUri == linked_objects.c.targetUri
-            )
+            .join(linked_objects, TermLink.targetUri == linked_objects.c.targetUri)
         )
 
         if node.nodeType == 'T':
@@ -251,9 +239,7 @@ class GlossaryRepository:
             )
         q = q.order_by(asc(path))
 
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)
-        ).to_dict()
+        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 25)).to_dict()
 
     @staticmethod
     def list_categories(session, uri, data=None):
@@ -273,9 +259,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def list_terms(session, uri, data=None):
@@ -294,9 +278,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def get_node(session, uri) -> GlossaryNode:
@@ -340,9 +322,7 @@ class GlossaryRepository:
         link: TermLink = session.query(TermLink).get(linkUri)
         if not link:
             raise exceptions.ObjectNotFound('Link', linkUri)
-        GlossaryRepository._verify_term_association_approver_role(
-            session, username, groups, link
-        )
+        GlossaryRepository._verify_term_association_approver_role(session, username, groups, link)
         if not link.approvedBySteward:
             link.approvedBySteward = True
             updated = True
@@ -355,9 +335,7 @@ class GlossaryRepository:
         link: TermLink = session.query(TermLink).get(linkUri)
         if not link:
             raise exceptions.ObjectNotFound('Link', linkUri)
-        GlossaryRepository._verify_term_association_approver_role(
-            session, username, groups, link
-        )
+        GlossaryRepository._verify_term_association_approver_role(session, username, groups, link)
         if link.approvedBySteward:
             link.approvedBySteward = False
             updated = True
@@ -381,18 +359,13 @@ class GlossaryRepository:
         GlossaryRegistry.reindex(session, link.targetType, link.targetUri)
 
     @staticmethod
-    def set_glossary_terms_links(
-        session, username, target_uri, target_type, glossary_terms
-    ):
+    def set_glossary_terms_links(session, username, target_uri, target_type, glossary_terms):
         """Used in dependent modules to assign glossary terms to resources"""
-        current_links = session.query(TermLink).filter(
-            TermLink.targetUri == target_uri
-        )
+        current_links = session.query(TermLink).filter(TermLink.targetUri == target_uri)
         for current_link in current_links:
             if current_link not in glossary_terms:
                 session.delete(current_link)
         for nodeUri in glossary_terms:
-
             term = session.query(GlossaryNode).get(nodeUri)
             if term:
                 link = (
@@ -419,9 +392,7 @@ class GlossaryRepository:
         """Used in dependent modules get assigned glossary terms to resources"""
         terms = (
             session.query(GlossaryNode)
-            .join(
-                TermLink, TermLink.nodeUri == GlossaryNode.nodeUri
-            )
+            .join(TermLink, TermLink.nodeUri == GlossaryNode.nodeUri)
             .filter(
                 and_(
                     TermLink.targetUri == target_uri,
@@ -450,9 +421,7 @@ class GlossaryRepository:
 
     @staticmethod
     def search_glossary_terms(session, data=None):
-        q = session.query(GlossaryNode).filter(
-            GlossaryNode.deleted.is_(None)
-        )
+        q = session.query(GlossaryNode).filter(GlossaryNode.deleted.is_(None))
         term = data.get('term')
         if term:
             q = q.filter(
@@ -462,6 +431,4 @@ class GlossaryRepository:
                 )
             )
         q = q.order_by(asc(GlossaryNode.path))
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()

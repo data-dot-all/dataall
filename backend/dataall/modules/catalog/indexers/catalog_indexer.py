@@ -13,4 +13,4 @@ class CatalogIndexer(ABC):
         return CatalogIndexer._INDEXERS
 
     def index(self, session) -> int:
-        raise NotImplementedError("index is not implemented")
+        raise NotImplementedError('index is not implemented')

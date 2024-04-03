@@ -18,9 +18,7 @@ print('\n'.join(sys.path))
 logger = logging.getLogger('cdksass')
 
 ENVNAME = os.getenv('envname', 'local')
-logger.warning(
-    f"Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get('DH_DOCKER_VERSION')}"
-)
+logger.warning(f"Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get('DH_DOCKER_VERSION')}")
 
 
 def connect():
@@ -30,7 +28,7 @@ def connect():
         with engine.scoped_session() as session:
             orgs = session.query(Organization).all()
         return engine
-    except Exception as e:
+    except Exception:
         raise Exception('Connection Error')
 
 
@@ -52,11 +50,7 @@ def check_creds(response: Response):
     logger.info('GET /awscreds')
     try:
         region = os.getenv('AWS_REGION', 'eu-west-1')
-        sts = boto3.client(
-            'sts',
-            region_name=region,
-            endpoint_url=f"https://sts.{region}.amazonaws.com"
-        )
+        sts = boto3.client('sts', region_name=region, endpoint_url=f'https://sts.{region}.amazonaws.com')
         data = sts.get_caller_identity()
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
@@ -88,7 +82,7 @@ def check_connect(response: Response):
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
             '_ts': datetime.now().isoformat(),
-            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.host})",
+            'message': f'Connected to database for environment {ENVNAME}({engine.dbconfig.host})',
         }
     except Exception as e:
         logger.exception('DBCONNECTIONERROR')
@@ -123,9 +117,7 @@ def check_cdk_installed(response: Response):
 
 
 @app.post('/stack/{stackid}', status_code=status.HTTP_202_ACCEPTED)
-async def create_stack(
-    stackid: str, background_tasks: BackgroundTasks, response: Response
-):
+async def create_stack(stackid: str, background_tasks: BackgroundTasks, response: Response):
     """Deploys or updates the stack"""
     logger.info(f'POST /stack/{stackid}')
     try:
@@ -174,9 +166,7 @@ async def create_stack(
 
 
 @app.delete('/stack/{stackid}', status_code=status.HTTP_202_ACCEPTED)
-async def delete_stack(
-    stackid: str, background_tasks: BackgroundTasks, response: Response
-):
+async def delete_stack(stackid: str, background_tasks: BackgroundTasks, response: Response):
     """
     Deletes the stack
     """

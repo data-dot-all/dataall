@@ -12,6 +12,7 @@ class ServicePolicy(object):
     """
     Generic Class to define AWS-services policies added to an IAM role
     """
+
     def __init__(
         self,
         stack,
@@ -52,7 +53,7 @@ class ServicePolicy(object):
                 managed_policy_name=f'{self.id}-0',
                 statements=[
                     aws_iam.PolicyStatement(
-                        sid="ListActions",
+                        sid='ListActions',
                         effect=aws_iam.Effect.ALLOW,
                         actions=[
                             'ec2:Describe*',
@@ -72,36 +73,32 @@ class ServicePolicy(object):
                         resources=['*'],
                     ),
                     aws_iam.PolicyStatement(
-                        sid="CreateServiceRole",
+                        sid='CreateServiceRole',
                         actions=[
                             'iam:CreateRole',
                         ],
-                        resources=[
-                            f'arn:aws:iam::{self.account}:role/service-role/*'
-                        ]
+                        resources=[f'arn:aws:iam::{self.account}:role/service-role/*'],
                     ),
                     aws_iam.PolicyStatement(
-                        sid="PassRole",
+                        sid='PassRole',
                         actions=[
                             'iam:PassRole',
                         ],
-                        resources=[
-                            f'arn:aws:iam::{self.account}:role/{self.role_name}'
-                        ],
+                        resources=[f'arn:aws:iam::{self.account}:role/{self.role_name}'],
                         conditions={
-                            "StringEquals": {
-                                "iam:PassedToService": [
-                                    "glue.amazonaws.com",
-                                    "lambda.amazonaws.com",
-                                    "sagemaker.amazonaws.com",
-                                    "states.amazonaws.com",
-                                    "sagemaker.amazonaws.com",
-                                    "databrew.amazonaws.com",
-                                    "codebuild.amazonaws.com",
-                                    "codepipeline.amazonaws.com"
+                            'StringEquals': {
+                                'iam:PassedToService': [
+                                    'glue.amazonaws.com',
+                                    'lambda.amazonaws.com',
+                                    'sagemaker.amazonaws.com',
+                                    'states.amazonaws.com',
+                                    'sagemaker.amazonaws.com',
+                                    'databrew.amazonaws.com',
+                                    'codebuild.amazonaws.com',
+                                    'codepipeline.amazonaws.com',
                                 ]
                             }
-                        }
+                        },
                     ),
                 ],
             )
@@ -113,9 +110,7 @@ class ServicePolicy(object):
         for service in services:
             statements.extend(service.get_statements(self, self.permissions))
 
-        statements_chunks: list = [
-            statements[i: i + 10] for i in range(0, len(statements), 10)
-        ]
+        statements_chunks: list = [statements[i : i + 10] for i in range(0, len(statements), 10)]
 
         for index, chunk in enumerate(statements_chunks):
             policies.append(
@@ -133,6 +128,4 @@ class ServicePolicy(object):
         This method implements a policy based on a tag key and optionally a resource prefix
         :return: list
         """
-        raise NotImplementedError(
-            'Policy subclasses need to implement the get_statements class method'
-        )
+        raise NotImplementedError('Policy subclasses need to implement the get_statements class method')

@@ -52,6 +52,7 @@ class EnvironmentSetup(Stack):
     - Deploy team specific resources: teams IAM roles, Athena workgroups
     - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
     """
+
     module_name = __file__
     _EXTENSIONS: List[Type[EnvironmentStackExtension]] = []
 
@@ -82,9 +83,7 @@ class EnvironmentSetup(Stack):
     def get_environment_group_permissions(engine, environmentUri, group):
         with engine.scoped_session() as session:
             group_permissions = EnvironmentService.list_group_permissions_internal(
-                session=session,
-                uri=environmentUri,
-                group_uri=group
+                session=session, uri=environmentUri, group_uri=group
             )
             permission_names = [permission.name for permission in group_permissions]
             return permission_names
@@ -125,9 +124,9 @@ class EnvironmentSetup(Stack):
 
         pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate"
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
         )
-        self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == "True" else False
+        self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == 'True' else False
         self.engine = self.get_engine()
 
         self._environment = self.get_target(target_uri=target_uri)
@@ -147,7 +146,7 @@ class EnvironmentSetup(Stack):
                 'accountId': self.dataall_central_account,
                 'externalId': self.external_id,
                 'resourcePrefix': self._environment.resourcePrefix,
-                'environmentUri': self._environment.environmentUri
+                'environmentUri': self._environment.environmentUri,
             }
             pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
             self.pivot_role = iam.Role.from_role_arn(
@@ -227,34 +226,34 @@ class EnvironmentSetup(Stack):
                 statements=[
                     iam.PolicyStatement(
                         actions=[
-                            "kms:Encrypt",
-                            "kms:Decrypt",
-                            "kms:ReEncrypt*",
-                            "kms:GenerateDataKey*",
+                            'kms:Encrypt',
+                            'kms:Decrypt',
+                            'kms:ReEncrypt*',
+                            'kms:GenerateDataKey*',
                         ],
                         effect=iam.Effect.ALLOW,
                         principals=[self.default_role] + self.group_roles,
-                        resources=["*"],
+                        resources=['*'],
                         conditions={
-                            "StringEquals": {
-                                "kms:ViaService": [
-                                    f"sqs.{self._environment.region}.amazonaws.com",
-                                    f"sns.{self._environment.region}.amazonaws.com",
+                            'StringEquals': {
+                                'kms:ViaService': [
+                                    f'sqs.{self._environment.region}.amazonaws.com',
+                                    f'sns.{self._environment.region}.amazonaws.com',
                                 ]
                             }
-                        }
+                        },
                     ),
                     iam.PolicyStatement(
                         actions=[
-                            "kms:DescribeKey",
-                            "kms:List*",
-                            "kms:GetKeyPolicy",
+                            'kms:DescribeKey',
+                            'kms:List*',
+                            'kms:GetKeyPolicy',
                         ],
                         effect=iam.Effect.ALLOW,
                         principals=[self.default_role] + self.group_roles,
-                        resources=["*"],
-                    )
-                ]
+                        resources=['*'],
+                    ),
+                ],
             )
             subscription_key = kms.Key(
                 self,
@@ -265,7 +264,7 @@ class EnvironmentSetup(Stack):
                 admins=[
                     iam.ArnPrincipal(self._environment.CDKRoleArn),
                 ],
-                policy=subscription_key_policy
+                policy=subscription_key_policy,
             )
 
             dlq_queue = sqs.Queue(
@@ -313,7 +312,7 @@ class EnvironmentSetup(Stack):
                     self._environment.subscriptionsProducersTopicName,
                     self.dataall_central_account,
                     self._environment,
-                    subscription_key
+                    subscription_key,
                 )
 
             topic.add_subscription(sns_subs.SqsSubscription(queue))
@@ -365,7 +364,7 @@ class EnvironmentSetup(Stack):
                 self._environment.subscriptionsConsumersTopicName,
                 self.dataall_central_account,
                 self._environment,
-                subscription_key
+                subscription_key,
             )
 
         # print the IAM role arn for this service account
@@ -378,10 +377,10 @@ class EnvironmentSetup(Stack):
         )
 
         for extension in EnvironmentSetup._EXTENSIONS:
-            logger.info(f"Adding extension stack{extension.__name__}")
+            logger.info(f'Adding extension stack{extension.__name__}')
             extension.extent(self)
 
-        TagsUtil.add_tags(stack=self, model=Environment, target_type="environment")
+        TagsUtil.add_tags(stack=self, model=Environment, target_type='environment')
 
         CDKNagUtil.check_rules(self)
 
@@ -394,7 +393,9 @@ class EnvironmentSetup(Stack):
             )
             return default_role
         else:
-            environment_admin_group_role = self.create_group_environment_role(group=self.environment_admins_group, id='DefaultEnvironmentRole')
+            environment_admin_group_role = self.create_group_environment_role(
+                group=self.environment_admins_group, id='DefaultEnvironmentRole'
+            )
             return environment_admin_group_role
 
     def create_or_import_environment_groups_roles(self):
@@ -413,7 +414,6 @@ class EnvironmentSetup(Stack):
         return group_roles
 
     def create_group_environment_role(self, group: EnvironmentGroup, id: str):
-
         group_permissions = self.get_environment_group_permissions(
             self.engine, self._environment.environmentUri, group.groupUri
         )
@@ -437,22 +437,24 @@ class EnvironmentSetup(Stack):
             environmentUri=self._environment.environmentUri,
             resource_prefix=self._environment.resourcePrefix,
             role_name=group.environmentIAMRoleName,
-            account=self._environment.AwsAccountId
+            account=self._environment.AwsAccountId,
         )
         try:
             managed_policies = policy_manager.get_all_policies()
         except Exception as e:
-            logger.info(f"Not adding any managed policy because of exception: {e}")
+            logger.info(f'Not adding any managed policy because of exception: {e}')
             # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
             managed_policies = []
         for policy in managed_policies:
             # If there is a managed policy that exist it should be attached to the IAM role
-            if policy.get("exists", False):
-                external_managed_policies.append(iam.ManagedPolicy.from_managed_policy_name(
-                    self,
-                    id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
-                    managed_policy_name=policy.get("policy_name")
-                ))
+            if policy.get('exists', False):
+                external_managed_policies.append(
+                    iam.ManagedPolicy.from_managed_policy_name(
+                        self,
+                        id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
+                        managed_policy_name=policy.get('policy_name'),
+                    )
+                )
 
         with self.engine.scoped_session() as session:
             data_policy = S3Policy(
@@ -536,12 +538,7 @@ class EnvironmentSetup(Stack):
             'SNS:Publish',
             'SNS:Receive',
         ]
-        topic = sns.Topic(
-            self,
-            f'{construct_id}',
-            topic_name=f'{construct_id}',
-            master_key=kms_key
-        )
+        topic = sns.Topic(self, f'{construct_id}', topic_name=f'{construct_id}', master_key=kms_key)
 
         topic.add_to_resource_policy(
             iam.PolicyStatement(

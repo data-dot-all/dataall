@@ -58,9 +58,7 @@ class DatasetProfilingService:
     def resolve_profiling_run_status(run_uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            task = Task(
-                targetUri=run_uri, action='glue.job.profiling_run_status'
-            )
+            task = Task(targetUri=run_uri, action='glue.job.profiling_run_status')
             session.add(task)
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
@@ -74,9 +72,7 @@ class DatasetProfilingService:
     def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session, table_uri=uri)
-            run: DatasetProfilingRun = (
-                DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
-            )
+            run: DatasetProfilingRun = DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
 
             if run:
                 if not run.results:
@@ -89,8 +85,8 @@ class DatasetProfilingService:
                         run.results = results
 
                 if not run.results:
-                    run_with_results = (
-                        DatasetProfilingRepository.get_table_last_profiling_run_with_results(session, uri)
+                    run_with_results = DatasetProfilingRepository.get_table_last_profiling_run_with_results(
+                        session, uri
                     )
                     if run_with_results:
                         run = run_with_results
@@ -106,11 +102,12 @@ class DatasetProfilingService:
     @staticmethod
     def _check_preview_permissions_if_needed(session, table_uri):
         context = get_context()
-        table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
-            session, table_uri
-        )
+        table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-        if ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality) != ConfidentialityClassification.Unclassified.value:
+        if (
+            ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
+            != ConfidentialityClassification.Unclassified.value
+        ):
             ResourcePolicy.check_user_resource_permission(
                 session=session,
                 username=context.username,

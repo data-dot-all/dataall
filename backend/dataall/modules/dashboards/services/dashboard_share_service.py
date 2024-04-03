@@ -4,8 +4,12 @@ from dataall.core.permissions.permission_checker import has_tenant_permission, h
 from dataall.base.db.exceptions import InvalidInput, UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import DashboardShareStatus, Dashboard
-from dataall.modules.dashboards.services.dashboard_permissions import SHARE_DASHBOARD, MANAGE_DASHBOARDS, GET_DASHBOARD, \
-    CREATE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_permissions import (
+    SHARE_DASHBOARD,
+    MANAGE_DASHBOARDS,
+    GET_DASHBOARD,
+    CREATE_DASHBOARD,
+)
 
 
 class DashboardShareService:
@@ -89,7 +93,7 @@ class DashboardShareService:
                 username=context.username,
                 dashboard=dashboard,
                 principal_id=principal_id,
-                init_status=DashboardShareStatus.APPROVED
+                init_status=DashboardShareStatus.APPROVED,
             )
 
             DashboardShareService._create_share_policy(session, principal_id, dashboard.dashboardUri)

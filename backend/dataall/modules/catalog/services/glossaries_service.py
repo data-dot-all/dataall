@@ -4,11 +4,10 @@ from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_tenant_permission
 
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
-from dataall.modules.catalog.services.glossaries_permissions import (
-    MANAGE_GLOSSARIES
-)
+from dataall.modules.catalog.db.glossary_models import GlossaryNode
+from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
 from dataall.modules.catalog.indexers.registry import GlossaryRegistry
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +16,6 @@ def _session():
 
 
 class GlossariesService:
-
     @staticmethod
     @has_tenant_permission(MANAGE_GLOSSARIES)
     def create_glossary(data: dict = None) -> GlossaryNode:
@@ -62,13 +60,13 @@ class GlossariesService:
             return GlossaryRepository.get_node_tree(session=session, path=path, filter=filter)
 
     @staticmethod
-    def get_node_link_to_target(uri: str, targetUri: str,):
+    def get_node_link_to_target(
+        uri: str,
+        targetUri: str,
+    ):
         with _session() as session:
             return GlossaryRepository.get_node_link_to_target(
-                session=session,
-                username=get_context().username,
-                uri=uri,
-                targetUri=targetUri
+                session=session, username=get_context().username, uri=uri, targetUri=targetUri
             )
 
     @staticmethod
@@ -80,10 +78,7 @@ class GlossariesService:
     def list_term_associations(node: GlossaryNode, filter: dict = None):
         with _session() as session:
             return GlossaryRepository.list_term_associations(
-                session=session,
-                node=node,
-                filter=filter,
-                target_model_definitions=GlossaryRegistry.definitions()
+                session=session, node=node, filter=filter, target_model_definitions=GlossaryRegistry.definitions()
             )
 
     @staticmethod
@@ -114,20 +109,14 @@ class GlossariesService:
     def approve_term_association(linkUri: str):
         with _session() as session:
             return GlossaryRepository.approve_term_association(
-                session=session,
-                username=get_context().username,
-                groups=get_context().groups,
-                linkUri=linkUri
+                session=session, username=get_context().username, groups=get_context().groups, linkUri=linkUri
             )
 
     @staticmethod
     def dismiss_term_association(linkUri: str):
         with _session() as session:
             return GlossaryRepository.dismiss_term_association(
-                session=session,
-                username=get_context().username,
-                groups=get_context().groups,
-                linkUri=linkUri
+                session=session, username=get_context().username, groups=get_context().groups, linkUri=linkUri
             )
 
     @staticmethod

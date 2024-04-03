@@ -1,4 +1,5 @@
 """Defines the object types of the SageMaker ML Studio"""
+
 from dataall.base.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     resolve_user_role,
@@ -100,6 +101,6 @@ SagemakerStudioDomain = gql.ObjectType(
             name='environment',
             type=gql.Ref('Environment'),
             resolver=resolve_environment,
-        )
+        ),
     ],
 )

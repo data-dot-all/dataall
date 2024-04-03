@@ -8,7 +8,8 @@ import re
 # these models are not used directly in env.py, but these imports are important for alembic
 # import additional models here
 
-
+# disable ruff-format, because this unused imports are important
+# fmt: off
 from dataall.modules.catalog.db.glossary_models import GlossaryNode, TermLink
 from dataall.modules.dashboards.db.dashboard_models import DashboardShare, Dashboard
 from dataall.modules.datapipelines import DataPipeline
@@ -17,6 +18,8 @@ from dataall.modules.feed.db.feed_models import FeedMessage
 from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.vote.db.vote_models import Vote
 from dataall.modules.worksheets.db.worksheet_models import WorksheetQueryResult, Worksheet
+# fmt: on
+# enable ruff-format back
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -70,7 +73,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         version_table_schema=ENVNAME,
         literal_binds=True,
-        include_object=include_object
+        include_object=include_object,
     )
 
     with context.begin_transaction():

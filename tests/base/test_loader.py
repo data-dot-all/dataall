@@ -100,17 +100,12 @@ def patch_loading(mocker, all_modules, in_config):
         'dataall.base.loader._all_modules',
         return_value=all_modules,
     )
-    mocker.patch(
-        'dataall.base.loader._load_modules',
-        return_value=({module.name() for module in in_config}, {})
-    )
+    mocker.patch('dataall.base.loader._load_modules', return_value=({module.name() for module in in_config}, {}))
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def patch_modes(mocker):
-    mocker.patch(
-        'dataall.base.loader._ACTIVE_MODES', set()
-    )
+    mocker.patch('dataall.base.loader._ACTIVE_MODES', set())
     yield
 
 
@@ -141,9 +136,11 @@ def test_many_nested_layers(mocker):
 
 
 def test_complex_loading(mocker):
-    patch_loading(mocker, [
-        AModule, BModule, CModule, DModule, EModule, FModule, GModule, IModule, JModule, KModule
-    ], {CModule, FModule, GModule, IModule, KModule})
+    patch_loading(
+        mocker,
+        [AModule, BModule, CModule, DModule, EModule, FModule, GModule, IModule, JModule, KModule],
+        {CModule, FModule, GModule, IModule, KModule},
+    )
 
     loader.load_modules({ImportMode.API})
     assert order == [AModule, JModule, BModule, DModule, EModule, GModule, FModule, IModule, KModule]
@@ -157,4 +154,3 @@ def test_incorrect_loading(mocker):
     patch_loading(mocker, [AModule, BModule], {AModule})
     with pytest.raises(ImportError):
         loader.load_modules({ImportMode.API})
-

@@ -1,4 +1,5 @@
 """Contains the enums GraphQL mapping for SageMaker ML Studio"""
+
 from dataall.base.api.constants import GraphQLEnumMapper
 
 

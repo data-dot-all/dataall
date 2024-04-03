@@ -5,6 +5,7 @@ Revises: d922057f0d91
 Create Date: 2022-11-29 10:57:27.641565
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
@@ -47,9 +48,7 @@ class EnvironmentGroup(Base):
 
 class ShareObject(Base):
     __tablename__ = 'share_object'
-    shareUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('share')
-    )
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
     groupUri = Column(String)
@@ -73,15 +72,9 @@ def upgrade():
         sa.Column('groupUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('IAMRoleName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('IAMRoleArn', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('consumptionRoleUri', name='consumptionRoleUri_pkey'),
     )
 
@@ -94,14 +87,18 @@ def upgrade():
         print('Back-filling share_object table...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            env_group: [EnvironmentGroup] = session.query(EnvironmentGroup).filter(
-                (
-                    and_(
-                        EnvironmentGroup.groupUri == share.principalId,
-                        EnvironmentGroup.environmentUri == share.environmentUri,
+            env_group: [EnvironmentGroup] = (
+                session.query(EnvironmentGroup)
+                .filter(
+                    (
+                        and_(
+                            EnvironmentGroup.groupUri == share.principalId,
+                            EnvironmentGroup.environmentUri == share.environmentUri,
+                        )
                     )
                 )
-            ).first()
+                .first()
+            )
             if not share.groupUri:
                 share.groupUri = share.principalId
                 share.principalIAMRoleName = env_group.environmentIAMRoleName

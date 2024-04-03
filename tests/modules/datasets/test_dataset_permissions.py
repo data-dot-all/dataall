@@ -3,8 +3,12 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db.exceptions import ResourceUnauthorized
 from dataall.core.permissions.permissions import TENANT_ALL
-from dataall.modules.datasets.services.dataset_permissions import DATASET_WRITE, UPDATE_DATASET, MANAGE_DATASETS, \
-    DATASET_READ
+from dataall.modules.datasets.services.dataset_permissions import (
+    DATASET_WRITE,
+    UPDATE_DATASET,
+    MANAGE_DATASETS,
+    DATASET_READ,
+)
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -32,9 +36,7 @@ def test_attach_resource_policy(db, user, group, dataset_fixture):
         )
 
 
-def test_attach_tenant_policy(
-    db, user, group, dataset_fixture, permissions, tenant
-):
+def test_attach_tenant_policy(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
         TenantPolicy.attach_group_tenant_policy(
             session=session,
@@ -52,9 +54,7 @@ def test_attach_tenant_policy(
         )
 
 
-def test_unauthorized_resource_policy(
-    db, user, group, dataset_fixture, permissions
-):
+def test_unauthorized_resource_policy(db, user, group, dataset_fixture, permissions):
     with pytest.raises(ResourceUnauthorized):
         with db.scoped_session() as session:
             assert ResourcePolicy.check_user_resource_permission(

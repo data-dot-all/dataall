@@ -14,9 +14,7 @@ class CodeArtifactStack(NestedStack):
         super().__init__(scope, id, **kwargs)
         domain_dict = dict(domain_name=f'{resource_prefix}-domain-{git_branch}')
         if target_envs:
-            principals: [iam.AccountPrincipal] = [
-                iam.AccountPrincipal(account['account']) for account in target_envs
-            ]
+            principals: [iam.AccountPrincipal] = [iam.AccountPrincipal(account['account']) for account in target_envs]
             principals.append(iam.AccountPrincipal(self.account))
             domain_policy = iam.PolicyDocument(
                 statements=[
@@ -41,15 +39,15 @@ class CodeArtifactStack(NestedStack):
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
                         actions=[
-                            "codeartifact:DescribePackageVersion",
-                            "codeartifact:DescribeRepository",
-                            "codeartifact:GetPackageVersionReadme",
-                            "codeartifact:GetRepositoryEndpoint",
-                            "codeartifact:ListPackageVersionAssets",
-                            "codeartifact:ListPackageVersionDependencies",
-                            "codeartifact:ListPackageVersions",
-                            "codeartifact:ListPackages",
-                            "codeartifact:ReadFromRepository"
+                            'codeartifact:DescribePackageVersion',
+                            'codeartifact:DescribeRepository',
+                            'codeartifact:GetPackageVersionReadme',
+                            'codeartifact:GetRepositoryEndpoint',
+                            'codeartifact:ListPackageVersionAssets',
+                            'codeartifact:ListPackageVersionDependencies',
+                            'codeartifact:ListPackageVersions',
+                            'codeartifact:ListPackages',
+                            'codeartifact:ReadFromRepository',
                         ],
                         principals=principals,
                         resources=['*'],
@@ -60,7 +58,7 @@ class CodeArtifactStack(NestedStack):
         domain = codeartifact.CfnDomain(self, 'CodeArtifactDomain', **domain_dict)
         npm_repo = codeartifact.CfnRepository(
             self,
-            f'CodeArtifactNpmRepo',
+            'CodeArtifactNpmRepo',
             domain_name=domain.domain_name,
             repository_name=f'{resource_prefix}-npm-store',
             external_connections=[
@@ -72,13 +70,13 @@ class CodeArtifactStack(NestedStack):
 
         pip_repo = codeartifact.CfnRepository(
             self,
-            f'CodeArtifactPipRepo',
+            'CodeArtifactPipRepo',
             domain_name=domain.domain_name,
             repository_name=f'{resource_prefix}-pypi-store',
             external_connections=[
                 'public:pypi',
             ],
-            permissions_policy_document=pip_repo_policy
+            permissions_policy_document=pip_repo_policy,
         )
         pip_repo.add_override('Properties.DomainName', domain.domain_name)
         pip_repo.add_depends_on(domain)
@@ -94,7 +92,7 @@ class CodeArtifactStack(NestedStack):
     @property
     def codeartifact_pip_repo_name(self) -> str:
         return self.pip_repo.repository_name
-    
+
     @property
     def codeartifact_npm_repo_name(self) -> str:
         return self.npm_repo.repository_name

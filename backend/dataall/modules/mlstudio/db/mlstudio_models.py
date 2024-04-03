@@ -10,11 +10,10 @@ from dataall.base.db import Resource, utils
 
 class SagemakerStudioDomain(Resource, Base):
     """Describes ORM model for sagemaker ML Studio domain"""
+
     __tablename__ = 'sagemaker_studio_domain'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
-    sagemakerStudioUri = Column(
-        String, primary_key=True, default=utils.uuid('sagemakerstudio')
-    )
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+    sagemakerStudioUri = Column(String, primary_key=True, default=utils.uuid('sagemakerstudio'))
     sagemakerStudioDomainID = Column(String, nullable=True)
     SagemakerStudioStatus = Column(String, nullable=True)
     sagemakerStudioDomainName = Column(String, nullable=False)
@@ -29,16 +28,13 @@ class SagemakerStudioDomain(Resource, Base):
 
 class SagemakerStudioUser(Resource, Base):
     """Describes ORM model for sagemaker ML Studio user"""
+
     __tablename__ = 'sagemaker_studio_user_profile'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
-    sagemakerStudioUserUri = Column(
-        String, primary_key=True, default=utils.uuid('sagemakerstudiouserprofile')
-    )
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+    sagemakerStudioUserUri = Column(String, primary_key=True, default=utils.uuid('sagemakerstudiouserprofile'))
     sagemakerStudioUserStatus = Column(String, nullable=False)
     sagemakerStudioUserName = Column(String, nullable=False)
-    sagemakerStudioUserNameSlugify = Column(
-        String, nullable=False, default=utils.slugifier('label')
-    )
+    sagemakerStudioUserNameSlugify = Column(String, nullable=False, default=utils.slugifier('label'))
     sagemakerStudioDomainID = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
     RoleArn = Column(String, nullable=False)

@@ -24,9 +24,7 @@ def import_dashboard(context: Context, source, input: dict = None):
         raise RequiredParameter('label')
 
     return DashboardService.import_dashboard(
-        uri=input['environmentUri'],
-        admin_group=input['SamlGroupName'],
-        data=input
+        uri=input['environmentUri'], admin_group=input['SamlGroupName'], data=input
     )
 
 
@@ -106,16 +104,12 @@ def delete_dashboard(context: Context, source, dashboardUri: str = None):
 
 def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return GlossaryRepository.get_glossary_terms_links(
-            session, source.dashboardUri, 'Dashboard'
-        )
+        return GlossaryRepository.get_glossary_terms_links(session, source.dashboardUri, 'Dashboard')
 
 
 def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return VoteRepository.count_upvotes(
-            session, source.dashboardUri, target_type='dashboard'
-        )
+        return VoteRepository.count_upvotes(session, source.dashboardUri, target_type='dashboard')
 
 
 def get_monitoring_dashboard_id(context, source):
@@ -142,7 +136,5 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
     return DashboardQuicksightService.get_quicksight_reader_url(uri=dashboardUri)
 
 
-def get_quicksight_designer_url(
-    context, source, environmentUri: str = None, dashboardUri: str = None
-):
+def get_quicksight_designer_url(context, source, environmentUri: str = None, dashboardUri: str = None):
     return DashboardQuicksightService.get_quicksight_designer_url(uri=environmentUri)
