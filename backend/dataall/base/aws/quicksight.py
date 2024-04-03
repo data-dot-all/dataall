@@ -61,7 +61,9 @@ class QuicksightClient:
             try:
                 identity_region = QuicksightClient.QUICKSIGHT_IDENTITY_REGIONS[index].get('code')
                 index += 1
-                client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=region, session_region=identity_region)
+                client = QuicksightClient.get_quicksight_client(
+                    AwsAccountId=AwsAccountId, region=region, session_region=identity_region
+                )
                 response = client.describe_account_settings(AwsAccountId=AwsAccountId)
                 logger.info(f'Returning identity region = {identity_region} for account {AwsAccountId}')
                 return identity_region

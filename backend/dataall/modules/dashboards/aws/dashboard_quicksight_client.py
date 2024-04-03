@@ -19,10 +19,14 @@ class DashboardQuicksightClient:
         self._account_id = aws_account_id
         self._region = region
         self._username = username
-        self._client = QuicksightClient.get_quicksight_client(AwsAccountId=aws_account_id, region=region, session_region=region)
+        self._client = QuicksightClient.get_quicksight_client(
+            AwsAccountId=aws_account_id, region=region, session_region=region
+        )
 
     def register_user_in_group(self, group_name, user_role='READER'):
-        identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id, self._region)
+        identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(
+            self._account_id, self._region
+        )
         QuicksightClient.create_quicksight_group(
             AwsAccountId=self._account_id, region=self._region, GroupName=group_name
         )

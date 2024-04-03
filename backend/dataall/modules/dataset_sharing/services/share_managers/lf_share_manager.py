@@ -90,7 +90,9 @@ class LFShareManager:
         :return: List of principals' arns
         """
         principal_iam_role_arn = IAM.get_role_arn_by_name(
-            account_id=self.target_environment.AwsAccountId, region=self.target_environment.region, role_name=self.share.principalIAMRoleName
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            role_name=self.share.principalIAMRoleName,
         )
         principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(

@@ -239,6 +239,7 @@ class EnvironmentService:
             role_name=env_group_iam_role_name,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
+            region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).create_all_policies(managed=env_role_imported)
 
@@ -332,6 +333,7 @@ class EnvironmentService:
             role_name=group_membership.environmentIAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
+            region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).delete_all_policies()
 
@@ -441,6 +443,7 @@ class EnvironmentService:
             role_name=consumption_role.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
+            region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).create_all_policies(managed=consumption_role.dataallManaged)
 
@@ -475,6 +478,7 @@ class EnvironmentService:
                 role_name=consumption_role.IAMRoleName,
                 environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
+                region=environment.region,
                 resource_prefix=environment.resourcePrefix,
             ).delete_all_policies()
 
@@ -929,6 +933,7 @@ class EnvironmentService:
                 role_name=environment.EnvironmentDefaultIAMRoleName,
                 environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
+                region=environment.region,
                 resource_prefix=environment.resourcePrefix,
             ).delete_all_policies()
 

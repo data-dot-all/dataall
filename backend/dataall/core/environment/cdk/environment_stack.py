@@ -438,6 +438,7 @@ class EnvironmentSetup(Stack):
             resource_prefix=self._environment.resourcePrefix,
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
+            region=self._environment.region,
         )
         try:
             managed_policies = policy_manager.get_all_policies()

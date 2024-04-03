@@ -348,6 +348,7 @@ def get_policies(context: Context, source, **kwargs):
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
+            region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).get_all_policies()
 

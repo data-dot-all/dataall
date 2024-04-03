@@ -110,8 +110,11 @@ class SessionHelper:
         base_name = SessionHelper._get_parameter_value(
             parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName'
         )
-        return f"{base_name}-{region}" if config.get_property(
-            'core.features.cdk_pivot_role_multiple_environments_same_account', default=False) else base_name
+        return (
+            f'{base_name}-{region}'
+            if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False)
+            else base_name
+        )
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None):
@@ -369,7 +372,7 @@ class SessionHelper:
 
     @staticmethod
     def is_assumable_pivot_role(accountid):
-        #TODO: region
+        # TODO: region
         try:
             SessionHelper.remote_session(accountid=accountid)
         except ClientError as e:

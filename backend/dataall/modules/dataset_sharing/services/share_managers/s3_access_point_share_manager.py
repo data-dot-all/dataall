@@ -175,6 +175,7 @@ class S3AccessPointShareManager:
         share_policy_service = SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
         )
@@ -202,7 +203,7 @@ class S3AccessPointShareManager:
         ]
 
         version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_environment.AwsAccountId, share_resource_policy_name
+            self.target_environment.AwsAccountId, self.target_environment.region, share_resource_policy_name
         )
 
         s3_statement_index = SharePolicyService._get_statement_by_sid(
@@ -282,6 +283,7 @@ class S3AccessPointShareManager:
         share_policy_service = SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
         )
@@ -306,7 +308,7 @@ class S3AccessPointShareManager:
 
         share_resource_policy_name = share_policy_service.generate_policy_name()
         version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_account_id, share_resource_policy_name
+            self.target_account_id, self.target_environment.region, share_resource_policy_name
         )
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
@@ -339,7 +341,11 @@ class S3AccessPointShareManager:
             )
 
         IAM.update_managed_policy_default_version(
-            self.target_account_id, share_resource_policy_name, version_id, json.dumps(policy_document)
+            self.target_account_id,
+            self.target_environment.region,
+            share_resource_policy_name,
+            version_id,
+            json.dumps(policy_document),
         )
 
     def check_access_point_and_policy(self) -> None:
@@ -482,7 +488,9 @@ class S3AccessPointShareManager:
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('KMS Key Policy', kms_key_id))
             return
 
-        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         existing_policy = json.loads(existing_policy)
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
@@ -510,7 +518,9 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         pivot_role_name = SessionHelper.get_delegation_role_name()
 
         if existing_policy:
@@ -610,6 +620,7 @@ class S3AccessPointShareManager:
         share_policy_service = SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
         )
@@ -625,7 +636,7 @@ class S3AccessPointShareManager:
         share_resource_policy_name = share_policy_service.generate_policy_name()
 
         version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_account_id, share_resource_policy_name
+            self.target_account_id, self.target_environment.region, share_resource_policy_name
         )
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
@@ -652,7 +663,11 @@ class S3AccessPointShareManager:
                 policy_document=policy_document,
             )
         IAM.update_managed_policy_default_version(
-            self.target_account_id, share_resource_policy_name, version_id, json.dumps(policy_document)
+            self.target_account_id,
+            self.target_environment.region,
+            share_resource_policy_name,
+            version_id,
+            json.dumps(policy_document),
         )
 
     def delete_dataset_bucket_key_policy(
@@ -664,7 +679,9 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-        target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_arn = IAM.get_role_arn_by_name(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
         if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
