@@ -29,8 +29,9 @@ class CDKPipelineStack:
     - data.all metadata as environment variables accesible at synth
 
     """
+
     def get_engine(self):
-        envname = os.environ.get("envname", "local")
+        envname = os.environ.get('envname', 'local')
         engine = db.get_engine(envname=envname)
         return engine
 
@@ -39,7 +40,6 @@ class CDKPipelineStack:
     def __init__(self, target_uri):
         engine = self.get_engine()
         with engine.scoped_session() as session:
-
             self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, target_uri)
             self.pipeline_environment = EnvironmentService.get_environment_by_uri(session, self.pipeline.environmentUri)
             # Development environments
@@ -47,12 +47,7 @@ class CDKPipelineStack:
 
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
 
-        self.code_dir_path = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "blueprints"
-            )
-        )
+        self.code_dir_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'blueprints'))
         self.is_create = True
         try:
             codecommit_client = aws.client('codecommit', region_name=self.pipeline.region)
@@ -60,16 +55,24 @@ class CDKPipelineStack:
             if repository:
                 self.is_create = False
                 self.code_dir_path = os.path.realpath(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "blueprints",
-                        "data_pipeline_blueprint"
-                    )
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'blueprints', 'data_pipeline_blueprint')
                 )
-                CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
-                CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments, pipeline_environment=self.pipeline_environment)
+                CDKPipelineStack.write_ddk_json_multienvironment(
+                    path=os.path.join(self.code_dir_path, self.pipeline.repo),
+                    output_file='ddk.json',
+                    pipeline_environment=self.pipeline_environment,
+                    development_environments=self.development_environments,
+                    pipeline_name=self.pipeline.name,
+                )
+                CDKPipelineStack.write_ddk_app_multienvironment(
+                    path=os.path.join(self.code_dir_path, self.pipeline.repo),
+                    output_file='app.py',
+                    pipeline=self.pipeline,
+                    development_environments=self.development_environments,
+                    pipeline_environment=self.pipeline_environment,
+                )
 
-                logger.info(f"Pipeline Repo {self.pipeline.repo} Exists...Handling Update")
+                logger.info(f'Pipeline Repo {self.pipeline.repo} Exists...Handling Update')
                 update_cmds = [
                     f'REPO_NAME={self.pipeline.repo}',
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
@@ -83,29 +86,41 @@ class CDKPipelineStack:
                 # However, the input arguments have be sanitized with the CommandSanitizer
 
                 process = subprocess.run(  # nosemgrep
-                    "; ".join(update_cmds),  # nosemgrep
+                    '; '.join(update_cmds),  # nosemgrep
                     text=True,  # nosemgrep
                     shell=True,  # nosec  # nosemgrep
                     encoding='utf-8',  # nosemgrep
                     cwd=self.code_dir_path,  # nosemgrep
-                    env=self.env  # nosemgrep
+                    env=self.env,  # nosemgrep
                 )
             else:
                 raise Exception
-        except Exception as e:
+        except Exception:
             self.initialize_repo()
-            CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments, pipeline_environment=self.pipeline_environment)
-            CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments, pipeline_name=self.pipeline.name)
+            CDKPipelineStack.write_ddk_app_multienvironment(
+                path=os.path.join(self.code_dir_path, self.pipeline.repo),
+                output_file='app.py',
+                pipeline=self.pipeline,
+                development_environments=self.development_environments,
+                pipeline_environment=self.pipeline_environment,
+            )
+            CDKPipelineStack.write_ddk_json_multienvironment(
+                path=os.path.join(self.code_dir_path, self.pipeline.repo),
+                output_file='ddk.json',
+                pipeline_environment=self.pipeline_environment,
+                development_environments=self.development_environments,
+                pipeline_name=self.pipeline.name,
+            )
             self.git_push_repo()
 
     def initialize_repo(self):
         cmd_init = [
-            f"mkdir {self.pipeline.repo}",
-            f"cp -R data_pipeline_blueprint/* {self.pipeline.repo}/",
-            f"cd {self.pipeline.repo}",
-            "git init --initial-branch main",
+            f'mkdir {self.pipeline.repo}',
+            f'cp -R data_pipeline_blueprint/* {self.pipeline.repo}/',
+            f'cd {self.pipeline.repo}',
+            'git init --initial-branch main',
             f"REPO_URL=$(aws codecommit create-repository --repository-name {self.pipeline.repo} --tags application=dataall,team={self.pipeline.SamlGroupName} --query 'repositoryMetadata.cloneUrlHttp' --output text)",
-            "git remote add origin ${REPO_URL}",
+            'git remote add origin ${REPO_URL}',
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
@@ -121,14 +136,16 @@ class CDKPipelineStack:
             shell=True,  # nosec  # nosemgrep
             encoding='utf-8',  # nosemgrep
             cwd=self.code_dir_path,  # nosemgrep
-            env=self.env  # nosemgrep
+            env=self.env,  # nosemgrep
         )
         if process.returncode == 0:
-            logger.info("Successfully Initialized New CDK/DDK App")
+            logger.info('Successfully Initialized New CDK/DDK App')
 
     @staticmethod
-    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments, pipeline_name):
-        json_envs = ""
+    def write_ddk_json_multienvironment(
+        path, output_file, pipeline_environment, development_environments, pipeline_name
+    ):
+        json_envs = ''
         for env in development_environments:
             json_env = f""",
         "{env.stage}": {{
@@ -193,7 +210,7 @@ cicd_pipeline = (
         .add_synth_action()
         .build_pipeline()"""
 
-        stages = ""
+        stages = ''
         for env in sorted(development_environments, key=lambda env: env.order):
             stage = f""".add_stage(stage_id="{env.stage}", stage=ApplicationStage(app, "{env.stage}", env=ddk.Configurator.get_environment(config_path="./ddk.json", environment_id="{env.stage}")))"""
             stages = stages + stage
@@ -213,10 +230,10 @@ app.synth()
             'git config user.email "codebuild@example.com"',
             'git config user.name "CodeBuild"',
             'git config --local credential.helper "!aws codecommit credential-helper $@"',
-            "git config --local credential.UseHttpPath true",
-            "git add .",
+            'git config --local credential.UseHttpPath true',
+            'git add .',
             "git commit -a -m 'Initial Commit' ",
-            "git push -u origin main"
+            'git push -u origin main',
         ]
 
         logger.info(f"Running Commands: {'; '.join(git_cmds)}")
@@ -230,47 +247,35 @@ app.synth()
             shell=True,  # nosec  # nosemgrep
             encoding='utf-8',  # nosemgrep
             cwd=os.path.join(self.code_dir_path, self.pipeline.repo),  # nosemgrep
-            env=self.env  # nosemgrep
+            env=self.env,  # nosemgrep
         )
         if process.returncode == 0:
-            logger.info("Successfully Pushed DDK App Code")
+            logger.info('Successfully Pushed DDK App Code')
 
     @staticmethod
     def clean_up_repo(pipeline_dir):
         if pipeline_dir:
-            code_dir_path = os.path.realpath(
-                os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)),
-                    "blueprints"
-                )
-            )
+            code_dir_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'blueprints'))
 
-            cmd = ['rm', '-rf', f"./{pipeline_dir}"]
+            cmd = ['rm', '-rf', f'./{pipeline_dir}']
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
-                cmd,
-                text=True,
-                shell=False,
-                encoding='utf-8',
-                capture_output=True,
-                cwd=code_dir_path
+                cmd, text=True, shell=False, encoding='utf-8', capture_output=True, cwd=code_dir_path
             )
 
             if process.returncode == 0:
-                print(f"Successfully cleaned cloned repo: {pipeline_dir}. {str(process.stdout)}")
+                print(f'Successfully cleaned cloned repo: {pipeline_dir}. {str(process.stdout)}')
             else:
-                logger.error(
-                    f'Failed clean cloned repo: {pipeline_dir} due to {str(process.stderr)}'
-                )
+                logger.error(f'Failed clean cloned repo: {pipeline_dir} due to {str(process.stderr)}')
         else:
-            logger.info(f"Info:Path {pipeline_dir} not found")
+            logger.info(f'Info:Path {pipeline_dir} not found')
         return
 
     @staticmethod
     def _check_repository(codecommit_client, repo_name):
         repository = None
-        logger.info(f"Checking Repository Exists: {repo_name}")
+        logger.info(f'Checking Repository Exists: {repo_name}')
         try:
             repository = codecommit_client.get_repository(repositoryName=repo_name)
         except ClientError as e:
@@ -300,7 +305,7 @@ app.synth()
                 {
                     'AWS_ACCESS_KEY_ID': env_creds.access_key,
                     'AWS_SECRET_ACCESS_KEY': env_creds.secret_key,
-                    'AWS_SESSION_TOKEN': env_creds.token
+                    'AWS_SESSION_TOKEN': env_creds.token,
                 }
             )
         return env, aws

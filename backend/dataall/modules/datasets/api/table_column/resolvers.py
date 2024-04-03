@@ -28,15 +28,11 @@ def resolve_terms(context, source: DatasetTableColumn, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        q = session.query(TermLink).filter(
-            TermLink.targetUri == source.columnUri
-        )
+        q = session.query(TermLink).filter(TermLink.targetUri == source.columnUri)
     return paginate(q, page=1, page_size=15).to_dict()
 
 
-def update_table_column(
-    context: Context, source, columnUri: str = None, input: dict = None
-):
+def update_table_column(context: Context, source, columnUri: str = None, input: dict = None):
     if columnUri is None:
         return None
 

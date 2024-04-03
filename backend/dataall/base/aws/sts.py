@@ -54,7 +54,7 @@ class SessionHelper:
                     'sts',
                     config=Config(user_agent_extra=f'{__pkg_name__}/{__version__}'),
                     region_name=region,
-                    endpoint_url=f"https://sts.{region}.amazonaws.com"
+                    endpoint_url=f'https://sts.{region}.amazonaws.com',
                 )
                 response = sts.assume_role(**assume_role_dict)
                 return boto3.Session(
@@ -98,7 +98,8 @@ class SessionHelper:
         :rtype:
         """
         return SessionHelper._get_parameter_value(
-            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId')
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId'
+        )
 
     @classmethod
     def get_delegation_role_name(cls, region):
@@ -107,8 +108,10 @@ class SessionHelper:
             string: name of the assumed role
         """
         base_name = SessionHelper._get_parameter_value(
-            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
-        return f"{base_name}-{region}" if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False) else base_name
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName'
+        )
+        return f"{base_name}-{region}" if config.get_property(
+            'core.features.cdk_pivot_role_multiple_environments_same_account', default=False) else base_name
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None):
@@ -168,7 +171,9 @@ class SessionHelper:
         Returns:
                 string : arn of the CDKToolkit role on the target aws account id
         """
-        log.info(f"Getting CDK look up role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-lookup-role-{accountid}-{region}")
+        log.info(
+            f'Getting CDK look up role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-lookup-role-{accountid}-{region}'
+        )
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(accountid, accountid, region)
 
     @classmethod
@@ -179,8 +184,23 @@ class SessionHelper:
         Returns:
                 string : arn of the CDKToolkit role on the target aws account id
         """
-        log.info(f"Getting CDK exec role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-cfn-exec-role-{accountid}-{region}")
+        log.info(
+            f'Getting CDK exec role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-cfn-exec-role-{accountid}-{region}'
+        )
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-cfn-exec-role-{}-{}'.format(accountid, accountid, region)
+
+    @classmethod
+    def get_delegation_role_id(cls, accountid):
+        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
+        Args:
+            accountid(string) : aws account id
+        Returns :
+            string : RoleId of the role
+        """
+        session = SessionHelper.remote_session(accountid=accountid)
+        client = session.client('iam', region_name='eu-west-1')
+        response = client.get_role(RoleName=cls.get_delegation_role_name())
+        return response['Role']['RoleId']
 
     @classmethod
     def remote_session(cls, accountid, region, role=None):
@@ -194,12 +214,11 @@ class SessionHelper:
         """
         base_session = cls.get_session()
         if role:
-            log.info(f"Remote boto3 session using role={role} for account={accountid}")
+            log.info(f'Remote boto3 session using role={role} for account={accountid}')
             role_arn = role
         else:
-            log.info(f"Remote boto3 session using pivot role for account= {accountid}")
+            log.info(f'Remote boto3 session using pivot role for account= {accountid}')
             role_arn = cls.get_delegation_role_arn(accountid=accountid, region=region)
-            print(f"#### ROLE ARN= {role_arn}")
         session = SessionHelper.get_session(base_session=base_session, role_arn=role_arn)
         return session
 
@@ -215,11 +234,7 @@ class SessionHelper:
         if not session:
             session = cls.get_session()
         region = os.getenv('AWS_REGION', 'eu-west-1')
-        client = session.client(
-            'sts',
-            region_name=region,
-            endpoint_url=f"https://sts.{region}.amazonaws.com"
-        )
+        client = session.client('sts', region_name=region, endpoint_url=f'https://sts.{region}.amazonaws.com')
         response = client.get_caller_identity()
         return response['Account']
 
@@ -351,3 +366,20 @@ class SessionHelper:
 
         # Send final URL to stdout
         return request_url
+
+    @staticmethod
+    def is_assumable_pivot_role(accountid):
+        #TODO: region
+        try:
+            SessionHelper.remote_session(accountid=accountid)
+        except ClientError as e:
+            log.error(
+                f'Failed to assume dataall pivot role session in environment with account id {accountid} due to {e}'
+            )
+            return False
+        except Exception as e:
+            log.error(
+                f'Unexpected error while assuming data.all pivot role in environment with account id {accountid} due to {e}'
+            )
+            return False
+        return True

@@ -34,8 +34,9 @@ install-tests:
 	pip install -r tests/requirements.txt
 
 lint:
-	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+	pip install ruff
+	ruff check --fix
+	ruff format
 
 bandit:
 	pip install bandit
@@ -84,6 +85,12 @@ upgrade-db: upgrade-pip install-backend
 	pip install 'alembic'
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
+
+generate-migrations: upgrade-pip install-backend
+	pip install 'alembic'
+	export PYTHONPATH=./backend && \
+	alembic -c backend/alembic.ini upgrade head
+	alembic -c backend/alembic.ini revision -m "describe_changes_shortly" --autogenerate
 
 clean:
 	@rm -fr cdk_out/

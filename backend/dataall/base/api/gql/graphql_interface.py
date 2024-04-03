@@ -1,4 +1,6 @@
-from .graphql_type import ObjectType
+from dataall.base.api.gql import ObjectType
+from dataall.base.api.gql.graphql_type_modifiers import NonNullableType
+from dataall.base.api.gql.graphql_scalar import String
 
 
 class Interface(ObjectType):

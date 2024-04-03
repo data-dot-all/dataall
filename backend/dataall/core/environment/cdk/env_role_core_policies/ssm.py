@@ -13,22 +13,16 @@ class SSM(ServicePolicy):
                 # sid="SSMReadAll",
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
-                    "ssm:DescribeParameters",
+                    'ssm:DescribeParameters',
                 ],
-                resources=["*"],
+                resources=['*'],
             ),
             aws_iam.PolicyStatement(
                 # sid='CreateTeamParameters',
                 effect=aws_iam.Effect.ALLOW,
-                actions=[
-                    'ssm:AddTagsToResource'
-                ],
-                resources=[f"arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*"],
-                conditions={
-                    'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                actions=['ssm:AddTagsToResource'],
+                resources=[f'arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*'],
+                conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}},
             ),
             aws_iam.PolicyStatement(
                 # sid='ManageTeamParameters',
@@ -43,12 +37,8 @@ class SSM(ServicePolicy):
                     'ssm:DeleteParameters',
                     'ssm:ListTagsForResource',
                 ],
-                resources=[f"arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*"],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            )
+                resources=[f'arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*'],
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
+            ),
         ]
         return statements

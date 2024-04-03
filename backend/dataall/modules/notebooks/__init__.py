@@ -1,4 +1,5 @@
 """Contains the code related to SageMaker notebooks"""
+
 import logging
 
 from dataall.base.loader import ImportMode, ModuleInterface
@@ -18,9 +19,10 @@ class NotebookApiModuleInterface(ModuleInterface):
         import dataall.modules.notebooks.api
 
         from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, UPDATE_NOTEBOOK
-        TargetType("notebook", GET_NOTEBOOK, UPDATE_NOTEBOOK)
 
-        log.info("API of sagemaker notebooks has been imported")
+        TargetType('notebook', GET_NOTEBOOK, UPDATE_NOTEBOOK)
+
+        log.info('API of sagemaker notebooks has been imported')
 
 
 class NotebookCdkModuleInterface(ModuleInterface):
@@ -32,4 +34,5 @@ class NotebookCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.notebooks.cdk
-        log.info("API of sagemaker notebooks has been imported")
+
+        log.info('API of sagemaker notebooks has been imported')

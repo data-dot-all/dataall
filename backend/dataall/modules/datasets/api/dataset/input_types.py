@@ -16,12 +16,10 @@ NewDatasetInput = gql.InputType(
         gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
         gql.Argument(name='SamlAdminGroupName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='businessOwnerEmail', type=gql.String),
-        gql.Argument(
-            name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
-        ),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
-        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
+        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
 
@@ -36,19 +34,17 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument('businessOwnerDelegationEmails', gql.ArrayType(gql.String)),
         gql.Argument('businessOwnerEmail', gql.String),
         gql.Argument('language', gql.Ref('Language')),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
-        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
+        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
 
 DatasetSortCriteria = gql.InputType(
     name='DatasetSortCriteria',
     arguments=[
-        gql.Argument(
-            name='field', type=gql.NonNullableType(DatasetSortField.toGraphQLEnum())
-        ),
+        gql.Argument(name='field', type=gql.NonNullableType(DatasetSortField.toGraphQLEnum())),
         gql.Argument(name='direction', type=SortDirection.toGraphQLEnum()),
     ],
 )
@@ -79,9 +75,7 @@ DatasetPresignedUrlInput = gql.InputType(
 )
 
 
-CrawlerInput = gql.InputType(
-    name='CrawlerInput', arguments=[gql.Argument(name='prefix', type=gql.String)]
-)
+CrawlerInput = gql.InputType(name='CrawlerInput', arguments=[gql.Argument(name='prefix', type=gql.String)])
 
 ImportDatasetInput = gql.InputType(
     name='ImportDatasetInput',
@@ -100,12 +94,17 @@ ImportDatasetInput = gql.InputType(
         gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
         gql.Argument(name='SamlAdminGroupName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='businessOwnerEmail', type=gql.String),
-        gql.Argument(
-            name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)
-        ),
-        gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
+        gql.Argument(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
+        gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
-        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean)
+        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+    ],
+)
 
+ShareObjectSelectorInput = gql.InputType(
+    name='ShareObjectSelectorInput',
+    arguments=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='shareUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )

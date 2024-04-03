@@ -9,7 +9,7 @@ class UnionTypeRegistry(ABC):
 
     @classmethod
     def types(cls):
-        raise NotImplementedError("Types method is not implemented")
+        raise NotImplementedError('Types method is not implemented')
 
 
 @cache_instances

@@ -3,21 +3,12 @@ from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
-from dataall.base.config import config as config_json
 
 logger = logging.getLogger(__name__)
 
 
 class PivotRoleStatementSet(object):
-    def __init__(
-            self,
-            stack,
-            env_resource_prefix,
-            role_name,
-            account,
-            region,
-            environmentUri
-    ):
+    def __init__(self, stack, env_resource_prefix, role_name, account, region, environmentUri):
         self.stack = stack
         self.env_resource_prefix = env_resource_prefix
         self.role_name = role_name
@@ -33,7 +24,9 @@ class PivotRoleStatementSet(object):
         statements = []
         services = PivotRoleStatementSet.__subclasses__()
         logger.info(f'Found {len(services)} subclasses of PivotRoleStatementSet')
-        logger.info(f'PivotroleStatement variables: {self.env_resource_prefix}, {self.role_name}, {self.account}, {self.region}')
+        logger.info(
+            f'PivotroleStatement variables: {self.env_resource_prefix}, {self.role_name}, {self.account}, {self.region}'
+        )
 
         for service in services:
             statements.extend(service.get_statements(self))
@@ -46,8 +39,8 @@ class PivotRoleStatementSet(object):
             policies.append(
                 iam.ManagedPolicy(
                     self.stack,
-                    f'PivotRolePolicy-{index+1}',
-                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index+1}',
+                    f'PivotRolePolicy-{index + 1}',
+                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index + 1}',
                     statements=chunk,
                 )
             )
@@ -58,9 +51,14 @@ class PivotRoleStatementSet(object):
         This method returns the list of IAM policy statements needed to be added to the pivot role policies
         :return: list
         """
-        raise NotImplementedError(
-            'PivotRoleStatementSet subclasses need to implement the get_statements class method'
-        )
+        raise NotImplementedError('PivotRoleStatementSet subclasses need to implement the get_statements class method')
+
+
+# IT IS HERE TO AVOID CIRCULAR IMPORT
+# disable ruff-format, because this unused imports are important
+# pivot_role_core_policies is used to fill PivotRoleStatementSet subclasses (line 31)
+# ruff: noqa: E402
+from dataall.core.environment.cdk import pivot_role_core_policies
 
 
 class PivotRole(NestedStack):
@@ -69,8 +67,6 @@ class PivotRole(NestedStack):
         self.env_resource_prefix = config['resourcePrefix']
         self.role_name = config['roleName']
         self.environmentUri = config['environmentUri']
-
-        from dataall.core.environment.cdk import pivot_role_core_policies
 
         # Create Pivot IAM Role
         self.pivot_role = self.create_pivot_role(
@@ -93,7 +89,7 @@ class PivotRole(NestedStack):
             role_name=self.role_name,
             account=self.account,
             region=self.region,
-            environmentUri=self.environmentUri
+            environmentUri=self.environmentUri,
         ).generate_policies()
 
         logger.info(f'Managed Policies: {managed_policies}')
@@ -108,7 +104,7 @@ class PivotRole(NestedStack):
             ),
             path='/',
             max_session_duration=Duration.hours(12),
-            managed_policies=managed_policies
+            managed_policies=managed_policies,
         )
 
         role.assume_role_policy.add_statements(
@@ -118,11 +114,13 @@ class PivotRole(NestedStack):
                 actions=['sts:AssumeRole'],
                 conditions={
                     'StringEquals': {'sts:ExternalId': external_id},
-                    'StringLike': {"aws:PrincipalArn": [
-                        f"arn:aws:iam::{principal_id}:role/*graphql-role",
-                        f"arn:aws:iam::{principal_id}:role/*awsworker-role",
-                        f"arn:aws:iam::{principal_id}:role/*ecs-tasks-role"
-                    ]}
+                    'StringLike': {
+                        'aws:PrincipalArn': [
+                            f'arn:aws:iam::{principal_id}:role/*graphql-role',
+                            f'arn:aws:iam::{principal_id}:role/*awsworker-role',
+                            f'arn:aws:iam::{principal_id}:role/*ecs-tasks-role',
+                        ]
+                    },
                 },
             )
         )

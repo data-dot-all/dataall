@@ -8,14 +8,29 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectActions, ShareableType, ShareItemStatus, \
-    ShareItemActions
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareObjectActions,
+    ShareableType,
+    ShareItemStatus,
+    ShareItemActions,
+    ShareItemHealthStatus,
+)
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareObjectSM, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repositories import (
+    ShareObjectRepository,
+    ShareObjectSM,
+    ShareItemSM,
+)
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
-from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE_OBJECT, ADD_ITEM, REMOVE_ITEM, \
-    LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
+from dataall.modules.dataset_sharing.services.share_permissions import (
+    GET_SHARE_OBJECT,
+    ADD_ITEM,
+    REMOVE_ITEM,
+    LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
+    APPROVE_SHARE_OBJECT,
+)
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
@@ -28,6 +43,36 @@ class ShareItemService:
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
         return share.shareUri
+
+    @staticmethod
+    @has_resource_permission(GET_SHARE_OBJECT)
+    def verify_items_share_object(uri, item_uris):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            for item in verify_items:
+                setattr(item, 'healthStatus', ShareItemHealthStatus.PendingVerify.value)
+
+            verify_share_items_task: Task = Task(action='ecs.share.verify', targetUri=uri)
+            session.add(verify_share_items_task)
+
+        Worker.queue(engine=context.db_engine, task_ids=[verify_share_items_task.taskUri])
+        return True
+
+    @staticmethod
+    @has_resource_permission(APPROVE_SHARE_OBJECT)
+    def reapply_items_share_object(uri, item_uris):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            verify_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in item_uris]
+            for item in verify_items:
+                setattr(item, 'healthStatus', ShareItemHealthStatus.PendingReApply.value)
+
+            reapply_share_items_task: Task = Task(action='ecs.share.reapply', targetUri=uri)
+            session.add(reapply_share_items_task)
+
+        Worker.queue(engine=context.db_engine, task_ids=[reapply_share_items_task.taskUri])
+        return True
 
     @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
@@ -68,11 +113,9 @@ class ShareItemService:
                         resource_uri=item.itemUri,
                     )
 
-            ShareNotificationService(
-                session=session,
-                dataset=dataset,
-                share=share
-            ).notify_share_object_rejection(email_id=context.username)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
+                email_id=context.username
+            )
 
             revoke_share_task: Task = Task(
                 action='ecs.share.revoke',
@@ -94,7 +137,7 @@ class ShareItemService:
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            target_environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
@@ -108,17 +151,20 @@ class ShareItemService:
                 raise UnauthorizedOperation(
                     action=ADD_ITEM,
                     message=f'Lake Formation cross region sharing is not supported. '
-                            f'Table {item.GlueTableName} is in {item.region} and target environment '
-                            f'{target_environment.name} is in {target_environment.region} ',
+                    f'Table {item.GlueTableName} is in {item.region} and target environment '
+                    f'{target_environment.name} is in {target_environment.region} ',
                 )
 
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
 
             s3_access_point_name = utils.slugify(
                 share.datasetUri + '-' + share.principalId,
-                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+                max_length=50,
+                lowercase=True,
+                regex_pattern='[^a-zA-Z0-9-]',
+                separator='-',
             )
-            log.info(f"S3AccessPointName={s3_access_point_name}")
+            log.info(f'S3AccessPointName={s3_access_point_name}')
 
             if not share_item:
                 share_item = ShareObjectItem(
@@ -128,15 +174,13 @@ class ShareItemService:
                     itemName=item.name,
                     status=ShareItemStatus.PendingApproval.value,
                     owner=context.username,
-                    GlueDatabaseName=dataset.GlueDatabaseName
+                    GlueDatabaseName=ShareItemService._get_glue_database_for_share(
+                        dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
+                    )
                     if item_type == ShareableType.Table.value
                     else '',
-                    GlueTableName=item.GlueTableName
-                    if item_type == ShareableType.Table.value
-                    else '',
-                    S3AccessPointName=s3_access_point_name
-                    if item_type == ShareableType.StorageLocation.value
-                    else '',
+                    GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else '',
+                    S3AccessPointName=s3_access_point_name if item_type == ShareableType.StorageLocation.value else '',
                 )
                 session.add(share_item)
         return share_item
@@ -146,7 +190,10 @@ class ShareItemService:
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-            if share_item.itemType == ShareableType.Table.value and share_item.status == ShareItemStatus.Share_Failed.value:
+            if (
+                share_item.itemType == ShareableType.Table.value
+                and share_item.status == ShareItemStatus.Share_Failed.value
+            ):
                 share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
                 ResourcePolicy.delete_resource_policy(
                     session=session,
@@ -168,9 +215,7 @@ class ShareItemService:
     @staticmethod
     def check_existing_shared_items(share):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.check_existing_shared_items(
-                session, share.shareUri
-            )
+            return ShareObjectRepository.check_existing_shared_items(session, share.shareUri)
 
     @staticmethod
     def list_shareable_objects(share, filter, is_revokable=False):
@@ -185,3 +230,20 @@ class ShareItemService:
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+
+    @staticmethod
+    def _get_glue_database_for_share(glueDatabase, account_id, region):
+        # Check if a catalog account exists and return database accordingly
+        try:
+            catalog_dict = GlueClient(
+                account_id=account_id,
+                region=region,
+                database=glueDatabase,
+            ).get_source_catalog()
+
+            if catalog_dict is not None:
+                return catalog_dict.get('database_name')
+            else:
+                return glueDatabase
+        except Exception as e:
+            raise e

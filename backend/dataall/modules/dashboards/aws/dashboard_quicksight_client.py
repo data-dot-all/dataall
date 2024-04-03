@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.secrets_manager import SecretsManager
-from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -24,7 +23,9 @@ class DashboardQuicksightClient:
 
     def register_user_in_group(self, group_name, user_role='READER'):
         identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id, self._region)
-        QuicksightClient.create_quicksight_group(AwsAccountId=self._account_id, region=self._region, GroupName=group_name)
+        QuicksightClient.create_quicksight_group(
+            AwsAccountId=self._account_id, region=self._region, GroupName=group_name
+        )
         user = self._describe_user()
 
         if user is not None:
@@ -59,7 +60,7 @@ class DashboardQuicksightClient:
             )
         return self._describe_user()
 
-    def get_reader_session(self, user_role="READER", dashboard_id=None, domain_name: str = None):
+    def get_reader_session(self, user_role='READER', dashboard_id=None, domain_name: str = None):
         user = self._describe_user()
         if user is None:
             user = self.register_user_in_group(self._DEFAULT_GROUP_NAME, user_role)
@@ -67,10 +68,10 @@ class DashboardQuicksightClient:
         response = self._client.generate_embed_url_for_registered_user(
             AwsAccountId=self._account_id,
             SessionLifetimeInMinutes=120,
-            UserArn=user.get("Arn"),
+            UserArn=user.get('Arn'),
             ExperienceConfiguration={
-                "Dashboard": {
-                    "InitialDashboardId": dashboard_id,
+                'Dashboard': {
+                    'InitialDashboardId': dashboard_id,
                 },
             },
             AllowedDomains=[domain_name],
@@ -80,7 +81,7 @@ class DashboardQuicksightClient:
     def get_shared_reader_session(self, group_name, user_role='READER', dashboard_id=None):
         aws_account_id = self._account_id
         identity_region = QuicksightClient.get_identity_region(aws_account_id, self._region)
-        group_principal = f"arn:aws:quicksight:{identity_region}:{aws_account_id}:group/default/{group_name}"
+        group_principal = f'arn:aws:quicksight:{identity_region}:{aws_account_id}:group/default/{group_name}'
 
         user = self.register_user_in_group(group_name, user_role)
 
@@ -94,14 +95,14 @@ class DashboardQuicksightClient:
                     {
                         'Principal': group_principal,
                         'Actions': [
-                            "quicksight:DescribeDashboard",
-                            "quicksight:ListDashboardVersions",
-                            "quicksight:QueryDashboard",
-                        ]
+                            'quicksight:DescribeDashboard',
+                            'quicksight:ListDashboardVersions',
+                            'quicksight:QueryDashboard',
+                        ],
                     },
-                ]
+                ],
             )
-            log.info(f"Permissions granted: {permissions}")
+            log.info(f'Permissions granted: {permissions}')
 
         response = self._client.get_dashboard_embed_url(
             AwsAccountId=aws_account_id,
@@ -127,8 +128,8 @@ class DashboardQuicksightClient:
 
     def get_author_session(self):
         user = self._describe_user()
-        if user is None or user.get("Role", None) not in ["AUTHOR", "ADMIN"]:
-            user = self.register_user_in_group(self._DEFAULT_GROUP_NAME, "AUTHOR")
+        if user is None or user.get('Role', None) not in ['AUTHOR', 'ADMIN']:
+            user = self.register_user_in_group(self._DEFAULT_GROUP_NAME, 'AUTHOR')
 
         response = self._client.get_session_embed_url(
             AwsAccountId=self._account_id,
@@ -171,74 +172,69 @@ class DashboardQuicksightClient:
 
         self.register_user_in_group(self._DEFAULT_GROUP_NAME, 'AUTHOR')
         try:
-            client.describe_data_source(
-                AwsAccountId=aws_account_id, DataSourceId="dataall-metadata-db"
-            )
+            client.describe_data_source(AwsAccountId=aws_account_id, DataSourceId='dataall-metadata-db')
 
         except client.exceptions.ResourceNotFoundException:
             aurora_secret_arn = ParameterStoreManager.get_parameter_value(
                 AwsAccountId=aws_account_id,
                 region=region,
-                parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn'
+                parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn',
             )
 
-            aurora_params = SecretsManager(aws_account_id, region).get_secret_value(
-                secret_id=aurora_secret_arn
-            )
+            aurora_params = SecretsManager(aws_account_id, region).get_secret_value(secret_id=aurora_secret_arn)
             aurora_params_dict = ast.literal_eval(aurora_params)
             client.create_data_source(
                 AwsAccountId=aws_account_id,
-                DataSourceId="dataall-metadata-db",
-                Name="dataall-metadata-db",
-                Type="AURORA_POSTGRESQL",
+                DataSourceId='dataall-metadata-db',
+                Name='dataall-metadata-db',
+                Type='AURORA_POSTGRESQL',
                 DataSourceParameters={
                     'AuroraPostgreSqlParameters': {
-                        'Host': aurora_params_dict["host"],
-                        'Port': "5432",
-                        'Database': aurora_params_dict["dbname"]
+                        'Host': aurora_params_dict['host'],
+                        'Port': '5432',
+                        'Database': aurora_params_dict['dbname'],
                     }
                 },
                 Credentials={
-                    "CredentialPair": {
-                        "Username": aurora_params_dict["username"],
-                        "Password": aurora_params_dict["password"],
+                    'CredentialPair': {
+                        'Username': aurora_params_dict['username'],
+                        'Password': aurora_params_dict['password'],
                     }
                 },
                 Permissions=[
                     {
-                        "Principal": f"arn:aws:quicksight:{region}:{aws_account_id}:group/default/dataall",
-                        "Actions": [
-                            "quicksight:UpdateDataSourcePermissions",
-                            "quicksight:DescribeDataSource",
-                            "quicksight:DescribeDataSourcePermissions",
-                            "quicksight:PassDataSource",
-                            "quicksight:UpdateDataSource",
-                            "quicksight:DeleteDataSource"
-                        ]
+                        'Principal': f'arn:aws:quicksight:{region}:{aws_account_id}:group/default/dataall',
+                        'Actions': [
+                            'quicksight:UpdateDataSourcePermissions',
+                            'quicksight:DescribeDataSource',
+                            'quicksight:DescribeDataSourcePermissions',
+                            'quicksight:PassDataSource',
+                            'quicksight:UpdateDataSource',
+                            'quicksight:DeleteDataSource',
+                        ],
                     }
                 ],
                 VpcConnectionProperties={
-                    'VpcConnectionArn': f"arn:aws:quicksight:{region}:{aws_account_id}:vpcConnection/"
-                                        f"{vpc_connection_id}"
-                }
+                    'VpcConnectionArn': f'arn:aws:quicksight:{region}:{aws_account_id}:vpcConnection/'
+                    f'{vpc_connection_id}'
+                },
             )
 
-        return "dataall-metadata-db"
+        return 'dataall-metadata-db'
 
     def _check_dashboard_permissions(self, dashboard_id):
-        response = self._client.describe_dashboard_permissions(
-            AwsAccountId=self._account_id,
-            DashboardId=dashboard_id
-        )['Permissions']
-        log.info(f"Dashboard initial permissions: {response}")
+        response = self._client.describe_dashboard_permissions(AwsAccountId=self._account_id, DashboardId=dashboard_id)[
+            'Permissions'
+        ]
+        log.info(f'Dashboard initial permissions: {response}')
         read_principals = []
         write_principals = []
 
-        for a, p in zip([p["Actions"] for p in response], [p["Principal"] for p in response]):
-            write_principals.append(p) if "Update" in str(a) else read_principals.append(p)
+        for a, p in zip([p['Actions'] for p in response], [p['Principal'] for p in response]):
+            write_principals.append(p) if 'Update' in str(a) else read_principals.append(p)
 
-        log.info(f"Dashboard updated permissions, Read principals: {read_principals}")
-        log.info(f"Dashboard updated permissions, Write principals: {write_principals}")
+        log.info(f'Dashboard updated permissions, Read principals: {read_principals}')
+        log.info(f'Dashboard updated permissions, Write principals: {write_principals}')
 
         return read_principals, write_principals
 
@@ -247,18 +243,14 @@ class DashboardQuicksightClient:
         user = self._describe_user()
         if not user:
             return []
-        response = client.list_user_groups(
-            UserName=self._username, AwsAccountId=self._account_id, Namespace='default'
-        )
+        response = client.list_user_groups(UserName=self._username, AwsAccountId=self._account_id, Namespace='default')
         return response['GroupList']
 
     def _describe_user(self):
         """Describes a QS user, returns None if not found"""
         client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id, self._region)
         try:
-            response = client.describe_user(
-                UserName=self._username, AwsAccountId=self._account_id, Namespace='default'
-            )
+            response = client.describe_user(UserName=self._username, AwsAccountId=self._account_id, Namespace='default')
         except ClientError:
             return None
         return response.get('User')

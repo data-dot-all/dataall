@@ -1,4 +1,3 @@
-import hashlib
 import os
 
 from aws_cdk import (
@@ -22,6 +21,7 @@ from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
 
+
 class CloudfrontDistro(pyNestedClass):
     def __init__(
         self,
@@ -39,16 +39,16 @@ class CloudfrontDistro(pyNestedClass):
         super().__init__(scope, id, **kwargs)
 
         # Create IP set if IP filtering enabled
-        ip_set_cloudfront=None
-        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+        ip_set_cloudfront = None
+        if custom_waf_rules and custom_waf_rules.get('allowed_ip_list'):
             ip_set_cloudfront = wafv2.CfnIPSet(
                 self,
-                "DataallCloudfrontIPSet",
-                name=f"{resource_prefix}-{envname}-ipset-cloudfront",
-                description=f"IP addresses to allow for Dataall {envname}",
-                addresses=custom_waf_rules.get("allowed_ip_list"),
-                ip_address_version="IPV4",
-                scope="CLOUDFRONT"
+                'DataallCloudfrontIPSet',
+                name=f'{resource_prefix}-{envname}-ipset-cloudfront',
+                description=f'IP addresses to allow for Dataall {envname}',
+                addresses=custom_waf_rules.get('allowed_ip_list'),
+                ip_address_version='IPV4',
+                scope='CLOUDFRONT',
             )
 
         acl = wafv2.CfnWebACL(
@@ -116,8 +116,9 @@ class CloudfrontDistro(pyNestedClass):
             )
 
             if custom_domain.get('certificate_arn'):
-                certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
-                                                                custom_domain.get('certificate_arn'))
+                certificate = acm.Certificate.from_certificate_arn(
+                    self, 'CustomDomainCertificate', custom_domain.get('certificate_arn')
+                )
             else:
                 certificate = acm.Certificate(
                     self,
@@ -140,10 +141,7 @@ class CloudfrontDistro(pyNestedClass):
             ssl_support_method=ssl_support_method,
             minimum_protocol_version=security_policy,
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(
-                    bucket=cloudfront_bucket,
-                    origin_access_identity=origin_access_identity
-                ),
+                origin=origins.S3Origin(bucket=cloudfront_bucket, origin_access_identity=origin_access_identity),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
@@ -177,7 +175,7 @@ class CloudfrontDistro(pyNestedClass):
         self.user_docs_bucket = None
         if custom_auth is None:
             userguide_docs_distribution, user_docs_bucket = self.build_static_site(
-                f'userguide',
+                'userguide',
                 acl,
                 auth_at_edge,
                 envname,
@@ -186,7 +184,7 @@ class CloudfrontDistro(pyNestedClass):
                 certificate,
                 ssl_support_method,
                 security_policy,
-                logging_bucket
+                logging_bucket,
             )
 
             self.userguide_docs_distribution = userguide_docs_distribution
@@ -209,9 +207,7 @@ class CloudfrontDistro(pyNestedClass):
                 'CloudFrontFrontendDomain',
                 record_name=frontend_alternate_domain,
                 zone=hosted_zone,
-                target=route53.RecordTarget.from_alias(
-                    route53_targets.CloudFrontTarget(cloudfront_distribution)
-                ),
+                target=route53.RecordTarget.from_alias(route53_targets.CloudFrontTarget(cloudfront_distribution)),
             )
 
         if tooling_account_id:
@@ -259,9 +255,7 @@ class CloudfrontDistro(pyNestedClass):
                     actions=[
                         'rum:GetAppMonitor',
                     ],
-                    resources=[
-                        f'arn:aws:rum:*:{self.account}:appmonitor/*{resource_prefix}*'
-                    ],
+                    resources=[f'arn:aws:rum:*:{self.account}:appmonitor/*{resource_prefix}*'],
                 )
             )
 
@@ -287,9 +281,7 @@ class CloudfrontDistro(pyNestedClass):
         self.frontend_distribution = cloudfront_distribution
         self.frontend_bucket = cloudfront_bucket
         self.cross_account_deployment_role = (
-            cross_account_deployment_role.role_name
-            if cross_account_deployment_role
-            else None
+            cross_account_deployment_role.role_name if cross_account_deployment_role else None
         )
 
     def build_docs_http_headers(self, docs_http_headers, envname, resource_prefix):
@@ -342,9 +334,8 @@ class CloudfrontDistro(pyNestedClass):
         certificate,
         ssl_support_method,
         security_policy,
-        logging_bucket
+        logging_bucket,
     ):
-
         # Lambda@edge for http_header_redirection
         docs_http_headers = os.path.realpath(
             os.path.join(
@@ -356,7 +347,7 @@ class CloudfrontDistro(pyNestedClass):
         )
 
         if not os.path.isdir(docs_http_headers):
-            raise Exception(f"Http Docs Headers Folder not found at {docs_http_headers}")
+            raise Exception(f'Http Docs Headers Folder not found at {docs_http_headers}')
 
         (
             self.http_header_func,
@@ -367,9 +358,7 @@ class CloudfrontDistro(pyNestedClass):
         refresh = auth_at_edge.devdoc_app.get_att('Outputs.RefreshAuthHandler').to_string()
         signout = auth_at_edge.devdoc_app.get_att('Outputs.SignOutHandler').to_string()
         check = auth_at_edge.devdoc_app.get_att('Outputs.CheckAuthHandler').to_string()
-        httpheaders = auth_at_edge.devdoc_app.get_att(
-            'Outputs.HttpHeadersHandler'
-        ).to_string()
+        httpheaders = auth_at_edge.devdoc_app.get_att('Outputs.HttpHeadersHandler').to_string()
         if not (parse or refresh or signout or check or httpheaders):
             raise Exception('Edge functions not found !')
 
@@ -403,15 +392,11 @@ class CloudfrontDistro(pyNestedClass):
                 response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
                 compress=True,
-                origin=origins.S3Origin(
-                    bucket=cloudfront_bucket,
-                    origin_access_identity=origin_access_identity
-                ),
-
+                origin=origins.S3Origin(bucket=cloudfront_bucket, origin_access_identity=origin_access_identity),
                 edge_lambdas=[
                     cloudfront.EdgeLambda(
                         event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                        function_version=self.func_version(f'{construct_id}CheckerV', check)
+                        function_version=self.func_version(f'{construct_id}CheckerV', check),
                     ),
                     cloudfront.EdgeLambda(
                         event_type=cloudfront.LambdaEdgeEventType.VIEWER_RESPONSE,
@@ -434,19 +419,15 @@ class CloudfrontDistro(pyNestedClass):
             error_responses=self.error_responses(),
             web_acl_id=acl.get_att('Arn').to_string(),
             log_bucket=logging_bucket,
-            log_file_prefix=f'cloudfront-logs/{construct_id}'
+            log_file_prefix=f'cloudfront-logs/{construct_id}',
         )
 
         param_path = f'/dataall/{envname}/cloudfront/docs/user'
 
-        self.store_distribution_params(
-            cloudfront_bucket, construct_id, cloudfront_distribution, param_path
-        )
+        self.store_distribution_params(cloudfront_bucket, construct_id, cloudfront_distribution, param_path)
         return cloudfront_distribution, cloudfront_bucket
 
-    def store_distribution_params(
-        self, cloudfront_bucket, construct_id, distribution, param_path
-    ):
+    def store_distribution_params(self, cloudfront_bucket, construct_id, distribution, param_path):
         ssm.StringParameter(
             self,
             f'{construct_id}DistributionId',
@@ -469,19 +450,15 @@ class CloudfrontDistro(pyNestedClass):
     @staticmethod
     def additional_documentation_behavior(func) -> cloudfront.BehaviorOptions:
         return cloudfront.BehaviorOptions(
-                origin=origins.HttpOrigin('example.org'),
-                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                compress=True,
-                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
-                response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-
-                edge_lambdas=[
-                    cloudfront.EdgeLambda(
-                        event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                        function_version=func
-                    )
-                ],
-            )
+            origin=origins.HttpOrigin('example.org'),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            compress=True,
+            cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+            response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+            edge_lambdas=[
+                cloudfront.EdgeLambda(event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST, function_version=func)
+            ],
+        )
 
     def func_version(self, name, arn):
         return _lambda.Version.from_version_arn(self, name, version_arn=arn)

@@ -23,8 +23,6 @@ from .secrets_stack import SecretsManagerStack
 from .ses_stack import SesStack
 from .sqs import SqsStack
 from .vpc import VpcStack
-from .deploy_config import deploy_config
-
 
 
 class BackendStack(Stack):
@@ -84,7 +82,7 @@ class BackendStack(Stack):
 
         ParamStoreStack(
             self,
-            f'ParamStore',
+            'ParamStore',
             envname=envname,
             resource_prefix=resource_prefix,
             custom_domain=custom_domain,
@@ -93,13 +91,13 @@ class BackendStack(Stack):
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
-            reauth_apis=reauth_config.get("reauth_apis", None) if reauth_config else None,
+            reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
             **kwargs,
         )
         if enable_cw_canaries:
             SecretsManagerStack(
                 self,
-                f'Secrets',
+                'Secrets',
                 envname=envname,
                 resource_prefix=resource_prefix,
                 **kwargs,
@@ -107,7 +105,7 @@ class BackendStack(Stack):
 
         s3_resources_stack = S3ResourcesStack(
             self,
-            f'S3Resources',
+            'S3Resources',
             envname=envname,
             resource_prefix=resource_prefix,
             **kwargs,
@@ -117,7 +115,7 @@ class BackendStack(Stack):
         if custom_auth is None:
             cognito_stack = IdpStack(
                 self,
-                f'Cognito',
+                'Cognito',
                 envname=envname,
                 resource_prefix=resource_prefix,
                 internet_facing=internet_facing,
@@ -140,18 +138,18 @@ class BackendStack(Stack):
                         'ssm:GetParameterHistory',
                         'ssm:GetParameters',
                         'ssm:GetParameter',
-                        'ssm:GetParametersByPath'
+                        'ssm:GetParametersByPath',
                     ],
                     resources=[
                         f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*'
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
                     ],
                 ),
             )
 
         sqs_stack = SqsStack(
             self,
-            f'SqsStack',
+            'SqsStack',
             envname=envname,
             resource_prefix=resource_prefix,
             prod_sizing=prod_sizing,
@@ -161,17 +159,19 @@ class BackendStack(Stack):
         # Create the SES Stack
         ses_stack = self.create_ses_stack(custom_domain, envname, kwargs, resource_prefix)
 
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
-        )
+        repo = ecr.Repository.from_repository_arn(self, 'ECRREPO', repository_arn=ecr_repository)
         if None not in [custom_domain, ses_stack]:
-            email_sender = custom_domain.get('email_notification_sender_email_id', "noreply") + "@" + custom_domain.get("hosted_zone_name")
+            email_sender = (
+                custom_domain.get('email_notification_sender_email_id', 'noreply')
+                + '@'
+                + custom_domain.get('hosted_zone_name')
+            )
         else:
             email_sender = 'none'
 
         self.lambda_api_stack = LambdaApiStack(
             self,
-            f'Lambdas',
+            'Lambdas',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -185,17 +185,18 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool if custom_auth is None else None,
             pivot_role_name=self.pivot_role_name,
-            reauth_ttl=reauth_config.get("ttl", 5) if reauth_config else 5,
+            reauth_ttl=reauth_config.get('ttl', 5) if reauth_config else 5,
             email_notification_sender_email_id=email_sender,
-            email_custom_domain = ses_stack.ses_identity.email_identity_name if ses_stack != None else None,
-            ses_configuration_set = ses_stack.configuration_set.configuration_set_name if ses_stack != None else None,
+            email_custom_domain=ses_stack.ses_identity.email_identity_name if ses_stack is not None else None,
+            ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
+            custom_domain=custom_domain,
             custom_auth=custom_auth,
             **kwargs,
         )
 
         self.ecs_stack = ContainerStack(
             self,
-            f'ECS',
+            'ECS',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -216,7 +217,7 @@ class BackendStack(Stack):
 
         dbmigration_stack = DBMigrationStack(
             self,
-            f'DbMigration',
+            'DbMigration',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -232,8 +233,8 @@ class BackendStack(Stack):
         if quicksight_enabled:
             pivot_role_in_account = iam.Role(
                 self,
-                id=f'PivotRoleLimited',
-                role_name=f'dataallPivotRole',
+                id='PivotRoleLimited',
+                role_name='dataallPivotRole',
                 assumed_by=iam.CompositePrincipal(
                     iam.ServicePrincipal('lambda.amazonaws.com'),
                     iam.AccountPrincipal(self.account),
@@ -243,21 +244,13 @@ class BackendStack(Stack):
             pivot_role_in_account_policies = [
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        'ssm:PutParameter'
-                    ],
-                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*']
+                    actions=['ssm:GetParametersByPath', 'ssm:GetParameters', 'ssm:GetParameter', 'ssm:PutParameter'],
+                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=[
-                        'secretsmanager:DescribeSecret',
-                        'secretsmanager:GetSecretValue'
-                    ],
-                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*']
+                    actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
+                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -265,9 +258,9 @@ class BackendStack(Stack):
                         'ssm:DescribeParameters',
                         'quicksight:GetSessionEmbedUrl',
                         'quicksight:ListUserGroups',
-                        'secretsmanager:ListSecrets'
+                        'secretsmanager:ListSecrets',
                     ],
-                    resources=['*']
+                    resources=['*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -285,15 +278,16 @@ class BackendStack(Stack):
                         'quicksight:DescribeDashboardPermissions',
                         'quicksight:SearchDashboards',
                         'quicksight:GetAuthCode',
-                        'quicksight:CreateDataSet'
+                        'quicksight:CreateDataSet',
                     ],
-                    resources=[f'arn:aws:quicksight:*:{self.account}:user/*',
-                               f'arn:aws:quicksight:*:{self.account}:group/*',
-                               f'arn:aws:quicksight:*:{self.account}:datasource/*',
-                               f'arn:aws:quicksight:*:{self.account}:dashboard/*',
-                               f'arn:aws:quicksight:*:{self.account}:dataset/*'
-                               ],
-                )
+                    resources=[
+                        f'arn:aws:quicksight:*:{self.account}:user/*',
+                        f'arn:aws:quicksight:*:{self.account}:group/*',
+                        f'arn:aws:quicksight:*:{self.account}:datasource/*',
+                        f'arn:aws:quicksight:*:{self.account}:dashboard/*',
+                        f'arn:aws:quicksight:*:{self.account}:dataset/*',
+                    ],
+                ),
             ]
 
             for policy in pivot_role_in_account_policies:
@@ -313,7 +307,7 @@ class BackendStack(Stack):
 
         aurora_stack = AuroraServerlessStack(
             self,
-            f'Aurora',
+            'Aurora',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -330,7 +324,7 @@ class BackendStack(Stack):
 
         self.monitoring_stack = MonitoringStack(
             self,
-            f'CWDashboards',
+            'CWDashboards',
             envname=envname,
             resource_prefix=resource_prefix,
             lambdas=[
@@ -347,18 +341,18 @@ class BackendStack(Stack):
         )
 
         self.opensearch_args = {
-            "envname": envname,
-            "resource_prefix": resource_prefix,
-            "vpc": vpc,
-            "vpc_endpoints_sg": vpc_endpoints_sg,
-            "lambdas": [
+            'envname': envname,
+            'resource_prefix': resource_prefix,
+            'vpc': vpc,
+            'vpc_endpoints_sg': vpc_endpoints_sg,
+            'lambdas': [
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
                 self.lambda_api_stack.elasticsearch_proxy_handler,
             ],
-            "ecs_security_groups": self.ecs_stack.ecs_security_groups,
-            "ecs_task_role": self.ecs_stack.ecs_task_role,
-            "prod_sizing": prod_sizing,
+            'ecs_security_groups': self.ecs_stack.ecs_security_groups,
+            'ecs_task_role': self.ecs_stack.ecs_task_role,
+            'prod_sizing': prod_sizing,
             **kwargs,
         }
         if enable_opensearch_serverless:
@@ -391,10 +385,15 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(["modules.datasets.features.share_notifications.email.active"])
+    @run_if(['modules.datasets.features.share_notifications.email.active'])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
-        if custom_domain is None or None in [custom_domain.get('hosted_zone_name', None), custom_domain.get('hosted_zone_id', None)]:
-            raise Exception("Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain")
+        if custom_domain is None or None in [
+            custom_domain.get('hosted_zone_name', None),
+            custom_domain.get('hosted_zone_id', None),
+        ]:
+            raise Exception(
+                'Cannot Create SES Stack For email notification as Custom Domain is not present or is missing hosted_zone_id or name. Either Disable Email Notification Config or add Custom Domain'
+            )
 
         return SesStack(
             self,
@@ -404,7 +403,6 @@ class BackendStack(Stack):
             custom_domain=custom_domain,
             **kwargs,
         )
-
 
     def create_opensearch_stack(self):
         os_stack = OpenSearchStack(self, 'OpenSearch', **self.opensearch_args)
@@ -423,15 +421,13 @@ class BackendStack(Stack):
 
     def get_s3_prefix_list(self):
         try:
-            ec2_client = boto3.client("ec2", region_name=self.region)
+            ec2_client = boto3.client('ec2', region_name=self.region)
             response = ec2_client.describe_prefix_lists(
                 Filters=[
-                    {
-                        'Name': 'prefix-list-name',
-                        'Values': [f'com.amazonaws.{self.region}.s3']
-                    },
+                    {'Name': 'prefix-list-name', 'Values': [f'com.amazonaws.{self.region}.s3']},
                 ]
             )
-        except:
-            return ""
-        return response['PrefixLists'][0].get("PrefixListId")
+        except Exception as e:
+            print(e)
+            return ''
+        return response['PrefixLists'][0].get('PrefixListId')

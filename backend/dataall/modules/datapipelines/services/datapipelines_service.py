@@ -15,8 +15,15 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.db import exceptions
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
-from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
-    CREDENTIALS_PIPELINE, MANAGE_PIPELINES, CREATE_PIPELINE, PIPELINE_ALL, GET_PIPELINE, UPDATE_PIPELINE
+from dataall.modules.datapipelines.services.datapipelines_permissions import (
+    DELETE_PIPELINE,
+    CREDENTIALS_PIPELINE,
+    MANAGE_PIPELINES,
+    CREATE_PIPELINE,
+    PIPELINE_ALL,
+    GET_PIPELINE,
+    UPDATE_PIPELINE,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +45,7 @@ class DataPipelineService:
     ) -> DataPipeline:
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, 'pipelinesEnabled')
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -51,7 +58,7 @@ class DataPipelineService:
                 username=get_context().username,
                 admin_group=admin_group,
                 uri=environment.environmentUri,
-                data=data
+                data=data,
             )
 
             ResourcePolicy.attach_resource_policy(
@@ -104,7 +111,7 @@ class DataPipelineService:
     ) -> DataPipelineEnvironment:
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
-            enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, 'pipelinesEnabled')
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -116,7 +123,7 @@ class DataPipelineService:
 
             pipeline_env: DataPipelineEnvironment = DataPipelineEnvironment(
                 owner=get_context().username,
-                label=f"{pipeline.label}-{environment.label}",
+                label=f'{pipeline.label}-{environment.label}',
                 environmentUri=environment.environmentUri,
                 environmentLabel=environment.label,
                 pipelineUri=pipeline.DataPipelineUri,
@@ -126,7 +133,7 @@ class DataPipelineService:
                 region=environment.region,
                 stage=data['stage'],
                 order=data['order'],
-                samlGroupName=data['samlGroupName']
+                samlGroupName=data['samlGroupName'],
             )
 
             session.add(pipeline_env)
@@ -137,37 +144,30 @@ class DataPipelineService:
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(UPDATE_PIPELINE)
-    def update_pipeline(
-        uri, data=None
-    ) -> DataPipeline:
+    def update_pipeline(uri, data=None) -> DataPipeline:
         with _session() as session:
             pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
             if data:
                 if isinstance(data, dict):
                     for k in data.keys():
                         setattr(pipeline, k, data.get(k))
-            if (pipeline.template == ""):
+            if pipeline.template == '':
                 stack_helper.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(UPDATE_PIPELINE)
-    def update_pipeline_environment(
-        uri, data=None
-    ) -> DataPipelineEnvironment:
+    def update_pipeline_environment(uri, data=None) -> DataPipelineEnvironment:
         with _session() as session:
             pipeline_env = DatapipelinesRepository.get_pipeline_environment(
-                session=session,
-                pipelineUri=uri,
-                environmentUri=data['environmentUri'],
-                stage=data['stage']
+                session=session, pipelineUri=uri, environmentUri=data['environmentUri'], stage=data['stage']
             )
 
             if data:
                 if isinstance(data, dict):
                     for k in data.keys():
-                        print(f"KEY: {k}, VALUE: {data.get(k)}")
+                        print(f'KEY: {k}, VALUE: {data.get(k)}')
                         setattr(pipeline_env, k, data.get(k))
             return pipeline_env
 
@@ -194,11 +194,7 @@ class DataPipelineService:
     @staticmethod
     def list_pipeline_environments(*, uri, filter: dict) -> dict:
         with _session() as session:
-            return DatapipelinesRepository.paginated_pipeline_environments(
-                session=session,
-                uri=uri,
-                data=filter
-            )
+            return DatapipelinesRepository.paginated_pipeline_environments(session=session, uri=uri, data=filter)
 
     @staticmethod
     def get_clone_url_http(uri: str):
@@ -242,9 +238,7 @@ class DataPipelineService:
             return True
 
     @staticmethod
-    def _delete_repository(
-            target_uri, accountid, cdk_role_arn, region, repo_name
-    ):
+    def _delete_repository(target_uri, accountid, cdk_role_arn, region, repo_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             task = Task(
@@ -264,10 +258,7 @@ class DataPipelineService:
     @staticmethod
     def delete_pipeline_environment(envPipelineUri: str):
         with _session() as session:
-            DatapipelinesRepository.delete_pipeline_environment(
-                session=session,
-                envPipelineUri=envPipelineUri
-            )
+            DatapipelinesRepository.delete_pipeline_environment(session=session, envPipelineUri=envPipelineUri)
             return True
 
     @staticmethod
@@ -280,7 +271,9 @@ class DataPipelineService:
             env_role_arn = env.EnvironmentDefaultIAMRoleArn
             aws_account_id = pipeline.AwsAccountId
 
-            return DataPipelineService._get_credentials_from_aws(env_role_arn=env_role_arn, aws_account_id=aws_account_id, region=pipeline.region)
+            return DataPipelineService._get_credentials_from_aws(
+                env_role_arn=env_role_arn, aws_account_id=aws_account_id, region=pipeline.region
+            )
 
     @staticmethod
     def _get_credentials_from_aws(env_role_arn, aws_account_id, region):

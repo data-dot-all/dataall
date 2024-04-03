@@ -10,7 +10,8 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     generate_dataset_access_token,
     delete_dataset,
     import_dataset,
-    start_crawler
+    start_crawler,
+    verify_dataset_share_objects,
 )
 
 createDataset = gql.MutationField(
@@ -67,4 +68,11 @@ StartGlueCrawler = gql.MutationField(
     ],
     resolver=start_crawler,
     type=gql.Ref('GlueCrawler'),
+)
+
+verifyDatasetShareObjects = gql.MutationField(
+    name='verifyDatasetShareObjects',
+    args=[gql.Argument(name='input', type=gql.Ref('ShareObjectSelectorInput'))],
+    type=gql.Boolean,
+    resolver=verify_dataset_share_objects,
 )

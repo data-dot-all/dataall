@@ -27,7 +27,7 @@ from dataall.base.utils.shell_utils import CommandSanitizer
 logger = logging.getLogger(__name__)
 
 
-@stack("pipeline")
+@stack('pipeline')
 class PipelineStack(Stack):
     """
     Create a stack that contains CDK Continuous Integration and Delivery (CI/CD) pipeline.
@@ -44,7 +44,7 @@ class PipelineStack(Stack):
     module_name = __file__
 
     def get_engine(self):
-        envname = os.environ.get("envname", "local")
+        envname = os.environ.get('envname', 'local')
         engine = db.get_engine(envname=envname)
         return engine
 
@@ -56,15 +56,11 @@ class PipelineStack(Stack):
     def get_pipeline_environments(self, targer_uri) -> DataPipelineEnvironment:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            envs = DatapipelinesRepository.query_pipeline_environments(
-                session, targer_uri
-            )
+            envs = DatapipelinesRepository.query_pipeline_environments(session, targer_uri)
         return envs
 
-    def get_pipeline_cicd_environment(
-        self, pipeline: DataPipeline
-    ) -> Environment:
-        envname = os.environ.get("envname", "local")
+    def get_pipeline_cicd_environment(self, pipeline: DataPipeline) -> Environment:
+        envname = os.environ.get('envname', 'local')
         engine = db.get_engine(envname=envname)
         with engine.scoped_session() as session:
             return EnvironmentService.get_environment_by_uri(session, pipeline.environmentUri)
@@ -72,26 +68,22 @@ class PipelineStack(Stack):
     def get_env_team(self, pipeline: DataPipeline) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = EnvironmentService.get_environment_group(
-                session, pipeline.SamlGroupName, pipeline.environmentUri
-            )
+            env = EnvironmentService.get_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
         return env
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
-        kwargs.setdefault("tags", {}).update({"utility": "dataall-data-pipeline"})
+        kwargs.setdefault('tags', {}).update({'utility': 'dataall-data-pipeline'})
         super().__init__(
             scope,
             id,
-            env=kwargs.get("env"),
-            stack_name=kwargs.get("stack_name"),
-            tags=kwargs.get("tags"),
-            description="Cloud formation stack of PIPELINE: {}; URI: {}; DESCRIPTION: {}".format(
+            env=kwargs.get('env'),
+            stack_name=kwargs.get('stack_name'),
+            tags=kwargs.get('tags'),
+            description='Cloud formation stack of PIPELINE: {}; URI: {}; DESCRIPTION: {}'.format(
                 self.get_target(target_uri=target_uri).label,
                 target_uri,
                 self.get_target(target_uri=target_uri).description,
-            )[
-                :1024
-            ],
+            )[:1024],
         )
 
         # Configuration
@@ -107,28 +99,26 @@ class PipelineStack(Stack):
         # Support resources
         build_role_policy = iam.Policy(
             self,
-            f"{pipeline.name}-policy",
-            policy_name=f"{pipeline.name}-policy",
+            f'{pipeline.name}-policy',
+            policy_name=f'{pipeline.name}-policy',
             statements=self.make_codebuild_policy_statements(
-                pipeline_environment=pipeline_environment,
-                pipeline_env_team=pipeline_env_team,
-                pipeline=pipeline
+                pipeline_environment=pipeline_environment, pipeline_env_team=pipeline_env_team, pipeline=pipeline
             ),
         )
 
         build_project_role = iam.Role(
             self,
-            "PipelineRole",
+            'PipelineRole',
             role_name=pipeline.name,
-            inline_policies={f"Inline{pipeline.name}": build_role_policy.document},
-            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
+            inline_policies={f'Inline{pipeline.name}': build_role_policy.document},
+            assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
         )
 
         self.codebuild_key = kms.Key(
             self,
-            f"{pipeline.name}-codebuild-key",
+            f'{pipeline.name}-codebuild-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f"{pipeline.name}-codebuild-key",
+            alias=f'{pipeline.name}-codebuild-key',
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(pipeline_environment.CDKRoleArn),
@@ -136,50 +126,46 @@ class PipelineStack(Stack):
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        resources=["*"],
+                        resources=['*'],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            build_project_role
-                        ],
+                        principals=[build_project_role],
                         actions=[
-                            "kms:Encrypt",
-                            "kms:Decrypt",
-                            "kms:ReEncrypt*",
-                            "kms:GenerateDataKey*",
+                            'kms:Encrypt',
+                            'kms:Decrypt',
+                            'kms:ReEncrypt*',
+                            'kms:GenerateDataKey*',
                         ],
                     ),
                     iam.PolicyStatement(
-                        resources=["*"],
+                        resources=['*'],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
-                            build_project_role
-                        ],
+                        principals=[iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn), build_project_role],
                         actions=[
-                            "kms:DescribeKey",
-                            "kms:List*",
-                            "kms:GetKeyPolicy",
+                            'kms:DescribeKey',
+                            'kms:List*',
+                            'kms:GetKeyPolicy',
                         ],
-                    )
+                    ),
                 ],
             ),
         )
 
         # Create CodeCommit repository and mirror blueprint code
-        code_dir_path = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "blueprints"
-            )
-        )
-        logger.info(f"code directory path = {code_dir_path}")
+        code_dir_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'blueprints'))
+        logger.info(f'code directory path = {code_dir_path}')
         env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
         try:
             repository = PipelineStack._check_repository(aws, pipeline_environment.region, pipeline.repo)
             if repository:
-                PipelineStack.write_ddk_json_multienvironment(path=os.path.join(code_dir_path, pipeline.repo), output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments, pipeline_name=pipeline.name)
+                PipelineStack.write_ddk_json_multienvironment(
+                    path=os.path.join(code_dir_path, pipeline.repo),
+                    output_file='ddk.json',
+                    pipeline_environment=pipeline_environment,
+                    development_environments=development_environments,
+                    pipeline_name=pipeline.name,
+                )
 
-                logger.info(f"Pipeline Repo {pipeline.repo} Exists...Handling Update")
+                logger.info(f'Pipeline Repo {pipeline.repo} Exists...Handling Update')
                 update_cmds = [
                     f'REPO_NAME={pipeline.repo}',
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
@@ -192,29 +178,37 @@ class PipelineStack(Stack):
                 # However, the input arguments have be sanitized with the CommandSanitizer
 
                 process = subprocess.run(  # nosemgrep
-                    "; ".join(update_cmds),  # nosemgrep
+                    '; '.join(update_cmds),  # nosemgrep
                     text=True,  # nosemgrep
                     shell=True,  # nosec  # nosemgrep
                     encoding='utf-8',  # nosemgrep
                     cwd=code_dir_path,  # nosemgrep
-                    env=env_vars  # nosemgrep
+                    env=env_vars,  # nosemgrep
                 )
             else:
                 raise Exception
-        except Exception as e:
+        except Exception:
             PipelineStack.initialize_repo(pipeline, code_dir_path, env_vars)
 
-            PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
+            PipelineStack.write_deploy_buildspec(
+                path=code_dir_path, output_file=f'{pipeline.repo}/deploy_buildspec.yaml'
+            )
 
-            PipelineStack.write_ddk_json_multienvironment(path=os.path.join(code_dir_path, pipeline.repo), output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments, pipeline_name=pipeline.name)
+            PipelineStack.write_ddk_json_multienvironment(
+                path=os.path.join(code_dir_path, pipeline.repo),
+                output_file='ddk.json',
+                pipeline_environment=pipeline_environment,
+                development_environments=development_environments,
+                pipeline_name=pipeline.name,
+            )
 
-            logger.info(f"Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository")
+            logger.info(f'Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository')
 
             PipelineStack.cleanup_zip_directory(code_dir_path)
 
             PipelineStack.zip_directory(os.path.join(code_dir_path, pipeline.repo))
             code_asset = Asset(
-                scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/{pipeline.repo}/code.zip"
+                scope=self, id=f'{pipeline.name}-asset', path=f'{code_dir_path}/{pipeline.repo}/code.zip'
             )
 
             code = codecommit.CfnRepository.CodeProperty(
@@ -227,12 +221,12 @@ class PipelineStack(Stack):
             repository = codecommit.CfnRepository(
                 scope=self,
                 code=code,
-                id="CodecommitRepository",
+                id='CodecommitRepository',
                 repository_name=pipeline.repo,
             )
             repository.apply_removal_policy(RemovalPolicy.RETAIN)
 
-        if pipeline.devStrategy == "trunk":
+        if pipeline.devStrategy == 'trunk':
             codepipeline_pipeline = codepipeline.Pipeline(
                 scope=self,
                 id=pipeline.name,
@@ -258,7 +252,7 @@ class PipelineStack(Stack):
             )
 
             for env in sorted(development_environments, key=lambda env: env.order):
-                buildspec = "deploy_buildspec.yaml"
+                buildspec = 'deploy_buildspec.yaml'
                 build_project = codebuild.PipelineProject(
                     scope=self,
                     id=f'{pipeline.name}-build-{env.stage}',
@@ -270,7 +264,7 @@ class PipelineStack(Stack):
                             pipeline_environment=env,
                             pipeline_env_team=env.samlGroupName,
                             stage=env.stage,
-                            stages=self.devStages
+                            stages=self.devStages,
                         ),
                     ),
                     role=build_project_role,
@@ -294,22 +288,18 @@ class PipelineStack(Stack):
                 if env.order < development_environments.count():
                     self.codepipeline_pipeline.add_stage(
                         stage_name=f'ManualApproval-{env.stage}',
-                        actions=[
-                            codepipeline_actions.ManualApprovalAction(
-                                action_name=f'ManualApproval-{env.stage}'
-                            )
-                        ],
+                        actions=[codepipeline_actions.ManualApprovalAction(action_name=f'ManualApproval-{env.stage}')],
                     )
 
         else:
             for env in development_environments:
                 branch_name = 'main' if (env.stage == 'prod') else env.stage
-                buildspec = "deploy_buildspec.yaml"
+                buildspec = 'deploy_buildspec.yaml'
 
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
-                    id=f"{pipeline.name}-{env.stage}",
-                    pipeline_name=f"{pipeline.name}-{env.stage}",
+                    id=f'{pipeline.name}-{env.stage}',
+                    pipeline_name=f'{pipeline.name}-{env.stage}',
                     restart_execution_on_update=True,
                 )
                 self.codepipeline_pipeline = codepipeline_pipeline
@@ -341,7 +331,7 @@ class PipelineStack(Stack):
                             pipeline_environment=env,
                             pipeline_env_team=env.samlGroupName,
                             stage=env.stage,
-                            stages=self.devStages
+                            stages=self.devStages,
                         ),
                     ),
                     role=build_project_role,
@@ -364,18 +354,18 @@ class PipelineStack(Stack):
         # CloudFormation output
         CfnOutput(
             self,
-            "RepoNameOutput",
-            export_name=f"{pipeline.DataPipelineUri}-RepositoryName",
+            'RepoNameOutput',
+            export_name=f'{pipeline.DataPipelineUri}-RepositoryName',
             value=pipeline.repo,
         )
         CfnOutput(
             self,
-            "PipelineNameOutput",
-            export_name=f"{pipeline.DataPipelineUri}-PipelineName",
+            'PipelineNameOutput',
+            export_name=f'{pipeline.DataPipelineUri}-PipelineName',
             value=codepipeline_pipeline.pipeline_name,
         )
 
-        TagsUtil.add_tags(stack=self, model=DataPipeline, target_type="pipeline")
+        TagsUtil.add_tags(stack=self, model=DataPipeline, target_type='pipeline')
 
         CDKNagUtil.check_rules(self)
 
@@ -385,45 +375,38 @@ class PipelineStack(Stack):
     @staticmethod
     def zip_directory(path):
         try:
-            shutil.make_archive("code", "zip", path)
-            shutil.move("code.zip", f"{path}/code.zip")
+            shutil.make_archive('code', 'zip', path)
+            shutil.move('code.zip', f'{path}/code.zip')
         except Exception as e:
-            logger.error(f"Failed to zip repository due to: {e}")
+            logger.error(f'Failed to zip repository due to: {e}')
 
     @staticmethod
     def cleanup_zip_directory(path):
-        if os.path.isfile(f"{path}/code.zip"):
-            os.remove(f"{path}/code.zip")
+        if os.path.isfile(f'{path}/code.zip'):
+            os.remove(f'{path}/code.zip')
         else:
-            logger.info("Info: %s Zip not found" % f"{path}/code.zip")
+            logger.info('Info: %s Zip not found' % f'{path}/code.zip')
 
     @staticmethod
     def cleanup_pipeline_directory(path):
         if os.path.isdir(path):
             shutil.rmtree(path)
         else:
-            logger.info("Info: %s Directory not found" % f"{path}")
+            logger.info('Info: %s Directory not found' % f'{path}')
 
     @staticmethod
-    def make_environment_variables(
-        pipeline,
-        pipeline_environment,
-        pipeline_env_team,
-        stage,
-        stages
-    ):
-
+    def make_environment_variables(pipeline, pipeline_environment, pipeline_env_team, stage, stages):
         env_vars_1 = {
-            "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
-            "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
-            "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
-            "DEV_STAGES": codebuild.BuildEnvironmentVariable(value=stages),
-            "DEV_STRATEGY": codebuild.BuildEnvironmentVariable(value=pipeline.devStrategy),
-            "TEMPLATE": codebuild.BuildEnvironmentVariable(value=pipeline.template),
-            "ENVIRONMENT_URI": codebuild.BuildEnvironmentVariable(value=pipeline_environment.environmentUri),
-            "AWSACCOUNTID": codebuild.BuildEnvironmentVariable(value=pipeline_environment.AwsAccountId),
-            "AWSREGION": codebuild.BuildEnvironmentVariable(value=pipeline_environment.region),
-            "ENVTEAM_ROLENAME": codebuild.BuildEnvironmentVariable(value=pipeline_env_team),
+            'PIPELINE_URI': codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
+            'PIPELINE_NAME': codebuild.BuildEnvironmentVariable(value=pipeline.name),
+            'STAGE': codebuild.BuildEnvironmentVariable(value=stage),
+            'DEV_STAGES': codebuild.BuildEnvironmentVariable(value=stages),
+            'DEV_STRATEGY': codebuild.BuildEnvironmentVariable(value=pipeline.devStrategy),
+            'TEMPLATE': codebuild.BuildEnvironmentVariable(value=pipeline.template),
+            'ENVIRONMENT_URI': codebuild.BuildEnvironmentVariable(value=pipeline_environment.environmentUri),
+            'AWSACCOUNTID': codebuild.BuildEnvironmentVariable(value=pipeline_environment.AwsAccountId),
+            'AWSREGION': codebuild.BuildEnvironmentVariable(value=pipeline_environment.region),
+            'ENVTEAM_ROLENAME': codebuild.BuildEnvironmentVariable(value=pipeline_env_team),
         }
         env_vars = dict(env_vars_1)
         return env_vars
@@ -450,41 +433,41 @@ class PipelineStack(Stack):
 
     @staticmethod
     def make_codebuild_policy_statements(
-            pipeline_environment,
-            pipeline_env_team,
-            pipeline
+        pipeline_environment, pipeline_env_team, pipeline
     ) -> List[iam.PolicyStatement]:
         return [
             iam.PolicyStatement(
                 actions=[
-                    "ec2:DescribeAvailabilityZones",
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:DescribeSecret",
-                    "ssm:GetParametersByPath",
-                    "ssm:GetParameters",
-                    "ssm:GetParameter",
-                    "codebuild:CreateReportGroup",
-                    "codebuild:CreateReport",
-                    "codebuild:UpdateReport",
-                    "codebuild:BatchPutTestCases",
-                    "codebuild:BatchPutCodeCoverages",
-                    "codecommit:ListRepositories",
-                    "sts:AssumeRole",
-                    "cloudformation:DescribeStacks"
+                    'ec2:DescribeAvailabilityZones',
+                    'secretsmanager:GetSecretValue',
+                    'secretsmanager:DescribeSecret',
+                    'ssm:GetParametersByPath',
+                    'ssm:GetParameters',
+                    'ssm:GetParameter',
+                    'codebuild:CreateReportGroup',
+                    'codebuild:CreateReport',
+                    'codebuild:UpdateReport',
+                    'codebuild:BatchPutTestCases',
+                    'codebuild:BatchPutCodeCoverages',
+                    'codecommit:ListRepositories',
+                    'sts:AssumeRole',
+                    'cloudformation:DescribeStacks',
                 ],
-                resources=["*"],
+                resources=['*'],
             ),
             iam.PolicyStatement(
-                actions=[
-                    "codecommit:*"
+                actions=['codecommit:*'],
+                resources=[
+                    f'arn:aws:codecommit:{pipeline_environment.region}:{pipeline_environment.AwsAccountId}:{pipeline.repo}'
                 ],
-                resources=[f"arn:aws:codecommit:{pipeline_environment.region}:{pipeline_environment.AwsAccountId}:{pipeline.repo}"],
-            )
+            ),
         ]
 
     @staticmethod
-    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments, pipeline_name):
-        json_envs = ""
+    def write_ddk_json_multienvironment(
+        path, output_file, pipeline_environment, development_environments, pipeline_name
+    ):
+        json_envs = ''
         for env in development_environments:
             json_env = f""",
         "{env.stage}": {{
@@ -516,11 +499,7 @@ class PipelineStack(Stack):
 
     @staticmethod
     def initialize_repo(pipeline, code_dir_path, env_vars):
-
-        cmd_init = [
-            f"mkdir {pipeline.repo}",
-            f"cp -R data_pipeline_blueprint/* {pipeline.repo}/"
-        ]
+        cmd_init = [f'mkdir {pipeline.repo}', f'cp -R data_pipeline_blueprint/* {pipeline.repo}/']
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
@@ -535,10 +514,10 @@ class PipelineStack(Stack):
             shell=True,  # nosec  # nosemgrep
             encoding='utf-8',  # nosemgrep
             cwd=code_dir_path,  # nosemgrep
-            env=env_vars  # nosemgrep
+            env=env_vars,  # nosemgrep
         )
         if process.returncode == 0:
-            logger.info("Successfully Initialized New CDK/DDK App")
+            logger.info('Successfully Initialized New CDK/DDK App')
             return
 
     @staticmethod
@@ -550,14 +529,14 @@ class PipelineStack(Stack):
             'AWS_REGION': pipeline_environment.region,
             'AWS_DEFAULT_REGION': pipeline_environment.region,
             'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
-            'envname': os.environ.get('envname', 'local')
+            'envname': os.environ.get('envname', 'local'),
         }
         if env_creds:
             env.update(
                 {
                     'AWS_ACCESS_KEY_ID': env_creds.access_key,
                     'AWS_SECRET_ACCESS_KEY': env_creds.secret_key,
-                    'AWS_SESSION_TOKEN': env_creds.token
+                    'AWS_SESSION_TOKEN': env_creds.token,
                 }
             )
         return env, aws
@@ -566,7 +545,7 @@ class PipelineStack(Stack):
     def _check_repository(aws, region, repo_name):
         codecommit_client = aws.client('codecommit', region_name=region)
         repository = None
-        logger.info(f"Checking Repository Exists: {repo_name}")
+        logger.info(f'Checking Repository Exists: {repo_name}')
         try:
             repository = codecommit_client.get_repository(repositoryName=repo_name)
         except ClientError as e:

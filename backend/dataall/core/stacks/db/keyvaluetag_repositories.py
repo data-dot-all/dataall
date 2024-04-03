@@ -25,9 +25,7 @@ class KeyValueTag:
             username=context.username,
             groups=context.groups,
             resource_uri=uri,
-            permission_name=TargetType.get_resource_update_permission_name(
-                data['targetType']
-            ),
+            permission_name=TargetType.get_resource_update_permission_name(data['targetType']),
         )
 
         tag_keys = [tag['key'].lower() for tag in data.get('tags', [])]
@@ -44,11 +42,7 @@ class KeyValueTag:
         ).delete()
         for tag in data.get('tags'):
             kv_tag: models.KeyValueTag = models.KeyValueTag(
-                targetUri=uri,
-                targetType=data['targetType'],
-                key=tag['key'],
-                value=tag['value'],
-                cascade=tag['cascade']
+                targetUri=uri, targetType=data['targetType'], key=tag['key'], value=tag['value'], cascade=tag['cascade']
             )
             tags.append(kv_tag)
             session.add(kv_tag)
@@ -63,9 +57,7 @@ class KeyValueTag:
             username=context.username,
             groups=context.groups,
             resource_uri=uri,
-            permission_name=TargetType.get_resource_read_permission_name(
-                target_type
-            ),
+            permission_name=TargetType.get_resource_read_permission_name(target_type),
         )
         return KeyValueTag.find_key_value_tags(session, uri, target_type)
 

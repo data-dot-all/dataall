@@ -5,6 +5,7 @@ from .deploy_config import deploy_config
 
 def _process_func(func):
     """Helper function that helps decorate methods/functions"""
+
     def no_decorated(f):
         return f
 
@@ -25,6 +26,7 @@ def run_if(active_properties: List[str]):
     The active_properties is a list of properties that must be a boolean value in the config file
     IF at least one of the active_properties is set to True then the decorated function will be called
     """
+
     def decorator(f):
         fn, fn_decorator = _process_func(f)
 

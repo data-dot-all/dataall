@@ -30,7 +30,8 @@ class DatasetColumnGlueHandler:
             updated_table = {
                 k: v
                 for k, v in original_table['Table'].items()
-                if k not in [
+                if k
+                not in [
                     'CatalogId',
                     'VersionId',
                     'DatabaseName',
@@ -40,14 +41,12 @@ class DatasetColumnGlueHandler:
                     'IsRegisteredWithLakeFormation',
                 ]
             }
-            all_columns = updated_table.get('StorageDescriptor', {}).get(
-                'Columns', []
-            ) + updated_table.get('PartitionKeys', [])
+            all_columns = updated_table.get('StorageDescriptor', {}).get('Columns', []) + updated_table.get(
+                'PartitionKeys', []
+            )
             for col in all_columns:
                 if col['Name'] == column.name:
                     col['Comment'] = column.description
-                    log.info(
-                        f'Found column {column.name} adding description {column.description}'
-                    )
+                    log.info(f'Found column {column.name} adding description {column.description}')
 
                     glue_client.update_table_for_column(column.name, updated_table)

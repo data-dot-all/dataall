@@ -90,14 +90,10 @@ class CloudFormation:
                 for output in stack_outputs:
                     print(output)
                     filtered_outputs[output['OutputKey']] = output['OutputValue']
-            resources = CloudFormation._describe_stack_resources(**data)[
-                'StackResources'
-            ]
+            resources = CloudFormation._describe_stack_resources(**data)['StackResources']
             events = CloudFormation._describe_stack_events(**data)['StackEvents']
             with engine.scoped_session() as session:
-                stack: Stack = session.query(Stack).get(
-                    task.payload['stackUri']
-                )
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
                 stack.status = status
                 stack.stackid = stack_arn
                 stack.outputs = filtered_outputs
@@ -131,13 +127,9 @@ class CloudFormation:
                 session.commit()
         except ClientError as e:
             with engine.scoped_session() as session:
-                stack: Stack = session.query(Stack).get(
-                    task.payload['stackUri']
-                )
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
                 if not stack.error:
-                    stack.error = {
-                        'error': json_utils.to_string(e.response['Error']['Message'])
-                    }
+                    stack.error = {'error': json_utils.to_string(e.response['Error']['Message'])}
                 session.commit()
 
     @staticmethod

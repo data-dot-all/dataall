@@ -18,18 +18,16 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.modules.catalog.indexers.base_indexer.BaseIndexer._index', return_value={})
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def environment_group(db):
-    def factory(
-        environment: Environment, group: str
-    ) -> EnvironmentGroup:
+    def factory(environment: Environment, group: str) -> EnvironmentGroup:
         with db.scoped_session() as session:
             env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
                 groupUri=group,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
                 environmentIAMRoleName=environment.EnvironmentDefaultIAMRoleName,
-                environmentAthenaWorkGroup="workgroup",
+                environmentAthenaWorkGroup='workgroup',
             )
             session.add(env_group)
             session.commit()
@@ -50,7 +48,9 @@ def _create_env_params(session, env: Environment, params: Dict[str, str]):
     if params:
         for key, value in params.items():
             param = EnvironmentParameter(
-                env_uri=env.environmentUri, key=key, value=value,
+                env_uri=env.environmentUri,
+                key=key,
+                value=value,
             )
             session.add(param)
         session.commit()
@@ -88,10 +88,10 @@ def env(db, environment_group):
                 description=desc,
                 SamlGroupName=group,
                 EnvironmentDefaultIAMRoleName=role,
-                EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{account}:role/{role}",
-                EnvironmentDefaultBucketName="defaultbucketname1234567789",
-                CDKRoleArn=f"arn:aws::{account}:role/EnvRole",
-                EnvironmentDefaultAthenaWorkGroup="DefaultWorkGroup"
+                EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{account}:role/{role}',
+                EnvironmentDefaultBucketName='defaultbucketname1234567789',
+                CDKRoleArn=f'arn:aws::{account}:role/EnvRole',
+                EnvironmentDefaultAthenaWorkGroup='DefaultWorkGroup',
             )
             session.add(env)
             session.commit()
@@ -117,6 +117,7 @@ def org(db):
             session.add(org)
             session.commit()
             return org
+
     yield factory
 
 

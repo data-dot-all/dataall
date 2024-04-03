@@ -22,7 +22,7 @@ def get_sagemaker_studio_domain(AwsAccountId, region, domain_name):
         domain_id_paginator = client.get_paginator('list_domains')
         for page in domain_id_paginator.paginate():
             for domain in page.get('Domains', []):
-                if domain.get("DomainName") == domain_name:
+                if domain.get('DomainName') == domain_name:
                     return domain
         return dict()
     except ClientError as e:
@@ -32,11 +32,9 @@ def get_sagemaker_studio_domain(AwsAccountId, region, domain_name):
 
 class SagemakerStudioClient:
     """A Sagemaker studio proxy client that is used to send requests to AWS"""
+
     def __init__(self, sm_user: SagemakerStudioUser):
-        self._client = get_client(
-            AwsAccountId=sm_user.AWSAccountId,
-            region=sm_user.region
-        )
+        self._client = get_client(AwsAccountId=sm_user.AWSAccountId, region=sm_user.region)
         self._sagemakerStudioDomainID = sm_user.sagemakerStudioDomainID
         self._sagemakerStudioUserNameSlugify = sm_user.sagemakerStudioUserNameSlugify
 
@@ -58,9 +56,7 @@ class SagemakerStudioClient:
             )
             return response['Status']
         except ClientError as e:
-            logger.error(
-                f'Could not retrieve Studio user {self._sagemakerStudioUserNameSlugify} status due to: {e} '
-            )
+            logger.error(f'Could not retrieve Studio user {self._sagemakerStudioUserNameSlugify} status due to: {e} ')
             return 'NOT FOUND'
 
     def get_sagemaker_studio_user_applications(self):

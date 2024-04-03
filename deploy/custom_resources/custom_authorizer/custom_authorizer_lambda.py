@@ -16,6 +16,7 @@ Custom Lambda Authorizer Code Performs following,
 Custom Lambda Authorizer is attached to the API Gateway. Check the deploy/stacks/lambda_api.py for more details on deployment
 """
 
+
 def lambda_handler(incoming_event, context):
     # Get the Token which is sent in the Authorization Header
     auth_token = incoming_event['headers']['Authorization']
@@ -38,12 +39,12 @@ def lambda_handler(incoming_event, context):
 # AWS Lambda and any other local environments
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
-    token = ""
-    account_id = ""
-    api_gw_id = ""
+    token = ''
+    account_id = ''
+    api_gw_id = ''
     event = {
-        "type": "TOKEN",
-        "Authorization": token,
-        "methodArn": f"arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api"
+        'type': 'TOKEN',
+        'Authorization': token,
+        'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }
     lambda_handler(event, None)

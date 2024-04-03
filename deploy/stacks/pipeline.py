@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import List
 
-from aws_cdk import SecretValue, Stack, Tags, RemovalPolicy
+from aws_cdk import Stack, Tags, RemovalPolicy
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
@@ -44,7 +44,7 @@ class PipelineStack(Stack):
 
         self.vpc_stack = VpcStack(
             self,
-            id=f'Vpc',
+            id='Vpc',
             envname=git_branch,
             cidr='10.0.0.0/16',
             resource_prefix=resource_prefix,
@@ -56,7 +56,7 @@ class PipelineStack(Stack):
 
         self.aurora_devdb = AuroraServerlessStack(
             self,
-            f'Aurora',
+            'Aurora',
             envname=self.git_branch,
             resource_prefix=self.resource_prefix,
             vpc=self.vpc,
@@ -74,12 +74,12 @@ class PipelineStack(Stack):
         self.aurora_devdb.aurora_sg.add_ingress_rule(
             peer=self.codebuild_sg,
             connection=ec2.Port.tcp(5432),
-            description=f'Allow Codebuild to run integration tests',
+            description='Allow Codebuild to run integration tests',
         )
 
         self.codeartifact = CodeArtifactStack(
             self,
-            f'CodeArtifact',
+            'CodeArtifact',
             target_envs=self.target_envs,
             git_branch=self.git_branch,
             resource_prefix=self.resource_prefix,
@@ -117,9 +117,7 @@ class PipelineStack(Stack):
 
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
-                repo_string=repo_string,
-                branch=self.git_branch,
-                connection_arn=repo_connection_arn
+                repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
             )
 
         else:
@@ -145,7 +143,7 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
-                    'echo ${CODEBUILD_SOURCE_VERSION}'
+                    'echo ${CODEBUILD_SOURCE_VERSION}',
                 ],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
@@ -155,12 +153,10 @@ class PipelineStack(Stack):
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
-                        "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
-                            value=git_branch
-                        ),
+                        'DATAALL_REPO_BRANCH': codebuild.BuildEnvironmentVariable(value=git_branch),
                     }
                 )
-            )
+            ),
         )
 
         self.pipeline.node.add_dependency(self.aurora_devdb)
@@ -169,13 +165,9 @@ class PipelineStack(Stack):
 
         self.image_tag = f'{git_branch}-{str(uuid.uuid4())[:8]}'
 
-        repository_name = self.set_ecr_stage(
-            {'envname': git_branch, 'account': self.account, 'region': self.region}
-        )
+        repository_name = self.set_ecr_stage({'envname': git_branch, 'account': self.account, 'region': self.region})
 
-        target_envs = target_envs or [
-            {'envname': 'dev', 'account': self.account, 'region': self.region}
-        ]
+        target_envs = target_envs or [{'envname': 'dev', 'account': self.account, 'region': self.region}]
 
         for target_env in target_envs:
             self.pipeline_bucket.grant_read(iam.AccountPrincipal(target_env['account']))
@@ -195,9 +187,7 @@ class PipelineStack(Stack):
             )
 
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
-                self.set_stacks_updater_stage(
-                    target_env
-                )
+                self.set_stacks_updater_stage(target_env)
 
             if target_env.get('internet_facing', True):
                 self.set_cloudfront_stage(
@@ -232,23 +222,19 @@ class PipelineStack(Stack):
             'BaselineCodeBuildManagedPolicy',
             managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
-            statements= [
+            statements=[
                 iam.PolicyStatement(
                     actions=[
                         'sts:AssumeRole',
                     ],
-                    resources=[
-                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'
-                    ],
+                    resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
                 ),
                 iam.PolicyStatement(
                     actions=[
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
-                    conditions={
-                        'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
-                    },
+                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -327,7 +313,7 @@ class PipelineStack(Stack):
             'ExpandedCodeBuildManagedPolicy',
             managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-expanded-cb-policy',
             roles=[self.expanded_codebuild_role],
-            statements= [
+            statements=[
                 iam.PolicyStatement(
                     actions=[
                         'cloudfront:CreateInvalidation',
@@ -335,14 +321,17 @@ class PipelineStack(Stack):
                     ],
                     resources=[
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
-                        f'arn:aws:cloudfront::*:distribution/*',
+                        'arn:aws:cloudfront::*:distribution/*',
                     ],
                 )
             ],
         )
 
     def validate_deployment_params(self, source, repo_connection_arn, git_branch, resource_prefix, target_envs):
-        if (source == "codestar_connection" and repo_connection_arn is None) or (repo_connection_arn is not None and not re.match(r"arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+", repo_connection_arn)):
+        if (source == 'codestar_connection' and repo_connection_arn is None) or (
+            repo_connection_arn is not None
+            and not re.match(r'arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+', repo_connection_arn)
+        ):
             raise ValueError(
                 f'Error: When the source is a CodeStar Connection, {repo_connection_arn} cannot be None.'
                 f'Please define the ARN of the CodeStar Connection'
@@ -358,26 +347,22 @@ class PipelineStack(Stack):
                     f'envname {env["envname"]} is created to use AWS resources. '
                     f'It must match the pattern ^[a-zA-Z0-9-_]+$'
                 )
-            if (
-                env['account'] == self.account
-                and env['region'] == self.region
-                and env['envname'] == git_branch
-            ):
+            if env['account'] == self.account and env['region'] == self.region and env['envname'] == git_branch:
                 raise ValueError(
-                    f'Seems like tooling account and deployment '
-                    f'account are the same in the same region with the same envname and git_branch.'
-                    f'Try a different envname than git_branch for it to work'
+                    'Seems like tooling account and deployment '
+                    'account are the same in the same region with the same envname and git_branch.'
+                    'Try a different envname than git_branch for it to work'
                 )
             if (
-                    env.get("internet_facing", True) not in [True, False]
-                    or env.get("with_approval", False) not in [True, False]
-                    or env.get("prod_sizing", False) not in [True, False]
-                    or env.get("enable_cw_canaries", False) not in [True, False]
-                    or env.get("enable_cw_rum", False) not in [True, False]
+                env.get('internet_facing', True) not in [True, False]
+                or env.get('with_approval', False) not in [True, False]
+                or env.get('prod_sizing', False) not in [True, False]
+                or env.get('enable_cw_canaries', False) not in [True, False]
+                or env.get('enable_cw_rum', False) not in [True, False]
             ):
                 raise ValueError(
-                    f'Data type not supported in one of cdk.json variables (internet_facing,with_approvalprod_sizing,enable_cw_canaries,enable_cw_rum) \n'
-                    f'Supported data type : Boolean'
+                    'Data type not supported in one of cdk.json variables (internet_facing,with_approvalprod_sizing,enable_cw_canaries,enable_cw_rum) \n'
+                    'Supported data type : Boolean'
                 )
         if len(resource_prefix) >= 20:
             raise ValueError(
@@ -389,30 +374,32 @@ class PipelineStack(Stack):
         for env in target_envs:
             if 'custom_auth' in env:
                 custom_auth_configs = env.get('custom_auth')
-                if ('url' not in custom_auth_configs or
-                    'provider' not in custom_auth_configs or
-                    'redirect_url' not in custom_auth_configs or
-                    'client_id' not in custom_auth_configs or
-                    'response_types' not in custom_auth_configs or
-                    'scopes' not in custom_auth_configs or
-                    'jwks_url' not in custom_auth_configs or
-                    'claims_mapping' not in custom_auth_configs or
-                    'user_id' not in custom_auth_configs['claims_mapping'] or
-                    'email' not in custom_auth_configs['claims_mapping']
+                if (
+                    'url' not in custom_auth_configs
+                    or 'provider' not in custom_auth_configs
+                    or 'redirect_url' not in custom_auth_configs
+                    or 'client_id' not in custom_auth_configs
+                    or 'response_types' not in custom_auth_configs
+                    or 'scopes' not in custom_auth_configs
+                    or 'jwks_url' not in custom_auth_configs
+                    or 'claims_mapping' not in custom_auth_configs
+                    or 'user_id' not in custom_auth_configs['claims_mapping']
+                    or 'email' not in custom_auth_configs['claims_mapping']
                 ):
                     raise ValueError(
                         'Custom Auth Configuration Error : Missing some configurations in custom_auth section in Deployments. Please take a look at template_cdk.json for reference or visit the data.all webpage and checkout the Deploy to AWS section'
                     )
 
-                if (not isinstance(custom_auth_configs['url'], str) or
-                        not isinstance(custom_auth_configs['provider'], str) or
-                        not isinstance(custom_auth_configs['redirect_url'], str) or
-                        not isinstance(custom_auth_configs['client_id'], str) or
-                        not isinstance(custom_auth_configs['response_types'], str) or
-                        not isinstance(custom_auth_configs['scopes'], str) or
-                        not isinstance(custom_auth_configs['jwks_url'], str) or
-                        not isinstance(custom_auth_configs['claims_mapping']['user_id'], str) or
-                        not isinstance(custom_auth_configs['claims_mapping']['email'], str)
+                if (
+                    not isinstance(custom_auth_configs['url'], str)
+                    or not isinstance(custom_auth_configs['provider'], str)
+                    or not isinstance(custom_auth_configs['redirect_url'], str)
+                    or not isinstance(custom_auth_configs['client_id'], str)
+                    or not isinstance(custom_auth_configs['response_types'], str)
+                    or not isinstance(custom_auth_configs['scopes'], str)
+                    or not isinstance(custom_auth_configs['jwks_url'], str)
+                    or not isinstance(custom_auth_configs['claims_mapping']['user_id'], str)
+                    or not isinstance(custom_auth_configs['claims_mapping']['email'], str)
                 ):
                     raise TypeError(
                         'Custom Auth Configuration Error : Type error: Configs type is not as required. Please take a look at template_cdk.json for reference or visit the data.all webpage and checkout the Deploy to AWS section'
@@ -633,16 +620,17 @@ class PipelineStack(Stack):
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
                 quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
-                enable_cw_rum=target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None,
-                enable_cw_canaries=target_env.get('enable_cw_canaries', False) and target_env.get("custom_auth", None) == None,
+                enable_cw_rum=target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None,
+                enable_cw_canaries=target_env.get('enable_cw_canaries', False)
+                and target_env.get('custom_auth', None) is None,
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
                 codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
                 codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
-                reauth_config =target_env.get('reauth_config', None),
+                reauth_config=target_env.get('reauth_config', None),
                 cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
-                custom_auth=target_env.get('custom_auth', None)
+                custom_auth=target_env.get('custom_auth', None),
             )
         )
         return backend_stage
@@ -651,9 +639,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        migration_wave = self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage"
-        )
+        migration_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage")
         migration_wave.add_post(
             pipelines.CodeBuildStep(
                 id='MigrateDB',
@@ -681,9 +667,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        wave = self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-stacks-updater-stage"
-        )
+        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-stacks-updater-stage")
         wave.add_post(
             pipelines.CodeBuildStep(
                 id='StacksUpdater',
@@ -702,7 +686,7 @@ class PipelineStack(Stack):
                     f"export task_definition=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/task_def_arn/stacks_updater --profile buildprofile --output text --query 'Parameter.Value')",
                     'network_config="awsvpcConfiguration={subnets=[$private_subnets],securityGroups=[$security_groups],assignPublicIp=DISABLED}"',
                     f'cluster_arn="arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/$cluster_name"',
-                    f'aws --profile buildprofile ecs run-task --task-definition $task_definition --cluster "$cluster_arn" --launch-type "FARGATE" --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
+                    'aws --profile buildprofile ecs run-task --task-definition $task_definition --cluster "$cluster_arn" --launch-type "FARGATE" --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
                 ],
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
@@ -722,7 +706,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 tooling_account_id=self.account,
                 custom_domain=target_env.get('custom_domain'),
-                custom_auth=target_env.get('custom_auth', None)
+                custom_auth=target_env.get('custom_auth', None),
             )
         )
         front_stage_actions = (
@@ -738,7 +722,7 @@ class PipelineStack(Stack):
                     f'export internet_facing={target_env.get("internet_facing", True)}',
                     f'export custom_domain={str(True) if target_env.get("custom_domain") else str(False)}',
                     f'export deployment_region={target_env.get("region", self.region)}',
-                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) == None }',
+                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) is None }',
                     f'export resource_prefix={self.resource_prefix}',
                     f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                     f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
@@ -778,19 +762,17 @@ class PipelineStack(Stack):
             front_stage_actions = (
                 *front_stage_actions,
                 self.cognito_config_action(target_env),
-        )
-        if target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None:
+            )
+        if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             front_stage_actions = (
                 *front_stage_actions,
                 self.cw_rum_config_action(target_env),
             )
-        self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-frontend-stage"
-        ).add_post(*front_stage_actions)
+        self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-frontend-stage").add_post(
+            *front_stage_actions
+        )
         if target_env.get('custom_auth', None) is None:
-            self.pipeline.add_wave(
-                f"{self.resource_prefix}-{target_env['envname']}-docs-stage"
-            ).add_post(
+            self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-docs-stage").add_post(
                 pipelines.CodeBuildStep(
                     id='UpdateDocumentation',
                     build_environment=codebuild.BuildEnvironment(
@@ -887,7 +869,7 @@ class PipelineStack(Stack):
                 custom_domain=target_env['custom_domain'],
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
-                custom_auth=target_env.get('custom_auth', None)
+                custom_auth=target_env.get('custom_auth', None),
             ),
             pre=[
                 pipelines.CodeBuildStep(
@@ -908,9 +890,9 @@ class PipelineStack(Stack):
                         f'export REACT_APP_STAGE={target_env["envname"]}',
                         f'export envname={target_env["envname"]}',
                         f'export internet_facing={target_env.get("internet_facing", False)}',
-                        f'export custom_domain=True',
+                        'export custom_domain=True',
                         f'export deployment_region={target_env.get("region", self.region)}',
-                        f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) == None}',
+                        f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) is None}',
                         f'export resource_prefix={self.resource_prefix}',
                         f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                         f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
@@ -937,9 +919,9 @@ class PipelineStack(Stack):
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
                     role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc
+                    vpc=self.vpc,
                 )
-            ]
+            ],
         )
         if target_env.get('custom_auth') is None:
             albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
@@ -947,7 +929,7 @@ class PipelineStack(Stack):
         if target_env.get('custom_auth') is None:
             albfront_stage.add_post(self.cognito_config_action(target_env))
 
-        if target_env.get('enable_cw_rum', False) and target_env.get("custom_auth", None) == None:
+        if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))
 
     def user_guide_pre_build_alb(self, repository_name):

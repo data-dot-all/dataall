@@ -14,6 +14,7 @@ class FeedDefinition:
 
 class FeedRegistry(UnionTypeRegistry):
     """Registers models for different target types"""
+
     _DEFINITIONS: Dict[str, FeedDefinition] = {}
 
     @classmethod

@@ -17,6 +17,7 @@ from dataall.base.utils import slugify
 
 class DatapipelinesRepository(EnvironmentResource):
     """DAO layer for datapipelines"""
+
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
@@ -24,20 +25,18 @@ class DatapipelinesRepository(EnvironmentResource):
         return (
             session.query(DataPipeline)
             .filter(
-                and_(
-                    DataPipeline.environmentUri == environment.environmentUri,
-                    DataPipeline.SamlGroupName == group_uri
-                ))
+                and_(DataPipeline.environmentUri == environment.environmentUri, DataPipeline.SamlGroupName == group_uri)
+            )
             .count()
         )
 
     @staticmethod
     def create_pipeline(
-            session,
-            username: str,
-            admin_group: str,
-            uri: str,
-            data: dict = None,
+        session,
+        username: str,
+        admin_group: str,
+        uri: str,
+        data: dict = None,
     ) -> DataPipeline:
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
@@ -52,7 +51,7 @@ class DatapipelinesRepository(EnvironmentResource):
             region=environment.region,
             repo=slugify(data['label']),
             devStrategy=data['devStrategy'],
-            template="",
+            template='',
         )
 
         session.add(pipeline)
@@ -107,7 +106,8 @@ class DatapipelinesRepository(EnvironmentResource):
                 and_(
                     Stack.targetUri == uri,
                     Stack.stack == 'PipelineStack',
-                ))
+                )
+            )
             .first()
         )
 
@@ -128,27 +128,17 @@ class DatapipelinesRepository(EnvironmentResource):
             )
         if filter and filter.get('region'):
             if len(filter.get('region')) > 0:
-                query = query.filter(
-                    DataPipeline.region.in_(filter.get('region'))
-                )
+                query = query.filter(DataPipeline.region.in_(filter.get('region')))
         if filter and filter.get('tags'):
             if len(filter.get('tags')) > 0:
-                query = query.filter(
-                    or_(
-                        *[DataPipeline.tags.any(tag) for tag in filter.get('tags')]
-                    )
-                )
+                query = query.filter(or_(*[DataPipeline.tags.any(tag) for tag in filter.get('tags')]))
         if filter and filter.get('type'):
             if len(filter.get('type')) > 0:
-                query = query.filter(
-                    DataPipeline.devStrategy.in_(filter.get('type'))
-                )
+                query = query.filter(DataPipeline.devStrategy.in_(filter.get('type')))
         return query
 
     @staticmethod
-    def paginated_user_pipelines(
-        session, username, groups, data=None
-    ) -> dict:
+    def paginated_user_pipelines(session, username, groups, data=None) -> dict:
         return paginate(
             query=DatapipelinesRepository.query_user_pipelines(session, username, groups, data),
             page=data.get('page', DatapipelinesRepository._DEFAULT_PAGE),
@@ -163,9 +153,7 @@ class DatapipelinesRepository(EnvironmentResource):
         return query
 
     @staticmethod
-    def paginated_pipeline_environments(
-        session, uri, data=None
-    ) -> dict:
+    def paginated_pipeline_environments(session, uri, data=None) -> dict:
         return paginate(
             query=DatapipelinesRepository.query_pipeline_environments(session, uri),
             page=data.get('page', DatapipelinesRepository._DEFAULT_PAGE),
@@ -175,31 +163,31 @@ class DatapipelinesRepository(EnvironmentResource):
     @staticmethod
     def delete_pipeline_environments(session, uri) -> bool:
         deletedItems = (
-            session.query(DataPipelineEnvironment).filter(
-                DataPipelineEnvironment.pipelineUri == uri).delete()
+            session.query(DataPipelineEnvironment).filter(DataPipelineEnvironment.pipelineUri == uri).delete()
         )
         session.commit()
         return True
 
     @staticmethod
-    def delete_pipeline_environment(
-        session, envPipelineUri
-    ) -> bool:
+    def delete_pipeline_environment(session, envPipelineUri) -> bool:
         deletedItem = (
-            session.query(DataPipelineEnvironment).filter(
-                DataPipelineEnvironment.envPipelineUri == envPipelineUri).delete()
+            session.query(DataPipelineEnvironment)
+            .filter(DataPipelineEnvironment.envPipelineUri == envPipelineUri)
+            .delete()
         )
         session.commit()
         return True
 
     @staticmethod
-    def get_pipeline_environment(
-        session, pipelineUri, environmentUri, stage
-    ) -> DataPipelineEnvironment:
-        return session.query(DataPipelineEnvironment).filter(
-            and_(
-                DataPipelineEnvironment.pipelineUri == pipelineUri,
-                DataPipelineEnvironment.environmentUri == environmentUri,
-                DataPipelineEnvironment.stage == stage
+    def get_pipeline_environment(session, pipelineUri, environmentUri, stage) -> DataPipelineEnvironment:
+        return (
+            session.query(DataPipelineEnvironment)
+            .filter(
+                and_(
+                    DataPipelineEnvironment.pipelineUri == pipelineUri,
+                    DataPipelineEnvironment.environmentUri == environmentUri,
+                    DataPipelineEnvironment.stage == stage,
+                )
             )
-        ).first()
+            .first()
+        )

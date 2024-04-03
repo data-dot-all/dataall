@@ -11,6 +11,7 @@ class SagemakerClient:
     """
     A Sagemaker notebooks proxy client that is used to send requests to AWS
     """
+
     def __init__(self, notebook: SagemakerNotebook):
         session = SessionHelper.remote_session(notebook.AWSAccountId, notebook.region)
         self._client = session.client('sagemaker', region_name=notebook.region)
@@ -19,22 +20,16 @@ class SagemakerClient:
     def get_notebook_instance_status(self) -> str:
         """Remote call to AWS to check the notebook's status"""
         try:
-            response = self._client.describe_notebook_instance(
-                NotebookInstanceName=self._instance_name
-            )
+            response = self._client.describe_notebook_instance(NotebookInstanceName=self._instance_name)
             return response.get('NotebookInstanceStatus', 'NOT FOUND')
         except ClientError as e:
-            logger.error(
-                f'Could not retrieve instance {self._instance_name} status due to: {e} '
-            )
+            logger.error(f'Could not retrieve instance {self._instance_name} status due to: {e} ')
             return 'NOT FOUND'
 
     def presigned_url(self):
         """Creates a presigned url for a notebook instance by sending request to AWS"""
         try:
-            response = self._client.create_presigned_notebook_instance_url(
-                NotebookInstanceName=self._instance_name
-            )
+            response = self._client.create_presigned_notebook_instance_url(NotebookInstanceName=self._instance_name)
             return response['AuthorizedUrl']
         except ClientError as e:
             raise e

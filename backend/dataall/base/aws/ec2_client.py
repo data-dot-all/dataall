@@ -7,7 +7,6 @@ log = logging.getLogger(__name__)
 
 
 class EC2:
-
     @staticmethod
     def get_client(account_id: str, region: str, role=None):
         session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
@@ -15,13 +14,11 @@ class EC2:
 
     @staticmethod
     def check_default_vpc_exists(AwsAccountId: str, region: str, role=None):
-        log.info("Check that default VPC exists..")
+        log.info('Check that default VPC exists..')
         client = EC2.get_client(account_id=AwsAccountId, region=region, role=role)
-        response = client.describe_vpcs(
-            Filters=[{'Name': 'isDefault', 'Values': ['true']}]
-        )
+        response = client.describe_vpcs(Filters=[{'Name': 'isDefault', 'Values': ['true']}])
         vpcs = response['Vpcs']
-        log.info(f"Default VPCs response: {vpcs}")
+        log.info(f'Default VPCs response: {vpcs}')
         if vpcs:
             vpc_id = vpcs[0]['VpcId']
             subnetIds = EC2._get_vpc_subnets(AwsAccountId=AwsAccountId, region=region, vpc_id=vpc_id, role=role)
@@ -32,9 +29,7 @@ class EC2:
     @staticmethod
     def _get_vpc_subnets(AwsAccountId: str, region: str, vpc_id: str, role=None):
         client = EC2.get_client(account_id=AwsAccountId, region=region, role=role)
-        response = client.describe_subnets(
-            Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
-        )
+        response = client.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
         return [subnet['SubnetId'] for subnet in response['Subnets']]
 
     @staticmethod
@@ -50,12 +45,9 @@ class EC2:
             if subnet_ids:
                 response = ec2.describe_subnets(
                     Filters=[
-                        {
-                            'Name': 'vpc-id',
-                            'Values': [vpc_id]
-                        },
+                        {'Name': 'vpc-id', 'Values': [vpc_id]},
                     ],
-                    SubnetIds=subnet_ids
+                    SubnetIds=subnet_ids,
                 )
         except ClientError as e:
             log.exception(f'Subnet Id {subnet_ids} Not Found: {e}')

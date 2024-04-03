@@ -41,26 +41,26 @@ def update_stacks(engine, envname):
 
 
 def update_stack(session, envname, target_uri, wait=False):
-    stack = Stack.get_stack_by_target_uri(
-        session, target_uri=target_uri
-    )
+    stack = Stack.get_stack_by_target_uri(session, target_uri=target_uri)
     cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
     if not Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
         stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack_uri=stack.stackUri)
         if wait:
             retries = 1
             while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
-                log.info(f"Update for {stack.name}//{stack.stackUri} is not complete, waiting for {SLEEP_TIME} seconds...")
+                log.info(
+                    f'Update for {stack.name}//{stack.stackUri} is not complete, waiting for {SLEEP_TIME} seconds...'
+                )
                 time.sleep(SLEEP_TIME)
                 retries = retries + 1
                 if retries > RETRIES:
-                    log.info(f"Maximum number of retries exceeded ({RETRIES} retries), continuing task...")
+                    log.info(f'Maximum number of retries exceeded ({RETRIES} retries), continuing task...')
                     break
-            log.info(f"Update for {stack.name}//{stack.stackUri} COMPLETE or maximum number of retries exceeded ({RETRIES} retries)")
+            log.info(
+                f'Update for {stack.name}//{stack.stackUri} COMPLETE or maximum number of retries exceeded ({RETRIES} retries)'
+            )
     else:
-        log.info(
-            f'Stack update is already running... Skipping stack {stack.name}//{stack.stackUri}'
-        )
+        log.info(f'Stack update is already running... Skipping stack {stack.name}//{stack.stackUri}')
 
 
 if __name__ == '__main__':
