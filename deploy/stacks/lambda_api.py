@@ -91,6 +91,10 @@ class LambdaApiStack(pyNestedClass):
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
         api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
         api_handler_env = {'envname': envname, 'LOG_LEVEL': 'INFO', 'REAUTH_TTL': str(reauth_ttl)}
+        # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
+        if custom_domain and custom_domain.get('hosted_zone_name', None):
+            api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
+        api_handler_role = self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name)
         if custom_auth:
             api_handler_env['custom_auth'] = custom_auth.get('provider', None)
         self.api_handler = _lambda.DockerImageFunction(
@@ -98,7 +102,7 @@ class LambdaApiStack(pyNestedClass):
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
+            role=api_handler_role,
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -120,9 +124,6 @@ class LambdaApiStack(pyNestedClass):
             'LOG_LEVEL': 'INFO',
             'email_sender_id': email_notification_sender_email_id,
         }
-        # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
-        if custom_domain and custom_domain.get('hosted_zone_name', None):
-            awshandler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
