@@ -779,7 +779,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_exists(
     )
     mocker.patch(
         'dataall.base.aws.iam.IAM.get_role_arn_by_name',
-        side_effect=lambda account_id, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
     )
     mock_glue_client().get_glue_database.return_value = False
 
