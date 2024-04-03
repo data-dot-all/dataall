@@ -517,8 +517,6 @@ class EnvironmentService:
 
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
-        if filter and filter.get('SamlGroupName') and filter.get('SamlGroupName') in groups:
-            groups = [filter.get('SamlGroupName')]
         query = (
             session.query(Environment)
             .outerjoin(
@@ -541,6 +539,10 @@ class EnvironmentService:
                     Environment.tags.contains(f'{{{term}}}'),
                     Environment.region.ilike('%' + term + '%'),
                 )
+            )
+        if filter and filter.get('SamlGroupName') and filter.get('SamlGroupName') in groups:
+            query = query.filter(
+                EnvironmentGroup.groupUri == filter.get('SamlGroupName')
             )
         return query
 
