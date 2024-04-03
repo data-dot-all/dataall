@@ -52,12 +52,11 @@ OmicsRun = gql.ObjectType(
         gql.Field("created", type=gql.String),
         gql.Field("updated", type=gql.String),
         gql.Field("owner", type=gql.String),
-        gql.Field("AwsAccountId", type=gql.String),
-        gql.Field("region", type=gql.String),
         gql.Field("workflowUri", type=gql.String),
         gql.Field("SamlAdminGroupName", type=gql.String),
         gql.Field("parameterTemplate", type=gql.String),
         gql.Field("outputDatasetUri", type=gql.String),
+        gql.Field("outputUri", type=gql.String),
         gql.Field(
             name='environment',
             type=gql.Ref('Environment'),

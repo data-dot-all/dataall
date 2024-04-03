@@ -43,8 +43,7 @@ class OmicsClient:
     def get_omics_run(session, runUri: str):
         omics_db = OmicsRepository(session)
         omics_run = omics_db.get_omics_run(runUri=runUri)
-        workflow = omics_db.get_workflow(workflowUri=omics_run.workflowUri)
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=workflow.environmentUri)
+        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
         client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
         try:
             response = client.get_run(id=omics_run.runUri)
@@ -61,7 +60,8 @@ class OmicsClient:
     def run_omics_workflow(omics_run: OmicsRun, session):
         group = EnvironmentService.get_environment_group(session, omics_run.SamlAdminGroupName, omics_run.environmentUri)
         workflow = OmicsRepository(session=session).get_workflow(workflowUri=omics_run.workflowUri)
-        client = OmicsClient.client(awsAccountId=omics_run.AwsAccountId, region=omics_run.region)
+        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
+        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
         try:
             response = client.start_run(
                 workflowId=workflow.id,
