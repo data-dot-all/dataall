@@ -1,6 +1,5 @@
 import os
 
-import boto3
 import jwt
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
@@ -33,10 +32,8 @@ logger.info('Connected')
 # create_schema_and_tables(engine, envname=ENVNAME)
 load_modules(modes={ImportMode.API, ImportMode.HANDLERS})
 Base.metadata.create_all(engine.engine)
-CDKPROXY_URL = (
-    'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
-)
-config.set_property("cdk_proxy_url", CDKPROXY_URL)
+CDKPROXY_URL = 'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
+config.set_property('cdk_proxy_url', CDKPROXY_URL)
 
 save_permissions_with_tenant(engine)
 
@@ -61,17 +58,12 @@ def request_context(headers, mock=False):
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')
         try:
-            decoded = jwt.decode(headers.get('Authorization'), options={"verify_signature": False})
+            decoded = jwt.decode(headers.get('Authorization'), options={'verify_signature': False})
             username = decoded.get('email', 'anonymous')
             groups = []
             saml_groups = decoded.get('custom:saml.groups', [])
             if len(saml_groups):
-                groups: list = (
-                    saml_groups.replace('[', '')
-                    .replace(']', '')
-                    .replace(', ', ',')
-                    .split(',')
-                )
+                groups: list = saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
             cognito_groups = decoded.get('cognito:groups', [])
             groups.extend(cognito_groups)
         except Exception as e:
@@ -90,13 +82,7 @@ def request_context(headers, mock=False):
     set_context(RequestContext(db_engine=engine, username=username, groups=groups, user_id=username))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
-    context = Context(
-        engine=engine,
-        schema=schema,
-        username=username,
-        groups=groups,
-        user_id=username
-    )
+    context = Context(engine=engine, schema=schema, username=username, groups=groups, user_id=username)
     return context.__dict__
 
 

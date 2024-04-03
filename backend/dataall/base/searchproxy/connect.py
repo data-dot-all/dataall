@@ -75,7 +75,7 @@ def connect(envname='local'):
         )
 
         # Avoid calling GET /info endpoint because it is not available in OpenSearch Serverless
-        if service != "aoss":
+        if service != 'aoss':
             print(es.info())
 
         if not es.indices.exists(index='dataall-index'):

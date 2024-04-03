@@ -1,4 +1,5 @@
 """Contains the code related to dashboards"""
+
 import logging
 from typing import Set, List, Type
 
@@ -33,34 +34,32 @@ class DashboardApiModuleInterface(ModuleInterface):
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
-        FeedRegistry.register(FeedDefinition("Dashboard", Dashboard))
+        FeedRegistry.register(FeedDefinition('Dashboard', Dashboard))
 
-        GlossaryRegistry.register(GlossaryDefinition(
-            target_type="Dashboard",
-            object_type="Dashboard",
-            model=Dashboard,
-            reindexer=DashboardIndexer
-        ))
+        GlossaryRegistry.register(
+            GlossaryDefinition(
+                target_type='Dashboard', object_type='Dashboard', model=Dashboard, reindexer=DashboardIndexer
+            )
+        )
 
-        add_vote_type("dashboard", DashboardIndexer)
+        add_vote_type('dashboard', DashboardIndexer)
 
         EnvironmentResourceManager.register(DashboardRepository())
-        log.info("Dashboard API has been loaded")
+        log.info('Dashboard API has been loaded')
 
 
 class DashboardCdkModuleInterface(ModuleInterface):
-
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CDK in modes
 
     def __init__(self):
         import dataall.modules.dashboards.cdk
-        log.info("Dashboard CDK code has been loaded")
+
+        log.info('Dashboard CDK code has been loaded')
 
 
 class DashboardCatalogIndexerModuleInterface(ModuleInterface):
-
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CATALOG_INDEXER_TASK in modes
@@ -68,10 +67,11 @@ class DashboardCatalogIndexerModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.catalog import CatalogIndexerModuleInterface
+
         return [CatalogIndexerModuleInterface]
 
     def __init__(self):
         from dataall.modules.dashboards.indexers.dashboard_catalog_indexer import DashboardCatalogIndexer
 
         DashboardCatalogIndexer()
-        log.info("Dashboard catalog indexer task has been loaded")
+        log.info('Dashboard catalog indexer task has been loaded')

@@ -8,17 +8,37 @@ class DataSharingPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # For access point sharing and S3 bucket sharing
             iam.PolicyStatement(
-                sid='IAMRolePolicy',
+                sid='IAMRolePolicy1',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'iam:PutRolePolicy',
-                    'iam:DeleteRolePolicy'
+                    'iam:DeleteRolePolicy',
+                    'iam:AttachRolePolicy',
+                    'iam:DetachRolePolicy',
+                    'iam:ListAttachedRolePolicies',
                 ],
-                resources=['*'],
+                resources=[f'arn:aws:iam::{self.account}:role/*'],
+            ),
+            iam.PolicyStatement(
+                sid='IAMRolePolicy2',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'iam:ListPolicyVersions',
+                    'iam:CreatePolicy',
+                    'iam:DeletePolicy',
+                    'iam:CreatePolicyVersion',
+                    'iam:DeletePolicyVersion',
+                ],
+                resources=[
+                    f'arn:aws:iam::{self.account}:policy/{self.env_resource_prefix}*',
+                    f'arn:aws:iam::{self.account}:policy/targetDatasetAccessControlPolicy',
+                    f'arn:aws:iam::{self.account}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy',
+                ],
             ),
             iam.PolicyStatement(
                 sid='ManagedAccessPoints',
@@ -66,10 +86,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='RamAssociateResource',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'ram:AssociateResourceShare',
-                    'ram:DisassociateResourceShare'
-                ],
+                actions=['ram:AssociateResourceShare', 'ram:DisassociateResourceShare'],
                 resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
                 conditions={'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
             ),
@@ -77,7 +94,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 sid='RamDeleteResource',
                 effect=iam.Effect.ALLOW,
                 actions=['ram:DeleteResourceShare'],
-                resources=[f'arn:aws:ram:*:{self.account}:resource-share/*']
+                resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
             ),
             iam.PolicyStatement(
                 sid='RamInvitations',
@@ -92,11 +109,8 @@ class DataSharingPivotRole(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='RamRead',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'ram:Get*',
-                    'ram:List*'
-                ],
+                actions=['ram:Get*', 'ram:List*'],
                 resources=['*'],
-            )
+            ),
         ]
         return statements

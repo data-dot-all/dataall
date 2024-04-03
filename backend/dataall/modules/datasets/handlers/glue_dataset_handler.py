@@ -10,14 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class DatasetCrawlerHandler:
-
     @staticmethod
     @Worker.handler(path='glue.crawler.start')
     def start_crawler(engine, task: Task):
         with engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(
-                session, task.targetUri
-            )
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, task.targetUri)
             location = task.payload.get('location')
             targets = {'S3Targets': [{'Path': location}]}
             crawler = DatasetCrawler(dataset)

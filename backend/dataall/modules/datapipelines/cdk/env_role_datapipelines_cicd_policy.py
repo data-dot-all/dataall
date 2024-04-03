@@ -11,6 +11,7 @@ class AwsCICD(ServicePolicy):
     - Create an S3 Bucket for codepipeline prefixed by "codepipeline-"
     - Read/Write to and from S3 Buckets prefixed by "codepipeline-"
     """
+
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_PIPELINE not in group_permissions:
             return []
@@ -30,10 +31,7 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 # sid="TagCICD",
-                actions=[
-                    "codecommit:TagResource",
-                    "codepipeline:TagResource"
-                ],
+                actions=['codecommit:TagResource', 'codepipeline:TagResource'],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*',
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*',
@@ -49,12 +47,10 @@ class AwsCICD(ServicePolicy):
             iam.PolicyStatement(
                 # sid="AllCodecommitTeamRepo",
                 not_actions=[
-                    "codecommit:TagResource",
-                    "codecommit:UntagResource",
+                    'codecommit:TagResource',
+                    'codecommit:UntagResource',
                 ],
-                resources=[
-                    f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
-                ],
+                resources=[f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'],
                 conditions={
                     'StringEquals': {
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
@@ -82,8 +78,8 @@ class AwsCICD(ServicePolicy):
             iam.PolicyStatement(
                 # sid="AllCodepipelineTeamRepo",
                 not_actions=[
-                    "codepipeline:TagResource",
-                    "codepipeline:UntagResource",
+                    'codepipeline:TagResource',
+                    'codepipeline:UntagResource',
                 ],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*/*',
@@ -92,11 +88,7 @@ class AwsCICD(ServicePolicy):
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*',
                     f'arn:aws:codepipeline:{self.region}:{self.account}:webhook:{self.resource_prefix}',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="CodePipelineCreateS3Bucket",
@@ -107,11 +99,11 @@ class AwsCICD(ServicePolicy):
                     's3:PutBucketPublicAccessBlock',
                     's3:GetObject',
                     's3:PutObject',
-                    's3:DeleteObject'
+                    's3:DeleteObject',
                 ],
                 resources=[
-                    f"arn:aws:s3:::codepipeline-{self.region}-{self.account}",
-                    f"arn:aws:s3:::codepipeline-{self.region}-{self.account}/{self.resource_prefix}*"
+                    f'arn:aws:s3:::codepipeline-{self.region}-{self.account}',
+                    f'arn:aws:s3:::codepipeline-{self.region}-{self.account}/{self.resource_prefix}*',
                 ],
             ),
             iam.PolicyStatement(
@@ -148,11 +140,7 @@ class AwsCICD(ServicePolicy):
                     f'arn:aws:codebuild:{self.region}:{self.account}:project/{self.resource_prefix}*',
                     f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="AllCodebuildTeamRepo",
@@ -167,11 +155,7 @@ class AwsCICD(ServicePolicy):
                     f'arn:aws:codebuild:{self.region}:{self.account}:project/{self.resource_prefix}*',
                     f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            )
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
+            ),
         ]
         return statements

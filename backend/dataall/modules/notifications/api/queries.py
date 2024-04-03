@@ -1,5 +1,10 @@
 from dataall.base.api import gql
-from .resolvers import *
+from .resolvers import (
+    count_deleted_notifications,
+    count_read_notifications,
+    count_unread_notifications,
+    list_my_notifications,
+)
 
 
 listNotifications = gql.QueryField(

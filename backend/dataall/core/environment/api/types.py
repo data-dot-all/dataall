@@ -1,6 +1,13 @@
 from dataall.base.api import gql
 
-from dataall.core.environment.api.resolvers import *
+from dataall.core.environment.api.resolvers import (
+    get_environment_stack,
+    get_parent_organization,
+    get_policies,
+    resolve_environment_networks,
+    resolve_parameters,
+    resolve_user_role,
+)
 from dataall.core.environment.api.enums import EnvironmentPermission
 
 
@@ -29,9 +36,7 @@ EnvironmentGroupPermission = gql.ObjectType(
         gql.Field(name='groupUri', type=gql.String),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
-        gql.Field(
-            name='groupRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()
-        ),
+        gql.Field(name='groupRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
         gql.Field(name='Group', type=gql.Ref('Group')),
     ],
 )
@@ -50,7 +55,7 @@ EnvironmentParameter = gql.ObjectType(
     fields=[
         gql.Field(name='key', type=gql.String),
         gql.Field(name='value', type=gql.String),
-    ]
+    ],
 )
 
 Environment = gql.ObjectType(
@@ -140,7 +145,7 @@ EnvironmentSimplified = gql.ObjectType(
             name='networks',
             type=gql.ArrayType(gql.Ref('Vpc')),
             resolver=resolve_environment_networks,
-        )
+        ),
     ],
 )
 
@@ -152,6 +157,15 @@ EnvironmentSimplifiedSearchResult = gql.ObjectType(
     ],
 )
 
+RoleManagedPolicy = gql.ObjectType(
+    name='RoleManagedPolicy',
+    fields=[
+        gql.Field(name='policy_name', type=gql.String),
+        gql.Field(name='policy_type', type=gql.String),
+        gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name='attached', type=gql.Boolean),
+    ],
+)
 
 ConsumptionRole = gql.ObjectType(
     name='ConsumptionRole',
@@ -162,9 +176,11 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='IAMRoleArn', type=gql.String),
         gql.Field(name='IAMRoleName', type=gql.String),
+        gql.Field(name='dataallManaged', type=gql.Boolean),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
+        gql.Field(name='managedPolicies', type=gql.ArrayType(RoleManagedPolicy), resolver=get_policies),
     ],
 )
 

@@ -12,9 +12,7 @@ def test_add_tables(table, dataset_fixture, db):
 
 
 def test_update_table(client, table, dataset_fixture, db, user, group):
-    table_to_update = table(
-        dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner
-    )
+    table_to_update = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
     response = client.query(
         """
         mutation UpdateDatasetTable($tableUri:String!,$input:ModifyDatasetTableInput!){
@@ -39,11 +37,7 @@ def test_update_table(client, table, dataset_fixture, db, user, group):
 
 def test_add_columns(table, dataset_fixture, db):
     with db.scoped_session() as session:
-        table = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'table1')
-            .first()
-        )
+        table = session.query(DatasetTable).filter(DatasetTable.name == 'table1').first()
         table_col = DatasetTableColumn(
             name='col1',
             description='None',
@@ -112,16 +106,8 @@ def test_list_dataset_tables(client, dataset_fixture):
 
 def test_update_dataset_table_column(client, table, dataset_fixture, db):
     with db.scoped_session() as session:
-        table = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'table1')
-            .first()
-        )
-        column = (
-            session.query(DatasetTableColumn)
-            .filter(DatasetTableColumn.tableUri == table.tableUri)
-            .first()
-        )
+        table = session.query(DatasetTable).filter(DatasetTable.name == 'table1').first()
+        column = session.query(DatasetTableColumn).filter(DatasetTableColumn.tableUri == table.tableUri).first()
         response = client.query(
             """
             mutation updateDatasetTableColumn($columnUri:String!,$input:DatasetTableColumnInput){
@@ -136,13 +122,9 @@ def test_update_dataset_table_column(client, table, dataset_fixture, db):
             groups=[dataset_fixture.SamlAdminGroupName],
         )
         print('response', response)
-        assert (
-            response.data.updateDatasetTableColumn.description == 'My new description'
-        )
+        assert response.data.updateDatasetTableColumn.description == 'My new description'
 
-        column = session.query(DatasetTableColumn).get(
-            column.columnUri
-        )
+        column = session.query(DatasetTableColumn).get(column.columnUri)
         assert column.description == 'My new description'
         response = client.query(
             """
@@ -161,16 +143,8 @@ def test_update_dataset_table_column(client, table, dataset_fixture, db):
 
 def test_sync_tables_and_columns(client, table, dataset_fixture, db):
     with db.scoped_session() as session:
-        table = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'table1')
-            .first()
-        )
-        column = (
-            session.query(DatasetTableColumn)
-            .filter(DatasetTableColumn.tableUri == table.tableUri)
-            .first()
-        )
+        table = session.query(DatasetTable).filter(DatasetTable.name == 'table1').first()
+        column = session.query(DatasetTableColumn).filter(DatasetTableColumn.tableUri == table.tableUri).first()
         glue_tables = [
             {
                 'Name': 'new_table',
@@ -223,11 +197,7 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         ]
 
         assert DatasetTableService.sync_existing_tables(session, dataset_fixture.datasetUri, glue_tables)
-        new_table: DatasetTable = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'new_table')
-            .first()
-        )
+        new_table: DatasetTable = session.query(DatasetTable).filter(DatasetTable.name == 'new_table').first()
         assert new_table
         assert new_table.GlueTableName == 'new_table'
         columns: [DatasetTableColumn] = (
@@ -240,11 +210,7 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         assert columns[0].columnType == 'column'
         assert columns[1].columnType == 'partition_0'
 
-        existing_table: DatasetTable = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'table1')
-            .first()
-        )
+        existing_table: DatasetTable = session.query(DatasetTable).filter(DatasetTable.name == 'table1').first()
         assert existing_table
         assert existing_table.GlueTableName == 'table1'
         columns: [DatasetTableColumn] = (
@@ -257,18 +223,12 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         assert columns[0].columnType == 'column'
         assert columns[1].columnType == 'partition_0'
 
-        deleted_table: DatasetTable = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.name == 'table2')
-            .first()
-        )
+        deleted_table: DatasetTable = session.query(DatasetTable).filter(DatasetTable.name == 'table2').first()
         assert deleted_table.LastGlueTableStatus == 'Deleted'
 
 
 def test_delete_table(client, table, dataset_fixture, db, group):
-    table_to_delete = table(
-        dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner
-    )
+    table_to_delete = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
     response = client.query(
         """
         mutation deleteDatasetTable($tableUri:String!){

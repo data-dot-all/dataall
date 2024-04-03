@@ -59,9 +59,7 @@ class AlbFrontStack(Stack):
             security_groups=[],
         )
 
-        ecr_repository = ecr.Repository.from_repository_arn(
-            self, 'EcrRepository', repository_arn=ecr_repository
-        )
+        ecr_repository = ecr.Repository.from_repository_arn(self, 'EcrRepository', repository_arn=ecr_repository)
 
         role_inline_policy = iam.Policy(
             self,
@@ -106,9 +104,7 @@ class AlbFrontStack(Stack):
             self,
             f'ECSTaskRole{envname}',
             role_name=f'{resource_prefix}-{envname}-ecs-albtasks-role',
-            inline_policies={
-                f'EcsRoleInlinePolicy{envname}': role_inline_policy.document
-            },
+            inline_policies={f'EcsRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         )
 
@@ -123,10 +119,10 @@ class AlbFrontStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             server_access_logs_bucket=s3.Bucket.from_bucket_name(
                 self,
-                f'AccessLogsBucket',
+                'AccessLogsBucket',
                 Fn.import_value(f'{resource_prefix}-{envname}-access-logs-bucket-name'),
             ),
-            server_access_logs_prefix=f'elb_access_logs',
+            server_access_logs_prefix='elb_access_logs',
             versioned=True,
             auto_delete_objects=True,
         )
@@ -148,8 +144,9 @@ class AlbFrontStack(Stack):
             userguide_alternate_domain = None
 
         if custom_domain and custom_domain.get('certificate_arn'):
-            certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
-                                                               custom_domain.get('certificate_arn'))
+            certificate = acm.Certificate.from_certificate_arn(
+                self, 'CustomDomainCertificate', custom_domain.get('certificate_arn')
+            )
         elif custom_domain and custom_domain.get('hosted_zone_name'):
             certificate = acm.Certificate(
                 self,
@@ -159,7 +156,9 @@ class AlbFrontStack(Stack):
                 validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
             )
         else:
-            raise ValueError("Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED when internet_facing=false")
+            raise ValueError(
+                "Configuration parameter custom_domain['hosted_zone_name'] in cdk.json is REQUIRED when internet_facing=false"
+            )
 
         frontend_sg = ec2.SecurityGroup(
             self,
@@ -187,15 +186,11 @@ class AlbFrontStack(Stack):
                     'LOGLEVEL': 'DEBUG',
                 },
                 task_role=task_role,
-                image=ecs.ContainerImage.from_ecr_repository(
-                    repository=ecr_repository, tag=frontend_image_tag
-                ),
+                image=ecs.ContainerImage.from_ecr_repository(repository=ecr_repository, tag=frontend_image_tag),
                 enable_logging=True,
                 log_driver=ecs.LogDriver.aws_logs(
                     stream_prefix='service',
-                    log_group=self.create_log_group(
-                        envname, resource_prefix, log_group_name='frontend'
-                    ),
+                    log_group=self.create_log_group(envname, resource_prefix, log_group_name='frontend'),
                 ),
             ),
             public_load_balancer=False,
@@ -248,15 +243,11 @@ class AlbFrontStack(Stack):
                         'LOGLEVEL': 'DEBUG',
                     },
                     task_role=task_role,
-                    image=ecs.ContainerImage.from_ecr_repository(
-                        repository=ecr_repository, tag=userguide_image_tag
-                    ),
+                    image=ecs.ContainerImage.from_ecr_repository(repository=ecr_repository, tag=userguide_image_tag),
                     enable_logging=True,
                     log_driver=ecs.LogDriver.aws_logs(
                         stream_prefix='service',
-                        log_group=self.create_log_group(
-                            envname, resource_prefix, log_group_name='userguide'
-                        ),
+                        log_group=self.create_log_group(envname, resource_prefix, log_group_name='userguide'),
                     ),
                 ),
                 public_load_balancer=False,
@@ -309,7 +300,6 @@ class AlbFrontStack(Stack):
             export_name=f'frontend-{envname}-hostedzoneid',
             value=frontend_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
         )
-
 
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(

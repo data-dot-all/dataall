@@ -8,6 +8,7 @@ class DatasetGlueCatalogServicePolicy(ServicePolicy):
     """
     Class including all permissions needed to work with AWS Glue Catalog.
     """
+
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_DATASET not in group_permissions:
             return []
@@ -17,20 +18,20 @@ class DatasetGlueCatalogServicePolicy(ServicePolicy):
                 # sid="GlueLFReadData",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "lakeformation:GetDataAccess",
-                    "glue:GetTable",
-                    "glue:GetTables",
-                    "glue:SearchTables",
-                    "glue:GetDatabase",
-                    "glue:GetDatabases",
-                    "glue:GetPartitions",
-                    "lakeformation:GetResourceLFTags",
-                    "lakeformation:ListLFTags",
-                    "lakeformation:GetLFTag",
-                    "lakeformation:SearchTablesByLFTags",
-                    "lakeformation:SearchDatabasesByLFTags"
+                    'lakeformation:GetDataAccess',
+                    'glue:GetTable',
+                    'glue:GetTables',
+                    'glue:SearchTables',
+                    'glue:GetDatabase',
+                    'glue:GetDatabases',
+                    'glue:GetPartitions',
+                    'lakeformation:GetResourceLFTags',
+                    'lakeformation:ListLFTags',
+                    'lakeformation:GetLFTag',
+                    'lakeformation:SearchTablesByLFTags',
+                    'lakeformation:SearchDatabasesByLFTags',
                 ],
-                resources=["*"],
+                resources=['*'],
             ),
             iam.PolicyStatement(
                 # sid="GlueManageCatalog",
@@ -64,7 +65,7 @@ class DatasetGlueCatalogServicePolicy(ServicePolicy):
                     f'arn:aws:glue:{self.region}:{self.account}:table/{self.resource_prefix}*/*',
                     f'arn:aws:glue:{self.region}:{self.account}:connection/{self.resource_prefix}*',
                 ],
-            )
+            ),
         ]
         return statements
 
@@ -73,28 +74,28 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
     """
     Class including all permissions needed to work with AWS Glue ETL.
     """
+
     def get_statements(self, group_permissions, **kwargs):
         statements = [
             iam.PolicyStatement(
                 # sid="ListBucketProfilingGlue",
                 actions=[
-                    "s3:ListBucket",
+                    's3:ListBucket',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}'],
-                conditions={"StringEquals": {
-                    "s3:prefix": ["", "profiling/", "profiling/code/"],
-                    "s3:delimiter": ["/"]}}
+                conditions={
+                    'StringEquals': {'s3:prefix': ['', 'profiling/', 'profiling/code/'], 's3:delimiter': ['/']}
+                },
             ),
             iam.PolicyStatement(
                 # sid="ReadEnvironmentBucketProfilingGlue",
                 actions=[
-                    "s3:GetObject",
-                    "s3:GetObjectAcl",
-                    "s3:GetObjectVersion",
+                    's3:GetObject',
+                    's3:GetObjectAcl',
+                    's3:GetObjectVersion',
                 ],
-                resources=[
-                    f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/profiling/code/*'],
+                resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/profiling/code/*'],
                 effect=iam.Effect.ALLOW,
             ),
             iam.PolicyStatement(
@@ -105,25 +106,17 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     'glue:List*',
                     'glue:BatchGet*',
                 ],
-                resources=["*"],
+                resources=['*'],
             ),
             iam.PolicyStatement(
                 # sid="GlueCreateS3Bucket",
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:CreateBucket',
-                    's3:ListBucket',
-                    's3:PutBucketPublicAccessBlock'
-                ],
+                actions=['s3:CreateBucket', 's3:ListBucket', 's3:PutBucketPublicAccessBlock'],
                 resources=[f'arn:aws:s3:::aws-glue-assets-{self.account}-{self.region}'],
             ),
             iam.PolicyStatement(
                 # sid="GlueReadWriteS3Bucket",
-                actions=[
-                    's3:GetObject',
-                    's3:PutObject',
-                    's3:DeleteObject'
-                ],
+                actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
                 effect=iam.Effect.ALLOW,
                 resources=[
                     f'arn:aws:s3:::aws-glue-assets-{self.account}-{self.region}/{self.resource_prefix}/{self.team.groupUri}/',
@@ -138,7 +131,7 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     'glue:CreateCrawler',
                     'glue:CreateJob',
                     'glue:CreateTrigger',
-                    'glue:TagResource'
+                    'glue:TagResource',
                 ],
                 resources=[
                     f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*',
@@ -148,9 +141,7 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     f'arn:aws:glue:{self.region}:{self.account}:trigger/{self.resource_prefix}*',
                     f'arn:aws:glue:{self.region}:{self.account}:table/{self.resource_prefix}*/*',
                 ],
-                conditions={
-                    'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}
-                }
+                conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="GlueManageGlueResources",
@@ -165,13 +156,9 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     f'arn:aws:glue:{self.region}:{self.account}:devEndpoint/{self.resource_prefix}*',
                     f'arn:aws:glue:{self.region}:{self.account}:trigger/{self.resource_prefix}*',
                     f'arn:aws:glue:{self.region}:{self.account}:job/{self.resource_prefix}*',
-                    f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*'
+                    f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:resourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:resourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 # sid="SupportGluePermissions",
@@ -194,6 +181,6 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*',
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*:log-stream:*',
                 ],
-            )
+            ),
         ]
         return statements

@@ -10,12 +10,19 @@ from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
-from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, GET_DASHBOARD, \
-    UPDATE_DASHBOARD, CREATE_DASHBOARD, DASHBOARD_ALL, DELETE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_permissions import (
+    MANAGE_DASHBOARDS,
+    GET_DASHBOARD,
+    UPDATE_DASHBOARD,
+    CREATE_DASHBOARD,
+    DASHBOARD_ALL,
+    DELETE_DASHBOARD,
+)
 
 
 class DashboardService:
     """Service that serves request related to dashboard"""
+
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(GET_DASHBOARD)
@@ -31,7 +38,7 @@ class DashboardService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
-            enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
 
             if not enabled:
                 raise UnauthorizedOperation(
@@ -48,9 +55,7 @@ class DashboardService:
                     message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
                 )
 
-            env = data.get(
-                'environment', EnvironmentService.get_environment_by_uri(session, uri)
-            )
+            env = data.get('environment', EnvironmentService.get_environment_by_uri(session, uri))
 
             dashboard = DashboardRepository.create_dashboard(session, env, context.username, data)
 
@@ -64,9 +69,7 @@ class DashboardService:
             )
             session.add(activity)
 
-            DashboardService._set_dashboard_resource_policy(
-                session, env, dashboard, data['SamlGroupName']
-            )
+            DashboardService._set_dashboard_resource_policy(session, env, dashboard, data['SamlGroupName'])
 
             DashboardService._update_glossary(session, dashboard, data)
             DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
@@ -83,9 +86,7 @@ class DashboardService:
 
             DashboardService._update_glossary(session, dashboard, data)
             environment = EnvironmentService.get_environment_by_uri(session, dashboard.environmentUri)
-            DashboardService._set_dashboard_resource_policy(
-                session, environment, dashboard, dashboard.SamlGroupName
-            )
+            DashboardService._set_dashboard_resource_policy(session, environment, dashboard, dashboard.SamlGroupName)
 
             DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
             return dashboard
@@ -98,9 +99,7 @@ class DashboardService:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
             DashboardRepository.delete_dashboard(session, dashboard)
 
-            ResourcePolicy.delete_resource_policy(
-                session=session, resource_uri=uri, group=dashboard.SamlGroupName
-            )
+            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dashboard.SamlGroupName)
             GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
             )

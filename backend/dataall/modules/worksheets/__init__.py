@@ -1,4 +1,5 @@
 """Contains the code related to worksheets"""
+
 import logging
 from typing import Type, List
 
@@ -21,7 +22,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
         import dataall.modules.worksheets.api
 
         EnvironmentResourceManager.register(WorksheetRepository())
-        log.info("API of worksheets has been imported")
+        log.info('API of worksheets has been imported')
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
@@ -40,7 +41,7 @@ class WorksheetCdkModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.worksheets.cdk
 
-        log.info("CDK module of worksheets has been imported")
+        log.info('CDK module of worksheets has been imported')
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:

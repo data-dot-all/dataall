@@ -36,9 +36,7 @@ OrganizationSortCriteria = gql.InputType(
             name='field',
             type=gql.NonNullableType(OrganizationSortField.toGraphQLEnum()),
         ),
-        gql.Argument(
-            name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())
-        ),
+        gql.Argument(name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())),
     ],
 )
 

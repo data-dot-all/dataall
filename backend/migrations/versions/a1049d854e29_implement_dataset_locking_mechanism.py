@@ -5,6 +5,7 @@ Revises: 6c9a8afee4e4
 Create Date: 2024-02-01 16:38:32.533228
 
 """
+
 import os
 
 import sqlalchemy as sa
@@ -28,7 +29,7 @@ Base = declarative_base()
 
 class Dataset(Resource, Base):
     __tablename__ = 'dataset'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     organizationUri = Column(String, nullable=False)
     datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
     region = Column(String, default='eu-west-1')
@@ -106,7 +107,7 @@ def upgrade():
         datasets: [Dataset] = session.query(Dataset).all()
 
         if not has_table('dataset_lock', engine):
-            print("Creating dataset_lock table")
+            print('Creating dataset_lock table')
 
             op.create_table(
                 'dataset_lock',
@@ -117,26 +118,24 @@ def upgrade():
 
             op.create_foreign_key(
                 'fk_dataset_lock_datasetUri',  # Constraint name
-                'dataset_lock', 'dataset',
-                ['datasetUri'], ['datasetUri']
+                'dataset_lock',
+                'dataset',
+                ['datasetUri'],
+                ['datasetUri'],
             )
 
             print('Creating a new row for each existing dataset in dataset_lock table')
             for dataset in datasets:
-                dataset_lock = DatasetLock(
-                    datasetUri=dataset.datasetUri,
-                    isLocked=False,
-                    acquiredBy=''
-                )
+                dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
                 session.add(dataset_lock)
             session.flush()  # flush to get the datasetUri
 
-        print("Creation of dataset_lock table is done")
+        print('Creation of dataset_lock table is done')
 
         session.commit()
 
     except Exception as ex:
-        print(f"Failed to execute the migration script due to: {ex}")
+        print(f'Failed to execute the migration script due to: {ex}')
         raise ex
 
 
@@ -145,13 +144,13 @@ def downgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
-        print("Dropping dataset_lock table")
+        print('Dropping dataset_lock table')
 
         op.drop_table('dataset_lock')
 
-        print("Dropping of dataset_lock table is done")
+        print('Dropping of dataset_lock table is done')
         session.commit()
 
     except Exception as ex:
-        print(f"Failed to execute the migration script due to: {ex}")
+        print(f'Failed to execute the migration script due to: {ex}')
         raise ex

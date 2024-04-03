@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 
 class AthenaTableClient:
-
     def __init__(self, env: Environment, table: DatasetTable):
         session = SessionHelper.remote_session(accountid=table.AWSAccountId)
         self._client = session.client('athena', region_name=env.region)
@@ -30,10 +29,7 @@ class AthenaTableClient:
         try:
             env_workgroup = self._client.get_work_group(WorkGroup=env.EnvironmentDefaultAthenaWorkGroup)
         except ClientError as e:
-            log.info(
-                f'Workgroup {env.EnvironmentDefaultAthenaWorkGroup} can not be found'
-                f'due to: {e}'
-            )
+            log.info(f'Workgroup {env.EnvironmentDefaultAthenaWorkGroup} can not be found' f'due to: {e}')
 
         connection = connect(
             aws_access_key_id=creds.access_key,

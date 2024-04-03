@@ -17,7 +17,6 @@ class PipelineNotificationStack(pyNestedClass):
         pipeline=None,
         **kwargs,
     ):
-
         super().__init__(scope, id, **kwargs)
 
         self.topic_key = kms.Key(
@@ -40,9 +39,7 @@ class PipelineNotificationStack(pyNestedClass):
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(
-                                service='codestar-notifications.amazonaws.com'
-                            ),
+                            iam.ServicePrincipal(service='codestar-notifications.amazonaws.com'),
                         ],
                         actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
                     ),
@@ -61,9 +58,7 @@ class PipelineNotificationStack(pyNestedClass):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 principals=[
-                    iam.ServicePrincipal(
-                        service='codestar-notifications.amazonaws.com'
-                    ),
+                    iam.ServicePrincipal(service='codestar-notifications.amazonaws.com'),
                 ],
                 actions=['sns:Publish'],
                 resources=['*'],

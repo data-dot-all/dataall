@@ -27,16 +27,14 @@ class MonitoringStack(pyNestedClass):
         lambdas: [_lambda.Function] = None,
         database='dataalldevdb',
         ecs_cluster: ecs.Cluster = None,
-        ecs_task_definitions_families = None,
+        ecs_task_definitions_families=None,
         backend_api=None,
         queue_name: str = None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
 
-        self.alarms_topic, self.cw_alarm_action = self.create_alarms_topic(
-            envname, resource_prefix
-        )
+        self.alarms_topic, self.cw_alarm_action = self.create_alarms_topic(envname, resource_prefix)
 
         self.create_cw_alarms(
             backend_api,
@@ -87,7 +85,7 @@ class MonitoringStack(pyNestedClass):
         )
         alarms_topic = sns.Topic(
             self,
-            f'AlarmsTopic',
+            'AlarmsTopic',
             topic_name=f'{resource_prefix}-{envname}-alarms-topic',
             master_key=key,
         )
@@ -120,12 +118,8 @@ class MonitoringStack(pyNestedClass):
             f'{resource_prefix}-{envname}-WafApiGatewayRateLimitBreached',
             Fn.import_value(f'{resource_prefix}-{envname}-api-webacl'),
         )
-        self.set_api_alarms(
-            f'{resource_prefix}-{envname}-api-alarm', backend_api
-        )
-        self.set_aurora_alarms(
-            f'{resource_prefix}-{envname}-aurora-alarm', database
-        )
+        self.set_api_alarms(f'{resource_prefix}-{envname}-api-alarm', backend_api)
+        self.set_aurora_alarms(f'{resource_prefix}-{envname}-aurora-alarm', database)
         self.set_sqs_alarms(
             f'{resource_prefix}-{envname}-sqs-alarm',
             queue_name,
@@ -177,20 +171,12 @@ class MonitoringStack(pyNestedClass):
                 dashboard.add_widgets(cw.TextWidget(width=24, markdown='# ECS Tasks'))
                 for task_family in ecs_task_definitions_families:
                     dashboard.add_widgets(
-                        cf_ecs.build_ecs_task_container_insight_cpu_widget(
-                            cluster_name, task_family
-                        ),
-                        cf_ecs.build_ecs_task_container_insight_memory_widget(
-                            cluster_name, task_family
-                        ),
-                        cf_ecs.build_ecs_task_container_insight_storage_widget(
-                            cluster_name, task_family
-                        ),
+                        cf_ecs.build_ecs_task_container_insight_cpu_widget(cluster_name, task_family),
+                        cf_ecs.build_ecs_task_container_insight_memory_widget(cluster_name, task_family),
+                        cf_ecs.build_ecs_task_container_insight_storage_widget(cluster_name, task_family),
                     )
         if database:
-            dashboard.add_widgets(
-                cw.TextWidget(width=24, markdown='# Aurora Serverless Database')
-            )
+            dashboard.add_widgets(cw.TextWidget(width=24, markdown='# Aurora Serverless Database'))
             DBClusterIdentifier = database
             dashboard.add_widgets(
                 cf_rds.build_aurora_writer_rep_widget(DBClusterIdentifier),
@@ -218,9 +204,7 @@ class MonitoringStack(pyNestedClass):
                 cf_rds.build_aurora_bill_widget(DBClusterIdentifier),
             )
 
-    def set_function_alarms(
-        self, alarm_name, lambda_function, resource_prefix
-    ):
+    def set_function_alarms(self, alarm_name, lambda_function, resource_prefix):
         error_metric = cw.Metric(
             namespace=resource_prefix,
             metric_name=f'{lambda_function.function_name}-error-metric',
@@ -281,25 +265,19 @@ class MonitoringStack(pyNestedClass):
             metric_name='Count',
             dimensions_map={'ApiName': api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-max-calls', api_count, threshold=100
-        )
+        self._set_alarm(f'{alarm_name}-max-calls', api_count, threshold=100)
         api_5xx_errors = cw.Metric(
             namespace='AWS/ApiGateway',
             metric_name='5XXError',
             dimensions_map={'ApiName': api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-5XXErrors', api_5xx_errors, threshold=1
-        )
+        self._set_alarm(f'{alarm_name}-5XXErrors', api_5xx_errors, threshold=1)
         api_4xx_errors = cw.Metric(
             namespace='AWS/ApiGateway',
             metric_name='4XXError',
             dimensions_map={'ApiName': api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-4XXErrors', api_4xx_errors, threshold=1
-        )
+        self._set_alarm(f'{alarm_name}-4XXErrors', api_4xx_errors, threshold=1)
 
     def set_aurora_alarms(self, alarm_name, db_identifier):
         cpu_alarm = cw.Metric(
@@ -309,12 +287,8 @@ class MonitoringStack(pyNestedClass):
             statistic='Sum',
             period=Duration.minutes(1),
         )
-        self._set_alarm(
-            f'{alarm_name}-CPUUtilization80', cpu_alarm, threshold=80
-        )
-        self._set_alarm(
-            f'{alarm_name}-CPUUtilization90', cpu_alarm, threshold=90
-        )
+        self._set_alarm(f'{alarm_name}-CPUUtilization80', cpu_alarm, threshold=80)
+        self._set_alarm(f'{alarm_name}-CPUUtilization90', cpu_alarm, threshold=90)
 
     def _set_alarm(self, alarm_name, api_count, threshold=1):
         api_error = cw.Alarm(

@@ -12,10 +12,7 @@ AwsEnvironmentInput = gql.InputType(
 
 ModifyEnvironmentParameterInput = gql.InputType(
     name='ModifyEnvironmentParameterInput',
-    arguments=[
-        gql.Argument('key', gql.String),
-        gql.Argument('value', gql.String)
-    ]
+    arguments=[gql.Argument('key', gql.String), gql.Argument('value', gql.String)],
 )
 
 NewEnvironmentInput = gql.InputType(
@@ -32,7 +29,7 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
         gql.Argument('vpcId', gql.String),
-        gql.Argument('subnetIds', gql.ArrayType(gql.String))
+        gql.Argument('subnetIds', gql.ArrayType(gql.String)),
     ],
 )
 
@@ -46,7 +43,7 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('resourcePrefix', gql.String),
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
         gql.Argument('vpcId', gql.String),
-        gql.Argument('subnetIds', gql.ArrayType(gql.String))
+        gql.Argument('subnetIds', gql.ArrayType(gql.String)),
     ],
 )
 
@@ -66,12 +63,8 @@ class EnvironmentSortField(GraphQLEnumMapper):
 EnvironmentSortCriteria = gql.InputType(
     name='EnvironmentSortCriteria',
     arguments=[
-        gql.Argument(
-            name='field', type=gql.NonNullableType(EnvironmentSortField.toGraphQLEnum())
-        ),
-        gql.Argument(
-            name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())
-        ),
+        gql.Argument(name='field', type=gql.NonNullableType(EnvironmentSortField.toGraphQLEnum())),
+        gql.Argument(name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())),
     ],
 )
 
@@ -106,6 +99,7 @@ AddConsumptionRoleToEnvironmentInput = gql.InputType(
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
         gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
+        gql.Argument('dataallManaged', gql.NonNullableType(gql.Boolean)),
     ],
 )
 

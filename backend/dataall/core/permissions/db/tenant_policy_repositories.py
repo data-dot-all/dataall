@@ -26,9 +26,7 @@ class TenantPolicy:
         return False
 
     @staticmethod
-    def check_user_tenant_permission(
-        session, username: str, groups: [str], tenant_name: str, permission_name: str
-    ):
+    def check_user_tenant_permission(session, username: str, groups: [str], tenant_name: str, permission_name: str):
         if TenantPolicy.is_tenant_admin(groups):
             return True
 
@@ -51,9 +49,7 @@ class TenantPolicy:
             return tenant_policy
 
     @staticmethod
-    def has_user_tenant_permission(
-        session, username: str, groups: [str], tenant_name: str, permission_name: str
-    ):
+    def has_user_tenant_permission(session, username: str, groups: [str], tenant_name: str, permission_name: str):
         if not username or not permission_name:
             return False
         tenant_policy: models.TenantPolicy = (
@@ -68,8 +64,7 @@ class TenantPolicy:
             )
             .join(
                 models.Permission,
-                models.Permission.permissionUri
-                == models.TenantPolicyPermission.permissionUri,
+                models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
             )
             .filter(
                 models.TenantPolicy.principalId.in_(groups),
@@ -81,9 +76,7 @@ class TenantPolicy:
         return tenant_policy
 
     @staticmethod
-    def has_group_tenant_permission(
-        session, group_uri: str, tenant_name: str, permission_name: str
-    ):
+    def has_group_tenant_permission(session, group_uri: str, tenant_name: str, permission_name: str):
         if not group_uri or not permission_name:
             return False
 
@@ -99,8 +92,7 @@ class TenantPolicy:
             )
             .join(
                 models.Permission,
-                models.Permission.permissionUri
-                == models.TenantPolicyPermission.permissionUri,
+                models.Permission.permissionUri == models.TenantPolicyPermission.permissionUri,
             )
             .filter(
                 and_(
@@ -123,9 +115,7 @@ class TenantPolicy:
 
         tenant_policy = (
             session.query(models.TenantPolicy)
-            .join(
-                models.Tenant, models.Tenant.tenantUri == models.TenantPolicy.tenantUri
-            )
+            .join(models.Tenant, models.Tenant.tenantUri == models.TenantPolicy.tenantUri)
             .filter(
                 and_(
                     models.TenantPolicy.principalId == group_uri,
@@ -150,14 +140,11 @@ class TenantPolicy:
         permissions: [str],
         tenant_name: str,
     ) -> models.TenantPolicy:
-
         TenantPolicy.validate_attach_tenant_policy(group, permissions, tenant_name)
 
         policy = TenantPolicy.save_group_tenant_policy(session, group, tenant_name)
 
-        TenantPolicy.add_permission_to_group_tenant_policy(
-            session, group, permissions, tenant_name, policy
-        )
+        TenantPolicy.add_permission_to_group_tenant_policy(session, group, permissions, tenant_name, policy)
 
         return policy
 
@@ -172,7 +159,6 @@ class TenantPolicy:
 
     @staticmethod
     def save_group_tenant_policy(session, group, tenant_name):
-
         TenantPolicy.validate_save_tenant_policy(group, tenant_name)
 
         policy = TenantPolicy.find_tenant_policy(session, group, tenant_name)
@@ -194,12 +180,8 @@ class TenantPolicy:
             raise exceptions.RequiredParameter(param_name='tenant_name')
 
     @staticmethod
-    def add_permission_to_group_tenant_policy(
-        session, group, permissions, tenant_name, policy
-    ):
-        TenantPolicy.validate_add_permission_to_tenant_policy_params(
-            group, permissions, policy, tenant_name
-        )
+    def add_permission_to_group_tenant_policy(session, group, permissions, tenant_name, policy):
+        TenantPolicy.validate_add_permission_to_tenant_policy_params(group, permissions, policy, tenant_name)
 
         for permission in permissions:
             if not TenantPolicy.has_group_tenant_permission(
@@ -208,14 +190,10 @@ class TenantPolicy:
                 permission_name=permission,
                 tenant_name=tenant_name,
             ):
-                TenantPolicy.associate_permission_to_tenant_policy(
-                    session, policy, permission
-                )
+                TenantPolicy.associate_permission_to_tenant_policy(session, policy, permission)
 
     @staticmethod
-    def validate_add_permission_to_tenant_policy_params(
-        group, permissions, policy, tenant_name
-    ):
+    def validate_add_permission_to_tenant_policy_params(group, permissions, policy, tenant_name):
         if not group:
             raise exceptions.RequiredParameter(param_name='group')
         TenantPolicy.validate_add_permissions_params(permissions, policy, tenant_name)
@@ -262,10 +240,7 @@ class TenantPolicy:
         group: str,
         tenant_name: str,
     ) -> bool:
-
-        policy = TenantPolicy.find_tenant_policy(
-            session, group_uri=group, tenant_name=tenant_name
-        )
+        policy = TenantPolicy.find_tenant_policy(session, group_uri=group, tenant_name=tenant_name)
         if policy:
             for permission in policy.permissions:
                 session.delete(permission)
@@ -275,9 +250,7 @@ class TenantPolicy:
         return True
 
     @staticmethod
-    def list_group_tenant_permissions(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_group_tenant_permissions(session, username, groups, uri, data=None, check_perm=None):
         if not groups:
             raise exceptions.RequiredParameter('groups')
         if not uri:
@@ -317,9 +290,7 @@ class TenantPolicy:
         )
 
         if data and data.get('term'):
-            query = query.filter(
-                models.TenantPolicy.principalId.ilike('%' + data.get('term') + '%')
-            )
+            query = query.filter(models.TenantPolicy.principalId.ilike('%' + data.get('term') + '%'))
 
         return paginate(
             query=query,
@@ -346,9 +317,7 @@ class TenantPolicy:
         return group_invitation_permissions
 
     @staticmethod
-    def update_group_permissions(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def update_group_permissions(session, username, groups, uri, data=None, check_perm=None):
         TenantPolicy.validate_params(data)
 
         if not TenantPolicy.is_tenant_admin(groups):
@@ -357,13 +326,9 @@ class TenantPolicy:
                 message=f'User: {username} is not allowed to manage tenant permissions',
             )
 
-        TenantPolicy.validate_permissions(
-            session, TENANT_NAME, data['permissions'], uri
-        )
+        TenantPolicy.validate_permissions(session, TENANT_NAME, data['permissions'], uri)
 
-        TenantPolicy.delete_tenant_policy(
-            session=session, group=uri, tenant_name=TENANT_NAME
-        )
+        TenantPolicy.delete_tenant_policy(session=session, group=uri, tenant_name=TENANT_NAME)
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=uri,

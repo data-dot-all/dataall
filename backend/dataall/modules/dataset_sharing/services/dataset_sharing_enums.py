@@ -46,7 +46,7 @@ class ShareItemHealthStatus(GraphQLEnumMapper):
     Healthy = 'Healthy'
     Unhealthy = 'Unhealthy'
     PendingVerify = 'PendingVerify'
-    PendingReApply = "PendingReApply"
+    PendingReApply = 'PendingReApply'
 
 
 class ShareObjectActions(GraphQLEnumMapper):

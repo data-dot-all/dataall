@@ -9,7 +9,6 @@ from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.permissions.permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
-from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
@@ -26,7 +25,9 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareItemSM,
 )
 from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
+from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
@@ -41,10 +42,12 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
-
     @staticmethod
     @has_resource_permission(GET_ENVIRONMENT)
     def get_share_object_in_environment(uri, shareUri):
@@ -69,6 +72,7 @@ class ShareObjectService:
         principal_id,
         principal_type,
         requestPurpose,
+        attachMissingPolicies,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -78,8 +82,8 @@ class ShareObjectService:
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
-                    message=f"Requester Team {group_uri} works in region {environment.region} "
-                    f"and the requested dataset is stored in region {dataset.region}",
+                    message=f'Requester Team {group_uri} works in region {environment.region} '
+                    f'and the requested dataset is stored in region {dataset.region}',
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
@@ -87,11 +91,14 @@ class ShareObjectService:
                     session, principal_id, environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
+                managed = consumption_role.dataallManaged
+
             else:
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session, group_uri, environment.environmentUri
                 )
                 principal_iam_role_name = env_group.environmentIAMRoleName
+                managed = True
 
             if (
                 (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
@@ -100,11 +107,32 @@ class ShareObjectService:
             ):
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
-                    message=f"Team: {group_uri} is managing the dataset {dataset.name}",
+                    message=f'Team: {group_uri} is managing the dataset {dataset.name}',
                 )
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
+            share_policy_service = SharePolicyService(
+                account=environment.AwsAccountId,
+                role_name=principal_iam_role_name,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix,
+            )
+            # Backwards compatibility
+            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+            # We create the policy from the inline statements
+            # In this case it could also happen that the role is the Admin of the environment
+            if not share_policy_service.check_if_policy_exists():
+                share_policy_service.create_managed_policy_from_inline_and_delete_inline()
+            # End of backwards compatibility
+
+            attached = share_policy_service.check_if_policy_attached()
+            if not attached and not managed and not attachMissingPolicies:
+                raise Exception(
+                    f'Required customer managed policy {share_policy_service.generate_policy_name()} is not attached to role {principal_iam_role_name}'
+                )
+            elif not attached:
+                share_policy_service.attach_policy()
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             if not share:
                 share = ShareObject(
@@ -125,11 +153,11 @@ class ShareObjectService:
                 share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
 
                 s3_access_point_name = utils.slugify(
-                    share.datasetUri + "-" + share.principalId,
+                    share.datasetUri + '-' + share.principalId,
                     max_length=50,
                     lowercase=True,
-                    regex_pattern="[^a-zA-Z0-9-]",
-                    separator="-",
+                    regex_pattern='[^a-zA-Z0-9-]',
+                    separator='-',
                 )
 
                 if not share_item and item:
@@ -140,21 +168,25 @@ class ShareObjectService:
                         itemName=item.name,
                         status=ShareItemStatus.PendingApproval.value,
                         owner=context.username,
-                        GlueDatabaseName=dataset.GlueDatabaseName if item_type == ShareableType.Table.value else "",
-                        GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else "",
+                        GlueDatabaseName=ShareItemService._get_glue_database_for_share(
+                            dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
+                        )
+                        if item_type == ShareableType.Table.value
+                        else '',
+                        GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else '',
                         S3AccessPointName=s3_access_point_name
                         if item_type == ShareableType.StorageLocation.value
-                        else "",
+                        else '',
                     )
                     session.add(new_share_item)
 
             activity = Activity(
-                action="SHARE_OBJECT:CREATE",
-                label="SHARE_OBJECT:CREATE",
+                action='SHARE_OBJECT:CREATE',
+                label='SHARE_OBJECT:CREATE',
                 owner=context.username,
-                summary=f"{context.username} created a share object for the {dataset.name} in {environment.name} for the principal: {principal_id}",
+                summary=f'{context.username} created a share object for the {dataset.name} in {environment.name} for the principal: {principal_id}',
                 targetUri=dataset.datasetUri,
-                targetType="dataset",
+                targetType='dataset',
             )
             session.add(activity)
 
@@ -200,12 +232,12 @@ class ShareObjectService:
 
             if not valid_share_items_states:
                 raise ShareItemsFound(
-                    action="Submit Share Object",
-                    message="The request is empty of pending items. Add items to share request.",
+                    action='Submit Share Object',
+                    message='The request is empty of pending items. Add items to share request.',
                 )
 
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
+            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
             if dashboard_enabled:
                 share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
                 if share_table_items:
@@ -254,7 +286,7 @@ class ShareObjectService:
                         resource_type=DatasetTable.__name__,
                     )
 
-            share.rejectPurpose = ""
+            share.rejectPurpose = ''
             session.commit()
 
             ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_approval(
@@ -262,9 +294,9 @@ class ShareObjectService:
             )
 
             approve_share_task: Task = Task(
-                action="ecs.share.approve",
+                action='ecs.share.approve',
                 targetUri=uri,
-                payload={"environmentUri": share.environmentUri},
+                payload={'environmentUri': share.environmentUri},
             )
             session.add(approve_share_task)
 
@@ -317,9 +349,9 @@ class ShareObjectService:
             new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states:
                 raise ShareItemsFound(
-                    action="Delete share object",
-                    message="There are shared items in this request. "
-                    "Revoke access to these items before deleting the request.",
+                    action='Delete share object',
+                    message='There are shared items in this request. '
+                    'Revoke access to these items before deleting the request.',
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
@@ -352,8 +384,8 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_statistics(uri):
         with get_context().db_engine.scoped_session() as session:
-            tables = ShareObjectRepository.count_sharable_items(session, uri, "DatasetTable")
-            locations = ShareObjectRepository.count_sharable_items(session, uri, "DatasetStorageLocation")
+            tables = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetTable')
+            locations = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
             shared_items = ShareObjectRepository.count_items_in_states(
                 session, uri, ShareItemSM.get_share_item_shared_states()
             )
@@ -366,12 +398,12 @@ class ShareObjectService:
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
             return {
-                "tables": tables,
-                "locations": locations,
-                "sharedItems": shared_items,
-                "revokedItems": revoked_items,
-                "failedItems": failed_items,
-                "pendingItems": pending_items,
+                'tables': tables,
+                'locations': locations,
+                'sharedItems': shared_items,
+                'revokedItems': revoked_items,
+                'failedItems': failed_items,
+                'pendingItems': pending_items,
             }
 
     @staticmethod
@@ -382,25 +414,30 @@ class ShareObjectService:
                 environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
                 S3AccessPointName = utils.slugify(
                     datasetUri + '-' + principalId,
-                    max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+                    max_length=50,
+                    lowercase=True,
+                    regex_pattern='[^a-zA-Z0-9-]',
+                    separator='-',
                 )
-                old_shared_db_name = f"{dataset.GlueDatabaseName}_shared_{uri}"[:254]
+                # Check if the share was made with a Glue Database
+                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
+                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
+                )
+                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
                 database = GlueClient(
-                    account_id=environment.AwsAccountId,
-                    region=environment.region,
-                    database=old_shared_db_name
+                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
                 ).get_glue_database()
                 warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f"{dataset.GlueDatabaseName}_shared"
+                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
                 return {
                     's3AccessPointName': S3AccessPointName,
                     'sharedGlueDatabase': sharedGlueDatabase,
                     's3bucketName': dataset.S3BucketName,
                 }
             return {
-                's3AccessPointName': "Not Created",
-                'sharedGlueDatabase': "Not Created",
-                's3bucketName': "Not Created",
+                's3AccessPointName': 'Not Created',
+                'sharedGlueDatabase': 'Not Created',
+                's3bucketName': 'Not Created',
             }
 
     @staticmethod
@@ -451,7 +488,7 @@ class ShareObjectService:
         if share_object_group and share_object_group not in context.groups:
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
-                message=f"User: {context.username} is not a member of the team {share_object_group}",
+                message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
             session=session,
@@ -459,5 +496,5 @@ class ShareObjectService:
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
-                message=f"Team: {share_object_group} is not a member of the environment {environment_uri}",
+                message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )

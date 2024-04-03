@@ -1,5 +1,5 @@
 from .graphql_field import Field
-from .graphql_scalar import *
+from .graphql_scalar import String
 from .graphql_type import ObjectType
 
 
@@ -18,17 +18,13 @@ class Schema:
 
     def ensure_query(self):
         if not self.type('Query'):
-            self.add_type(
-                ObjectType(name='Query', fields=[Field(name='test', type=String)])
-            )
+            self.add_type(ObjectType(name='Query', fields=[Field(name='test', type=String)]))
         elif not len(self.type('Query').fields):
             self.type('Query').add_field(field=Field(name='test', type=String))
 
     def ensure_mutation(self):
         if not self.type('Mutation'):
-            self.add_type(
-                ObjectType(name='Mutation', fields=[Field(name='test', type=String)])
-            )
+            self.add_type(ObjectType(name='Mutation', fields=[Field(name='test', type=String)]))
         elif not len(self.type('Mutation').fields):
             self.type('Mutation').add_field(field=Field(name='test', type=String))
 
@@ -117,9 +113,6 @@ class Schema:
 
 
 if __name__ == '__main__':
-
-    schema = Schema(
-        types=[ObjectType(name='Account', fields=[Field(name='uri', type=String)])]
-    )
+    schema = Schema(types=[ObjectType(name='Account', fields=[Field(name='uri', type=String)])])
 
     print(schema.gql())

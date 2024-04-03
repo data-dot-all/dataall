@@ -1,7 +1,9 @@
 from dataall.modules.mlstudio.db.mlstudio_models import SagemakerStudioUser
 
 
-def test_create_sagemaker_studio_domain(db, client, org_fixture, env_with_mlstudio, user, group, vpcId="vpc-1234", subnetIds=["subnet"]):
+def test_create_sagemaker_studio_domain(
+    db, client, org_fixture, env_with_mlstudio, user, group, vpcId='vpc-1234', subnetIds=['subnet']
+):
     response = client.query(
         """
         query getEnvironmentMLStudioDomain($environmentUri: String) {
@@ -37,7 +39,7 @@ def test_create_sagemaker_studio_user(sagemaker_studio_user, group, env_with_mls
     assert sagemaker_studio_user.environmentUri == env_with_mlstudio.environmentUri
 
 
-def test_list_sagemaker_studio_users(client, db, group, multiple_sagemaker_studio_users): 
+def test_list_sagemaker_studio_users(client, db, group, multiple_sagemaker_studio_users):
     response = client.query(
         """
         query listSagemakerStudioUsers($filter:SagemakerStudioUserFilter!){
@@ -56,9 +58,7 @@ def test_list_sagemaker_studio_users(client, db, group, multiple_sagemaker_studi
     assert len(response.data.listSagemakerStudioUsers['nodes']) == 10
 
 
-def test_nopermissions_list_sagemaker_studio_users(
-    client, db, group
-):
+def test_nopermissions_list_sagemaker_studio_users(client, db, group):
     response = client.query(
         """
         query listSagemakerStudioUsers($filter:SagemakerStudioUserFilter!){
@@ -76,9 +76,7 @@ def test_nopermissions_list_sagemaker_studio_users(
     assert len(response.data.listSagemakerStudioUsers['nodes']) == 0
 
 
-def test_delete_sagemaker_studio_user(
-    client, db, group, sagemaker_studio_user
-):
+def test_delete_sagemaker_studio_user(client, db, group, sagemaker_studio_user):
     response = client.query(
         """
         mutation deleteSagemakerStudioUser($sagemakerStudioUserUri:String!, $deleteFromAWS:Boolean){
@@ -92,10 +90,9 @@ def test_delete_sagemaker_studio_user(
     )
     assert response.data
     with db.scoped_session() as session:
-        n = session.query(SagemakerStudioUser).get(
-            sagemaker_studio_user.sagemakerStudioUserUri
-        )
+        n = session.query(SagemakerStudioUser).get(sagemaker_studio_user.sagemakerStudioUserUri)
         assert not n
+
 
 def update_env_query():
     query = """
@@ -120,6 +117,7 @@ def update_env_query():
     """
     return query
 
+
 def test_update_env_delete_domain(client, org_fixture, env_with_mlstudio, group, group2):
     response = client.query(
         update_env_query(),
@@ -128,12 +126,7 @@ def test_update_env_delete_domain(client, org_fixture, env_with_mlstudio, group,
         input={
             'label': 'DEV',
             'tags': [],
-            'parameters': [
-                {
-                    'key': 'mlStudiosEnabled',
-                    'value': 'False'
-                }
-            ],
+            'parameters': [{'key': 'mlStudiosEnabled', 'value': 'False'}],
         },
         groups=[group.name],
     )
@@ -168,14 +161,9 @@ def test_update_env_create_domain_with_vpc(db, client, org_fixture, env_with_mls
         input={
             'label': 'dev',
             'tags': [],
-            'vpcId': "vpc-12345",
+            'vpcId': 'vpc-12345',
             'subnetIds': ['subnet-12345', 'subnet-67890'],
-            'parameters': [
-                {
-                    'key': 'mlStudiosEnabled',
-                    'value': 'True'
-                }
-            ],
+            'parameters': [{'key': 'mlStudiosEnabled', 'value': 'True'}],
         },
         groups=[group.name],
     )
@@ -206,4 +194,3 @@ def test_update_env_create_domain_with_vpc(db, client, org_fixture, env_with_mls
     assert response.data.getEnvironmentMLStudioDomain.vpcId == 'vpc-12345'
     assert len(response.data.getEnvironmentMLStudioDomain.subnetIds) == 2
     assert response.data.getEnvironmentMLStudioDomain.environmentUri == env_with_mlstudio.environmentUri
-

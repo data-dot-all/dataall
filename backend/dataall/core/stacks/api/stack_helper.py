@@ -17,9 +17,7 @@ def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
     context = get_context()
     with context.db_engine.scoped_session() as session:
         env: Environment = session.query(Environment).get(environmentUri)
-        stack: StackModel = Stack.find_stack_by_target_uri(
-            session, target_uri=targetUri
-        )
+        stack: StackModel = Stack.find_stack_by_target_uri(session, target_uri=targetUri)
         if not stack:
             stack = StackModel(
                 stack='environment',
@@ -59,24 +57,18 @@ def save_describe_stack_task(session, environment, stack, target_uri):
 def deploy_stack(targetUri):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: StackModel = Stack.get_stack_by_target_uri(
-            session, target_uri=targetUri
-        )
+        stack: StackModel = Stack.get_stack_by_target_uri(session, target_uri=targetUri)
         envname = os.getenv('envname', 'local')
 
         if envname in ['local', 'pytest', 'dkrcompose']:
             requests.post(f'{config.get_property("cdk_proxy_url")}/stack/{stack.stackUri}')
 
         else:
-            cluster_name = Parameter().get_parameter(
-                env=envname, path='ecs/cluster/name'
-            )
+            cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
             if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
                 stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
             else:
-                task: Task = Task(
-                    action='ecs.cdkproxy.deploy', targetUri=stack.stackUri
-                )
+                task: Task = Task(action='ecs.cdkproxy.deploy', targetUri=stack.stackUri)
                 session.add(task)
                 session.commit()
                 Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
@@ -84,14 +76,10 @@ def deploy_stack(targetUri):
         return stack
 
 
-def delete_stack(
-    target_uri, accountid, cdk_role_arn, region
-):
+def delete_stack(target_uri, accountid, cdk_role_arn, region):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: StackModel = Stack.find_stack_by_target_uri(
-            session, target_uri=target_uri
-        )
+        stack: StackModel = Stack.find_stack_by_target_uri(session, target_uri=target_uri)
         if not stack:
             return
         task = Task(
