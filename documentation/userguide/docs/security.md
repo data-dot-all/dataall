@@ -54,17 +54,22 @@ Example of custom WAF rules setting:
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "eu-west-1",
-    "custom_waf_rules": {
-      "allowed_geo_list": [ "US", "CN" ],
-      "allowed_ip_list":  ["192.0.2.44/32", "192.0.2.0/24", "192.0.0.0/16"] 
-    },
     "DeploymentEnvironments": [
         {
             "envname": "dev",
             "account": "000000000000",
             "region": "eu-west-1",
-            "enable_pivot_role_auto_create": true,
-            "enable_opensearch_serverless": true
+            "custom_waf_rules": {
+                "allowed_geo_list": [
+                  "US",
+                  "CN"
+                ],
+                "allowed_ip_list": [
+                  "192.0.2.44/32",
+                  "192.0.2.0/24",
+                  "192.0.0.0/16"
+                ]
+              }
         }
     ]
   }
