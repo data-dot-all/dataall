@@ -54,7 +54,7 @@ class OmicsRepository(EnvironmentResource):
             query = query.filter(
                 or_(
                     OmicsWorkflow.id.ilike(filter.get("term") + "%%"),
-                    OmicsWorkflow.name.ilike(filter.get("term") + "%%"),
+                    OmicsWorkflow.name.ilike("%%" + filter.get("term") + "%%"),
                 )
             )
         return query

@@ -1,8 +1,8 @@
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, Grid, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager, useSettings } from 'design';
+import { Defaults, Pager, SearchInput, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { listOmicsWorkflows } from '../services';
@@ -13,23 +13,23 @@ export const OmicsWorkflowsList = () => {
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
-  // const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
 
-  // const handleInputChange = (event) => {
-  //   setInputValue(event.target.value);
-  //   setFilter({ ...filter, term: event.target.value });
-  // };
-  //
-  // const handleInputKeyup = (event) => {
-  //   if (event.code === 'Enter') {
-  //     setFilter({ page: 1, term: event.target.value });
-  //     fetchItems().catch((e) =>
-  //       dispatch({ type: SET_ERROR, error: e.message })
-  //     );
-  //   }
-  // };
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+    setFilter({ ...filter, term: event.target.value });
+  };
+
+  const handleInputKeyup = (event) => {
+    if (event.code === 'Enter') {
+      setFilter({ page: 1, term: event.target.value });
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  };
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
       await setFilter({ ...filter, page: value });
@@ -72,6 +72,21 @@ export const OmicsWorkflowsList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
+          <Box
+            sx={{
+              mt: 2
+            }}
+          >
+            <Grid container spacing={0} xs={12}>
+              <Grid item md={12} xs={12}>
+                <SearchInput
+                  onChange={handleInputChange}
+                  onKeyUp={handleInputKeyup}
+                  value={inputValue}
+                />
+              </Grid>
+            </Grid>
+          </Box>
           <Box
             sx={{
               mt: 3
