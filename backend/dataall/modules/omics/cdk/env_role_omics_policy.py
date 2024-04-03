@@ -8,6 +8,7 @@ class OmicsPolicy(ServicePolicy):
     """
     Creates an Omics policy for accessing and interacting with Omics Projects
     """
+
     # TODO: scope down omics permissions
     # TODO: identify additional needed permissions
     # Use f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
@@ -18,32 +19,20 @@ class OmicsPolicy(ServicePolicy):
         return [
             iam.PolicyStatement(
                 sid='OmicsWorkflowActions',
-                actions=[
-                    "omics:ListWorkflows",
-                    "omics:GetWorkflow",
-                    "omics:StartRun"
-                ],
+                actions=['omics:ListWorkflows', 'omics:GetWorkflow', 'omics:StartRun'],
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:workflow/*',
-                    f'arn:aws:omics:{self.region}::workflow/*'
-                ]
+                    f'arn:aws:omics:{self.region}::workflow/*',
+                ],
             ),
             iam.PolicyStatement(
                 sid='OmicsRunActions',
-                actions=[
-                    "omics:ListRuns",
-                    "omics:DeleteRun",
-                    "omics:GetRun",
-                    "omics:ListRunTasks",
-                    "omics:CancelRun"
-                ],
+                actions=['omics:ListRuns', 'omics:DeleteRun', 'omics:GetRun', 'omics:ListRunTasks', 'omics:CancelRun'],
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:run/{self.resource_prefix}*',
                 ],
                 conditions={
-                    'StringEquals': {
-                        f'omics:ResourceTag/{self.tag_key}': [self.tag_value]
-                    },
-                }
-            )
+                    'StringEquals': {f'omics:ResourceTag/{self.tag_key}': [self.tag_value]},
+                },
+            ),
         ]

@@ -1,4 +1,5 @@
 """Contains the code related to X"""
+
 import logging
 from typing import Set, List, Type
 
@@ -18,13 +19,14 @@ class OmicsApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets import DatasetApiModuleInterface
+
         return [DatasetApiModuleInterface]
 
     def __init__(self):
         import dataall.modules.omics.api
         from dataall.modules.omics.services.omics_permissions import GET_OMICS_RUN, UPDATE_OMICS_RUN
 
-        log.info("API of omics has been imported")
+        log.info('API of omics has been imported')
 
 
 class OmicsCdkModuleInterface(ModuleInterface):
@@ -36,4 +38,5 @@ class OmicsCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.omics.cdk
-        log.info("API of Omics has been imported")
+
+        log.info('API of Omics has been imported')

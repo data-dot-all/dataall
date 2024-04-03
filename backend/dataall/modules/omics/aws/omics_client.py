@@ -28,15 +28,10 @@ class OmicsClient:
         environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=workflow.environmentUri)
         client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
         try:
-            response = client.get_workflow(
-                id=workflow.id,
-                type='READY2RUN'
-            )
+            response = client.get_workflow(id=workflow.id, type='READY2RUN')
             return response
         except ClientError as e:
-            logger.error(
-                f'Could not retrieve Ready2Run Omics Workflows status due to: {e} '
-            )
+            logger.error(f'Could not retrieve Ready2Run Omics Workflows status due to: {e} ')
             raise e
 
     @staticmethod
@@ -51,14 +46,14 @@ class OmicsClient:
             print(response)
             return response
         except ClientError as e:
-            logger.error(
-                f'Could not retrieve workflow run status due to: {e} '
-            )
+            logger.error(f'Could not retrieve workflow run status due to: {e} ')
             return 'ERROR GETTING WORKFLOW RUN'
 
     @staticmethod
     def run_omics_workflow(omics_run: OmicsRun, session):
-        group = EnvironmentService.get_environment_group(session, omics_run.SamlAdminGroupName, omics_run.environmentUri)
+        group = EnvironmentService.get_environment_group(
+            session, omics_run.SamlAdminGroupName, omics_run.environmentUri
+        )
         workflow = OmicsRepository(session=session).get_workflow(workflowUri=omics_run.workflowUri)
         environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
         client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
@@ -69,14 +64,12 @@ class OmicsClient:
                 roleArn=group.environmentIAMRoleArn,
                 parameters=json.loads(omics_run.parameterTemplate),
                 outputUri=omics_run.outputUri,
-                tags={'Team': f'{omics_run.SamlAdminGroupName}'}
+                tags={'Team': f'{omics_run.SamlAdminGroupName}'},
             )
             return response
         except ClientError as e:
             # TODO: Check if we need to raise an error!
-            logger.error(
-                f'Could not retrieve workflow run status due to: {e} '
-            )
+            logger.error(f'Could not retrieve workflow run status due to: {e} ')
             return 'ERROR RUNNING OMICS WORKFLOW'
 
     @staticmethod
@@ -90,16 +83,14 @@ class OmicsClient:
                 PaginationConfig={
                     'MaxItems': 1000,
                     'PageSize': 100,
-                }
+                },
             )
             for page in response_pages:
                 found_workflows.extend(page['items'])
-            logger.info(f"{type} workflows = {found_workflows}")
+            logger.info(f'{type} workflows = {found_workflows}')
             return found_workflows
         except ClientError as e:
-            logger.error(
-                f'Could not retrieve {type} Omics Workflows status due to: {e} '
-            )
+            logger.error(f'Could not retrieve {type} Omics Workflows status due to: {e} ')
             return 'ERROR LISTING WORKFLOWS'
 
 

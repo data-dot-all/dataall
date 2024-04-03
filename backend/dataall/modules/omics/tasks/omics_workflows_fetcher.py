@@ -23,18 +23,24 @@ def fetch_omics_workflows(engine):
     with engine.scoped_session() as session:
         environments = session.query(Environment)
         for env in environments:
-            ready_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.READY2RUN.value)
+            ready_workflows = OmicsClient.list_workflows(
+                awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.READY2RUN.value
+            )
             # Removing private workflows until fully supported after initial launch
             # private_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.PRIVATE.value)
-            workflows = ready_workflows # + private_workflows
-            log.info(f"Found workflows {str(workflows)} in environment {env.environmentUri}")
+            workflows = ready_workflows  # + private_workflows
+            log.info(f'Found workflows {str(workflows)} in environment {env.environmentUri}')
             for workflow in workflows:
                 log.info(f"Processing workflow name={workflow['name']}, id={workflow['id']}...")
                 existing_workflow = OmicsRepository(session).get_workflow(workflow['id'])
                 if existing_workflow is not None:
-                    log.info(f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping...")
+                    log.info(
+                        f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping..."
+                    )
                 else:
-                    log.info(f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering...")
+                    log.info(
+                        f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering..."
+                    )
                     omicsWorkflow = OmicsWorkflow(
                         id=workflow['id'],
                         name=workflow['name'],
@@ -42,7 +48,7 @@ def fetch_omics_workflows(engine):
                         type=workflow['type'],
                         environmentUri=env.environmentUri,
                         label=workflow['name'],
-                        owner=env.environmentUri
+                        owner=env.environmentUri,
                     )
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
     return True

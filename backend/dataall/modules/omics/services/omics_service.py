@@ -2,6 +2,7 @@
 A service layer for Omics pipelines
 Central part for working with Omics workflow runs
 """
+
 import dataclasses
 import logging
 from dataclasses import dataclass, field
@@ -25,7 +26,7 @@ from dataall.modules.omics.services.omics_permissions import (
     CREATE_OMICS_RUN,
     GET_OMICS_RUN,
     OMICS_RUN_ALL,
-    DELETE_OMICS_RUN
+    DELETE_OMICS_RUN,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,24 +35,22 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OmicsRunCreationRequest:
     """A request dataclass for Omics pipeline creation. Adds default values for missed parameters"""
+
     label: str
     SamlAdminGroupName: str
     environment: Dict = field(default_factory=dict)
-    description: str = "No description provided"
+    description: str = 'No description provided'
     tags: List[str] = field(default_factory=list)
-    S3InputBucket: str = "No input bucket provided"
-    S3InputPrefix: str = ""
-    S3OutputBucket: str = "No output bucket provided"
-    S3OutputPrefix: str = ""
+    S3InputBucket: str = 'No input bucket provided'
+    S3InputPrefix: str = ''
+    S3OutputBucket: str = 'No output bucket provided'
+    S3OutputPrefix: str = ''
 
     @classmethod
     def from_dict(cls, env):
         """Copies only required fields from the dictionary and creates an instance of class"""
         fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{
-            k: v for k, v in env.items()
-            if k in fields
-        })
+        return cls(**{k: v for k, v in env.items() if k in fields})
 
 
 class OmicsService:
@@ -72,9 +71,9 @@ class OmicsService:
         with _session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, data['destination'])
-            enabled = EnvironmentService.get_boolean_env_param(session, environment, "omicsEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, environment, 'omicsEnabled')
 
-            if not enabled and enabled.lower() != "true":
+            if not enabled and enabled.lower() != 'true':
                 raise exceptions.UnauthorizedOperation(
                     action=CREATE_OMICS_RUN,
                     message=f'OMICS_RUN feature is disabled for the environment {environment.label}',
@@ -88,8 +87,8 @@ class OmicsService:
                 workflowUri=data['workflowUri'],
                 parameterTemplate=data['parameterTemplate'],
                 label=data['label'],
-                outputUri=f"s3://{dataset.S3BucketName}",
-                outputDatasetUri=dataset.datasetUri
+                outputUri=f's3://{dataset.S3BucketName}',
+                outputDatasetUri=dataset.datasetUri,
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
@@ -137,9 +136,7 @@ class OmicsService:
         """List existed user Omics runs. Filters only required omics_runs by the filter param"""
         with _session() as session:
             return OmicsRepository(session).paginated_user_runs(
-                username=get_context().username,
-                groups=get_context().groups,
-                filter=filter
+                username=get_context().username, groups=get_context().groups, filter=filter
             )
 
     @staticmethod
@@ -147,9 +144,7 @@ class OmicsService:
     def list_omics_workflows(filter: dict) -> dict:
         """List Omics workflows."""
         with _session() as session:
-            return OmicsRepository(session).paginated_omics_workflows(
-                filter=filter
-            )
+            return OmicsRepository(session).paginated_omics_workflows(filter=filter)
 
     @staticmethod
     @has_resource_permission(DELETE_OMICS_RUN)
@@ -159,7 +154,7 @@ class OmicsService:
         with _session() as session:
             omics_run = OmicsService._get_omics_run(session, uri)
             if not omics_run:
-                raise exceptions.ObjectNotFound("OmicsRun", uri)
+                raise exceptions.ObjectNotFound('OmicsRun', uri)
             session.delete(omics_run)
 
             ResourcePolicy.delete_resource_policy(

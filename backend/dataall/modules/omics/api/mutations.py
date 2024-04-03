@@ -4,9 +4,9 @@ from dataall.base.api import gql
 from .resolvers import *
 
 createOmicsRun = gql.MutationField(
-    name="createOmicsRun",
-    type=gql.Ref("OmicsRun"),
-    args=[gql.Argument(name="input", type=gql.NonNullableType(gql.Ref("NewOmicsRunInput")))],
+    name='createOmicsRun',
+    type=gql.Ref('OmicsRun'),
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewOmicsRunInput')))],
     resolver=create_omics_run,
 )
 # TODO implement updates to runs!

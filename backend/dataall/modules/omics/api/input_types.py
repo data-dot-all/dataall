@@ -3,14 +3,14 @@
 from dataall.base.api import gql
 
 NewOmicsRunInput = gql.InputType(
-    name="NewOmicsRunInput",
+    name='NewOmicsRunInput',
     arguments=[
-        gql.Field("environmentUri", type=gql.NonNullableType(gql.String)),
-        gql.Field("workflowUri", type=gql.NonNullableType(gql.String)),
-        gql.Field("label", type=gql.NonNullableType(gql.String)),
-        gql.Field("destination", type=gql.String),
-        gql.Field("parameterTemplate", type=gql.String),
-        gql.Field("SamlAdminGroupName", type=gql.NonNullableType(gql.String)),
+        gql.Field('environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Field('workflowUri', type=gql.NonNullableType(gql.String)),
+        gql.Field('label', type=gql.NonNullableType(gql.String)),
+        gql.Field('destination', type=gql.String),
+        gql.Field('parameterTemplate', type=gql.String),
+        gql.Field('SamlAdminGroupName', type=gql.NonNullableType(gql.String)),
     ],
 )
 
@@ -28,10 +28,10 @@ NewOmicsRunInput = gql.InputType(
 # )
 
 OmicsFilter = gql.InputType(
-    name="OmicsFilter",
+    name='OmicsFilter',
     arguments=[
-        gql.Argument(name="term", type=gql.String),
-        gql.Argument(name="page", type=gql.Integer),
-        gql.Argument(name="pageSize", type=gql.Integer),
+        gql.Argument(name='term', type=gql.String),
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
     ],
 )

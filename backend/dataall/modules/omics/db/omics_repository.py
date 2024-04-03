@@ -2,6 +2,7 @@
 DAO layer that encapsulates the logic and interaction with the database for Omics
 Provides the API to retrieve / update / delete omics resources
 """
+
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
@@ -13,6 +14,7 @@ from dataall.core.environment.services.environment_resource_manager import Envir
 
 class OmicsRepository(EnvironmentResource):
     """DAO layer for Omics"""
+
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 20
 
@@ -45,16 +47,16 @@ class OmicsRepository(EnvironmentResource):
     def get_omics_run(self, runUri: str):
         omics_run = self._session.query(OmicsRun).get(runUri)
         if not omics_run:
-            raise exceptions.ObjectNotFound("OmicsRun", runUri)
+            raise exceptions.ObjectNotFound('OmicsRun', runUri)
         return omics_run
 
     def _query_workflows(self, filter) -> Query:
         query = self._session.query(OmicsWorkflow)
-        if filter and filter.get("term"):
+        if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    OmicsWorkflow.id.ilike(filter.get("term") + "%%"),
-                    OmicsWorkflow.name.ilike("%%" + filter.get("term") + "%%"),
+                    OmicsWorkflow.id.ilike(filter.get('term') + '%%'),
+                    OmicsWorkflow.name.ilike('%%' + filter.get('term') + '%%'),
                 )
             )
         return query
@@ -73,11 +75,11 @@ class OmicsRepository(EnvironmentResource):
                 OmicsRun.SamlAdminGroupName.in_(groups),
             )
         )
-        if filter and filter.get("term"):
+        if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    OmicsRun.description.ilike(filter.get("term") + "%%"),
-                    OmicsRun.label.ilike(filter.get("term") + "%%"),
+                    OmicsRun.description.ilike(filter.get('term') + '%%'),
+                    OmicsRun.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -93,10 +95,7 @@ class OmicsRepository(EnvironmentResource):
         return (
             self._session.query(OmicsRun)
             .filter(
-                and_(
-                    OmicsRun.environmentUri == environment.environmentUri,
-                    OmicsRun.SamlAdminGroupName == group_uri
-                )
+                and_(OmicsRun.environmentUri == environment.environmentUri, OmicsRun.SamlAdminGroupName == group_uri)
             )
             .count()
         )

@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 class RequestValidator:
     """Aggregates all validation logic for operating with omics"""
+
     @staticmethod
     def required_uri(uri):
         if not uri:
@@ -23,8 +24,8 @@ class RequestValidator:
         if not data.get('label'):
             raise exceptions.RequiredParameter('name')
 
-        required(data, "environmentUri")
-        required(data, "SamlAdminGroupName")
+        required(data, 'environmentUri')
+        required(data, 'SamlAdminGroupName')
 
     @staticmethod
     def _required(data: dict, name: str):
@@ -36,9 +37,7 @@ def create_omics_run(context: Context, source, input=None):
     RequestValidator.validate_creation_request(input)
     # request = OmicsRunCreationRequest.from_dict(input)
     return OmicsService.create_omics_run(
-        uri=input["environmentUri"],
-        admin_group=input["SamlAdminGroupName"],
-        data=input
+        uri=input['environmentUri'], admin_group=input['SamlAdminGroupName'], data=input
     )
 
 
@@ -61,10 +60,7 @@ def get_omics_workflow(context: Context, source, workflowUri: str = None):
 
 def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):
     RequestValidator.required_uri(runUri)
-    return OmicsService.delete_omics_run(
-        uri=runUri,
-        delete_from_aws=deleteFromAWS
-    )
+    return OmicsService.delete_omics_run(uri=runUri, delete_from_aws=deleteFromAWS)
 
 
 def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
