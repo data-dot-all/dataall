@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import datetime
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.db import get_engine
@@ -32,11 +33,16 @@ def fetch_omics_workflows(engine):
             log.info(f'Found workflows {str(workflows)} in environment {env.environmentUri}')
             for workflow in workflows:
                 log.info(f"Processing workflow name={workflow['name']}, id={workflow['id']}...")
-                existing_workflow = OmicsRepository(session).get_workflow(workflow['id'])
+                existing_workflow = OmicsRepository(session).get_workflow_by_id(workflow['id'])
                 if existing_workflow is not None:
                     log.info(
-                        f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Skipping..."
+                        f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Updating information..."
                     )
+                    existing_workflow.name = workflow['name']
+                    existing_workflow.label = workflow['name']
+                    existing_workflow.updated = datetime.datetime.now
+                    session.commit()
+
                 else:
                     log.info(
                         f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering..."

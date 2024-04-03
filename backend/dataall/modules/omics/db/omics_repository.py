@@ -44,6 +44,9 @@ class OmicsRepository(EnvironmentResource):
     def get_workflow(self, workflowUri: str):
         return self._session.query(OmicsWorkflow).get(workflowUri)
 
+    def get_workflow_by_id(self, id: str):
+        return self._session.query(OmicsWorkflow).filter(OmicsWorkflow.id == id).first()
+
     def get_omics_run(self, runUri: str):
         omics_run = self._session.query(OmicsRun).get(runUri)
         if not omics_run:
