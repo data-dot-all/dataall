@@ -2,25 +2,22 @@ import pytest
 
 
 def test_omics_run(omics_run, group):
-    print('adri')
-    print(omics_run)
     assert omics_run.runUri
     assert omics_run.SamlAdminGroupName == group.name
     assert omics_run.label == 'my omics run'
 
 
 def test_get_omics_run():
-    # TODO
+    #TODO
+    query = """
+        """
     assert True
 
 
 def test_get_omics_run_from_aws():
     # TODO
-    assert True
-
-
-def test_get_omics_workflow():
-    # TODO
+    query = """
+        """
     assert True
 
 

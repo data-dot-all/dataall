@@ -40,7 +40,6 @@ def fetch_omics_workflows(engine):
                     )
                     existing_workflow.name = workflow['name']
                     existing_workflow.label = workflow['name']
-                    existing_workflow.updated = datetime.datetime.now
                     session.commit()
 
                 else:

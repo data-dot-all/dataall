@@ -8,7 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='module')
 def patch_aws(module_mocker):
     response_dict = dict()
     response_dict['id'] = '1234'
@@ -97,7 +97,7 @@ def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> Dataset:
 
 
 @pytest.fixture(scope='module')
-def omics_run(client, group, env_fixture, dataset1, workflow1) -> OmicsRun:
+def omics_run(client, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
     response = client.query(
         """
             mutation createOmicsRun($input: NewOmicsRunInput) {
