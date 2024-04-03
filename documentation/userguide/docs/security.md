@@ -35,3 +35,39 @@ Any user data transmitted over the internet is SSL-encrypted over HTTPS.
 ### **Authentication**
 The data.all authentication process is based SAML 2.0–based login. data.all can also integrate into organizations’
 existing SAML 2.0–based SSO authentication systems.
+
+### **AWS Web Application Firewall (WAF)**
+Data.all supports the opportunity to add custom rules to AWS WAF. These rules are set in `cdk.json` at the root level of the repository.
+As a custom rules (property `custom_waf_rules`) customer can set two allow lists:
+* The Geo match allow-list (property `allowed_geo_list`) is an array of two-character country codes that you want to match against. 
+If this property is specified, WAF will block web requests from all other countries, otherwise requests from all countries will be allowed.
+* The IP match allow-list (property `allowed_ip_list`) is used to specify zero or more IP addresses or blocks of IP addresses. 
+If this property is specified, WAF will block web requests from all other IP addresses, otherwise requests from all IP addresses will be allowed.
+
+Example of custom WAF rules setting:
+```json
+{
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "eu-west-1",
+    "custom_waf_rules": {
+      "allowed_geo_list": [ "US", "CN" ],
+      "allowed_ip_list":  ["192.0.2.44/32", "192.0.2.0/24", "192.0.0.0/16"] 
+    },
+    "DeploymentEnvironments": [
+        {
+            "envname": "dev",
+            "account": "000000000000",
+            "region": "eu-west-1",
+            "enable_pivot_role_auto_create": true,
+            "enable_opensearch_serverless": true
+        }
+    ]
+  }
+}
+```
+
