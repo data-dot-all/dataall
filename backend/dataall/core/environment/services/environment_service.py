@@ -541,9 +541,7 @@ class EnvironmentService:
                 )
             )
         if filter and filter.get('SamlGroupName') and filter.get('SamlGroupName') in groups:
-            query = query.filter(
-                EnvironmentGroup.groupUri == filter.get('SamlGroupName')
-            )
+            query = query.filter(EnvironmentGroup.groupUri == filter.get('SamlGroupName'))
         return query
 
     @staticmethod
