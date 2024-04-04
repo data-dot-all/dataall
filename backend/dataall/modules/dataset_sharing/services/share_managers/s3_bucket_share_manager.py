@@ -397,7 +397,7 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
-            pivot_role_name = SessionHelper.get_delegation_role_name()
+            pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
 
             if existing_policy:
                 existing_policy = json.loads(existing_policy)
@@ -406,17 +406,18 @@ class S3BucketShareManager:
 
                 if DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID in statements.keys():
                     logger.info(
-                        f'KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}'
+                        f'KMS key policy already contains share statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, updating existing statement'
                     )
+
                 else:
                     logger.info(
                         f'KMS key policy does not contain statement {DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}, generating a new one'
                     )
-                    statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] = (
-                        self.generate_enable_pivot_role_permissions_policy_statement(
-                            pivot_role_name, self.source_account_id
-                        )
+                statements[DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID] = (
+                    self.generate_enable_pivot_role_permissions_policy_statement(
+                        pivot_role_name, self.source_account_id
                     )
+                )
 
                 if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
                     logger.info(

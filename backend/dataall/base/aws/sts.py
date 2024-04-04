@@ -112,7 +112,7 @@ class SessionHelper:
         )
         return (
             f'{base_name}-{region}'
-            if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False)
+            if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False) and base_name != "dataallPivotRole"
             else base_name
         )
 
@@ -156,7 +156,7 @@ class SessionHelper:
         return request_url
 
     @classmethod
-    def get_delegation_role_arn(cls, accountid, region):
+    def get_delegation_role_arn(cls, accountid, region=None):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:
             accountid(string) : aws account id
@@ -171,6 +171,7 @@ class SessionHelper:
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid using CDK Toolkit role
         Args:
             accountid(string) : aws account id
+            region(string) : aws account region
         Returns:
                 string : arn of the CDKToolkit role on the target aws account id
         """
@@ -184,6 +185,7 @@ class SessionHelper:
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid using CDK Toolkit role
         Args:
             accountid(string) : aws account id
+            region(string) : aws account region
         Returns:
                 string : arn of the CDKToolkit role on the target aws account id
         """
@@ -191,19 +193,6 @@ class SessionHelper:
             f'Getting CDK exec role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-cfn-exec-role-{accountid}-{region}'
         )
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-cfn-exec-role-{}-{}'.format(accountid, accountid, region)
-
-    @classmethod
-    def get_delegation_role_id(cls, accountid):
-        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
-        Args:
-            accountid(string) : aws account id
-        Returns :
-            string : RoleId of the role
-        """
-        session = SessionHelper.remote_session(accountid=accountid)
-        client = session.client('iam', region_name='eu-west-1')
-        response = client.get_role(RoleName=cls.get_delegation_role_name())
-        return response['Role']['RoleId']
 
     @classmethod
     def remote_session(cls, accountid, region, role=None):
