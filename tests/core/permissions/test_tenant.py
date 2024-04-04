@@ -1,5 +1,8 @@
 from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
-from dataall.core.permissions.services.core_permissions import MANAGE_GROUPS, MANAGE_ORGANIZATIONS
+from dataall.core.permissions.services.permissions_constants.tenant_permissions import (
+    MANAGE_GROUPS,
+    MANAGE_ORGANIZATIONS,
+)
 
 
 def test_list_tenant_permissions(client, user, group, tenant):

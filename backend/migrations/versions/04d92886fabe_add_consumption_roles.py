@@ -20,7 +20,9 @@ from datetime import datetime
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
-from dataall.core.permissions.services.core_permissions import CONSUMPTION_ENVIRONMENT_ROLE_ALL
+from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+    CONSUMPTION_ENVIRONMENT_ROLE_ALL,
+)
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'

@@ -7,7 +7,9 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
-from dataall.core.permissions.services import core_permissions
+from dataall.core.permissions.services.permissions_constants.network_permissions import NETWORK_ALL, DELETE_NETWORK
+from dataall.core.permissions.services.permissions_constants.environment_permissions import CREATE_NETWORK
+from dataall.core.permissions.services.permissions_constants.tenant_permissions import MANAGE_ENVIRONMENTS
 
 
 def _session():
@@ -16,9 +18,9 @@ def _session():
 
 class VpcService:
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(core_permissions.MANAGE_ENVIRONMENTS)
-    @ResourcePolicyService.has_resource_permission(core_permissions.CREATE_NETWORK)
-    @has_group_permission(core_permissions.CREATE_NETWORK)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(CREATE_NETWORK)
+    @has_group_permission(CREATE_NETWORK)
     def create_network(uri: str, admin_group: str, data: dict):
         with _session() as session:
             username = get_context().username
@@ -26,7 +28,7 @@ class VpcService:
 
             if vpc:
                 raise exceptions.ResourceAlreadyExists(
-                    action=core_permissions.CREATE_NETWORK,
+                    action=CREATE_NETWORK,
                     message=f'Vpc {data["vpcId"]} is already associated to environment {uri}',
                 )
 
@@ -59,7 +61,7 @@ class VpcService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=vpc.SamlGroupName,
-                permissions=core_permissions.NETWORK_ALL,
+                permissions=NETWORK_ALL,
                 resource_uri=vpc.vpcUri,
                 resource_type=Vpc.__name__,
             )
@@ -68,7 +70,7 @@ class VpcService:
                 ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
-                    permissions=core_permissions.NETWORK_ALL,
+                    permissions=NETWORK_ALL,
                     resource_uri=vpc.vpcUri,
                     resource_type=Vpc.__name__,
                 )
@@ -76,8 +78,8 @@ class VpcService:
             return vpc
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(core_permissions.MANAGE_ENVIRONMENTS)
-    @ResourcePolicyService.has_resource_permission(core_permissions.DELETE_NETWORK)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(DELETE_NETWORK)
     def delete_network(uri):
         with _session() as session:
             vpc = VpcRepository.get_vpc_by_uri(session=session, vpc_uri=uri)

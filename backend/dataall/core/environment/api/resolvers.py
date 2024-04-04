@@ -28,7 +28,14 @@ from dataall.base.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization
-from dataall.core.permissions.services import core_permissions
+from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+    CREDENTIALS_ENVIRONMENT,
+    ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+)
+from dataall.core.permissions.services.permissions_constants.organization_permissions import (
+    GET_ORGANIZATION,
+    LINK_ENVIRONMENT,
+)
 
 log = logging.getLogger()
 
@@ -92,7 +99,7 @@ def check_environment(context: Context, source, account_id, region, data):
 def create_environment(context: Context, source, input={}):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
-            action=core_permissions.LINK_ENVIRONMENT,
+            action=LINK_ENVIRONMENT,
             message=f'User: {context.username} is not a member of the group {input["SamlGroupName"]}',
         )
 
@@ -122,7 +129,7 @@ def create_environment(context: Context, source, input={}):
 def update_environment(context: Context, source, environmentUri: str = None, input: dict = None):
     if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
         raise exceptions.UnauthorizedOperation(
-            action=core_permissions.LINK_ENVIRONMENT,
+            action=LINK_ENVIRONMENT,
             message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
         )
 
@@ -447,7 +454,7 @@ def get_environment_assume_role_url(
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=core_permissions.CREDENTIALS_ENVIRONMENT,
+            permission_name=CREDENTIALS_ENVIRONMENT,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         url = SessionHelper.get_console_access_url(
@@ -471,7 +478,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=core_permissions.CREDENTIALS_ENVIRONMENT,
+            permission_name=CREDENTIALS_ENVIRONMENT,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         c = _get_environment_group_aws_session(
@@ -519,7 +526,7 @@ def enable_subscriptions(context: Context, source, environmentUri: str = None, i
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=core_permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+            permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         if input.get('producersTopicArn'):
@@ -554,7 +561,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=core_permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+            permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
 
@@ -577,7 +584,7 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=core_permissions.GET_ORGANIZATION,
+            permission_name=GET_ORGANIZATION,
         )
         pivot_role_bucket = Parameter().get_parameter(
             env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
@@ -617,7 +624,7 @@ def get_cdk_exec_policy_template(context: Context, source, organizationUri=None)
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=core_permissions.GET_ORGANIZATION,
+            permission_name=GET_ORGANIZATION,
         )
         cdk_exec_policy_bucket = Parameter().get_parameter(
             env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
@@ -657,7 +664,7 @@ def get_external_id(context: Context, source, organizationUri=None):
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=core_permissions.GET_ORGANIZATION,
+            permission_name=GET_ORGANIZATION,
         )
         external_id = SessionHelper.get_external_id_secret()
         if not external_id:
@@ -675,7 +682,7 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
             username=context.username,
             groups=context.groups,
             resource_uri=organizationUri,
-            permission_name=core_permissions.GET_ORGANIZATION,
+            permission_name=GET_ORGANIZATION,
         )
         pivot_role_name = SessionHelper.get_delegation_role_name()
         if not pivot_role_name:
