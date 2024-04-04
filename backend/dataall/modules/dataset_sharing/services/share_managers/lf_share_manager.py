@@ -212,7 +212,7 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_source.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id)],
+            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)],
             database_name=self.source_database_name,
             permissions=['ALL'],
         )
@@ -243,7 +243,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             permissions=['ALL'],
         )
@@ -255,7 +259,7 @@ class LFShareManager:
         and add to db level errors if check fails
         :return: None
         """
-        principal = SessionHelper.get_delegation_role_arn(self.source_account_id)
+        principal = SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)
         if not self.lf_client_in_source.check_permissions_to_database(
             principals=[principal],
             database_name=self.source_database_name,
@@ -273,7 +277,9 @@ class LFShareManager:
         and add to db level errors if check fails
         :return: None
         """
-        principal = SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)
+        principal = SessionHelper.get_delegation_role_arn(
+            self.target_environment.AwsAccountId, self.target_environment.region
+        )
         if not self.lf_client_in_target.check_permissions_to_database(
             principals=[principal],
             database_name=self.shared_db_name,
@@ -334,7 +340,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_table(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             table_name=table.GlueTableName,
             catalog_id=self.target_environment.AwsAccountId,

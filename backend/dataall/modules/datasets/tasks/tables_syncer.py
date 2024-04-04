@@ -60,7 +60,7 @@ def sync_tables(engine):
                     for table in tables:
                         LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
-                                SessionHelper.get_delegation_role_arn(env.AwsAccountId),
+                                SessionHelper.get_delegation_role_arn(env.AwsAccountId, env.region),
                                 env_group.environmentIAMRoleArn,
                             ],
                         )

@@ -22,7 +22,7 @@ class LakeFormationTableClient:
         for tables managed inside dataall
         """
         table = self._table
-        principal = SessionHelper.get_delegation_role_arn(table.AWSAccountId)
+        principal = SessionHelper.get_delegation_role_arn(table.AWSAccountId, table.region)
         self._grant_permissions_to_table(principal, ['SELECT', 'ALTER', 'DROP', 'INSERT'])
 
     def grant_principals_all_table_permissions(self, principals: [str]):

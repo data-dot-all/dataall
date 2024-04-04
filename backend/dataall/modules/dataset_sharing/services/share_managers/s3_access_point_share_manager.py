@@ -367,7 +367,9 @@ class S3AccessPointShareManager:
 
         existing_policy = json.loads(existing_policy)
         statements = {item['Sid']: item for item in existing_policy['Statement']}
-        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_id = SessionHelper.get_role_id(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         error = False
         if f'{target_requester_id}0' not in statements.keys():
             error = True
@@ -431,7 +433,9 @@ class S3AccessPointShareManager:
                 retries += 1
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
-        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_id = SessionHelper.get_role_id(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         if existing_policy:
             # Update existing access point policy
             logger.info(
@@ -576,7 +580,9 @@ class S3AccessPointShareManager:
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(self.access_point_name))
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
-        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        target_requester_id = SessionHelper.get_role_id(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
         statements = {item['Sid']: item for item in access_point_policy['Statement']}
         if f'{target_requester_id}0' in statements.keys():
             prefix_list = statements[f'{target_requester_id}0']['Condition']['StringLike']['s3:prefix']

@@ -929,7 +929,11 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     ).generate_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, target_environment.region, expected_policy_name, 'v1', json.dumps(expected_remaining_target_role_policy)
+        target_environment.AwsAccountId,
+        target_environment.region,
+        expected_policy_name,
+        'v1',
+        json.dumps(expected_remaining_target_role_policy),
     )
 
 
