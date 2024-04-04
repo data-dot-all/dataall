@@ -324,8 +324,10 @@ const EnvironmentCreateForm = (props) => {
                       CloudFormation (i.e. CDK Execution Policy). You optionally
                       can use the below CloudFormation template to create the
                       custom IAM policy that is more restrictive than the
-                      default <b>AdministratorAccess</b> policy. 
-                      To enable the features - Notebooks, MLStudio, Pipelines and Dashboards, please set the respective parameters to <b>true</b> in the bootstrap command (default is false).
+                      default <b>AdministratorAccess</b> policy. To enable the
+                      features - Notebooks, MLStudio, Pipelines and Dashboards,
+                      please set the respective parameters to <b>true</b> in the
+                      bootstrap command (default is false).
                     </Typography>
                     <Button
                       color="primary"
