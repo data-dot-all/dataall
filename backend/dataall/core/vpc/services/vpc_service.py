@@ -7,9 +7,9 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
-from dataall.core.permissions.services.permissions_constants.network_permissions import NETWORK_ALL, DELETE_NETWORK
-from dataall.core.permissions.services.permissions_constants.environment_permissions import CREATE_NETWORK
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import MANAGE_ENVIRONMENTS
+from dataall.core.permissions.services.network_permissions import NETWORK_ALL, DELETE_NETWORK
+from dataall.core.permissions.services.environment_permissions import CREATE_NETWORK
+from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 
 
 def _session():

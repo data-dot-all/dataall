@@ -6,7 +6,7 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.permissions_constants.environment_permissions import GET_ENVIRONMENT
+from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient

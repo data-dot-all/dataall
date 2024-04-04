@@ -1,12 +1,12 @@
-from dataall.core.permissions.services.permissions_constants.organization_permissions import ORGANIZATION_ALL
-from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
+from dataall.core.permissions.services.environment_permissions import (
     CREATE_NETWORK,
     ENVIRONMENT_ALL,
     CONSUMPTION_ROLE_ALL,
     INVITE_ENVIRONMENT_GROUP,
     ADD_ENVIRONMENT_CONSUMPTION_ROLES,
 )
-from dataall.core.permissions.services.permissions_constants.network_permissions import NETWORK_ALL
+from dataall.core.permissions.services.network_permissions import NETWORK_ALL
 
 """
 RESOURCES_ALL

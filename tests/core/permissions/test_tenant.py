@@ -1,5 +1,5 @@
 from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import (
+from dataall.core.permissions.services.tenant_permissions import (
     MANAGE_GROUPS,
     MANAGE_ORGANIZATIONS,
 )

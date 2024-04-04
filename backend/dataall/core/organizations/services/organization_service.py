@@ -8,8 +8,8 @@ from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import MANAGE_ORGANIZATIONS
-from dataall.core.permissions.services.permissions_constants.organization_permissions import (
+from dataall.core.permissions.services.tenant_permissions import MANAGE_ORGANIZATIONS
+from dataall.core.permissions.services.organization_permissions import (
     ORGANIZATION_ALL,
     ORGANIZATION_INVITED,
     UPDATE_ORGANIZATION,

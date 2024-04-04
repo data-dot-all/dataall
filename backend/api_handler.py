@@ -18,7 +18,7 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import get_engine
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()

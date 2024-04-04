@@ -32,9 +32,9 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.enums import StackStatus
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
-from dataall.core.permissions.services.permissions_constants.organization_permissions import LINK_ENVIRONMENT
-from dataall.core.permissions.services.permissions_constants import environment_permissions
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import MANAGE_ENVIRONMENTS
+from dataall.core.permissions.services.organization_permissions import LINK_ENVIRONMENT
+from dataall.core.permissions.services import environment_permissions
+from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 
 log = logging.getLogger(__name__)
 

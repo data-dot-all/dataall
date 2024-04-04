@@ -1,8 +1,8 @@
-from dataall.core.permissions.services.permissions_constants.resources_permissions import (
+from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL,
     RESOURCES_ALL_WITH_DESC,
 )
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 
 MANAGE_GLOSSARIES = 'MANAGE_GLOSSARIES'
 

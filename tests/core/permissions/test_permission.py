@@ -3,9 +3,9 @@ import pytest
 from dataall.core.permissions.db.permission.permission_models import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.base.db import exceptions
-from dataall.core.permissions.services.permissions_constants.environment_permissions import ENVIRONMENT_ALL
-from dataall.core.permissions.services.permissions_constants.organization_permissions import ORGANIZATION_ALL
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import MANAGE_GROUPS, TENANT_ALL
+from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_ALL
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
+from dataall.core.permissions.services.tenant_permissions import MANAGE_GROUPS, TENANT_ALL
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 

@@ -20,7 +20,7 @@ from datetime import datetime
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
-from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+from dataall.core.permissions.services.environment_permissions import (
     CONSUMPTION_ENVIRONMENT_ROLE_ALL,
 )
 

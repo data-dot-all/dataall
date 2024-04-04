@@ -28,11 +28,11 @@ from dataall.base.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization
-from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+from dataall.core.permissions.services.environment_permissions import (
     CREDENTIALS_ENVIRONMENT,
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
 )
-from dataall.core.permissions.services.permissions_constants.organization_permissions import (
+from dataall.core.permissions.services.organization_permissions import (
     GET_ORGANIZATION,
     LINK_ENVIRONMENT,
 )

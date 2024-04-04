@@ -1,9 +1,9 @@
-from dataall.core.permissions.services.permissions_constants.resources_permissions import (
+from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL_WITH_DESC,
     RESOURCES_ALL,
 )
-from dataall.core.permissions.services.permissions_constants.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
-from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
+from dataall.core.permissions.services.environment_permissions import (
     ENVIRONMENT_INVITED,
     ENVIRONMENT_INVITATION_REQUEST,
     ENVIRONMENT_ALL,

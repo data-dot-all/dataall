@@ -1,7 +1,7 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.permissions_constants.environment_permissions import (
+from dataall.core.permissions.services.environment_permissions import (
     REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
 )
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
