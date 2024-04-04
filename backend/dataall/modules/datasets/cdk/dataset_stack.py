@@ -155,6 +155,7 @@ class DatasetStack(Stack):
                                 'kms:DescribeKey',
                                 'kms:CreateAlias',
                                 'kms:List*',
+                                'kms:DescribeKey',
                             ],
                             resources=['*'],
                             principals=[

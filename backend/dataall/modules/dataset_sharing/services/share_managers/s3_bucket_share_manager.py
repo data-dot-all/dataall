@@ -626,6 +626,7 @@ class S3BucketShareManager:
                 'kms:ReEncrypt*',
                 'kms:TagResource',
                 'kms:UntagResource',
+                'kms:DescribeKey',
             ],
             'Resource': '*',
         }

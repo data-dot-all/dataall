@@ -762,6 +762,7 @@ class S3AccessPointShareManager:
                 'kms:ReEncrypt*',
                 'kms:TagResource',
                 'kms:UntagResource',
+                'kms:DescribeKey',
             ],
             'Resource': '*',
         }
