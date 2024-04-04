@@ -82,7 +82,7 @@ Environment = gql.ObjectType(
         gql.Field(name='datasets', type=gql.String),
         gql.Field(
             name='organization',
-            type=gql.Ref('Organization'),
+            type=gql.Ref('OrganizationSimplified'),
             resolver=get_parent_organization,
         ),
         gql.Field(
@@ -138,7 +138,7 @@ EnvironmentSimplified = gql.ObjectType(
         gql.Field(name='region', type=gql.String),
         gql.Field(
             name='organization',
-            type=gql.Ref('Organization'),
+            type=gql.Ref('OrganizationSimplified'),
             resolver=get_parent_organization,
         ),
         gql.Field(

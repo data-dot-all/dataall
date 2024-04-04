@@ -51,3 +51,12 @@ OrganizationSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(Organization)),
     ],
 )
+
+OrganizationSimplified = gql.ObjectType(
+    name='OrganizationSimplified',
+    fields=[
+        gql.Field(name='organizationUri', type=gql.ID),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String)
+    ],
+)
