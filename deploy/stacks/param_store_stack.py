@@ -3,7 +3,10 @@ import random
 import string
 
 import boto3
-from aws_cdk import aws_ssm
+from aws_cdk import (
+  aws_ssm,
+  custom_resources as cr
+)
 
 from .pyNestedStack import pyNestedClass
 from .deploy_config import deploy_config
@@ -127,6 +130,23 @@ class ParamStoreStack(pyNestedClass):
             parameter_name=f'/dataall/{envname}/version',
             string_value=str(json.dumps(deploy_config.get_dataall_version())),
             description='Deployed data all version',
+        )
+
+        cr.AwsCustomResource(
+            self, 
+            "SSMParamSettingHighThroughput",
+            on_update=cr.AwsSdkCall(
+                service="SSM",
+                action="UpdateServiceSettingCommand",
+                parameters={
+                    "SettingId": "/ssm/parameter-store/high-throughput-enabled",
+                    "SettingValue": "true"
+                },
+                physical_resource_id=cr.PhysicalResourceId.from_response(f"ssm-high-throughput-{self.account}-{self.region}")
+            ),
+            policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
+                resources=[f"arn:aws:ssm:{self.region}:{self.account}:servicesetting/ssm/parameter-store/high-throughput-enabled"]
+            )
         )
 
 
