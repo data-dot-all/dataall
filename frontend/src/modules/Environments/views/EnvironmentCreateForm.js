@@ -327,7 +327,7 @@ const EnvironmentCreateForm = (props) => {
                       custom IAM policy that is more restrictive than the
                       default <b>AdministratorAccess</b> policy. To disable the
                       features - Notebooks, MLStudio, Pipelines and Dashboards,
-                      please set the respective parameters to <b>true</b> in 
+                      please set the respective parameters to <b>true</b> in
                       the CloudFormation template (default is true).
                     </Typography>
                     <Button
