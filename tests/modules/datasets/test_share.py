@@ -2,6 +2,7 @@ import random
 import typing
 from unittest.mock import MagicMock
 
+import boto3
 import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -20,6 +21,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareItemSM,
     ShareObjectSM,
 )
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 
 
@@ -1538,6 +1540,48 @@ def test_verify_items_share_request(db, client, user2, group2, share3_processed,
     sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     status = sharedItem['healthStatus']
     assert status == ShareItemHealthStatus.PendingVerify.value
+
+
+def test_verify_principal_role_exists(db, client, user2, group2, share3_processed, share3_item_shared, mocker):
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
+
+    with db.scoped_session() as session:
+        verified = ShareObjectService.verify_principal_role(session, share3_processed)
+        items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
+        assert verified
+        for item in items:
+            assert item.healthStatus == share3_item_shared.healthStatus
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value=None,
+    )
+    with db.scoped_session() as session:
+        verified = ShareObjectService.verify_principal_role(session, share3_processed)
+        items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
+        assert not verified
+        for item in items:
+            assert item.healthStatus == ShareItemHealthStatus.PrincipalRoleNotFound.value
 
 
 def test_reapply_items_share_request(db, client, user, group, share3_processed, share3_item_shared_unhealthy):

@@ -10,6 +10,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectRepository,
     ShareItemSM,
 )
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import (
     ProcessLakeFormationShare,
 )
@@ -25,7 +26,6 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareableType,
 )
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
-
 
 log = logging.getLogger(__name__)
 
@@ -110,6 +110,11 @@ class DataSharingService:
                     new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
                     share_object_SM.update_state(session, share, new_object_state)
                     return False
+
+            log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+            # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+            if not ShareObjectService.verify_principal_role(session, share):
+                return False
 
             log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -241,6 +246,11 @@ class DataSharingService:
                     share_object_SM = ShareObjectSM(share.status)
                     new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
                     share_object_SM.update_state(session, share, new_object_state)
+                    return False
+
+                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+                # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+                if not ShareObjectService.verify_principal_role(session, share):
                     return False
 
                 new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
@@ -454,6 +464,11 @@ class DataSharingService:
                 session, share_uri, status=status, healthStatus=healthStatus
             )
 
+        log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+        # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+        if not ShareObjectService.verify_principal_role(session, share):
+            return
+
         log.info(f'Verifying permissions to folders: {folders_to_verify}')
         ProcessS3AccessPointShare.verify_shares(
             session,
@@ -553,6 +568,11 @@ class DataSharingService:
                             session, share_item, ShareItemHealthStatus.Unhealthy.value, error_message, datetime.now()
                         )
                     return False
+
+            log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+            # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+            if not ShareObjectService.verify_principal_role(session, share):
+                return False
 
             log.info(f'Reapply permissions to folders: {reapply_folders}')
             reapply_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(

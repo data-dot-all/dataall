@@ -1,3 +1,4 @@
+from datetime import datetime
 from warnings import warn
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
@@ -17,6 +18,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
+    ShareItemHealthStatus,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import (
@@ -42,12 +44,40 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.base.aws.iam import IAM
+from dataall.base.aws.sts import SessionHelper
+
 import logging
 
 log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
+    @staticmethod
+    def verify_principal_role(session, share: ShareObject) -> bool:
+        role_name = share.principalIAMRoleName
+        account_id = SessionHelper.get_account()
+        delegation_role = SessionHelper.get_delegation_role_arn(account_id)
+        principal_role = IAM.get_role_arn_by_name(account_id, role_name, delegation_role)
+        if not principal_role:
+            statuses = []
+            for item in ShareObjectRepository.get_all_sharable_items(session, share.shareUri):
+                ShareObjectRepository.update_share_item_health_status(
+                    session,
+                    share_item=item,
+                    healthStatus=ShareItemHealthStatus.PrincipalRoleNotFound.value,
+                    healthMessage=f'Share principal role {role_name} not found.',
+                    timestamp=datetime.now(),
+                )
+                statuses.append(item.status)
+
+            for status in set(statuses):
+                ShareObjectRepository.update_share_item_status_batch(
+                    session, share.shareUri, status, ShareItemStatus.Share_Failed.value
+                )
+            return False
+        return True
+
     @staticmethod
     @has_resource_permission(GET_ENVIRONMENT)
     def get_share_object_in_environment(uri, shareUri):
