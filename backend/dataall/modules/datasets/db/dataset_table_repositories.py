@@ -7,6 +7,7 @@ from sqlalchemy.sql import and_
 from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareItemSM
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
 from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 from dataall.base.utils import json_utils
 
@@ -66,6 +67,8 @@ class DatasetTableRepository:
                     ShareObject.datasetUri == dataset_uri,  # for this dataset
                     ShareObject.environmentUri == environment_uri,  # for this environment
                     ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.principalType
+                    != PrincipalType.ConsumptionRole.value,  # Exclude Consumption roles shares
                     or_(
                         ShareObject.owner == username,
                         ShareObject.principalId.in_(groups),
