@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Login } from '../views/Login';
 import { useAuth } from '../hooks';
-import { regexToValidateWindowPathName } from '../../utils';
+import {regexToValidateWindowPathName, windowPathLengthThreshold} from '../../utils';
 
 export const AuthGuard = (props) => {
   const { children } = props;
@@ -45,7 +45,7 @@ export const AuthGuard = (props) => {
     if (!regexToValidateWindowPathName.test(windowPathLocation))
       return <>{children}</>;
     // A guardrail to limit the string of the pathname to a certain characters
-    if (windowPathLocation.length > 50) return <>{children}</>;
+    if (windowPathLocation.length > windowPathLengthThreshold) return <>{children}</>;
     return <Navigate to={windowPathLocation} replace={true} />;
   } else {
     sessionStorage.removeItem('window-location');
