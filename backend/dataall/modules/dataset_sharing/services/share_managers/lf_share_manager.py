@@ -647,7 +647,7 @@ class LFShareManager:
             f'Database {self.dataset.GlueDatabaseName} is a resource link and '
             f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}'
         )
-        if SessionHelper.is_assumable_pivot_role(catalog_account_id):
+        if SessionHelper.is_assumable_pivot_role(catalog_account_id, catalog_region):
             self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
         else:
             raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')

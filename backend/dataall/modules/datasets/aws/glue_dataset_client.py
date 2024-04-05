@@ -9,9 +9,8 @@ log = logging.getLogger(__name__)
 
 class DatasetCrawler:
     def __init__(self, dataset: Dataset):
-        region = dataset.region if dataset.region else 'eu-west-1'
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=region)
-        self._client = session.client('glue', region_name=region)
+        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
+        self._client = session.client('glue', region_name=dataset.region)
         self._dataset = dataset
 
     def get_crawler(self, crawler_name=None):

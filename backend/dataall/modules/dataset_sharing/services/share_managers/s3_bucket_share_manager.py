@@ -627,6 +627,7 @@ class S3BucketShareManager:
                 'kms:TagResource',
                 'kms:UntagResource',
                 'kms:DescribeKey',
+                'kms:List*',
             ],
             'Resource': '*',
         }

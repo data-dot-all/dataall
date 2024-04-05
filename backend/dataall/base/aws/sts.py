@@ -112,7 +112,8 @@ class SessionHelper:
         )
         return (
             f'{base_name}-{region}'
-            if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False) and base_name != "dataallPivotRole"
+            if config.get_property('core.features.cdk_pivot_role_multiple_environments_same_account', default=False)
+            and base_name != 'dataallPivotRole'
             else base_name
         )
 
@@ -156,7 +157,7 @@ class SessionHelper:
         return request_url
 
     @classmethod
-    def get_delegation_role_arn(cls, accountid, region=None):
+    def get_delegation_role_arn(cls, accountid, region):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:
             accountid(string) : aws account id
@@ -360,13 +361,12 @@ class SessionHelper:
         return request_url
 
     @staticmethod
-    def is_assumable_pivot_role(accountid):
-        # TODO: region
+    def is_assumable_pivot_role(accountid, region):
         try:
-            SessionHelper.remote_session(accountid=accountid)
+            SessionHelper.remote_session(accountid=accountid, region=region)
         except ClientError as e:
             log.error(
-                f'Failed to assume dataall pivot role session in environment with account id {accountid} due to {e}'
+                f'Failed to assume dataall pivot role session in environment with account id {accountid} region {region} due to {e}'
             )
             return False
         except Exception as e:

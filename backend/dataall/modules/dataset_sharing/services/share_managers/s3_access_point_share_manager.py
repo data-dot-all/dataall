@@ -763,6 +763,7 @@ class S3AccessPointShareManager:
                 'kms:TagResource',
                 'kms:UntagResource',
                 'kms:DescribeKey',
+                'kms:List*',
             ],
             'Resource': '*',
         }
