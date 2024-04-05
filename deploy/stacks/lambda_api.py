@@ -94,7 +94,6 @@ class LambdaApiStack(pyNestedClass):
         # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name', None):
             api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
-        api_handler_role = self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name)
         if custom_auth:
             api_handler_env['custom_auth'] = custom_auth.get('provider', None)
         self.api_handler = _lambda.DockerImageFunction(
@@ -102,7 +101,7 @@ class LambdaApiStack(pyNestedClass):
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
             description='dataall graphql function',
-            role=api_handler_role,
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
