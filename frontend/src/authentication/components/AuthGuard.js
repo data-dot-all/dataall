@@ -42,10 +42,10 @@ export const AuthGuard = (props) => {
     const windowPathLocation = sessionStorage.getItem('window-location');
     sessionStorage.removeItem('window-location');
     // Check if the window-location only contains alphanumeric and / in it and its not tampered
-    if (!regexToValidateWindowPathName.test(windowPathLocation))
+    if (!RegexToValidateWindowPathName.test(windowPathLocation))
       return <>{children}</>;
     // A guardrail to limit the string of the pathname to a certain characters
-    if (windowPathLocation.length > windowPathLengthThreshold) return <>{children}</>;
+    if (windowPathLocation.length > WindowPathLengthThreshold) return <>{children}</>;
     return <Navigate to={windowPathLocation} replace={true} />;
   } else {
     sessionStorage.removeItem('window-location');

@@ -26,5 +26,5 @@ export const AwsRegions = [
   { name: 'AWS GovCloud (US)', code: 'us-gov-west-1' }
 ];
 
-export const regexToValidateWindowPathName = /^[a-zA-Z0-9/]*$/;
-export const windowPathLengthThreshold = 50
+export const RegexToValidateWindowPathName = /^[a-zA-Z0-9/]*$/;
+export const WindowPathLengthThreshold = 50
