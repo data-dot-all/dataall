@@ -1,4 +1,5 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
+
 import re
 
 from dataall.core.environment.services.environment_service import EnvironmentService

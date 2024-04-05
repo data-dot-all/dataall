@@ -35,6 +35,7 @@ class BackendStage(Stage):
         reauth_config=None,
         cognito_user_session_timeout_inmins=43200,
         custom_auth=None,
+        custom_waf_rules=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -67,6 +68,7 @@ class BackendStage(Stage):
             reauth_config=reauth_config,
             cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
             custom_auth=custom_auth,
+            custom_waf_rules=custom_waf_rules,
             **kwargs,
         )
 
