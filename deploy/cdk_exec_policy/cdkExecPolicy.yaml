@@ -11,28 +11,28 @@ Parameters:
   NotebooksEnabled:
     Description: Whether Notebooks are enabled on this Data.all Environment.
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
   MLStudioEnabled:
     Description: Whether ML Studio is enabled on this Data.all Environment
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
   PipelinesEnabled:
     Description: Whether Pipelines are enabled on this Data.all Environment
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
   DashboardsEnabled:
     Description: Whether Dashboards are enabled on this Data.all Environment
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
@@ -289,7 +289,7 @@ Resources:
             Resource: '*'
 
           - !If 
-            - MLStudioEnabledCondition
+            - SagemakerComponentsEnabledCondition
             - Sid: EC2
               Effect: Allow
               Action:
