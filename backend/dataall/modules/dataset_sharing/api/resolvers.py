@@ -255,7 +255,9 @@ def resolve_shared_database_name(context: Context, source):
         return None
     old_shared_db_name = (source.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
     with context.engine.scoped_session() as session:
-        share = ShareObjectService.get_share_object_in_environment(uri=source.environmentUri, shareUri=source.shareUri)
+        share = ShareObjectService.get_share_object_in_environment(
+            uri=source.targetEnvironmentUri, shareUri=source.shareUri
+        )
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         database = GlueClient(
             account_id=env.AwsAccountId, database=old_shared_db_name, region=env.region
