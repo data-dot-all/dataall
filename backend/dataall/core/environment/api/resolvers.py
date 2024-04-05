@@ -27,7 +27,8 @@ from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization
+
+from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
 from dataall.core.permissions.services.environment_permissions import (
     CREDENTIALS_ENVIRONMENT,
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
@@ -36,6 +37,7 @@ from dataall.core.permissions.services.organization_permissions import (
     GET_ORGANIZATION,
     LINK_ENVIRONMENT,
 )
+
 
 log = logging.getLogger()
 
@@ -344,7 +346,7 @@ def list_environment_networks(context: Context, source, environmentUri=None, fil
 
 
 def get_parent_organization(context: Context, source, **kwargs):
-    org = get_organization(context, source, organizationUri=source.organizationUri)
+    org = get_organization_simplified(context, source, organizationUri=source.organizationUri)
     return org
 
 

@@ -1,5 +1,7 @@
 """Indexes DatasetTable in OpenSearch"""
 
+import re
+
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
@@ -31,7 +33,7 @@ class DatasetTableIndexer(BaseIndexer):
                     'description': table.description,
                     'database': table.GlueDatabaseName,
                     'source': table.S3BucketName,
-                    'classification': dataset.confidentiality,
+                    'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [t.replace('-', '') for t in tags or []],
                     'topics': dataset.topics,
                     'region': dataset.region.replace('-', ''),

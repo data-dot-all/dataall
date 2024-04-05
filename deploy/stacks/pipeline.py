@@ -631,6 +631,7 @@ class PipelineStack(Stack):
                 reauth_config=target_env.get('reauth_config', None),
                 cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
                 custom_auth=target_env.get('custom_auth', None),
+                custom_waf_rules=target_env.get('custom_waf_rules', None),
             )
         )
         return backend_stage
@@ -707,6 +708,7 @@ class PipelineStack(Stack):
                 tooling_account_id=self.account,
                 custom_domain=target_env.get('custom_domain'),
                 custom_auth=target_env.get('custom_auth', None),
+                custom_waf_rules=target_env.get('custom_waf_rules', None),
             )
         )
         front_stage_actions = (
