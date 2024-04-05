@@ -27,4 +27,4 @@ export const AwsRegions = [
 ];
 
 export const RegexToValidateWindowPathName = /^[a-zA-Z0-9/]*$/;
-export const WindowPathLengthThreshold = 50
+export const WindowPathLengthThreshold = 50;
