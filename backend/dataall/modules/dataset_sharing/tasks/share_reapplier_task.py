@@ -3,7 +3,7 @@ import os
 import sys
 from dataall.modules.dataset_sharing.api.types import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemHealthStatus
 from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 from dataall.base.db import get_engine
 
@@ -28,6 +28,12 @@ def verify_shares(engine):
                 f'Re-applying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
             )
             processed_share_objects.append(share_object.shareUri)
+            ShareObjectRepository.update_share_item_health_status_batch(
+                session=session,
+                share_uri=share_object.shareUri,
+                old_status=ShareItemHealthStatus.Unhealthy.value,
+                new_status=ShareItemHealthStatus.PendingReApply.value,
+            )
             DataSharingService.reapply_share(engine, share_uri=share_object.shareUri)
         return processed_share_objects
 
