@@ -32,6 +32,65 @@ class DBMigrationStack(pyNestedClass):
                 iam.AccountPrincipal(tooling_account_id),
             ),
         )
+        private_subnets = vpc.select_subnets(
+            subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT)
+        
+        subnet_resources = []
+        
+        
+        for subnet in private_subnets.subnets:
+            subnet_resources.append(f'arn:aws:ec2:{self.region}:{self.account}:subnet/{subnet.subnet_id}')
+        
+        subnet_iam_condition = {'ec2:Subnet':subnet_resources, 'ec2:AuthorizedService': 'codebuild.amazonaws.com'}
+        
+        vpc_iam_condition = {'ec2:Vpc': f'arn:aws:ec2:{self.region}:{self.account}:vpc/{vpc.vpc_id}'}
+        
+        network_interface_perm_policy = iam.PolicyStatement(
+                actions=[
+                    'ec2:CreateNetworkInterfacePermission',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                ],
+                
+            )
+        network_interface_perm_policy.add_condition('StringEquals', subnet_iam_condition)
+        
+        self.build_project_role.add_to_policy(
+            network_interface_perm_policy
+
+        )
+        
+        network_interface_create_del_perm_policy = iam.PolicyStatement(
+                actions=[
+                     'ec2:CreateNetworkInterface',
+                     'ec2:DeleteNetworkInterface',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                ],
+                
+            )
+        network_interface_create_del_perm_policy.add_condition('ArnEquals', vpc_iam_condition)
+        
+        self.build_project_role.add_to_policy(
+            network_interface_create_del_perm_policy
+        )
+        
+        
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:DescribeNetworkInterfaces',
+                    'ec2:DescribeSubnets',
+                    'ec2:DescribeSecurityGroups',
+                    'ec2:DescribeDhcpOptions',
+                    'ec2:DescribeVpcs'
+                ],
+                resources=['*']
+            )
+        )
+        
         self.build_project_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
@@ -135,7 +194,7 @@ class DBMigrationStack(pyNestedClass):
             environment=codebuild.BuildEnvironment(
                 build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
             ),
-            role=self.build_project_role,
+            role=self.build_project_role.without_policy_updates(),
             build_spec=codebuild.BuildSpec.from_object(
                 dict(
                     version='0.2',
@@ -162,4 +221,33 @@ class DBMigrationStack(pyNestedClass):
                 subnets=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnets
             ),
             security_groups=[self.codebuild_sg],
+        )
+        
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                    'logs:PutLogEvents'
+                ],
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.db_migration_project.project_name}',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.db_migration_project.project_name}*',
+                ],
+            )
+        )
+        
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                   'codebuild:CreateReportGroup',
+                   'codebuild:CreateReport',
+                   'codebuild:UpdateReport',
+                   'codebuild:BatchPutTestCases',
+                   'codebuild:BatchPutCodeCoverages'
+                ],
+                resources=[
+                    f'arn:aws:codebuild:{self.region}:{self.account}:report-group:{self.db_migration_project.project_name}-*',
+                ],
+            )
         )
