@@ -112,54 +112,56 @@ class DataSharingService:
                     return False
 
             log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+            share_successful = ShareObjectService.verify_principal_role(session, share)
             # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-            if not ShareObjectService.verify_principal_role(session, share):
-                return False
+            if share_successful:
 
-            log.info(f'Granting permissions to folders: {shared_folders}')
+                log.info(f'Granting permissions to folders: {shared_folders}')
 
-            approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
-                session,
-                dataset,
-                share,
-                shared_folders,
-                source_environment,
-                target_environment,
-                source_env_group,
-                env_group,
-            )
-            log.info(f'sharing folders succeeded = {approved_folders_succeed}')
+                approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+                    session,
+                    dataset,
+                    share,
+                    shared_folders,
+                    source_environment,
+                    target_environment,
+                    source_env_group,
+                    env_group,
+                )
+                log.info(f'sharing folders succeeded = {approved_folders_succeed}')
 
-            log.info('Granting permissions to S3 buckets')
+                log.info('Granting permissions to S3 buckets')
 
-            approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
-                session,
-                dataset,
-                share,
-                shared_buckets,
-                source_environment,
-                target_environment,
-                source_env_group,
-                env_group,
-            )
-            log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
+                approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+                    session,
+                    dataset,
+                    share,
+                    shared_buckets,
+                    source_environment,
+                    target_environment,
+                    source_env_group,
+                    env_group,
+                )
+                log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
-            log.info(f'Granting permissions to tables: {shared_tables}')
-            approved_tables_succeed = ProcessLakeFormationShare(
-                session,
-                dataset,
-                share,
-                shared_tables,
-                source_environment,
-                target_environment,
-                env_group,
-            ).process_approved_shares()
-            log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+                log.info(f'Granting permissions to tables: {shared_tables}')
+                approved_tables_succeed = ProcessLakeFormationShare(
+                    session,
+                    dataset,
+                    share,
+                    shared_tables,
+                    source_environment,
+                    target_environment,
+                    env_group,
+                ).process_approved_shares()
+                log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+
+                share_successful = approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
 
             new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
             share_sm.update_state(session, share, new_share_state)
 
-            return approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
+            return share_successful
 
         except Exception as e:
             log.error(f'Error occurred during share approval: {e}')
@@ -248,13 +250,13 @@ class DataSharingService:
                     share_object_SM.update_state(session, share, new_object_state)
                     return False
 
-                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
-                # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-                if not ShareObjectService.verify_principal_role(session, share):
-                    return False
+
 
                 new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
                 revoked_item_sm.update_state(session, share_uri, new_state)
+
+                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+                principal_healthy = ShareObjectService.verify_principal_role(session, share)
 
                 log.info(f'Revoking permissions to folders: {revoked_folders}')
 
@@ -267,6 +269,7 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
+                    principal_healthy
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
 
@@ -281,6 +284,7 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
+                    principal_healthy
                 )
                 log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
@@ -292,7 +296,7 @@ class DataSharingService:
                     revoked_tables,
                     source_environment,
                     target_environment,
-                    env_group,
+                    env_group
                 ).process_revoked_shares()
                 log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 

@@ -3,6 +3,7 @@ from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemHealthStatus,
@@ -88,6 +89,8 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 env_group,
             )
             try:
+                if not ShareObjectService.verify_principal_role(session, share):
+                    raise Exception('Principal Role does not exist. Please, revoke share.')
                 sharing_bucket.grant_role_bucket_policy()
                 sharing_bucket.grant_s3_iam_access()
                 if not dataset.imported or dataset.importedKmsKey:
@@ -123,6 +126,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
+        principal_exist: bool
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -160,7 +164,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 env_group,
             )
             try:
-                removing_bucket.delete_target_role_bucket_policy()
+                removing_bucket.delete_target_role_bucket_policy(principal_exist)
                 removing_bucket.delete_target_role_access_policy(
                     share=share, target_bucket=revoked_bucket, target_environment=target_environment
                 )

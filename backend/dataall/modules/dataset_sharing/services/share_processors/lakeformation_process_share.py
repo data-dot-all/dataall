@@ -29,7 +29,7 @@ class ProcessLakeFormationShare(LFShareManager):
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
-        reapply: bool = False,
+        reapply: bool = False
     ):
         super().__init__(
             session,

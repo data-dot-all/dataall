@@ -30,15 +30,15 @@ DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
 
 class S3BucketShareManager:
     def __init__(
-        self,
-        session,
-        dataset: Dataset,
-        share: ShareObject,
-        target_bucket: DatasetBucket,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
+            self,
+            session,
+            dataset: Dataset,
+            share: ShareObject,
+            target_bucket: DatasetBucket,
+            source_environment: Environment,
+            target_environment: Environment,
+            source_env_group: EnvironmentGroup,
+            env_group: EnvironmentGroup,
     ):
         self.session = session
         self.source_env_group = source_env_group
@@ -129,8 +129,8 @@ class S3BucketShareManager:
                 )
             )
         elif not share_policy_service.check_resource_in_policy_statement(
-            target_resources=s3_target_resources,
-            existing_policy_statement=policy_document['Statement'][s3_statement_index],
+                target_resources=s3_target_resources,
+                existing_policy_statement=policy_document['Statement'][s3_statement_index],
         ):
             logger.info(
                 f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {s3_target_resources}'
@@ -163,8 +163,8 @@ class S3BucketShareManager:
                 )
 
             elif not share_policy_service.check_resource_in_policy_statement(
-                target_resources=kms_target_resources,
-                existing_policy_statement=policy_document['Statement'][kms_statement_index],
+                    target_resources=kms_target_resources,
+                    existing_policy_statement=policy_document['Statement'][kms_statement_index],
             ):
                 logger.info(
                     f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {kms_target_resources}'
@@ -433,12 +433,17 @@ class S3BucketShareManager:
                 }
             kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
-    def delete_target_role_bucket_policy(self):
+    def delete_target_role_bucket_policy(self, principal_exist):
         logger.info(f'Deleting target role from bucket policy for bucket {self.bucket_name}...')
         try:
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
             bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            if principal_exist:
+                target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id,
+                                                                self.target_requester_IAMRoleName)
+            else:
+                # if somehow the role was deleted, we can only try to guess the role arn (quite easy, though)
+                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
@@ -456,10 +461,10 @@ class S3BucketShareManager:
             raise e
 
     def delete_target_role_access_policy(
-        self,
-        share: ShareObject,
-        target_bucket: DatasetBucket,
-        target_environment: Environment,
+            self,
+            share: ShareObject,
+            target_bucket: DatasetBucket,
+            target_environment: Environment,
     ):
         logger.info('Deleting target role IAM statements...')
 
@@ -508,8 +513,8 @@ class S3BucketShareManager:
         )
 
     def delete_target_role_bucket_key_policy(
-        self,
-        target_bucket: DatasetBucket,
+            self,
+            target_bucket: DatasetBucket,
     ):
         if (target_bucket.imported and target_bucket.importedKmsKey) or not target_bucket.imported:
             logger.info('Deleting target role from dataset bucket KMS key policy...')
