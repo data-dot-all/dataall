@@ -115,7 +115,6 @@ class DataSharingService:
             share_successful = ShareObjectService.verify_principal_role(session, share)
             # If principal role doesn't exist, all share items are unhealthy, no use of further checks
             if share_successful:
-
                 log.info(f'Granting permissions to folders: {shared_folders}')
 
                 approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
@@ -250,8 +249,6 @@ class DataSharingService:
                     share_object_SM.update_state(session, share, new_object_state)
                     return False
 
-
-
                 new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
                 revoked_item_sm.update_state(session, share_uri, new_state)
 
@@ -269,7 +266,7 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
-                    principal_healthy
+                    principal_healthy,
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
 
@@ -284,19 +281,13 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
-                    principal_healthy
+                    principal_healthy,
                 )
                 log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
                 log.info(f'Revoking permissions to tables: {revoked_tables}')
                 revoked_tables_succeed = ProcessLakeFormationShare(
-                    session,
-                    dataset,
-                    share,
-                    revoked_tables,
-                    source_environment,
-                    target_environment,
-                    env_group
+                    session, dataset, share, revoked_tables, source_environment, target_environment, env_group
                 ).process_revoked_shares()
                 log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 

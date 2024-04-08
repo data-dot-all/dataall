@@ -126,7 +126,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
-        principal_exist: bool
+        principal_exist: bool,
     ) -> bool:
         """
         1) update_share_item_status with Start action

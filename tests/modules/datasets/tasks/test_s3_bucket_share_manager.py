@@ -807,7 +807,7 @@ def test_delete_target_role_bucket_policy_with_no_read_only_sid(
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
     mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
-    share2_manager.delete_target_role_bucket_policy()
+    share2_manager.delete_target_role_bucket_policy(True)
 
     s3_client().create_bucket_policy.assert_not_called()
 
@@ -840,7 +840,7 @@ def test_delete_target_role_bucket_policy_with_multiple_principals_in_policy(
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
     mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
-    share2_manager.delete_target_role_bucket_policy()
+    share2_manager.delete_target_role_bucket_policy(True)
 
     s3_client().create_bucket_policy.assert_called()
 
@@ -889,7 +889,7 @@ def test_delete_target_role_bucket_policy_with_one_principal_in_policy(
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
     mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
 
-    share2_manager.delete_target_role_bucket_policy()
+    share2_manager.delete_target_role_bucket_policy(True)
 
     s3_client().create_bucket_policy.assert_called()
 
