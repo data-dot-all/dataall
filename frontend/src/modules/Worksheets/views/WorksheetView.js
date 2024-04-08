@@ -33,7 +33,6 @@ import {
   getSharedDatasetTables,
   listDatasetTableColumns,
   listDatasetsOwnedByEnvGroup,
-  listEnvironmentGroups,
   listValidEnvironments,
   searchEnvironmentDataItems,
   useClient
@@ -57,7 +56,6 @@ const WorksheetView = () => {
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [worksheet, setWorksheet] = useState({ worksheetUri: '' });
   const [results, setResults] = useState({ rows: [], fields: [] });
   const [loading, setLoading] = useState(true);
@@ -65,7 +63,6 @@ const WorksheetView = () => {
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
   const [currentEnv, setCurrentEnv] = useState();
-  const [currentTeam, setCurrentTeam] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseOptions, setDatabaseOptions] = useState([]);
@@ -91,47 +88,32 @@ const WorksheetView = () => {
     setIsDeleteWorksheetOpen(false);
   };
 
-  const fetchEnvironments = useCallback(async () => {
-    setLoadingEnvs(true);
-    const response = await client.query(
-      listValidEnvironments({ filter: Defaults.filter })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoadingEnvs(false);
-  }, [client, dispatch]);
-
-  const fetchGroups = async (environmentUri) => {
-    try {
+  const fetchEnvironments = useCallback(
+    async (group) => {
+      setLoadingEnvs(true);
       const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
+        listValidEnvironments({
+          filter: {
+            ...Defaults.selectListFilter,
+            SamlGroupName: group
+          }
         })
       );
       if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
+        setEnvironmentOptions(
+          response.data.listValidEnvironments.nodes.map((e) => ({
+            ...e,
+            value: e.environmentUri,
+            label: e.label
           }))
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
+      setLoadingEnvs(false);
+    },
+    [client, dispatch]
+  );
 
   const fetchDatabases = useCallback(
     async (environment, team) => {
@@ -140,11 +122,7 @@ const WorksheetView = () => {
       let sharedWithDatabases = [];
       let response = await client.query(
         listDatasetsOwnedByEnvGroup({
-          filter: {
-            term: '',
-            page: 1,
-            pageSize: 10000
-          },
+          filter: Defaults.selectListFilter,
           environmentUri: environment.environmentUri,
           groupUri: team
         })
@@ -165,9 +143,7 @@ const WorksheetView = () => {
         searchEnvironmentDataItems({
           environmentUri: environment.environmentUri,
           filter: {
-            page: 1,
-            pageSize: 10000,
-            term: '',
+            ...Defaults.selectListFilter,
             uniqueShares: true,
             itemTypes: 'DatasetTable'
           }
@@ -183,14 +159,17 @@ const WorksheetView = () => {
             value: d.datasetUri,
             label: d.sharedGlueDatabaseName,
             GlueDatabaseName: d.sharedGlueDatabaseName,
-            environmentUri: d.environmentUri
+            environmentUri: d.environmentUri,
+            principalId: d.principalId
           }));
         // Remove duplicates based on GlueDatabaseName
         sharedWithDatabases = sharedWithDatabases.filter(
           (database, index, self) =>
             index ===
             self.findIndex(
-              (d) => d.GlueDatabaseName === database.GlueDatabaseName
+              (d) =>
+                d.GlueDatabaseName === database.GlueDatabaseName &&
+                d.principalId === team
             )
         );
       }
@@ -340,6 +319,7 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
   }, [client, dispatch, enqueueSnackbar, navigate, worksheet]);
+
   const fetchWorksheet = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getWorksheet(params.uri));
@@ -347,21 +327,22 @@ const WorksheetView = () => {
       setWorksheet(response.data.getWorksheet);
       setSqlBody(response.data.getWorksheet.sqlBody);
       setResults(response.data.getWorksheet.lastSavedQueryResult);
+      fetchEnvironments(response.data.getWorksheet.SamlAdminGroupName).catch(
+        (e) => dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, params.uri, dispatch]);
+  }, [client, params.uri, fetchEnvironments, dispatch]);
+
   useEffect(() => {
     if (client) {
       fetchWorksheet().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
-  }, [client, fetchWorksheet, fetchEnvironments, dispatch]);
+  }, [client, dispatch]);
 
   function handleEnvironmentChange(event) {
     setColumns([]);
@@ -369,22 +350,9 @@ const WorksheetView = () => {
     setSelectedTable('');
     setDatabaseOptions([]);
     setTableOptions([]);
-    setCurrentTeam('');
     setCurrentEnv(event.target.value);
-    fetchGroups(event.target.value.environmentUri).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
-    );
-  }
-
-  function handleTeamChange(event) {
-    setColumns([]);
-    setSelectedDatabase('');
-    setSelectedTable('');
-    setDatabaseOptions([]);
-    setTableOptions([]);
-    setCurrentTeam(event.target.value);
-    fetchDatabases(currentEnv, event.target.value).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
+    fetchDatabases(event.target.value, worksheet.SamlAdminGroupName).catch(
+      (e) => dispatch({ type: SET_ERROR, error: e.message })
     );
   }
 
@@ -474,31 +442,13 @@ const WorksheetView = () => {
                 </Box>
                 <Box sx={{ p: 2, mt: 2 }}>
                   <TextField
+                    disabled
                     fullWidth
                     label="Team"
                     name="team"
-                    onChange={(event) => {
-                      handleTeamChange(event);
-                    }}
-                    select
-                    value={currentTeam}
+                    value={worksheet ? worksheet.SamlAdminGroupName : ''}
                     variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingEnvs ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {groupOptions.map((group) => (
-                      <MenuItem key={group.value} value={group.value}>
-                        {group.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  />
                 </Box>
                 <Box sx={{ p: 2 }}>
                   <TextField
