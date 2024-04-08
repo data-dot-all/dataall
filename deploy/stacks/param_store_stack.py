@@ -142,7 +142,7 @@ class ParamStoreStack(pyNestedClass):
                     "SettingId": "/ssm/parameter-store/high-throughput-enabled",
                     "SettingValue": "true"
                 },
-                physical_resource_id=cr.PhysicalResourceId.from_response(f"ssm-high-throughput-{self.account}-{self.region}")
+                physical_resource_id=cr.PhysicalResourceId.of(f"ssm-high-throughput-{self.account}-{self.region}")
             ),
             policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
                 resources=[f"arn:aws:ssm:{self.region}:{self.account}:servicesetting/ssm/parameter-store/high-throughput-enabled"]
