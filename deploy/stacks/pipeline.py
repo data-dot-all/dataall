@@ -234,22 +234,38 @@ class PipelineStack(Stack):
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
-                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
+                    conditions={
+                        'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
+                    },
                 ),
                 iam.PolicyStatement(
                     actions=[
                         'ecr:GetAuthorizationToken',
                         'ec2:DescribePrefixLists',
                         'ec2:DescribeManagedPrefixLists',
-                        'ec2:CreateNetworkInterface',
                         'ec2:DescribeNetworkInterfaces',
-                        'ec2:DeleteNetworkInterface',
                         'ec2:DescribeSubnets',
                         'ec2:DescribeSecurityGroups',
                         'ec2:DescribeDhcpOptions',
                         'ec2:DescribeVpcs',
                     ],
                     resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                        
+                    ],
+                    resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                ],
+                    conditions={
+                        'ArnEquals': {
+                            'ec2:Vpc': f'arn:aws:ec2:{self.region}:{self.account}:vpc/{self.vpc.vpc_id}'
+                        }}
                 ),
                 iam.PolicyStatement(
                     actions=[
