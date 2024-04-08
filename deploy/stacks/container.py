@@ -176,6 +176,7 @@ class ContainerStack(pyNestedClass):
         self.add_subscription_task()
         self.add_share_management_task()
         self.add_share_verifier_task()
+        self.add_share_reapplier_task()
 
     @run_if(['modules.datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
