@@ -64,8 +64,8 @@ def check_environment(context: Context, source, account_id, region, data):
     cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region)
     if not pivot_role_as_part_of_environment:
         log.info('Check if PivotRole exist in the account')
-        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
-        role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
+        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id, region=region)
+        role = IAM.get_role(account_id=account_id, region=region, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
         if not role:
             raise exceptions.AWSResourceNotFound(
                 action='CHECK_PIVOT_ROLE',
@@ -162,7 +162,7 @@ def invite_group(context: Context, source, input):
 def add_consumption_role(context: Context, source, input):
     with context.engine.scoped_session() as session:
         env = EnvironmentService.get_environment_by_uri(session, input['environmentUri'])
-        role = IAM.get_role(env.AwsAccountId, input['IAMRoleArn'])
+        role = IAM.get_role(env.AwsAccountId, env.region, input['IAMRoleArn'])
         if not role:
             raise exceptions.AWSResourceNotFound(
                 action='ADD_CONSUMPTION_ROLE',
@@ -348,6 +348,7 @@ def get_policies(context: Context, source, **kwargs):
             role_name=source.IAMRoleName,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
+            region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).get_all_policies()
 
@@ -395,7 +396,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
             action='ENVIRONMENT_AWS_ACCESS',
             message=f'User: {username} is not member of the team {groupUri}',
         )
-    pivot_session = SessionHelper.remote_session(environment.AwsAccountId)
+    pivot_session = SessionHelper.remote_session(environment.AwsAccountId, environment.region)
     if not groupUri:
         if environment.SamlGroupName in groups:
             aws_session = SessionHelper.get_session(
@@ -677,7 +678,7 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
             resource_uri=organizationUri,
             permission_name=permissions.GET_ORGANIZATION,
         )
-        pivot_role_name = SessionHelper.get_delegation_role_name()
+        pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
                 action='GET_PIVOT_ROLE_NAME',

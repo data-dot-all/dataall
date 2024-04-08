@@ -114,6 +114,7 @@ class ShareObjectService:
 
             share_policy_service = SharePolicyService(
                 account=environment.AwsAccountId,
+                region=environment.region,
                 role_name=principal_iam_role_name,
                 environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,

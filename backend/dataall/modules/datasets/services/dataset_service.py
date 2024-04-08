@@ -293,11 +293,13 @@ class DatasetService:
                 )
                 role_arn = env_group.environmentIAMRoleArn
                 account_id = shared_environment.AwsAccountId
+                region = shared_environment.region
             else:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
+                region = dataset.region
 
-        pivot_session = SessionHelper.remote_session(account_id)
+        pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
         url = SessionHelper.get_console_access_url(
             aws_session,
@@ -354,7 +356,7 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
-        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
+        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId, dataset.region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn)
         c = aws_session.get_credentials()
         credentials = {

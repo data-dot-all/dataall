@@ -272,12 +272,12 @@ class DataPipelineService:
             aws_account_id = pipeline.AwsAccountId
 
             return DataPipelineService._get_credentials_from_aws(
-                env_role_arn=env_role_arn, aws_account_id=aws_account_id
+                env_role_arn=env_role_arn, aws_account_id=aws_account_id, region=pipeline.region
             )
 
     @staticmethod
-    def _get_credentials_from_aws(env_role_arn, aws_account_id):
-        aws_session = SessionHelper.remote_session(aws_account_id)
+    def _get_credentials_from_aws(env_role_arn, aws_account_id, region):
+        aws_session = SessionHelper.remote_session(aws_account_id, region)
         env_session = SessionHelper.get_session(aws_session, role_arn=env_role_arn)
         c = env_session.get_credentials()
         body = json.dumps(

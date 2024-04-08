@@ -50,7 +50,7 @@ class DatasetColumnService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
-            aws = SessionHelper.remote_session(table.AWSAccountId)
+            aws = SessionHelper.remote_session(table.AWSAccountId, table.region)
             glue_table = GlueTableClient(aws, table).get_table()
 
             DatasetTableRepository.sync_table_columns(session, table, glue_table['Table'])

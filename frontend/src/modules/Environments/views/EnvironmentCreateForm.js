@@ -23,7 +23,7 @@ import {
   Typography
 } from '@mui/material';
 import { useTheme } from '@mui/styles';
-import config from '../../../generated/config.json';
+
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -58,6 +58,7 @@ import {
   isModuleEnabled,
   ModuleNames
 } from 'utils';
+import config from '../../../generated/config.json';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -324,10 +325,7 @@ const EnvironmentCreateForm = (props) => {
                       CloudFormation (i.e. CDK Execution Policy). You optionally
                       can use the below CloudFormation template to create the
                       custom IAM policy that is more restrictive than the
-                      default <b>AdministratorAccess</b> policy. To enable the
-                      features - Notebooks, MLStudio, Pipelines and Dashboards,
-                      please set the respective parameters to <b>true</b> in the
-                      bootstrap command (default is false).
+                      default <b>AdministratorAccess</b> policy.
                     </Typography>
                     <Button
                       color="primary"
@@ -397,7 +395,7 @@ const EnvironmentCreateForm = (props) => {
                             <Typography color="textPrimary" variant="subtitle2">
                               <CopyToClipboard
                                 onCopy={() => copyNotification()}
-                                text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall ParameterKey=NotebooksEnabled,ParameterValue=false ParameterKey=MLStudioEnabled,ParameterValue=false ParameterKey=PipelinesEnabled,ParameterValue=false ParameterKey=DashboardsEnabled,ParameterValue=false --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                                text={`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                               >
                                 <IconButton>
                                   <CopyAllOutlined
@@ -410,7 +408,7 @@ const EnvironmentCreateForm = (props) => {
                                   />
                                 </IconButton>
                               </CopyToClipboard>
-                              {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall ParameterKey=NotebooksEnabled,ParameterValue=false ParameterKey=MLStudioEnabled,ParameterValue=false ParameterKey=PipelinesEnabled,ParameterValue=false ParameterKey=DashboardsEnabled,ParameterValue=false --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                              {`aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                             </Typography>
                           </CardContent>
                         </Card>

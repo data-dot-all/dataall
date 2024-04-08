@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_client(AwsAccountId, region):
-    session = SessionHelper.remote_session(AwsAccountId)
+    session = SessionHelper.remote_session(AwsAccountId, region)
     return session.client('sagemaker', region_name=region)
 
 
