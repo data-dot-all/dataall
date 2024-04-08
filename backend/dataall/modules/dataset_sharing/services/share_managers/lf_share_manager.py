@@ -220,10 +220,12 @@ class LFShareManager:
         """
         Checks if shared database exists in target account
         and add to db level errors if check fails
-        :return: None
+        :return: True if dataset exists
         """
         if not self.glue_client_in_target.get_glue_database():
             self.db_level_errors.append(ShareErrorFormatter.dne_error_msg('Glue DB', self.shared_db_name))
+            return False
+        return True
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
         """
@@ -250,38 +252,26 @@ class LFShareManager:
     def check_pivot_role_permissions_to_source_database(self) -> None:
         """
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the source database in source account
-        and add to db level errors if check fails
-        :return: None
+        :return: True if the permissions exists and are applied
         """
         principal = SessionHelper.get_delegation_role_arn(self.source_account_id)
-        if not self.lf_client_in_source.check_permissions_to_database(
+        return self.lf_client_in_source.check_permissions_to_database(
             principals=[principal],
             database_name=self.source_database_name,
             permissions=['ALL'],
-        ):
-            self.db_level_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    principal, 'LF', ['ALL'], 'Glue DB', self.source_database_name
-                )
-            )
+        )
 
     def check_pivot_role_permissions_to_shared_database(self) -> None:
         """
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the shared database in target account
-        and add to db level errors if check fails
-        :return: None
+        :return: True if the permissions exists and are applied
         """
         principal = SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)
-        if not self.lf_client_in_target.check_permissions_to_database(
+        return self.lf_client_in_target.check_permissions_to_database(
             principals=[principal],
             database_name=self.shared_db_name,
             permissions=['ALL'],
-        ):
-            self.db_level_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    principal, 'LF', ['ALL'], 'Glue DB', self.shared_db_name
-                )
-            )
+        )
 
     def check_principals_permissions_to_shared_database(self) -> None:
         """
