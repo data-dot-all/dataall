@@ -1,9 +1,8 @@
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
@@ -35,7 +34,7 @@ class DatasetColumnService:
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
             ):
-                ResourcePolicy.check_user_resource_permission(
+                ResourcePolicyService.check_user_resource_permission(
                     session=session,
                     username=context.username,
                     groups=context.groups,
@@ -45,7 +44,9 @@ class DatasetColumnService:
             return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
 
     @classmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri, param_name='table_uri')
+    @ResourcePolicyService.has_resource_permission(
+        UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri, param_name='table_uri'
+    )
     def sync_table_columns(cls, table_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -57,7 +58,9 @@ class DatasetColumnService:
         return cls.paginate_active_columns_for_table(uri=table_uri, filter={})
 
     @staticmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri_for_column, param_name='column_uri')
+    @ResourcePolicyService.has_resource_permission(
+        UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri_for_column, param_name='column_uri'
+    )
     def update_table_column_description(column_uri: str, description) -> DatasetTableColumn:
         with get_context().db_engine.scoped_session() as session:
             column: DatasetTableColumn = DatasetColumnRepository.get_column(session, column_uri)

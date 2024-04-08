@@ -1,7 +1,10 @@
 import logging
 
 from dataall.base.db import exceptions
-from dataall.core.permissions import permissions
+from dataall.core.permissions.services.environment_permissions import (
+    GET_ENVIRONMENT,
+    UPDATE_ENVIRONMENT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,4 +41,4 @@ class TargetType:
             )
 
 
-TargetType('environment', permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)
+TargetType('environment', GET_ENVIRONMENT, UPDATE_ENVIRONMENT)
