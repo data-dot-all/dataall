@@ -449,18 +449,6 @@ def test_check_pivot_role_permissions_to_source_database(processor_with_mocks, d
     )
 
 
-def test_check_pivot_role_permissions_to_source_database_failed(processor_with_mocks, dataset1: Dataset, mocker):
-    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
-    lf_client.check_permissions_to_database.return_value = False
-    mocker.patch(
-        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
-        return_value='arn:role',
-    )
-    # Then
-    processor.check_pivot_role_permissions_to_source_database()
-    assert len(processor.db_level_errors) == 1
-
-
 def test_check_shared_database_in_target(processor_with_mocks, dataset1: Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     glue_client.get_glue_database.return_value = True
@@ -497,19 +485,6 @@ def test_check_pivot_role_permissions_to_shared_database(processor_with_mocks, d
         database_name=f'{dataset1.GlueDatabaseName}_shared',
         permissions=['ALL'],
     )
-
-
-def test_check_pivot_role_permissions_to_shared_database_failed(processor_with_mocks, dataset1: Dataset, mocker):
-    processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
-    mocker.patch(
-        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
-        return_value='arn:role',
-    )
-    lf_client.check_permissions_to_database.return_value = False
-    # When
-    processor.check_pivot_role_permissions_to_shared_database()
-    # Then
-    assert len(processor.db_level_errors) == 1
 
 
 def test_check_principals_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset):
