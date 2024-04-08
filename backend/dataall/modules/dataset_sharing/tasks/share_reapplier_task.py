@@ -14,7 +14,7 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-def verify_shares(engine):
+def reapply_shares(engine):
     """
     A method used by the scheduled ECS Task to re-apply_share() on all data.all active shares
     """
@@ -41,4 +41,4 @@ def verify_shares(engine):
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    verify_shares(engine=ENGINE)
+    reapply_shares(engine=ENGINE)
