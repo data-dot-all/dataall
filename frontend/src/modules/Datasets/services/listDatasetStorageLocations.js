@@ -14,6 +14,10 @@ export const listDatasetStorageLocations = (datasetUri, filter) => ({
         datasetUri
         locations(filter: $filter) {
           count
+          page
+          pages
+          hasNext
+          hasPrevious
           nodes {
             locationUri
             created
