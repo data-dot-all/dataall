@@ -157,6 +157,28 @@ class DataSharingService:
 
                 share_successful = approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
 
+            else:
+
+                log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
+                for table in shared_tables:
+                    ShareObjectRepository.update_share_item_status(
+                        session,
+                        table.tableUri,
+                        ShareItemStatus.Share_Failed.value,
+                    )
+                for folder in shared_folders:
+                    ShareObjectRepository.update_share_item_status(
+                        session,
+                        folder.locationUri,
+                        ShareItemStatus.Share_Failed.value,
+                    )
+                for bucket in shared_buckets:
+                    ShareObjectRepository.update_share_item_status(
+                        session,
+                        bucket.bucketUri,
+                        ShareItemStatus.Share_Failed.value,
+                    )
+
             new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
             share_sm.update_state(session, share, new_share_state)
 

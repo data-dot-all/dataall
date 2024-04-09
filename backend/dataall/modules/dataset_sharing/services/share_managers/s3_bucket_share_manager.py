@@ -449,6 +449,9 @@ class S3BucketShareManager:
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
                 principal_list = self.get_principal_list(statements[DATAALL_READ_ONLY_SID])
+                for p_id in principal_list:
+                    if "AROA" in p_id:
+                        principal_list.remove(p_id)
                 if f'{target_requester_arn}' in principal_list:
                     principal_list.remove(f'{target_requester_arn}')
                     if len(principal_list) == 0:
@@ -524,10 +527,15 @@ class S3BucketShareManager:
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
             target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_requester_IAMRoleName)
+            if target_requester_arn is None:
+                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
             if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
                 principal_list = self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID])
+                for p_id in principal_list:
+                    if "AROA" in p_id:
+                        principal_list.remove(p_id)
                 if f'{target_requester_arn}' in principal_list:
                     principal_list.remove(f'{target_requester_arn}')
                     if len(principal_list) == 0:
