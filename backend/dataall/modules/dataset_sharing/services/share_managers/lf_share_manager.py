@@ -98,7 +98,7 @@ class LFShareManager:
             )
             logger.info('Try to build arn')
             principal_iam_role_arn = (
-                f'arn:aws:iam::{self.target_environment.AwsAccountId}:{self.share.principalIAMRoleName}'
+                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}'
             )
 
         principals = [principal_iam_role_arn]

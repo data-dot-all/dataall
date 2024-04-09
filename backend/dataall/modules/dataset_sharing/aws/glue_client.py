@@ -66,7 +66,7 @@ class GlueClient:
     def table_exists(self, table_name):
         try:
             log.info(
-                f'TEST Check table exists {table_name} '
+                f'Check table exists {table_name} '
                 f'in database {self._database} '
                 f'in account {self._account_id}...'
             )

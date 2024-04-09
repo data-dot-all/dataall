@@ -444,7 +444,7 @@ class S3BucketShareManager:
                 )
             else:
                 # if somehow the role was deleted, we can only try to guess the role arn (quite easy, though)
-                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:{self.target_requester_IAMRoleName}'
+                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
