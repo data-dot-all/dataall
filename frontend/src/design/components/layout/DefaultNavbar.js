@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Box, IconButton, Toolbar } from '@mui/material';
+import {AppBar, Box, IconButton, Toolbar, Typography} from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Menu } from '@mui/icons-material';
 import PropTypes from 'prop-types';
@@ -7,6 +7,7 @@ import { AccountPopover, NotificationsPopover } from '../popovers';
 import { Logo } from '../Logo';
 import { SettingsDrawer } from '../SettingsDrawer';
 import { ModuleNames, isModuleEnabled } from 'utils';
+import {isMaintenanceMode} from "../../../services/graphql/MaintenanceWindow";
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -20,6 +21,12 @@ export const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
 
   return (
     <AppBar position="fixed" className={classes.appBar}>
+      {isMaintenanceMode() ? <AppBar position="sticky" sx={{ bgcolor: "red"}}>
+          <Typography variant="subtitle2" align={'center'} fontSize={'20px'}>
+            data.all is in maintenance mode. You can still navigate inside data.all but during this period, please do not make any modifications to any data.all assets ( datasets, environment, etc ).
+          </Typography>
+      </AppBar> : <></>}
+
       <Toolbar sx={{ minHeight: 64, maxHeight: 64 }}>
         {!openDrawer && (
           <IconButton

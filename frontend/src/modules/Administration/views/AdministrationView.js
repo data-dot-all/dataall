@@ -13,11 +13,12 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import { AdministrationTeams, DashboardViewer } from '../components';
+import { AdministrationTeams, DashboardViewer, MaintenanceViewer } from '../components';
 
 const tabs = [
   { label: 'Teams', value: 'teams' },
-  { label: 'Monitoring', value: 'dashboard' }
+  { label: 'Monitoring', value: 'dashboard' },
+  { label: 'Maintenance', value: 'maintenance' }
 ];
 
 const AdministrationView = () => {
@@ -90,6 +91,7 @@ const AdministrationView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'teams' && <AdministrationTeams />}
             {currentTab === 'dashboard' && <DashboardViewer />}
+            {currentTab === 'maintenance' && <MaintenanceViewer />}
           </Box>
         </Container>
       </Box>
