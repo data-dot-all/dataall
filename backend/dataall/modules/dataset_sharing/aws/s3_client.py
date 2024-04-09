@@ -1,6 +1,9 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
+from botocore.exceptions import ClientError
+
+import json
 
 log = logging.getLogger(__name__)
 
@@ -128,6 +131,24 @@ class S3Client:
                 ExpectedBucketOwner=self._account_id,
             )
             log.info(f'Created bucket policy of {bucket_name} on {self._account_id} successfully')
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'MalformedPolicy':
+                log.info('MalformedPolicy. Lets try again')
+                bucket_policy = json.loads(policy)
+                statements = bucket_policy['Statement']
+                for statement in statements:
+                    if 'DataAll-Bucket' in statement['Sid']:
+                        principal_list = statement['Principal']['AWS']
+                        if isinstance(principal_list, str):
+                            principal_list = [principal_list]
+                        new_principal_list = principal_list[:]
+                        for p_id in principal_list:
+                            if "AROA" in p_id:
+                                new_principal_list.remove(p_id)
+                        statement['Principal']['AWS'] = new_principal_list
+                bucket_policy['Statement'] = statements
+                log.info(f'New Policy: {json.dumps(bucket_policy)}')
+                self.create_bucket_policy(bucket_name, json.dumps(bucket_policy))
         except Exception as e:
             log.error(f'Bucket policy created failed on bucket {bucket_name} of {self._account_id} : {e}')
             raise e

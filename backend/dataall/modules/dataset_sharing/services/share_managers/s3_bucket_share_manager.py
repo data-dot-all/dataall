@@ -326,6 +326,11 @@ class S3BucketShareManager:
 
     def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
         principal_list = self.get_principal_list(statement)
+        logger.info("principal list = ", principal_list)
+        for p_id in principal_list:
+            if 'AROA' in p_id:
+                logger.info("p_id = ", p_id)
+                principal_list.remove(p_id)
         if f'{target_requester_arn}' not in principal_list:
             principal_list.append(f'{target_requester_arn}')
         statement['Principal']['AWS'] = principal_list
