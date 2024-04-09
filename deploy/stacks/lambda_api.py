@@ -316,7 +316,7 @@ class LambdaApiStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:iam::*:role/{pivot_role_name}-*',
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
                     ],
                 ),
