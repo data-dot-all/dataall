@@ -205,6 +205,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 log.info(f'Revoking access to table: {table.GlueTableName} ')
                 self.check_table_exists_in_source_database(share_item, table)
 
+                log.info('Check resource link table exists')
                 resource_link_table_exists = self.check_resource_link_table_exists_in_target_database(table)
                 other_table_shares_in_env = (
                     True
@@ -218,7 +219,9 @@ class ProcessLakeFormationShare(LFShareManager):
                 )
 
                 if resource_link_table_exists:
+                    log.info('Revoking principal permissions from resource link table')
                     self.revoke_principals_permissions_to_resource_link_table(table)
+                    log.info('Revoking principal permissions from table in target')
                     self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:

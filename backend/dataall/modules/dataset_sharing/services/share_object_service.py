@@ -60,7 +60,6 @@ class ShareObjectService:
         delegation_role = SessionHelper.get_delegation_role_arn(account_id)
         principal_role = IAM.get_role_arn_by_name(account_id, role_name, delegation_role)
         if not principal_role:
-            statuses = []
             for item in ShareObjectRepository.get_all_sharable_items(session, share.shareUri):
                 ShareObjectRepository.update_share_item_health_status(
                     session,
@@ -68,12 +67,6 @@ class ShareObjectService:
                     healthStatus=ShareItemHealthStatus.PrincipalRoleNotFound.value,
                     healthMessage=f'Share principal role {role_name} not found.',
                     timestamp=datetime.now(),
-                )
-                statuses.append(item.status)
-
-            for status in set(statuses):
-                ShareObjectRepository.update_share_item_status_batch(
-                    session, share.shareUri, status, ShareItemStatus.Share_Failed.value
                 )
             return False
         return True
