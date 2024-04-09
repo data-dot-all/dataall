@@ -90,7 +90,9 @@ class LFShareManager:
         :return: List of principals' arns
         """
         principal_iam_role_arn = IAM.get_role_arn_by_name(
-            account_id=self.target_environment.AwsAccountId, role_name=self.share.principalIAMRoleName
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            role_name=self.share.principalIAMRoleName,
         )
         principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(
@@ -210,7 +212,7 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_source.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id)],
+            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)],
             database_name=self.source_database_name,
             permissions=['ALL'],
         )
@@ -243,7 +245,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             permissions=['ALL'],
         )
@@ -254,7 +260,7 @@ class LFShareManager:
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the source database in source account
         :return: True if the permissions exists and are applied
         """
-        principal = SessionHelper.get_delegation_role_arn(self.source_account_id)
+        principal = SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)
         return self.lf_client_in_source.check_permissions_to_database(
             principals=[principal],
             database_name=self.source_database_name,
@@ -266,7 +272,9 @@ class LFShareManager:
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the shared database in target account
         :return: True if the permissions exists and are applied
         """
-        principal = SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)
+        principal = SessionHelper.get_delegation_role_arn(
+            self.target_environment.AwsAccountId, self.target_environment.region
+        )
         return self.lf_client_in_target.check_permissions_to_database(
             principals=[principal],
             database_name=self.shared_db_name,
@@ -322,7 +330,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_table(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             table_name=table.GlueTableName,
             catalog_id=self.target_environment.AwsAccountId,
@@ -625,7 +637,7 @@ class LFShareManager:
             f'Database {self.dataset.GlueDatabaseName} is a resource link and '
             f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}'
         )
-        if SessionHelper.is_assumable_pivot_role(catalog_account_id):
+        if SessionHelper.is_assumable_pivot_role(catalog_account_id, catalog_region):
             self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
         else:
             raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')

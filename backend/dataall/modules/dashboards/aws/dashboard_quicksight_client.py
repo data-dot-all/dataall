@@ -19,10 +19,14 @@ class DashboardQuicksightClient:
         self._account_id = aws_account_id
         self._region = region
         self._username = username
-        self._client = QuicksightClient.get_quicksight_client(aws_account_id, region)
+        self._client = QuicksightClient.get_quicksight_client(
+            AwsAccountId=aws_account_id, region=region, session_region=region
+        )
 
     def register_user_in_group(self, group_name, user_role='READER'):
-        identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
+        identity_region_client = QuicksightClient.get_quicksight_client_in_identity_region(
+            self._account_id, self._region
+        )
         QuicksightClient.create_quicksight_group(
             AwsAccountId=self._account_id, region=self._region, GroupName=group_name
         )
@@ -80,7 +84,7 @@ class DashboardQuicksightClient:
 
     def get_shared_reader_session(self, group_name, user_role='READER', dashboard_id=None):
         aws_account_id = self._account_id
-        identity_region = QuicksightClient.get_identity_region(aws_account_id)
+        identity_region = QuicksightClient.get_identity_region(aws_account_id, self._region)
         group_principal = f'arn:aws:quicksight:{identity_region}:{aws_account_id}:group/default/{group_name}'
 
         user = self.register_user_in_group(group_name, user_role)
@@ -239,7 +243,7 @@ class DashboardQuicksightClient:
         return read_principals, write_principals
 
     def _list_user_groups(self):
-        client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
+        client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id, self._region)
         user = self._describe_user()
         if not user:
             return []
@@ -248,7 +252,7 @@ class DashboardQuicksightClient:
 
     def _describe_user(self):
         """Describes a QS user, returns None if not found"""
-        client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
+        client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id, self._region)
         try:
             response = client.describe_user(UserName=self._username, AwsAccountId=self._account_id, Namespace='default')
         except ClientError:
