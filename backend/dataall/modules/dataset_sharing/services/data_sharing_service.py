@@ -160,22 +160,15 @@ class DataSharingService:
             else:
 
                 log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
-                for table in shared_tables:
+                items = ShareObjectRepository.get_all_sharable_items(
+                    session,
+                    share_uri,
+                    ShareItemStatus.Share_Approved.value,
+                )
+                for item in items:
                     ShareObjectRepository.update_share_item_status(
                         session,
-                        table.tableUri,
-                        ShareItemStatus.Share_Failed.value,
-                    )
-                for folder in shared_folders:
-                    ShareObjectRepository.update_share_item_status(
-                        session,
-                        folder.locationUri,
-                        ShareItemStatus.Share_Failed.value,
-                    )
-                for bucket in shared_buckets:
-                    ShareObjectRepository.update_share_item_status(
-                        session,
-                        bucket.bucketUri,
+                        item.shareItemUri,
                         ShareItemStatus.Share_Failed.value,
                     )
 
