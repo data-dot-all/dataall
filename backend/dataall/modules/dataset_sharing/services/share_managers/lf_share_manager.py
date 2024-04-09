@@ -97,7 +97,9 @@ class LFShareManager:
                 f'Principal IAM Role {self.share.principalIAMRoleName} not found in {self.target_environment.AwsAccountId}'
             )
             logger.info('Try to build arn')
-            principal_iam_role_arn = f'arn:aws:iam::{self.target_environment.AwsAccountId}:{self.share.principalIAMRoleName}'
+            principal_iam_role_arn = (
+                f'arn:aws:iam::{self.target_environment.AwsAccountId}:{self.share.principalIAMRoleName}'
+            )
 
         principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(
