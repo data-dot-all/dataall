@@ -7,8 +7,12 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
-from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
+from dataall.modules.dataset_sharing.aws.kms_client import (
+    KmsClient,
+    DATAALL_BUCKET_KMS_DECRYPT_SID,
+    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+)
+from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -22,10 +26,6 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBuck
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
 logger = logging.getLogger(__name__)
-
-DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
-DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
-DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
 
 
 class S3BucketShareManager:
@@ -326,11 +326,6 @@ class S3BucketShareManager:
 
     def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
         principal_list = self.get_principal_list(statement)
-        logger.info("principal list = ", principal_list)
-        for p_id in principal_list:
-            if 'AROA' in p_id:
-                logger.info("p_id = ", p_id)
-                principal_list.remove(p_id)
         if f'{target_requester_arn}' not in principal_list:
             principal_list.append(f'{target_requester_arn}')
         statement['Principal']['AWS'] = principal_list
@@ -454,9 +449,6 @@ class S3BucketShareManager:
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
                 principal_list = self.get_principal_list(statements[DATAALL_READ_ONLY_SID])
-                for p_id in principal_list:
-                    if "AROA" in p_id:
-                        principal_list.remove(p_id)
                 if f'{target_requester_arn}' in principal_list:
                     principal_list.remove(f'{target_requester_arn}')
                     if len(principal_list) == 0:
@@ -538,9 +530,6 @@ class S3BucketShareManager:
             statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
             if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
                 principal_list = self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID])
-                for p_id in principal_list:
-                    if "AROA" in p_id:
-                        principal_list.remove(p_id)
                 if f'{target_requester_arn}' in principal_list:
                     principal_list.remove(f'{target_requester_arn}')
                     if len(principal_list) == 0:

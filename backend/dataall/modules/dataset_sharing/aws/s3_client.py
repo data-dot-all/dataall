@@ -7,6 +7,10 @@ import json
 
 log = logging.getLogger(__name__)
 
+DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
+DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
+DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
+
 
 class S3ControlClient:
     def __init__(self, account_id: str, region: str):
@@ -115,13 +119,33 @@ class S3ControlClient:
         return policy
 
 
+def _remove_malformed_principal(policy: str):
+    log.info(f'Malformed Policy: {policy}')
+    bucket_policy = json.loads(policy)
+    statements = bucket_policy['Statement']
+    for statement in statements:
+        if statement['Sid'] in [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]:
+            principal_list = statement['Principal']['AWS']
+            if isinstance(principal_list, str):
+                principal_list = [principal_list]
+            new_principal_list = principal_list[:]
+            for p_id in principal_list:
+                if 'AROA' in p_id:
+                    new_principal_list.remove(p_id)
+            statement['Principal']['AWS'] = new_principal_list
+    bucket_policy['Statement'] = statements
+    log.info(f'Fixed Policy: {json.dumps(bucket_policy)}')
+    return json.dumps(bucket_policy)
+
+
 class S3Client:
     def __init__(self, account_id, region):
         session = SessionHelper.remote_session(accountid=account_id)
         self._client = session.client('s3', region_name=region)
         self._account_id = account_id
 
-    def create_bucket_policy(self, bucket_name: str, policy: str):
+    # flag second_try indicates, that in case of MalformedPolicy error, we will try to fix it and try again
+    def create_bucket_policy(self, bucket_name: str, policy: str, second_try=True):
         try:
             s3cli = self._client
             s3cli.put_bucket_policy(
@@ -133,22 +157,13 @@ class S3Client:
             log.info(f'Created bucket policy of {bucket_name} on {self._account_id} successfully')
         except ClientError as e:
             if e.response['Error']['Code'] == 'MalformedPolicy':
-                log.info('MalformedPolicy. Lets try again')
-                bucket_policy = json.loads(policy)
-                statements = bucket_policy['Statement']
-                for statement in statements:
-                    if 'DataAll-Bucket' in statement['Sid']:
-                        principal_list = statement['Principal']['AWS']
-                        if isinstance(principal_list, str):
-                            principal_list = [principal_list]
-                        new_principal_list = principal_list[:]
-                        for p_id in principal_list:
-                            if "AROA" in p_id:
-                                new_principal_list.remove(p_id)
-                        statement['Principal']['AWS'] = new_principal_list
-                bucket_policy['Statement'] = statements
-                log.info(f'New Policy: {json.dumps(bucket_policy)}')
-                self.create_bucket_policy(bucket_name, json.dumps(bucket_policy))
+                if second_try:
+                    log.info('MalformedPolicy. Lets try again')
+                    fixed_policy = _remove_malformed_principal(policy)
+                    self.create_bucket_policy(bucket_name, json.dumps(fixed_policy), False)
+                else:
+                    log.error(f'Failed to create bucket policy. MalformedPolicy: {policy}')
+                    raise
         except Exception as e:
             log.error(f'Bucket policy created failed on bucket {bucket_name} of {self._account_id} : {e}')
             raise e
