@@ -15,11 +15,7 @@ def patch_aws(module_mocker):
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.get_omics_workflow',
-        return_value={
-            'id': 'wf-id',
-            'parameterTemplate': 'some',
-            'type': 'READY2RUN'
-        },
+        return_value={'id': 'wf-id', 'parameterTemplate': 'some', 'type': 'READY2RUN'},
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.get_omics_run',
@@ -27,11 +23,7 @@ def patch_aws(module_mocker):
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
-        return_value={
-            'id': 'wf-id',
-            'parameterTemplate': 'some',
-            'type': 'READY2RUN'
-        },
+        return_value={'id': 'wf-id', 'parameterTemplate': 'some', 'type': 'READY2RUN'},
     )
 
 
@@ -88,7 +80,6 @@ def omics_workflow_model(db):
                 arn='some-arn',
                 id='wf-id',
                 type='READY2RUN',
-
             )
             session.add(workflow)
             session.commit()

@@ -4,6 +4,7 @@ from dataall.base.db import Engine
 from dataall.modules.omics.tasks.omics_workflows_fetcher import fetch_omics_workflows
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 
+
 @pytest.fixture
 def second_environment(env, org_fixture, group):
     yield env(
@@ -15,25 +16,14 @@ def second_environment(env, org_fixture, group):
         role='new-role',
     )
 
+
 def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, module_mocker, env_fixture):
     """Checks that new workflows are added to the RDS database"""
 
     # Given one environment and 2 READY2RUN workflows returned from that account
     items = [
-        {
-            'arn': 'some-arn-1',
-            'id': 'id-1',
-            'name': 'name-1',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
-        {
-            'arn': 'some-arn-2',
-            'id': 'id-2',
-            'name': 'name-2',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
+        {'arn': 'some-arn-1', 'id': 'id-1', 'name': 'name-1', 'status': 'ACTIVE', 'type': 'READY2RUN'},
+        {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
@@ -48,31 +38,21 @@ def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, mod
     with db.scoped_session() as session:
         workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
         # Then, the 2 workflows are added to RDS
-        assert workflows.get("count") == 2
+        assert workflows.get('count') == 2
         # Finally, clean_up test
-        for workflow in workflows.get("nodes"):
+        for workflow in workflows.get('nodes'):
             session.delete(workflow)
 
 
-def test_omics_workflow_fetcher_new_workflows_multiple_environments(db: Engine, module_mocker, env_fixture, second_environment):
+def test_omics_workflow_fetcher_new_workflows_multiple_environments(
+    db: Engine, module_mocker, env_fixture, second_environment
+):
     """Checks that new workflows are added to the RDS database WITHOUT duplicating the workflows of both environments"""
 
     # Given 2 environment and 2 READY2RUN workflows returned from each of the accounts
     items = [
-        {
-            'arn': 'some-arn-1',
-            'id': 'id-1',
-            'name': 'name-1',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
-        {
-            'arn': 'some-arn-2',
-            'id': 'id-2',
-            'name': 'name-2',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
+        {'arn': 'some-arn-1', 'id': 'id-1', 'name': 'name-1', 'status': 'ACTIVE', 'type': 'READY2RUN'},
+        {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
@@ -87,11 +67,12 @@ def test_omics_workflow_fetcher_new_workflows_multiple_environments(db: Engine, 
     with db.scoped_session() as session:
         workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
         # Then, the 2 workflows are added to RDS without duplicating
-        assert workflows.get("count") == 2
+        assert workflows.get('count') == 2
         # Finally, clean_up test
-        for workflow in workflows.get("nodes"):
+        for workflow in workflows.get('nodes'):
             session.delete(workflow)
         session.delete(second_environment)
+
 
 def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module_mocker):
     """Checks that existing workflows are updated in the RDS database"""
@@ -100,29 +81,11 @@ def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module
     with db.scoped_session() as session:
         workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
         # Check only the workflow1 is initially in the test
-        assert workflows.get("count") == 1
+        assert workflows.get('count') == 1
     items = [
-        {
-            'arn': 'some-arn-1',
-            'id': 'id-1',
-            'name': 'name-1',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
-        {
-            'arn': 'some-arn-2',
-            'id': 'id-2',
-            'name': 'name-2',
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
-        {
-            'arn': workflow1.arn,
-            'id': workflow1.id,
-            'name': workflow1.name,
-            'status': 'ACTIVE',
-            'type': 'READY2RUN'
-        },
+        {'arn': 'some-arn-1', 'id': 'id-1', 'name': 'name-1', 'status': 'ACTIVE', 'type': 'READY2RUN'},
+        {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
+        {'arn': workflow1.arn, 'id': workflow1.id, 'name': workflow1.name, 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
@@ -137,4 +100,4 @@ def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module
     with db.scoped_session() as session:
         workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
         # Then, the 2 workflows are added to RDS without duplicating
-        assert workflows.get("count") == 3
+        assert workflows.get('count') == 3

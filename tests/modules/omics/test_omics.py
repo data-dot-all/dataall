@@ -9,6 +9,7 @@ def test_create_omics_run(run1, group):
     assert run1.SamlAdminGroupName == group.name
     assert run1.label == 'my omics run'
 
+
 def test_list_user_omics_runs(client, user, group, run1):
     query = """
         query listOmicsRuns($filter: OmicsFilter) {
@@ -173,6 +174,7 @@ def test_list_omics_workflows(client, user, group, workflow1):
     assert response.data.listOmicsWorkflows['count'] == 1
     assert response.data.listOmicsWorkflows['nodes'][0]['label'] == workflow1.label
     assert response.data.listOmicsWorkflows['nodes'][0]['workflowUri'] == workflow1.workflowUri
+
 
 def test_get_omics_workflow(client, user, group, workflow1):
     query = """
