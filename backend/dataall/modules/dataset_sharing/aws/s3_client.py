@@ -161,7 +161,7 @@ class S3Client:
                 if second_try:
                     log.info('MalformedPolicy. Lets try again')
                     fixed_policy = _remove_malformed_principal(policy)
-                    self.create_bucket_policy(bucket_name, json.dumps(fixed_policy), False)
+                    self.create_bucket_policy(bucket_name, fixed_policy, False)
                 else:
                     log.error(f'Failed to create bucket policy. MalformedPolicy: {policy}')
                     raise

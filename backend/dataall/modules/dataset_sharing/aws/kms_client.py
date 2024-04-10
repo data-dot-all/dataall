@@ -58,7 +58,7 @@ class KmsClient:
                 if second_try:
                     log.info('MalformedPolicy. Lets try again')
                     fixed_policy = _remove_malformed_principal(policy)
-                    self.put_key_policy(key_id, json.dumps(fixed_policy), False)
+                    self.put_key_policy(key_id, fixed_policy, False)
                     return
             log.error(f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} ')
             raise e
