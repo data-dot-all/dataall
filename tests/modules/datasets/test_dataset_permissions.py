@@ -1,8 +1,7 @@
 from dataall.base.context import set_context, RequestContext
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db.exceptions import ResourceUnauthorized
-from dataall.core.permissions.permissions import TENANT_ALL
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_WRITE,
     UPDATE_DATASET,
@@ -15,19 +14,20 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 from tests.core.permissions.test_permission import *
 from dataall.core.organizations.services.organization_service import OrganizationService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 
 def test_attach_resource_policy(db, user, group, dataset_fixture):
     permissions(db, ENVIRONMENT_ALL + ORGANIZATION_ALL + DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ)
     with db.scoped_session() as session:
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.name,
             permissions=DATASET_WRITE,
             resource_uri=dataset_fixture.datasetUri,
             resource_type=Dataset.__name__,
         )
-        assert ResourcePolicy.check_user_resource_permission(
+        assert ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=user.username,
             groups=[group.name],
@@ -38,14 +38,14 @@ def test_attach_resource_policy(db, user, group, dataset_fixture):
 
 def test_attach_tenant_policy(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=[MANAGE_DATASETS],
             tenant_name='dataall',
         )
 
-        assert TenantPolicy.check_user_tenant_permission(
+        assert TenantPolicyService.check_user_tenant_permission(
             session=session,
             username=user.username,
             groups=[group.name],
@@ -57,7 +57,7 @@ def test_attach_tenant_policy(db, user, group, dataset_fixture, permissions, ten
 def test_unauthorized_resource_policy(db, user, group, dataset_fixture, permissions):
     with pytest.raises(ResourceUnauthorized):
         with db.scoped_session() as session:
-            assert ResourcePolicy.check_user_resource_permission(
+            assert ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=user.username,
                 groups=[group.name],
@@ -70,11 +70,11 @@ def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
     with db.scoped_session() as session:
         set_context(RequestContext(db, user.username, [group.name], user_id=user.username))
 
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=TENANT_ALL,
-            tenant_name='dataall',
+            tenant_name=TenantPolicyService.TENANT_NAME,
         )
         org_with_perm = OrganizationService.create_organization(
             data={

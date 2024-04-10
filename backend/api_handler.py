@@ -16,10 +16,9 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
-from dataall.core.permissions.db import save_permissions_with_tenant
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import get_engine
-from dataall.core.permissions import permissions
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
@@ -37,8 +36,6 @@ REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
-
-save_permissions_with_tenant(ENGINE)
 
 
 def resolver_adapter(resolver):
@@ -143,14 +140,14 @@ def handler(event, context):
             log.debug('groups are %s', ','.join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = TenantPolicy.find_tenant_policy(session, group, 'dataall')
+                    policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
                     if not policy:
                         print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
-                        TenantPolicy.attach_group_tenant_policy(
+                        TenantPolicyService.attach_group_tenant_policy(
                             session=session,
                             group=group,
-                            permissions=permissions.TENANT_ALL,
-                            tenant_name='dataall',
+                            permissions=TENANT_ALL,
+                            tenant_name=TenantPolicyService.TENANT_NAME,
                         )
 
         except Exception as e:

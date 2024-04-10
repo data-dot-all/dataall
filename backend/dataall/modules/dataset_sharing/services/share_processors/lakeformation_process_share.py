@@ -304,9 +304,11 @@ class ProcessLakeFormationShare(LFShareManager):
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
                     )
                 self.initialize_clients()
-                self.check_pivot_role_permissions_to_source_database()
-                self.check_shared_database_in_target()
-                self.check_pivot_role_permissions_to_shared_database()
+                if not self.check_pivot_role_permissions_to_source_database():
+                    self.grant_pivot_role_all_database_permissions_to_source_database()
+                shared_database_exists = self.check_shared_database_in_target()
+                if shared_database_exists and not self.check_pivot_role_permissions_to_shared_database():
+                    self.grant_pivot_role_all_database_permissions_to_shared_database()
                 self.check_principals_permissions_to_shared_database()
             except Exception as e:
                 self.db_level_errors = [str(e)]

@@ -1,13 +1,15 @@
-from dataall.core.permissions.permissions import (
-    ENVIRONMENT_INVITED,
-    ENVIRONMENT_INVITATION_REQUEST,
-    ENVIRONMENT_ALL,
-    TENANT_ALL,
-    TENANT_ALL_WITH_DESC,
+from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL,
     RESOURCES_ALL_WITH_DESC,
 )
 
+from dataall.core.permissions.services.environment_permissions import (
+    ENVIRONMENT_INVITED,
+    ENVIRONMENT_INVITATION_REQUEST,
+    ENVIRONMENT_ALL,
+)
+
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 
 """
 DATAPIPELINE PERMISSIONS FOR ENVIRONMENT

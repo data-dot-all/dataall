@@ -90,7 +90,9 @@ class LFShareManager:
         :return: List of principals' arns
         """
         principal_iam_role_arn = IAM.get_role_arn_by_name(
-            account_id=self.target_environment.AwsAccountId, role_name=self.share.principalIAMRoleName
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            role_name=self.share.principalIAMRoleName,
         )
         if principal_iam_role_arn is None:
             logger.info(
@@ -219,7 +221,7 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_source.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id)],
+            principals=[SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)],
             database_name=self.source_database_name,
             permissions=['ALL'],
         )
@@ -229,10 +231,12 @@ class LFShareManager:
         """
         Checks if shared database exists in target account
         and add to db level errors if check fails
-        :return: None
+        :return: True if dataset exists
         """
         if not self.glue_client_in_target.get_glue_database():
             self.db_level_errors.append(ShareErrorFormatter.dne_error_msg('Glue DB', self.shared_db_name))
+            return False
+        return True
 
     def check_if_exists_and_create_shared_database_in_target(self) -> dict:
         """
@@ -250,7 +254,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_database(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             permissions=['ALL'],
         )
@@ -259,38 +267,28 @@ class LFShareManager:
     def check_pivot_role_permissions_to_source_database(self) -> None:
         """
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the source database in source account
-        and add to db level errors if check fails
-        :return: None
+        :return: True if the permissions exists and are applied
         """
-        principal = SessionHelper.get_delegation_role_arn(self.source_account_id)
-        if not self.lf_client_in_source.check_permissions_to_database(
+        principal = SessionHelper.get_delegation_role_arn(self.source_account_id, self.source_account_region)
+        return self.lf_client_in_source.check_permissions_to_database(
             principals=[principal],
             database_name=self.source_database_name,
             permissions=['ALL'],
-        ):
-            self.db_level_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    principal, 'LF', ['ALL'], 'Glue DB', self.source_database_name
-                )
-            )
+        )
 
     def check_pivot_role_permissions_to_shared_database(self) -> None:
         """
         Checks 'ALL' Lake Formation permissions to data.all PivotRole to the shared database in target account
-        and add to db level errors if check fails
-        :return: None
+        :return: True if the permissions exists and are applied
         """
-        principal = SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)
-        if not self.lf_client_in_target.check_permissions_to_database(
+        principal = SessionHelper.get_delegation_role_arn(
+            self.target_environment.AwsAccountId, self.target_environment.region
+        )
+        return self.lf_client_in_target.check_permissions_to_database(
             principals=[principal],
             database_name=self.shared_db_name,
             permissions=['ALL'],
-        ):
-            self.db_level_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    principal, 'LF', ['ALL'], 'Glue DB', self.shared_db_name
-                )
-            )
+        )
 
     def check_principals_permissions_to_shared_database(self) -> None:
         """
@@ -341,7 +339,11 @@ class LFShareManager:
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_table(
-            principals=[SessionHelper.get_delegation_role_arn(self.target_environment.AwsAccountId)],
+            principals=[
+                SessionHelper.get_delegation_role_arn(
+                    self.target_environment.AwsAccountId, self.target_environment.region
+                )
+            ],
             database_name=self.shared_db_name,
             table_name=table.GlueTableName,
             catalog_id=self.target_environment.AwsAccountId,
@@ -644,7 +646,7 @@ class LFShareManager:
             f'Database {self.dataset.GlueDatabaseName} is a resource link and '
             f'the source database {catalog_database} belongs to a catalog account {catalog_account_id}'
         )
-        if SessionHelper.is_assumable_pivot_role(catalog_account_id):
+        if SessionHelper.is_assumable_pivot_role(catalog_account_id, catalog_region):
             self._validate_catalog_ownership_tag(catalog_account_id, catalog_region, catalog_database)
         else:
             raise Exception(f'Pivot role is not assumable, catalog account {catalog_account_id} is not onboarded')

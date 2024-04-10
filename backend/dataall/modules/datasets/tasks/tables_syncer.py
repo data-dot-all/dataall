@@ -60,7 +60,7 @@ def sync_tables(engine):
                     for table in tables:
                         LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
-                                SessionHelper.get_delegation_role_arn(env.AwsAccountId),
+                                SessionHelper.get_delegation_role_arn(env.AwsAccountId, env.region),
                                 env_group.environmentIAMRoleArn,
                             ],
                         )
@@ -79,7 +79,7 @@ def sync_tables(engine):
 
 
 def is_assumable_pivot_role(env: Environment):
-    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId)
+    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
     if not aws_session:
         log.error(f'Failed to assume dataall pivot role in environment {env.AwsAccountId}')
         return False

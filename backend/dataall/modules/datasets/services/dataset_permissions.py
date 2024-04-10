@@ -1,14 +1,15 @@
 from itertools import chain
 
-from dataall.core.permissions.permissions import (
-    TENANT_ALL,
-    TENANT_ALL_WITH_DESC,
-    RESOURCES_ALL,
-    RESOURCES_ALL_WITH_DESC,
+from dataall.core.permissions.services.environment_permissions import (
     ENVIRONMENT_INVITED,
     ENVIRONMENT_INVITATION_REQUEST,
     ENVIRONMENT_INVITED_DEFAULT,
     ENVIRONMENT_ALL,
+)
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
+from dataall.core.permissions.services.resources_permissions import (
+    RESOURCES_ALL,
+    RESOURCES_ALL_WITH_DESC,
 )
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
@@ -30,7 +31,6 @@ DATASET_READ = [
     LIST_DATASET_FOLDERS,
     CREDENTIALS_DATASET,
 ]
-
 
 UPDATE_DATASET = 'UPDATE_DATASET'
 SYNC_DATASET = 'SYNC_DATASET'
@@ -63,7 +63,6 @@ DATASET_WRITE = [
 DATASET_ALL = list(set(DATASET_WRITE + DATASET_READ))
 RESOURCES_ALL.extend(DATASET_ALL)
 
-
 RESOURCES_ALL.extend(DATASET_TABLE_READ)
 
 """
@@ -84,7 +83,6 @@ ENVIRONMENT_ALL.append(LIST_ENVIRONMENT_DATASETS)
 
 RESOURCES_ALL.append(CREATE_DATASET)
 RESOURCES_ALL.append(LIST_ENVIRONMENT_DATASETS)
-
 
 for perm in chain(DATASET_ALL, DATASET_TABLE_READ):
     RESOURCES_ALL_WITH_DESC[perm] = perm

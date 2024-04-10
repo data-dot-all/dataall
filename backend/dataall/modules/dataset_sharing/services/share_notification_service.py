@@ -44,7 +44,7 @@ class ShareNotificationService:
     def notify_share_object_submission(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
@@ -59,7 +59,7 @@ class ShareNotificationService:
     def notify_share_object_approval(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         msg = f'User {email_id} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
@@ -74,7 +74,7 @@ class ShareNotificationService:
     def notify_share_object_rejection(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         if self.share.status == ShareObjectStatus.Rejected.value:
             msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
             subject = f'Data.all | Share Request Rejected for {self.dataset.label}'

@@ -730,6 +730,24 @@ class ShareObjectRepository:
         )
 
     @staticmethod
+    def update_share_item_health_status_batch(
+        session,
+        share_uri: str,
+        old_status: str,
+        new_status: str,
+    ) -> bool:
+        (
+            session.query(ShareObjectItem)
+            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
+            .update(
+                {
+                    ShareObjectItem.healthStatus: new_status,
+                }
+            )
+        )
+        return True
+
+    @staticmethod
     def update_share_item_status_batch(
         session,
         share_uri: str,

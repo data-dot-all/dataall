@@ -1,10 +1,10 @@
 from builtins import super
-import boto3
 
+import boto3
+from aws_cdk import Stack
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_ec2 as ec2
-from aws_cdk import Stack
 
 from .aurora import AuroraServerlessStack
 from .cognito import IdpStack
@@ -22,6 +22,7 @@ from .s3_resources import S3ResourcesStack
 from .secrets_stack import SecretsManagerStack
 from .ses_stack import SesStack
 from .sqs import SqsStack
+from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
 
 
@@ -93,6 +94,7 @@ class BackendStack(Stack):
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
             reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
+            prod_sizing=prod_sizing,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -322,6 +324,20 @@ class BackendStack(Stack):
             codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
             prod_sizing=prod_sizing,
             quicksight_monitoring_sg=quicksight_monitoring_sg,
+            **kwargs,
+        )
+
+        TriggerFunctionStack(
+            self,
+            'SavePerms',
+            handler='trigger_handler.save_permissions',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            vpc=vpc,
+            vpce_connection=vpce_connection,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            connectables=[aurora_stack.cluster],
             **kwargs,
         )
 

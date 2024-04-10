@@ -40,7 +40,7 @@ class PivotRoleStatementSet(object):
                 iam.ManagedPolicy(
                     self.stack,
                     f'PivotRolePolicy-{index + 1}',
-                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{index + 1}',
+                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index + 1}',
                     statements=chunk,
                 )
             )

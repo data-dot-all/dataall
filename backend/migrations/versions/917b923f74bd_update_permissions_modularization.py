@@ -10,14 +10,12 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.permissions.db.permission_repositories import Permission
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.base.db import Resource
-from dataall.core.permissions.db.permission_models import (
-    PermissionType,
-    ResourcePolicyPermission,
-    TenantPolicyPermission,
-)
-
+from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicyPermission
+from dataall.core.permissions.api.enums import PermissionType
+from dataall.core.permissions.db.tenant.tenant_models import TenantPolicyPermission
+from dataall.core.permissions.services.permission_service import PermissionService
 
 # revision identifiers, used by Alembic.
 revision = '917b923f74bd'
@@ -120,7 +118,7 @@ def downgrade():
 def delete_unused_permissions(session):
     for name in UNUSED_RESOURCE_PERMISSIONS:
         try:
-            perm = Permission.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
+            perm = PermissionService.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
             (
                 session.query(ResourcePolicyPermission)
                 .filter(ResourcePolicyPermission.permissionUri == perm.permissionUri)
@@ -132,7 +130,7 @@ def delete_unused_permissions(session):
 
     for name in UNUSED_TENANT_PERMISSIONS:
         try:
-            perm = Permission.get_permission_by_name(session, name, PermissionType.TENANT.value)
+            perm = PermissionService.get_permission_by_name(session, name, PermissionType.TENANT.value)
             (
                 session.query(TenantPolicyPermission)
                 .filter(TenantPolicyPermission.permissionUri == perm.permissionUri)
@@ -145,7 +143,7 @@ def delete_unused_permissions(session):
 
 def save_deleted_permissions(session):
     for name in UNUSED_RESOURCE_PERMISSIONS:
-        Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
+        PermissionService.save_permission(session, name, name, PermissionType.RESOURCE.value)
 
     for name in UNUSED_TENANT_PERMISSIONS:
-        Permission.save_permission(session, name, name, PermissionType.TENANT.value)
+        PermissionService.save_permission(session, name, name, PermissionType.TENANT.value)
