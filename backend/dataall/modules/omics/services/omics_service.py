@@ -12,8 +12,8 @@ from typing import List, Dict
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.base.db import exceptions
 import json
@@ -59,8 +59,8 @@ class OmicsService:
     """
 
     @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
-    @has_resource_permission(CREATE_OMICS_RUN)
+    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
+    @ResourcePolicyService.has_resource_permission(CREATE_OMICS_RUN)
     @has_group_permission(CREATE_OMICS_RUN)
     def create_omics_run(*, uri: str, admin_group: str, data: dict) -> OmicsRun:
         """
@@ -92,7 +92,7 @@ class OmicsService:
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=omics_run.SamlAdminGroupName,
                 permissions=OMICS_RUN_ALL,
@@ -108,19 +108,19 @@ class OmicsService:
             return omics_run
 
     @staticmethod
-    @has_resource_permission(GET_OMICS_RUN)
+    @ResourcePolicyService.has_resource_permission(GET_OMICS_RUN)
     def get_omics_run(*, uri: str):
         with _session() as session:
             return OmicsRepository.get_omics_run(session, uri)
 
     @staticmethod
-    @has_resource_permission(GET_OMICS_RUN)
+    @ResourcePolicyService.has_resource_permission(GET_OMICS_RUN)
     def get_omics_run_from_aws(uri: str):
         with _session() as session:
             return OmicsClient.get_omics_run(session, uri)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def get_omics_workflow(uri: str) -> dict:
         """Get Omics workflow."""
         with _session() as session:
@@ -131,7 +131,7 @@ class OmicsService:
         return response
 
     @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_user_omics_runs(filter: dict) -> dict:
         """List existed user Omics runs. Filters only required omics_runs by the filter param"""
         with _session() as session:
@@ -140,14 +140,14 @@ class OmicsService:
             )
 
     @staticmethod
-    @has_tenant_permission(MANAGE_OMICS_RUNS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_omics_workflows(filter: dict) -> dict:
         """List Omics workflows."""
         with _session() as session:
             return OmicsRepository(session).paginated_omics_workflows(filter=filter)
 
     @staticmethod
-    @has_resource_permission(DELETE_OMICS_RUN)
+    @ResourcePolicyService.has_resource_permission(DELETE_OMICS_RUN)
     def delete_omics_run(uri: str):
         # TODO: IMPLEMENT _get_omics_run and in FRONTEND
         """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
@@ -157,7 +157,7 @@ class OmicsService:
                 raise exceptions.ObjectNotFound('OmicsRun', uri)
             session.delete(omics_run)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=omics_run.runUri,
                 group=omics_run.SamlAdminGroupName,

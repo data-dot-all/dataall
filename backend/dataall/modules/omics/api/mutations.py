@@ -10,6 +10,7 @@ createOmicsRun = gql.MutationField(
     resolver=create_omics_run,
 )
 # TODO implement updates to runs!
+# If we implement it, we need to add the test
 # updateOmicsRun = gql.MutationField(
 #     name="updateOmicsRun",
 #     type=gql.Ref("OmicsRun"),
@@ -21,6 +22,7 @@ createOmicsRun = gql.MutationField(
 # )
 
 # TODO: not used in the frontend at the moment
+# If we implement it, we need to add the test
 # deleteOmicsRun = gql.MutationField(
 #     name="deleteOmicsRun",
 #     type=gql.Boolean,

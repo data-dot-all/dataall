@@ -19,7 +19,7 @@ class OmicsClient:
 
     @staticmethod
     def client(awsAccountId: str, region: str):
-        session = SessionHelper.remote_session(awsAccountId)
+        session = SessionHelper.remote_session(awsAccountId, region)
         return session.client('omics', region_name=region)
 
     @staticmethod

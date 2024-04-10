@@ -14,6 +14,7 @@ NewOmicsRunInput = gql.InputType(
     ],
 )
 
+#TODO: review if needed
 # UpdateOmicsRunInput = gql.InputType(
 #     name="UpdateOmicsRunInput",
 #     arguments=[
