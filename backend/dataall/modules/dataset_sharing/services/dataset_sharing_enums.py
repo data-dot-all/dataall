@@ -49,7 +49,6 @@ class ShareItemHealthStatus(GraphQLEnumMapper):
     PendingReApply = 'PendingReApply'
 
 
-
 class ShareObjectActions(GraphQLEnumMapper):
     Submit = 'Submit'
     Approve = 'Approve'

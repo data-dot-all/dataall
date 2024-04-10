@@ -27,10 +27,6 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import ShareOb
 
 logger = logging.getLogger(__name__)
 
-DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
-DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
-DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
-
 
 class S3BucketShareManager:
     def __init__(
@@ -459,7 +455,7 @@ class S3BucketShareManager:
             bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
             if principal_exist:
                 target_requester_arn = IAM.get_role_arn_by_name(
-                    self.target_account_id,self.target_environment.region, self.target_requester_IAMRoleName
+                    self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
                 )
             else:
                 # if somehow the role was deleted, we can only try to guess the role arn (quite easy, though)
@@ -547,7 +543,9 @@ class S3BucketShareManager:
             kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
             kms_key_id = kms_client.get_key_id(key_alias)
             existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-            target_requester_arn = IAM.get_role_arn_by_name(self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName)
+            target_requester_arn = IAM.get_role_arn_by_name(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+            )
             if target_requester_arn is None:
                 target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
