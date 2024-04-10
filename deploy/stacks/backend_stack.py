@@ -55,6 +55,7 @@ class BackendStack(Stack):
         reauth_config=None,
         cognito_user_session_timeout_inmins=43200,
         custom_auth=None,
+        custom_waf_rules=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -92,6 +93,7 @@ class BackendStack(Stack):
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
             reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
+            prod_sizing=prod_sizing,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -123,6 +125,7 @@ class BackendStack(Stack):
                 enable_cw_rum=enable_cw_rum,
                 vpc=vpc,
                 cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
+                custom_waf_rules=custom_waf_rules,
                 **kwargs,
             )
         else:
@@ -191,6 +194,7 @@ class BackendStack(Stack):
             ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
             custom_domain=custom_domain,
             custom_auth=custom_auth,
+            custom_waf_rules=custom_waf_rules,
             **kwargs,
         )
 

@@ -43,38 +43,36 @@ class ShareNotificationService:
 
     def notify_share_object_submission(self, email_id: str):
         share_link_text = ''
-        if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg
-        )
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg)
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
         share_link_text = ''
-        if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         msg = f'User {email_id} APPROVED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg
-        )
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg)
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_rejection(self, email_id: str):
         share_link_text = ''
-        if os.environ.get('frontend_domain_url'):
-            share_link_text = f'<br><br> Please visit Data.all <a href="{os.environ.get("frontend_domain_url")}"/console/shares/{self.share.shareUri}">Share link </a> to take action or view more details'
+        if os.environ.get("frontend_domain_url"):
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         if self.share.status == ShareObjectStatus.Rejected.value:
             msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
             subject = f'Data.all | Share Request Rejected for {self.dataset.label}'
@@ -87,8 +85,7 @@ class ShareNotificationService:
         email_notification_msg = msg + share_link_text
 
         notifications = self._register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg
-        )
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg)
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
@@ -97,8 +94,7 @@ class ShareNotificationService:
         msg = f'New data (at {s3_prefix}) is available from dataset {self.dataset.datasetUri} shared by owner {self.dataset.owner}'
 
         notifications = self._register_notifications(
-            notification_type=DataSharingNotificationType.DATASET_VERSION.value, msg=msg
-        )
+            notification_type=DataSharingNotificationType.DATASET_VERSION.value, msg=msg)
         return notifications
 
     def _get_share_object_targeted_users(self):
@@ -118,7 +114,7 @@ class ShareNotificationService:
         """
         notifications = []
         for recipient in self.notification_target_users:
-            log.info(f'Creating notification for {recipient}, msg {msg}')
+            log.info(f"Creating notification for {recipient}, msg {msg}")
             notifications.append(
                 NotificationRepository.create_notification(
                     session=self.session,
@@ -148,8 +144,8 @@ class ShareNotificationService:
                     notification_recipient_groups_list = [self.dataset.SamlAdminGroupName, self.dataset.stewards]
                     notification_recipient_email_ids = []
 
-                    if share_notification_config_type == 'email':
-                        if params.get('group_notifications', False) == True:
+                    if share_notification_config_type == "email":
+                        if params.get("group_notifications", False) == True:
                             notification_recipient_groups_list.append(self.share.groupUri)
                         else:
                             notification_recipient_email_ids = [self.share.owner]
@@ -162,7 +158,7 @@ class ShareNotificationService:
                                 'subject': subject,
                                 'message': msg,
                                 'recipientGroupsList': notification_recipient_groups_list,
-                                'recipientEmailList': notification_recipient_email_ids,
+                                'recipientEmailList': notification_recipient_email_ids
                             },
                         )
                         self.session.add(notification_task)

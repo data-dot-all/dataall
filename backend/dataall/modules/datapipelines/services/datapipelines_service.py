@@ -5,8 +5,8 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
@@ -35,8 +35,8 @@ def _session():
 
 class DataPipelineService:
     @staticmethod
-    @has_tenant_permission(MANAGE_PIPELINES)
-    @has_resource_permission(CREATE_PIPELINE)
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
     @has_group_permission(CREATE_PIPELINE)
     def create_pipeline(
         uri: str,
@@ -61,7 +61,7 @@ class DataPipelineService:
                 data=data,
             )
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=admin_group,
                 permissions=PIPELINE_ALL,
@@ -70,7 +70,7 @@ class DataPipelineService:
             )
 
             if environment.SamlGroupName != pipeline.SamlGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
                     permissions=PIPELINE_ALL,
@@ -101,8 +101,8 @@ class DataPipelineService:
             return pipeline
 
     @staticmethod
-    @has_tenant_permission(MANAGE_PIPELINES)
-    @has_resource_permission(CREATE_PIPELINE)
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
     @has_group_permission(CREATE_PIPELINE)
     def create_pipeline_environment(
         uri: str,
@@ -142,8 +142,8 @@ class DataPipelineService:
             return pipeline_env
 
     @staticmethod
-    @has_tenant_permission(MANAGE_PIPELINES)
-    @has_resource_permission(UPDATE_PIPELINE)
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(UPDATE_PIPELINE)
     def update_pipeline(uri, data=None) -> DataPipeline:
         with _session() as session:
             pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
@@ -156,8 +156,8 @@ class DataPipelineService:
             return pipeline
 
     @staticmethod
-    @has_tenant_permission(MANAGE_PIPELINES)
-    @has_resource_permission(UPDATE_PIPELINE)
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(UPDATE_PIPELINE)
     def update_pipeline_environment(uri, data=None) -> DataPipelineEnvironment:
         with _session() as session:
             pipeline_env = DatapipelinesRepository.get_pipeline_environment(
@@ -182,8 +182,8 @@ class DataPipelineService:
             )
 
     @staticmethod
-    @has_tenant_permission(MANAGE_PIPELINES)
-    @has_resource_permission(GET_PIPELINE)
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(GET_PIPELINE)
     def get_pipeline(
         uri: str,
     ) -> DataPipeline:
@@ -204,7 +204,7 @@ class DataPipelineService:
             return f'codecommit::{env.region}://{pipeline.repo}'
 
     @staticmethod
-    @has_resource_permission(DELETE_PIPELINE)
+    @ResourcePolicyService.has_resource_permission(DELETE_PIPELINE)
     def delete_pipeline(uri: str, deleteFromAWS: bool):
         with _session() as session:
             pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
@@ -230,7 +230,7 @@ class DataPipelineService:
 
             session.delete(pipeline)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=pipeline.DataPipelineUri,
                 group=pipeline.SamlGroupName,
@@ -262,7 +262,7 @@ class DataPipelineService:
             return True
 
     @staticmethod
-    @has_resource_permission(CREDENTIALS_PIPELINE)
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(uri):
         with _session() as session:
             pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)

@@ -6,16 +6,25 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
-from dataall.core.permissions import permissions
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.permissions.services.tenant_permissions import MANAGE_ORGANIZATIONS
+from dataall.core.permissions.services.organization_permissions import (
+    ORGANIZATION_ALL,
+    ORGANIZATION_INVITED,
+    UPDATE_ORGANIZATION,
+    GET_ORGANIZATION,
+    INVITE_ORGANIZATION_GROUP,
+    REMOVE_ORGANIZATION_GROUP,
+    DELETE_ORGANIZATION,
+)
 
 
 class OrganizationService:
     """Service that serves request related to organization"""
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
     def create_organization(data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -47,10 +56,10 @@ class OrganizationService:
             )
             session.add(activity)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=data['SamlGroupName'],
-                permissions=permissions.ORGANIZATION_ALL,
+                permissions=ORGANIZATION_ALL,
                 resource_uri=org.organizationUri,
                 resource_type=models.Organization.__name__,
             )
@@ -58,7 +67,7 @@ class OrganizationService:
             return org
 
     @staticmethod
-    @has_resource_permission(permissions.UPDATE_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(UPDATE_ORGANIZATION)
     def update_organization(uri, data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -76,18 +85,24 @@ class OrganizationService:
                 targetType='org',
             )
             session.add(activity)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=organization.SamlGroupName,
-                permissions=permissions.ORGANIZATION_ALL,
+                permissions=ORGANIZATION_ALL,
                 resource_uri=organization.organizationUri,
                 resource_type=models.Organization.__name__,
             )
             return organization
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
     def get_organization(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return OrganizationRepository.get_organization_by_uri(session=session, uri=uri)
+
+    @staticmethod
+    def get_organization_simplified(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return OrganizationRepository.get_organization_by_uri(session=session, uri=uri)
@@ -102,7 +117,7 @@ class OrganizationService:
             )
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
     def list_organization_environments(filter, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -138,8 +153,8 @@ class OrganizationService:
         return OrganisationUserRole.NoPermission.value
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.DELETE_ORGANIZATION)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(DELETE_ORGANIZATION)
     def archive_organization(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -151,7 +166,7 @@ class OrganizationService:
                     message='The organization you tried to delete has linked environments',
                 )
             session.delete(org)
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=org.SamlGroupName,
                 resource_uri=org.organizationUri,
@@ -161,8 +176,8 @@ class OrganizationService:
             return True
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(INVITE_ORGANIZATION_GROUP)
     def invite_group(uri, data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -182,19 +197,19 @@ class OrganizationService:
                 invitedBy=context.username,
             )
             session.add(org_group)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=organization.organizationUri,
-                permissions=permissions.ORGANIZATION_INVITED,
+                permissions=ORGANIZATION_INVITED,
                 resource_type=models.Organization.__name__,
             )
 
             return organization
 
     @staticmethod
-    @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_permission(permissions.REMOVE_ORGANIZATION_GROUP)
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(REMOVE_ORGANIZATION_GROUP)
     def remove_group(uri, group):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -220,7 +235,7 @@ class OrganizationService:
                 session.delete(group_membership)
                 session.commit()
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=organization.organizationUri,
@@ -229,7 +244,7 @@ class OrganizationService:
             return organization
 
     @staticmethod
-    @has_resource_permission(permissions.GET_ORGANIZATION)
+    @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
     def list_organization_groups(filter, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:

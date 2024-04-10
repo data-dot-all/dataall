@@ -5,7 +5,7 @@ import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
@@ -196,7 +196,7 @@ def table(db):
             session.add(table)
             session.commit()
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_TABLE_READ,
@@ -236,7 +236,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
     table1 = table(dataset=dataset_fixture, name='table1', username=user.username)
 
     with db.scoped_session() as session:
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
             permissions=DATASET_TABLE_READ,
@@ -251,7 +251,7 @@ def table_confidential_fixture(db, dataset_confidential_fixture, table, group, u
     table2 = table(dataset=dataset_confidential_fixture, name='table2', username=user.username)
 
     with db.scoped_session() as session:
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
             permissions=DATASET_TABLE_READ,
@@ -305,7 +305,7 @@ def dataset_model(db):
             session.add(dataset)
             session.commit()
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=environment.SamlGroupName,
                 permissions=DATASET_ALL,
@@ -386,21 +386,21 @@ def share(db):
             session.add(share)
             session.commit()
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=env_group.groupUri,
                 permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 permissions=SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.stewards,
                 permissions=SHARE_OBJECT_APPROVER,
