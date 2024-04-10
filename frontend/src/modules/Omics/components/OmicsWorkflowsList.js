@@ -55,10 +55,6 @@ export const OmicsWorkflowsList = () => {
     }
   }, [client, filter.page, dispatch, fetchItems]);
 
-  if (loading) {
-    return <CircularProgress />;
-  }
-
   return (
     <>
       <Helmet>
@@ -92,17 +88,23 @@ export const OmicsWorkflowsList = () => {
               mt: 3
             }}
           >
-            {items.nodes.length <= 0 ? (
-              <Typography color="textPrimary" variant="subtitle2">
-                No workflows registered in data.all.
-              </Typography>
+            {loading ? (
+              <CircularProgress />
             ) : (
               <Box>
-                {items.nodes.map((node) => (
-                  <OmicsWorkflowsListItem workflow={node} />
-                ))}
+                {items.nodes.length <= 0 ? (
+                  <Typography color="textPrimary" variant="subtitle2">
+                    No workflows registered in data.all.
+                  </Typography>
+                ) : (
+                  <Box>
+                    {items.nodes.map((node) => (
+                      <OmicsWorkflowsListItem workflow={node} />
+                    ))}
 
-                <Pager items={items} onChange={handlePageChange} />
+                    <Pager items={items} onChange={handlePageChange} />
+                  </Box>
+                )}
               </Box>
             )}
           </Box>

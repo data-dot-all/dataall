@@ -1,32 +1,15 @@
 import pytest
 
 
-def test_omics_run(omics_run, group):
-    assert omics_run.runUri
-    assert omics_run.SamlAdminGroupName == group.name
-    assert omics_run.label == 'my omics run'
+def test_create_omics_run(run1, group):
+    """
+    Tests creation of omics Run
+    """
+    assert run1.runUri
+    assert run1.SamlAdminGroupName == group.name
+    assert run1.label == 'my omics run'
 
-
-def test_get_omics_run():
-    #TODO
-    query = """
-        """
-    assert True
-
-
-def test_get_omics_run_from_aws():
-    # TODO
-    query = """
-        """
-    assert True
-
-
-def test_run_omics_workflow():
-    # TODO
-    assert True
-
-
-def test_list_user_omics_runs(client, user, group, omics_run):
+def test_list_user_omics_runs(client, user, group, run1):
     query = """
         query listOmicsRuns($filter: OmicsFilter) {
           listOmicsRuns(filter: $filter) {
@@ -84,6 +67,7 @@ def test_list_user_omics_runs(client, user, group, omics_run):
         groups=[group.name],
     )
 
+    assert response.data.listOmicsRuns['count'] == 1
     assert len(response.data.listOmicsRuns['nodes']) == 1
 
     response = client.query(
@@ -92,11 +76,11 @@ def test_list_user_omics_runs(client, user, group, omics_run):
         username=user.username,
         groups=[group.name],
     )
-
+    assert response.data.listOmicsRuns['count'] == 1
     assert len(response.data.listOmicsRuns['nodes']) == 1
 
 
-def test_nopermissions_list_user_omics_runs(client, user2, group2):
+def test_nopermissions_list_user_omics_runs(client, user2, group2, run1):
     query = """
         query listOmicsRuns($filter: OmicsFilter) {
           listOmicsRuns(filter: $filter) {
@@ -153,15 +137,63 @@ def test_nopermissions_list_user_omics_runs(client, user2, group2):
         username=user2.username,
         groups=[group2.name],
     )
-
+    assert response.data.listOmicsRuns['count'] == 0
     assert len(response.data.listOmicsRuns['nodes']) == 0
 
 
-def test_list_omics_workflows():
-    # TODO
-    assert True
+def test_list_omics_workflows(client, user, group, workflow1):
+    query = """
+        query listOmicsWorkflows($filter: OmicsFilter) {
+          listOmicsWorkflows(filter: $filter) {
+            count
+            page
+            pages
+            hasNext
+            hasPrevious
+            nodes {
+              arn
+              id
+              name
+              label
+              workflowUri
+              description
+              type
+              parameterTemplate
+            }
+          }
+        }
+        """
 
+    response = client.query(
+        query,
+        filter=None,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.listOmicsWorkflows['count'] == 1
+    assert response.data.listOmicsWorkflows['nodes'][0]['label'] == workflow1.label
+    assert response.data.listOmicsWorkflows['nodes'][0]['workflowUri'] == workflow1.workflowUri
 
-def delete_omics_run():
-    # TODO
-    assert True
+def test_get_omics_workflow(client, user, group, workflow1):
+    query = """
+        query getOmicsWorkflow($workflowUri: String!) {
+          getOmicsWorkflow(workflowUri: $workflowUri) {
+            workflowUri
+            id
+            name
+            description
+            parameterTemplate
+            type
+          }
+        }
+        """
+
+    response = client.query(
+        query,
+        workflowUri=workflow1.workflowUri,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
+    assert response.data.getOmicsWorkflow['id'] == workflow1.id
+    assert response.data.getOmicsWorkflow['type'] == workflow1.type

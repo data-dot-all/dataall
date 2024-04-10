@@ -1,4 +1,3 @@
-import boto3
 import pytest
 import typing
 
@@ -10,23 +9,29 @@ from dataall.core.organizations.db.organization_models import Organization
 
 @pytest.fixture(scope='module')
 def patch_aws(module_mocker):
-    response_dict = dict()
-    response_dict['id'] = '1234'
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.run_omics_workflow',
-        return_value=response_dict,
+        return_value={'id': 'run-id'},
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.get_omics_workflow',
-        return_value=response_dict,
+        return_value={
+            'id': 'wf-id',
+            'parameterTemplate': 'some',
+            'type': 'READY2RUN'
+        },
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.get_omics_run',
-        return_value=response_dict,
+        return_value={'id': 'run-id'},
     )
     module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
-        return_value=response_dict,
+        return_value={
+            'id': 'wf-id',
+            'parameterTemplate': 'some',
+            'type': 'READY2RUN'
+        },
     )
 
 
@@ -81,8 +86,9 @@ def omics_workflow_model(db):
                 owner=environment.owner,
                 name=label,
                 arn='some-arn',
-                id='some-id',
+                id='wf-id',
                 type='READY2RUN',
+
             )
             session.add(workflow)
             session.commit()
@@ -97,7 +103,7 @@ def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> Dataset:
 
 
 @pytest.fixture(scope='module')
-def omics_run(client, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
+def run1(client, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
     response = client.query(
         """
             mutation createOmicsRun($input: NewOmicsRunInput) {
