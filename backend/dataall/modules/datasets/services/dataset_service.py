@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 
@@ -314,18 +315,12 @@ class DatasetService:
         engine = get_context().db_engine
         with engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-            location = (
-                f's3://{dataset.S3BucketName}/{data.get("prefix")}'
-                if data.get('prefix')
-                else f's3://{dataset.S3BucketName}'
-            )
-
+            location = os.path.join('s3://', dataset.S3BucketName, data.get('prefix', ''), '')
             crawler = DatasetCrawler(dataset).get_crawler()
             if not crawler:
                 raise exceptions.AWSResourceNotFound(
                     action=CRAWL_DATASET,
-                    message=f'Crawler {dataset.GlueCrawlerName} can not be found',
+                    message=f'Crawler {dataset.GlueCrawlerName} cannot be found',
                 )
 
             task = Task(
