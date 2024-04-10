@@ -1,9 +1,37 @@
 import logging
+import json
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
+
+DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
+DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = 'DataAll-Access-Point-KMS-Decrypt'
+
+
+def _remove_malformed_principal(policy: str):
+    log.info(f'Malformed Policy: {policy}')
+    kms_policy = json.loads(policy)
+    statements = kms_policy['Statement']
+    for statement in statements:
+        if statement['Sid'] in [
+            DATAALL_BUCKET_KMS_DECRYPT_SID,
+            DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+            DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+        ]:
+            principal_list = statement['Principal']['AWS']
+            if isinstance(principal_list, str):
+                principal_list = [principal_list]
+            new_principal_list = principal_list[:]
+            for p_id in principal_list:
+                if 'AROA' in p_id:
+                    new_principal_list.remove(p_id)
+            statement['Principal']['AWS'] = new_principal_list
+    kms_policy['Statement'] = statements
+    log.info(f'Fixed Policy: {json.dumps(kms_policy)}')
+    return json.dumps(kms_policy)
 
 
 class KmsClient:
@@ -14,7 +42,7 @@ class KmsClient:
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 
-    def put_key_policy(self, key_id: str, policy: str):
+    def put_key_policy(self, key_id: str, policy: str, second_try=True):
         try:
             self._client.put_key_policy(
                 KeyId=key_id,
@@ -26,6 +54,12 @@ class KmsClient:
                 raise Exception(
                     f'Data.all Environment Pivot Role does not have kms:PutKeyPolicy Permission for key id {key_id}: {e}'
                 )
+            elif e.response['Error']['Code'] == 'MalformedPolicy':
+                if second_try:
+                    log.info('MalformedPolicy. Lets try again')
+                    fixed_policy = _remove_malformed_principal(policy)
+                    self.put_key_policy(key_id, json.dumps(fixed_policy), False)
+                    return
             log.error(f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} ')
             raise e
 

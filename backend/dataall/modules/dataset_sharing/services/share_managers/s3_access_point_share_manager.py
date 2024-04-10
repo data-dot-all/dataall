@@ -8,8 +8,17 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.modules.dataset_sharing.aws.s3_client import (
+    S3ControlClient,
+    S3Client,
+    DATAALL_ALLOW_OWNER_SID,
+    DATAALL_DELEGATE_TO_ACCESS_POINT,
+)
+from dataall.modules.dataset_sharing.aws.kms_client import (
+    KmsClient,
+    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+)
 from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -26,10 +35,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
-DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
-DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = 'DataAll-Access-Point-KMS-Decrypt'
-DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
-DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
 
 class S3AccessPointShareManager:

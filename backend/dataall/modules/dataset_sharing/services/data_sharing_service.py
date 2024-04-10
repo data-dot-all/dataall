@@ -158,7 +158,6 @@ class DataSharingService:
                 share_successful = approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
 
             else:
-
                 log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
                 items = ShareObjectRepository.get_all_sharable_items(
                     session,

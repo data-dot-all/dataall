@@ -66,9 +66,7 @@ class GlueClient:
     def table_exists(self, table_name):
         try:
             log.info(
-                f'Check table exists {table_name} '
-                f'in database {self._database} '
-                f'in account {self._account_id}...'
+                f'Check table exists {table_name} ' f'in database {self._database} ' f'in account {self._account_id}...'
             )
             table = self._client.get_table(CatalogId=self._account_id, DatabaseName=self._database, Name=table_name)
             log.info(f'Glue table {table_name} found in account {self._account_id} in database {self._database}')
