@@ -54,7 +54,7 @@ class KmsClient:
                 raise Exception(
                     f'Data.all Environment Pivot Role does not have kms:PutKeyPolicy Permission for key id {key_id}: {e}'
                 )
-            elif e.response['Error']['Code'] == 'MalformedPolicy':
+            elif e.response['Error']['Code'] == 'MalformedPolicyDocumentException':
                 if second_try:
                     log.info('MalformedPolicy. Lets try again')
                     fixed_policy = _remove_malformed_principal(policy)
