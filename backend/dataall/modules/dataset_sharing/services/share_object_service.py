@@ -64,7 +64,7 @@ class ShareObjectService:
                 ShareObjectRepository.update_share_item_health_status(
                     session,
                     share_item=item,
-                    healthStatus=ShareItemHealthStatus.PrincipalRoleNotFound.value,
+                    healthStatus=ShareItemHealthStatus.Unhealthy.value,
                     healthMessage=f'Share principal role {role_name} not found.',
                     timestamp=datetime.now(),
                 )

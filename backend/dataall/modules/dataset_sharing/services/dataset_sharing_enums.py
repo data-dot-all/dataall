@@ -47,7 +47,7 @@ class ShareItemHealthStatus(GraphQLEnumMapper):
     Unhealthy = 'Unhealthy'
     PendingVerify = 'PendingVerify'
     PendingReApply = 'PendingReApply'
-    PrincipalRoleNotFound = 'PrincipalRoleNotFound'
+
 
 
 class ShareObjectActions(GraphQLEnumMapper):

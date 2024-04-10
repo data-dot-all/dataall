@@ -1581,7 +1581,7 @@ def test_verify_principal_role_exists(db, client, user2, group2, share3_processe
         items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
         assert not verified
         for item in items:
-            assert item.healthStatus == ShareItemHealthStatus.PrincipalRoleNotFound.value
+            assert item.healthStatus == ShareItemHealthStatus.Unhealthy.value
 
 
 def test_reapply_items_share_request(db, client, user, group, share3_processed, share3_item_shared_unhealthy):

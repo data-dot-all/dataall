@@ -16,7 +16,7 @@ def _remove_malformed_principal(policy: str):
     kms_policy = json.loads(policy)
     statements = kms_policy['Statement']
     for statement in statements:
-        if statement['Sid'] in [
+        if statement.get('Sid', 'no-sid') in [
             DATAALL_BUCKET_KMS_DECRYPT_SID,
             DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
             DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,

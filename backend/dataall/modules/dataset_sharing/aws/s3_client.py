@@ -74,9 +74,9 @@ class S3ControlClient:
 
     @staticmethod
     def generate_access_point_policy_template(
-        principal_id: str,
-        access_point_arn: str,
-        s3_prefix: str,
+            principal_id: str,
+            access_point_arn: str,
+            s3_prefix: str,
     ):
         policy = {
             'Version': '2012-10-17',
@@ -124,7 +124,8 @@ def _remove_malformed_principal(policy: str):
     bucket_policy = json.loads(policy)
     statements = bucket_policy['Statement']
     for statement in statements:
-        if statement['Sid'] in [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]:
+        if statement.get('Sid', 'no-sid') in [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID,
+                                              DATAALL_DELEGATE_TO_ACCESS_POINT]:
             principal_list = statement['Principal']['AWS']
             if isinstance(principal_list, str):
                 principal_list = [principal_list]
