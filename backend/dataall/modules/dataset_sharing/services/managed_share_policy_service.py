@@ -19,9 +19,10 @@ EMPTY_STATEMENT_SID = 'EmptyStatement'
 
 
 class SharePolicyService(ManagedPolicy):
-    def __init__(self, role_name, account, environmentUri, resource_prefix):
+    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
         self.role_name = role_name
         self.account = account
+        self.region = region
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
 
@@ -141,7 +142,7 @@ class SharePolicyService(ManagedPolicy):
             policy_document = self._generate_managed_policy_from_inline_policies()
             log.info(f'Creating policy from inline backwards compatibility. Policy = {str(policy_document)}')
             policy_arn = IAM.create_managed_policy(
-                self.account, self.generate_policy_name(), json.dumps(policy_document)
+                self.account, self.region, self.generate_policy_name(), json.dumps(policy_document)
             )
 
             # Delete obsolete inline policies
@@ -189,7 +190,7 @@ class SharePolicyService(ManagedPolicy):
         # This function can only be used for backwards compatibility where policies had statement[0] for s3
         # and statement[1] for KMS permissions
         try:
-            existing_policy = IAM.get_role_policy(self.account, self.role_name, policy_name)
+            existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
             if existing_policy is not None:
                 kms_resources = (
                     existing_policy['Statement'][1]['Resource'] if len(existing_policy['Statement']) > 1 else []
@@ -225,10 +226,10 @@ class SharePolicyService(ManagedPolicy):
     def _delete_old_inline_policies(self):
         for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_ACCESS_POINT_ROLE_POLICY]:
             try:
-                existing_policy = IAM.get_role_policy(self.account, self.role_name, policy_name)
+                existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
                 if existing_policy is not None:
                     log.info(f'Deleting inline policy {policy_name}...')
-                    IAM.delete_role_policy(self.account, self.role_name, policy_name)
+                    IAM.delete_role_policy(self.account, self.region, self.role_name, policy_name)
                 else:
                     pass
             except Exception as e:

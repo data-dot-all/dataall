@@ -3,7 +3,7 @@ import random
 import string
 
 import boto3
-from aws_cdk import aws_ssm
+from aws_cdk import aws_ssm, custom_resources as cr
 
 from .pyNestedStack import pyNestedClass
 from .deploy_config import deploy_config
@@ -23,6 +23,7 @@ class ParamStoreStack(pyNestedClass):
         enable_pivot_role_auto_create=False,
         pivot_role_name='dataallPivotRole',
         reauth_apis=None,
+        prod_sizing=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -128,6 +129,22 @@ class ParamStoreStack(pyNestedClass):
             string_value=str(json.dumps(deploy_config.get_dataall_version())),
             description='Deployed data all version',
         )
+        if prod_sizing:
+            cr.AwsCustomResource(
+                self,
+                'SSMParamSettingHighThroughput',
+                on_update=cr.AwsSdkCall(
+                    service='SSM',
+                    action='UpdateServiceSettingCommand',
+                    parameters={'SettingId': '/ssm/parameter-store/high-throughput-enabled', 'SettingValue': 'true'},
+                    physical_resource_id=cr.PhysicalResourceId.of(f'ssm-high-throughput-{self.account}-{self.region}'),
+                ),
+                policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
+                    resources=[
+                        f'arn:aws:ssm:{self.region}:{self.account}:servicesetting/ssm/parameter-store/high-throughput-enabled'
+                    ]
+                ),
+            )
 
 
 def _get_external_id_value(envname, account_id, region):

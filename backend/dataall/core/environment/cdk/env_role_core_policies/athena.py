@@ -14,7 +14,10 @@ class Athena(ServicePolicy):
         statements = [
             iam.PolicyStatement(
                 # sid="ListAthena",
-                actions=['athena:ListWorkGroups', 'athena:ListTagsForResource', 'athena:GetWorkgroup'],
+                actions=[
+                    'athena:List*',
+                    'athena:GetWorkgroup'
+                ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             ),
@@ -23,7 +26,6 @@ class Athena(ServicePolicy):
                 actions=[
                     'athena:Get*',
                     'athena:BatchGet*',
-                    'athena:List*',
                     'athena:StartQueryExecution',
                     'athena:StopQueryExecution',
                     'athena:CreateNamedQuery',

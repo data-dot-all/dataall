@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 
@@ -293,11 +294,13 @@ class DatasetService:
                 )
                 role_arn = env_group.environmentIAMRoleArn
                 account_id = shared_environment.AwsAccountId
+                region = shared_environment.region
             else:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
+                region = dataset.region
 
-        pivot_session = SessionHelper.remote_session(account_id)
+        pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
         url = SessionHelper.get_console_access_url(
             aws_session,
@@ -312,18 +315,12 @@ class DatasetService:
         engine = get_context().db_engine
         with engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-            location = (
-                f's3://{dataset.S3BucketName}/{data.get("prefix")}'
-                if data.get('prefix')
-                else f's3://{dataset.S3BucketName}'
-            )
-
+            location = os.path.join('s3://', dataset.S3BucketName, data.get('prefix', ''), '')
             crawler = DatasetCrawler(dataset).get_crawler()
             if not crawler:
                 raise exceptions.AWSResourceNotFound(
                     action=CRAWL_DATASET,
-                    message=f'Crawler {dataset.GlueCrawlerName} can not be found',
+                    message=f'Crawler {dataset.GlueCrawlerName} cannot be found',
                 )
 
             task = Task(
@@ -354,7 +351,7 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
-        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
+        pivot_session = SessionHelper.remote_session(dataset.AwsAccountId, dataset.region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn)
         c = aws_session.get_credentials()
         credentials = {

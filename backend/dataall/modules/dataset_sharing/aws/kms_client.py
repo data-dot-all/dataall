@@ -10,7 +10,7 @@ class KmsClient:
     _DEFAULT_POLICY_NAME = 'default'
 
     def __init__(self, account_id: str, region: str):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 

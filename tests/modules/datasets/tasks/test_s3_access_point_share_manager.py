@@ -370,11 +370,16 @@ def test_grant_target_role_access_policy_test_empty_policy(
         environmentUri=target_environment.environmentUri,
         role_name=share1.principalIAMRoleName,
         account=target_environment.AwsAccountId,
+        region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
     ).generate_policy_name()
     # Then
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, expected_policy_name, 'v1', json.dumps(expected_policy)
+        target_environment.AwsAccountId,
+        target_environment.region,
+        expected_policy_name,
+        'v1',
+        json.dumps(expected_policy),
     )
 
 
@@ -919,11 +924,16 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         environmentUri=target_environment.environmentUri,
         role_name=share1.principalIAMRoleName,
         account=target_environment.AwsAccountId,
+        region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
     ).generate_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, expected_policy_name, 'v1', json.dumps(expected_remaining_target_role_policy)
+        target_environment.AwsAccountId,
+        target_environment.region,
+        expected_policy_name,
+        'v1',
+        json.dumps(expected_remaining_target_role_policy),
     )
 
 
@@ -1013,11 +1023,16 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         environmentUri=target_environment.environmentUri,
         role_name=share1.principalIAMRoleName,
         account=target_environment.AwsAccountId,
+        region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
     ).generate_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
-        target_environment.AwsAccountId, expected_policy_name, 'v1', json.dumps(expected_remaining_target_role_policy)
+        target_environment.AwsAccountId,
+        target_environment.region,
+        expected_policy_name,
+        'v1',
+        json.dumps(expected_remaining_target_role_policy),
     )
 
 
