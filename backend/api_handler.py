@@ -37,8 +37,6 @@ ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
-TenantPolicyService.save_permissions_with_tenant(ENGINE)
-
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
