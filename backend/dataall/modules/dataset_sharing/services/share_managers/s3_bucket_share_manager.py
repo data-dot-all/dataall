@@ -14,6 +14,7 @@ from dataall.modules.dataset_sharing.aws.kms_client import (
 )
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
@@ -279,6 +280,9 @@ class S3BucketShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+        if not target_requester_arn:
+            self.bucket_errors.append(f'Principal role {self.target_requester_IAMRoleName} is not found.')
+            return
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
         error = False
@@ -311,6 +315,10 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if not target_requester_arn:
+                raise PrincipalRoleNotFound(
+                    'grant role bucket policy', f'Principal role {self.target_requester_IAMRoleName} is not found.'
+                )
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
@@ -366,6 +374,10 @@ class S3BucketShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+        if not target_requester_arn:
+            self.bucket_errors.append(f'Principal role {self.target_requester_IAMRoleName} is not found.')
+            return
+
         existing_policy = json.loads(existing_policy)
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
@@ -397,6 +409,12 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if not target_requester_arn:
+                raise PrincipalRoleNotFound(
+                    'grant dataset bucket key policy',
+                    f'Principal role {self.target_requester_IAMRoleName} is not found. Fail to update KMS policy',
+                )
+
             pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
 
             if existing_policy:

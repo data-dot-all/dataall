@@ -23,6 +23,7 @@ from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
     SharePolicyService,
@@ -530,6 +531,13 @@ class S3AccessPointShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+
+        if not target_requester_arn:
+            raise PrincipalRoleNotFound(
+                'update dataset bucket key policy',
+                f'Principal role {self.target_requester_IAMRoleName} is not found. Failed to update MS key policy',
+            )
+
         pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
 
         if existing_policy:
