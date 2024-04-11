@@ -914,6 +914,11 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         return_value=None,
     )
 
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
+    )
+
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
 
