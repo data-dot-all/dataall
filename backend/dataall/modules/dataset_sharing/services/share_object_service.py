@@ -45,7 +45,6 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetReposit
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.base.aws.iam import IAM
-from dataall.base.aws.sts import SessionHelper
 
 import logging
 
@@ -56,9 +55,8 @@ class ShareObjectService:
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         role_name = share.principalIAMRoleName
-        account_id = SessionHelper.get_account()
-        region = SessionHelper.get_region()
-        principal_role = IAM.get_role_arn_by_name(account_id=account_id, region=region, role_name=role_name)
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
         return principal_role is not None
 
     @staticmethod
