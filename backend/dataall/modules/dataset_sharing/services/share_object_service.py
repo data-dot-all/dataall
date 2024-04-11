@@ -40,8 +40,8 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 import logging
 
 log = logging.getLogger(__name__)
@@ -273,19 +273,10 @@ class ShareObjectService:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
-            # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
+            # Attach data.all read permissions to tables and folders
             if share.groupUri != dataset.SamlAdminGroupName:
-                share_table_items = ShareObjectRepository.find_all_share_items(
-                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
-                )
-                for table in share_table_items:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=share.groupUri,
-                        permissions=DATASET_TABLE_READ,
-                        resource_uri=table.itemUri,
-                        resource_type=DatasetTable.__name__,
-                    )
+                ShareObjectService._attach_dataset_table_read_permission(session, share)
+                ShareObjectService._attach_dataset_folder_read_permission(session, share)
 
             share.rejectPurpose = ''
             session.commit()
@@ -498,4 +489,38 @@ class ShareObjectService:
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
+            )
+
+    @staticmethod
+    def _attach_dataset_table_read_permission(session, share):
+        """
+        Attach Table permissions to share groups
+        """
+        share_table_items = ShareObjectRepository.find_all_share_items(
+            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
+        )
+        for table in share_table_items:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=table.itemUri,
+                resource_type=DatasetTable.__name__,
+            )
+
+    @staticmethod
+    def _attach_dataset_folder_read_permission(session, share):
+        """
+        Attach Table permissions to share groups
+        """
+        share_folder_items = ShareObjectRepository.find_all_share_items(
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Approved.value]
+        )
+        for location in share_folder_items:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_FOLDER_READ,
+                resource_uri=location.locationUri,
+                resource_type=DatasetStorageLocation.__name__,
             )
