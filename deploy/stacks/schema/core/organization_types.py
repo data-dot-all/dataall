@@ -1,15 +1,14 @@
-from aws_cdk.aws_appsync import GraphqlApi
-from awscdk.appsync_utils import GraphqlType, EnumType, CodeFirstSchema, ObjectType
-from injector import inject, singleton
+from functools import cache
+
+from awscdk.appsync_utils import GraphqlType, EnumType, ObjectType
 
 from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
 from stacks.schema.commons import CommonTypes
 
 
-@singleton
+@cache
 class OrganizationTypes(SchemaBase):
-    @inject
     def __init__(
         self,
         common_types=CommonTypes(),

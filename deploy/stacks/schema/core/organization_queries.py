@@ -1,5 +1,6 @@
+from functools import cache
+
 from awscdk.appsync_utils import GraphqlType, ResolvableField
-from injector import inject, singleton
 
 from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
@@ -8,9 +9,8 @@ from stacks.schema.core.organization_inputs import OrganizationInputs
 from stacks.schema.core.organization_types import OrganizationTypes
 
 
-@singleton
+@cache
 class OrganizationQueries(SchemaBase):
-    @inject
     def __init__(
         self,
         org_inputs=OrganizationInputs(),

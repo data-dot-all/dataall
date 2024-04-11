@@ -1,5 +1,6 @@
+from functools import cache
+
 from awscdk.appsync_utils import InputType
-from injector import inject, singleton
 
 from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
@@ -7,9 +8,8 @@ from stacks.schema.commons import CommonTypes
 from stacks.schema.core.environment_types import EnvironmentTypes
 
 
-@singleton
+@cache
 class EnvironmentInputs(SchemaBase):
-    @inject
     def __init__(
         self,
         common_types=CommonTypes(),

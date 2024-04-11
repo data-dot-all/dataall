@@ -1,6 +1,6 @@
-from aws_cdk.aws_appsync import GraphqlApi, LambdaDataSource
-from awscdk.appsync_utils import CodeFirstSchema, ResolvableField, GraphqlType
-from injector import inject, singleton
+from functools import cache
+
+from awscdk.appsync_utils import ResolvableField, GraphqlType
 
 from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
@@ -8,9 +8,8 @@ from stacks.schema.core.environment_types import EnvironmentTypes
 from stacks.schema.core.stack_types import StackTypes
 
 
-@singleton
+@cache
 class StackQueries(SchemaBase):
-    @inject
     def __init__(
         self,
         env_types=EnvironmentTypes(),
