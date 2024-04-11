@@ -29,7 +29,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission, Environmen
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
-from dataall.core.stacks.db.enums import StackStatus
+from dataall.core.stacks.api.enums import StackStatus
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
 from dataall.core.permissions.services.organization_permissions import LINK_ENVIRONMENT
