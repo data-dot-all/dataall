@@ -1296,13 +1296,7 @@ def test_remove_share_item(client, user2, group2, share1_draft, share1_item_pa):
     assert get_share_object_response.data.getShareObject.get('items').count == 0
 
 
-def test_submit_share_request(
-    client,
-    user2,
-    group2,
-    share1_draft,
-    share1_item_pa,
-):
+def test_submit_share_request(client, user2, group2, share1_draft, share1_item_pa, mocker):
     # Given
     # Existing share object in status Draft (-> fixture share1_draft)
     # with existing share item in status Pending Approval (-> fixture share1_item_pa)
@@ -1317,6 +1311,26 @@ def test_submit_share_request(
     assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get('items').count == 1
 
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
     # When
     # Submit share object
     submit_share_object_response = submit_share_object(
@@ -1337,11 +1351,7 @@ def test_submit_share_request(
 
 
 def test_submit_share_request_with_auto_approval(
-    client,
-    user2,
-    group2,
-    share_autoapprove_draft,
-    share_autoapprove_item_pa,
+    client, user2, group2, share_autoapprove_draft, share_autoapprove_item_pa, mocker
 ):
     # Given
     # Existing share object in status Draft (-> fixture share1_draft)
@@ -1357,6 +1367,26 @@ def test_submit_share_request_with_auto_approval(
     assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get('items').count == 1
 
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
     # When
     # Submit share object
     submit_share_object_response = submit_share_object(
@@ -1405,7 +1435,7 @@ def test_update_share_reject_purpose_unauthorized(client, share2_submitted, user
     assert 'UnauthorizedOperation' in update_share_reject_purpose_response.errors[0].message
 
 
-def test_approve_share_request(db, client, user, group, share2_submitted, share2_item_pa):
+def test_approve_share_request(db, client, user, group, share2_submitted, share2_item_pa, mocker):
     # Given
     # Existing share object in status Submitted (-> fixture share2_submitted)
     # with existing share item in status Pending Approval (-> fixture share2_item_pa)
@@ -1419,6 +1449,26 @@ def test_approve_share_request(db, client, user, group, share2_submitted, share2
     assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get('items').count == 1
 
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
     # When we approve the share object
     approve_share_object_response = approve_share_object(
         client=client, user=user, group=group, shareUri=share2_submitted.shareUri
