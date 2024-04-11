@@ -1,8 +1,5 @@
 import importlib
 import pkgutil
-from typing import List
-
-from injector import Injector, Module
 
 from stacks import schema
 
@@ -12,7 +9,7 @@ class SchemaBase(object):
 
 
 def import_submodules(package):
-    """ Import all submodules of a module, recursively, including subpackages
+    """Import all submodules of a module, recursively, including subpackages
     :param package: package (name or actual module)
     :type package: str | module
     :rtype: dict[str, types.ModuleType]
@@ -28,12 +25,11 @@ def import_submodules(package):
     return results
 
 
-def create_schema(modules: List[Module]):
+def create_schema(app_sync_stack):
     """
     1. Recursively import all submodules under 'schema' to ensure that __subclasses__ will list all the classes that inherit from SchemaBase.
     2. Force injector initialise all the classes that inherit from SchemaBase
     """
-    injector = Injector(modules)
     import_submodules(schema)
     for cls in SchemaBase.__subclasses__():
-        injector.get(cls)
+        cls()

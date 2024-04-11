@@ -2,6 +2,7 @@ from aws_cdk.aws_appsync import GraphqlApi, LambdaDataSource
 from awscdk.appsync_utils import CodeFirstSchema, ResolvableField, GraphqlType
 from injector import inject, singleton
 
+from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
 from stacks.schema.core.environment_types import EnvironmentTypes
 from stacks.schema.core.stack_types import StackTypes
@@ -11,13 +12,12 @@ from stacks.schema.core.stack_types import StackTypes
 class StackQueries(SchemaBase):
     @inject
     def __init__(
-            self,
-            api: GraphqlApi,
-            data_source: LambdaDataSource,
-            env_types: EnvironmentTypes,
-            stack_types: StackTypes,
+        self,
+        env_types=EnvironmentTypes(),
+        stack_types=StackTypes(),
     ):
-        schema: CodeFirstSchema = api.schema
+        schema = AppSyncStack.INSTANCE.schema
+        data_source = AppSyncStack.INSTANCE.data_source
 
         self.get_stack = ResolvableField(
             return_type=stack_types.stack.attribute(),

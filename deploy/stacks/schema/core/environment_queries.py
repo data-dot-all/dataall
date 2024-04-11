@@ -1,27 +1,24 @@
-from aws_cdk.aws_appsync import GraphqlApi, LambdaDataSource
-from awscdk.appsync_utils import CodeFirstSchema, ResolvableField, GraphqlType
+from awscdk.appsync_utils import ResolvableField, GraphqlType
 from injector import inject, singleton
 
+from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
 from stacks.schema.core.environment_inputs import EnvironmentInputs
 from stacks.schema.core.environment_types import EnvironmentTypes
 from stacks.schema.core.organization_types import OrganizationTypes
-from stacks.schema.core.stack_types import StackTypes
 
 
 @singleton
 class EnvironmentQueries(SchemaBase):
     @inject
     def __init__(
-            self,
-            api: GraphqlApi,
-            data_source: LambdaDataSource,
-            env_types: EnvironmentTypes,
-            env_inputs: EnvironmentInputs,
-            org_types: OrganizationTypes,
-            stack_types: StackTypes,
+        self,
+        env_types=EnvironmentTypes(),
+        env_inputs=EnvironmentInputs(),
+        org_types=OrganizationTypes(),
     ):
-        schema: CodeFirstSchema = api.schema
+        schema = AppSyncStack.INSTANCE.schema
+        data_source = AppSyncStack.INSTANCE.data_source
         self.get_environment = ResolvableField(
             return_type=env_types.environment.attribute(),
             args={'environmentUri': GraphqlType.string()},
@@ -45,11 +42,14 @@ class EnvironmentQueries(SchemaBase):
         )
         schema.add_query('listEnvironmentNetworks', self.list_environment_networks)
 
-        env_types.environment.add_field(field_name='networks', field=ResolvableField(
-            return_type=env_types.vpc.attribute(is_list=True),
-            args={'environmentUri': GraphqlType.string()},
-            data_source=data_source,
-        ))
+        env_types.environment.add_field(
+            field_name='networks',
+            field=ResolvableField(
+                return_type=env_types.vpc.attribute(is_list=True),
+                args={'environmentUri': GraphqlType.string()},
+                data_source=data_source,
+            ),
+        )
 
         # env_types.environment.add_field(field_name='stack', field=ResolvableField(
         #     return_type=stack_types.stack.attribute(),
@@ -57,14 +57,20 @@ class EnvironmentQueries(SchemaBase):
         #     data_source=data_source,
         # ))
 
-        env_types.environment.add_field(field_name='userRoleInEnvironment', field=ResolvableField(
-            return_type=env_types.environment_permission.attribute(),
-            args={'environmentUri': GraphqlType.string()},
-            data_source=data_source,
-        ))
+        env_types.environment.add_field(
+            field_name='userRoleInEnvironment',
+            field=ResolvableField(
+                return_type=env_types.environment_permission.attribute(),
+                args={'environmentUri': GraphqlType.string()},
+                data_source=data_source,
+            ),
+        )
 
-        env_types.environment.add_field(field_name='parameters', field=ResolvableField(
-            return_type=env_types.environment_parameter.attribute(is_list=True),
-            args={'environmentUri': GraphqlType.string()},
-            data_source=data_source,
-        ))
+        env_types.environment.add_field(
+            field_name='parameters',
+            field=ResolvableField(
+                return_type=env_types.environment_parameter.attribute(is_list=True),
+                args={'environmentUri': GraphqlType.string()},
+                data_source=data_source,
+            ),
+        )

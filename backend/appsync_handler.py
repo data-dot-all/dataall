@@ -21,8 +21,7 @@ def sqa_query_encoder(obj: Query):
 
 def sqa_base_encoder(obj: Base):
     return jsonable_encoder(
-        {k: (json.dumps(v) if isinstance(v, dict) else v) for k, v in vars(obj).items()},
-        custom_encoder=CUSTOM_ENCODERS
+        {k: (json.dumps(v) if isinstance(v, dict) else v) for k, v in vars(obj).items()}, custom_encoder=CUSTOM_ENCODERS
     )
 
 
@@ -40,6 +39,7 @@ def todict(obj):
 
 class DotDict(dict):
     """dot.notation access to dictionary attributes"""
+
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
@@ -55,10 +55,7 @@ def handler(event, context, app_context):
             source = None
             if super().source:
                 source = DotDict(super().source)
-            extra_arguments = {
-                'context': DotDict(app_context),
-                'source': source
-            }
+            extra_arguments = {'context': DotDict(app_context), 'source': source}
             extra_arguments.update(super().arguments)
             return extra_arguments
 

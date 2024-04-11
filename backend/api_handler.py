@@ -216,9 +216,7 @@ def handler(event, context):
             }
 
     if query:
-        success, response = graphql_sync(
-            schema=executable_schema, data=query, context_value=app_context
-        )
+        success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
         response = {
             'statusCode': 200 if success else 400,
             'headers': {

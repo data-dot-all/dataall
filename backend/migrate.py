@@ -14,17 +14,17 @@ PATCH_FILENAME = 'full.patch'
 
 
 def generate_import_hunk(filename):
-    return '''--- a/{filename}
+    return """--- a/{filename}
 +++ b/{filename}
 @@ -0,0 +1 @@
 +from dataall.base.api import appSyncResolver
-'''.format(filename=filename)
+""".format(filename=filename)
 
 
 def generate_decorator_hunk(typename, fieldname, oldline, newline):
-    return '''@@ -{oldline},0 +{newline} @@
+    return """@@ -{oldline},0 +{newline} @@
 +@appSyncResolver.resolver(type_name='{typename}', field_name='{fieldname}')
-'''.format(
+""".format(
         oldline=oldline,
         newline=newline,
         typename=typename,
@@ -45,7 +45,9 @@ hunks: Dict[str, List[HunkData]] = defaultdict(list)
 def refactor(typename, field: Field):
     if field.resolver:
         lineno = field.resolver.__code__.co_firstlineno  # 44
-        filename = field.resolver.__code__.co_filename  # '/home/ANT.AMAZON.COM/kalosp/projects/dataall/backend/dataall/core/organizations/api/resolvers.py'
+        filename = (
+            field.resolver.__code__.co_filename
+        )  # '/home/ANT.AMAZON.COM/kalosp/projects/dataall/backend/dataall/core/organizations/api/resolvers.py'
         rfilename = os.path.relpath(filename, Path.home().joinpath('projects', 'dataall'))
         if any(map(field.resolver.__code__.co_name.__contains__, ['lambda', 'decorated'])):
             print(f'FIX MANUALLY {typename}.{field.name} : ({filename}:{lineno})')
@@ -60,7 +62,9 @@ def write_patch():
         for rfilename, all_hunks in hunks.items():
             patch_file.write(generate_import_hunk(rfilename))
             for i, hunk in enumerate(all_hunks):
-                patch_file.write(generate_decorator_hunk(hunk.typename, hunk.fieldname, hunk.lineno, hunk.lineno + 1 + i))
+                patch_file.write(
+                    generate_decorator_hunk(hunk.typename, hunk.fieldname, hunk.lineno, hunk.lineno + 1 + i)
+                )
             patch_file.write('\n')
             print(rfilename)
 

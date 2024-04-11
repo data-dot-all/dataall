@@ -1,33 +1,39 @@
-from aws_cdk.aws_appsync import GraphqlApi
-from awscdk.appsync_utils import CodeFirstSchema, EnumType, InterfaceType, GraphqlType
-from injector import singleton, inject
+from functools import cache
 
+from awscdk.appsync_utils import EnumType, InterfaceType, GraphqlType
+
+from stacks.appsync import AppSyncStack
 from stacks.schema import SchemaBase
 
 
-@singleton
+@cache
 class CommonTypes(SchemaBase):
-    @inject
-    def __init__(self, api: GraphqlApi):
-        schema: CodeFirstSchema = api.schema
+    def __init__(self):
+        schema = AppSyncStack.INSTANCE.schema
 
-        self.sort_direction = EnumType('SortDirection', definition=[
-            'asc',
-            'desc',
-        ])
+        self.sort_direction = EnumType(
+            'SortDirection',
+            definition=[
+                'asc',
+                'desc',
+            ],
+        )
         schema.add_type(self.sort_direction)
 
-        self.paged_result = InterfaceType('PagedResult', definition={
-            'count': GraphqlType.int(),
-            'pageSize': GraphqlType.int(),
-            'nextPage': GraphqlType.int(),
-            'pages': GraphqlType.int(),
-            'page': GraphqlType.int(),
-            'previousPage': GraphqlType.int(),
-            'hasNext': GraphqlType.boolean(),
-            'hasPrevious': GraphqlType.boolean(),
-            'count': GraphqlType.int(),
-        })
+        self.paged_result = InterfaceType(
+            'PagedResult',
+            definition={
+                'count': GraphqlType.int(),
+                'pageSize': GraphqlType.int(),
+                'nextPage': GraphqlType.int(),
+                'pages': GraphqlType.int(),
+                'page': GraphqlType.int(),
+                'previousPage': GraphqlType.int(),
+                'hasNext': GraphqlType.boolean(),
+                'hasPrevious': GraphqlType.boolean(),
+                'count': GraphqlType.int(),  # noqa
+            },
+        )
         schema.add_type(self.paged_result)
 
         self.filter_args = {

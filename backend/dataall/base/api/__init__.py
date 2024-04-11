@@ -16,6 +16,7 @@ from dataall.base.api.constants import GraphQLEnumMapper
 
 appSyncResolver = AppSyncResolver()
 
+
 def bootstrap():
     classes = {
         gql.ObjectType: [],
