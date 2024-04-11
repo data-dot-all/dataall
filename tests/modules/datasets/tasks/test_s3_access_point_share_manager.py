@@ -1017,6 +1017,11 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         return_value=None,
     )
 
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
+    )
+
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
 
@@ -1208,6 +1213,11 @@ def test_check_target_role_access_policy(mocker, target_dataset_access_control_p
         return_value=('v1', target_dataset_access_control_policy),
     )
 
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
+    )
+
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'some-key-2112'
 
@@ -1240,6 +1250,11 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     iam_get_policy_mock = mocker.patch(
         'dataall.base.aws.iam.IAM.get_managed_policy_default_version',
         return_value=('v1', target_dataset_access_control_policy),
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
     )
 
     kms_client = mock_kms_client(mocker)
