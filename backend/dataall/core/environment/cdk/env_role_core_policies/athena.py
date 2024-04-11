@@ -14,10 +14,7 @@ class Athena(ServicePolicy):
         statements = [
             iam.PolicyStatement(
                 # sid="ListAthena",
-                actions=[
-                    'athena:List*',
-                    'athena:GetWorkgroup'
-                ],
+                actions=['athena:List*', 'athena:GetWorkgroup'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             ),
