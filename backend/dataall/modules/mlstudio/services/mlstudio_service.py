@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -101,7 +101,7 @@ class SagemakerStudioService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @ResourcePolicyService.has_resource_permission(CREATE_SGMSTUDIO_USER)
-    @has_group_permission(CREATE_SGMSTUDIO_USER)
+    @GroupPolicyService.has_group_permission(CREATE_SGMSTUDIO_USER)
     def create_sagemaker_studio_user(*, uri: str, admin_group: str, request: SagemakerStudioCreationRequest):
         """
         Creates an ML Studio user
