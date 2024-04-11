@@ -26,7 +26,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
@@ -57,19 +57,23 @@ class ShareObjectService:
     def verify_principal_role(session, share: ShareObject) -> bool:
         role_name = share.principalIAMRoleName
         account_id = SessionHelper.get_account()
-        delegation_role = SessionHelper.get_delegation_role_arn(account_id)
-        principal_role = IAM.get_role_arn_by_name(account_id, role_name, delegation_role)
-        if not principal_role:
-            for item in ShareObjectRepository.get_all_sharable_items(session, share.shareUri):
-                ShareObjectRepository.update_share_item_health_status(
-                    session,
-                    share_item=item,
-                    healthStatus=ShareItemHealthStatus.Unhealthy.value,
-                    healthMessage=f'Share principal role {role_name} not found.',
-                    timestamp=datetime.now(),
-                )
-            return False
-        return True
+        region = SessionHelper.get_region()
+        principal_role = IAM.get_role_arn_by_name(
+            account_id=account_id,
+            region=region,
+            role_name=role_name)
+        return principal_role is not None
+
+    @staticmethod
+    def update_all_share_items_status(session, shareUri, status: ShareItemHealthStatus, message):
+        for item in ShareObjectRepository.get_all_sharable_items(session, shareUri):
+            ShareObjectRepository.update_share_item_health_status(
+                session,
+                share_item=item,
+                healthStatus=status.value,
+                healthMessage=message,
+                timestamp=datetime.now(),
+            )
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_ENVIRONMENT)
@@ -86,16 +90,16 @@ class ShareObjectService:
     @classmethod
     @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
-        cls,
-        uri: str,
-        dataset_uri: str,
-        item_uri: str,
-        item_type: str,
-        group_uri,
-        principal_id,
-        principal_type,
-        requestPurpose,
-        attachMissingPolicies,
+            cls,
+            uri: str,
+            dataset_uri: str,
+            item_uri: str,
+            item_type: str,
+            group_uri,
+            principal_id,
+            principal_type,
+            requestPurpose,
+            attachMissingPolicies,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -106,7 +110,7 @@ class ShareObjectService:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
                     message=f'Requester Team {group_uri} works in region {environment.region} '
-                    f'and the requested dataset is stored in region {dataset.region}',
+                            f'and the requested dataset is stored in region {dataset.region}',
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
@@ -124,9 +128,9 @@ class ShareObjectService:
                 managed = True
 
             if (
-                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                and environment.environmentUri == dataset.environmentUri
-                and principal_type == PrincipalType.Group.value
+                    (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
+                    and environment.environmentUri == dataset.environmentUri
+                    and principal_type == PrincipalType.Group.value
             ):
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
@@ -251,6 +255,12 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
+            if not ShareObjectService.verify_principal_role(session, share):
+                raise PrincipalRoleNotFound(
+                    action='Submit Share Object',
+                    message=f'The principal role {share.principalIAMRoleName} is not found.',
+                )
+
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
 
@@ -294,6 +304,13 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
+
+            if not ShareObjectService.verify_principal_role(session, share):
+                raise PrincipalRoleNotFound(
+                    action='Submit Share Object',
+                    message=f'The principal role {share.principalIAMRoleName} is not found.',
+                )
+
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
@@ -375,7 +392,7 @@ class ShareObjectService:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
-                    'Revoke access to these items before deleting the request.',
+                            'Revoke access to these items before deleting the request.',
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
@@ -515,8 +532,8 @@ class ShareObjectService:
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
-            session=session,
-            uri=environment_uri,
+                session=session,
+                uri=environment_uri,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,

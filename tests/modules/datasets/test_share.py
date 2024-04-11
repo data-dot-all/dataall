@@ -1542,42 +1542,14 @@ def test_verify_items_share_request(db, client, user2, group2, share3_processed,
     assert status == ShareItemHealthStatus.PendingVerify.value
 
 
-def test_verify_principal_role_exists(db, client, user2, group2, share3_processed, share3_item_shared, mocker):
-    # Mock glue and sts calls to create a LF processor
-    mocker.patch(
-        'dataall.base.aws.sts.SessionHelper.remote_session',
-        return_value=boto3.Session(),
-    )
-
-    # Mock glue and sts calls to create a LF processor
-    mocker.patch(
-        'dataall.base.aws.sts.SessionHelper.get_account',
-        return_value='1111',
-    )
-    # Mock glue and sts calls to create a LF processor
-    mocker.patch(
-        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
-        return_value='arn',
-    )
-
-    mocker.patch(
-        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
-        return_value='fake_role_arn',
-    )
-
+def test_update_all_share_items_status(db, client, user2, group2, share3_processed, share3_item_shared, mocker):
     with db.scoped_session() as session:
-        verified = ShareObjectService.verify_principal_role(session, share3_processed)
-        items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
-        assert verified
-        for item in items:
-            assert item.healthStatus == share3_item_shared.healthStatus
-
-    mocker.patch(
-        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
-        return_value=None,
-    )
-    with db.scoped_session() as session:
-        verified = ShareObjectService.verify_principal_role(session, share3_processed)
+        verified = ShareObjectService.update_all_share_items_status(
+            session,
+            share3_processed.shareUri,
+            ShareItemHealthStatus.Unhealthy,
+            ''
+        )
         items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
         assert not verified
         for item in items:

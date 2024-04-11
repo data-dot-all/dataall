@@ -232,6 +232,11 @@ class SessionHelper:
         return response['Account']
 
     @classmethod
+    def get_region(cls, session = None):
+        return os.getenv('AWS_REGION', 'eu-west-1')
+
+
+    @classmethod
     def get_organization_id(cls, session=None):
         """Returns the organization id for the priovided session
         Args:

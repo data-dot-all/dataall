@@ -159,6 +159,12 @@ class DataSharingService:
 
             else:
                 log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
+                ShareObjectService.update_all_share_items_status(
+                    session,
+                    share_uri,
+                    ShareItemHealthStatus.Unhealthy,
+                    f'Principal IAM Role {share.principalIAMRoleName} does not exist'
+                )
                 items = ShareObjectRepository.get_all_sharable_items(
                     session,
                     share_uri,
@@ -476,6 +482,12 @@ class DataSharingService:
         log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
         # If principal role doesn't exist, all share items are unhealthy, no use of further checks
         if not ShareObjectService.verify_principal_role(session, share):
+            ShareObjectService.update_all_share_items_status(
+                session,
+                share_uri,
+                ShareItemHealthStatus.Unhealthy,
+                f'Share principal Role {share.principalIAMRoleName} is not found.'
+            )
             return
 
         log.info(f'Verifying permissions to folders: {folders_to_verify}')
@@ -581,6 +593,12 @@ class DataSharingService:
             log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
             # If principal role doesn't exist, all share items are unhealthy, no use of further checks
             if not ShareObjectService.verify_principal_role(session, share):
+                ShareObjectService.update_all_share_items_status(
+                    session,
+                    share_uri,
+                    ShareItemHealthStatus.Unhealthy,
+                    f'Share principal Role {share.principalIAMRoleName} is not found.'
+                )
                 return False
 
             log.info(f'Reapply permissions to folders: {reapply_folders}')
