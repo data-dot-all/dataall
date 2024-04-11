@@ -32,7 +32,7 @@ def get_session():
 
 def upgrade():
     session = get_session()
-    print(f"Adding organization group permissions...")
+    print('Adding organization group permissions...')
     invite_permission = PermissionService.save_permission(
         session=session,
         name=INVITE_ORGANIZATION_GROUP,
@@ -58,4 +58,4 @@ def upgrade():
 
 def downgrade():
     # No downgrade. It's a bugfix
-    print(f"Downgrade not supported for this migration: add_organization_group_permissions.")
+    print('Downgrade not supported for this migration: add_organization_group_permissions.')
