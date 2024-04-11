@@ -27,6 +27,10 @@ def get_organization(context: Context, source, organizationUri=None):
     return OrganizationService.get_organization(uri=organizationUri)
 
 
+def get_organization_simplified(context: Context, source, organizationUri=None):
+    return OrganizationService.get_organization_simplified(uri=organizationUri)
+
+
 @appSyncResolver.resolver(type_name='Query', field_name='listOrganizations')
 def list_organizations(context: Context, source, filter=None):
     if not filter:

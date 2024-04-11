@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from dataall.core.permissions.db import Permission
+from dataall.core.permissions.services.permission_service import PermissionService
 
 # revision identifiers, used by Alembic.
 revision = '033c3d6c1849'
@@ -27,7 +27,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Initializing permissions...')
-        Permission.init_permissions(session)
+        PermissionService.init_permissions(session)
         print('Permissions initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')

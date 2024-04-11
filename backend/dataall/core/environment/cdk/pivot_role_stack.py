@@ -40,7 +40,7 @@ class PivotRoleStatementSet(object):
                 iam.ManagedPolicy(
                     self.stack,
                     f'PivotRolePolicy-{index + 1}',
-                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{index + 1}',
+                    managed_policy_name=f'{self.env_resource_prefix}-pivot-role-cdk-policy-{self.region}-{index + 1}',
                     statements=chunk,
                 )
             )
@@ -52,6 +52,13 @@ class PivotRoleStatementSet(object):
         :return: list
         """
         raise NotImplementedError('PivotRoleStatementSet subclasses need to implement the get_statements class method')
+
+
+# IT IS HERE TO AVOID CIRCULAR IMPORT
+# disable ruff-format, because this unused imports are important
+# pivot_role_core_policies is used to fill PivotRoleStatementSet subclasses (line 31)
+# ruff: noqa: E402
+from dataall.core.environment.cdk import pivot_role_core_policies
 
 
 class PivotRole(NestedStack):

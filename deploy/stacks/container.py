@@ -176,6 +176,7 @@ class ContainerStack(pyNestedClass):
         self.add_subscription_task()
         self.add_share_management_task()
         self.add_share_verifier_task()
+        self.add_share_reapplier_task()
 
     @run_if(['modules.datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
@@ -257,6 +258,32 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
         self.ecs_task_definitions_families.append(verify_shares_task.task_definition.family)
+
+    @run_if(['modules.datasets.active'])
+    def add_share_reapplier_task(self):
+        share_reapplier_task_definition = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-reapplier',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+            family=f'{self._resource_prefix}-{self._envname}-share-reapplier',
+        )
+
+        share_reapplier_container = share_reapplier_task_definition.add_container(
+            f'ShareReapplierTaskContainer{self._envname}',
+            container_name='container',
+            image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
+            environment=self._create_env('INFO'),
+            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_reapplier_task'],
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix='task',
+                log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
+            ),
+            readonly_root_filesystem=True,
+        )
+        self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
     @run_if(['modules.datasets.active'])
     def add_subscription_task(self):
@@ -445,7 +472,7 @@ class ContainerStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:iam::*:role/{pivot_role_name}',
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
                     ],

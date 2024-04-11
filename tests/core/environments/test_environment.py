@@ -1,8 +1,10 @@
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permissions import REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
+from dataall.core.permissions.services.environment_permissions import (
+    REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
+)
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 
 def get_env(client, env_fixture, group):
@@ -706,7 +708,7 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
     consumption_role_uri = consumption_role.data.addConsumptionRoleToEnvironment.consumptionRoleUri
 
     with db.scoped_session() as session:
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             resource_uri=consumption_role_uri,
             group=group.name,

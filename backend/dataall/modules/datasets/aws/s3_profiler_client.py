@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 class S3ProfilerClient:
     def __init__(self, env: Environment):
-        self._client = SessionHelper.remote_session(env.AwsAccountId).client('s3', region_name=env.region)
+        self._client = SessionHelper.remote_session(env.AwsAccountId, env.region).client('s3', region_name=env.region)
         self._env = env
 
     def get_profiling_results_from_s3(self, dataset, table, run):

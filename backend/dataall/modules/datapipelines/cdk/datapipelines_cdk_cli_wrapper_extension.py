@@ -27,7 +27,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
             update_stack_output(session, stack)
             return True, path, app_path
 
-        aws = SessionHelper.remote_session(stack.accountid)
+        aws = SessionHelper.remote_session(stack.accountid, stack.region)
         creds = aws.get_credentials()
         env.update(
             {

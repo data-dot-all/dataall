@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class S3ControlClient:
     def __init__(self, account_id: str, region: str):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('s3control', region_name=region)
         self._account_id = account_id
 
@@ -95,22 +95,10 @@ class S3ControlClient:
         return policy
 
     @staticmethod
-    def generate_default_bucket_policy(
-        s3_bucket_name: str,
-        owner_roleId: list,
-        allow_owner_sid: str,
-    ):
+    def generate_default_bucket_policy(s3_bucket_name: str):
         policy = {
             'Version': '2012-10-17',
             'Statement': [
-                {
-                    'Sid': allow_owner_sid,
-                    'Effect': 'Allow',
-                    'Principal': '*',
-                    'Action': 's3:*',
-                    'Resource': [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*'],
-                    'Condition': {'StringLike': {'aws:userId': owner_roleId}},
-                },
                 {
                     'Effect': 'Deny',
                     'Principal': {'AWS': '*'},
@@ -126,7 +114,7 @@ class S3ControlClient:
 
 class S3Client:
     def __init__(self, account_id, region):
-        session = SessionHelper.remote_session(accountid=account_id)
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('s3', region_name=region)
         self._account_id = account_id
 

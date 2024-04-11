@@ -11,8 +11,8 @@ from typing import List, Dict
 from dataall.base.context import get_context
 from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
@@ -99,8 +99,8 @@ class SagemakerStudioService:
     """
 
     @staticmethod
-    @has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
-    @has_resource_permission(CREATE_SGMSTUDIO_USER)
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
+    @ResourcePolicyService.has_resource_permission(CREATE_SGMSTUDIO_USER)
     @has_group_permission(CREATE_SGMSTUDIO_USER)
     def create_sagemaker_studio_user(*, uri: str, admin_group: str, request: SagemakerStudioCreationRequest):
         """
@@ -148,7 +148,7 @@ class SagemakerStudioService:
             )
             SageMakerStudioRepository.save_sagemaker_studio_user(session, sagemaker_studio_user)
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=SGMSTUDIO_USER_ALL,
@@ -157,7 +157,7 @@ class SagemakerStudioService:
             )
 
             if env.SamlGroupName != sagemaker_studio_user.SamlAdminGroupName:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
                     permissions=SGMSTUDIO_USER_ALL,
@@ -233,7 +233,7 @@ class SagemakerStudioService:
             )
 
     @staticmethod
-    @has_resource_permission(GET_SGMSTUDIO_USER)
+    @ResourcePolicyService.has_resource_permission(GET_SGMSTUDIO_USER)
     def get_sagemaker_studio_user(*, uri: str):
         with _session() as session:
             return SagemakerStudioService._get_sagemaker_studio_user(session, uri)
@@ -247,7 +247,7 @@ class SagemakerStudioService:
             return status
 
     @staticmethod
-    @has_resource_permission(SGMSTUDIO_USER_URL)
+    @ResourcePolicyService.has_resource_permission(SGMSTUDIO_USER_URL)
     def get_sagemaker_studio_user_presigned_url(*, uri: str):
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
@@ -260,7 +260,7 @@ class SagemakerStudioService:
             return sagemaker_studio_client(user).get_sagemaker_studio_user_applications()
 
     @staticmethod
-    @has_resource_permission(DELETE_SGMSTUDIO_USER)
+    @ResourcePolicyService.has_resource_permission(DELETE_SGMSTUDIO_USER)
     def delete_sagemaker_studio_user(*, uri: str, delete_from_aws: bool):
         """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
@@ -268,7 +268,7 @@ class SagemakerStudioService:
             env = EnvironmentService.get_environment_by_uri(session, user.environmentUri)
             session.delete(user)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=user.sagemakerStudioUserUri,
                 group=user.SamlAdminGroupName,

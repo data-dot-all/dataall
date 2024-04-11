@@ -4,10 +4,10 @@ from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
-from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
-from dataall.core.permissions.permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
@@ -19,7 +19,7 @@ class DashboardQuicksightService:
     _REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
     @classmethod
-    @has_resource_permission(GET_DASHBOARD)
+    @ResourcePolicyService.has_resource_permission(GET_DASHBOARD)
     def get_quicksight_reader_url(cls, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -57,7 +57,7 @@ class DashboardQuicksightService:
                     return client.get_anonymous_session(dashboard_id=dash.DashboardId)
 
     @classmethod
-    @has_resource_permission(CREATE_DASHBOARD)
+    @ResourcePolicyService.has_resource_permission(CREATE_DASHBOARD)
     def get_quicksight_designer_url(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -127,7 +127,7 @@ class DashboardQuicksightService:
     @staticmethod
     def _check_user_must_be_admin():
         context = get_context()
-        admin = TenantPolicy.is_tenant_admin(context.groups)
+        admin = TenantPolicyRepository.is_tenant_admin(context.groups)
 
         if not admin:
             raise TenantUnauthorized(
