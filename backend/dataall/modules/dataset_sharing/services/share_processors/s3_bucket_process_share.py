@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
@@ -90,7 +91,10 @@ class ProcessS3BucketShare(S3BucketShareManager):
             )
             try:
                 if not ShareObjectService.verify_principal_role(session, share):
-                    raise Exception('Principal Role does not exist. Please, revoke share.')
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {share.principalIAMRoleName} is not found. Failed to update MS key policy',
+                    )
                 sharing_bucket.grant_role_bucket_policy()
                 sharing_bucket.grant_s3_iam_access()
                 if not dataset.imported or dataset.importedKmsKey:

@@ -302,7 +302,7 @@ class ShareObjectService:
 
             if not ShareObjectService.verify_principal_role(session, share):
                 raise PrincipalRoleNotFound(
-                    action='Submit Share Object',
+                    action='Approve Share Object',
                     message=f'The principal role {share.principalIAMRoleName} is not found.',
                 )
 
