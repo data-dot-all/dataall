@@ -645,10 +645,14 @@ class S3AccessPointShareManager:
             resource_prefix=self.target_environment.resourcePrefix,
         )
 
+        role_arn = IAM.get_role_arn_by_name(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
+
         # Backwards compatibility
         # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
         # We create the policy from the inline statements and attach it to the role
-        if not share_policy_service.check_if_policy_exists():
+        if not share_policy_service.check_if_policy_exists() and role_arn:
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
         # End of backwards compatibility
@@ -658,6 +662,10 @@ class S3AccessPointShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id, self.target_environment.region, share_resource_policy_name
         )
+
+        if not policy_document:
+            logger.info(f'Policy {share_resource_policy_name} is not found')
+            return
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)

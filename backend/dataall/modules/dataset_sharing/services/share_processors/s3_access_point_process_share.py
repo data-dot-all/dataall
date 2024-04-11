@@ -129,7 +129,6 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
-        principal_exist: bool,
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -174,8 +173,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                 else:
                     log.info('Cleaning up folder share resources...')
                     removing_folder.delete_access_point()
-                    if principal_exist:
-                        removing_folder.revoke_target_role_access_policy()
+                    removing_folder.revoke_target_role_access_policy()
                     if not dataset.imported or dataset.importedKmsKey:
                         removing_folder.delete_dataset_bucket_key_policy(dataset=dataset)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)

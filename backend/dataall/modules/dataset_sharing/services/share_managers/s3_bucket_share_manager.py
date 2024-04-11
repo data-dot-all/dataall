@@ -466,16 +466,15 @@ class S3BucketShareManager:
                 }
             kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
-    def delete_target_role_bucket_policy(self, principal_exist):
+    def delete_target_role_bucket_policy(self):
         logger.info(f'Deleting target role from bucket policy for bucket {self.bucket_name}...')
         try:
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
             bucket_policy = json.loads(s3_client.get_bucket_policy(self.bucket_name))
-            if principal_exist:
-                target_requester_arn = IAM.get_role_arn_by_name(
-                    self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
-                )
-            else:
+            target_requester_arn = IAM.get_role_arn_by_name(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+            )
+            if not target_requester_arn:
                 # if somehow the role was deleted, we can only try to guess the role arn (quite easy, though)
                 target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()

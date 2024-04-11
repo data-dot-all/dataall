@@ -272,9 +272,6 @@ class DataSharingService:
                 new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
                 revoked_item_sm.update_state(session, share_uri, new_state)
 
-                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
-                principal_healthy = ShareObjectService.verify_principal_role(session, share)
-
                 log.info(f'Revoking permissions to folders: {revoked_folders}')
 
                 revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(
@@ -286,7 +283,6 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
-                    principal_healthy,
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
 
@@ -301,7 +297,6 @@ class DataSharingService:
                     target_environment,
                     source_env_group,
                     env_group,
-                    principal_healthy,
                 )
                 log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 

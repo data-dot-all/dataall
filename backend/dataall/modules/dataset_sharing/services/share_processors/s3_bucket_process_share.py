@@ -130,7 +130,6 @@ class ProcessS3BucketShare(S3BucketShareManager):
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
-        principal_exist: bool,
     ) -> bool:
         """
         1) update_share_item_status with Start action
@@ -168,7 +167,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 env_group,
             )
             try:
-                removing_bucket.delete_target_role_bucket_policy(principal_exist)
+                removing_bucket.delete_target_role_bucket_policy()
                 removing_bucket.delete_target_role_access_policy(
                     share=share, target_bucket=revoked_bucket, target_environment=target_environment
                 )
