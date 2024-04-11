@@ -58,10 +58,7 @@ class ShareObjectService:
         role_name = share.principalIAMRoleName
         account_id = SessionHelper.get_account()
         region = SessionHelper.get_region()
-        principal_role = IAM.get_role_arn_by_name(
-            account_id=account_id,
-            region=region,
-            role_name=role_name)
+        principal_role = IAM.get_role_arn_by_name(account_id=account_id, region=region, role_name=role_name)
         return principal_role is not None
 
     @staticmethod
@@ -90,16 +87,16 @@ class ShareObjectService:
     @classmethod
     @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
-            cls,
-            uri: str,
-            dataset_uri: str,
-            item_uri: str,
-            item_type: str,
-            group_uri,
-            principal_id,
-            principal_type,
-            requestPurpose,
-            attachMissingPolicies,
+        cls,
+        uri: str,
+        dataset_uri: str,
+        item_uri: str,
+        item_type: str,
+        group_uri,
+        principal_id,
+        principal_type,
+        requestPurpose,
+        attachMissingPolicies,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -110,7 +107,7 @@ class ShareObjectService:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
                     message=f'Requester Team {group_uri} works in region {environment.region} '
-                            f'and the requested dataset is stored in region {dataset.region}',
+                    f'and the requested dataset is stored in region {dataset.region}',
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
@@ -128,9 +125,9 @@ class ShareObjectService:
                 managed = True
 
             if (
-                    (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                    and environment.environmentUri == dataset.environmentUri
-                    and principal_type == PrincipalType.Group.value
+                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
+                and environment.environmentUri == dataset.environmentUri
+                and principal_type == PrincipalType.Group.value
             ):
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
@@ -392,7 +389,7 @@ class ShareObjectService:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
-                            'Revoke access to these items before deleting the request.',
+                    'Revoke access to these items before deleting the request.',
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
@@ -532,8 +529,8 @@ class ShareObjectService:
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
-                session=session,
-                uri=environment_uri,
+            session=session,
+            uri=environment_uri,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,

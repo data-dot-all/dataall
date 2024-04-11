@@ -163,7 +163,7 @@ class DataSharingService:
                     session,
                     share_uri,
                     ShareItemHealthStatus.Unhealthy,
-                    f'Principal IAM Role {share.principalIAMRoleName} does not exist'
+                    f'Principal IAM Role {share.principalIAMRoleName} does not exist',
                 )
                 items = ShareObjectRepository.get_all_sharable_items(
                     session,
@@ -486,7 +486,7 @@ class DataSharingService:
                 session,
                 share_uri,
                 ShareItemHealthStatus.Unhealthy,
-                f'Share principal Role {share.principalIAMRoleName} is not found.'
+                f'Share principal Role {share.principalIAMRoleName} is not found.',
             )
             return
 
@@ -597,7 +597,7 @@ class DataSharingService:
                     session,
                     share_uri,
                     ShareItemHealthStatus.Unhealthy,
-                    f'Share principal Role {share.principalIAMRoleName} is not found.'
+                    f'Share principal Role {share.principalIAMRoleName} is not found.',
                 )
                 return False
 
