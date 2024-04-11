@@ -521,6 +521,6 @@ class ShareObjectService:
                 session=session,
                 group=share.groupUri,
                 permissions=DATASET_FOLDER_READ,
-                resource_uri=location.locationUri,
+                resource_uri=location.itemUri,
                 resource_type=DatasetStorageLocation.__name__,
             )

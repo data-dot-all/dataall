@@ -265,5 +265,5 @@ class ShareItemService:
             ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=share.groupUri,
-                resource_uri=location.locationUri,
+                resource_uri=location.itemUri,
             )
