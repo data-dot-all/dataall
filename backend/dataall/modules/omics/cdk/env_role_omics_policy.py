@@ -9,9 +9,6 @@ class OmicsPolicy(ServicePolicy):
     Creates an Omics policy for accessing and interacting with Omics Projects
     """
 
-    # TODO: scope down omics permissions
-    # TODO: identify additional needed permissions
-    # Use f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_OMICS_RUN not in group_permissions:
             return []
@@ -34,5 +31,13 @@ class OmicsPolicy(ServicePolicy):
                 conditions={
                     'StringEquals': {f'omics:ResourceTag/{self.tag_key}': [self.tag_value]},
                 },
+            ),
+            iam.PolicyStatement(
+                sid='CloudWatchLogsActions',
+                actions=['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/omics/*',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/omics/*:log-stream:*',
+                ],
             ),
         ]

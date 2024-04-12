@@ -12,10 +12,11 @@ class OmicsPolicy(PivotRoleStatementSet):
             iam.PolicyStatement(sid='OmicsList', actions=['omics:List*'], resources=['*']),
             iam.PolicyStatement(
                 sid='OmicsWorkflowActions',
-                actions=['omics:GetWorkflow', 'omics:StartRun'],
+                actions=['omics:GetWorkflow', 'omics:StartRun', 'omics:TagResource'],
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:workflow/*',
                     f'arn:aws:omics:{self.region}::workflow/*',
+                    f'arn:aws:omics:{self.region}:{self.account}:run/*',
                 ],
             ),
             iam.PolicyStatement(
@@ -24,5 +25,21 @@ class OmicsPolicy(PivotRoleStatementSet):
                 resources=[
                     f'arn:aws:omics:{self.region}:{self.account}:run/{self.env_resource_prefix}*',
                 ],
+            ),
+            iam.PolicyStatement(
+                sid='PassRoleOmics',
+                actions=[
+                    'iam:PassRole',
+                ],
+                resources=[
+                    f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        'iam:PassedToService': [
+                            'omics.amazonaws.com',
+                        ]
+                    }
+                },
             ),
         ]
