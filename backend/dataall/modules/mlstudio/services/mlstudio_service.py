@@ -14,7 +14,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
@@ -165,7 +165,7 @@ class SagemakerStudioService:
                     resource_type=SagemakerStudioUser.__name__,
                 )
 
-            StackRepository.create_stack(
+            Stack.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='mlstudio',

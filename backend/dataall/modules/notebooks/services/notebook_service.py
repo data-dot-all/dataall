@@ -16,7 +16,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
@@ -138,7 +138,7 @@ class NotebookService:
                     resource_type=SagemakerNotebook.__name__,
                 )
 
-            StackRepository.create_stack(
+            Stack.create_stack(
                 session=session,
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',

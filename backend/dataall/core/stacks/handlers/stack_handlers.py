@@ -8,7 +8,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db import stack_models as models
-from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
 
@@ -40,7 +40,7 @@ class StackHandlers:
     @Worker.handler(path='ecs.cdkproxy.deploy')
     def deploy_stack(engine, task: Task):
         with engine.scoped_session() as session:
-            stack: models.Stack = StackRepository.get_stack_by_uri(session, stack_uri=task.targetUri)
+            stack: models.Stack = Stack.get_stack_by_uri(session, stack_uri=task.targetUri)
             envname = os.environ.get('envname', 'local')
             cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
 

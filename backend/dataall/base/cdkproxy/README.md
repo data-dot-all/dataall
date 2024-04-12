@@ -26,12 +26,11 @@ from aws_cdk import (
 )
 from dataall.base.cdkproxy.stacks import stack
 
-
 @stack(stack="mypredefinedstack")
-class MyPredefinedStack(core.StackRepository):
+class MyPredefinedStack(core.Stack):
     def __init__(self, scope, id, **kwargs):
         super().__init__(scope, id, **kwargs)
-        # constructs goes here
+        #constructs goes here
 
 ```
 
