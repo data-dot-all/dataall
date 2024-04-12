@@ -58,12 +58,28 @@ class LambdaApiStack(pyNestedClass):
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
+
+        esproxy_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+        )
+        graphql_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+        )
+        awsworker_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+        )
+
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
+            log_group=esproxy_loggroup
+            if esproxy_loggroup is not None
+            else logs.LogGroup(
+                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+            ),
             description='dataall es search function',
-            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
@@ -80,12 +96,23 @@ class LambdaApiStack(pyNestedClass):
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
         api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
+        api_handler_env = {'envname': envname, 'LOG_LEVEL': 'INFO', 'REAUTH_TTL': str(reauth_ttl)}
+        # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
+        if custom_domain and custom_domain.get('hosted_zone_name', None):
+            api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
+        if custom_auth:
+            api_handler_env['custom_auth'] = custom_auth.get('provider', None)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
+            log_group=graphql_loggroup
+            if graphql_loggroup is not None
+            else logs.LogGroup(
+                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+            ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -102,12 +129,22 @@ class LambdaApiStack(pyNestedClass):
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
         awsworker_sg = self.create_lambda_sgs(envname, 'awsworker', resource_prefix, vpc)
+        awshandler_env = {
+            'envname': envname,
+            'LOG_LEVEL': 'INFO',
+            'email_sender_id': email_notification_sender_email_id,
+        }
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
+            log_group=awsworker_loggroup
+            if awsworker_loggroup is not None
+            else logs.LogGroup(
+                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+            ),
             description='dataall aws worker for aws asynchronous tasks function',
-            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
@@ -127,6 +164,84 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
+
+        # Add the SES Sendemail policy
+        if email_custom_domain is not None:
+            self.aws_handler.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=['ses:SendEmail'],
+                    resources=[
+                        f'arn:aws:ses:{self.region}:{self.account}:identity/{email_custom_domain}',
+                        f'arn:aws:ses:{self.region}:{self.account}:configuration-set/{ses_configuration_set}',
+                    ],
+                )
+            )
+
+        if custom_auth is not None:
+            # Create the custom authorizer lambda
+            custom_authorizer_assets = os.path.realpath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..',
+                    'custom_resources',
+                    'custom_authorizer',
+                )
+            )
+
+            if not os.path.isdir(custom_authorizer_assets):
+                raise Exception(f'Custom Authorizer Folder not found at {custom_authorizer_assets}')
+
+            custom_lambda_env = {
+                'envname': envname,
+                'LOG_LEVEL': 'DEBUG',
+                'custom_auth_provider': custom_auth.get('provider'),
+                'custom_auth_url': custom_auth.get('url'),
+                'custom_auth_client': custom_auth.get('client_id'),
+                'custom_auth_jwks_url': custom_auth.get('jwks_url'),
+            }
+
+            for claims_map in custom_auth.get('claims_mapping', {}):
+                custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
+
+            authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
+            self.authorizer_fn = _lambda.Function(
+                self,
+                f'CustomAuthorizerFunction-{envname}',
+                function_name=f'{resource_prefix}-{envname}-custom-authorizer',
+                log_group=logs.LogGroup(
+                    self,
+                    'customauthorizerloggroup',
+                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
+                ),
+                handler='custom_authorizer_lambda.lambda_handler',
+                code=_lambda.Code.from_asset(
+                    path=custom_authorizer_assets,
+                    bundling=BundlingOptions(
+                        image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                        local=SolutionBundling(source_path=custom_authorizer_assets),
+                    ),
+                ),
+                memory_size=512 if prod_sizing else 256,
+                description='dataall Custom authorizer replacing cognito authorizer',
+                timeout=Duration.seconds(20),
+                environment=custom_lambda_env,
+                vpc=vpc,
+                security_groups=[authorizer_fn_sg],
+                runtime=_lambda.Runtime.PYTHON_3_9,
+            )
+
+            # Add NAT Connectivity For Custom Authorizer Lambda
+            self.authorizer_fn.connections.allow_to(
+                ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
+            )
+
+            # Store custom authorizer's ARN in ssm
+            ssm.StringParameter(
+                self,
+                f'{resource_prefix}-{envname}-custom-authorizer-arn',
+                parameter_name=f'/dataall/{envname}/customauth/customauthorizerarn',
+                string_value=self.authorizer_fn.function_arn,
+            )
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
@@ -182,7 +297,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -252,6 +367,12 @@ class LambdaApiStack(pyNestedClass):
                         'logs:StartQuery',
                         'logs:DescribeLogGroups',
                         'logs:DescribeLogStreams',
+                        'logs:DescribeQueries',
+                        'logs:StopQuery',
+                        'logs:GetQueryResults',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents',
                     ],
                     resources=[
                         f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
@@ -279,8 +400,28 @@ class LambdaApiStack(pyNestedClass):
                         'xray:GetSamplingTargets',
                         'xray:GetSamplingStatisticSummaries',
                         'cognito-idp:ListGroups',
+                        'cognito-idp:ListUsersInGroup',
                     ],
                     resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
                 ),
                 iam.PolicyStatement(
                     actions=[

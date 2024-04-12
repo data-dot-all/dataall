@@ -55,7 +55,6 @@ class DBMigrationStack(pyNestedClass):
                         resources=[
                             f'arn:aws:ec2:{self.region}:{self.account}:*/*',
                         ],
-                        conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
                     ),
                     iam.PolicyStatement(
                         actions=[
