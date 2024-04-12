@@ -1,3 +1,5 @@
+from typing import List
+
 from aws_cdk import Duration
 from aws_cdk import (
     aws_iam as iam,
@@ -23,7 +25,7 @@ class TriggerFunctionStack(pyNestedClass):
         resource_prefix='dataall',
         vpc: ec2.IVpc = None,
         vpce_connection: ec2.IConnectable = None,
-        connectables: list[ec2.IConnectable] = [],
+        connectables: List[ec2.IConnectable] = [],
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -75,7 +77,7 @@ class TriggerFunctionStack(pyNestedClass):
             ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
         )
 
-    def get_policy_statements(self, resource_prefix) -> list[iam.PolicyStatement]:
+    def get_policy_statements(self, resource_prefix) -> List[iam.PolicyStatement]:
         return [
             iam.PolicyStatement(
                 actions=[
