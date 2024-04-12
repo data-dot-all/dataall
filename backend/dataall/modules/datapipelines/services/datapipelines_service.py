@@ -3,7 +3,7 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -37,7 +37,7 @@ class DataPipelineService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline(
         uri: str,
         admin_group: str,
@@ -103,7 +103,7 @@ class DataPipelineService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline_environment(
         uri: str,
         admin_group: str,

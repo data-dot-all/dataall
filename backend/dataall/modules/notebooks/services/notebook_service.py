@@ -10,7 +10,7 @@ from typing import List, Dict
 
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -69,7 +69,7 @@ class NotebookService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(CREATE_NOTEBOOK)
-    @has_group_permission(CREATE_NOTEBOOK)
+    @GroupPolicyService.has_group_permission(CREATE_NOTEBOOK)
     def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
