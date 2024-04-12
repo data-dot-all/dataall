@@ -234,22 +234,46 @@ class PipelineStack(Stack):
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
-                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
+                    conditions={
+                        'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
+                    },
                 ),
                 iam.PolicyStatement(
                     actions=[
                         'ecr:GetAuthorizationToken',
                         'ec2:DescribePrefixLists',
                         'ec2:DescribeManagedPrefixLists',
-                        'ec2:CreateNetworkInterface',
                         'ec2:DescribeNetworkInterfaces',
-                        'ec2:DeleteNetworkInterface',
                         'ec2:DescribeSubnets',
                         'ec2:DescribeSecurityGroups',
                         'ec2:DescribeDhcpOptions',
                         'ec2:DescribeVpcs',
                     ],
                     resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                        
+                    ],
+                    resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                        
+                    ],
+                    resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                    conditions={
+                        'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}
+                    },
+                    
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -794,7 +818,7 @@ class PipelineStack(Stack):
                         'aws s3 sync site/ s3://$bucket',
                         "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                     ],
-                    role=self.expanded_codebuild_role,
+                    role=self.expanded_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                 ),
             )

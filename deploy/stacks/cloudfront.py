@@ -232,10 +232,25 @@ class CloudfrontDistro(pyNestedClass):
             )
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
-                    actions=['cloudfront:CreateInvalidation', 's3:List*'],
+                    actions=['s3:List*'],
                     resources=['*'],
                 )
             )
+            
+            cross_account_deployment_role.add_to_policy(
+                iam.PolicyStatement(
+                    actions=['cloudfront:CreateInvalidation'],
+                    resources=[f'arn:aws:cloudfront::{self.account}:distribution/{cloudfront_distribution.distribution_id}'],
+                )
+            )
+            
+            if custom_auth is None:
+                cross_account_deployment_role.add_to_policy(
+                iam.PolicyStatement(
+                    actions=['cloudfront:CreateInvalidation'],
+                    resources=[f'arn:aws:cloudfront::{self.account}:distribution/{userguide_docs_distribution.distribution_id}'],
+                ))
+                
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[
