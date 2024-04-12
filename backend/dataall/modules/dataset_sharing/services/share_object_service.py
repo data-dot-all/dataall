@@ -273,8 +273,8 @@ class ShareObjectService:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
-            # Attach data.all read permissions to tables and folders
-            if share.groupUri != dataset.SamlAdminGroupName:
+            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                log.info('Attaching TABLE/FOLDER READ permissions...')
                 ShareObjectService._attach_dataset_table_read_permission(session, share)
                 ShareObjectService._attach_dataset_folder_read_permission(session, share)
 

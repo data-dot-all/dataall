@@ -13,6 +13,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
+    PrincipalType,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
@@ -101,7 +102,8 @@ class ShareItemService:
 
             share_sm.update_state(session, share, new_share_state)
 
-            if share.groupUri != dataset.SamlAdminGroupName:
+            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                log.info('Deleting TABLE/FOLDER READ permissions...')
                 ShareItemService._delete_dataset_table_read_permission(session, share)
                 ShareItemService._delete_dataset_folder_read_permission(session, share)
 
@@ -259,7 +261,7 @@ class ShareItemService:
         Delete Folder permissions to share groups
         """
         share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Approved.value]
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Revoke_Approved.value]
         )
         for location in share_folder_items:
             ResourcePolicyService.delete_resource_policy(
