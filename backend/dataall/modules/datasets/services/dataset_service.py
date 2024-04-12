@@ -15,7 +15,7 @@ from dataall.core.permissions.services.group_policy_service import GroupPolicySe
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
@@ -435,8 +435,8 @@ class DatasetService:
         stack_helper.deploy_stack(dataset.environmentUri)
 
     @staticmethod
-    def _create_dataset_stack(session, dataset: Dataset) -> Stack:
-        return Stack.create_stack(
+    def _create_dataset_stack(session, dataset: Dataset) -> StackRepository:
+        return StackRepository.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,

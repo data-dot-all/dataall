@@ -7,8 +7,8 @@ from dataall.base.config import config
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.stacks.aws.ecs import Ecs
-from dataall.core.stacks.db.stack_repositories import Stack
-from dataall.core.stacks.db.stack_models import Stack as StackModel
+from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
 
@@ -17,9 +17,9 @@ def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
     context = get_context()
     with context.db_engine.scoped_session() as session:
         env: Environment = session.query(Environment).get(environmentUri)
-        stack: StackModel = Stack.find_stack_by_target_uri(session, target_uri=targetUri)
+        stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
         if not stack:
-            stack = StackModel(
+            stack = Stack(
                 stack='environment',
                 payload={},
                 targetUri=targetUri,
@@ -57,7 +57,7 @@ def save_describe_stack_task(session, environment, stack, target_uri):
 def deploy_stack(targetUri):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: StackModel = Stack.get_stack_by_target_uri(session, target_uri=targetUri)
+        stack: Stack = StackRepository.get_stack_by_target_uri(session, target_uri=targetUri)
         envname = os.getenv('envname', 'local')
 
         if envname in ['local', 'pytest', 'dkrcompose']:
@@ -79,7 +79,7 @@ def deploy_stack(targetUri):
 def delete_stack(target_uri, accountid, cdk_role_arn, region):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: StackModel = Stack.find_stack_by_target_uri(session, target_uri=target_uri)
+        stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=target_uri)
         if not stack:
             return
         task = Task(

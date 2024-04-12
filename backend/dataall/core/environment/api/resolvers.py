@@ -10,7 +10,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -18,7 +18,7 @@ from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.services.vpc_service import VpcService
 from dataall.base.aws.ec2_client import EC2
 from dataall.base.feature_toggle_checker import is_feature_enabled
@@ -114,7 +114,7 @@ def create_environment(context: Context, source, input={}):
             uri=input.get('organizationUri'),
             data=input,
         )
-        Stack.create_stack(
+        StackRepository.create_stack(
             session=session,
             environment_uri=env.environmentUri,
             target_type='environment',
