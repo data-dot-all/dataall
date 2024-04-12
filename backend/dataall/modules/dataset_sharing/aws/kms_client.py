@@ -43,7 +43,9 @@ class KmsClient:
             elif e.response['Error']['Code'] == 'MalformedPolicyDocumentException':
                 if fix_malformed_principals:
                     log.info('MalformedPolicy. Lets try again')
-                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(policy, DATAALL_KMS_SIDS, self._account_id, self.region)
+                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(
+                        policy, DATAALL_KMS_SIDS, self._account_id, self.region
+                    )
                     self.put_key_policy(key_id, fixed_policy, False)
                     return
             log.error(f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} ')

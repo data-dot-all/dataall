@@ -93,7 +93,7 @@ class ProcessS3BucketShare(S3BucketShareManager):
                 if not ShareObjectService.verify_principal_role(session, share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {share.principalIAMRoleName} is not found. Failed to update MS key policy',
+                        f'Principal role {share.principalIAMRoleName} is not found. Failed to update KMS key policy',
                     )
                 sharing_bucket.grant_role_bucket_policy()
                 sharing_bucket.grant_s3_iam_access()

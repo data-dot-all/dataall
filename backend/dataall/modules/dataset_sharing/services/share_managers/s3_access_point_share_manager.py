@@ -535,7 +535,7 @@ class S3AccessPointShareManager:
         if not target_requester_arn:
             raise PrincipalRoleNotFound(
                 'update dataset bucket key policy',
-                f'Principal role {self.target_requester_IAMRoleName} is not found. Failed to update MS key policy',
+                f'Principal role {self.target_requester_IAMRoleName} is not found. Failed to update KMS key policy',
             )
 
         pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)

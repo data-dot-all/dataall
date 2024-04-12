@@ -46,10 +46,10 @@ class IAM:
 
     @staticmethod
     def get_role_policy(
-            account_id: str,
-            region: str,
-            role_name: str,
-            policy_name: str,
+        account_id: str,
+        region: str,
+        role_name: str,
+        policy_name: str,
     ):
         try:
             client = IAM.client(account_id, region)
@@ -68,10 +68,10 @@ class IAM:
 
     @staticmethod
     def delete_role_policy(
-            account_id: str,
-            region: str,
-            role_name: str,
-            policy_name: str,
+        account_id: str,
+        region: str,
+        role_name: str,
+        policy_name: str,
     ):
         try:
             client = IAM.client(account_id, region)
@@ -152,7 +152,7 @@ class IAM:
 
     @staticmethod
     def update_managed_policy_default_version(
-            account_id: str, region: str, policy_name: str, old_version_id: str, policy_document: str
+        account_id: str, region: str, policy_name: str, old_version_id: str, policy_document: str
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
@@ -169,9 +169,9 @@ class IAM:
 
     @staticmethod
     def delete_managed_policy_non_default_versions(
-            account_id: str,
-            region: str,
-            policy_name: str,
+        account_id: str,
+        region: str,
+        policy_name: str,
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'

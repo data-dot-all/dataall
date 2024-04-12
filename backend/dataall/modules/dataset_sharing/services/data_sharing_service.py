@@ -76,111 +76,107 @@ class DataSharingService:
                     session, share_uri, ShareItemStatus.Share_Approved.value
                 )
 
-                lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
+                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
+                principal_healthy = ShareObjectService.verify_principal_role(session, share)
+                # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+                if principal_healthy:
+                    lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
 
-                if not lock_acquired:
-                    log.error(f'Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...')
-                    for table in shared_tables:
-                        share_item = ShareObjectRepository.find_sharable_item(session, share_uri, table.tableUri)
-                        cls.handle_share_items_failure_during_locking(
-                            session, share_item, ShareItemStatus.Share_Approved.value
-                        )
+                    if not lock_acquired:
+                        log.error(f'Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...')
+                        for table in shared_tables:
+                            share_item = ShareObjectRepository.find_sharable_item(session, share_uri, table.tableUri)
+                            cls.handle_share_items_failure_during_locking(
+                                session, share_item, ShareItemStatus.Share_Approved.value
+                            )
 
-                    for folder in shared_folders:
-                        share_item = ShareObjectRepository.find_sharable_item(
-                            session,
-                            share_uri,
-                            folder.locationUri,
-                        )
-                        cls.handle_share_items_failure_during_locking(
-                            session, share_item, ShareItemStatus.Share_Approved.value
-                        )
+                        for folder in shared_folders:
+                            share_item = ShareObjectRepository.find_sharable_item(
+                                session,
+                                share_uri,
+                                folder.locationUri,
+                            )
+                            cls.handle_share_items_failure_during_locking(
+                                session, share_item, ShareItemStatus.Share_Approved.value
+                            )
 
-                    for bucket in shared_buckets:
-                        share_item = ShareObjectRepository.find_sharable_item(
-                            session,
-                            share_uri,
-                            bucket.bucketUri,
-                        )
-                        cls.handle_share_items_failure_during_locking(
-                            session, share_item, ShareItemStatus.Share_Approved.value
-                        )
+                        for bucket in shared_buckets:
+                            share_item = ShareObjectRepository.find_sharable_item(
+                                session,
+                                share_uri,
+                                bucket.bucketUri,
+                            )
+                            cls.handle_share_items_failure_during_locking(
+                                session, share_item, ShareItemStatus.Share_Approved.value
+                            )
 
-                    share_object_SM = ShareObjectSM(share.status)
-                    new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
-                    share_object_SM.update_state(session, share, new_object_state)
-                    return False
+                        share_object_SM = ShareObjectSM(share.status)
+                        new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
+                        share_object_SM.update_state(session, share, new_object_state)
+                        return False
 
-            log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
-            share_successful = ShareObjectService.verify_principal_role(session, share)
-            # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-            if share_successful:
-                log.info(f'Granting permissions to folders: {shared_folders}')
+                    log.info(f'Granting permissions to folders: {shared_folders}')
 
-                approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
-                    session,
-                    dataset,
-                    share,
-                    shared_folders,
-                    source_environment,
-                    target_environment,
-                    source_env_group,
-                    env_group,
-                )
-                log.info(f'sharing folders succeeded = {approved_folders_succeed}')
-
-                log.info('Granting permissions to S3 buckets')
-
-                approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
-                    session,
-                    dataset,
-                    share,
-                    shared_buckets,
-                    source_environment,
-                    target_environment,
-                    source_env_group,
-                    env_group,
-                )
-                log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
-
-                log.info(f'Granting permissions to tables: {shared_tables}')
-                approved_tables_succeed = ProcessLakeFormationShare(
-                    session,
-                    dataset,
-                    share,
-                    shared_tables,
-                    source_environment,
-                    target_environment,
-                    env_group,
-                ).process_approved_shares()
-                log.info(f'sharing tables succeeded = {approved_tables_succeed}')
-
-                share_successful = approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
-
-            else:
-                log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
-                ShareObjectService.update_all_share_items_status(
-                    session,
-                    share_uri,
-                    ShareItemHealthStatus.Unhealthy,
-                    f'Principal IAM Role {share.principalIAMRoleName} does not exist',
-                )
-                items = ShareObjectRepository.get_all_sharable_items(
-                    session,
-                    share_uri,
-                    ShareItemStatus.Share_Approved.value,
-                )
-                for item in items:
-                    ShareObjectRepository.update_share_item_status(
+                    approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
                         session,
-                        item.shareItemUri,
-                        ShareItemStatus.Share_Failed.value,
+                        dataset,
+                        share,
+                        shared_folders,
+                        source_environment,
+                        target_environment,
+                        source_env_group,
+                        env_group,
+                    )
+                    log.info(f'sharing folders succeeded = {approved_folders_succeed}')
+
+                    log.info('Granting permissions to S3 buckets')
+
+                    approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+                        session,
+                        dataset,
+                        share,
+                        shared_buckets,
+                        source_environment,
+                        target_environment,
+                        source_env_group,
+                        env_group,
+                    )
+                    log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
+
+                    log.info(f'Granting permissions to tables: {shared_tables}')
+                    approved_tables_succeed = ProcessLakeFormationShare(
+                        session,
+                        dataset,
+                        share,
+                        shared_tables,
+                        source_environment,
+                        target_environment,
+                        env_group,
+                    ).process_approved_shares()
+                    log.info(f'sharing tables succeeded = {approved_tables_succeed}')
+
+                    principal_healthy = (
+                        approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
                     )
 
-            new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
-            share_sm.update_state(session, share, new_share_state)
+                else:
+                    log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
+                    items = ShareObjectRepository.get_all_sharable_items(
+                        session,
+                        share_uri,
+                        ShareItemStatus.Share_Approved.value,
+                    )
+                    for item in items:
+                        ShareObjectRepository.update_share_item_status(
+                            session,
+                            item.shareItemUri,
+                            ShareItemStatus.Share_Failed.value,
+                        )
 
-            return share_successful
+                new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
+                share_sm.update_state(session, share, new_share_state)
+
+                return principal_healthy
 
         except Exception as e:
             log.error(f'Error occurred during share approval: {e}')
@@ -480,8 +476,9 @@ class DataSharingService:
             ShareObjectService.update_all_share_items_status(
                 session,
                 share_uri,
-                ShareItemHealthStatus.Unhealthy,
-                f'Share principal Role {share.principalIAMRoleName} is not found.',
+                previous_health_status=healthStatus,
+                new_health_status=ShareItemHealthStatus.Unhealthy.value,
+                message=f'Share principal Role {share.principalIAMRoleName} is not found.',
             )
             return
 
@@ -588,12 +585,6 @@ class DataSharingService:
             log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
             # If principal role doesn't exist, all share items are unhealthy, no use of further checks
             if not ShareObjectService.verify_principal_role(session, share):
-                ShareObjectService.update_all_share_items_status(
-                    session,
-                    share_uri,
-                    ShareItemHealthStatus.Unhealthy,
-                    f'Share principal Role {share.principalIAMRoleName} is not found.',
-                )
                 return False
 
             log.info(f'Reapply permissions to folders: {reapply_folders}')

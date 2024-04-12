@@ -14,6 +14,7 @@ DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
 DATAALL_BUCKET_SIDS = [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]
 
+
 class S3ControlClient:
     def __init__(self, account_id: str, region: str):
         session = SessionHelper.remote_session(accountid=account_id, region=region)
@@ -121,8 +122,6 @@ class S3ControlClient:
         return policy
 
 
-
-
 class S3Client:
     def __init__(self, account_id, region):
         session = SessionHelper.remote_session(accountid=account_id, region=region)
@@ -145,7 +144,9 @@ class S3Client:
             if e.response['Error']['Code'] == 'MalformedPolicy':
                 if fix_malformed_principals:
                     log.info('MalformedPolicy. Lets try again')
-                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(policy, DATAALL_BUCKET_SIDS, self._account_id, self.region)
+                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(
+                        policy, DATAALL_BUCKET_SIDS, self._account_id, self.region
+                    )
                     self.create_bucket_policy(bucket_name, fixed_policy, False)
                 else:
                     log.error(f'Failed to create bucket policy. MalformedPolicy: {policy}')

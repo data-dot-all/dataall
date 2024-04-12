@@ -60,12 +60,16 @@ class ShareObjectService:
         return principal_role is not None
 
     @staticmethod
-    def update_all_share_items_status(session, shareUri, status: ShareItemHealthStatus, message):
-        for item in ShareObjectRepository.get_all_sharable_items(session, shareUri):
+    def update_all_share_items_status(
+        session, shareUri, new_health_status: str, message, previous_health_status: str = None
+    ):
+        for item in ShareObjectRepository.get_all_sharable_items(
+            session, shareUri, healthStatus=previous_health_status
+        ):
             ShareObjectRepository.update_share_item_health_status(
                 session,
                 share_item=item,
-                healthStatus=status.value,
+                healthStatus=new_health_status,
                 healthMessage=message,
                 timestamp=datetime.now(),
             )
