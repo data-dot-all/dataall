@@ -156,12 +156,7 @@ def handler(event, context):
 
         set_context(RequestContext(ENGINE, username, groups, user_id))
 
-        app_context = {
-            'engine': ENGINE,
-            'username': username,
-            'groups': groups,
-            'schema': SCHEMA
-        }
+        app_context = {'engine': ENGINE, 'username': username, 'groups': groups, 'schema': SCHEMA}
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:

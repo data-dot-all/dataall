@@ -122,7 +122,9 @@ class PipelineStack(Stack):
 
         else:
             source = CodePipelineSource.code_commit(
-                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall-testing'),
+                repository=codecommit.Repository.from_repository_name(
+                    self, 'sourcerepo', repository_name='dataall-testing'
+                ),
                 branch=self.git_branch,
             )
 
@@ -234,9 +236,7 @@ class PipelineStack(Stack):
                         'sts:GetServiceBearerToken',
                     ],
                     resources=['*'],
-                    conditions={
-                        'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
-                    },
+                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -255,25 +255,20 @@ class PipelineStack(Stack):
                     actions=[
                         'ec2:CreateNetworkInterface',
                         'ec2:DeleteNetworkInterface',
-                        
                     ],
                     resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
                 ),
                 iam.PolicyStatement(
                     actions=[
                         'ec2:AssignPrivateIpAddresses',
                         'ec2:UnassignPrivateIpAddresses',
-                        
                     ],
                     resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
-                    conditions={
-                        'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}
-                    },
-                    
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
                 ),
                 iam.PolicyStatement(
                     actions=[

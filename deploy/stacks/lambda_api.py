@@ -56,9 +56,8 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
-
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
-        esproxy_sg = self.create_lambda_sgs(envname, "esproxy", resource_prefix, vpc)
+        esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
@@ -80,7 +79,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
-        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc)
+        api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
@@ -102,7 +101,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
-        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc)
+        awsworker_sg = self.create_lambda_sgs(envname, 'awsworker', resource_prefix, vpc)
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
@@ -139,24 +138,16 @@ class LambdaApiStack(pyNestedClass):
                 lmbda.connections.allow_from(
                     vpce_connection,
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                    'Allow Lambda from VPC Endpoint'
+                    'Allow Lambda from VPC Endpoint',
                 )
-                lmbda.connections.allow_to(
-                    vpce_connection,
-                    ec2.Port.tcp(443),
-                    'Allow Lambda to VPC Endpoint'
-                )
+                lmbda.connections.allow_to(vpce_connection, ec2.Port.tcp(443), 'Allow Lambda to VPC Endpoint')
 
         # Add NAT Connectivity For API Handler
         self.api_handler.connections.allow_to(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(443),
-            'Allow NAT Internet Access SG Egress'
+            ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
         )
         self.aws_handler.connections.allow_to(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(443),
-            'Allow NAT Internet Access SG Egress'
+            ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
         )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
@@ -179,7 +170,7 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
-        
+
     def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(
             self,
@@ -192,7 +183,6 @@ class LambdaApiStack(pyNestedClass):
         return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
-
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -232,7 +222,7 @@ class LambdaApiStack(pyNestedClass):
                     ],
                     resources=[
                         f'arn:aws:iam::*:role/{pivot_role_name}',
-                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*'
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
                     ],
                 ),
                 iam.PolicyStatement(
@@ -322,7 +312,6 @@ class LambdaApiStack(pyNestedClass):
         vpc,
         user_pool,
     ):
-
         api_deploy_options = apigw.StageOptions(
             throttling_rate_limit=10000,
             throttling_burst_limit=5000,
