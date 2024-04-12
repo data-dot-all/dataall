@@ -1,11 +1,10 @@
 import json
 
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
@@ -21,7 +20,7 @@ from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_T
 
 class DatasetProfilingService:
     @staticmethod
-    @has_resource_permission(PROFILE_DATASET_TABLE)
+    @ResourcePolicyService.has_resource_permission(PROFILE_DATASET_TABLE)
     def start_profiling_run(uri, table_uri, glue_table_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -63,7 +62,7 @@ class DatasetProfilingService:
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
     @staticmethod
-    @has_resource_permission(GET_DATASET)
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
     def list_profiling_runs(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, uri)
@@ -108,7 +107,7 @@ class DatasetProfilingService:
             ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
             != ConfidentialityClassification.Unclassified.value
         ):
-            ResourcePolicy.check_user_resource_permission(
+            ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
                 groups=context.groups,

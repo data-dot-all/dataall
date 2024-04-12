@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.core.permissions.permission_checker import has_tenant_permission
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.catalog.db.glossary_models import GlossaryNode
@@ -17,19 +17,19 @@ def _session():
 
 class GlossariesService:
     @staticmethod
-    @has_tenant_permission(MANAGE_GLOSSARIES)
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def create_glossary(data: dict = None) -> GlossaryNode:
         with _session() as session:
             return GlossaryRepository.create_glossary(session=session, data=data)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_GLOSSARIES)
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def create_category(uri: str, data: dict = None):
         with _session() as session:
             return GlossaryRepository.create_category(session=session, uri=uri, data=data)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_GLOSSARIES)
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def create_term(uri: str, data: dict = None):
         with _session() as session:
             return GlossaryRepository.create_term(session=session, uri=uri, data=data)
@@ -94,13 +94,13 @@ class GlossariesService:
         return target
 
     @staticmethod
-    @has_tenant_permission(MANAGE_GLOSSARIES)
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def update_node(uri: str = None, data: dict = None):
         with _session() as session:
             return GlossaryRepository.update_node(session=session, uri=uri, data=data)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_GLOSSARIES)
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def delete_node(uri: str = None):
         with _session() as session:
             return GlossaryRepository.delete_node(session=session, uri=uri)

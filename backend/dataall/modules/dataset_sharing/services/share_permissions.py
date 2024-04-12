@@ -2,11 +2,14 @@
 SHARE OBJECT
 """
 
-from dataall.core.permissions.permissions import (
+from dataall.core.permissions.services.environment_permissions import (
     ENVIRONMENT_INVITED,
     ENVIRONMENT_INVITATION_REQUEST,
     ENVIRONMENT_INVITED_DEFAULT,
     ENVIRONMENT_ALL,
+)
+
+from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL,
     RESOURCES_ALL_WITH_DESC,
 )

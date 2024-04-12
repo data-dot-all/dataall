@@ -17,14 +17,15 @@ RESOURCE_PERMISSION
 
 """
 
-from dataall.core.permissions.permissions import (
-    ENVIRONMENT_ALL,
-    ENVIRONMENT_INVITED,
+from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL_WITH_DESC,
     RESOURCES_ALL,
+)
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
+from dataall.core.permissions.services.environment_permissions import (
+    ENVIRONMENT_ALL,
+    ENVIRONMENT_INVITED,
     ENVIRONMENT_INVITATION_REQUEST,
-    TENANT_ALL,
-    TENANT_ALL_WITH_DESC,
 )
 
 # Definition of TENANT_PERMISSIONS for SageMaker ML Studio
