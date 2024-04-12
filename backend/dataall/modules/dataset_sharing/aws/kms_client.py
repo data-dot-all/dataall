@@ -2,7 +2,7 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
-from dataall.modules.dataset_sharing.services.share_utils.share_policy_verifier import SharePolicyVerifier
+from dataall.modules.dataset_sharing.aws.share_policy_verifier import SharePolicyVerifier
 
 
 log = logging.getLogger(__name__)

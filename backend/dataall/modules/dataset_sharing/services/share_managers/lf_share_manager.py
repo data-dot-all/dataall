@@ -21,7 +21,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.services.share_utils.share_manager_utils import ShareErrorFormatter
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 
 logger = logging.getLogger(__name__)
 

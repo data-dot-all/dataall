@@ -24,7 +24,7 @@ from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.dataset_sharing.services.share_utils.share_manager_utils import ShareErrorFormatter
+from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
     SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
