@@ -255,17 +255,25 @@ class PipelineStack(Stack):
                     actions=[
                         'ec2:CreateNetworkInterface',
                         'ec2:DeleteNetworkInterface',
+                        
+                    ],
+                    resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
                         'ec2:AssignPrivateIpAddresses',
                         'ec2:UnassignPrivateIpAddresses',
                         
                     ],
                     resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
                 ],
                     conditions={
-                        'ArnEquals': {
-                            'ec2:Vpc': f'arn:aws:ec2:{self.region}:{self.account}:vpc/{self.vpc.vpc_id}'
-                        }}
+                        'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}
+                    },
+                    
                 ),
                 iam.PolicyStatement(
                     actions=[
