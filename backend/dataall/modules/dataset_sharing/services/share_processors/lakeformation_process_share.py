@@ -14,7 +14,7 @@ from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.dataset_sharing.services.share_utils.share_manager_utils import ShareErrorFormatter
 
 log = logging.getLogger(__name__)
 
