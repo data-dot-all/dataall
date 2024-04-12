@@ -5,7 +5,6 @@ import os
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from sqlalchemy import and_
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
@@ -37,7 +36,6 @@ from dataall.core.permissions.services.organization_permissions import (
     GET_ORGANIZATION,
     LINK_ENVIRONMENT,
 )
-
 
 log = logging.getLogger()
 
@@ -376,20 +374,8 @@ def resolve_user_role(context: Context, source: Environment):
         return EnvironmentPermission.Owner.value
     elif source.SamlGroupName in context.groups:
         return EnvironmentPermission.Admin.value
-    else:
-        with context.engine.scoped_session() as session:
-            env_group = (
-                session.query(EnvironmentGroup)
-                .filter(
-                    and_(
-                        EnvironmentGroup.environmentUri == source.environmentUri,
-                        EnvironmentGroup.groupUri.in_(context.groups),
-                    )
-                )
-                .first()
-            )
-            if env_group:
-                return EnvironmentPermission.Invited.value
+    elif EnvironmentService.is_user_invited(source.environmentUri):
+        return EnvironmentPermission.Invited.value
     return EnvironmentPermission.NotInvited.value
 
 
@@ -418,14 +404,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group: EnvironmentGroup = (
-            session.query(EnvironmentGroup)
-            .filter(
-                EnvironmentGroup.environmentUri == environment.environmentUri,
-                EnvironmentGroup.groupUri == groupUri,
-            )
-            .first()
-        )
+        env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
         if not env_group:
             raise exceptions.UnauthorizedOperation(
                 action='ENVIRONMENT_AWS_ACCESS',
@@ -700,8 +679,9 @@ def resolve_environment(context, source, **kwargs):
     """Resolves the environment for a environmental resource"""
     if not source:
         return None
+
     with context.engine.scoped_session() as session:
-        return session.query(Environment).get(source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):
