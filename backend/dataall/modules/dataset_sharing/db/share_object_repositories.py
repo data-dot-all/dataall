@@ -821,7 +821,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_all_sharable_items(session, share_uri, status=None, healthStatus=None):
+    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
         (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
             session, share_uri, status, healthStatus
         )

@@ -1601,7 +1601,7 @@ def test_update_all_share_items_status(db, client, user2, group2, share3_process
             message='',
             previous_health_status=None,
         )
-        items = ShareObjectRepository.get_all_sharable_items(session, share3_processed.shareUri)
+        items = ShareObjectRepository.get_all_shareable_items(session, share3_processed.shareUri)
         assert not verified
         for item in items:
             assert item.healthStatus == ShareItemHealthStatus.Unhealthy.value

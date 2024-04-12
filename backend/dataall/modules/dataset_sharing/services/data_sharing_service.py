@@ -77,9 +77,9 @@ class DataSharingService:
                 )
 
                 log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
-                principal_healthy = ShareObjectService.verify_principal_role(session, share)
+                share_successfull = ShareObjectService.verify_principal_role(session, share)
                 # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-                if principal_healthy:
+                if share_successfull:
                     lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
 
                     if not lock_acquired:
@@ -155,13 +155,13 @@ class DataSharingService:
                     ).process_approved_shares()
                     log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
-                    principal_healthy = (
+                    share_successfull = (
                         approved_folders_succeed and approved_s3_buckets_succeed and approved_tables_succeed
                     )
 
                 else:
                     log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
-                    items = ShareObjectRepository.get_all_sharable_items(
+                    items = ShareObjectRepository.get_all_shareable_items(
                         session,
                         share_uri,
                         ShareItemStatus.Share_Approved.value,
@@ -176,7 +176,7 @@ class DataSharingService:
                 new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share, new_share_state)
 
-                return principal_healthy
+                return share_successfull
 
         except Exception as e:
             log.error(f'Error occurred during share approval: {e}')

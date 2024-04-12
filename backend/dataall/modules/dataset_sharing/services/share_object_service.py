@@ -63,7 +63,7 @@ class ShareObjectService:
     def update_all_share_items_status(
         session, shareUri, new_health_status: str, message, previous_health_status: str = None
     ):
-        for item in ShareObjectRepository.get_all_sharable_items(
+        for item in ShareObjectRepository.get_all_shareable_items(
             session, shareUri, healthStatus=previous_health_status
         ):
             ShareObjectRepository.update_share_item_health_status(
