@@ -10,7 +10,7 @@ from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.core.stacks.db.stack_models import Stack as StackModel
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
 from dataall.base.utils import Parameter
 
@@ -19,8 +19,8 @@ log = logging.getLogger(__name__)
 
 def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
-        env: Environment = session.query(Environment).get(environmentUri)
-        stack: StackModel = session.query(StackModel).get(stackUri)
+        env = EnvironmentService.get_environment_by_uri(session=session, uri=environmentUri)
+        stack = StackRepository.get_stack_by_uri(session, stackUri)
         cfn_task = stack_helper.save_describe_stack_task(session, env, stack, None)
         CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
         return EnvironmentService.get_stack(
@@ -92,7 +92,7 @@ def get_stack_logs(context: Context, source, environmentUri: str = None, stackUr
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
-        stack = Stack.update_stack(session=session, uri=targetUri, target_type=targetType)
+        stack = StackRepository.update_stack(session=session, uri=targetUri, target_type=targetType)
     stack_helper.deploy_stack(stack.targetUri)
     return stack
 

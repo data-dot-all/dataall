@@ -63,7 +63,7 @@ def update_stack_output(session, stack):
     aws = SessionHelper.remote_session(stack.accountid, stack.region)
     cfn = aws.resource('cloudformation', region_name=stack.region)
     try:
-        stack_outputs = cfn.Stack(f'{stack.name}').outputs
+        stack_outputs = cfn.StackRepository(f'{stack.name}').outputs
     except ClientError as e:
         logger.warning(f'Failed to retrieve stack output for stack {stack.name} due to: {e}')
     if stack_outputs:
@@ -207,11 +207,11 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
     session = SessionHelper.remote_session(stack.accountid, stack.region)
     resource = session.resource('cloudformation', region_name=stack.region)
     try:
-        meta = resource.Stack(f'{stack.name}')
+        meta = resource.StackRepository(f'{stack.name}')
         return {'StackId': meta.stack_id, 'StackStatus': meta.stack_status}
     except ClientError as e:
         logger.warning(f'Failed to retrieve stack output for stack {stack.name} due to: {e}')
-        meta = resource.Stack(stack.stackid)
+        meta = resource.StackRepository(stack.stackid)
         return {'StackId': meta.stack_id, 'StackStatus': meta.stack_status}
 
 

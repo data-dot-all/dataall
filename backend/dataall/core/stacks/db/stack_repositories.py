@@ -14,10 +14,10 @@ from dataall.base.utils.naming_convention import (
 log = logging.getLogger(__name__)
 
 
-class Stack:
+class StackRepository:
     @staticmethod
     def get_stack_by_target_uri(session, target_uri):
-        stack = Stack.find_stack_by_target_uri(session, target_uri)
+        stack = StackRepository.find_stack_by_target_uri(session, target_uri)
         if not stack:
             raise exceptions.ObjectNotFound('Stack', target_uri)
         return stack
@@ -29,7 +29,7 @@ class Stack:
 
     @staticmethod
     def get_stack_by_uri(session, stack_uri):
-        stack = Stack.find_stack_by_uri(session, stack_uri)
+        stack = StackRepository.find_stack_by_uri(session, stack_uri)
         if not stack:
             raise exceptions.ObjectNotFound('Stack', stack_uri)
         return stack
@@ -77,5 +77,5 @@ class Stack:
             resource_uri=uri,
             permission_name=TargetType.get_resource_update_permission_name(target_type),
         )
-        stack = Stack.get_stack_by_target_uri(session, target_uri=uri)
+        stack = StackRepository.get_stack_by_target_uri(session, target_uri=uri)
         return stack
