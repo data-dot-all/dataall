@@ -211,7 +211,6 @@ class EnvironmentService:
         return env
 
     @staticmethod
-    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.UPDATE_ENVIRONMENT)
     def update_environment(session, uri, data=None):
