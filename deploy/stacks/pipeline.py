@@ -818,7 +818,7 @@ class PipelineStack(Stack):
                         'aws s3 sync site/ s3://$bucket',
                         "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                     ],
-                    role=self.expanded_codebuild_role,
+                    role=self.expanded_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                 ),
             )
