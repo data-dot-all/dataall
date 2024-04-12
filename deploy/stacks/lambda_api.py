@@ -66,23 +66,30 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
-
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
-        
-        esproxy_loggroup = (logs.LogGroup.from_log_group_name(self,'esproxyloggroup',f'/aws/lambda/{resource_prefix}-{envname}-esproxy'))
-        graphql_loggroup = (logs.LogGroup.from_log_group_name(self,'graphqlloggroup',f'/aws/lambda/{resource_prefix}-{envname}-graphql'))
-        awsworker_loggroup = (logs.LogGroup.from_log_group_name(self,'awsworkerloggroup',f'/aws/lambda/{resource_prefix}-{envname}-awsworker'))
-        
+
+        esproxy_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+        )
+        graphql_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+        )
+        awsworker_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+        )
+
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
-            
-            log_group=esproxy_loggroup if esproxy_loggroup is not None else logs.LogGroup(self,"esproxyloggroup",
-                                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'),
+            log_group=esproxy_loggroup
+            if esproxy_loggroup is not None
+            else logs.LogGroup(
+                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+            ),
             description='dataall es search function',
-            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name,vpc),
+            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
@@ -98,7 +105,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
-        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc)
+        api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
         api_handler_env = {'envname': envname, 'LOG_LEVEL': 'INFO', 'REAUTH_TTL': str(reauth_ttl)}
         # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name', None):
@@ -109,10 +116,13 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
-            log_group=graphql_loggroup if graphql_loggroup is not None else logs.LogGroup(self,"graphqlloggroup",
-                                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'),
+            log_group=graphql_loggroup
+            if graphql_loggroup is not None
+            else logs.LogGroup(
+                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+            ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name,vpc),
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -128,7 +138,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
-        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc)
+        awsworker_sg = self.create_lambda_sgs(envname, 'awsworker', resource_prefix, vpc)
         awshandler_env = {
             'envname': envname,
             'LOG_LEVEL': 'INFO',
@@ -138,10 +148,13 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
-            log_group=awsworker_loggroup if awsworker_loggroup is not None else logs.LogGroup(self,"awsworkerloggroup",
-                                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'),
+            log_group=awsworker_loggroup
+            if awsworker_loggroup is not None
+            else logs.LogGroup(
+                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+            ),
             description='dataall aws worker for aws asynchronous tasks function',
-            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name,vpc),
+            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
@@ -200,13 +213,16 @@ class LambdaApiStack(pyNestedClass):
             for claims_map in custom_auth.get('claims_mapping', {}):
                 custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
 
-            authorizer_fn_sg = self.create_lambda_sgs(envname, "customauthorizer", resource_prefix, vpc)
+            authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
             self.authorizer_fn = _lambda.Function(
                 self,
                 f'CustomAuthorizerFunction-{envname}',
                 function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-                log_group=logs.LogGroup(self,"customauthorizerloggroup",
-                                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer'),
+                log_group=logs.LogGroup(
+                    self,
+                    'customauthorizerloggroup',
+                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
+                ),
                 handler='custom_authorizer_lambda.lambda_handler',
                 code=_lambda.Code.from_asset(
                     path=custom_authorizer_assets,
@@ -280,7 +296,7 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
-        
+
     def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(
             self,
@@ -292,8 +308,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name,vpc):
-
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -368,7 +383,7 @@ class LambdaApiStack(pyNestedClass):
                         'logs:GetQueryResults',
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
-                        'logs:PutLogEvents'
+                        'logs:PutLogEvents',
                     ],
                     resources=[
                         f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
@@ -386,33 +401,28 @@ class LambdaApiStack(pyNestedClass):
                         'xray:GetSamplingTargets',
                         'xray:GetSamplingStatisticSummaries',
                         'cognito-idp:ListGroups',
-                        'cognito-idp:ListUsersInGroup'
+                        'cognito-idp:ListUsersInGroup',
                     ],
                     resources=['*'],
-                ), 
+                ),
                 iam.PolicyStatement(
                     actions=[
                         'ec2:CreateNetworkInterface',
                         'ec2:DeleteNetworkInterface',
-                        
                     ],
                     resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
                 ),
                 iam.PolicyStatement(
                     actions=[
                         'ec2:AssignPrivateIpAddresses',
                         'ec2:UnassignPrivateIpAddresses',
-                        
                     ],
                     resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
-                    conditions={
-                        'StringEquals': {
-                            'ec2:VpcID': f'{vpc.vpc_id}'
-                        }}
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -445,7 +455,6 @@ class LambdaApiStack(pyNestedClass):
         user_pool,
         custom_auth,
     ):
-
         api_deploy_options = apigw.StageOptions(
             throttling_rate_limit=10000,
             throttling_burst_limit=5000,
