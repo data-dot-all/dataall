@@ -1,4 +1,5 @@
 import json
+import os
 
 from aws_cdk import (
     aws_iam as iam,
@@ -17,6 +18,7 @@ from aws_cdk import (
     CfnOutput,
     Fn,
     RemovalPolicy,
+    BundlingOptions,
 )
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
@@ -26,6 +28,8 @@ from aws_cdk.aws_ec2 import (
 )
 
 from .pyNestedStack import pyNestedClass
+from .solution_bundling import SolutionBundling
+from .waf_rules import get_waf_rules
 
 
 class LambdaApiStack(pyNestedClass):
@@ -47,6 +51,12 @@ class LambdaApiStack(pyNestedClass):
         prod_sizing=False,
         user_pool=None,
         pivot_role_name=None,
+        reauth_ttl=5,
+        email_notification_sender_email_id=None,
+        email_custom_domain=None,
+        ses_configuration_set=None,
+        custom_domain=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -58,28 +68,12 @@ class LambdaApiStack(pyNestedClass):
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
-
-        esproxy_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
-        )
-        graphql_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
-        )
-        awsworker_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
-        )
-
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
-            log_group=esproxy_loggroup
-            if esproxy_loggroup is not None
-            else logs.LogGroup(
-                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
-            ),
             description='dataall es search function',
-            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
+            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
@@ -106,13 +100,8 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
-            log_group=graphql_loggroup
-            if graphql_loggroup is not None
-            else logs.LogGroup(
-                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
-            ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -120,7 +109,7 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[api_handler_sg],
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment=api_handler_env,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -138,17 +127,12 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
-            log_group=awsworker_loggroup
-            if awsworker_loggroup is not None
-            else logs.LogGroup(
-                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
-            ),
             description='dataall aws worker for aws asynchronous tasks function',
-            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
+            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment=awshandler_env,
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
@@ -208,11 +192,6 @@ class LambdaApiStack(pyNestedClass):
                 self,
                 f'CustomAuthorizerFunction-{envname}',
                 function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-                log_group=logs.LogGroup(
-                    self,
-                    'customauthorizerloggroup',
-                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
-                ),
                 handler='custom_authorizer_lambda.lambda_handler',
                 code=_lambda.Code.from_asset(
                     path=custom_authorizer_assets,
@@ -276,6 +255,7 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             vpc,
             user_pool,
+            custom_auth,
         )
 
         self.create_sns_topic(
@@ -297,7 +277,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -336,7 +316,7 @@ class LambdaApiStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:iam::*:role/{pivot_role_name}',
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
                     ],
                 ),
@@ -367,12 +347,6 @@ class LambdaApiStack(pyNestedClass):
                         'logs:StartQuery',
                         'logs:DescribeLogGroups',
                         'logs:DescribeLogStreams',
-                        'logs:DescribeQueries',
-                        'logs:StopQuery',
-                        'logs:GetQueryResults',
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
                     ],
                     resources=[
                         f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
@@ -406,25 +380,6 @@ class LambdaApiStack(pyNestedClass):
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        'ec2:CreateNetworkInterface',
-                        'ec2:DeleteNetworkInterface',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:AssignPrivateIpAddresses',
-                        'ec2:UnassignPrivateIpAddresses',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                    conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
                         'aoss:APIAccessAll',
                     ],
                     resources=[
@@ -452,6 +407,7 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix,
         vpc,
         user_pool,
+        custom_auth,
     ):
         api_deploy_options = apigw.StageOptions(
             throttling_rate_limit=10000,
@@ -474,6 +430,7 @@ class LambdaApiStack(pyNestedClass):
             apig_vpce,
             resource_prefix,
             user_pool,
+            custom_auth,
         )
 
         # Create IP set if IP filtering enabled in CDK.json
@@ -499,7 +456,7 @@ class LambdaApiStack(pyNestedClass):
                 metric_name='waf-apigw',
                 sampled_requests_enabled=True,
             ),
-            rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
+            rules=get_waf_rules(envname, 'APIGateway', custom_waf_rules, ip_set_regional),
         )
 
         wafv2.CfnWebACLAssociation(
@@ -533,15 +490,43 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce,
         resource_prefix,
         user_pool,
+        custom_auth,
     ):
-        cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
-            self,
-            'CognitoAuthorizer',
-            cognito_user_pools=[user_pool],
-            authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
-            identity_source='method.request.header.Authorization',
-            results_cache_ttl=Duration.minutes(60),
-        )
+        if custom_auth is None:
+            cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
+                self,
+                'CognitoAuthorizer',
+                cognito_user_pools=[user_pool],
+                authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
+                identity_source='method.request.header.Authorization',
+                results_cache_ttl=Duration.minutes(60),
+            )
+        else:
+            # Create a custom Authorizer
+            custom_authorizer_role = iam.Role(
+                self,
+                f'{resource_prefix}-{envname}-custom-authorizer-role',
+                role_name=f'{resource_prefix}-{envname}-custom-authorizer-role',
+                assumed_by=iam.ServicePrincipal('apigateway.amazonaws.com'),
+                description='Allow Custom Authorizer to call custom auth lambda',
+            )
+            custom_authorizer_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['lambda:InvokeFunction'],
+                    resources=[self.authorizer_fn.function_arn],
+                )
+            )
+
+            custom_authorizer = apigw.RequestAuthorizer(
+                self,
+                'CustomAuthorizer',
+                handler=self.authorizer_fn,
+                identity_sources=[apigw.IdentitySource.header('Authorization')],
+                authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
+                assume_role=custom_authorizer_role,
+                results_cache_ttl=Duration.minutes(60),
+            )
         if not internet_facing:
             if apig_vpce:
                 api_vpc_endpoint = InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
@@ -648,11 +633,14 @@ class LambdaApiStack(pyNestedClass):
         )
         graphql_proxy.add_method(
             'POST',
-            authorizer=cognito_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO,
+            authorizer=cognito_authorizer if custom_auth is None else custom_authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO
+            if custom_auth is None
+            else apigw.AuthorizationType.CUSTOM,
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
+
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')
         search_validation_model = apigw.Model(
@@ -687,8 +675,10 @@ class LambdaApiStack(pyNestedClass):
         )
         search_proxy.add_method(
             'POST',
-            authorizer=cognito_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO,
+            authorizer=cognito_authorizer if custom_auth is None else custom_authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO
+            if custom_auth is None
+            else apigw.AuthorizationType.CUSTOM,
             request_validator=request_validator,
             request_models={'application/json': search_validation_model},
         )
@@ -772,181 +762,6 @@ class LambdaApiStack(pyNestedClass):
             )
         api_policy = iam.PolicyDocument(statements=statements)
         return api_policy
-
-    @staticmethod
-    def get_waf_rules(envname, custom_waf_rules=None, ip_set_regional=None):
-        waf_rules = []
-        priority = 0
-        if custom_waf_rules:
-            if custom_waf_rules.get('allowed_geo_list'):
-                waf_rules.append(
-                    wafv2.CfnWebACL.RuleProperty(
-                        name='GeoMatch',
-                        statement=wafv2.CfnWebACL.StatementProperty(
-                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
-                                statement=wafv2.CfnWebACL.StatementProperty(
-                                    geo_match_statement=wafv2.CfnWebACL.GeoMatchStatementProperty(
-                                        country_codes=custom_waf_rules.get('allowed_geo_list')
-                                    )
-                                )
-                            )
-                        ),
-                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
-                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                            sampled_requests_enabled=True,
-                            cloud_watch_metrics_enabled=True,
-                            metric_name='GeoMatch',
-                        ),
-                        priority=priority,
-                    )
-                )
-                priority += 1
-            if custom_waf_rules.get('allowed_ip_list'):
-                waf_rules.append(
-                    wafv2.CfnWebACL.RuleProperty(
-                        name='IPMatch',
-                        statement=wafv2.CfnWebACL.StatementProperty(
-                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
-                                statement=wafv2.CfnWebACL.StatementProperty(
-                                    ip_set_reference_statement={'arn': ip_set_regional.attr_arn}
-                                )
-                            )
-                        ),
-                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
-                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                            sampled_requests_enabled=True,
-                            cloud_watch_metrics_enabled=True,
-                            metric_name='IPMatch',
-                        ),
-                        priority=priority,
-                    )
-                )
-                priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesAdminProtectionRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesAdminProtectionRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesAmazonIpReputationList',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesAmazonIpReputationList'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesCommonRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesCommonRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesCommonRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesKnownBadInputsRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesLinuxRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesLinuxRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesLinuxRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesSQLiRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesSQLiRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesSQLiRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='APIGatewayRateLimit',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(aggregate_key_type='IP', limit=1000)
-                ),
-                action=wafv2.CfnWebACL.RuleActionProperty(block={}),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name=f'WAFAPIGatewayRateLimit{envname}',
-                ),
-                priority=priority,
-            )
-        )
-        priority += 1
-        return waf_rules
 
     def create_sns_topic(self, construct_id, envname, lambda_function, param_name, topic_name=None):
         key = kms.Key(
