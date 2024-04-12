@@ -1,9 +1,8 @@
 import json
 import logging
+from dataall.base.aws.iam import IAM
 
 logger = logging.getLogger(__name__)
-
-from dataall.base.aws.iam import IAM
 
 
 class SharePolicyVerifier:
