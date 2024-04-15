@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 ENVNAME = os.getenv('envname', 'local')
 
+
 class PivotRoleStatementSet(object):
     def __init__(self, stack, env_resource_prefix, role_name, account, region, environmentUri):
         self.stack = stack
@@ -109,13 +110,13 @@ class PivotRole(NestedStack):
             managed_policies=managed_policies,
         )
 
-        if ENVNAME == "local":
+        if ENVNAME == 'local':
             # Less restrictive trust policy for local development
             role.assume_role_policy.add_statements(
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     principals=[iam.AccountPrincipal(account_id=principal_id)],
-                    actions=['sts:AssumeRole']
+                    actions=['sts:AssumeRole'],
                 )
             )
         else:
