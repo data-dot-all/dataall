@@ -9,8 +9,10 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemActions,
     ShareableType,
 )
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
@@ -72,6 +74,12 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info('No tables to share. Skipping...')
         else:
             try:
+                if not ShareObjectService.verify_principal_role(self.session, self.share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {self.share.principalIAMRoleName} is not found. Failed to update LF policy',
+                    )
+
                 if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                     raise Exception(
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
