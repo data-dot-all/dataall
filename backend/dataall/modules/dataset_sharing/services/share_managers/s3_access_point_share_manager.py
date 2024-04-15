@@ -8,12 +8,22 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.modules.dataset_sharing.aws.s3_client import (
+    S3ControlClient,
+    S3Client,
+    DATAALL_ALLOW_OWNER_SID,
+    DATAALL_DELEGATE_TO_ACCESS_POINT,
+)
+from dataall.modules.dataset_sharing.aws.kms_client import (
+    KmsClient,
+    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+)
 from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
     SharePolicyService,
@@ -26,10 +36,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
-DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
-DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = 'DataAll-Access-Point-KMS-Decrypt'
-DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
-DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
 
 class S3AccessPointShareManager:
@@ -525,6 +531,13 @@ class S3AccessPointShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+
+        if not target_requester_arn:
+            raise PrincipalRoleNotFound(
+                'update dataset bucket key policy',
+                f'Principal role {self.target_requester_IAMRoleName} is not found. Failed to update KMS key policy',
+            )
+
         pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
 
         if existing_policy:
@@ -632,10 +645,14 @@ class S3AccessPointShareManager:
             resource_prefix=self.target_environment.resourcePrefix,
         )
 
+        role_arn = IAM.get_role_arn_by_name(
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+        )
+
         # Backwards compatibility
         # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
         # We create the policy from the inline statements and attach it to the role
-        if not share_policy_service.check_if_policy_exists():
+        if not share_policy_service.check_if_policy_exists() and role_arn:
             share_policy_service.create_managed_policy_from_inline_and_delete_inline()
             share_policy_service.attach_policy()
         # End of backwards compatibility
@@ -645,6 +662,10 @@ class S3AccessPointShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_account_id, self.target_environment.region, share_resource_policy_name
         )
+
+        if not policy_document:
+            logger.info(f'Policy {share_resource_policy_name} is not found')
+            return
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
