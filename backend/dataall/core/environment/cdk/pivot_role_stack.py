@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
@@ -107,22 +108,32 @@ class PivotRole(NestedStack):
             managed_policies=managed_policies,
         )
 
-        role.assume_role_policy.add_statements(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                principals=[iam.AccountPrincipal(account_id=principal_id)],
-                actions=['sts:AssumeRole'],
-                conditions={
-                    'StringEquals': {'sts:ExternalId': external_id},
-                    'StringLike': {
-                        'aws:PrincipalArn': [
-                            f'arn:aws:iam::{principal_id}:role/*graphql-role',
-                            f'arn:aws:iam::{principal_id}:role/*awsworker-role',
-                            f'arn:aws:iam::{principal_id}:role/*ecs-tasks-role',
-                        ]
-                    },
-                },
+        if os.getenv("envname", "local") == "local":
+            # Less restrictive trust policy for local development
+            role.assume_role_policy.add_statements(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    principals=[iam.AccountPrincipal(account_id=principal_id)],
+                    actions=['sts:AssumeRole']
+                )
             )
-        )
+        else:
+            role.assume_role_policy.add_statements(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    principals=[iam.AccountPrincipal(account_id=principal_id)],
+                    actions=['sts:AssumeRole'],
+                    conditions={
+                        'StringEquals': {'sts:ExternalId': external_id},
+                        'StringLike': {
+                            'aws:PrincipalArn': [
+                                f'arn:aws:iam::{principal_id}:role/*graphql-role',
+                                f'arn:aws:iam::{principal_id}:role/*awsworker-role',
+                                f'arn:aws:iam::{principal_id}:role/*ecs-tasks-role',
+                            ]
+                        },
+                    },
+                )
+            )
 
         return role
