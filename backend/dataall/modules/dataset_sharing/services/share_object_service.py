@@ -41,9 +41,9 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     GET_SHARE_OBJECT,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
 import logging

@@ -1,5 +1,5 @@
 import pytest
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_models import Dataset
 from dataall.core.environment.tasks.env_stacks_updater import update_stacks
 
 

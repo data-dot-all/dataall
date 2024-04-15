@@ -42,10 +42,10 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
 

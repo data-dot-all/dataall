@@ -5,7 +5,7 @@ import pytest
 
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput, UnauthorizedOperation, AWSResourceNotFound
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_models import Dataset
 
 
 def test_s3_managed_bucket_import(mock_aws_client):

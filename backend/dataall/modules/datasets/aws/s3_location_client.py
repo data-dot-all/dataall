@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 
 log = logging.getLogger(__name__)
 

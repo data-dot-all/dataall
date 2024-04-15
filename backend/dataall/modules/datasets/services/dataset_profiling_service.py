@@ -12,10 +12,10 @@ from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repositories import DatasetProfilingRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
-from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, DatasetTable
-from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification
+from dataall.modules.datasets.db.dataset_models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
 
 
 class DatasetProfilingService:

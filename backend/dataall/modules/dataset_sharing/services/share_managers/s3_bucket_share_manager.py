@@ -23,7 +23,7 @@ from dataall.modules.dataset_sharing.services.managed_share_policy_service impor
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetBucket
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 from dataall.modules.feed.api.registry import FeedRegistry
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable
+from dataall.modules.datasets.db.dataset_models import DatasetTable
 
 
 def test_dataset_registered():

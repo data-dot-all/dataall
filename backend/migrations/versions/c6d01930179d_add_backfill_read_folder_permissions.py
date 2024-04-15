@@ -12,8 +12,8 @@ from sqlalchemy import and_
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.datasets_base.services.permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType
 

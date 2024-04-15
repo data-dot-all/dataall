@@ -17,10 +17,10 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DELETE_DATASET_TABLE,
     SYNC_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import (
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_READ,
     GET_DATASET_TABLE,

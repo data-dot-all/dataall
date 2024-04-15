@@ -14,7 +14,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'

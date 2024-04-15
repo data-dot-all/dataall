@@ -31,8 +31,8 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
     APPROVE_SHARE_OBJECT,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import Dataset
 
 log = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from sqlalchemy import and_
 
 from dataall.base.db import paginate
-from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets.db.dataset_models import DatasetProfilingRun, DatasetTable
 
 
 class DatasetProfilingRepository:

@@ -6,7 +6,7 @@ from aws_cdk import App
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)

@@ -5,7 +5,7 @@ import re
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 

@@ -14,9 +14,9 @@ from dataall.modules.datasets.services.dataset_permissions import (
     LIST_DATASET_FOLDERS,
     DELETE_DATASET_FOLDER,
 )
-from dataall.modules.datasets_base.services.permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 
 
 class DatasetLocationService:
