@@ -32,6 +32,55 @@ class DBMigrationStack(pyNestedClass):
                 iam.AccountPrincipal(tooling_account_id),
             ),
         )
+        private_subnets = vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT)
+
+        subnet_resources = []
+
+        for subnet in private_subnets.subnets:
+            subnet_resources.append(f'arn:aws:ec2:{self.region}:{self.account}:subnet/{subnet.subnet_id}')
+
+        subnet_iam_condition = {'ec2:Subnet': subnet_resources, 'ec2:AuthorizedService': 'codebuild.amazonaws.com'}
+
+        self.build_project_role.attach_inline_policy(
+            iam.Policy(
+                self,
+                f'DBMigrationCBProject{envname}PolicyDocument',
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            'ec2:CreateNetworkInterface',
+                            'ec2:DeleteNetworkInterface',
+                        ],
+                        resources=[
+                            f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                        ],
+                    ),
+                    iam.PolicyStatement(
+                        actions=[
+                            'ec2:CreateNetworkInterfacePermission',
+                        ],
+                        resources=[
+                            f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                        ],
+                        conditions={
+                            'StringEquals': subnet_iam_condition,
+                        },
+                    ),
+                    iam.PolicyStatement(
+                        actions=[
+                            'ec2:DescribeNetworkInterfaces',
+                            'ec2:DescribeSubnets',
+                            'ec2:DescribeSecurityGroups',
+                            'ec2:DescribeDhcpOptions',
+                            'ec2:DescribeVpcs',
+                        ],
+                        resources=['*'],
+                    ),
+                ],
+            )
+        )
+
         self.build_project_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
@@ -107,6 +156,29 @@ class DBMigrationStack(pyNestedClass):
                 conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
             ),
         )
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{resource_prefix}-{envname}-dbmigration*',
+                ],
+            )
+        )
+
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'codebuild:CreateReportGroup',
+                    'codebuild:CreateReport',
+                    'codebuild:UpdateReport',
+                    'codebuild:BatchPutTestCases',
+                    'codebuild:BatchPutCodeCoverages',
+                ],
+                resources=[
+                    f'arn:aws:codebuild:{self.region}:{self.account}:report-group:{resource_prefix}-{envname}-dbmigration-*',
+                ],
+            )
+        )
         self.codebuild_sg = ec2.SecurityGroup(
             self,
             f'DBMigrationCBSG{envname}',
@@ -135,7 +207,7 @@ class DBMigrationStack(pyNestedClass):
             environment=codebuild.BuildEnvironment(
                 build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
             ),
-            role=self.build_project_role,
+            role=self.build_project_role.without_policy_updates(),
             build_spec=codebuild.BuildSpec.from_object(
                 dict(
                     version='0.2',
@@ -163,3 +235,5 @@ class DBMigrationStack(pyNestedClass):
             ),
             security_groups=[self.codebuild_sg],
         )
+
+        self.db_migration_project.node.add_dependency(self.build_project_role)
