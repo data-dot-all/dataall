@@ -9,7 +9,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.db import exceptions
@@ -79,7 +79,7 @@ class DataPipelineService:
                 )
 
             if data['devStrategy'] == 'cdk-trunk':
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
@@ -88,7 +88,7 @@ class DataPipelineService:
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
