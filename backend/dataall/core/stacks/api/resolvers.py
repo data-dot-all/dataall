@@ -8,9 +8,9 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
-from dataall.core.stacks.db.stack_models import Stack as StackModel
+from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
 from dataall.base.utils import Parameter
 
@@ -19,8 +19,8 @@ log = logging.getLogger(__name__)
 
 def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
-        env: Environment = session.query(Environment).get(environmentUri)
-        stack: StackModel = session.query(StackModel).get(stackUri)
+        env: Environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+        stack: Stack = StackRepository.get_stack_by_uri(session, stackUri)
         cfn_task = stack_helper.save_describe_stack_task(session, env, stack, None)
         CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
         return EnvironmentService.get_stack(
@@ -36,31 +36,31 @@ def resolve_link(context, source, **kwargs):
     return f'https://{source.region}.console.aws.amazon.com/cloudformation/home?region={source.region}#/stacks/stackinfo?stackId={source.stackid}'
 
 
-def resolve_outputs(context, source: StackModel, **kwargs):
+def resolve_outputs(context, source: Stack, **kwargs):
     if not source:
         return None
     return json.dumps(source.outputs or {})
 
 
-def resolve_resources(context, source: StackModel, **kwargs):
+def resolve_resources(context, source: Stack, **kwargs):
     if not source:
         return None
     return json.dumps(source.resources or {})
 
 
-def resolve_error(context, source: StackModel, **kwargs):
+def resolve_error(context, source: Stack, **kwargs):
     if not source:
         return None
     return json.dumps(source.error or {})
 
 
-def resolve_events(context, source: StackModel, **kwargs):
+def resolve_events(context, source: Stack, **kwargs):
     if not source:
         return None
     return json.dumps(source.events or {})
 
 
-def resolve_task_id(context, source: StackModel, **kwargs):
+def resolve_task_id(context, source: Stack, **kwargs):
     if not source:
         return None
     if source.EcsTaskArn:
@@ -92,7 +92,7 @@ def get_stack_logs(context: Context, source, environmentUri: str = None, stackUr
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
-        stack = Stack.update_stack(session=session, uri=targetUri, target_type=targetType)
+        stack = StackRepository.update_stack(session=session, uri=targetUri, target_type=targetType)
     stack_helper.deploy_stack(stack.targetUri)
     return stack
 

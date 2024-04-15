@@ -9,12 +9,12 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
@@ -101,7 +101,7 @@ class SagemakerStudioService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @ResourcePolicyService.has_resource_permission(CREATE_SGMSTUDIO_USER)
-    @has_group_permission(CREATE_SGMSTUDIO_USER)
+    @GroupPolicyService.has_group_permission(CREATE_SGMSTUDIO_USER)
     def create_sagemaker_studio_user(*, uri: str, admin_group: str, request: SagemakerStudioCreationRequest):
         """
         Creates an ML Studio user
@@ -165,7 +165,7 @@ class SagemakerStudioService:
                     resource_type=SagemakerStudioUser.__name__,
                 )
 
-            Stack.create_stack(
+            StackRepository.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='mlstudio',

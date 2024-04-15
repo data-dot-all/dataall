@@ -10,13 +10,13 @@ from typing import List, Dict
 
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
@@ -69,7 +69,7 @@ class NotebookService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(CREATE_NOTEBOOK)
-    @has_group_permission(CREATE_NOTEBOOK)
+    @GroupPolicyService.has_group_permission(CREATE_NOTEBOOK)
     def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
@@ -138,7 +138,7 @@ class NotebookService:
                     resource_type=SagemakerNotebook.__name__,
                 )
 
-            Stack.create_stack(
+            StackRepository.create_stack(
                 session=session,
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',

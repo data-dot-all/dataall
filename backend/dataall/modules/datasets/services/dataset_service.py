@@ -11,11 +11,12 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
@@ -113,7 +114,7 @@ class DatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREATE_DATASET)
-    @has_group_permission(CREATE_DATASET)
+    @GroupPolicyService.has_group_permission(CREATE_DATASET)
     def create_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -436,7 +437,7 @@ class DatasetService:
 
     @staticmethod
     def _create_dataset_stack(session, dataset: Dataset) -> Stack:
-        return Stack.create_stack(
+        return StackRepository.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,

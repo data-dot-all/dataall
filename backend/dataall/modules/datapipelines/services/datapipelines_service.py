@@ -3,13 +3,13 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.db import exceptions
@@ -37,7 +37,7 @@ class DataPipelineService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline(
         uri: str,
         admin_group: str,
@@ -79,7 +79,7 @@ class DataPipelineService:
                 )
 
             if data['devStrategy'] == 'cdk-trunk':
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
@@ -88,7 +88,7 @@ class DataPipelineService:
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
@@ -103,7 +103,7 @@ class DataPipelineService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline_environment(
         uri: str,
         admin_group: str,
