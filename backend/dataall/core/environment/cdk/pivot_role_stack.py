@@ -110,7 +110,7 @@ class PivotRole(NestedStack):
             managed_policies=managed_policies,
         )
 
-        if ENVNAME == 'local':
+        if ENVNAME in ['local', 'dkrcompose']:
             # Less restrictive trust policy for local development
             role.assume_role_policy.add_statements(
                 iam.PolicyStatement(
