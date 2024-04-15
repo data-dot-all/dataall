@@ -23,9 +23,11 @@ class StackRepository:
         return stack
 
     @staticmethod
-    def find_stack_by_target_uri(session, target_uri):
-        stack: models.Stack = session.query(models.Stack).filter(models.Stack.targetUri == target_uri).first()
-        return stack
+    def find_stack_by_target_uri(session, target_uri, statuses=None):
+        query = session.query(models.Stack).filter(models.Stack.targetUri == target_uri)
+        if statuses:
+            query = query.filter(models.Stack.status.in_(statuses))
+        return query.first()
 
     @staticmethod
     def get_stack_by_uri(session, stack_uri):

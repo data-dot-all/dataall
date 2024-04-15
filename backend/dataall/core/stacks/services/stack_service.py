@@ -2,6 +2,7 @@ import os
 
 import requests
 
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
@@ -14,12 +15,11 @@ from dataall.base.utils import Parameter
 
 
 class StackService:
-
     @staticmethod
     def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env: Environment = session.query(Environment).get(environmentUri)
+            env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
             if not stack:
                 stack = Stack(
