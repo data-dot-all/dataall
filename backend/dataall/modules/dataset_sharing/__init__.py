@@ -3,7 +3,6 @@ from typing import List, Type, Set
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareEnvironmentResource
-from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.base.loader import ModuleInterface, ImportMode
 
 
@@ -18,8 +17,9 @@ class SharingApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
+        from dataall.modules.datasets import DatasetApiModuleInterface
 
-        return [DatasetBaseModuleInterface, NotificationsModuleInterface]
+        return [DatasetApiModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
@@ -39,8 +39,9 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
+        from dataall.modules.datasets import DatasetAsyncHandlersModuleInterface
 
-        return [DatasetBaseModuleInterface, NotificationsModuleInterface]
+        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         import dataall.modules.dataset_sharing.handlers
