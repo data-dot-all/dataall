@@ -16,7 +16,7 @@ from dataall.core.environment.services.environment_resource_manager import Envir
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.services.vpc_service import VpcService
@@ -121,7 +121,7 @@ def create_environment(context: Context, source, input={}):
             target_uri=env.environmentUri,
             target_label=env.label,
         )
-    stack_helper.deploy_stack(targetUri=env.environmentUri)
+    StackService.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value
     return env
 
@@ -148,7 +148,7 @@ def update_environment(context: Context, source, environmentUri: str = None, inp
         )
 
         if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
-            stack_helper.deploy_stack(targetUri=environment.environmentUri)
+            StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -161,7 +161,7 @@ def invite_group(context: Context, source, input):
             data=input,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -192,7 +192,7 @@ def update_group_permissions(context, source, input):
             data=input,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -205,7 +205,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
             group=groupUri,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -479,7 +479,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 
 
 def get_environment_stack(context: Context, source: Environment, **kwargs):
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
     )
@@ -491,7 +491,7 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
         EnvironmentService.delete_environment(session, uri=environmentUri, environment=environment)
 
     if deleteFromAWS:
-        stack_helper.delete_stack(
+        StackService.delete_stack(
             target_uri=environmentUri,
             accountid=environment.AwsAccountId,
             cdk_role_arn=environment.CDKRoleArn,
@@ -532,7 +532,7 @@ def enable_subscriptions(context: Context, source, environmentUri: str = None, i
         environment.subscriptionsConsumersTopicImported = False
         environment.subscriptionsEnabled = True
         session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        StackService.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -553,7 +553,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
         environment.subscriptionsProducersTopicImported = False
         environment.subscriptionsEnabled = False
         session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        StackService.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 

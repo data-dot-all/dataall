@@ -1,8 +1,8 @@
 import logging
 
-from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -147,7 +147,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
 def get_dataset_stack(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.datasetUri,
         environmentUri=source.environmentUri,
     )

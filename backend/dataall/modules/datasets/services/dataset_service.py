@@ -7,13 +7,13 @@ from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
@@ -365,7 +365,7 @@ class DatasetService:
 
     @staticmethod
     def get_dataset_stack(dataset: Dataset):
-        return stack_helper.get_stack_with_cfn_resources(
+        return StackService.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,
             environmentUri=dataset.environmentUri,
         )
@@ -417,13 +417,13 @@ class DatasetService:
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
+            StackService.delete_stack(
                 target_uri=uri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
             )
-            stack_helper.deploy_stack(dataset.environmentUri)
+            StackService.deploy_stack(dataset.environmentUri)
         return True
 
     @staticmethod
@@ -432,8 +432,8 @@ class DatasetService:
         Each dataset stack deployment triggers environment stack update
         to rebuild teams IAM roles data access policies
         """
-        stack_helper.deploy_stack(dataset.datasetUri)
-        stack_helper.deploy_stack(dataset.environmentUri)
+        StackService.deploy_stack(dataset.datasetUri)
+        StackService.deploy_stack(dataset.environmentUri)
 
     @staticmethod
     def _create_dataset_stack(session, dataset: Dataset) -> Stack:

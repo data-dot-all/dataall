@@ -5,7 +5,7 @@ import os
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.core.stacks.db.stack_models import Stack
@@ -21,7 +21,7 @@ def get_stack(context: Context, source, environmentUri: str = None, stackUri: st
     with context.engine.scoped_session() as session:
         env: Environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         stack: Stack = StackRepository.get_stack_by_uri(session, stackUri)
-        cfn_task = stack_helper.save_describe_stack_task(session, env, stack, None)
+        cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
         CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
         return EnvironmentService.get_stack(
             session=session,
@@ -93,7 +93,7 @@ def get_stack_logs(context: Context, source, environmentUri: str = None, stackUr
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
         stack = StackRepository.update_stack(session=session, uri=targetUri, target_type=targetType)
-    stack_helper.deploy_stack(stack.targetUri)
+    StackService.deploy_stack(stack.targetUri)
     return stack
 
 
@@ -113,5 +113,5 @@ def update_key_value_tags(context: Context, source, input=None):
             uri=input['targetUri'],
             data=input,
         )
-        stack_helper.deploy_stack(targetUri=input['targetUri'])
+        StackService.deploy_stack(targetUri=input['targetUri'])
         return kv_tags

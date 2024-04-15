@@ -14,10 +14,10 @@ from dataall.core.permissions.services.group_policy_service import GroupPolicySe
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
@@ -146,7 +146,7 @@ class NotebookService:
                 target_label=notebook.label,
             )
 
-        stack_helper.deploy_stack(targetUri=notebook.notebookUri)
+        StackService.deploy_stack(targetUri=notebook.notebookUri)
 
         return notebook
 
@@ -211,7 +211,7 @@ class NotebookService:
             env: Environment = EnvironmentService.get_environment_by_uri(session, notebook.environmentUri)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
+            StackService.delete_stack(
                 target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
             )
 
