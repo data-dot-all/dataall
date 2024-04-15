@@ -52,7 +52,10 @@ data.all to multiple environments on the same or multiple AWS accounts (e.g dev,
 with `internet_facing` set to true, `us-east-1` is required for the deployment of some frontend components. 
 Backend resources can be hosted in any region given that the AWS services used are available.
 
-**Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
+**Important**: the selected region for the tooling account and for the backend resources (deployment account) MUST be 
+the same one.
+
+If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
 and the Deployment account.
 
 Make sure that the AWS services used in data.all are available in the Regions you choose for tooling and deployment. 
@@ -120,6 +123,8 @@ It needs to be bootstrapped with CDK in 2 regions, your selected region and us-e
 The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
 Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
 
+Remember that the selected region for the tooling account and for the backend resources (deployment account) MUST be 
+the same one.
 
 Run the commands below with the AWS credentials of the tooling account:
 
@@ -235,7 +240,7 @@ and find 2 examples of cdk.json files.
 | ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                          |
 | envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                                                                              |
 | account                                       | REQUIRED              | The AWS deployment account (deployment account N)                                                                                                                                                                                                                                                                                                                                                                    |
-| region                                        | REQUIRED              | The AWS deployment region                                                                                                                                                                                                                                                                                                                                                                                            |
+| region                                        | REQUIRED              | The AWS deployment region - Must be the same as the `tooling_region`                                                                                                                                                                                                                                                                                                                                                 |
 | with_approval                                 | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                                                                                                                                                                                          |
 | vpc_id                                        | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                                                                                                                                                                                               |
 | vpc_endpoints_sg                              | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                                                                                                                                                                                                 |
@@ -301,7 +306,7 @@ deploy to 2 deployments accounts.
         {
             "envname": "dev",
             "account": "000000000000",
-            "region": "eu-west-1",
+            "region": "eu-west-2",
             "with_approval": false,
             "internet_facing": true,
             "prod_sizing": false,
@@ -312,7 +317,7 @@ deploy to 2 deployments accounts.
         {
             "envname": "prod",
             "account": "111111111111",
-            "region": "eu-west-1",
+            "region": "eu-west-2",
             "with_approval": true,
             "internet_facing": false,
             "vpc_id": "vpc-0987654321EXAMPLE",
@@ -360,7 +365,7 @@ deploy to 2 deployments accounts.
         {
             "envname": "dev",
             "account": "000000000000",
-            "region": "eu-west-1",
+            "region": "eu-west-2",
             "with_approval": false,
             "internet_facing": true,
             "prod_sizing": false,
