@@ -7,6 +7,7 @@ from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunk
 
 logger = logging.getLogger(__name__)
 
+ENVNAME = os.getenv('envname', 'local')
 
 class PivotRoleStatementSet(object):
     def __init__(self, stack, env_resource_prefix, role_name, account, region, environmentUri):
@@ -108,7 +109,7 @@ class PivotRole(NestedStack):
             managed_policies=managed_policies,
         )
 
-        if os.getenv("envname", "local") == "local":
+        if ENVNAME == "local":
             # Less restrictive trust policy for local development
             role.assume_role_policy.add_statements(
                 iam.PolicyStatement(
