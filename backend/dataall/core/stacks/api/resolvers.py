@@ -14,7 +14,14 @@ from dataall.base.utils import Parameter
 log = logging.getLogger(__name__)
 
 
-def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None, targetUri: str = None, targetType: str = None):
+def get_stack(
+    context: Context,
+    source,
+    environmentUri: str = None,
+    stackUri: str = None,
+    targetUri: str = None,
+    targetType: str = None,
+):
     env = EnvironmentService.find_environment_by_uri(uri=environmentUri)
     return StackService.get_and_describe_stack_in_env(env, stackUri, targetUri, targetType)
 

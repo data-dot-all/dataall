@@ -141,7 +141,7 @@ class StackService:
                 permission_name=TargetType.get_resource_read_permission_name(target_type),
             )
             stack: Stack = StackRepository.get_stack_by_uri(session, stack_uri)
-            
+
             cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
             CloudFormation.describe_stack_resources(engine=get_context().db_engine, task=cfn_task)
         return stack
