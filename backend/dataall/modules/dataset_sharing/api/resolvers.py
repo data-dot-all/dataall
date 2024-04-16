@@ -324,3 +324,11 @@ def verify_dataset_share_objects(context: Context, source, input):
 @is_feature_enabled('modules.datasets.features.aws_actions')
 def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)
+
+
+def list_dataset_share_objects(context, source, filter: dict = None):
+    if not source:
+        return None
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetSharingService.list_dataset_share_objects(source, filter)

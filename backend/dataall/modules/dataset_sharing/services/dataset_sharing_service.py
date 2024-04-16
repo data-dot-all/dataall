@@ -23,6 +23,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
 from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset
 
 import logging
 
@@ -113,6 +114,10 @@ class DatasetSharingService(DatasetServiceInterface):
                         resource_uri=share.shareUri,
                     )
 
+    @staticmethod
+    def list_dataset_share_objects(dataset: Dataset, data: dict = None):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
