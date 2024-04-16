@@ -47,7 +47,9 @@ export const Stack = (props) => {
       if (isFetching) setLoading(true);
       if (isRefreshing) setRefreshing(true);
       try {
-        const response = await client.query(getStack(environmentUri, stackUri));
+        const response = await client.query(
+          getStack(environmentUri, stackUri, targetUri, targetType)
+        );
         if (response && !response.errors) {
           setStack({ ...response.data.getStack });
           setStackName(`${response.data.getStack.name}`);

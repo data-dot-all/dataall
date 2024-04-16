@@ -29,7 +29,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { KeyValueTagList, StackStatus, Stack } from 'modules/Shared';
+import { KeyValueTagList, Stack } from 'modules/Shared';
 import { NotebookOverview } from '../components';
 import {
   deleteSagemakerNotebook,
@@ -72,7 +72,6 @@ const NotebookView = () => {
   const [isStartingNotebook, setIsStartingNotebook] = useState(false);
   const [isRefreshingNotebook, setIsRefreshingNotebook] = useState(false);
   const [notebook, setNotebook] = useState(null);
-  const [stack, setStack] = useState(null);
   const [isOpeningSagemakerNotebook, setIsOpeningSagemakerNotebook] =
     useState(false);
   const [isStoppedInstance, setIsStoppedInstance] = useState({});
@@ -97,9 +96,6 @@ const NotebookView = () => {
     const response = await client.query(getSagemakerNotebook(params.uri));
     if (!response.errors) {
       setNotebook(response.data.getSagemakerNotebook);
-      if (response.data.getSagemakerNotebook.stack) {
-        setStack(response.data.getSagemakerNotebook.stack);
-      }
       const status = response.data.getSagemakerNotebook.NotebookInstanceStatus;
       if (status === 'Stopped' || status === 'Stopping') {
         setIsStoppedInstance(true);
@@ -258,11 +254,6 @@ const NotebookView = () => {
       <Helmet>
         <title>Notebooks: Notebook Details | data.all</title>
       </Helmet>
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={notebook.environment?.environmentUri}
-      />
       <Box
         sx={{
           backgroundColor: 'background.default',

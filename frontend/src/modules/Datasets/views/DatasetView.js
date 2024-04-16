@@ -36,12 +36,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getDataset, countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteDataset } from '../services';
 import { ShareBoxList } from 'modules/Shares';
-import {
-  FeedComments,
-  KeyValueTagList,
-  StackStatus,
-  Stack
-} from 'modules/Shared';
+import { FeedComments, KeyValueTagList, Stack } from 'modules/Shared';
 import {
   DatasetAWSActions,
   DatasetData,
@@ -64,7 +59,6 @@ const DatasetView = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isUpVoted, setIsUpVoted] = useState(false);
   const [upVotes, setUpvotes] = useState(null);
-  const [stack, setStack] = useState(null);
   const [openFeed, setOpenFeed] = useState(false);
   const getTabs = () => {
     const tabs = [
@@ -156,11 +150,6 @@ const DatasetView = () => {
         ) !== -1
       );
       setUpvotes(response.data.getDataset.statistics.upvotes);
-      if (response.data.getDataset.stack) {
-        setStack(response.data.getDataset.stack);
-      } else {
-        setStack({ status: 'CREATE_FAILED' });
-      }
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -214,13 +203,6 @@ const DatasetView = () => {
       <Helmet>
         <title>Datasets: Dataset Details | data.all</title>
       </Helmet>
-      {isAdmin && (
-        <StackStatus
-          stack={stack}
-          setStack={setStack}
-          environmentUri={dataset.environment?.environmentUri}
-        />
-      )}
       <Box
         sx={{
           backgroundColor: 'background.default',

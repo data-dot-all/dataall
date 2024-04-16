@@ -7,6 +7,8 @@ getStack = gql.QueryField(
     args=[
         gql.Argument(name='environmentUri', type=gql.String),
         gql.Argument(name='stackUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='targetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='targetType', type=gql.NonNullableType(gql.String)),
     ],
     resolver=get_stack,
 )
