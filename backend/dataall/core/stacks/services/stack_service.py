@@ -20,7 +20,6 @@ from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.core.environment.db.environment_models import Environment
 
-
 log = logging.getLogger(__name__)
 
 
@@ -134,16 +133,6 @@ class StackService:
     def get_stack_by_uri(stack_uri):
         with get_context().db_engine.scoped_session() as session:
             return StackRepository.get_stack_by_uri(session, stack_uri)
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def get_environmental_stack_by_uri(uri, stack_uri):
-        """
-        :param uri: environmental_uri, used for permissions check
-        :param stack_uri:
-        :return:
-        """
-        StackService.get_stack_by_uri(stack_uri)
 
     @staticmethod
     def get_and_describe_stack_in_env(env: Environment, stack_uri):
