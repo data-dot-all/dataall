@@ -80,22 +80,3 @@ class KmsClient:
             return None
         else:
             return response['KeyMetadata']['KeyId']
-
-    def check_key_exists(self, key_alias: str):
-        try:
-            key_exist = False
-            paginator = self._client.get_paginator('list_aliases')
-            for page in paginator.paginate():
-                key_aliases = [alias['AliasName'] for alias in page['Aliases']]
-                if key_alias in key_aliases:
-                    key_exist = True
-                    break
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(
-                    f'Data.all Environment Pivot Role does not have kms:ListAliases Permission in account {self._account_id}: {e}'
-                )
-            log.error(f'Failed to list KMS key aliases in account {self._account_id}: {e}')
-            return None
-        else:
-            return key_exist
