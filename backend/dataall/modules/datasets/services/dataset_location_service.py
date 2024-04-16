@@ -2,8 +2,7 @@ from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.base.db.exceptions import ResourceAlreadyExists
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -87,14 +86,8 @@ class DatasetLocationService:
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
-            has_shares = ShareObjectRepository.has_shared_items(session, location.locationUri)
-            if has_shares:
-                raise ResourceShared(
-                    action=DELETE_DATASET_FOLDER,
-                    message='Revoke all folder shares before deletion',
-                )
-
-            ShareObjectRepository.delete_shares(session, location.locationUri)
+            DatasetRepository.check_before_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
+            DatasetRepository.execute_on_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
             DatasetLocationService._delete_dataset_folder_read_permission(session, dataset, location.locationUri)
             DatasetLocationRepository.delete(session, location)
             GlossaryRepository.delete_glossary_terms_links(

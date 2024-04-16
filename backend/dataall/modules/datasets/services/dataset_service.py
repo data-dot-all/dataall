@@ -377,15 +377,7 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
-            )
-            if shares:
-                raise exceptions.UnauthorizedOperation(
-                    action=DELETE_DATASET,
-                    message=f'Dataset {dataset.name} is shared with other teams. '
-                    'Revoke all dataset shares before deletion.',
-                )
+            DatasetRepository.check_before_delete(session, uri, action=DELETE_DATASET)
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
             for tableUri in tables:
@@ -397,7 +389,7 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            DatasetRepository.execute_on_delete(session, uri, action=DELETE_DATASET)
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)

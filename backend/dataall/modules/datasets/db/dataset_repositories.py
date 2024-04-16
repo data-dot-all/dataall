@@ -1,5 +1,6 @@
 import logging
-
+from typing import List
+from abc import ABC, abstractmethod
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
@@ -17,9 +18,37 @@ from dataall.base.utils.naming_convention import (
 
 logger = logging.getLogger(__name__)
 
+class DatasetRepositoryInterface(ABC):
+    @staticmethod
+    def check_before_delete(self, session, uri, **kwargs):
+        """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
+        return True
+
+    @staticmethod
+    def execute_on_delete(self, session, uri, **kwargs):
+        """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
+        return True
+
 
 class DatasetRepository(EnvironmentResource):
     """DAO layer for Datasets"""
+
+    _interfaces: List[DatasetRepositoryInterface] = []
+
+    @classmethod
+    def register(cls, interface: DatasetRepositoryInterface):
+        cls._interfaces.append(interface)
+
+    @classmethod
+    def check_before_delete(cls, session, uri, action) -> bool:
+        can_be_deleted = [interface.check_before_delete(session, uri, action) for interface in cls._interfaces]
+        return False not in set(can_be_deleted)
+
+    @classmethod
+    def execute_on_delete(cls, session, uri) -> bool:
+        for interface in cls._interfaces:
+            interface.execute_on_delete(session, uri)
+        return True
 
     @classmethod
     def build_dataset(cls, username: str, env: Environment, data: dict) -> Dataset:

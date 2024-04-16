@@ -5,8 +5,6 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.db.exceptions import ResourceShared
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
@@ -67,16 +65,8 @@ class DatasetTableService:
     def delete_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            has_share = ShareObjectRepository.has_shared_items(session, table.tableUri)
-            if has_share:
-                raise ResourceShared(
-                    action=DELETE_DATASET_TABLE,
-                    message='Revoke all table shares before deletion',
-                )
-
-            ShareObjectRepository.delete_shares(session, table.tableUri)
-            DatasetTableRepository.delete(session, table)
-
+            DatasetRepository.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetRepository.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=table.tableUri, target_type='DatasetTable'
             )

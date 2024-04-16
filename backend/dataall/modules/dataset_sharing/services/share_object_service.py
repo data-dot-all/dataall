@@ -52,6 +52,7 @@ log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
+
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         role_name = share.principalIAMRoleName
