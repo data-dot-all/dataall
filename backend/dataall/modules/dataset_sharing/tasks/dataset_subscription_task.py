@@ -26,6 +26,7 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 # TODO: review this task usage and remove if not needed
+# It provides information about the shares a dataset items
 
 
 class DatasetSubscriptionService:
