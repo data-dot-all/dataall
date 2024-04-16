@@ -3,6 +3,8 @@ import os
 import requests
 
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
+from dataall.core.permissions.services import environment_permissions
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
@@ -99,3 +101,18 @@ class StackService:
 
         Worker.queue(context.db_engine, [task.taskUri])
         return True
+
+    @staticmethod
+    def get_stack_by_uri(stack_uri):
+        with get_context().db_engine.scoped_session() as session:
+            return StackRepository.get_stack_by_uri(session, stack_uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
+    def get_environmental_stack_by_uri(uri, stack_uri):
+        """
+        :param uri: environmental_uri, used for permissions check
+        :param stack_uri:
+        :return:
+        """
+        StackService.get_stack_by_uri(stack_uri)

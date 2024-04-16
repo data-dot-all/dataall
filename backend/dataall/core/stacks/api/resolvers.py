@@ -23,11 +23,7 @@ def get_stack(context: Context, source, environmentUri: str = None, stackUri: st
         stack: Stack = StackRepository.get_stack_by_uri(session, stackUri)
         cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
         CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
-        return EnvironmentService.get_stack(
-            session=session,
-            uri=environmentUri,
-            stack_uri=stackUri,
-        )
+        return StackService.get_environmental_stack_by_uri(uri=environmentUri, stack_uri=stackUri)
 
 
 def resolve_link(context, source, **kwargs):
@@ -68,26 +64,25 @@ def resolve_task_id(context, source: Stack, **kwargs):
 
 
 def get_stack_logs(context: Context, source, environmentUri: str = None, stackUri: str = None):
-    with context.engine.scoped_session() as session:
-        stack = EnvironmentService.get_stack(session=session, uri=environmentUri, stack_uri=stackUri)
-        if not stack.EcsTaskArn:
-            raise exceptions.AWSResourceNotFound(
-                action='GET_STACK_LOGS',
-                message='Logs could not be found for this stack',
-            )
+    stack = StackService.get_environmental_stack_by_uri(uri=environmentUri, stack_uri=stackUri)
+    if not stack.EcsTaskArn:
+        raise exceptions.AWSResourceNotFound(
+            action='GET_STACK_LOGS',
+            message='Logs could not be found for this stack',
+        )
 
-        query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
+    query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
                 | sort @timestamp asc
                 | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                 """
-        envname = os.getenv('envname', 'local')
-        results = CloudWatch.run_query(
-            query=query,
-            log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
-            days=1,
-        )
-        log.info(f'Running Logs query {query}')
-        return results
+    envname = os.getenv('envname', 'local')
+    results = CloudWatch.run_query(
+        query=query,
+        log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
+        days=1,
+    )
+    log.info(f'Running Logs query {query}')
+    return results
 
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):

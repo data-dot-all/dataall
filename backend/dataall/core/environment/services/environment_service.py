@@ -700,11 +700,6 @@ class EnvironmentService:
         return environments
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def get_stack(session, uri, stack_uri) -> Stack:
-        return session.query(Stack).get(stack_uri)
-
-    @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.DELETE_ENVIRONMENT)
     def delete_environment(session, uri, environment):
         env_groups = session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()
@@ -722,7 +717,7 @@ class EnvironmentService:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment '
-                f'related objects before proceeding',
+                        f'related objects before proceeding',
             )
         else:
             PolicyManager(
