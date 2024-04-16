@@ -84,7 +84,6 @@ class DataPipelineService:
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
@@ -93,7 +92,6 @@ class DataPipelineService:
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
 

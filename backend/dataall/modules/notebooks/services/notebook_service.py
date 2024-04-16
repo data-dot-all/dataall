@@ -143,7 +143,6 @@ class NotebookService:
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',
                 target_uri=notebook.notebookUri,
-                target_label=notebook.label,
             )
 
         StackService.deploy_stack(targetUri=notebook.notebookUri)

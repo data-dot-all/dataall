@@ -16,6 +16,13 @@ class KeyValueTagParamValidationService:
         if not data.get('targetType'):
             raise RequiredParameter('targetType')
 
+    @staticmethod
+    def verify_target_type_and_uri(target_type, target_uri):
+        if not target_uri:
+            raise RequiredParameter('targetUri')
+        if not target_type:
+            raise RequiredParameter('targetType')
+
 
 class KeyValueTagService:
     @staticmethod
@@ -54,14 +61,17 @@ class KeyValueTagService:
             return tags
 
     @staticmethod
-    def list_key_value_tags(uri, target_type) -> dict:
+    def list_key_value_tags(target_uri, target_type) -> dict:
+        KeyValueTagParamValidationService.verify_target_type_and_uri(target_uri, target_type)
         context = get_context()
         with context.db_engine.scoped_session() as session:
             ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
                 groups=context.groups,
-                resource_uri=uri,
+                resource_uri=target_uri,
                 permission_name=TargetType.get_resource_read_permission_name(target_type),
             )
-            return KeyValueTagRepository.find_key_value_tags(session, uri, target_type)
+            return KeyValueTagRepository.find_key_value_tags(session, target_uri, target_type)
+
+

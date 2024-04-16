@@ -15,9 +15,11 @@ from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.base.db.exceptions import RequiredParameter
+from dataall.core.stacks.db.target_type_repositories import TargetType
+
 
 log = logging.getLogger(__name__)
 
@@ -26,14 +28,21 @@ class StackRequestVerifier:
     @staticmethod
     def verify_get_and_describe_params(env_uri, stack_uri):
         if not env_uri:
-            raise ValueError('Environment URI is required')
+            raise RequiredParameter('Environment URI is required')
         if not stack_uri:
-            raise ValueError('Stack URI is required')
+            raise RequiredParameter('Stack URI is required')
 
     @staticmethod
     def validate_update_tag_input(data):
         if not data.get('targetUri'):
             raise ValueError('targetUri is required')
+
+    @staticmethod
+    def verify_target_type_and_uri(target_type, target_uri):
+        if not target_uri:
+            raise RequiredParameter('targetUri')
+        if not target_type:
+            raise RequiredParameter('targetType')
 
 
 class StackService:
@@ -147,17 +156,20 @@ class StackService:
 
     @staticmethod
     def update_stack_by_target_uri(target_uri, target_type):
-        with get_context().db_engine.scoped_session() as session:
-            stack = StackRepository.update_stack(session=session, uri=target_uri, target_type=target_type)
-        StackService.deploy_stack(stack.targetUri)
-        return stack
+        StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=target_uri,
+                permission_name=TargetType.get_resource_update_permission_name(target_type),
+            )
+            stack = StackRepository.get_stack_by_target_uri(session, target_uri=target_uri)
+            StackService.deploy_stack(stack.targetUri)
+            return stack
 
-    @staticmethod
-    def list_stack_tags(target_uri, target_type):
-        return KeyValueTagService.list_key_value_tags(
-            uri=target_uri,
-            target_type=target_type,
-        )
 
     @staticmethod
     def update_stack_tags(input):

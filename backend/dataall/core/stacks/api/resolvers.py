@@ -3,6 +3,7 @@ import logging
 
 from dataall.base.api.context import Context
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.stack_models import Stack
 
@@ -60,7 +61,7 @@ def update_stack(context: Context, source, targetUri: str = None, targetType: st
 
 
 def list_key_value_tags(context: Context, source, targetUri: str = None, targetType: str = None):
-    return StackService.list_stack_tags(targetUri, targetType)
+    return KeyValueTagService.list_key_value_tags(targetUri, targetType)
 
 
 def update_key_value_tags(context: Context, source, input=None):

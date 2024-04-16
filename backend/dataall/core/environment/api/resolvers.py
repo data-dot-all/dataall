@@ -119,7 +119,6 @@ def create_environment(context: Context, source, input={}):
             environment_uri=env.environmentUri,
             target_type='environment',
             target_uri=env.environmentUri,
-            target_label=env.label,
         )
     StackService.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value

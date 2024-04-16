@@ -443,7 +443,6 @@ class DatasetService:
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,
-            target_label=dataset.label,
             target_type='dataset',
             payload={
                 'bucket_name': dataset.S3BucketName,
