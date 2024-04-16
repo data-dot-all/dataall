@@ -1,29 +1,17 @@
 import json
 import logging
-import os
 
 from dataall.base.api.context import Context
-from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.stack_service import StackService
-from dataall.core.stacks.aws.cloudformation import CloudFormation
-from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.core.stacks.db.stack_models import Stack
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import StackRepository
-from dataall.base.db import exceptions
-from dataall.base.utils import Parameter
 
 log = logging.getLogger(__name__)
 
 
 def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None):
-    with context.engine.scoped_session() as session:
-        env: Environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        stack: Stack = StackRepository.get_stack_by_uri(session, stackUri)
-        cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
-        CloudFormation.describe_stack_resources(engine=context.engine, task=cfn_task)
-        return StackService.get_environmental_stack_by_uri(uri=environmentUri, stack_uri=stackUri)
+    env = EnvironmentService.find_environment_by_uri(environmentUri)
+    return StackService.get_and_describe_stack_in_env(env, stackUri)
 
 
 def resolve_link(context, source, **kwargs):
@@ -64,49 +52,16 @@ def resolve_task_id(context, source: Stack, **kwargs):
 
 
 def get_stack_logs(context: Context, source, environmentUri: str = None, stackUri: str = None):
-    stack = StackService.get_environmental_stack_by_uri(uri=environmentUri, stack_uri=stackUri)
-    if not stack.EcsTaskArn:
-        raise exceptions.AWSResourceNotFound(
-            action='GET_STACK_LOGS',
-            message='Logs could not be found for this stack',
-        )
-
-    query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
-                | sort @timestamp asc
-                | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
-                """
-    envname = os.getenv('envname', 'local')
-    results = CloudWatch.run_query(
-        query=query,
-        log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
-        days=1,
-    )
-    log.info(f'Running Logs query {query}')
-    return results
+    StackService.get_stack_logs(environmentUri, stackUri)
 
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
-    with context.engine.scoped_session() as session:
-        stack = StackRepository.update_stack(session=session, uri=targetUri, target_type=targetType)
-    StackService.deploy_stack(stack.targetUri)
-    return stack
+    return StackService.update_stack_by_target_uri(targetUri, targetType)
 
 
 def list_key_value_tags(context: Context, source, targetUri: str = None, targetType: str = None):
-    with context.engine.scoped_session() as session:
-        return KeyValueTag.list_key_value_tags(
-            session=session,
-            uri=targetUri,
-            target_type=targetType,
-        )
+    return StackService.list_stack_tags(targetUri, targetType)
 
 
 def update_key_value_tags(context: Context, source, input=None):
-    with context.engine.scoped_session() as session:
-        kv_tags = KeyValueTag.update_key_value_tags(
-            session=session,
-            uri=input['targetUri'],
-            data=input,
-        )
-        StackService.deploy_stack(targetUri=input['targetUri'])
-        return kv_tags
+    return StackService.update_stack_tags(input)

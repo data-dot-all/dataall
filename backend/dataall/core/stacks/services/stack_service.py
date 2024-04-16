@@ -1,27 +1,45 @@
 import os
 
 import requests
+import logging
 
-from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
-from dataall.core.environment.db.environment_models import Environment
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.aws.cloudwatch import CloudWatch
+from dataall.base.db.exceptions import AWSResourceNotFound
+
+log = logging.getLogger(__name__)
+
+
+class StackRequestVerifier:
+    @staticmethod
+    def verify_get_and_describe_params(env_uri, stack_uri):
+        if not env_uri:
+            raise ValueError('Environment URI is required')
+        if not stack_uri:
+            raise ValueError('Stack URI is required')
+
+    @staticmethod
+    def validate_update_tag_input(data):
+        if not data.get('targetUri'):
+            raise ValueError('targetUri is required')
 
 
 class StackService:
     @staticmethod
-    def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
+    def get_stack_with_cfn_resources(targetUri: str, env):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
             if not stack:
                 stack = Stack(
@@ -116,3 +134,64 @@ class StackService:
         :return:
         """
         StackService.get_stack_by_uri(stack_uri)
+
+    @staticmethod
+    def get_and_describe_stack_in_env(env, stack_uri):
+        StackRequestVerifier.verify_get_and_describe_params(env.environmentUri, stack_uri)
+        stack: Stack = StackService.get_environmental_stack_by_uri(uri=env.environmentUri, stack_uri=stack_uri)
+        with get_context().db_engine.scoped_session() as session:
+            cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
+            CloudFormation.describe_stack_resources(engine=get_context().db_engine, task=cfn_task)
+        return stack
+
+    @staticmethod
+    def update_stack_by_target_uri(target_uri, target_type):
+        with get_context().db_engine.scoped_session() as session:
+            stack = StackRepository.update_stack(session=session, uri=target_uri, target_type=target_type)
+        StackService.deploy_stack(stack.targetUri)
+        return stack
+
+    @staticmethod
+    def list_stack_tags(target_uri, target_type):
+        with get_context().db_engine.scoped_session() as session:
+            return KeyValueTag.list_key_value_tags(
+                session=session,
+                uri=target_uri,
+                target_type=target_type,
+            )
+
+    @staticmethod
+    def update_stack_tags(input):
+        StackRequestVerifier.validate_update_tag_input(input)
+        target_uri = input.get('targetUri')
+        with get_context().db_engine.scoped_session() as session:
+            kv_tags = KeyValueTag.update_key_value_tags(
+                session=session,
+                uri=target_uri,
+                data=input,
+            )
+            StackService.deploy_stack(targetUri=target_uri)
+            return kv_tags
+
+    @staticmethod
+    def get_stack_logs(env_uri, stack_uri):
+        StackRequestVerifier.verify_get_and_describe_params(env_uri, stack_uri)
+        stack = StackService.get_environmental_stack_by_uri(uri=env_uri, stack_uri=stack_uri)
+        if not stack.EcsTaskArn:
+            raise AWSResourceNotFound(
+                action='GET_STACK_LOGS',
+                message='Logs could not be found for this stack',
+            )
+
+        query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
+                    | sort @timestamp asc
+                    | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
+                    """
+        envname = os.getenv('envname', 'local')
+        results = CloudWatch.run_query(
+            query=query,
+            log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
+            days=1,
+        )
+        log.info(f'Running Logs query {query}')
+        return results

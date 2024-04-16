@@ -24,7 +24,6 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.api.enums import StackStatus
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
@@ -717,7 +716,7 @@ class EnvironmentService:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment '
-                        f'related objects before proceeding',
+                f'related objects before proceeding',
             )
         else:
             PolicyManager(
