@@ -6,7 +6,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     list_owned_datasets,
     get_dataset_assume_role_url,
     get_file_upload_presigned_url,
-    list_dataset_share_objects,
     list_datasets_owned_by_env_group,
     list_datasets_created_in_environment,
 )

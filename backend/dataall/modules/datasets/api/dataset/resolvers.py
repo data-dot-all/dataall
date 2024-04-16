@@ -130,14 +130,6 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 
 
-def list_dataset_share_objects(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_dataset_share_objects(source, filter)
-
-
 @is_feature_enabled('modules.datasets.features.aws_actions')
 def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)

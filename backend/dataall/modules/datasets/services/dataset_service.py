@@ -22,7 +22,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -411,11 +410,6 @@ class DatasetService:
                 'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
-
-    @staticmethod
-    def list_dataset_share_objects(dataset: Dataset, data: dict = None):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
