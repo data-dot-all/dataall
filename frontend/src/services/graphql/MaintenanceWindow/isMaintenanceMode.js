@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 export const isMaintenanceMode = () =>{
-    return true;
+    return false;
 }
 // export const isMaintenanceMode = () => ({
 //     query: gql`

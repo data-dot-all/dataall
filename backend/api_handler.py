@@ -165,6 +165,11 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
+        # If maintenance mode is enabled -> Check Status by using the graphQL Endpoint
+          # If groups doesn't contain data.all administrator group
+          # Check what is the access mode
+          # Return response with error "Maintenance Window is ON"
+
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
             reauth_apis = ParameterStoreManager.get_parameter_value(

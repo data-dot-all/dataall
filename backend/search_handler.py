@@ -21,6 +21,11 @@ def handler(event, context):
             },
         }
     elif event['httpMethod'] == 'POST':
+        # If maintenance mode is enabled -> Check Status by using the graphQL Endpoint
+        # If groups doesn't contain data.all administrator group
+        # Check what is the access mode
+        # Return response with error "Maintenance Window is ON"
+
         body = event.get('body')
         print(body)
         success = True

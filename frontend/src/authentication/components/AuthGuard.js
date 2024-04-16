@@ -7,12 +7,16 @@ import {
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
 } from '../../utils';
+import {isMaintenanceMode} from "../../services/graphql/MaintenanceWindow";
+import {useClient} from "../../services";
+import {NoAccessMaintenanceWindow} from "../../design";
 
 export const AuthGuard = (props) => {
   const { children } = props;
   const auth = useAuth();
   const location = useLocation();
   const [requestedLocation, setRequestedLocation] = useState(null);
+  const client = useClient();
 
   if (!auth.isAuthenticated) {
     if (location.pathname !== requestedLocation) {
@@ -54,6 +58,16 @@ export const AuthGuard = (props) => {
   } else {
     sessionStorage.removeItem('window-location');
   }
+
+  // Check if the maintenance window is enabled and has NO-ACCESS Status
+  // If yes then display a blank screen with a message that data.all is in maintenance mode
+  if (client){
+    // Replace this call with query call getting mode
+    if (isMaintenanceMode()){
+      return <NoAccessMaintenanceWindow/>
+    }
+  }
+
 
   return <>{children}</>;
 };
