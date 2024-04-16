@@ -51,14 +51,19 @@ log = logging.getLogger(__name__)
 
 class DatasetServiceInterface(ABC):
     @staticmethod
-    def check_before_delete(self, session, uri, **kwargs):
+    def check_before_delete(session, uri, **kwargs):
         """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
         return True
 
     @staticmethod
-    def execute_on_delete(self, session, uri, **kwargs):
+    def execute_on_delete(session, uri, **kwargs):
         """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
         return True
+
+    @staticmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
+        return []
 
 class DatasetService:
     _interfaces: List[DatasetServiceInterface] = []
@@ -69,16 +74,26 @@ class DatasetService:
 
     @classmethod
     def check_before_delete(cls, session, uri, **kwargs) -> bool:
-        """All actions form other modules that need to be executed before deletion"""
+        """All actions from other modules that need to be executed before deletion"""
         can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
         return False not in set(can_be_deleted)
 
     @classmethod
     def execute_on_delete(cls, session, uri, **kwargs) -> bool:
-        """All actions form other modules that need to be executed during deletion"""
+        """All actions from other modules that need to be executed during deletion"""
         for interface in cls._interfaces:
             interface.execute_on_delete(session, uri, **kwargs)
         return True
+
+    @classmethod
+    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
+        """All list_datasets from other modules that need to be appended to the list of datasets"""
+        all_subqueries = []
+        for interface in cls._interfaces:
+            interface_subquery = interface.append_to_list_user_datasets(session, username, groups)
+            if interface_subquery.first() is not None:
+                all_subqueries.append(interface_subquery)
+        return all_subqueries
 
     @staticmethod
     def check_dataset_account(session, environment):
@@ -216,10 +231,11 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_owned_shared_datasets(data: dict):
+    def list_all_user_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+            all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
+            return DatasetRepository.paginated_all_user_datasets(session, context.username, context.groups, all_subqueries, data=data)
 
     @staticmethod
     def list_owned_datasets(data: dict):

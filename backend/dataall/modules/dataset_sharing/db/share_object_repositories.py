@@ -972,7 +972,7 @@ class ShareObjectRepository:
             session.delete(share_obj)
 
     @staticmethod
-    def _query_user_datasets(session, username, groups, filter) -> Query:
+    def query_user_shared_datasets(session, username, groups) -> Query:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(Dataset)
@@ -983,9 +983,6 @@ class ShareObjectRepository:
             .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 or_(
-                    Dataset.owner == username,
-                    Dataset.SamlAdminGroupName.in_(groups),
-                    Dataset.stewards.in_(groups),
                     and_(
                         ShareObject.principalId.in_(groups),
                         ShareObjectItem.status.in_(share_item_shared_states),
@@ -997,22 +994,8 @@ class ShareObjectRepository:
                 )
             )
         )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    Dataset.description.ilike(filter.get('term') + '%%'),
-                    Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
         return query.distinct(Dataset.datasetUri)
 
-    @staticmethod
-    def paginated_user_datasets(session, username, groups, data=None) -> dict:
-        return paginate(
-            query=ShareObjectRepository._query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):

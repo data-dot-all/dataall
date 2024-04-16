@@ -25,6 +25,11 @@ log = logging.getLogger(__name__)
 class DatasetSharingService(DatasetServiceInterface):
 
     @staticmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Implemented as part of the DatasetServiceInterface"""
+        return ShareObjectRepository.query_user_shared_datasets(session, username, groups)
+
+    @staticmethod
     def check_before_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
