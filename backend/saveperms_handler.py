@@ -11,10 +11,9 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
-log = logging.getLogger(__name__)
 
 
-def save_permissions(event, context):
+def handler(event, context) -> None:
     load_modules(modes={ImportMode.API})
     envname = os.getenv('envname', 'local')
     engine = get_engine(envname=envname)
