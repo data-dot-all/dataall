@@ -91,14 +91,12 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
         log.info('Dataset handlers have been imported')
 
 
-
 class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks"""
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
-
 
     def __init__(self):
         import dataall.modules.datasets.cdk

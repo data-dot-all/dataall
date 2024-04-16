@@ -604,7 +604,9 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_revoke_table_sharing_failure_alarm(table, self.share, self.target_environment)
+        DatasetSharingAlarmService().trigger_revoke_table_sharing_failure_alarm(
+            table, self.share, self.target_environment
+        )
         return True
 
     def handle_share_failure_for_all_tables(self, tables, error, share_item_status, reapply=False):

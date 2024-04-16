@@ -327,7 +327,6 @@ class ShareEnvironmentResource(EnvironmentResource):
 
 
 class ShareObjectRepository:
-
     @staticmethod
     def save_and_commit(session, share):
         session.add(share)
@@ -373,12 +372,7 @@ class ShareObjectRepository:
         share: ShareObject = (
             session.query(ShareObject)
             .filter(ShareObject.datasetUri == dataset_uri)
-            .filter(
-                or_(
-                    ShareObject.owner == dataset_owner,
-                    ShareObject.principalId.in_(groups)
-                )
-            )
+            .filter(or_(ShareObject.owner == dataset_owner, ShareObject.principalId.in_(groups)))
             .first()
         )
         return share
@@ -1001,7 +995,6 @@ class ShareObjectRepository:
         )
         return query.distinct(Dataset.datasetUri)
 
-
     @staticmethod
     def find_dataset_shares(session, dataset_uri):
         return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
@@ -1317,4 +1310,3 @@ class ShareObjectRepository:
         )
 
         return env_tables_shared
-

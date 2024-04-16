@@ -45,7 +45,9 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
         return DatasetRole.DataSteward.value
     else:
         with context.engine.scoped_session() as session:
-            other_modules_user_role = DatasetService.get_other_modules_dataset_user_role(session, source.datasetUri, context.username, context.groups)
+            other_modules_user_role = DatasetService.get_other_modules_dataset_user_role(
+                session, source.datasetUri, context.username, context.groups
+            )
             if other_modules_user_role is not None:
                 return other_modules_user_role
     return DatasetRole.NoPermission.value

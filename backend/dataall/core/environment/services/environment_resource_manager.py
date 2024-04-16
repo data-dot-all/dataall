@@ -24,7 +24,6 @@ class EnvironmentResource(ABC):
         return 0
 
 
-
 class EnvironmentResourceManager:
     """
     API for managing environment and environment group lifecycle.

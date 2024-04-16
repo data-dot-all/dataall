@@ -315,11 +315,13 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             reject_purpose=rejectPurpose,
         )
 
+
 def verify_dataset_share_objects(context: Context, source, input):
     RequestValidator.validate_dataset_share_selector_input(input)
     dataset_uri = input.get('datasetUri')
     verify_share_uris = input.get('shareUris')
     return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+
 
 @is_feature_enabled('modules.datasets.features.aws_actions')
 def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
@@ -332,6 +334,7 @@ def list_dataset_share_objects(context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     return DatasetSharingService.list_dataset_share_objects(source, filter)
+
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
     return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)

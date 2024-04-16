@@ -39,7 +39,6 @@ class DatasetTableRepository:
     def delete(session, table: DatasetTable):
         session.delete(table)
 
-
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):
         table: DatasetTable = session.query(DatasetTable).get(table_uri)

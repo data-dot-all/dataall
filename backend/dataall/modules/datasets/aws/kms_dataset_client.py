@@ -16,7 +16,6 @@ class KmsClient:
         self._account_id = account_id
         self.region = region
 
-
     def get_key_id(self, key_alias: str):
         # The same client function is defined in the data_sharing module. Duplication is allowed to avoid coupling.
         try:

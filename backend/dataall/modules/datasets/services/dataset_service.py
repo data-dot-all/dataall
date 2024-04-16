@@ -46,6 +46,7 @@ from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_
 
 log = logging.getLogger(__name__)
 
+
 class DatasetServiceInterface(ABC):
     @staticmethod
     def check_before_delete(session, uri, **kwargs) -> bool:
@@ -64,16 +65,16 @@ class DatasetServiceInterface(ABC):
 
     @staticmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
-        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset """
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
         return None
 
     @staticmethod
     def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards """
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
         return True
 
     def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards """
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
         return True
 
 
@@ -268,7 +269,9 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
-            return DatasetRepository.paginated_all_user_datasets(session, context.username, context.groups, all_subqueries, data=data)
+            return DatasetRepository.paginated_all_user_datasets(
+                session, context.username, context.groups, all_subqueries, data=data
+            )
 
     @staticmethod
     def list_owned_datasets(data: dict):

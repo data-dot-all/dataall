@@ -18,7 +18,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DELETE_DATASET,
     DELETE_DATASET_TABLE,
     DELETE_DATASET_FOLDER,
-    CREDENTIALS_DATASET
+    CREDENTIALS_DATASET,
 )
 
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
@@ -170,7 +170,6 @@ class DatasetSharingService(DatasetServiceInterface):
                 role_arn = env_group.environmentIAMRoleArn
                 account_id = shared_environment.AwsAccountId
                 region = shared_environment.region
-
 
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
