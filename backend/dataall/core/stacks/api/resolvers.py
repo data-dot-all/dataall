@@ -57,7 +57,7 @@ def resolve_task_id(context, source: Stack, **kwargs):
 
 
 def get_stack_logs(context: Context, source, targetUri: str = None, targetType: str = None):
-    query=StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
+    query = StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
     envname = os.getenv('envname', 'local')
     log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
     results = CloudWatch.run_query(
