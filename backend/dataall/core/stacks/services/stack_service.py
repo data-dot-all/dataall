@@ -15,7 +15,6 @@ from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
-from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.db.exceptions import AWSResourceNotFound
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.stacks.db.target_type_repositories import TargetType
@@ -209,12 +208,4 @@ class StackService:
                     | sort @timestamp asc
                     | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                     """
-        envname = os.getenv('envname', 'local')
-        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
-        results = CloudWatch.run_query(
-            query=query,
-            log_group_name=log_group_name,
-            days=1,
-        )
-        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
-        return results
+        return query

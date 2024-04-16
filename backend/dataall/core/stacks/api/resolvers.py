@@ -1,11 +1,15 @@
 import json
 import logging
+import os
 
 from dataall.base.api.context import Context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.db.stack_models import Stack
+from dataall.core.stacks.aws.cloudwatch import CloudWatch
+from dataall.base.utils import Parameter
+
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +57,16 @@ def resolve_task_id(context, source: Stack, **kwargs):
 
 
 def get_stack_logs(context: Context, source, targetUri: str = None, targetType: str = None):
-    StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
+    query=StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
+    envname = os.getenv('envname', 'local')
+    log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
+    results = CloudWatch.run_query(
+        query=query,
+        log_group_name=log_group_name,
+        days=1,
+    )
+    log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
+    return results
 
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
