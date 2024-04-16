@@ -6,6 +6,7 @@ import logging
 from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
+from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
@@ -14,7 +15,7 @@ from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.utils import Parameter
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.db.exceptions import AWSResourceNotFound
 
@@ -153,25 +154,21 @@ class StackService:
 
     @staticmethod
     def list_stack_tags(target_uri, target_type):
-        with get_context().db_engine.scoped_session() as session:
-            return KeyValueTag.list_key_value_tags(
-                session=session,
-                uri=target_uri,
-                target_type=target_type,
-            )
+        return KeyValueTagService.list_key_value_tags(
+            uri=target_uri,
+            target_type=target_type,
+        )
 
     @staticmethod
     def update_stack_tags(input):
         StackRequestVerifier.validate_update_tag_input(input)
         target_uri = input.get('targetUri')
-        with get_context().db_engine.scoped_session() as session:
-            kv_tags = KeyValueTag.update_key_value_tags(
-                session=session,
-                uri=target_uri,
-                data=input,
-            )
-            StackService.deploy_stack(targetUri=target_uri)
-            return kv_tags
+        kv_tags = KeyValueTagService.update_key_value_tags(
+            uri=target_uri,
+            data=input,
+        )
+        StackService.deploy_stack(targetUri=target_uri)
+        return kv_tags
 
     @staticmethod
     def get_stack_logs(env_uri, stack_uri):

@@ -23,7 +23,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.api.enums import StackStatus
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
@@ -727,7 +727,7 @@ class EnvironmentService:
                 resource_prefix=environment.resourcePrefix,
             ).delete_all_policies()
 
-            KeyValueTag.delete_key_value_tags(session, environment.environmentUri, 'environment')
+            KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
             EnvironmentResourceManager.delete_env(session, environment)
             EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
