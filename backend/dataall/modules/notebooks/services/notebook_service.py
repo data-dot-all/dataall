@@ -14,7 +14,7 @@ from dataall.core.permissions.services.group_policy_service import GroupPolicySe
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
 from dataall.core.stacks.services.stack_service import StackService
@@ -143,7 +143,6 @@ class NotebookService:
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',
                 target_uri=notebook.notebookUri,
-                target_label=notebook.label,
             )
 
         StackService.deploy_stack(targetUri=notebook.notebookUri)
@@ -199,7 +198,7 @@ class NotebookService:
         """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             notebook = NotebookService._get_notebook(session, uri)
-            KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+            KeyValueTagRepository.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
             session.delete(notebook)
 
             ResourcePolicyService.delete_resource_policy(

@@ -7,7 +7,7 @@ from dataall.core.permissions.services.group_policy_service import GroupPolicySe
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.db.task_models import Task
@@ -84,7 +84,6 @@ class DataPipelineService:
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
@@ -93,7 +92,6 @@ class DataPipelineService:
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
 
@@ -226,7 +224,7 @@ class DataPipelineService:
                 )
 
             DatapipelinesRepository.delete_pipeline_environments(session, uri)
-            KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
+            KeyValueTagRepository.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
             session.delete(pipeline)
 

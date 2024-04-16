@@ -257,6 +257,7 @@ export const Stack = (props) => {
           <StackLogs
             environmentUri={environmentUri}
             stack={stack}
+            targetType={targetType}
             onClose={handleCloseOpenLogs}
             open={openLogsModal}
           />

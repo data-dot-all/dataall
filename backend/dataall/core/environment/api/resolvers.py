@@ -119,7 +119,6 @@ def create_environment(context: Context, source, input={}):
             environment_uri=env.environmentUri,
             target_type='environment',
             target_uri=env.environmentUri,
-            target_label=env.label,
         )
     StackService.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value
@@ -365,8 +364,7 @@ def resolve_environment_networks(context: Context, source, **kwargs):
 
 
 def get_environment(context: Context, source, environmentUri: str = None):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.find_environment_by_uri(session, uri=environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: Environment):
@@ -481,7 +479,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 def get_environment_stack(context: Context, source: Environment, **kwargs):
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
-        environmentUri=source.environmentUri,
+        env=source,
     )
 
 

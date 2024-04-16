@@ -70,7 +70,6 @@ def _create_env_stack(session, env):
         environment_uri=env.environmentUri,
         target_type='environment',
         target_uri=env.environmentUri,
-        target_label=env.label,
     )
 
 

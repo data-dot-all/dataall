@@ -14,7 +14,7 @@ from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
@@ -365,9 +365,11 @@ class DatasetService:
 
     @staticmethod
     def get_dataset_stack(dataset: Dataset):
+        env = EnvironmentService.find_environment_by_uri(uri=dataset.environmentUri)
+
         return StackService.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,
-            environmentUri=dataset.environmentUri,
+            env=env,
         )
 
     @staticmethod
@@ -402,7 +404,7 @@ class DatasetService:
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
-            KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
+            KeyValueTagRepository.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
             ResourcePolicyService.delete_resource_policy(
@@ -441,7 +443,6 @@ class DatasetService:
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,
-            target_label=dataset.label,
             target_type='dataset',
             payload={
                 'bucket_name': dataset.S3BucketName,

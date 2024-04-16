@@ -42,7 +42,7 @@ class StackRepository:
         return stack
 
     @staticmethod
-    def create_stack(session, environment_uri, target_label, target_uri, target_type, payload=None) -> models.Stack:
+    def create_stack(session, environment_uri, target_uri, target_type, payload=None) -> models.Stack:
         environment: Environment = session.query(Environment).get(environment_uri)
         if not environment:
             raise exceptions.ObjectNotFound('Environment', environment_uri)
@@ -62,22 +62,4 @@ class StackRepository:
         )
         session.add(stack)
         session.commit()
-        return stack
-
-    @staticmethod
-    def update_stack(session, uri: str, target_type: str) -> [models.Stack]:
-        if not uri:
-            raise exceptions.RequiredParameter('targetUri')
-        if not target_type:
-            raise exceptions.RequiredParameter('targetType')
-
-        context = get_context()
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=uri,
-            permission_name=TargetType.get_resource_update_permission_name(target_type),
-        )
-        stack = StackRepository.get_stack_by_target_uri(session, target_uri=uri)
         return stack
