@@ -22,8 +22,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
+from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
@@ -551,18 +550,3 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
-    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    def verify_dataset_share_objects(uri: str, share_uris: list):
-        with get_context().db_engine.scoped_session() as session:
-            for share_uri in share_uris:
-                share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-                states = ShareItemSM.get_share_item_revokable_states()
-                items = ShareObjectRepository.list_shareable_items(
-                    session, share, states, {'pageSize': 1000, 'isShared': True}
-                )
-                item_uris = [item.shareItemUri for item in items.get('nodes', [])]
-                ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
-        return True

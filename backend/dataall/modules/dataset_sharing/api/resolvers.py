@@ -37,6 +37,15 @@ class RequestValidator:
         if not data.get('itemUris'):
             raise RequiredParameter('itemUris')
 
+    @staticmethod
+    def validate_dataset_share_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('datasetUri'):
+            raise RequiredParameter('datasetUri')
+        if not data.get('shareUris'):
+            raise RequiredParameter('shareUris')
+
 
 def create_share_object(
     context: Context,
@@ -303,3 +312,9 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             uri=shareUri,
             reject_purpose=rejectPurpose,
         )
+
+def verify_dataset_share_objects(context: Context, source, input):
+    RequestValidator.validate_dataset_share_selector_input(input)
+    dataset_uri = input.get('datasetUri')
+    verify_share_uris = input.get('shareUris')
+    return ShareObjectService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
