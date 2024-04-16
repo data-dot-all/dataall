@@ -80,6 +80,39 @@ class DatasetSharingService(DatasetServiceInterface):
             return DatasetRole.Shared.value
         return None
 
+    @staticmethod
+    def extend_attach_steward_permissions(session, dataset, new_stewards, **kwargs):
+        """Implemented as part of the DatasetServiceInterface"""
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        if dataset_shares:
+            for share in dataset_shares:
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=new_stewards,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicyService.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
+
+    @staticmethod
+    def extend_delete_steward_permissions(session, dataset, **kwargs):
+        """Implemented as part of the DatasetServiceInterface"""
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        if dataset_shares:
+            for share in dataset_shares:
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicyService.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
+
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
