@@ -6,7 +6,6 @@ from sqlalchemy.orm import Query
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.api import stack_helper
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
@@ -32,6 +31,7 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.permissions.services.organization_permissions import LINK_ENVIRONMENT
 from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 
 log = logging.getLogger(__name__)
@@ -549,16 +549,13 @@ class EnvironmentService:
         context = get_context()
         query = EnvironmentRepository.query_user_environments(session, context.username, context.groups, data)
         valid_environments = []
+        valid_statuses = [
+            StackStatus.CREATE_COMPLETE.value,
+            StackStatus.UPDATE_COMPLETE.value,
+            StackStatus.UPDATE_ROLLBACK_COMPLETE.value,
+        ]
         for env in query:
-            stack = stack_helper.get_stack_with_cfn_resources(
-                targetUri=env.environmentUri,
-                environmentUri=env.environmentUri,
-            )
-            if stack.status in [
-                StackStatus.CREATE_COMPLETE.value,
-                StackStatus.UPDATE_COMPLETE.value,
-                StackStatus.UPDATE_ROLLBACK_COMPLETE.value,
-            ]:
+            if StackRepository.find_stack_by_target_uri(session, env.environmentUri, valid_statuses):
                 valid_environments.append(env)
 
         return {

@@ -8,8 +8,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.db import exceptions
@@ -97,7 +97,7 @@ class DataPipelineService:
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
 
-            stack_helper.deploy_stack(pipeline.DataPipelineUri)
+            StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
@@ -152,7 +152,7 @@ class DataPipelineService:
                     for k in data.keys():
                         setattr(pipeline, k, data.get(k))
             if pipeline.template == '':
-                stack_helper.deploy_stack(pipeline.DataPipelineUri)
+                StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
@@ -218,7 +218,7 @@ class DataPipelineService:
                     region=env.region,
                     repo_name=pipeline.repo,
                 )
-                stack_helper.delete_stack(
+                StackService.delete_stack(
                     target_uri=pipeline.DataPipelineUri,
                     accountid=env.AwsAccountId,
                     cdk_role_arn=env.CDKRoleArn,

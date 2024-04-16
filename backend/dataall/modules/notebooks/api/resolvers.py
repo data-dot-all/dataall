@@ -1,6 +1,6 @@
 from dataall.base.api.context import Context
-from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.notebooks.api.enums import SagemakerNotebookRole
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.services.notebook_service import NotebookService, NotebookCreationRequest
@@ -87,7 +87,7 @@ def resolve_user_role(context: Context, source: SagemakerNotebook):
 def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs):
     if not source:
         return None
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.notebookUri,
         environmentUri=source.environmentUri,
     )
