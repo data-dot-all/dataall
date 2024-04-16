@@ -3,7 +3,6 @@ import os
 import requests
 import logging
 
-from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
@@ -19,7 +18,6 @@ from dataall.base.db.exceptions import AWSResourceNotFound
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.core.environment.db.environment_models import Environment
-
 
 log = logging.getLogger(__name__)
 
