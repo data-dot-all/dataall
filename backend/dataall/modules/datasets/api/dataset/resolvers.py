@@ -7,7 +7,6 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets.db.dataset_models import Dataset
 from dataall.modules.datasets.services.datasets_base_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_service import DatasetService
@@ -46,9 +45,9 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
         return DatasetRole.DataSteward.value
     else:
         with context.engine.scoped_session() as session:
-            share = session.query(ShareObject).filter(ShareObject.datasetUri == source.datasetUri).first()
-            if share and (share.owner == context.username or share.principalId in context.groups):
-                return DatasetRole.Shared.value
+            other_modules_user_role = DatasetService.get_other_modules_dataset_user_role(session, source.datasetUri, context.username, context.groups)
+            if other_modules_user_role is not None:
+                return other_modules_user_role
     return DatasetRole.NoPermission.value
 
 

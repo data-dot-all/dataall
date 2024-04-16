@@ -16,6 +16,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
+from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
 
 import logging
 
@@ -54,7 +55,7 @@ class DatasetSharingService(DatasetServiceInterface):
         return True
 
     @staticmethod
-    def execute_on_delete(self, session, uri, **kwargs):
+    def execute_on_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
@@ -64,6 +65,15 @@ class DatasetSharingService(DatasetServiceInterface):
         else:
             raise exceptions.RequiredParameter('Delete action')
         return True
+
+    @staticmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Implemented as part of the DatasetServiceInterface"""
+        share = ShareObjectRepository.get_share_by_dataset_attributes(session, uri, username, groups)
+        if share is not None:
+            return DatasetRole.Shared.value
+        return None
+
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

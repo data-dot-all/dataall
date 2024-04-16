@@ -369,11 +369,16 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner):
+    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
         share: ShareObject = (
             session.query(ShareObject)
             .filter(ShareObject.datasetUri == dataset_uri)
-            .filter(ShareObject.owner == dataset_owner)
+            .filter(
+                or_(
+                    ShareObject.owner == dataset_owner,
+                    ShareObject.principalId.in_(groups)
+                )
+            )
             .first()
         )
         return share

@@ -51,19 +51,25 @@ log = logging.getLogger(__name__)
 
 class DatasetServiceInterface(ABC):
     @staticmethod
-    def check_before_delete(session, uri, **kwargs):
+    def check_before_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
         return True
 
     @staticmethod
-    def execute_on_delete(session, uri, **kwargs):
+    def execute_on_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
         return True
 
     @staticmethod
-    def append_to_list_user_datasets(session, username, groups):
+    def append_to_list_user_datasets(session, username, groups) -> List:
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
         return []
+
+    @staticmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset """
+        return None
+
 
 class DatasetService:
     _interfaces: List[DatasetServiceInterface] = []
@@ -84,6 +90,15 @@ class DatasetService:
         for interface in cls._interfaces:
             interface.execute_on_delete(session, uri, **kwargs)
         return True
+
+    @classmethod
+    def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
+        """All other user role types that might come from other modules"""
+        for interface in cls._interfaces:
+            role = interface.resolve_additional_dataset_user_role(session, uri, username, groups)
+            if role is not None:
+                return role
+        return None
 
     @classmethod
     def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
