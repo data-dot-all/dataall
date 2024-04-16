@@ -63,4 +63,3 @@ class StackRepository:
         session.add(stack)
         session.commit()
         return stack
-

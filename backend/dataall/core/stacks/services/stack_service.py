@@ -170,7 +170,6 @@ class StackService:
             StackService.deploy_stack(stack.targetUri)
             return stack
 
-
     @staticmethod
     def update_stack_tags(input):
         StackRequestVerifier.validate_update_tag_input(input)

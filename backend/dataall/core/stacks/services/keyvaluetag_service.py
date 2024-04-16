@@ -73,5 +73,3 @@ class KeyValueTagService:
                 permission_name=TargetType.get_resource_read_permission_name(target_type),
             )
             return KeyValueTagRepository.find_key_value_tags(session, target_uri, target_type)
-
-
