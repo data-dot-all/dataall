@@ -22,9 +22,7 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -61,9 +59,9 @@ class DatasetServiceInterface(ABC):
         return True
 
     @staticmethod
-    def append_to_list_user_datasets(session, username, groups) -> List:
+    def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
-        return []
+        return True
 
     @staticmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
@@ -343,24 +341,16 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            if dataset.SamlAdminGroupName not in context.groups:
-                share = ShareObjectRepository.get_share_by_dataset_attributes(
-                    session=session, dataset_uri=uri, dataset_owner=context.username
-                )
-                shared_environment = EnvironmentService.get_environment_by_uri(
-                    session=session, uri=share.environmentUri
-                )
-                env_group = EnvironmentService.get_environment_group(
-                    session=session, group_uri=share.principalId, environment_uri=share.environmentUri
-                )
-                role_arn = env_group.environmentIAMRoleArn
-                account_id = shared_environment.AwsAccountId
-                region = shared_environment.region
-            else:
+            if dataset.SamlAdminGroupName in context.groups:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
                 region = dataset.region
 
+            else:
+                raise exceptions.UnauthorizedOperation(
+                    action=CREDENTIALS_DATASET,
+                    message=f'User: {context.username} is not a member of the group {dataset.SamlAdminGroupName}',
+                )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
         url = SessionHelper.get_console_access_url(

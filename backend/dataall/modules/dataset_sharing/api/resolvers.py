@@ -5,6 +5,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
@@ -319,3 +320,7 @@ def verify_dataset_share_objects(context: Context, source, input):
     dataset_uri = input.get('datasetUri')
     verify_share_uris = input.get('shareUris')
     return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+
+@is_feature_enabled('modules.datasets.features.aws_actions')
+def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
+    return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)
