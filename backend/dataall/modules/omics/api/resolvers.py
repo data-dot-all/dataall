@@ -64,8 +64,12 @@ def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS
 
 
 def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
+    if not source:
+        return None
     return OmicsService.get_omics_workflow(source.workflowUri)
 
 
 def resolve_omics_run_details(context, source: OmicsRun, **kwargs):
+    if not source:
+        return None
     return OmicsService.get_omics_run_from_aws(source.runUri)
