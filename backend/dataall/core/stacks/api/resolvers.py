@@ -52,8 +52,8 @@ def resolve_task_id(context, source: Stack, **kwargs):
         return source.EcsTaskArn.split('/')[-1]
 
 
-def get_stack_logs(context: Context, source, environmentUri: str = None, stackUri: str = None):
-    StackService.get_stack_logs(environmentUri, stackUri)
+def get_stack_logs(context: Context, source, targetUri: str = None, targetType: str = None):
+    StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
 
 
 def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):

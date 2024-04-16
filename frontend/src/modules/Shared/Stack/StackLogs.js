@@ -15,7 +15,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getStackLogs, useClient } from 'services';
 
 export const StackLogs = (props) => {
-  const { environmentUri, stack, onClose, open } = props;
+  const { environmentUri, stack, targetType, onClose, open } = props;
   const { settings } = useSettings();
   const client = useClient();
   const dispatch = useDispatch();
@@ -26,7 +26,7 @@ export const StackLogs = (props) => {
     setLoading(true);
     try {
       const response = await client.query(
-        getStackLogs(environmentUri, stack.stackUri)
+        getStackLogs(stack.targetUri, targetType)
       );
       if (response && !response.errors) {
         setLogs(response.data.getStackLogs.map((l) => l.message));

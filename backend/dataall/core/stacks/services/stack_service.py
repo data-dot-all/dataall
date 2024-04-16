@@ -183,9 +183,19 @@ class StackService:
         return kv_tags
 
     @staticmethod
-    def get_stack_logs(env_uri, stack_uri):
-        StackRequestVerifier.verify_get_and_describe_params(env_uri, stack_uri)
-        stack = StackService.get_environmental_stack_by_uri(uri=env_uri, stack_uri=stack_uri)
+    def get_stack_logs(target_uri, target_type):
+        context = get_context()
+        StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
+        stack = StackService.update_stack_by_target_uri(target_uri, target_type)
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=target_uri,
+                permission_name=TargetType.get_resource_read_permission_name(target_type),
+            )
+
         if not stack.EcsTaskArn:
             raise AWSResourceNotFound(
                 action='GET_STACK_LOGS',
