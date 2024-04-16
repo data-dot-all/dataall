@@ -19,6 +19,7 @@ from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.db.exceptions import AWSResourceNotFound
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.stacks.db.target_type_repositories import TargetType
+from dataall.core.environment.db.environment_models import Environment
 
 
 log = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class StackRequestVerifier:
 
 class StackService:
     @staticmethod
-    def get_stack_with_cfn_resources(targetUri: str, env):
+    def get_stack_with_cfn_resources(targetUri: str, env: Environment):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
@@ -146,9 +147,9 @@ class StackService:
         StackService.get_stack_by_uri(stack_uri)
 
     @staticmethod
-    def get_and_describe_stack_in_env(env, stack_uri):
+    def get_and_describe_stack_in_env(env: Environment, stack_uri):
         StackRequestVerifier.verify_get_and_describe_params(env.environmentUri, stack_uri)
-        stack: Stack = StackService.get_environmental_stack_by_uri(uri=env.environmentUri, stack_uri=stack_uri)
+        stack: Stack = StackService.get_stack_by_uri(stack_uri)
         with get_context().db_engine.scoped_session() as session:
             cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
             CloudFormation.describe_stack_resources(engine=get_context().db_engine, task=cfn_task)
