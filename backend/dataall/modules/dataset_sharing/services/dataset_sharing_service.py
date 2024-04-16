@@ -31,6 +31,7 @@ log = logging.getLogger(__name__)
 
 
 class DatasetSharingService(DatasetServiceInterface):
+    # TODO: when we abstract dataset_sharing_base from s3_dataset_sharing this class won't pollute the shares module
 
     @staticmethod
     def append_to_list_user_datasets(session, username, groups):
@@ -120,10 +121,20 @@ class DatasetSharingService(DatasetServiceInterface):
             return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
 
     @staticmethod
+    def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return [
+                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
+                for t in ShareObjectRepository.query_dataset_tables_shared_with_env(
+                    session, env_uri, dataset_uri, context.username, context.groups
+                )
+            ]
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def verify_dataset_share_objects(uri: str, share_uris: list):
-        #TODO: when we abstract dataset_sharing_base from s3_dataset_sharing this function won't pollute the ShareObject service
         with get_context().db_engine.scoped_session() as session:
             for share_uri in share_uris:
                 share = ShareObjectRepository.get_share_by_uri(session, share_uri)

@@ -14,6 +14,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DELETE_DATASET_FOLDER,
 )
 from dataall.modules.datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 
@@ -86,8 +87,8 @@ class DatasetLocationService:
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
-            DatasetRepository.check_before_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
-            DatasetRepository.execute_on_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
+            DatasetService.check_before_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
+            DatasetService.execute_on_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
             DatasetLocationService._delete_dataset_folder_read_permission(session, dataset, location.locationUri)
             DatasetLocationRepository.delete(session, location)
             GlossaryRepository.delete_glossary_terms_links(

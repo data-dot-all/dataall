@@ -6,6 +6,7 @@ from dataall.modules.dataset_sharing.api.resolvers import (
     list_shared_with_environment_data_items,
     list_shares_in_my_inbox,
     list_shares_in_my_outbox,
+    list_shared_tables_by_env_dataset,
 )
 
 getShareObject = gql.QueryField(
@@ -58,4 +59,14 @@ listShareObjects = gql.QueryField(
         gql.Argument(name='page', type=gql.Integer),
     ],
     type=gql.Ref('ShareSearchResult'),
+)
+
+getSharedDatasetTables = gql.QueryField(
+    name='getSharedDatasetTables',
+    args=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='envUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.ArrayType(gql.Ref('SharedDatasetTableItem')),
+    resolver=list_shared_tables_by_env_dataset,
 )

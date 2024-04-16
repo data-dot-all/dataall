@@ -332,3 +332,6 @@ def list_dataset_share_objects(context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     return DatasetSharingService.list_dataset_share_objects(source, filter)
+
+def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
+    return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)

@@ -1,13 +1,9 @@
 import logging
 from datetime import datetime
 
-from sqlalchemy import or_
 from sqlalchemy.sql import and_
 
 from dataall.base.db import exceptions
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareItemSM
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
 from dataall.modules.datasets.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 from dataall.base.utils import json_utils
 
@@ -43,42 +39,6 @@ class DatasetTableRepository:
     def delete(session, table: DatasetTable):
         session.delete(table)
 
-    @staticmethod
-    def query_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, username: str, groups: [str]
-    ):
-        """For a given dataset, returns the list of Tables shared with the environment
-        This means looking at approved ShareObject items
-        for the share object associating the dataset and environment
-        """
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        env_tables_shared = (
-            session.query(DatasetTable)  # all tables
-            .join(
-                ShareObjectItem,  # found in ShareObjectItem
-                ShareObjectItem.itemUri == DatasetTable.tableUri,
-            )
-            .join(
-                ShareObject,  # jump to share object
-                ShareObject.shareUri == ShareObjectItem.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,  # for this dataset
-                    ShareObject.environmentUri == environment_uri,  # for this environment
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                    ShareObject.principalType
-                    != PrincipalType.ConsumptionRole.value,  # Exclude Consumption roles shares
-                    or_(
-                        ShareObject.owner == username,
-                        ShareObject.principalId.in_(groups),
-                    ),
-                )
-            )
-            .all()
-        )
-
-        return env_tables_shared
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):

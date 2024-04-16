@@ -17,6 +17,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 )
 from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
@@ -65,8 +66,8 @@ class DatasetTableService:
     def delete_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            DatasetRepository.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
-            DatasetRepository.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=table.tableUri, target_type='DatasetTable'
             )
@@ -99,17 +100,6 @@ class DatasetTableService:
         with get_context().db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
-
-    @staticmethod
-    def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return [
-                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in DatasetTableRepository.query_dataset_tables_shared_with_env(
-                    session, env_uri, dataset_uri, context.username, context.groups
-                )
-            ]
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
