@@ -1,13 +1,14 @@
 import logging
 
 from dataall.core.stacks.db.stack_models import KeyValueTag
+from typing import List
 
 logger = logging.getLogger(__name__)
 
 
 class KeyValueTagRepository:
     @staticmethod
-    def find_key_value_tags(session, target_uri, target_type) -> [KeyValueTag]:
+    def find_key_value_tags(session, target_uri, target_type) -> List[KeyValueTag]:
         return (
             session.query(KeyValueTag)
             .filter(
@@ -18,7 +19,7 @@ class KeyValueTagRepository:
         )
 
     @staticmethod
-    def find_environment_cascade_key_value_tags(session, target_uri) -> [KeyValueTag]:
+    def find_environment_cascade_key_value_tags(session, target_uri) -> List[KeyValueTag]:
         return (
             session.query(KeyValueTag)
             .filter(

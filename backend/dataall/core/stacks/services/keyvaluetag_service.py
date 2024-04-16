@@ -1,3 +1,6 @@
+from typing import List
+
+
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.db.stack_models import KeyValueTag
@@ -26,7 +29,7 @@ class KeyValueTagParamValidationService:
 
 class KeyValueTagService:
     @staticmethod
-    def update_key_value_tags(uri: str, data: dict = None) -> [KeyValueTag]:
+    def update_key_value_tags(uri: str, data: dict = None) -> List[KeyValueTag]:
         KeyValueTagParamValidationService.validate_update_param(uri, data)
         context = get_context()
         with context.db_engine.scoped_session() as session:
