@@ -9,6 +9,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
@@ -317,4 +318,4 @@ def verify_dataset_share_objects(context: Context, source, input):
     RequestValidator.validate_dataset_share_selector_input(input)
     dataset_uri = input.get('datasetUri')
     verify_share_uris = input.get('shareUris')
-    return ShareObjectService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+    return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
