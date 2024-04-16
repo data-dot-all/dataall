@@ -717,7 +717,7 @@ class EnvironmentService:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment '
-                        f'related objects before proceeding',
+                f'related objects before proceeding',
             )
         else:
             PolicyManager(

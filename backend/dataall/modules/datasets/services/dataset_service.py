@@ -365,7 +365,7 @@ class DatasetService:
 
     @staticmethod
     def get_dataset_stack(dataset: Dataset):
-        env = EnvironmentService.find_environment_by_uri(dataset.environmentUri)
+        env = EnvironmentService.find_environment_by_uri(uri=dataset.environmentUri)
 
         return StackService.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,

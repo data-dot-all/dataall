@@ -203,15 +203,18 @@ class StackService:
                 message='Logs could not be found for this stack',
             )
 
+        log.info(f'Get stack Logs for stack {stack.name}')
+
         query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
                     | sort @timestamp asc
                     | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                     """
         envname = os.getenv('envname', 'local')
+        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
         results = CloudWatch.run_query(
             query=query,
-            log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
+            log_group_name=log_group_name,
             days=1,
         )
-        log.info(f'Running Logs query {query}')
+        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
         return results

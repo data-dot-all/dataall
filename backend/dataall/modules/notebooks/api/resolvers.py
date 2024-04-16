@@ -88,7 +88,7 @@ def resolve_user_role(context: Context, source: SagemakerNotebook):
 def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs):
     if not source:
         return None
-    env = EnvironmentService.find_environment_by_uri(source.environmentUri)
+    env = EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.notebookUri,
         env=env,

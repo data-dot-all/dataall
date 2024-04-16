@@ -103,7 +103,7 @@ def resolve_clone_url_http(context: Context, source: DataPipeline, **kwargs):
 def resolve_stack(context, source: DataPipeline, **kwargs):
     if not source:
         return None
-    env = EnvironmentService.find_environment_by_uri(source.environmentUri)
+    env = EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.DataPipelineUri,
         env=env,
