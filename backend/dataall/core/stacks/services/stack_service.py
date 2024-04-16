@@ -3,7 +3,6 @@ import os
 import requests
 import logging
 
-from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
