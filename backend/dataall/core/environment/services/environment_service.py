@@ -684,8 +684,9 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def find_environment_by_uri(session, uri) -> Environment:
-        return EnvironmentService.get_environment_by_uri(session, uri)
+    def find_environment_by_uri(uri) -> Environment:
+        with get_context().db_engine.scoped_session() as session:
+            return EnvironmentService.get_environment_by_uri(session, uri)
 
     @staticmethod
     def list_all_active_environments(session) -> [Environment]:
@@ -716,7 +717,7 @@ class EnvironmentService:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment '
-                f'related objects before proceeding',
+                        f'related objects before proceeding',
             )
         else:
             PolicyManager(

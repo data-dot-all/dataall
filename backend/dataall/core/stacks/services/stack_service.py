@@ -186,7 +186,7 @@ class StackService:
     def get_stack_logs(target_uri, target_type):
         context = get_context()
         StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
-        stack = StackService.update_stack_by_target_uri(target_uri, target_type)
+
         with context.db_engine.scoped_session() as session:
             ResourcePolicyService.check_user_resource_permission(
                 session=session,
@@ -195,6 +195,7 @@ class StackService:
                 resource_uri=target_uri,
                 permission_name=TargetType.get_resource_read_permission_name(target_type),
             )
+            stack = StackRepository.get_stack_by_target_uri(session, target_uri)
 
         if not stack.EcsTaskArn:
             raise AWSResourceNotFound(

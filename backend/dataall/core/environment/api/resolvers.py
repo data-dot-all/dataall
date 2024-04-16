@@ -287,9 +287,9 @@ def list_all_environment_consumption_roles(context: Context, source, environment
 
 
 def list_environment_group_invitation_permissions(
-    context: Context,
-    source,
-    environmentUri=None,
+        context: Context,
+        source,
+        environmentUri=None,
 ):
     with context.engine.scoped_session() as session:
         return EnvironmentService.list_group_invitation_permissions(
@@ -364,8 +364,7 @@ def resolve_environment_networks(context: Context, source, **kwargs):
 
 
 def get_environment(context: Context, source, environmentUri: str = None):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.find_environment_by_uri(session, uri=environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: Environment):
@@ -424,10 +423,10 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
 
 @is_feature_enabled('core.features.env_aws_actions')
 def get_environment_assume_role_url(
-    context: Context,
-    source,
-    environmentUri: str = None,
-    groupUri: str = None,
+        context: Context,
+        source,
+        environmentUri: str = None,
+        groupUri: str = None,
 ):
     with context.engine.scoped_session() as session:
         ResourcePolicyService.check_user_resource_permission(
