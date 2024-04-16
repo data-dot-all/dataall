@@ -20,9 +20,8 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.datasets.db.dataset_repositories import DatasetRepository, DatasetRepositoryInterface
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
-from dataall.modules.datasets.services.dataset_permissions import DELETE_DATASET, DELETE_DATASET_TABLE, DELETE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 
@@ -326,46 +325,8 @@ class ShareEnvironmentResource(EnvironmentResource):
     def delete_env(session, environment):
         ShareObjectRepository.delete_all_share_items(session, environment.environmentUri)
 
-class ShareObjectDatasetExtensionRepository(DatasetRepositoryInterface):
 
-    @staticmethod
-    def check_before_delete(session, uri, **kwargs):
-        """Implemented as part of the DatasetRepositoryInterface"""
-        action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            has_share = ShareObjectRepository.has_shared_items(session, uri)
-            if has_share:
-                raise exceptions.ResourceShared(
-                    action=action,
-                    message='Revoke all shares for this item before deletion',
-                )
-        elif action in [DELETE_DATASET]:
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
-            )
-            if shares:
-                raise exceptions.ResourceShared(
-                    action=DELETE_DATASET,
-                    message='Revoke all dataset shares before deletion.',
-                )
-        else:
-            raise exceptions.RequiredParameter('Delete action')
-        return True
-
-    @staticmethod
-    def execute_on_delete(self, session, uri, **kwargs):
-        """Implemented as part of the DatasetRepositoryInterface"""
-        action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            ShareObjectRepository.delete_shares(session, uri)
-        elif action in [DELETE_DATASET]:
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
-        else:
-            raise exceptions.RequiredParameter('Delete action')
-        return True
-
-
-class ShareObjectRepository(DatasetRepositoryInterface):
+class ShareObjectRepository:
 
     @staticmethod
     def save_and_commit(session, share):

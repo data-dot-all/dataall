@@ -24,11 +24,11 @@ class SharingApiModuleInterface(ModuleInterface):
     def __init__(self):
         from dataall.modules.dataset_sharing import api
         from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
-        from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
-        from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectDatasetExtensionRepository
+        from dataall.modules.datasets.services.dataset_service import DatasetService
+        from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
-        DatasetRepository.register(ShareObjectDatasetExtensionRepository())
+        DatasetService.register(DatasetSharingService())
         log.info('API of dataset sharing has been imported')
 
 

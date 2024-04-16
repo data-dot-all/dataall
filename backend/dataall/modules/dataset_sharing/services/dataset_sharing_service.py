@@ -1,6 +1,7 @@
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectRepository,
     ShareItemSM,
@@ -9,14 +10,55 @@ from dataall.modules.dataset_sharing.services.share_item_service import ShareIte
 from dataall.modules.datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
+    DELETE_DATASET,
+    DELETE_DATASET_TABLE,
+    DELETE_DATASET_FOLDER,
 )
+
+from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
 
 import logging
 
 log = logging.getLogger(__name__)
 
 
-class DatasetSharingService:
+class DatasetSharingService(DatasetServiceInterface):
+
+    @staticmethod
+    def check_before_delete(session, uri, **kwargs):
+        """Implemented as part of the DatasetServiceInterface"""
+        action = kwargs.get('action')
+        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
+            has_share = ShareObjectRepository.has_shared_items(session, uri)
+            if has_share:
+                raise exceptions.ResourceShared(
+                    action=action,
+                    message='Revoke all shares for this item before deletion',
+                )
+        elif action in [DELETE_DATASET]:
+            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+                session=session, dataset_uri=uri
+            )
+            if shares:
+                raise exceptions.ResourceShared(
+                    action=DELETE_DATASET,
+                    message='Revoke all dataset shares before deletion.',
+                )
+        else:
+            raise exceptions.RequiredParameter('Delete action')
+        return True
+
+    @staticmethod
+    def execute_on_delete(self, session, uri, **kwargs):
+        """Implemented as part of the DatasetServiceInterface"""
+        action = kwargs.get('action')
+        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
+            ShareObjectRepository.delete_shares(session, uri)
+        elif action in [DELETE_DATASET]:
+            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+        else:
+            raise exceptions.RequiredParameter('Delete action')
+        return True
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
