@@ -1,8 +1,13 @@
 import logging
+import os
 import re
 
 from sqlalchemy.orm import Query
 
+from dataall.base.aws.ec2_client import EC2
+from dataall.base.aws.iam import IAM
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -22,6 +27,7 @@ from dataall.base.db import exceptions
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
+from dataall.core.stacks.aws.cloudformation import CloudFormation
 
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.api.enums import StackStatus
@@ -57,6 +63,7 @@ class EnvironmentRequestValidationService:
 
     @staticmethod
     def validate_creation_params(data, uri, session):
+        EnvironmentRequestValidationService.validate_user_groups(data)
         if not uri:
             raise exceptions.RequiredParameter('organizationUri')
         if not data:
@@ -93,6 +100,14 @@ class EnvironmentRequestValidationService:
                 f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
             )
 
+    @staticmethod
+    def validate_user_groups(data):
+        if data.get('SamlGroupName') and data.get('SamlGroupName') not in get_context().groups:
+            raise exceptions.UnauthorizedOperation(
+                action=LINK_ENVIRONMENT,
+                message=f'User: {get_context().username} is not a member of the group {data["SamlGroupName"]}',
+            )
+
 
 class EnvironmentService:
     @staticmethod
@@ -121,119 +136,188 @@ class EnvironmentService:
             )
 
     @staticmethod
+    def get_pivot_role_as_part_of_environment():
+        ssm_param = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+        )
+        return ssm_param == 'True'
+
+    @staticmethod
+    def check_cdk_resources(account_id, region, data) -> str:
+        """
+        Check if all necessary cdk resources exists in the account
+        :return : pivot role name
+        """
+
+        ENVNAME = os.environ.get('envname', 'local')
+        print('ENVNAME = ', ENVNAME)
+        if ENVNAME == 'pytest':
+            return 'CdkRoleName'
+
+        log.info('Checking cdk resources for environment.')
+
+        pivot_role_as_part_of_environment = EnvironmentService.get_pivot_role_as_part_of_environment()
+        log.info(f'Pivot role as part of environment = {pivot_role_as_part_of_environment}')
+
+        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
+        cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region)
+
+        if not pivot_role_as_part_of_environment:
+            log.info('Check if PivotRole exist in the account')
+            pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id, region=region)
+            role = IAM.get_role(
+                account_id=account_id, region=region, role_arn=pivot_role_arn, role=cdk_look_up_role_arn
+            )
+            if not role:
+                raise exceptions.AWSResourceNotFound(
+                    action='CHECK_PIVOT_ROLE',
+                    message='Pivot Role has not been created in the Environment AWS Account',
+                )
+
+        mlStudioEnabled = None
+        for parameter in data.get('parameters', []):
+            if parameter['key'] == 'mlStudiosEnabled':
+                mlStudioEnabled = parameter['value']
+
+        if mlStudioEnabled and data.get('vpcId', None) and data.get('subnetIds', []):
+            log.info('Check if ML Studio VPC Exists in the Account')
+            EC2.check_vpc_exists(
+                AwsAccountId=account_id,
+                region=region,
+                role=cdk_look_up_role_arn,
+                vpc_id=data.get('vpcId', None),
+                subnet_ids=data.get('subnetIds', []),
+            )
+
+        return cdk_role_name
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
-    def create_environment(session, uri, data=None):
+    def create_environment(uri, data=None):
         context = get_context()
-        EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
-        organization = OrganizationRepository.get_organization_by_uri(session, uri)
-        env = Environment(
-            organizationUri=data.get('organizationUri'),
-            label=data.get('label', 'Unnamed'),
-            tags=data.get('tags', []),
-            owner=context.username,
-            description=data.get('description', ''),
-            environmentType=data.get('type', EnvironmentType.Data.value),
-            AwsAccountId=data.get('AwsAccountId'),
-            region=data.get('region'),
-            SamlGroupName=data['SamlGroupName'],
-            validated=False,
-            isOrganizationDefaultEnvironment=False,
-            EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
-            EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
-            CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
-            resourcePrefix=data.get('resourcePrefix'),
-        )
+        with context.db_engine.scoped_session() as session:
+            EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
+            cdk_role_name = EnvironmentService.check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
+            organization = OrganizationRepository.get_organization_by_uri(session, uri)
+            env = Environment(
+                organizationUri=data.get('organizationUri'),
+                label=data.get('label', 'Unnamed'),
+                tags=data.get('tags', []),
+                owner=context.username,
+                description=data.get('description', ''),
+                environmentType=data.get('type', EnvironmentType.Data.value),
+                AwsAccountId=data.get('AwsAccountId'),
+                region=data.get('region'),
+                SamlGroupName=data['SamlGroupName'],
+                validated=False,
+                isOrganizationDefaultEnvironment=False,
+                EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
+                EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
+                CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{cdk_role_name}",
+                resourcePrefix=data.get('resourcePrefix'),
+            )
 
-        session.add(env)
-        session.commit()
+            env.userRoleInEnvironment = EnvironmentPermission.Owner.value
 
-        EnvironmentService._update_env_parameters(session, env, data)
-        EnvironmentResourceManager.create_env(session, env, data=data)
+            session.add(env)
+            session.commit()
 
-        env.EnvironmentDefaultBucketName = NamingConventionService(
-            target_uri=env.environmentUri,
-            target_label=env.label,
-            pattern=NamingConventionPattern.S3,
-            resource_prefix=env.resourcePrefix,
-        ).build_compliant_name()
+            EnvironmentService._update_env_parameters(session, env, data)
+            EnvironmentResourceManager.create_env(session, env, data=data)
 
-        env.EnvironmentDefaultAthenaWorkGroup = NamingConventionService(
-            target_uri=env.environmentUri,
-            target_label=env.label,
-            pattern=NamingConventionPattern.DEFAULT,
-            resource_prefix=env.resourcePrefix,
-        ).build_compliant_name()
-
-        if not data.get('EnvironmentDefaultIAMRoleArn'):
-            env_role_name = NamingConventionService(
+            env.EnvironmentDefaultBucketName = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,
-                pattern=NamingConventionPattern.IAM,
+                pattern=NamingConventionPattern.S3,
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
-            env.EnvironmentDefaultIAMRoleName = env_role_name
-            env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env_role_name}'
-            env.EnvironmentDefaultIAMRoleImported = False
-        else:
-            env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split('/')[-1]
-            env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
-            env.EnvironmentDefaultIAMRoleImported = True
 
-        env_group = EnvironmentGroup(
-            environmentUri=env.environmentUri,
-            groupUri=data['SamlGroupName'],
-            groupRoleInEnvironment=EnvironmentPermission.Owner.value,
-            environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,
-            environmentIAMRoleName=env.EnvironmentDefaultIAMRoleName,
-            environmentAthenaWorkGroup=env.EnvironmentDefaultAthenaWorkGroup,
-        )
-        session.add(env_group)
-        ResourcePolicyService.attach_resource_policy(
-            session=session,
-            resource_uri=env.environmentUri,
-            group=data['SamlGroupName'],
-            permissions=environment_permissions.ENVIRONMENT_ALL,
-            resource_type=Environment.__name__,
-        )
-        session.commit()
+            env.EnvironmentDefaultAthenaWorkGroup = NamingConventionService(
+                target_uri=env.environmentUri,
+                target_label=env.label,
+                pattern=NamingConventionPattern.DEFAULT,
+                resource_prefix=env.resourcePrefix,
+            ).build_compliant_name()
 
-        activity = Activity(
-            action='ENVIRONMENT:CREATE',
-            label='ENVIRONMENT:CREATE',
-            owner=context.username,
-            summary=f'{context.username} linked environment {env.AwsAccountId} to organization {organization.name}',
-            targetUri=env.environmentUri,
-            targetType='env',
-        )
-        session.add(activity)
-        return env
+            if not data.get('EnvironmentDefaultIAMRoleArn'):
+                env_role_name = NamingConventionService(
+                    target_uri=env.environmentUri,
+                    target_label=env.label,
+                    pattern=NamingConventionPattern.IAM,
+                    resource_prefix=env.resourcePrefix,
+                ).build_compliant_name()
+                env.EnvironmentDefaultIAMRoleName = env_role_name
+                env.EnvironmentDefaultIAMRoleArn = f'arn:aws:iam::{env.AwsAccountId}:role/{env_role_name}'
+                env.EnvironmentDefaultIAMRoleImported = False
+            else:
+                env.EnvironmentDefaultIAMRoleName = data['EnvironmentDefaultIAMRoleArn'].split('/')[-1]
+                env.EnvironmentDefaultIAMRoleArn = data['EnvironmentDefaultIAMRoleArn']
+                env.EnvironmentDefaultIAMRoleImported = True
+
+            env_group = EnvironmentGroup(
+                environmentUri=env.environmentUri,
+                groupUri=data['SamlGroupName'],
+                groupRoleInEnvironment=EnvironmentPermission.Owner.value,
+                environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,
+                environmentIAMRoleName=env.EnvironmentDefaultIAMRoleName,
+                environmentAthenaWorkGroup=env.EnvironmentDefaultAthenaWorkGroup,
+            )
+            session.add(env_group)
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                resource_uri=env.environmentUri,
+                group=data['SamlGroupName'],
+                permissions=environment_permissions.ENVIRONMENT_ALL,
+                resource_type=Environment.__name__,
+            )
+            session.commit()
+
+            activity = Activity(
+                action='ENVIRONMENT:CREATE',
+                label='ENVIRONMENT:CREATE',
+                owner=context.username,
+                summary=f'{context.username} linked environment {env.AwsAccountId} to organization {organization.name}',
+                targetUri=env.environmentUri,
+                targetType='env',
+            )
+            session.add(activity)
+            return env
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.UPDATE_ENVIRONMENT)
-    def update_environment(session, uri, data=None):
+    def update_environment(uri, data=None):
+        EnvironmentRequestValidationService.validate_user_groups(data)
         EnvironmentRequestValidationService.validate_resource_prefix(data)
-        environment = EnvironmentService.get_environment_by_uri(session, uri)
-        if data.get('label'):
-            environment.label = data.get('label')
-        if data.get('description'):
-            environment.description = data.get('description', 'No description provided')
-        if data.get('tags'):
-            environment.tags = data.get('tags')
-        if data.get('resourcePrefix'):
-            environment.resourcePrefix = data.get('resourcePrefix')
 
-        EnvironmentService._update_env_parameters(session, environment, data)
+        with get_context().db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            previous_resource_prefix = environment.resourcePrefix
+            EnvironmentService.check_cdk_resources(
+                account_id=environment.AwsAccountId, region=environment.region, data=data
+            )
 
-        ResourcePolicyService.attach_resource_policy(
-            session=session,
-            resource_uri=environment.environmentUri,
-            group=environment.SamlGroupName,
-            permissions=environment_permissions.ENVIRONMENT_ALL,
-            resource_type=Environment.__name__,
-        )
-        return environment
+            if data.get('label'):
+                environment.label = data.get('label')
+            if data.get('description'):
+                environment.description = data.get('description', 'No description provided')
+            if data.get('tags'):
+                environment.tags = data.get('tags')
+            if data.get('resourcePrefix'):
+                environment.resourcePrefix = data.get('resourcePrefix')
+
+            EnvironmentService._update_env_parameters(session, environment, data)
+
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                resource_uri=environment.environmentUri,
+                group=environment.SamlGroupName,
+                permissions=environment_permissions.ENVIRONMENT_ALL,
+                resource_type=Environment.__name__,
+            )
+            return environment, previous_resource_prefix
 
     @staticmethod
     def _update_env_parameters(session, env: Environment, data):

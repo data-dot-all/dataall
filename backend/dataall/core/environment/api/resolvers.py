@@ -46,108 +46,27 @@ def get_trust_account(context: Context, source, **kwargs):
     return current_account
 
 
-def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
-    ssm_param = ParameterStoreManager.get_parameter_value(
-        region=os.getenv('AWS_REGION', 'eu-west-1'),
-        parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
-    )
-    return True if ssm_param == 'True' else False
-
-
-def check_environment(context: Context, source, account_id, region, data):
-    """Checks necessary resources for environment deployment.
-    - Check CDKToolkit exists in Account assuming cdk_look_up_role
-    - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
-    Args:
-        input: environment creation input
-    """
-    pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
-    log.info(f'Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}')
-    ENVNAME = os.environ.get('envname', 'local')
-    if ENVNAME == 'pytest':
-        return 'CdkRoleName'
-
-    cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region)
-    if not pivot_role_as_part_of_environment:
-        log.info('Check if PivotRole exist in the account')
-        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id, region=region)
-        role = IAM.get_role(account_id=account_id, region=region, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
-        if not role:
-            raise exceptions.AWSResourceNotFound(
-                action='CHECK_PIVOT_ROLE',
-                message='Pivot Role has not been created in the Environment AWS Account',
-            )
-    mlStudioEnabled = None
-    for parameter in data.get('parameters', []):
-        if parameter['key'] == 'mlStudiosEnabled':
-            mlStudioEnabled = parameter['value']
-
-    if mlStudioEnabled and data.get('vpcId', None) and data.get('subnetIds', []):
-        log.info('Check if ML Studio VPC Exists in the Account')
-        EC2.check_vpc_exists(
-            AwsAccountId=account_id,
-            region=region,
-            role=cdk_look_up_role_arn,
-            vpc_id=data.get('vpcId', None),
-            subnet_ids=data.get('subnetIds', []),
-        )
-
-    return cdk_role_name
-
-
 def create_environment(context: Context, source, input={}):
-    if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
-        raise exceptions.UnauthorizedOperation(
-            action=LINK_ENVIRONMENT,
-            message=f'User: {context.username} is not a member of the group {input["SamlGroupName"]}',
-        )
+    env = EnvironmentService.create_environment(
+        uri=input.get('organizationUri'),
+        data=input,
+    )
+    StackService.create_stack(
+        environment_uri=env.environmentUri, target_type='environment', target_uri=env.environmentUri
+    )
 
-    with context.engine.scoped_session() as session:
-        cdk_role_name = check_environment(
-            context, source, account_id=input.get('AwsAccountId'), region=input.get('region'), data=input
-        )
-
-        input['cdk_role_name'] = cdk_role_name
-        env = EnvironmentService.create_environment(
-            session=session,
-            uri=input.get('organizationUri'),
-            data=input,
-        )
-        StackRepository.create_stack(
-            session=session,
-            environment_uri=env.environmentUri,
-            target_type='environment',
-            target_uri=env.environmentUri,
-        )
     StackService.deploy_stack(targetUri=env.environmentUri)
-    env.userRoleInEnvironment = EnvironmentPermission.Owner.value
     return env
 
 
 def update_environment(context: Context, source, environmentUri: str = None, input: dict = None):
-    if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
-        raise exceptions.UnauthorizedOperation(
-            action=LINK_ENVIRONMENT,
-            message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
-        )
+    environment, previous_resource_prefix = EnvironmentService.update_environment(
+        uri=environmentUri,
+        data=input,
+    )
 
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        cdk_role_name = check_environment(
-            context, source, account_id=environment.AwsAccountId, region=environment.region, data=input
-        )
-
-        previous_resource_prefix = environment.resourcePrefix
-
-        environment = EnvironmentService.update_environment(
-            session,
-            uri=environmentUri,
-            data=input,
-        )
-
-        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
-            StackService.deploy_stack(targetUri=environment.environmentUri)
+    if EnvironmentResourceManager.deploy_updated_stack(previous_resource_prefix, environment, data=input):
+        StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
