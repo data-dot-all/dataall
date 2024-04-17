@@ -9,7 +9,10 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.permissions.services.environment_permissions import ENABLE_ENVIRONMENT_SUBSCRIPTIONS
+from dataall.core.permissions.services.environment_permissions import (
+    ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+    CREDENTIALS_ENVIRONMENT,
+)
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.activity.db.activity_models import Activity
@@ -878,8 +881,9 @@ class EnvironmentService:
                 return session.delete(environment), environment
 
     @staticmethod
-    def get_environment_parameters(session, env_uri):
-        return EnvironmentParameterRepository(session).get_params(env_uri)
+    def get_environment_parameters(env_uri):
+        with get_context().db_engine.scoped_session() as session:
+            return EnvironmentParameterRepository(session).get_params(env_uri)
 
     @staticmethod
     def get_boolean_env_param(session, env: Environment, param: str) -> bool:
@@ -957,3 +961,93 @@ class EnvironmentService:
             environment.subscriptionsEnabled = False
             session.commit()
             return True
+
+    @staticmethod
+    def _get_environment_group_aws_session(session, username, groups, environment, groupUri=None):
+        if groupUri and groupUri not in groups:
+            raise exceptions.UnauthorizedOperation(
+                action='ENVIRONMENT_AWS_ACCESS',
+                message=f'User: {username} is not member of the team {groupUri}',
+            )
+        pivot_session = SessionHelper.remote_session(environment.AwsAccountId, environment.region)
+        if not groupUri:
+            if environment.SamlGroupName in groups:
+                aws_session = SessionHelper.get_session(
+                    base_session=pivot_session,
+                    role_arn=environment.EnvironmentDefaultIAMRoleArn,
+                )
+            else:
+                raise exceptions.UnauthorizedOperation(
+                    action='ENVIRONMENT_AWS_ACCESS',
+                    message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
+                )
+        else:
+            env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+            if not env_group:
+                raise exceptions.UnauthorizedOperation(
+                    action='ENVIRONMENT_AWS_ACCESS',
+                    message=f'Team {groupUri} is not invited to the environment {environment.name}',
+                )
+            else:
+                aws_session = SessionHelper.get_session(
+                    base_session=pivot_session,
+                    role_arn=env_group.environmentIAMRoleArn,
+                )
+            if not aws_session:
+                raise exceptions.AWSResourceNotFound(
+                    action='ENVIRONMENT_AWS_ACCESS',
+                    message=f'Failed to start an AWS session on environment {environment.AwsAccountId}',
+                )
+        return aws_session
+
+    @staticmethod
+    def get_environment_assume_role_url(
+        environmentUri: str = None,
+        groupUri: str = None,
+    ):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=environmentUri,
+                permission_name=CREDENTIALS_ENVIRONMENT,
+            )
+            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            url = SessionHelper.get_console_access_url(
+                EnvironmentService._get_environment_group_aws_session(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    environment=environment,
+                    groupUri=groupUri,
+                ),
+                region=environment.region,
+            )
+            return url
+
+    @staticmethod
+    def generate_environment_access_token(environmentUri: str = None, groupUri: str = None):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=environmentUri,
+                permission_name=CREDENTIALS_ENVIRONMENT,
+            )
+            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            c = EnvironmentService._get_environment_group_aws_session(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                environment=environment,
+                groupUri=groupUri,
+            ).get_credentials()
+            return {
+                'AccessKey': c.access_key,
+                'SessionKey': c.secret_key,
+                'sessionToken': c.token,
+            }

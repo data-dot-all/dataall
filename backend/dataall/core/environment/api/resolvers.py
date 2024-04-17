@@ -15,6 +15,7 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
+from dataall.core.organizations.services.organization_service import OrganizationService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
@@ -229,96 +230,18 @@ def list_environment_group_permissions(context, source, environmentUri: str = No
 
 
 @is_feature_enabled('core.features.env_aws_actions')
-def _get_environment_group_aws_session(session, username, groups, environment, groupUri=None):
-    if groupUri and groupUri not in groups:
-        raise exceptions.UnauthorizedOperation(
-            action='ENVIRONMENT_AWS_ACCESS',
-            message=f'User: {username} is not member of the team {groupUri}',
-        )
-    pivot_session = SessionHelper.remote_session(environment.AwsAccountId, environment.region)
-    if not groupUri:
-        if environment.SamlGroupName in groups:
-            aws_session = SessionHelper.get_session(
-                base_session=pivot_session,
-                role_arn=environment.EnvironmentDefaultIAMRoleArn,
-            )
-        else:
-            raise exceptions.UnauthorizedOperation(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
-            )
-    else:
-        env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
-        if not env_group:
-            raise exceptions.UnauthorizedOperation(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'Team {groupUri} is not invited to the environment {environment.name}',
-            )
-        else:
-            aws_session = SessionHelper.get_session(
-                base_session=pivot_session,
-                role_arn=env_group.environmentIAMRoleArn,
-            )
-        if not aws_session:
-            raise exceptions.AWSResourceNotFound(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'Failed to start an AWS session on environment {environment.AwsAccountId}',
-            )
-    return aws_session
-
-
-@is_feature_enabled('core.features.env_aws_actions')
 def get_environment_assume_role_url(
     context: Context,
     source,
     environmentUri: str = None,
     groupUri: str = None,
 ):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=CREDENTIALS_ENVIRONMENT,
-        )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        url = SessionHelper.get_console_access_url(
-            _get_environment_group_aws_session(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                environment=environment,
-                groupUri=groupUri,
-            ),
-            region=environment.region,
-        )
-    return url
+    return EnvironmentService.get_environment_assume_role_url(environmentUri=environmentUri, groupUri=groupUri)
 
 
 @is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(context, source, environmentUri: str = None, groupUri: str = None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=CREDENTIALS_ENVIRONMENT,
-        )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        c = _get_environment_group_aws_session(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            environment=environment,
-            groupUri=groupUri,
-        ).get_credentials()
-        credentials = {
-            'AccessKey': c.access_key,
-            'SessionKey': c.secret_key,
-            'sessionToken': c.token,
-        }
+    credentials = EnvironmentService.generate_environment_access_token(environmentUri=environmentUri, groupUri=groupUri)
     return json.dumps(credentials)
 
 
@@ -438,39 +361,11 @@ def get_cdk_exec_policy_template(context: Context, source, organizationUri=None)
 
 
 def get_external_id(context: Context, source, organizationUri=None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=organizationUri,
-            permission_name=GET_ORGANIZATION,
-        )
-        external_id = SessionHelper.get_external_id_secret()
-        if not external_id:
-            raise exceptions.AWSResourceNotFound(
-                action='GET_EXTERNAL_ID',
-                message='External Id could not be found on AWS Secretsmanager',
-            )
-        return external_id
+    return OrganizationService.get_external_id(organizationUri)
 
 
 def get_pivot_role_name(context: Context, source, organizationUri=None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=organizationUri,
-            permission_name=GET_ORGANIZATION,
-        )
-        pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
-        if not pivot_role_name:
-            raise exceptions.AWSResourceNotFound(
-                action='GET_PIVOT_ROLE_NAME',
-                message='Pivot role name could not be found on AWS Systems Manager - Parameter Store',
-            )
-        return pivot_role_name
+    return OrganizationService.get_pivot_role(organizationUri)
 
 
 def resolve_environment(context, source, **kwargs):
@@ -478,13 +373,11 @@ def resolve_environment(context, source, **kwargs):
     if not source:
         return None
 
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):
     """Resolves a parameters for the environment"""
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_parameters(session, source.environmentUri)
+    return EnvironmentService.get_environment_parameters(source.environmentUri)

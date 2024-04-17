@@ -1,3 +1,4 @@
+from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.core.activity.db.activity_models import Activity
@@ -260,3 +261,41 @@ class OrganizationService:
         with context.db_engine.scoped_session() as session:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
             return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
+
+    @staticmethod
+    def get_pivot_role(organization_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=organization_uri,
+                permission_name=GET_ORGANIZATION,
+            )
+        pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
+        if not pivot_role_name:
+            raise exceptions.AWSResourceNotFound(
+                action='GET_PIVOT_ROLE_NAME',
+                message='Pivot role name could not be found on AWS Systems Manager - Parameter Store',
+            )
+        return pivot_role_name
+
+    @staticmethod
+    def get_external_id(organization_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=organization_uri,
+                permission_name=GET_ORGANIZATION,
+            )
+            external_id = SessionHelper.get_external_id_secret()
+            if not external_id:
+                raise exceptions.AWSResourceNotFound(
+                    action='GET_EXTERNAL_ID',
+                    message='External Id could not be found on AWS Secretsmanager',
+                )
+            return external_id
