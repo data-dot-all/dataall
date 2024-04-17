@@ -12,6 +12,7 @@ from dataall.modules.dataset_sharing.api.resolvers import (
     update_share_reject_purpose,
     update_share_request_purpose,
     verify_items_share_object,
+    verify_dataset_share_objects,
 )
 
 createShareObject = gql.MutationField(
@@ -116,4 +117,11 @@ updateShareRequestReason = gql.MutationField(
     ],
     type=gql.Boolean,
     resolver=update_share_request_purpose,
+)
+
+verifyDatasetShareObjects = gql.MutationField(
+    name='verifyDatasetShareObjects',
+    args=[gql.Argument(name='input', type=gql.Ref('ShareObjectSelectorInput'))],
+    type=gql.Boolean,
+    resolver=verify_dataset_share_objects,
 )

@@ -9,6 +9,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import Share
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
@@ -36,6 +37,15 @@ class RequestValidator:
             raise RequiredParameter('shareUri')
         if not data.get('itemUris'):
             raise RequiredParameter('itemUris')
+
+    @staticmethod
+    def validate_dataset_share_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('datasetUri'):
+            raise RequiredParameter('datasetUri')
+        if not data.get('shareUris'):
+            raise RequiredParameter('shareUris')
 
 
 def create_share_object(
@@ -303,3 +313,10 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             uri=shareUri,
             reject_purpose=rejectPurpose,
         )
+
+
+def verify_dataset_share_objects(context: Context, source, input):
+    RequestValidator.validate_dataset_share_selector_input(input)
+    dataset_uri = input.get('datasetUri')
+    verify_share_uris = input.get('shareUris')
+    return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
