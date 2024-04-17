@@ -50,6 +50,7 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 log = logging.getLogger(__name__)
 
+
 class DatasetServiceInterface(ABC):
     @staticmethod
     def check_before_delete(session, uri, **kwargs) -> bool:
@@ -80,12 +81,26 @@ class DatasetServiceInterface(ABC):
         """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
         return True
 
+
 class DatasetService:
     _interfaces: List[DatasetServiceInterface] = []
 
     @classmethod
     def register(cls, interface: DatasetServiceInterface):
         cls._interfaces.append(interface)
+
+    @classmethod
+    def check_before_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed before deletion"""
+        can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
+        return False not in set(can_be_deleted)
+
+    @classmethod
+    def execute_on_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed during deletion"""
+        for interface in cls._interfaces:
+            interface.execute_on_delete(session, uri, **kwargs)
+        return True
 
     @staticmethod
     def check_dataset_account(session, environment):
@@ -402,15 +417,7 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
-            )
-            if shares:
-                raise exceptions.UnauthorizedOperation(
-                    action=DELETE_DATASET,
-                    message=f'Dataset {dataset.name} is shared with other teams. '
-                    'Revoke all dataset shares before deletion.',
-                )
+            DatasetService.check_before_delete(session, uri, action=DELETE_DATASET)
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
             for tableUri in tables:
@@ -422,7 +429,7 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
