@@ -72,4 +72,4 @@ def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
 def resolve_omics_run_details(context, source: OmicsRun, **kwargs):
     if not source:
         return None
-    return OmicsService.get_omics_run_from_aws(source.runUri)
+    return OmicsService.get_omics_run_details_from_aws(source.runUri)
