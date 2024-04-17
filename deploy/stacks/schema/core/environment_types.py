@@ -1,20 +1,15 @@
-from functools import cache
-
 from awscdk.appsync_utils import GraphqlType, EnumType, ObjectType
 
 from stacks.appsync import AppSyncStack
-from stacks.schema import SchemaBase
 from stacks.schema.commons import CommonTypes
 
 
-@cache
-class EnvironmentTypes(SchemaBase):
+class EnvironmentTypes:
     def __init__(
         self,
-        common_types=CommonTypes(),
+        app_sync_stack: AppSyncStack,
+        common_types: CommonTypes,
     ):
-        schema = AppSyncStack.INSTANCE.schema
-
         self.environment_permission = EnumType(
             'EnvironmentPermission',
             definition=[
@@ -26,7 +21,7 @@ class EnvironmentTypes(SchemaBase):
                 'NotInvited',
             ],
         )
-        schema.add_type(self.environment_permission)
+        app_sync_stack.schema.add_type(self.environment_permission)
 
         self.environment_sort_field = EnumType(
             'EnvironmentSortField',
@@ -36,7 +31,7 @@ class EnvironmentTypes(SchemaBase):
                 'label',
             ],
         )
-        schema.add_type(self.environment_sort_field)
+        app_sync_stack.schema.add_type(self.environment_sort_field)
 
         self.vpc = ObjectType(
             'Vpc',
@@ -57,7 +52,7 @@ class EnvironmentTypes(SchemaBase):
                 'default': GraphqlType.boolean(),
             },
         )
-        schema.add_type(self.vpc)
+        app_sync_stack.schema.add_type(self.vpc)
 
         self.environment_parameter = ObjectType(
             'EnvironmentParameter',
@@ -66,7 +61,7 @@ class EnvironmentTypes(SchemaBase):
                 'value': GraphqlType.string(),
             },
         )
-        schema.add_type(self.environment_parameter)
+        app_sync_stack.schema.add_type(self.environment_parameter)
 
         self.vpc_search_result = ObjectType(
             'VpcSearchResult',
@@ -75,7 +70,7 @@ class EnvironmentTypes(SchemaBase):
                 'nodes': self.vpc.attribute(is_list=True),
             },
         )
-        schema.add_type(self.vpc_search_result)
+        app_sync_stack.schema.add_type(self.vpc_search_result)
 
         self.environment = ObjectType(
             'Environment',
@@ -116,7 +111,7 @@ class EnvironmentTypes(SchemaBase):
                 # parameters: [EnvironmentParameter]
             },
         )
-        schema.add_type(self.environment)
+        app_sync_stack.schema.add_type(self.environment)
 
         self.environment_search_result = ObjectType(
             'EnvironmentSearchResult',
@@ -125,4 +120,4 @@ class EnvironmentTypes(SchemaBase):
                 'nodes': self.environment.attribute(is_list=True),
             },
         )
-        schema.add_type(self.environment_search_result)
+        app_sync_stack.schema.add_type(self.environment_search_result)

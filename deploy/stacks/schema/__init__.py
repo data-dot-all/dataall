@@ -1,35 +1,27 @@
-import importlib
-import pkgutil
-
 from stacks import schema
-
-
-class SchemaBase(object):
-    pass
-
-
-def import_submodules(package):
-    """Import all submodules of a module, recursively, including subpackages
-    :param package: package (name or actual module)
-    :type package: str | module
-    :rtype: dict[str, types.ModuleType]
-    """
-    if isinstance(package, str):
-        package = importlib.import_module(package)
-    results = {}
-    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
-        full_name = package.__name__ + '.' + name
-        results[full_name] = importlib.import_module(full_name)
-        if is_pkg:
-            results.update(import_submodules(full_name))
-    return results
+from stacks.schema.commons import CommonTypes
+from stacks.schema.core.environment_inputs import EnvironmentInputs
+from stacks.schema.core.environment_queries import EnvironmentQueries
+from stacks.schema.core.environment_types import EnvironmentTypes
+from stacks.schema.core.organization_inputs import OrganizationInputs
+from stacks.schema.core.organization_mutations import OrganizationMutations
+from stacks.schema.core.organization_queries import OrganizationQueries
+from stacks.schema.core.organization_types import OrganizationTypes
+from stacks.schema.core.stack_queries import StackQueries
+from stacks.schema.core.stack_types import StackTypes
 
 
 def create_schema(app_sync_stack):
-    """
-    1. Recursively import all submodules under 'schema' to ensure that __subclasses__ will list all the classes that inherit from SchemaBase.
-    2. Force injector initialise all the classes that inherit from SchemaBase
-    """
-    import_submodules(schema)
-    for cls in SchemaBase.__subclasses__():
-        cls()
+    kwargs = {'app_sync_stack': app_sync_stack}
+    kwargs['common_types'] = CommonTypes(**kwargs)
+    kwargs['env_types'] = EnvironmentTypes(**kwargs)
+    kwargs['org_types'] = OrganizationTypes(**kwargs)
+    kwargs['stack_types'] = StackTypes(**kwargs)
+
+    kwargs['env_inputs'] = EnvironmentInputs(**kwargs)
+    kwargs['env_queries'] = EnvironmentQueries(**kwargs)
+    kwargs['org_inputs'] = OrganizationInputs(**kwargs)
+    kwargs['org_queries'] = OrganizationQueries(**kwargs)
+    kwargs['org_mutations'] = OrganizationMutations(**kwargs)
+
+    kwargs['stack_queries'] = StackQueries(**kwargs)

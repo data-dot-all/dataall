@@ -1,16 +1,10 @@
-from functools import cache
-
 from awscdk.appsync_utils import EnumType, InterfaceType, GraphqlType
 
 from stacks.appsync import AppSyncStack
-from stacks.schema import SchemaBase
 
 
-@cache
-class CommonTypes(SchemaBase):
-    def __init__(self):
-        schema = AppSyncStack.INSTANCE.schema
-
+class CommonTypes:
+    def __init__(self, app_sync_stack: AppSyncStack):
         self.sort_direction = EnumType(
             'SortDirection',
             definition=[
@@ -18,7 +12,7 @@ class CommonTypes(SchemaBase):
                 'desc',
             ],
         )
-        schema.add_type(self.sort_direction)
+        app_sync_stack.schema.add_type(self.sort_direction)
 
         self.paged_result = InterfaceType(
             'PagedResult',
@@ -34,7 +28,7 @@ class CommonTypes(SchemaBase):
                 'count': GraphqlType.int(),  # noqa
             },
         )
-        schema.add_type(self.paged_result)
+        app_sync_stack.schema.add_type(self.paged_result)
 
         self.filter_args = {
             'term': GraphqlType.string(),

@@ -3,19 +3,15 @@ from functools import cache
 from awscdk.appsync_utils import GraphqlType, ObjectType
 
 from stacks.appsync import AppSyncStack
-from stacks.schema import SchemaBase
-from stacks.schema.commons import CommonTypes
 
 
 @cache
-class StackTypes(SchemaBase):
+class StackTypes:
     def __init__(
         self,
-        common_types=CommonTypes(),
+        app_sync_stack: AppSyncStack,
+        **_kwargs,
     ):
-        schema = AppSyncStack.INSTANCE.schema
-        data_source = AppSyncStack.INSTANCE.data_source
-
         self.stack_log = ObjectType(
             'StackLog',
             definition={
@@ -25,7 +21,7 @@ class StackTypes(SchemaBase):
                 'message': GraphqlType.string(),
             },
         )
-        schema.add_type(self.stack_log)
+        app_sync_stack.schema.add_type(self.stack_log)
 
         self.stack = ObjectType(
             'Stack',
@@ -48,4 +44,4 @@ class StackTypes(SchemaBase):
                 'EcsTaskId': GraphqlType.string(),
             },
         )
-        schema.add_type(self.stack)
+        app_sync_stack.schema.add_type(self.stack)

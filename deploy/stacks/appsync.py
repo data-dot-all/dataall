@@ -8,18 +8,13 @@ from aws_cdk.aws_lambda import IFunction
 from awscdk.appsync_utils import CodeFirstSchema
 
 from .pyNestedStack import pyNestedClass
-from .schema import create_schema
 
 
 class AppSyncStack(pyNestedClass):
-    INSTANCE = None
-
     def __init__(self, scope, id, user_pool: IUserPool, api_handler: IFunction, **kwargs):
-        AppSyncStack.INSTANCE: AppSyncStack = self
         super().__init__(scope, id, **kwargs)
         self.user_pool = user_pool
         self.api_handler = api_handler
-        create_schema(self)
 
     @cached_property
     def schema(self) -> CodeFirstSchema:

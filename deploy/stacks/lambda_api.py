@@ -29,6 +29,7 @@ from aws_cdk.aws_ec2 import (
 
 from .appsync import AppSyncStack
 from .pyNestedStack import pyNestedClass
+from .schema import create_schema
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
 
@@ -298,7 +299,8 @@ class LambdaApiStack(pyNestedClass):
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
 
-        AppSyncStack(scope, 'AppSyncAPI', user_pool, self.api_handler)
+        app_sync_stack = AppSyncStack(scope, 'AppSyncAPI', user_pool, self.api_handler)
+        create_schema(app_sync_stack)
 
     def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(
@@ -512,7 +514,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             'WafApiGW',
             resource_arn=f'arn:aws:apigateway:{self.region}::'
-            f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
+                         f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
             web_acl_arn=acl.get_att('Arn').to_string(),
         )
 

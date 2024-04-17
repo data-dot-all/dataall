@@ -3,18 +3,17 @@ from functools import cache
 from awscdk.appsync_utils import GraphqlType, EnumType, ObjectType
 
 from stacks.appsync import AppSyncStack
-from stacks.schema import SchemaBase
 from stacks.schema.commons import CommonTypes
 
 
 @cache
-class OrganizationTypes(SchemaBase):
+class OrganizationTypes:
     def __init__(
         self,
-        common_types=CommonTypes(),
+        app_sync_stack: AppSyncStack,
+        common_types: CommonTypes,
+        **_kwargs,
     ):
-        schema = AppSyncStack.INSTANCE.schema
-
         self.organization_stats = ObjectType(
             'OrganizationStats',
             definition={
@@ -23,7 +22,7 @@ class OrganizationTypes(SchemaBase):
                 'environments': GraphqlType.int(),
             },
         )
-        schema.add_type(self.organization_stats)
+        app_sync_stack.schema.add_type(self.organization_stats)
 
         self.organisation_user_role = EnumType(
             'OrganisationUserRole',
@@ -35,7 +34,7 @@ class OrganizationTypes(SchemaBase):
                 'Invited',
             ],
         )
-        schema.add_type(self.organisation_user_role)
+        app_sync_stack.schema.add_type(self.organisation_user_role)
 
         self.organization = ObjectType(
             'Organization',
@@ -54,7 +53,7 @@ class OrganizationTypes(SchemaBase):
                 # stats: OrganizationStats
             },
         )
-        schema.add_type(self.organization)
+        app_sync_stack.schema.add_type(self.organization)
 
         self.organization_sort_field = EnumType(
             'OrganizationSortField',
@@ -64,11 +63,11 @@ class OrganizationTypes(SchemaBase):
                 'label',
             ],
         )
-        schema.add_type(self.organization_sort_field)
+        app_sync_stack.schema.add_type(self.organization_sort_field)
 
         self.organization_search_result = ObjectType(
             'OrganizationSearchResult',
             interface_types=[common_types.paged_result],
             definition={'nodes': self.organization.attribute(is_list=True)},
         )
-        schema.add_type(self.organization_search_result)
+        app_sync_stack.schema.add_type(self.organization_search_result)

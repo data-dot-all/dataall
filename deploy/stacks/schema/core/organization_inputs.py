@@ -3,20 +3,19 @@ from functools import cache
 from awscdk.appsync_utils import GraphqlType, InputType
 
 from stacks.appsync import AppSyncStack
-from stacks.schema import SchemaBase
 from stacks.schema.commons import CommonTypes
 from stacks.schema.core.organization_types import OrganizationTypes
 
 
 @cache
-class OrganizationInputs(SchemaBase):
+class OrganizationInputs:
     def __init__(
         self,
-        common_types=CommonTypes(),
-        org_types=OrganizationTypes(),
+        app_sync_stack: AppSyncStack,
+        common_types: CommonTypes,
+        org_types: OrganizationTypes,
+        **_kwargs,
     ):
-        schema = AppSyncStack.INSTANCE.schema
-
         self.new_organization_input = InputType(
             'NewOrganizationInput',
             definition={
@@ -26,7 +25,7 @@ class OrganizationInputs(SchemaBase):
                 'SamlGroupName': GraphqlType.string(),
             },
         )
-        schema.add_type(self.new_organization_input)
+        app_sync_stack.schema.add_type(self.new_organization_input)
 
         self.organization_sort_criteria = InputType(
             'OrganizationSortCriteria',
@@ -35,7 +34,7 @@ class OrganizationInputs(SchemaBase):
                 'direction': common_types.sort_direction.attribute(),
             },
         )
-        schema.add_type(self.organization_sort_criteria)
+        app_sync_stack.schema.add_type(self.organization_sort_criteria)
 
         self.organization_filter = InputType(
             'OrganizationFilter',
@@ -45,4 +44,4 @@ class OrganizationInputs(SchemaBase):
                 'roles': org_types.organisation_user_role.attribute(is_list=True),
             },
         )
-        schema.add_type(self.organization_filter)
+        app_sync_stack.schema.add_type(self.organization_filter)
