@@ -72,12 +72,10 @@ def update_environment(context: Context, source, environmentUri: str = None, inp
 
 
 def invite_group(context: Context, source, input):
-    with context.engine.scoped_session() as session:
-        environment, environment_group = EnvironmentService.invite_group(
-            session=session,
-            uri=input['environmentUri'],
-            data=input,
-        )
+    environment, environment_group = EnvironmentService.invite_group(
+        uri=input['environmentUri'],
+        data=input,
+    )
 
     StackService.deploy_stack(targetUri=environment.environmentUri)
 
@@ -85,30 +83,18 @@ def invite_group(context: Context, source, input):
 
 
 def add_consumption_role(context: Context, source, input):
-    with context.engine.scoped_session() as session:
-        env = EnvironmentService.get_environment_by_uri(session, input['environmentUri'])
-        role = IAM.get_role(env.AwsAccountId, env.region, input['IAMRoleArn'])
-        if not role:
-            raise exceptions.AWSResourceNotFound(
-                action='ADD_CONSUMPTION_ROLE',
-                message=f"{input['IAMRoleArn']} does not exist in this account",
-            )
-        consumption_role = EnvironmentService.add_consumption_role(
-            session=session,
-            uri=input['environmentUri'],
-            data=input,
-        )
-
+    consumption_role = EnvironmentService.add_consumption_role(
+        uri=input['environmentUri'],
+        data=input,
+    )
     return consumption_role
 
 
 def update_group_permissions(context, source, input):
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.update_group_permissions(
-            session=session,
-            uri=input['environmentUri'],
-            data=input,
-        )
+    environment = EnvironmentService.update_group_permissions(
+        uri=input['environmentUri'],
+        data=input,
+    )
 
     StackService.deploy_stack(targetUri=environment.environmentUri)
 
@@ -116,12 +102,10 @@ def update_group_permissions(context, source, input):
 
 
 def remove_group(context: Context, source, environmentUri=None, groupUri=None):
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.remove_group(
-            session=session,
-            uri=environmentUri,
-            group=groupUri,
-        )
+    environment = EnvironmentService.remove_group(
+        uri=environmentUri,
+        group=groupUri,
+    )
 
     StackService.deploy_stack(targetUri=environment.environmentUri)
 
@@ -129,80 +113,56 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
 
 
 def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
-    with context.engine.scoped_session() as session:
-        status = EnvironmentService.remove_consumption_role(
-            session=session,
-            uri=consumptionRoleUri,
-            env_uri=environmentUri,
-        )
+    status = EnvironmentService.remove_consumption_role(
+        uri=consumptionRoleUri,
+        env_uri=environmentUri,
+    )
 
     return status
 
 
 def update_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None, input={}):
-    with context.engine.scoped_session() as session:
-        consumption_role = EnvironmentService.update_consumption_role(
-            session=session,
-            uri=consumptionRoleUri,
-            env_uri=environmentUri,
-            input=input,
-        )
+    consumption_role = EnvironmentService.update_consumption_role(
+        uri=consumptionRoleUri,
+        env_uri=environmentUri,
+        input=input,
+    )
     return consumption_role
 
 
 def list_environment_invited_groups(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_environment_invited_groups(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_environment_invited_groups(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def list_environment_groups(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_user_environment_groups(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_user_environment_groups(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def list_all_environment_groups(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_all_environment_groups(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_all_environment_groups(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def list_environment_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_user_environment_consumption_roles(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_user_environment_consumption_roles(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def list_all_environment_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_all_environment_consumption_roles(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_all_environment_consumption_roles(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def list_environment_group_invitation_permissions(
@@ -210,55 +170,30 @@ def list_environment_group_invitation_permissions(
     source,
     environmentUri=None,
 ):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_invitation_permissions(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-        )
+    return EnvironmentService.list_group_invitation_permissions()
 
 
 def list_environments(context: Context, source, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_user_environments(session, filter)
+    return EnvironmentService.paginated_user_environments(filter)
 
 
 def list_valid_environments(context: Context, source, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_valid_user_environments(session, filter)
+    return EnvironmentService.list_valid_user_environments(filter)
 
 
 def list_groups(context: Context, source, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_user_groups(session, filter)
+    return EnvironmentService.paginated_user_groups(filter)
 
 
 def list_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_user_consumption_roles(
-            session=session,
-            data=filter,
-        )
+    return EnvironmentService.paginated_user_consumption_roles(filter)
 
 
 def list_environment_networks(context: Context, source, environmentUri=None, filter=None):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.paginated_environment_networks(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return EnvironmentService.paginated_environment_networks(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def get_parent_organization(context: Context, source, **kwargs):
@@ -267,15 +202,14 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 
 def get_policies(context: Context, source, **kwargs):
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-        return PolicyManager(
-            role_name=source.IAMRoleName,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        ).get_all_policies()
+    environment = EnvironmentService.find_environment_by_uri(source.environmentUri)
+    return PolicyManager(
+        role_name=source.IAMRoleName,
+        environmentUri=environment.environmentUri,
+        account=environment.AwsAccountId,
+        region=environment.region,
+        resource_prefix=environment.resourcePrefix,
+    ).get_all_policies()
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):
@@ -287,18 +221,11 @@ def get_environment(context: Context, source, environmentUri: str = None):
 
 
 def resolve_user_role(context: Context, source: Environment):
-    if source.owner == context.username:
-        return EnvironmentPermission.Owner.value
-    elif source.SamlGroupName in context.groups:
-        return EnvironmentPermission.Admin.value
-    elif EnvironmentService.is_user_invited(source.environmentUri):
-        return EnvironmentPermission.Invited.value
-    return EnvironmentPermission.NotInvited.value
+    return EnvironmentService.resolve_user_role(environment=source)
 
 
 def list_environment_group_permissions(context, source, environmentUri: str = None, groupUri: str = None):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=groupUri)
+    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=groupUri)
 
 
 @is_feature_enabled('core.features.env_aws_actions')
@@ -403,9 +330,7 @@ def get_environment_stack(context: Context, source: Environment, **kwargs):
 
 
 def delete_environment(context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False):
-    with context.engine.scoped_session() as session:
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        EnvironmentService.delete_environment(session, uri=environmentUri, environment=environment)
+    session_response, environment = EnvironmentService.delete_environment(uri=environmentUri)
 
     if deleteFromAWS:
         StackService.delete_stack(
@@ -419,59 +344,15 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
 
 
 def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
-        )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        if input.get('producersTopicArn'):
-            environment.subscriptionsProducersTopicName = input.get('producersTopicArn')
-            environment.subscriptionsProducersTopicImported = True
-
-        else:
-            environment.subscriptionsProducersTopicName = NamingConventionService(
-                target_label=f'{environment.label}-producers-topic',
-                target_uri=environment.environmentUri,
-                pattern=NamingConventionPattern.DEFAULT,
-                resource_prefix=environment.resourcePrefix,
-            ).build_compliant_name()
-
-        environment.subscriptionsConsumersTopicName = NamingConventionService(
-            target_label=f'{environment.label}-consumers-topic',
-            target_uri=environment.environmentUri,
-            pattern=NamingConventionPattern.DEFAULT,
-            resource_prefix=environment.resourcePrefix,
-        ).build_compliant_name()
-        environment.subscriptionsConsumersTopicImported = False
-        environment.subscriptionsEnabled = True
-        session.commit()
-        StackService.deploy_stack(targetUri=environment.environmentUri)
-        return True
+    EnvironmentService.enable_subscriptions(environmentUri, input)
+    StackService.deploy_stack(targetUri=environmentUri)
+    return True
 
 
 def disable_subscriptions(context: Context, source, environmentUri: str = None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
-        )
-        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-
-        environment.subscriptionsConsumersTopicName = None
-        environment.subscriptionsConsumersTopicImported = False
-        environment.subscriptionsProducersTopicName = None
-        environment.subscriptionsProducersTopicImported = False
-        environment.subscriptionsEnabled = False
-        session.commit()
-        StackService.deploy_stack(targetUri=environment.environmentUri)
-        return True
+    EnvironmentService.disable_subscriptions(environmentUri)
+    StackService.deploy_stack(targetUri=environmentUri)
+    return True
 
 
 def get_pivot_role_template(context: Context, source, organizationUri=None):
