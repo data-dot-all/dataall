@@ -342,11 +342,6 @@ class DatasetService:
             }
 
     @staticmethod
-    def list_dataset_share_objects(dataset: Dataset, data: dict = None):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
-
-    @staticmethod
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:

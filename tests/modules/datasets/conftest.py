@@ -112,11 +112,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                         organizationUri
                         label
                     }
-                    shares{
-                        nodes{
-                         shareUri
-                        }
-                    }
                     terms{
                         count
                         nodes{

@@ -320,3 +320,15 @@ def verify_dataset_share_objects(context: Context, source, input):
     dataset_uri = input.get('datasetUri')
     verify_share_uris = input.get('shareUris')
     return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+
+
+def list_dataset_share_objects(context, source, filter: dict = None):
+    if not source:
+        return None
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetSharingService.list_dataset_share_objects(source, filter)
+
+
+def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
+    return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)

@@ -33,3 +33,19 @@ class DatasetSharingService:
                 item_uris = [item.shareItemUri for item in items.get('nodes', [])]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
         return True
+
+    @staticmethod
+    def list_dataset_share_objects(dataset: Dataset, data: dict = None):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
+
+    @staticmethod
+    def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return [
+                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
+                for t in ShareObjectRepository.query_dataset_tables_shared_with_env(
+                    session, env_uri, dataset_uri, context.username, context.groups
+                )
+            ]

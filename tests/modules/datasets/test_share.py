@@ -554,62 +554,7 @@ def update_share_reject_purpose(client, user, group, shareUri, rejectPurpose):
     return response
 
 
-def list_dataset_share_objects(client, user, group, datasetUri):
-    q = """
-        query ListDatasetShareObjects(
-              $datasetUri: String!
-              $filter: ShareObjectFilter
-            ) {
-              getDataset(datasetUri: $datasetUri) {
-                shares(filter: $filter) {
-                  page
-                  pages
-                  pageSize
-                  hasPrevious
-                  hasNext
-                  count
-                  nodes {
-                    owner
-                    created
-                    deleted
-                    shareUri
-                    status
-                    userRoleForShareObject
-                    principal {
-                      principalId
-                      principalType
-                      principalName
-                      AwsAccountId
-                      region
-                    }
-                    statistics {
-                      tables
-                      locations
-                    }
-                    dataset {
-                      datasetUri
-                      datasetName
-                      SamlAdminGroupName
-                      environmentName
-                    }
-                  }
-                }
-              }
-            }
-    """
-
-    response = client.query(
-        q,
-        username=user.username,
-        groups=[group.name],
-        datasetUri=datasetUri,
-    )
-    # Print response
-    print('List Dataset share objects response: ', response)
-    return response
-
-
-def get_share_requests_to_me(client, user, group):
+def get_share_requests_to_me(client, user, group, filter=None):
     q = """
         query getShareRequestsToMe($filter: ShareObjectFilter){
             getShareRequestsToMe(filter: $filter){
@@ -620,7 +565,7 @@ def get_share_requests_to_me(client, user, group):
             }
         }
     """
-    response = client.query(q, username=user.username, groups=[group.name])
+    response = client.query(q, username=user.username, groups=[group.name], filter=filter)
     # Print response
     print('Get share requests to me response: ', response)
     return response
@@ -1170,42 +1115,6 @@ def test_update_share_request_purpose_unauthorized(client, share1_draft, user, g
     assert 'UnauthorizedOperation' in update_share_request_purpose_response.errors[0].message
 
 
-def test_list_dataset_share_objects_approvers(client, user, group, share1_draft, dataset1):
-    # Given
-    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
-    # When a user from the Approvers group lists the share objects for a dataset
-    list_dataset_share_objects_response = list_dataset_share_objects(
-        client=client, user=user, group=group, datasetUri=dataset1.datasetUri
-    )
-    # Then, userRoleForShareObject is Approvers
-    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
-    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Approvers'
-
-
-def test_list_dataset_share_objects_unauthorized(client, user3, group4, share1_draft, dataset1):
-    # Given
-    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
-    # When a user from neither Approvers or Requesters group lists the share objects for a dataset
-    list_dataset_share_objects_response = list_dataset_share_objects(
-        client=client, user=user3, group=group4, datasetUri=dataset1.datasetUri
-    )
-    # Then, userRoleForShareObject is 'NoPermission'
-    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
-    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'NoPermission'
-
-
-def test_list_dataset_share_objects_requesters(client, user2, group2, share1_draft, dataset1):
-    # Given
-    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
-    # When a user from the Requesters group lists the share objects for a dataset
-    list_dataset_share_objects_response = list_dataset_share_objects(
-        client=client, user=user2, group=group2, datasetUri=dataset1.datasetUri
-    )
-    # Then, userRoleForShareObject is 'Requesters'
-    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
-    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
-
-
 def test_list_shares_to_me_approver(client, user, group, share1_draft):
     # Given
     # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
@@ -1685,12 +1594,12 @@ def test_reapply_items_share_request_unauthorized(
 def test_verify_dataset_share_objects_request(db, client, user, group, share3_processed, share3_item_shared, dataset1):
     # Given
     # Existing share objects in dataset1
-    list_dataset_share_objects_response = list_dataset_share_objects(
-        client=client, user=user, group=group, datasetUri=dataset1.datasetUri
+    list_dataset_shares = get_share_requests_to_me(
+        client=client, user=user, group=group, filter={'datasets_uris': [dataset1.datasetUri]}
     )
 
-    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
-    shareUris = [share.shareUri for share in list_dataset_share_objects_response.data.getDataset.shares.nodes]
+    assert list_dataset_shares.data.getShareRequestsToMe.count == 2
+    shareUris = [share.shareUri for share in list_dataset_shares.data.getShareRequestsToMe.nodes]
     assert len(shareUris)
     assert share3_processed.shareUri in shareUris
 

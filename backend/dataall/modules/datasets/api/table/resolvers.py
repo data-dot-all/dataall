@@ -56,7 +56,3 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(session, source.tableUri, 'DatasetTable')
-
-
-def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
-    return DatasetTableService.list_shared_tables_by_env_dataset(datasetUri, envUri)

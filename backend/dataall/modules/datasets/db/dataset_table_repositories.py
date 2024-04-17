@@ -44,43 +44,6 @@ class DatasetTableRepository:
         session.delete(table)
 
     @staticmethod
-    def query_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, username: str, groups: [str]
-    ):
-        """For a given dataset, returns the list of Tables shared with the environment
-        This means looking at approved ShareObject items
-        for the share object associating the dataset and environment
-        """
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        env_tables_shared = (
-            session.query(DatasetTable)  # all tables
-            .join(
-                ShareObjectItem,  # found in ShareObjectItem
-                ShareObjectItem.itemUri == DatasetTable.tableUri,
-            )
-            .join(
-                ShareObject,  # jump to share object
-                ShareObject.shareUri == ShareObjectItem.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,  # for this dataset
-                    ShareObject.environmentUri == environment_uri,  # for this environment
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                    ShareObject.principalType
-                    != PrincipalType.ConsumptionRole.value,  # Exclude Consumption roles shares
-                    or_(
-                        ShareObject.owner == username,
-                        ShareObject.principalId.in_(groups),
-                    ),
-                )
-            )
-            .all()
-        )
-
-        return env_tables_shared
-
-    @staticmethod
     def get_dataset_table_by_uri(session, table_uri):
         table: DatasetTable = session.query(DatasetTable).get(table_uri)
         if not table:
