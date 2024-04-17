@@ -6,37 +6,24 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from dataall.base.aws.iam import IAM
-from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.s3_client import S3_client
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.organizations.services.organization_service import OrganizationService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.services.stack_service import StackService
-from dataall.core.stacks.aws.cloudformation import CloudFormation
-from dataall.core.stacks.db.stack_repositories import StackRepository
+
 from dataall.core.vpc.services.vpc_service import VpcService
-from dataall.base.aws.ec2_client import EC2
+
 from dataall.base.feature_toggle_checker import is_feature_enabled
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
 
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
-from dataall.core.permissions.services.environment_permissions import (
-    CREDENTIALS_ENVIRONMENT,
-    ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
-)
-from dataall.core.permissions.services.organization_permissions import (
-    GET_ORGANIZATION,
-    LINK_ENVIRONMENT,
-)
+
+from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 
 log = logging.getLogger()
 
@@ -279,93 +266,19 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
 
 
 def get_pivot_role_template(context: Context, source, organizationUri=None):
-    from dataall.base.utils import Parameter
-
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=organizationUri,
-            permission_name=GET_ORGANIZATION,
-        )
-        pivot_role_bucket = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
-        )
-        pivot_role_bucket_key = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/pivot_role_prefix'
-        )
-        if not pivot_role_bucket or not pivot_role_bucket_key:
-            raise exceptions.AWSResourceNotFound(
-                action='GET_PIVOT_ROLE_TEMPLATE',
-                message='Pivot Yaml template file could not be found on Amazon S3 bucket',
-            )
-        try:
-            s3_client = boto3.client(
-                's3',
-                region_name=os.getenv('AWS_REGION', 'eu-central-1'),
-                config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
-            )
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params=dict(
-                    Bucket=pivot_role_bucket,
-                    Key=pivot_role_bucket_key,
-                ),
-                ExpiresIn=15 * 60,
-            )
-            return presigned_url
-        except ClientError as e:
-            log.error(f'Failed to get presigned URL for pivot role template due to: {e}')
-            raise e
+    return EnvironmentService.get_template_from_resource_bucket(organizationUri, 'pivot_role_prefix')
 
 
 def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=organizationUri,
-            permission_name=GET_ORGANIZATION,
-        )
-        cdk_exec_policy_bucket = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
-        )
-        cdk_exec_policy_bucket_key = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/cdk_exec_policy_prefix'
-        )
-        if not cdk_exec_policy_bucket or not cdk_exec_policy_bucket_key:
-            raise exceptions.AWSResourceNotFound(
-                action='GET_CDK_EXEC_POLICY_TEMPLATE',
-                message='CDK Exec Yaml template file could not be found on Amazon S3 bucket',
-            )
-        try:
-            s3_client = boto3.client(
-                's3',
-                region_name=os.getenv('AWS_REGION', 'eu-central-1'),
-                config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
-            )
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params=dict(
-                    Bucket=cdk_exec_policy_bucket,
-                    Key=cdk_exec_policy_bucket_key,
-                ),
-                ExpiresIn=15 * 60,
-            )
-            return presigned_url
-        except ClientError as e:
-            log.error(f'Failed to get presigned URL for CDK Exec role template due to: {e}')
-            raise e
+    return EnvironmentService.get_template_from_resource_bucket(organizationUri, 'cdk_exec_policy_prefix')
 
 
 def get_external_id(context: Context, source, organizationUri=None):
-    return OrganizationService.get_external_id(organizationUri)
+    return EnvironmentService.get_external_id(organizationUri)
 
 
 def get_pivot_role_name(context: Context, source, organizationUri=None):
-    return OrganizationService.get_pivot_role(organizationUri)
+    return EnvironmentService.get_pivot_role(organizationUri)
 
 
 def resolve_environment(context, source, **kwargs):

@@ -7,8 +7,11 @@ from sqlalchemy.orm import Query
 from dataall.base.aws.ec2_client import EC2
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.aws.s3_client import S3_client
+from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
+from dataall.base.db.exceptions import AWSResourceNotFound
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
     CREDENTIALS_ENVIRONMENT,
@@ -37,7 +40,7 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepositor
 from dataall.core.stacks.api.enums import StackStatus
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 
-from dataall.core.permissions.services.organization_permissions import LINK_ENVIRONMENT
+from dataall.core.permissions.services.organization_permissions import LINK_ENVIRONMENT, GET_ORGANIZATION
 from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 from dataall.core.stacks.db.stack_repositories import StackRepository
@@ -942,17 +945,17 @@ class EnvironmentService:
             return True
 
     @staticmethod
-    def disable_subscriptions(environmentUri: str = None):
+    def disable_subscriptions(environment_uri: str = None):
         context = get_context()
-        with context.engine.scoped_session() as session:
+        with context.db_engine.scoped_session() as session:
             ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
                 groups=context.groups,
-                resource_uri=environmentUri,
+                resource_uri=environment_uri,
                 permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
             )
-            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, environment_uri)
 
             environment.subscriptionsConsumersTopicName = None
             environment.subscriptionsConsumersTopicImported = False
@@ -1051,3 +1054,65 @@ class EnvironmentService:
                 'SessionKey': c.secret_key,
                 'sessionToken': c.token,
             }
+
+    @staticmethod
+    def get_pivot_role(organization_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=organization_uri,
+                permission_name=GET_ORGANIZATION,
+            )
+        pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
+        if not pivot_role_name:
+            raise exceptions.AWSResourceNotFound(
+                action='GET_PIVOT_ROLE_NAME',
+                message='Pivot role name could not be found on AWS Systems Manager - Parameter Store',
+            )
+        return pivot_role_name
+
+    @staticmethod
+    def get_external_id(organization_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=organization_uri,
+                permission_name=GET_ORGANIZATION,
+            )
+            external_id = SessionHelper.get_external_id_secret()
+            if not external_id:
+                raise exceptions.AWSResourceNotFound(
+                    action='GET_EXTERNAL_ID',
+                    message='External Id could not be found on AWS Secretsmanager',
+                )
+            return external_id
+
+    @staticmethod
+    def get_template_from_resource_bucket(organization_uri, template_name):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=organization_uri,
+                permission_name=GET_ORGANIZATION,
+            )
+            envname = os.getenv('envname', 'local')
+            region = os.getenv('AWS_REGION', 'eu-central-1')
+
+            resource_bucket = Parameter().get_parameter(env=envname, path='s3/resources_bucket_name')
+            template_key = Parameter().get_parameter(env=envname, path=f's3/{template_name}')
+            if not resource_bucket or not template_key:
+                raise AWSResourceNotFound(
+                    action='GET_TEMPLATE',
+                    message=f'{template_name} Yaml template file could not be found on Amazon S3 bucket',
+                )
+
+            return S3_client.get_presigned_url(region, resource_bucket, template_key)
