@@ -13,7 +13,7 @@ from dataall.modules.datasets.services.dataset_table_service import DatasetTable
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
