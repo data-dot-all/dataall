@@ -16,13 +16,16 @@ from dataall.modules.datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
+
 
 import logging
 
 log = logging.getLogger(__name__)
 
 
-class DatasetSharingService:
+
+class DatasetSharingService(DatasetServiceInterface):
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)

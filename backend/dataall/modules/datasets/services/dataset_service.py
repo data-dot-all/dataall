@@ -1,7 +1,8 @@
 import os
 import json
 import logging
-
+from typing import List
+from abc import ABC
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -49,8 +50,43 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 log = logging.getLogger(__name__)
 
+class DatasetServiceInterface(ABC):
+    @staticmethod
+    def check_before_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
+        return True
+
+    @staticmethod
+    def execute_on_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
+        return True
+
+    @staticmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
+        return True
+
+    @staticmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
+        return None
+
+    @staticmethod
+    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        return True
+
+    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        return True
 
 class DatasetService:
+    _interfaces: List[DatasetServiceInterface] = []
+
+    @classmethod
+    def register(cls, interface: DatasetServiceInterface):
+        cls._interfaces.append(interface)
+
     @staticmethod
     def check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
