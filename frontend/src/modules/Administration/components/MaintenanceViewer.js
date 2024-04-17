@@ -91,7 +91,7 @@ export const MaintenanceViewer = () => {
     const [popUp, setPopUp] = useState(false)
     const [confirmedMode, setConfirmedMode] = useState('')
     const [maintenanceButtonText, setMaintenanceButtonText] = useState('Start Maintenance')
-    const [maintenanceWindowStatus, setMaintenanceWindowStatus] = useState('NOT-IN-MAINTENANCE')
+    const [maintenanceWindowStatus, setMaintenanceWindowStatus] = useState('INACTIVE')
     const [dropDownStatus, setDropDownStatus] = useState(false)
     const [refreshingTimer, setRefreshingTimer] = useState('')
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -190,7 +190,7 @@ export const MaintenanceViewer = () => {
                 // Also, edit the Maintenance mode value
                 const maintenanceMode = 'READ-ONLY' // GET THIS FROM GRAPHQL ENDPOINT
                 setMaintenanceButtonText('End Maintenance')
-                setMaintenanceWindowStatus('IN-PROGRESS') // GET THIS FROM GRAPHQL ENDPOINT
+                setMaintenanceWindowStatus('PENDING') // GET THIS FROM GRAPHQL ENDPOINT
                 setConfirmedMode(maintenanceMode)
                 setDropDownStatus(true)
 
@@ -267,19 +267,19 @@ export const MaintenanceViewer = () => {
                 <Divider/>
                 <Box display="flex"  sx={{ p: 3 }}>
                     <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
-                        Status : {maintenanceWindowStatus === 'READY-FOR-DEPLOYMENT' ? (<Label color={'success'}>READY-FOR-DEPLOYMENT</Label>) : maintenanceWindowStatus === 'IN-PROGRESS' ? (<Label color={'warning'}>IN-PROGRESS</Label>) : maintenanceWindowStatus === 'NOT-IN-MAINTENANCE' ? (<Label color={'secondary'}>NOT-IN-MAINTENANCE</Label>) : <> - </> }
+                        Maintenance window status : {maintenanceWindowStatus === 'ACTIVE' ? (<Label color={'success'}>ACTIVE</Label>) : maintenanceWindowStatus === 'PENDING' ? (<Label color={'warning'}>PENDING</Label>) : maintenanceWindowStatus === 'INACTIVE' ? (<Label color={'secondary'}>INACTIVE</Label>) : <> - </> }
                     </Typography>
                      <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
                         |
                     </Typography>
                     <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
-                        Current Maintenance Mode : {confirmedMode}
+                        Current maintenance mode : {confirmedMode}
                     </Typography>
                 </Box>
                 <Divider/>
                 <Box>
                      <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 3 }}>
-                        Note - To get updates on the maintenance window status please be on this tab or keep visiting maintenance tab. For safe deployments, please deploy when the status is READY-FOR-DEPLOYMENT
+                        Note - For safe deployments, please deploy when the status is ACTIVE
                     </Typography>
                 </Box>
             </Card>
