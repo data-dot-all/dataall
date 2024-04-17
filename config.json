@@ -41,7 +41,8 @@
     },
     "core": {
         "features": {
-            "env_aws_actions": true
+            "env_aws_actions": true,
+            "cdk_pivot_role_multiple_environments_same_account": false
         }
     }
 }

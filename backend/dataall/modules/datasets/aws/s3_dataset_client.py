@@ -16,7 +16,7 @@ class S3DatasetClient:
         It first starts a session assuming the pivot role,
         then we define another session assuming the dataset role from the pivot role
         """
-        self._pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        self._pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = self._pivot_role_session.client('s3')
         self._dataset = dataset
 

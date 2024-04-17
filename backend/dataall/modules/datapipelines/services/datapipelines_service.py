@@ -3,13 +3,13 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
+from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.db import exceptions
@@ -37,7 +37,7 @@ class DataPipelineService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline(
         uri: str,
         admin_group: str,
@@ -79,31 +79,29 @@ class DataPipelineService:
                 )
 
             if data['devStrategy'] == 'cdk-trunk':
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='cdkpipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
             else:
-                Stack.create_stack(
+                StackRepository.create_stack(
                     session=session,
                     environment_uri=pipeline.environmentUri,
                     target_type='pipeline',
                     target_uri=pipeline.DataPipelineUri,
-                    target_label=pipeline.label,
                     payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
                 )
 
-            stack_helper.deploy_stack(pipeline.DataPipelineUri)
+            StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
-    @has_group_permission(CREATE_PIPELINE)
+    @GroupPolicyService.has_group_permission(CREATE_PIPELINE)
     def create_pipeline_environment(
         uri: str,
         admin_group: str,
@@ -152,7 +150,7 @@ class DataPipelineService:
                     for k in data.keys():
                         setattr(pipeline, k, data.get(k))
             if pipeline.template == '':
-                stack_helper.deploy_stack(pipeline.DataPipelineUri)
+                StackService.deploy_stack(pipeline.DataPipelineUri)
             return pipeline
 
     @staticmethod
@@ -218,7 +216,7 @@ class DataPipelineService:
                     region=env.region,
                     repo_name=pipeline.repo,
                 )
-                stack_helper.delete_stack(
+                StackService.delete_stack(
                     target_uri=pipeline.DataPipelineUri,
                     accountid=env.AwsAccountId,
                     cdk_role_arn=env.CDKRoleArn,
@@ -226,7 +224,7 @@ class DataPipelineService:
                 )
 
             DatapipelinesRepository.delete_pipeline_environments(session, uri)
-            KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
+            KeyValueTagRepository.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
             session.delete(pipeline)
 
@@ -272,12 +270,12 @@ class DataPipelineService:
             aws_account_id = pipeline.AwsAccountId
 
             return DataPipelineService._get_credentials_from_aws(
-                env_role_arn=env_role_arn, aws_account_id=aws_account_id
+                env_role_arn=env_role_arn, aws_account_id=aws_account_id, region=pipeline.region
             )
 
     @staticmethod
-    def _get_credentials_from_aws(env_role_arn, aws_account_id):
-        aws_session = SessionHelper.remote_session(aws_account_id)
+    def _get_credentials_from_aws(env_role_arn, aws_account_id, region):
+        aws_session = SessionHelper.remote_session(aws_account_id, region)
         env_session = SessionHelper.get_session(aws_session, role_arn=env_role_arn)
         c = env_session.get_credentials()
         body = json.dumps(

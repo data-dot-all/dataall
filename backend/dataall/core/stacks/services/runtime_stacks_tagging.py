@@ -8,7 +8,7 @@ from dataall.base import db
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
 from dataall.core.stacks.db.stack_models import KeyValueTag as KeyValueTagModel
 
 
@@ -133,7 +133,7 @@ class TagsUtil:
     def get_model_key_value_tags(cls, session, stack, target_type):
         return [
             (kv.key, kv.value)
-            for kv in KeyValueTag.find_key_value_tags(
+            for kv in KeyValueTagRepository.find_key_value_tags(
                 session,
                 stack.target_uri,
                 target_type,
@@ -144,7 +144,7 @@ class TagsUtil:
     def get_environment_cascade_key_value_tags(cls, session, environmentUri):
         return [
             (kv.key, kv.value)
-            for kv in KeyValueTag.find_environment_cascade_key_value_tags(
+            for kv in KeyValueTagRepository.find_environment_cascade_key_value_tags(
                 session,
                 environmentUri,
             )

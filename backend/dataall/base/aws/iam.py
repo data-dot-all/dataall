@@ -8,15 +8,15 @@ log = logging.getLogger(__name__)
 
 class IAM:
     @staticmethod
-    def client(account_id: str, role=None):
-        session = SessionHelper.remote_session(accountid=account_id, role=role)
+    def client(account_id: str, region: str, role=None):
+        session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
         return session.client('iam')
 
     @staticmethod
-    def get_role(account_id: str, role_arn: str, role=None):
+    def get_role(account_id: str, region: str, role_arn: str, role=None):
         log.info(f'Getting IAM role = {role_arn}')
         try:
-            client = IAM.client(account_id=account_id, role=role)
+            client = IAM.client(account_id=account_id, region=region, role=role)
             response = client.get_role(RoleName=role_arn.split('/')[-1])
             assert response['Role']['Arn'] == role_arn, "Arn doesn't match the role name. Check Arn and try again."
         except ClientError as e:
@@ -30,10 +30,10 @@ class IAM:
             return response['Role']
 
     @staticmethod
-    def get_role_arn_by_name(account_id: str, role_name: str, role=None):
+    def get_role_arn_by_name(account_id: str, region: str, role_name: str, role=None):
         log.info(f'Getting IAM role name= {role_name}')
         try:
-            client = IAM.client(account_id=account_id, role=role)
+            client = IAM.client(account_id=account_id, region=region, role=role)
             response = client.get_role(RoleName=role_name)
             return response['Role']['Arn']
         except ClientError as e:
@@ -47,11 +47,12 @@ class IAM:
     @staticmethod
     def get_role_policy(
         account_id: str,
+        region: str,
         role_name: str,
         policy_name: str,
     ):
         try:
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             response = client.get_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
@@ -68,11 +69,12 @@ class IAM:
     @staticmethod
     def delete_role_policy(
         account_id: str,
+        region: str,
         role_name: str,
         policy_name: str,
     ):
         try:
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             client.delete_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
@@ -85,10 +87,10 @@ class IAM:
             log.error(f'Failed to delete policy {policy_name} of role {role_name} : {e}')
 
     @staticmethod
-    def get_managed_policy_by_name(account_id: str, policy_name: str):
+    def get_managed_policy_by_name(account_id: str, region: str, policy_name: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             response = client.get_policy(PolicyArn=arn)
             return response['Policy']
         except ClientError as e:
@@ -100,9 +102,9 @@ class IAM:
             return None
 
     @staticmethod
-    def create_managed_policy(account_id: str, policy_name: str, policy: str):
+    def create_managed_policy(account_id: str, region: str, policy_name: str, policy: str):
         try:
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             response = client.create_policy(
                 PolicyName=policy_name,
                 PolicyDocument=policy,
@@ -118,10 +120,10 @@ class IAM:
             raise Exception(f'Failed to create managed policy {policy_name} : {e}')
 
     @staticmethod
-    def delete_managed_policy_by_name(account_id: str, policy_name):
+    def delete_managed_policy_by_name(account_id: str, region: str, policy_name):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             client.delete_policy(PolicyArn=arn)
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
@@ -131,10 +133,10 @@ class IAM:
             raise Exception(f'Failed to delete managed policy {policy_name} : {e}')
 
     @staticmethod
-    def get_managed_policy_default_version(account_id: str, policy_name: str):
+    def get_managed_policy_default_version(account_id: str, region: str, policy_name: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             response = client.get_policy(PolicyArn=arn)
             versionId = response['Policy']['DefaultVersionId']
             policyVersion = client.get_policy_version(PolicyArn=arn, VersionId=versionId)
@@ -150,11 +152,11 @@ class IAM:
 
     @staticmethod
     def update_managed_policy_default_version(
-        account_id: str, policy_name: str, old_version_id: str, policy_document: str
+        account_id: str, region: str, policy_name: str, old_version_id: str, policy_document: str
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             client.create_policy_version(PolicyArn=arn, PolicyDocument=policy_document, SetAsDefault=True)
 
             client.delete_policy_version(PolicyArn=arn, VersionId=old_version_id)
@@ -168,11 +170,12 @@ class IAM:
     @staticmethod
     def delete_managed_policy_non_default_versions(
         account_id: str,
+        region: str,
         policy_name: str,
     ):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
 
             # List all policy versions
             paginator = client.get_paginator('list_policy_versions')
@@ -197,9 +200,9 @@ class IAM:
             return None, None
 
     @staticmethod
-    def is_policy_attached(account_id: str, policy_name: str, role_name: str):
+    def is_policy_attached(account_id: str, region: str, policy_name: str, role_name: str):
         try:
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             paginator = client.get_paginator('list_attached_role_policies')
             pages = paginator.paginate(RoleName=role_name)
             policies = []
@@ -215,9 +218,9 @@ class IAM:
             return False
 
     @staticmethod
-    def attach_role_policy(account_id, role_name, policy_arn):
+    def attach_role_policy(account_id, region: str, role_name, policy_arn):
         try:
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             response = client.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
             return True
         except ClientError as e:
@@ -229,10 +232,10 @@ class IAM:
             raise e
 
     @staticmethod
-    def detach_policy_from_role(account_id: str, role_name: str, policy_name: str):
+    def detach_policy_from_role(account_id: str, region: str, role_name: str, policy_name: str):
         try:
             arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
-            client = IAM.client(account_id)
+            client = IAM.client(account_id, region)
             client.detach_role_policy(RoleName=role_name, PolicyArn=arn)
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
@@ -240,3 +243,35 @@ class IAM:
                     f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from role {role_name}: {e}'
                 )
             raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')
+
+    @staticmethod
+    def get_all_role_ids(account_id: str, region: str):
+        """
+        Get all role ids of an account. Without any filter, it's not supported by boto3
+        :param account_id:
+        :param region:
+        :return:
+        """
+        try:
+            client = IAM.client(account_id, region)
+            response = client.list_roles()['Roles']
+            return [role['RoleId'] for role in response]
+        except Exception as e:
+            log.error(f'Failed to get all role ids of {account_id} : {e}')
+            return []
+
+    @staticmethod
+    def remove_invalid_role_ids(account_id: str, region: str, principal_list):
+        """
+        Gets all ids of account roles and
+        removes all other role ids from the principal list.
+        :param account_id:
+        :param region:
+        :param principal_list:
+        :return:
+        """
+        all_role_ids = IAM.get_all_role_ids(account_id, region)
+        for p_id in principal_list[:]:
+            if 'AROA' in p_id:
+                if p_id not in all_role_ids:
+                    principal_list.remove(p_id)

@@ -821,6 +821,26 @@ class ShareObjectRepository:
         )
 
     @staticmethod
+    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
+        (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
+            session, share_uri, status, healthStatus
+        )
+        uris = []
+        uris.extend([table.tableUri for table in tables])
+        uris.extend([folder.locationUri for folder in folders])
+        uris.extend([bucket.bucketUri for bucket in buckets])
+        return (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.itemUri.in_(uris),
+                    ShareObjectItem.shareUri == share_uri,
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
     def get_share_data_items(session, share_uri, status=None, healthStatus=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 

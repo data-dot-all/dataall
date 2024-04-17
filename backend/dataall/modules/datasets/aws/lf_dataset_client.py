@@ -11,7 +11,7 @@ PIVOT_ROLE_NAME_PREFIX = 'dataallPivotRole'
 
 class LakeFormationDatasetClient:
     def __init__(self, env: Environment, dataset: Dataset):
-        session = SessionHelper.remote_session(env.AwsAccountId)
+        session = SessionHelper.remote_session(env.AwsAccountId, env.region)
         self._client = session.client('lakeformation', region_name=env.region)
         self._dataset = dataset
         self._env = env

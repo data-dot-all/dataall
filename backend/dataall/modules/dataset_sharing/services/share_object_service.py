@@ -1,3 +1,4 @@
+from datetime import datetime
 from warnings import warn
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -17,6 +18,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
+    ShareItemHealthStatus,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import (
@@ -24,7 +26,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
+from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
@@ -40,14 +42,38 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
+from dataall.base.aws.iam import IAM
+
 import logging
 
 log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
+    @staticmethod
+    def verify_principal_role(session, share: ShareObject) -> bool:
+        role_name = share.principalIAMRoleName
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
+        return principal_role is not None
+
+    @staticmethod
+    def update_all_share_items_status(
+        session, shareUri, new_health_status: str, message, previous_health_status: str = None
+    ):
+        for item in ShareObjectRepository.get_all_shareable_items(
+            session, shareUri, healthStatus=previous_health_status
+        ):
+            ShareObjectRepository.update_share_item_health_status(
+                session,
+                share_item=item,
+                healthStatus=new_health_status,
+                healthMessage=message,
+                timestamp=datetime.now(),
+            )
+
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_ENVIRONMENT)
     def get_share_object_in_environment(uri, shareUri):
@@ -114,6 +140,7 @@ class ShareObjectService:
 
             share_policy_service = SharePolicyService(
                 account=environment.AwsAccountId,
+                region=environment.region,
                 role_name=principal_iam_role_name,
                 environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
@@ -227,6 +254,12 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
+            if not ShareObjectService.verify_principal_role(session, share):
+                raise PrincipalRoleNotFound(
+                    action='Submit Share Object',
+                    message=f'The principal role {share.principalIAMRoleName} is not found.',
+                )
+
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
 
@@ -270,21 +303,19 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
+
+            if not ShareObjectService.verify_principal_role(session, share):
+                raise PrincipalRoleNotFound(
+                    action='Approve Share Object',
+                    message=f'The principal role {share.principalIAMRoleName} is not found.',
+                )
+
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
-            # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-            if share.groupUri != dataset.SamlAdminGroupName:
-                share_table_items = ShareObjectRepository.find_all_share_items(
-                    session, uri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
-                )
-                for table in share_table_items:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=share.groupUri,
-                        permissions=DATASET_TABLE_READ,
-                        resource_uri=table.itemUri,
-                        resource_type=DatasetTable.__name__,
-                    )
+            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                log.info('Attaching TABLE/FOLDER READ permissions...')
+                ShareObjectService._attach_dataset_table_read_permission(session, share)
+                ShareObjectService._attach_dataset_folder_read_permission(session, share)
 
             share.rejectPurpose = ''
             session.commit()
@@ -497,4 +528,38 @@ class ShareObjectService:
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
+            )
+
+    @staticmethod
+    def _attach_dataset_table_read_permission(session, share):
+        """
+        Attach Table permissions to share groups
+        """
+        share_table_items = ShareObjectRepository.find_all_share_items(
+            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
+        )
+        for table in share_table_items:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=table.itemUri,
+                resource_type=DatasetTable.__name__,
+            )
+
+    @staticmethod
+    def _attach_dataset_folder_read_permission(session, share):
+        """
+        Attach Table permissions to share groups
+        """
+        share_folder_items = ShareObjectRepository.find_all_share_items(
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Approved.value]
+        )
+        for location in share_folder_items:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_FOLDER_READ,
+                resource_uri=location.itemUri,
+                resource_type=DatasetStorageLocation.__name__,
             )
