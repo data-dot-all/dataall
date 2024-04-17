@@ -1,18 +1,17 @@
 """add_omics_module
 
-Revision ID: 9e620f623a5b
-Revises: 194608b1ff7f
-Create Date: 2024-03-05 12:09:18.606872
+Revision ID: 70bbe22eb72c
+Revises: c6d01930179d
+Create Date: 2024-04-17 17:43:45.429340
 
 """
-
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '9e620f623a5b'
-down_revision = '194608b1ff7f'
+revision = '70bbe22eb72c'
+down_revision = 'c6d01930179d'
 branch_labels = None
 depends_on = None
 
