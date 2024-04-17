@@ -283,24 +283,16 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            if dataset.SamlAdminGroupName not in context.groups:
-                share = ShareObjectRepository.get_share_by_dataset_attributes(
-                    session=session, dataset_uri=uri, dataset_owner=context.username
-                )
-                shared_environment = EnvironmentService.get_environment_by_uri(
-                    session=session, uri=share.environmentUri
-                )
-                env_group = EnvironmentService.get_environment_group(
-                    session=session, group_uri=share.principalId, environment_uri=share.environmentUri
-                )
-                role_arn = env_group.environmentIAMRoleArn
-                account_id = shared_environment.AwsAccountId
-                region = shared_environment.region
-            else:
+            if dataset.SamlAdminGroupName in context.groups:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
                 region = dataset.region
 
+            else:
+                raise exceptions.UnauthorizedOperation(
+                    action=CREDENTIALS_DATASET,
+                    message=f'User: {context.username} is not a member of the group {dataset.SamlAdminGroupName}',
+                )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
         url = SessionHelper.get_console_access_url(
