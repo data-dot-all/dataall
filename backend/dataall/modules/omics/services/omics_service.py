@@ -10,10 +10,10 @@ from typing import List, Dict
 
 
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.base.db import exceptions
 import json
@@ -61,7 +61,7 @@ class OmicsService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     @ResourcePolicyService.has_resource_permission(CREATE_OMICS_RUN)
-    @has_group_permission(CREATE_OMICS_RUN)
+    @GroupPolicyService.has_group_permission(CREATE_OMICS_RUN)
     def create_omics_run(*, uri: str, admin_group: str, data: dict) -> OmicsRun:
         """
         Creates an omics_run and attach policies to it
