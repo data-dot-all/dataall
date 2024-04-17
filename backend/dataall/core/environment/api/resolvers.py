@@ -5,21 +5,20 @@ import os
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from sqlalchemy import and_
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils import Parameter
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.services.vpc_service import VpcService
 from dataall.base.aws.ec2_client import EC2
 from dataall.base.feature_toggle_checker import is_feature_enabled
@@ -37,7 +36,6 @@ from dataall.core.permissions.services.organization_permissions import (
     GET_ORGANIZATION,
     LINK_ENVIRONMENT,
 )
-
 
 log = logging.getLogger()
 
@@ -116,14 +114,13 @@ def create_environment(context: Context, source, input={}):
             uri=input.get('organizationUri'),
             data=input,
         )
-        Stack.create_stack(
+        StackRepository.create_stack(
             session=session,
             environment_uri=env.environmentUri,
             target_type='environment',
             target_uri=env.environmentUri,
-            target_label=env.label,
         )
-    stack_helper.deploy_stack(targetUri=env.environmentUri)
+    StackService.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value
     return env
 
@@ -150,7 +147,7 @@ def update_environment(context: Context, source, environmentUri: str = None, inp
         )
 
         if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment, data=input):
-            stack_helper.deploy_stack(targetUri=environment.environmentUri)
+            StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -163,7 +160,7 @@ def invite_group(context: Context, source, input):
             data=input,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -194,7 +191,7 @@ def update_group_permissions(context, source, input):
             data=input,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -207,7 +204,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
             group=groupUri,
         )
 
-    stack_helper.deploy_stack(targetUri=environment.environmentUri)
+    StackService.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -367,8 +364,7 @@ def resolve_environment_networks(context: Context, source, **kwargs):
 
 
 def get_environment(context: Context, source, environmentUri: str = None):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.find_environment_by_uri(session, uri=environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: Environment):
@@ -376,20 +372,8 @@ def resolve_user_role(context: Context, source: Environment):
         return EnvironmentPermission.Owner.value
     elif source.SamlGroupName in context.groups:
         return EnvironmentPermission.Admin.value
-    else:
-        with context.engine.scoped_session() as session:
-            env_group = (
-                session.query(EnvironmentGroup)
-                .filter(
-                    and_(
-                        EnvironmentGroup.environmentUri == source.environmentUri,
-                        EnvironmentGroup.groupUri.in_(context.groups),
-                    )
-                )
-                .first()
-            )
-            if env_group:
-                return EnvironmentPermission.Invited.value
+    elif EnvironmentService.is_user_invited(source.environmentUri):
+        return EnvironmentPermission.Invited.value
     return EnvironmentPermission.NotInvited.value
 
 
@@ -418,14 +402,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group: EnvironmentGroup = (
-            session.query(EnvironmentGroup)
-            .filter(
-                EnvironmentGroup.environmentUri == environment.environmentUri,
-                EnvironmentGroup.groupUri == groupUri,
-            )
-            .first()
-        )
+        env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
         if not env_group:
             raise exceptions.UnauthorizedOperation(
                 action='ENVIRONMENT_AWS_ACCESS',
@@ -500,9 +477,9 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 
 
 def get_environment_stack(context: Context, source: Environment, **kwargs):
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
-        environmentUri=source.environmentUri,
+        env=source,
     )
 
 
@@ -512,7 +489,7 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
         EnvironmentService.delete_environment(session, uri=environmentUri, environment=environment)
 
     if deleteFromAWS:
-        stack_helper.delete_stack(
+        StackService.delete_stack(
             target_uri=environmentUri,
             accountid=environment.AwsAccountId,
             cdk_role_arn=environment.CDKRoleArn,
@@ -553,7 +530,7 @@ def enable_subscriptions(context: Context, source, environmentUri: str = None, i
         environment.subscriptionsConsumersTopicImported = False
         environment.subscriptionsEnabled = True
         session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        StackService.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -574,7 +551,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
         environment.subscriptionsProducersTopicImported = False
         environment.subscriptionsEnabled = False
         session.commit()
-        stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        StackService.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -700,8 +677,9 @@ def resolve_environment(context, source, **kwargs):
     """Resolves the environment for a environmental resource"""
     if not source:
         return None
+
     with context.engine.scoped_session() as session:
-        return session.query(Environment).get(source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):

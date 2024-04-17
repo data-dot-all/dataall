@@ -164,11 +164,11 @@ class DatasetTableService:
 
     @staticmethod
     def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
-        # ADD DATASET TABLE PERMISSIONS
-        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        """
+        Attach Table permissions to dataset groups
+        """
         permission_group = {
             dataset.SamlAdminGroupName,
-            env.SamlGroupName,
             dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
         }
         for group in permission_group:

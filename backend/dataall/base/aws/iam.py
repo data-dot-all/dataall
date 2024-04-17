@@ -243,3 +243,35 @@ class IAM:
                     f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from role {role_name}: {e}'
                 )
             raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')
+
+    @staticmethod
+    def get_all_role_ids(account_id: str, region: str):
+        """
+        Get all role ids of an account. Without any filter, it's not supported by boto3
+        :param account_id:
+        :param region:
+        :return:
+        """
+        try:
+            client = IAM.client(account_id, region)
+            response = client.list_roles()['Roles']
+            return [role['RoleId'] for role in response]
+        except Exception as e:
+            log.error(f'Failed to get all role ids of {account_id} : {e}')
+            return []
+
+    @staticmethod
+    def remove_invalid_role_ids(account_id: str, region: str, principal_list):
+        """
+        Gets all ids of account roles and
+        removes all other role ids from the principal list.
+        :param account_id:
+        :param region:
+        :param principal_list:
+        :return:
+        """
+        all_role_ids = IAM.get_all_role_ids(account_id, region)
+        for p_id in principal_list[:]:
+            if 'AROA' in p_id:
+                if p_id not in all_role_ids:
+                    principal_list.remove(p_id)

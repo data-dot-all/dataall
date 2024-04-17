@@ -182,10 +182,6 @@ class PipelineStack(Stack):
                     )
                 )
 
-            self.set_db_migration_stage(
-                target_env,
-            )
-
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
 
@@ -241,15 +237,32 @@ class PipelineStack(Stack):
                         'ecr:GetAuthorizationToken',
                         'ec2:DescribePrefixLists',
                         'ec2:DescribeManagedPrefixLists',
-                        'ec2:CreateNetworkInterface',
                         'ec2:DescribeNetworkInterfaces',
-                        'ec2:DeleteNetworkInterface',
                         'ec2:DescribeSubnets',
                         'ec2:DescribeSecurityGroups',
                         'ec2:DescribeDhcpOptions',
                         'ec2:DescribeVpcs',
                     ],
                     resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -636,34 +649,6 @@ class PipelineStack(Stack):
         )
         return backend_stage
 
-    def set_db_migration_stage(
-        self,
-        target_env,
-    ):
-        migration_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage")
-        migration_wave.add_post(
-            pipelines.CodeBuildStep(
-                id='MigrateDB',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
-                commands=[
-                    'mkdir ~/.aws/ && touch ~/.aws/config',
-                    'echo "[profile buildprofile]" > ~/.aws/config',
-                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-dbmigration-role" >> ~/.aws/config',
-                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
-                    'aws sts get-caller-identity --profile buildprofile',
-                    f'aws codebuild start-build --project-name {self.resource_prefix}-{target_env["envname"]}-dbmigration --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-id.json',
-                    f'aws codebuild batch-get-builds --ids $(jq -r .build.id codebuild-id.json) --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-output.json',
-                    f'while [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "SUCCEEDED" ] && [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "FAILED" ]; do echo "running migration"; aws codebuild batch-get-builds --ids $(jq -r .build.id codebuild-id.json) --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-output.json; echo "$(jq -r .builds[0].buildStatus codebuild-output.json)"; sleep 5; done',
-                    'if [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" = "FAILED" ]; then echo "Failed";  cat codebuild-output.json; exit -1; fi',
-                    'cat codebuild-output.json ',
-                ],
-                role=self.expanded_codebuild_role.without_policy_updates(),
-                vpc=self.vpc,
-            ),
-        )
-
     def set_stacks_updater_stage(
         self,
         target_env,
@@ -794,7 +779,7 @@ class PipelineStack(Stack):
                         'aws s3 sync site/ s3://$bucket',
                         "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                     ],
-                    role=self.expanded_codebuild_role,
+                    role=self.expanded_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                 ),
             )

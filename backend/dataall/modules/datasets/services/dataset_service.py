@@ -7,15 +7,16 @@ from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.base.context import get_context
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
+from dataall.core.stacks.db.stack_repositories import StackRepository
+from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
@@ -113,7 +114,7 @@ class DatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREATE_DATASET)
-    @has_group_permission(CREATE_DATASET)
+    @GroupPolicyService.has_group_permission(CREATE_DATASET)
     def create_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -364,9 +365,11 @@ class DatasetService:
 
     @staticmethod
     def get_dataset_stack(dataset: Dataset):
-        return stack_helper.get_stack_with_cfn_resources(
+        env = EnvironmentService.find_environment_by_uri(uri=dataset.environmentUri)
+
+        return StackService.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,
-            environmentUri=dataset.environmentUri,
+            env=env,
         )
 
     @staticmethod
@@ -401,7 +404,7 @@ class DatasetService:
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
-            KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
+            KeyValueTagRepository.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
             VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
 
             ResourcePolicyService.delete_resource_policy(
@@ -416,13 +419,13 @@ class DatasetService:
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
+            StackService.delete_stack(
                 target_uri=uri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
             )
-            stack_helper.deploy_stack(dataset.environmentUri)
+            StackService.deploy_stack(dataset.environmentUri)
         return True
 
     @staticmethod
@@ -431,16 +434,15 @@ class DatasetService:
         Each dataset stack deployment triggers environment stack update
         to rebuild teams IAM roles data access policies
         """
-        stack_helper.deploy_stack(dataset.datasetUri)
-        stack_helper.deploy_stack(dataset.environmentUri)
+        StackService.deploy_stack(dataset.datasetUri)
+        StackService.deploy_stack(dataset.environmentUri)
 
     @staticmethod
     def _create_dataset_stack(session, dataset: Dataset) -> Stack:
-        return Stack.create_stack(
+        return StackRepository.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,
-            target_label=dataset.label,
             target_type='dataset',
             payload={
                 'bucket_name': dataset.S3BucketName,

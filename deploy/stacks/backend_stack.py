@@ -11,7 +11,6 @@ from .cognito import IdpStack
 from .container import ContainerStack
 from .cw_canaries import CloudWatchCanariesStack
 from .cw_rum import CloudWatchRumStack
-from .dbmigration import DBMigrationStack
 from .lambda_api import LambdaApiStack
 from .monitoring import MonitoringStack
 from .opensearch import OpenSearchStack
@@ -220,21 +219,6 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        dbmigration_stack = DBMigrationStack(
-            self,
-            'DbMigration',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            vpc=vpc,
-            s3_prefix_list=self.s3_prefix_list,
-            tooling_account_id=tooling_account_id,
-            pipeline_bucket=pipeline_bucket,
-            vpce_connection=vpce_connection,
-            codeartifact_domain_name=codeartifact_domain_name,
-            codeartifact_pip_repo_name=codeartifact_pip_repo_name,
-            **kwargs,
-        )
-
         if quicksight_enabled:
             pivot_role_in_account = iam.Role(
                 self,
@@ -321,22 +305,37 @@ class BackendStack(Stack):
                 self.lambda_api_stack.api_handler,
             ],
             ecs_security_groups=self.ecs_stack.ecs_security_groups,
-            codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
             prod_sizing=prod_sizing,
             quicksight_monitoring_sg=quicksight_monitoring_sg,
             **kwargs,
         )
 
-        TriggerFunctionStack(
+        db_migrations = TriggerFunctionStack(
             self,
-            'SavePerms',
-            handler='trigger_handler.save_permissions',
+            'DbMigrations',
+            handler='dbmigrations_handler.handler',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
             vpce_connection=vpce_connection,
             image_tag=image_tag,
             ecr_repository=repo,
+            execute_after=[aurora_stack.cluster],
+            connectables=[aurora_stack.cluster],
+            **kwargs,
+        )
+
+        TriggerFunctionStack(
+            self,
+            'SavePerms',
+            handler='saveperms_handler.handler',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            vpc=vpc,
+            vpce_connection=vpce_connection,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            execute_after=[db_migrations.trigger_function],
             connectables=[aurora_stack.cluster],
             **kwargs,
         )

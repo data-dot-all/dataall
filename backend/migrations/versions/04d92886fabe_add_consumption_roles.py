@@ -125,9 +125,7 @@ def upgrade():
         print('Back-filling consumer role permissions for environments...')
         envs = EnvironmentService.list_all_active_environments(session=session)
         for env in envs:
-            groups = EnvironmentService.query_all_environment_groups(
-                session=session, uri=env.environmentUri, filter=None
-            )
+            groups = EnvironmentService.get_all_environment_groups(session=session, uri=env.environmentUri, filter=None)
             for group in groups:
                 ResourcePolicyService.attach_resource_policy(
                     session=session,

@@ -7,9 +7,14 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
-from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client
+from dataall.modules.dataset_sharing.aws.kms_client import (
+    KmsClient,
+    DATAALL_BUCKET_KMS_DECRYPT_SID,
+    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+)
+from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
@@ -22,10 +27,6 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBuck
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 
 logger = logging.getLogger(__name__)
-
-DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
-DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
-DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
 
 
 class S3BucketShareManager:
@@ -279,6 +280,9 @@ class S3BucketShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+        if not target_requester_arn:
+            self.bucket_errors.append(f'Principal role {self.target_requester_IAMRoleName} is not found.')
+            return
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
         error = False
@@ -311,6 +315,10 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if not target_requester_arn:
+                raise PrincipalRoleNotFound(
+                    'grant role bucket policy', f'Principal role {self.target_requester_IAMRoleName} is not found.'
+                )
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
@@ -366,6 +374,10 @@ class S3BucketShareManager:
         target_requester_arn = IAM.get_role_arn_by_name(
             self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
         )
+        if not target_requester_arn:
+            self.bucket_errors.append(f'Principal role {self.target_requester_IAMRoleName} is not found.')
+            return
+
         existing_policy = json.loads(existing_policy)
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
@@ -397,6 +409,12 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if not target_requester_arn:
+                raise PrincipalRoleNotFound(
+                    'grant dataset bucket key policy',
+                    f'Principal role {self.target_requester_IAMRoleName} is not found. Fail to update KMS policy',
+                )
+
             pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
 
             if existing_policy:
@@ -456,6 +474,9 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if not target_requester_arn:
+                # if somehow the role was deleted, we can only try to guess the role arn (quite easy, though)
+                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
             if DATAALL_READ_ONLY_SID in statements.keys():
@@ -542,6 +563,8 @@ class S3BucketShareManager:
             target_requester_arn = IAM.get_role_arn_by_name(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
             )
+            if target_requester_arn is None:
+                target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
             if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
