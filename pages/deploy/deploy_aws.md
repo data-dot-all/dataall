@@ -483,8 +483,7 @@ the different configuration options.
     },
     "core": {
         "features": {
-            "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "env_aws_actions": true
         }
     }
 }
@@ -577,27 +576,23 @@ In addition to disabling / enabling, some module features allow for additional c
 | custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
 
 
-### Disable and customize core features
+### Disable core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
 a particular feature in the core is to add it to the core section of the `config.json` and enable/disable it. 
 
 ```json
     "core": {
         "features": {
-            "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "env_aws_actions": true
         }
     }
 ```
-This is the list of core features that can currently be customized. Take it as an example if you need to 
-disable or modify the bahavior any other core feature.
+This is the list of core features that can be switched on/off at the moment. Take it as an example if you need to 
+disable any other core feature.
 
-| **Feature**           | **Module**     | **Description**                                                                                                                                                                                                                                     |   
-|-----------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| env_aws_actions       | environments   | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
-| cdk_pivot_role_multiple_environments_same_account       | environments   | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
-
-
+| **Feature**           | **Module**     | **Description**                                                                  |   
+|-----------------------|----------------|----------------------------------------------------------------------------------|
+| env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
