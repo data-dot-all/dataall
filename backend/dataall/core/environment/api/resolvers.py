@@ -1,29 +1,19 @@
 import json
 import logging
-import os
 
-import boto3
-from botocore.config import Config
-from botocore.exceptions import ClientError
-
-from dataall.base.aws.s3_client import S3_client
 from dataall.base.aws.sts import SessionHelper
-from dataall.base.utils import Parameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.services.organization_service import OrganizationService
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.services.stack_service import StackService
 
 from dataall.core.vpc.services.vpc_service import VpcService
 
 from dataall.base.feature_toggle_checker import is_feature_enabled
 
-from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
+from dataall.core.organizations.api.resolvers import Context, get_organization_simplified
 
-from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 
 log = logging.getLogger()
 
