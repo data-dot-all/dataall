@@ -1,3 +1,5 @@
+import logging
+
 from dataall.base.api.context import Context
 from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
@@ -23,7 +25,8 @@ def start_maintenance_window(context: Context, source: Maintenance, mode: str):
     if mode not in [item.value for item in list(MaintenanceModes)]:
         raise Exception('Mode is not conforming to the MaintenanceModes enums')
     # Check from the context if the groups contains the DataAdminstrators group
-    return MaintenanceService.start_maintenance_window(mode=mode)
+    logging.info(context.groups)
+    return MaintenanceService.start_maintenance_window(engine=context.engine, mode=mode)
 
 
 def stop_maintenance_window(context: Context, source: Maintenance):

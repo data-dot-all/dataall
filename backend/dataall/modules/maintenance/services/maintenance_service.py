@@ -43,9 +43,16 @@ class MaintenanceService:
 
     # Todo : Check what permissions you need to give here
     @staticmethod
-    def start_maintenance_window(mode: str = None):
+    def start_maintenance_window(engine, mode: str = None):
         # Update the RDS table with the mode and status to PENDING
         logger.info("Putting data.all into maintenance window")
+        try:
+            with engine.scoped_session() as session:
+                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_mode=mode)
+            return True
+        except Exception as e:
+            logger.error(f"Error occurred while starting maintenance window due to {e}")
+            return False
 
     @staticmethod
     def stop_maintenance_window():
