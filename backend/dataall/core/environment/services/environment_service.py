@@ -3,6 +3,7 @@ import os
 import re
 
 from sqlalchemy.orm import Query
+from typing import List
 
 from dataall.base.aws.ec2_client import EC2
 from dataall.base.aws.iam import IAM
@@ -824,13 +825,13 @@ class EnvironmentService:
             return EnvironmentService.get_environment_by_uri(session, uri)
 
     @staticmethod
-    def list_all_active_environments(session) -> [Environment]:
+    def list_all_active_environments(session) -> List[Environment]:
         """
         Lists all active dataall environments
         :param session:
         :return: [Environment]
         """
-        environments: [Environment] = session.query(Environment).filter(Environment.deleted.is_(None)).all()
+        environments: [Environment] = EnvironmentRepository.query_all_active_environments(session)
         log.info(f'Retrieved all active dataall environments {[e.AwsAccountId for e in environments]}')
         return environments
 
@@ -839,8 +840,8 @@ class EnvironmentService:
     def delete_environment(uri):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            env_groups = session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()
-            env_roles = session.query(ConsumptionRole).filter(ConsumptionRole.environmentUri == uri).all()
+            env_groups = EnvironmentRepository.query_environment_groups(session, uri)
+            env_roles = EnvironmentRepository.query_all_environment_consumption_roles(session, uri, None)
 
             env_resources = 0
             for group in env_groups:
