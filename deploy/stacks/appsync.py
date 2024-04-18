@@ -5,16 +5,30 @@ from aws_cdk import aws_appsync
 from aws_cdk import aws_logs
 from aws_cdk.aws_cognito import IUserPool
 from aws_cdk.aws_lambda import IFunction
+from aws_cdk.aws_rds import ServerlessCluster
 from awscdk.appsync_utils import CodeFirstSchema
 
 from .pyNestedStack import pyNestedClass
 
 
 class AppSyncStack(pyNestedClass):
-    def __init__(self, scope, id, user_pool: IUserPool, api_handler: IFunction, **kwargs):
+    def __init__(
+        self,
+        scope,
+        id,
+        envname,
+        resource_prefix,
+        user_pool: IUserPool,
+        api_handler: IFunction,
+        cluster: ServerlessCluster,
+        role,
+        **kwargs,
+    ):
         super().__init__(scope, id, **kwargs)
         self.user_pool = user_pool
         self.api_handler = api_handler
+        self.cluster = cluster
+        self.resolver_role = role
 
     @cached_property
     def schema(self) -> CodeFirstSchema:
@@ -43,6 +57,18 @@ class AppSyncStack(pyNestedClass):
             'CommonLambdaDataSource',
             api=self.api,
             lambda_function=self.api_handler,
+        )
+
+    @cached_property
+    def rds_data_source(self) -> aws_appsync.RdsDataSource:
+        return aws_appsync.RdsDataSource(
+            self,
+            'CommonRDSDataSource',
+            api=self.api,
+            serverless_cluster=self.cluster,
+            secret_store=self.cluster.secret,
+            service_role=self.resolver_role,
+            database_name=self.cluster._new_cfn_props.database_name,
         )
 
     @cached_property

@@ -1,5 +1,7 @@
 from functools import cache
+from pathlib import Path
 
+from aws_cdk.aws_appsync import Code, FunctionRuntime
 from awscdk.appsync_utils import GraphqlType, ResolvableField
 
 from stacks.appsync import AppSyncStack
@@ -29,6 +31,19 @@ class OrganizationQueries:
                 # runtime=FunctionRuntime.JS_1_0_0,
             ),
         )
+
+        if True:
+            app_sync_stack.schema.add_query(
+                'listOrganizationsDirect',
+                ResolvableField(
+                    return_type=org_types.organization.attribute(is_list=True),
+                    # args={'filter': org_inputs.organization_filter.attribute()},
+                    # pipeline_config=[data_source_func],
+                    data_source=app_sync_stack.rds_data_source,
+                    code=Code.from_asset(str(Path(__file__).parent.parent.parent.joinpath('schema/function_code.js'))),
+                    runtime=FunctionRuntime.JS_1_0_0,
+                ),
+            )
 
         get_organization = ResolvableField(
             return_type=org_types.organization.attribute(),

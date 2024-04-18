@@ -1,26 +1,25 @@
 import {util} from '@aws-appsync/utils';
+import {select, createPgStatement, toJsonObject} from '@aws-appsync/utils/rds';
 
 /**
- * Sends a request to a Lambda function. Passes all information about the request from the `info` object.
+ * Sends a request to get an item with emp_no `ctx.args.emp_no` from the employees table.
  * @param {import('@aws-appsync/utils').Context} ctx the context
- * @returns {import('@aws-appsync/utils').LambdaRequest} the request
+ * @returns {*} the request
  */
 export function request(ctx) {
-    return {
-        operation: 'Invoke',
-        payload: ctx,
-    };
+    return createPgStatement(select({table: 'dev.organization'}));
 }
 
+
 /**
- * Process a Lambda function response
+ * Returns the result or throws an error if the operation failed.
  * @param {import('@aws-appsync/utils').Context} ctx the context
- * @returns {*} the Lambda function response
+ * @returns {*} the result
  */
 export function response(ctx) {
-    const {result, error} = ctx;
+    const {error, result} = ctx;
     if (error) {
-        util.error(error.message, error.type, result);
+        return util.appendError(error.message, error.type, result);
     }
-    return result;
+    return toJsonObject(result)[0];
 }

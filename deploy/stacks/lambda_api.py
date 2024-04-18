@@ -299,9 +299,6 @@ class LambdaApiStack(pyNestedClass):
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
 
-        app_sync_stack = AppSyncStack(scope, 'AppSyncAPI', user_pool, self.api_handler)
-        create_schema(app_sync_stack)
-
     def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(
             self,

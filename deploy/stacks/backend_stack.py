@@ -6,6 +6,7 @@ from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
 
+from .appsync import AppSyncStack
 from .aurora import AuroraServerlessStack
 from .cognito import IdpStack
 from .container import ContainerStack
@@ -18,6 +19,7 @@ from .opensearch_serverless import OpenSearchServerlessStack
 from .param_store_stack import ParamStoreStack
 from .run_if import run_if
 from .s3_resources import S3ResourcesStack
+from .schema import create_schema
 from .secrets_stack import SecretsManagerStack
 from .ses_stack import SesStack
 from .sqs import SqsStack
@@ -309,6 +311,25 @@ class BackendStack(Stack):
             quicksight_monitoring_sg=quicksight_monitoring_sg,
             **kwargs,
         )
+
+        appsync_role = iam.Role(
+            self,
+            f'{resource_prefix}-{envname}-appsync-role',
+            role_name=f'{resource_prefix}-{envname}-appsync-role',
+            assumed_by=iam.ServicePrincipal('appsync.amazonaws.com'),
+        )
+
+        app_sync_stack = AppSyncStack(
+            self,
+            'AppSyncAPI',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            user_pool=cognito_stack.user_pool,
+            api_handler=self.lambda_api_stack.api_handler,
+            cluster=aurora_stack.cluster,
+            role=appsync_role,
+        )
+        create_schema(app_sync_stack)
 
         db_migrations = TriggerFunctionStack(
             self,
