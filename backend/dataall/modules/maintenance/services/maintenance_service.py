@@ -56,7 +56,8 @@ class MaintenanceService:
     @staticmethod
     def get_maintenance_window_status(engine):
         logger.info("Checking maintenance window status")
-        return MaintenanceRepository(engine).get_maintenance_record()
+        with engine.scoped_session() as session:
+            return MaintenanceRepository(session).get_maintenance_record()
 
 
     @staticmethod
