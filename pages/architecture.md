@@ -332,18 +332,36 @@ performance from actual user sessions in near real time.
 ## Linked Environments <a name="environment"></a>
 
 Environments are workspaces where one or multiple teams can work. They are the door between our users in data.all and AWS, that is
-why we say that we "link" environments because we link each environment to **ONE** AWS account, in one specific region.
+why we say that we "link" environments because we link each environment to **ONE** AWS account, in **ONE** specific region.
 Under each environment we create other data.all resources, such as datasets, pipelines and notebooks. 
 
-For the deployment of 
-CloudFormation stacks we call upon a CDK trust policy between the Deployment account and the Environment account. 
+For the deployment of CloudFormation stacks we call upon a CDK trust policy between the Deployment account and the Environment account.
 As for the SDK calls, from the deployment account we assume a certain IAM role in the environment accounts, the pivotRole.
+This role can only be assumed by the backend IAM roles using an externalId.
 
-Consequently, to link one AWS account with an environment, the account must verify two
-conditions:
+To link one AWS account with an environment, the account must verify the following conditions:
 
 1. AWS account is bootstrapped with CDK and is trusting data.all deployment account.
-2. pivotRole IAM role is created on the AWS account and trusts data.all deployment account.
+2. (optional) If the cdk.json parameter `enable_pivot_role_auto_create` is set to `False` then users need to manually create a pivotRole IAM role with the template provided in the UI.
+
+### Pivot role options
+The pivot role is a key piece of data.all architecture, it is the role assumed by the backend components to carry out
+AWS actions in the Environment accounts. There are 3 ways of configuring the pivot role:
+- 1. **Manual pivot role**: Users need to manually create
+the IAM role in each of the environment accounts. Whenever new features are introduced and the pivot role needs to be updates, users need to
+manually update the pivot role template. IAM policies cannot be scoped down to new resources imported in data.all.
+- 2. **Single-region CDK pivot role**: The pivot role is created and updated as part of the environment CDK stack. Users do not need to perform any actions. The IAM policies of the role can be scoped down to imported resources. Only one environment-region can be linked to data.all.
+- 3. **Multi-region CDK pivot role**: Same as the Single-region CDK pivot role, but it allows users to create multiple environments in the same AWS account. Only one environment per region can be created. 
+
+**Recommendation**: We strongly recommend users to avoid manual pivot roles. Between the single-region and multi-region, we recommend using the multi-region pivot role as it allows both use cases single region and multi region.
+
+
+  | Type      | IAM Role Name                   | cdk.json                                  | config.json                                                   | 
+  |-----------|---------------------------------|-------------------------------------------|---------------------------------------------------------------|
+  | Manual pivot role | `dataallPivotRole`              | `enable_pivot_role_auto_create` = `False` | Not applicable                                                |
+  | Single-region CDK pivot role | `dataallPivotRole-cdk`          | `enable_pivot_role_auto_create` = `True`  | `cdk_pivot_role_multiple_environments_same_account` = `False` |
+  | Multi-region CDK pivot role | `dataallPivotRole-cdk-<region>` | `enable_pivot_role_auto_create` = `True`  | `cdk_pivot_role_multiple_environments_same_account` = `True`  |
+
 
 
 ![archi](img/architecture_linked_env.drawio.png#zoom#shadow)
