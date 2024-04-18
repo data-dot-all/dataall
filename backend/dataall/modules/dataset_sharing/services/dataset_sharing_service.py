@@ -66,6 +66,11 @@ class DatasetSharingService(DatasetServiceInterface):
         return True
 
     @staticmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Implemented as part of the DatasetServiceInterface"""
+        return ShareObjectRepository.query_user_shared_datasets(session, username, groups)
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def verify_dataset_share_objects(uri: str, share_uris: list):

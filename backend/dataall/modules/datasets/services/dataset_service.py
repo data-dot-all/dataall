@@ -102,6 +102,16 @@ class DatasetService:
             interface.execute_on_delete(session, uri, **kwargs)
         return True
 
+    @classmethod
+    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
+        """All list_datasets from other modules that need to be appended to the list of datasets"""
+        all_subqueries = []
+        for interface in cls._interfaces:
+            interface_subquery = interface.append_to_list_user_datasets(session, username, groups)
+            if interface_subquery.first() is not None:
+                all_subqueries.append(interface_subquery)
+        return all_subqueries
+
     @staticmethod
     def check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
@@ -238,10 +248,13 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_owned_shared_datasets(data: dict):
+    def list_all_user_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+            all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
+            return DatasetRepository.paginated_all_user_datasets(
+                session, context.username, context.groups, all_subqueries, data=data
+            )
 
     @staticmethod
     def list_owned_datasets(data: dict):
