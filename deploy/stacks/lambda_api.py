@@ -15,6 +15,7 @@ from aws_cdk import (
     aws_sqs as sqs,
     aws_logs as logs,
     Duration,
+    CfnCondition,
     CfnOutput,
     Fn,
     RemovalPolicy,
@@ -69,10 +70,59 @@ class LambdaApiStack(pyNestedClass):
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
 
+        # Conditional creation of esproxy log group
+        esproxy_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+        )
+        esproxy_loggroup_condition = CfnCondition(
+            self,
+            'esproxyloggroupcondition',
+            expression=Fn.condition_equals(
+                esproxy_loggroup.log_group_physical_name(), f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+            ),
+        )
+        cfn_esproxy_loggroup = logs.CfnLogGroup(
+            self, 'cfnesproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+        )
+        cfn_esproxy_loggroup.cfn_options.condition = esproxy_loggroup_condition
+
+        # Conditional creation of graphql lambda log group
+        graphql_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+        )
+        graphql_loggroup_condition = CfnCondition(
+            self,
+            'graphqlloggroupcondition',
+            expression=Fn.condition_equals(
+                graphql_loggroup.log_group_physical_name(), f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+            ),
+        )
+        cfn_graphql_loggroup = logs.CfnLogGroup(
+            self, 'cfngraphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+        )
+        cfn_graphql_loggroup.cfn_options.condition = graphql_loggroup_condition
+
+        # Conditional creation of worker lambda log group
+        awsworker_loggroup = logs.LogGroup.from_log_group_name(
+            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+        )
+        awsworker_loggroup_condition = CfnCondition(
+            self,
+            'awsworkerloggroupcondition',
+            expression=Fn.condition_equals(
+                awsworker_loggroup.log_group_physical_name(), f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+            ),
+        )
+        cfn_awsworker_loggroup = logs.CfnLogGroup(
+            self, 'cfnawsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+        )
+        cfn_awsworker_loggroup.cfn_options.condition = awsworker_loggroup_condition
+
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
+            log_group=esproxy_loggroup,
             description='dataall es search function',
             role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
@@ -101,6 +151,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
+            log_group=graphql_loggroup,
             description='dataall graphql function',
             role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
@@ -128,6 +179,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
+            log_group=awsworker_loggroup,
             description='dataall aws worker for aws asynchronous tasks function',
             role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
