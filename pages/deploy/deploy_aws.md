@@ -759,16 +759,14 @@ When setting the value to `false`, backend resources become smaller but you save
 
 These are the resources affected:
 
-| Backend Service | prod_sizing | Configuration                                                                                                                                                                                                                   
-|-----------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Aurora          | true        | - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU                                           |
-| Aurora          | false       | - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU                                               |
-| OpenSearch      | true        | - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it      |
-| OpenSearch      | false       | - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it |
-| Lambda function | true        | - Lambda functions are configured with more memory                                                                                                                                                                              |
-| Lambda function | false       | - Lambda functions are configured with less memory                                                                                                                                                                              |
-| SSM             | true        | - SSM in the AWS account is configured for high throughput  (check [service quotas](https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm))                                                                         |
-| SSM             | false       | - SSM in the AWS account is configured for default throughput  (check [service quotas](https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm))                                                                      |
+| Backend Service |prod_sizing| Configuration
+|-----------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Aurora           |true       | - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU                                              |
+|Aurora           |false      | - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU                                                  |
+|OpenSearch       |true       | - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it         |
+|OpenSearch       |false      | - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it    |
+|Lambda function  |true       | - Lambda functions are configured with more memory                                                                                                                                                                                 |
+|Lambda function  |false      | - Lambda functions are configured with less memory                                                                                                                                                                                 |
 
 ### I used the wrong accounts or made another mistake in the deployment. How do I un-deploy data.all?
 In the above steps we are only deploying data.all tooling resources. Hence, if the CI/CD CodePipeline pipeline has not 
