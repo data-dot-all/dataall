@@ -275,34 +275,6 @@ Linux base image, and does not rely on Dockerhub. Docker images are
 built with AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
-The following table includes an overview of the different ECS task definitions deployed in data.all.
-
-
-| ECS task        | trigger | module     | Description                                                                                                                                                         
-|-----------------|---------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| cdkproxy        | on-demand (by backend) | core       | It deploys CDK stacks in data.all Environment accounts (e.g. Environments, Datasets, Notebooks...)                                                                  |
-| stacks-updater  | scheduled (daily) | core       | It updates all Environment and Dataset stacks                                                                                                                       |
-| catalog-indexer | scheduled (every 6 hours) | core       | It indexes new tables and data items in the data.all central catalog                                                                                                |
-| tables-syncer   | scheduled (every 15 mins)| datasets   | It syncs tables in the Glue Catalog with the metadata of tables in data.all                                                                                         |
-| subscriptions   | scheduled (every 15 mins) | datasets   | It retrieves data from shared items and posts it in an SNS topic                                                                                                    |
-| share-manager   | on-demand (by backend) | dataset_sharing | It executes data shares in source and target accounts (bucket sharing, table sharing, folder sharing)                                                               |
-| share-verifier  | scheduled (weekly) | dataset_sharing | It verifies all shared items and updates their health status.                                                                                                       |
-| share-reapplier | on-demand (manually by data.all admins) | dataset_sharing | It reapplies all unhealthy shared items in data.all. It can be used by data.all admins in case an upgrade or any other unforeseen event damages the current shares. |
-
-**Trigger an ECS task manually**
-Exceptionally, data.all admins might need to trigger some of these ECS tasks manually. They can do so directly from the
-AWS Console making sure they select the correct networking parameters, which as shown in the following commands, can be obtained from SSM Parameter Store.
-```
-export cluster_name=$(aws ssm get-parameter --name /dataall/<ENV_NAME>/ecs/cluster/name --output text --query 'Parameter.Value')
-export private_subnets=$(aws ssm get-parameter --name /dataall/<ENV_NAME>/ecs/private_subnets  --output text --query 'Parameter.Value')
-export security_groups=$(aws ssm get-parameter --name /dataall/<ENV_NAME>/ecs/security_groups  --output text --query 'Parameter.Value')
-export task_definition=$(aws ssm get-parameter --name /dataall/<ENV_NAME>/ecs/task_def_arn/stacks_updater  --output text --query 'Parameter.Value')
-network_config=\"awsvpcConfiguration={subnets=[$private_subnets],securityGroups=[$security_groups],assignPublicIp=DISABLED}\"
-cluster_arn=\"arn:aws:ecs:<DEPLOYMENT_REGION>:<DEPLOYMENT_ACCOUNT>:cluster/$cluster_name\"",
-aws ecs run-task --task-definition $task_definition --cluster \"$cluster_arn\" --launch-type \"FARGATE\" --network-configuration \"$network_config\" --launch-type FARGATE --propagate-tags TASK_DEFINITION
-
-```
-
 ### Amazon Aurora
 data.all uses Amazon Aurora serverless – PostgreSQL version to persist the application metadata. For example, for
 each data.all concept (data.all environments, datasets...) there is a table in the Aurora database. Additional tables
