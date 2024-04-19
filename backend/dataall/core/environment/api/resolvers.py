@@ -679,7 +679,7 @@ def resolve_environment(context, source, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):
