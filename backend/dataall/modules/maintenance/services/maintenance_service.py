@@ -48,17 +48,25 @@ class MaintenanceService:
         logger.info("Putting data.all into maintenance window")
         try:
             with engine.scoped_session() as session:
-                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_mode=mode)
+                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='PENDING' ,maintenance_mode=mode)
             return True
         except Exception as e:
             logger.error(f"Error occurred while starting maintenance window due to {e}")
             return False
 
     @staticmethod
-    def stop_maintenance_window():
+    def stop_maintenance_window(engine):
         # Update the RDS table by changing mode to - ''
         # Update the RDS table by changing the status to INACTIVE
         logger.info("Stopping maintenance window")
+        try:
+            with engine.scoped_session() as session:
+                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
+                return True
+        except Exception as e:
+            logger.error(f"Error occurred while stopping maintenance window due to {e}")
+            return False
+
 
     @staticmethod
     def get_maintenance_window_status(engine):

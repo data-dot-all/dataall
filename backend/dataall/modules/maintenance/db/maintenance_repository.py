@@ -12,9 +12,9 @@ class MaintenanceRepository:
     def __init__(self, session):
         self._session = session
 
-    def save_maintenance_status_and_mode(self, maintenance_mode: str):
+    def save_maintenance_status_and_mode(self, maintenance_status: str,  maintenance_mode: str):
         maintenance_record = self._session.query(Maintenance).one()
-        maintenance_record.status = 'PENDING'
+        maintenance_record.status = maintenance_status
         maintenance_record.mode = maintenance_mode
         self._session.commit()
 

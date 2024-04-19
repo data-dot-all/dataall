@@ -26,12 +26,16 @@ def start_maintenance_window(context: Context, source: Maintenance, mode: str):
         raise Exception('Mode is not conforming to the MaintenanceModes enums')
     # Check from the context if the groups contains the DataAdminstrators group
     logging.info(context.groups)
+    if "DAAdministrators" not in context.groups:
+        raise Exception('Only data.all admin group members can start maintenance window')
     return MaintenanceService.start_maintenance_window(engine=context.engine, mode=mode)
 
 
 def stop_maintenance_window(context: Context, source: Maintenance):
     # Check from the context if the groups contains the DataAdminstrators group
-    return MaintenanceService.stop_maintenance_window()
+    if "DAAdministrators" not in context.groups:
+        raise Exception('Only data.all admin group members can stop maintenance window')
+    return MaintenanceService.stop_maintenance_window(engine=context.engine)
 
 def get_maintenance_window_status(context: Context, source: Maintenance):
     return MaintenanceService.get_maintenance_window_status(engine=context.engine)
