@@ -402,7 +402,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+        env_group = EnvironmentService.get_environment_group(session, groupUri, environment.environmentUri)
         if not env_group:
             raise exceptions.UnauthorizedOperation(
                 action='ENVIRONMENT_AWS_ACCESS',
