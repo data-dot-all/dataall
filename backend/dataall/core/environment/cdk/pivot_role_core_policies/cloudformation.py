@@ -8,17 +8,18 @@ class CloudformationPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
                 sid='CloudFormation',
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "cloudformation:DeleteStack",
-                    "cloudformation:DescribeStacks",
-                    "cloudformation:DescribeStackEvents",
-                    "cloudformation:DescribeStackResources",
-                    "cloudformation:ContinueUpdateRollback"
+                    'cloudformation:DeleteStack',
+                    'cloudformation:DescribeStacks',
+                    'cloudformation:DescribeStackEvents',
+                    'cloudformation:DescribeStackResources',
+                    'cloudformation:ContinueUpdateRollback',
                 ],
                 resources=[
                     f'arn:aws:cloudformation:*:{self.account}:stack/{self.env_resource_prefix}*/*',

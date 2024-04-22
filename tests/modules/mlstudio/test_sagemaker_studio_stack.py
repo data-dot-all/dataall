@@ -1,4 +1,3 @@
-
 def test_sagemaker_studio_update_stack(client, sagemaker_studio_user, group):
     response = client.query(
         """
@@ -11,8 +10,8 @@ def test_sagemaker_studio_update_stack(client, sagemaker_studio_user, group):
         }
         """,
         targetUri=sagemaker_studio_user.sagemakerStudioUserUri,
-        targetType="mlstudio",
-        username="alice",
+        targetType='mlstudio',
+        username='alice',
         groups=[group.name],
     )
     assert response.data.updateStack.targetUri == sagemaker_studio_user.sagemakerStudioUserUri

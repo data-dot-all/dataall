@@ -7,7 +7,7 @@ users store data and work with data.**
 
 !!! danger "One AWS account, One environment"
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
-    Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
+    **We strongly discourage users to use the same AWS account for multiple environments**.
 
 ## :material-hammer-screwdriver: **AWS account Pre-requisites**
 *data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
@@ -49,8 +49,7 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
 In the above command we define the `--cloudformation-execution-policies` to use the AdministratorAccess policy `arn:aws:iam::aws:policy/AdministratorAccess`. 
 This is the default policy that CDK uses to deploy resources, nevertheless it is possible to restrict it to any IAM policy created in the account.
 
-In V1.6.0 a more restricted policy is provided and directly downloadable from the UI. This more restrictive policy can be optionally used as
-`--cloudformation-execution-policies` for the CDK Execution role.
+In V1.6.0 and later, a more restricted policy is provided and directly downloadable from the UI. This more restrictive policy can be optionally passed in to the parameter `--cloudformation-execution-policies` instead of `arn:aws:iam::aws:policy/AdministratorAccess` for the CDK Execution role.
 
 
 ### 2. (For manual) Pivot role
@@ -72,27 +71,13 @@ available in data.all UI to create the role named **dataallPivotRole**.
     If you have existing environments that were linked to data.all using a manually created Pivot Role you can
     still benefit from V1.5.0 `enable_pivot_role_auto_create` feature. You just need to update that parameter in
     the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
-    will contain the nested cdk-pivotRole stack (no actions needed) and existing environments can be updated by: a) manually, 
-    by clicking on "update stack" in the environment>stack tab  b) automatically, wait for the `stack-updater` ECS task that 
-    runs daily overnight c) automatically, set the added `enable_update_dataall_stacks_in_cicd_pipeline` parameter to `true` in 
-    the `cdk.json` config file. The `stack-updater` ECS task will be triggered from the CICD pipeline
+    will contain the nested cdk-pivotRole stack (no actions needed) and existing environments can be updated by:
+      <br>a) manually, by clicking on "update stack" in the environment --> stack tab
+      <br>b) automatically, wait for the `stack-updater` ECS task that runs daily overnight 
+      <br>c) automatically, set the added `enable_update_dataall_stacks_in_cicd_pipeline` parameter to `true` in the `cdk.json` config file. The `stack-updater` ECS task will be triggered from the CICD pipeline
 
-### 3. (For new accounts) AWS Lake Formation Service role
-<span style="color:grey">*data.all*</span> relies on AWS Lake Formation to manage access to your structured data.
-If AWS Lake Formation has never been
-activated on your AWS account, you need to create
-a service-linked role, using the following command:
 
-```bash
-aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.com
-```
-
-!!! danger "Service link creation error"
-    If you receive: An error occurred (InvalidInput) when calling the CreateServiceLinkedRole operation: Service
-    role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
-    <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
-
-### 4. (For Dashboards) Subscribe to Amazon Quicksight
+### 3. (For Dashboards) Subscribe to Amazon Quicksight
 
 This is an optional step. To link environments with <i><b>Dashboards enabled</b></i> , you will also need a running Amazon QuickSight subscription
 on the bootstraped account. If you have not subscribed to Quicksight before, go to your AWS account and choose the
@@ -103,26 +88,29 @@ Enterprise option as show below:
 ![quicksight](pictures/environments/boot_qs_2.png#zoom#shadow)
 
 
-### 5. (For ML Studio) Delete or adapt the default VPC
-If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
-it will use it to create ML Studio profiles. If no pre-existing domain is found, data.all will create a new one.
+### 4. (For ML Studio) Specifying a VPC or using default
+If ML Studio is enabled, data.all will create a new SageMaker Studio domain in your AWS Account and use the domain later on to create ML Studio profiles.
 
 Prior to V1.5.0 data.all always used the default VPC to create a new SageMaker domain. The default VPC had then to be
 customized to fulfill the networking requirements specified in the Sagemaker
 [documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html) for VPCOnly 
 domains.
 
-In V1.5.0 we introduce the creation of a suitable VPC for SageMaker as part of the environment stack. However, it is not possible to edit the VPC used by a SageMaker domain, it requires deletion and re-creation. To allow backwards
+In V1.5.0 we introduce the creation of a suitable VPC for SageMaker as part of the environment stack. However, it is not possible to edit the VPC used by a SageMaker Studio domain, it requires deletion and re-creation. To allow backwards
 compatibility and not delete the pre-existing domains, in V1.5.0 the default behavior is still to use the default VPC.
 
-Data.all will create a SageMaker VPC:
-- For new environments: (link environment)
-  - if there is not a pre-existing SageMaker Studio domain
-  - if there is not a default VPC in the account
-- For pre-existing environments: (update environment)
-  - if all ML Studio profiles have been deleted (from CloudFormation as well)
-  - if there is not a pre-existing SageMaker Studio domain
-  - if the default VPC has been deleted in the account
+In V2.2.0, we introduced the ability to select your own VPC ID and Subnet IDs to deploy the VPC-Only Sagemaker Studio domain to.
+
+Data.all will follow the following rules to establish which VPC to use for Sagemaker Studio domain creation:
+
+- If MLStudio enabled with VPC and subnet IDs specified
+  - Use the specified VPC and subnet IDs
+- If MLStudio enabled with no VPC/subnet IDs specified 
+  - default VPC exists -->  Uses default VPC and all subnets available
+  - default VPC does not exist --> Creates a new VPC and uses with private subnets
+
+Pre-existing environments from older versions of data.all will have their Sagemaker Studio domain remain unchanged if already enabled. Users can get a better understanding of what VPC configuration is being used by navigating to the environment --> MLStudio Tab in the data.all UI once the environment stack is created.
+
 
 ## :material-new-box: **Link an environment**
 ### Necessary permissions
@@ -162,20 +150,19 @@ Navigate to your organization, click on the **Link Environment** button, and fil
 | Short description | Short description about the environment                                                                                                   | No       | Yes      |Finance department teams
 | Account number    | AWS bootstraped account maped to the environment                                                                                          | Yes      | No       |111111111111
 | Region            | AWS region                                                                                                                                | Yes      | No       |Europe (Ireland)
-| IAM Role name     | Alternative name of the environment IAM role                                                                                              | No       | No       |anotherRoleName
+| IAM Role ARN     | Alternative name of the environment IAM role                                                                                              | No       | No       |anotherRoleName
 | Resources prefix  | Prefix for all AWS resources created in this environment. Only (^[a-z-]*$)                                                                | Yes      | Yes      |fin
 | Team              | Name of the group initially assigned to this environment                                                                                  | Yes      | No       |FinancesAdmin
 | Tags              | Tags that can later be used in the Catalog                                                                                                | Yes      | Yes      |finance, test
-| VPC Identifier    | VPC provided to host the environment resources instead than the default one created by <span style="color:grey">*data.all*</span>         | No       |   No       | vpc-......
-| Public subnets    | Public subnets provided to host the environment resources instead than the default created by <span style="color:grey">*data.all*</span>  | No       |  No        | subnet-....
-| Private subnets   | Private subnets provided to host the environment resources instead than the default created by <span style="color:grey">*data.all*</span> | No       |   No       | subnet-.....
+| ML Studio VPC ID    | VPC to host the environment sagemaker studio domain (if mlstudio is enabled) instead than the default VPC or the VPC created by <span style="color:grey">*data.all*</span>         | No       |   No       | vpc-......
+| ML Studio Subnet ID(s)   | Subnet(s) to host the environment sagemaker studio domain (if mlstudio is enabled) instead than the default subnets or the subnets created by <span style="color:grey">*data.all*</span>  | No       |  No        | subnet-....
 
 
 **Features Management**
 
 An environment is defined as a workspace and in this workspace we can flexibly activate or deactivate different
 features, adapting the workspace to the teams' needs. If you want to use Dashboards, you need to complete the optional
-fourth step explained in the previous chapter "Bootstrap your AWS account".
+third step explained in the previous chapter "Bootstrap your AWS account".
 
 !!! success "This is not set in stone!"
     Don't worry if you change your mind, features are editable. You can always update
@@ -192,6 +179,7 @@ the environment organization. There are several tabs just below the environment 
 - Overview: summary of environment information and AWS console and credential access.
 - Teams: list of all teams onboarded to this environment.
 - Datasets: list of all datasets owned and shared with for this environment
+- MLStudio: summary of Sagemaker Studio domain configuration (if enabled)
 - Networks: VPCs created and owned by the environment
 - Subscriptions: SNS topic subscriptions enabled or disabled in the environment
 - Tags: editable key-value tags
@@ -238,11 +226,11 @@ Note that we can keep the environment CloudFormation stack. What is this for? Th
 using the environment resources (IAM roles, etc) created by <span style="color:grey">*data.all*</span> but outside of <span style="color:grey">*data.all*</span>
 
 ### :material-plus-network-outline: **Create networks**
-Networks are VPCs created from <span style="color:grey">*data.all*</span> and belonging to an environment and team. To create a network, click in the
+Networks are pre-existing VPCs that are onboarded to <span style="color:grey">*data.all*</span> and belonging to an environment and team. To create a network, click in the
 **Networks** tab in the environment window, then click on **Add** and finally fill the following form.
 
-!!!abstract "I need an example!"
-    What is the advantage of using networks from <span style="color:grey">*data.all*</span>? ....[MISSING INFO]
+!!!abstract "Using Networks"
+    After onboarding your network(s) in <span style="color:grey">*data.all*</span>, users can easily select the VPC and Subnet information of that network to seamlessly deploy new resources in data.all that require VPC configurations, such as data.all Notebooks. For example, if a User wants to create a notebook in their environment after onboarding a network, the VPC and Subnet ID fields in the create notebook form on data.all will auto-populate with the VPC and subnet information for the user to easily to select (rather than navigating to and from the AWS Console)!
 
 
 ![](pictures/environments/env_networks.png#zoom#shadow)
@@ -303,7 +291,8 @@ creator of the environment or invited to the environment). In the following pict
 For the environment admin team and for each team invited to the environment <span style="color:grey">*data.all*</span> 
 creates an IAM role. From the **Teams** tab of
 the environment we can assume our team's IAM role to get access to the AWS Console or copy the credentials to the
-clipboard. Both options are under the "Actions" column in the Teams table.
+clipboard. Both options are under the "Actions" column in the Teams table (these options are only available if `core.features.env_aws_actions` is set to `True` in the `config.json` used for deployment of data.all).
+
 
 
 ![](pictures/environments/env_teams_3.png#zoom#shadow)
@@ -376,10 +365,13 @@ Any IAM role that exists in the Environment AWS Account can be added to <span st
 
 ![](pictures/environments/env_consumption_roles_1.png#zoom#shadow)
 
-A window like the following will appear for you to introduce the arn of the IAM role and the Team that owns the consumption role.
-Only members of this team and tenants of <span style="color:grey">*data.all*</span> can remove the consumption role.
+A window like the following will appear for you to introduce a name for the consumption role in data.all, the arn of the IAM role, the Team that owns the consumption role and whether data.all should manage the consumption role. Enabling "data.all managed" on the consumption role allows data.all to attach IAM policies to the role used for data.all related activities, such as sharing data, rather than having a user manually add those policies to the role.
+
+Only members of this team and tenants of <span style="color:grey">*data.all*</span> can edit or remove the consumption role.
 
 ![](pictures/environments/env_consumption_roles_2.png#zoom#shadow)
+
+![](pictures/environments/env_consumption_roles_3.png#zoom#shadow)
 
 !!! success "Existing roles only"
     <span style="color:grey">*data.all*</span> checks whether that IAM role exists in the AWS account of the environment before adding it as a consumption role.
@@ -387,5 +379,5 @@ Only members of this team and tenants of <span style="color:grey">*data.all*</sp
 **Data Access**
 
 - By default, a new consumption role does NOT have access to any data in <span style="color:grey">*data.all*</span>.
-- The team that owns the consumption role needs to open a share request for the consumption role as shown in the picture below.
+- The team that owns the consumption role needs to open a share request for the consumption role as discussed more in the Discover --> Shares section.
 

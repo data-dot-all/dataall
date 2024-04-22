@@ -14,7 +14,7 @@ listGroups = gql.QueryField(
         gql.Argument(name='filter', type=gql.Ref('ServiceProviderGroupFilter')),
     ],
     type=gql.ArrayType(gql.Ref('GroupsInfo')),
-    resolver=list_groups
+    resolver=list_groups,
 )
 
 

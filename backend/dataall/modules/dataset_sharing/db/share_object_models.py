@@ -5,7 +5,10 @@ from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareObjectStatus,
+    ShareItemStatus,
+)
 
 
 def in_one_month():
@@ -18,9 +21,7 @@ def _uuid4():
 
 class ShareObject(Base):
     __tablename__ = 'share_object'
-    shareUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('share')
-    )
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
     groupUri = Column(String)
@@ -42,9 +43,7 @@ class ShareObject(Base):
 class ShareObjectItem(Base):
     __tablename__ = 'share_object_item'
     shareUri = Column(String, nullable=False)
-    shareItemUri = Column(
-        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
-    )
+    shareItemUri = Column(String, default=utils.uuid('shareitem'), nullable=False, primary_key=True)
     itemType = Column(String, nullable=False)
     itemUri = Column(String, nullable=False)
     itemName = Column(String, nullable=False)
@@ -58,3 +57,6 @@ class ShareObjectItem(Base):
     S3AccessPointName = Column(String, nullable=True)
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
+    healthStatus = Column(String, nullable=True)
+    healthMessage = Column(String, nullable=True)
+    lastVerificationTime = Column(DateTime, nullable=True)

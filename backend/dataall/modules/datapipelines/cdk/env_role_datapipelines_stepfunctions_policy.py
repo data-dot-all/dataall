@@ -8,6 +8,7 @@ class StepFunctions(ServicePolicy):
     """
     Class including all permissions needed to work with AWS Step Functions.
     """
+
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_PIPELINE not in group_permissions:
             return []
@@ -32,17 +33,13 @@ class StepFunctions(ServicePolicy):
                     'states:CreateStateMachine',
                     'states:UpdateStateMachine',
                     'states:CreateActivity',
-                    'states:TagResource'
+                    'states:TagResource',
                 ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*',
                     f'arn:aws:states:{self.region}:{self.account}:activity:{self.resource_prefix}*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}},
             ),
             aws_iam.PolicyStatement(
                 # sid='ManageTeamStepFunctions',
@@ -53,17 +50,13 @@ class StepFunctions(ServicePolicy):
                     'states:Get*',
                     'states:List*',
                     'states:Start*',
-                    'states:StopExecution'
+                    'states:StopExecution',
                 ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:execution:{self.resource_prefix}*:*',
                     f'arn:aws:states:{self.region}:{self.account}:activity:{self.resource_prefix}*',
-                    f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*'
+                    f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*',
                 ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
         ]

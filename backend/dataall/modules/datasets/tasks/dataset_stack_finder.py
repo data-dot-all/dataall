@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from dataall.core.environment.services.env_stack_finder import StackFinder
+from dataall.core.environment.tasks.env_stack_finder import StackFinder
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
@@ -13,6 +13,7 @@ class DatasetStackFinder(StackFinder):
     Dataset stack finder. Looks for datasets stack to update
     Register automatically itself when StackFinder instance is created
     """
+
     def find_stack_uris(self, session) -> List[str]:
         all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         log.info(f'Found {len(all_datasets)} datasets')

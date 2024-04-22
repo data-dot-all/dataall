@@ -26,6 +26,10 @@ def get_organization(context: Context, source, organizationUri=None):
     return OrganizationService.get_organization(uri=organizationUri)
 
 
+def get_organization_simplified(context: Context, source, organizationUri=None):
+    return OrganizationService.get_organization_simplified(uri=organizationUri)
+
+
 def list_organizations(context: Context, source, filter=None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
@@ -41,10 +45,7 @@ def list_organization_environments(context, source, filter=None):
 
 
 def stats(context, source: models.Organization, **kwargs):
-    return OrganizationService.count_organization_resources(
-        uri=source.organizationUri,
-        group=source.SamlGroupName
-    )
+    return OrganizationService.count_organization_resources(uri=source.organizationUri, group=source.SamlGroupName)
 
 
 def resolve_user_role(context: Context, source: models.Organization):
@@ -71,16 +72,11 @@ def remove_group(context: Context, source, organizationUri=None, groupUri=None):
     )
 
 
-def list_organization_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
+def list_organization_groups(context: Context, source, organizationUri=None, filter=None):
     if filter is None:
         filter = {}
 
-    return OrganizationService.list_organization_groups(
-        filter=filter,
-        uri=organizationUri
-    )
+    return OrganizationService.list_organization_groups(filter=filter, uri=organizationUri)
 
 
 def resolve_organization_by_env(context, source, **kwargs):

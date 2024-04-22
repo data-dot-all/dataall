@@ -1,8 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.datasets.api.table_column.resolvers import (
-    sync_table_columns,
-    update_table_column
-)
+from dataall.modules.datasets.api.table_column.resolvers import sync_table_columns, update_table_column
 
 syncDatasetTableColumns = gql.MutationField(
     name='syncDatasetTableColumns',

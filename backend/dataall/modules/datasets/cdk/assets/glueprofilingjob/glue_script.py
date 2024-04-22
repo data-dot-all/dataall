@@ -6,9 +6,10 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 from awsglue.context import GlueContext
-from awsglue.transforms import *
+from awsglue.transforms import ColumnProfilerRunner
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
+from pydeequ.profiles import *
 
 sc = SparkContext.getOrCreate()
 sc._jsc.hadoopConfiguration().set('fs.s3.canned.acl', 'BucketOwnerFullControl')
@@ -32,21 +33,17 @@ list_args = [
     'environmentBucket',
     'dataallRegion',
     'table',
-    "SPARK_VERSION"
+    'SPARK_VERSION',
 ]
 try:
     args = getResolvedOptions(sys.argv, list_args)
-    logger.info(
-        f"Table arg passed profiling will run only on specified table >>> {args['table']}"
-    )
+    logger.info(f"Table arg passed profiling will run only on specified table >>> {args['table']}")
 except Exception as e:
     logger.info(f'No Table arg passed profiling will run on all dataset tables: {e}')
     list_args.remove('table')
     args = getResolvedOptions(sys.argv, list_args)
 
-os.environ["SPARK_VERSION"] = args.get("SPARK_VERSION", "3.1")
-
-from pydeequ.profiles import *
+os.environ['SPARK_VERSION'] = args.get('SPARK_VERSION', '3.1')
 
 logger.info('Parsed Retrieved parameters')
 

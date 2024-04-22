@@ -31,10 +31,7 @@ class NotificationRepository:
     @staticmethod
     def paginated_notifications(session, username, groups, filter=None):
         q = session.query(models.Notification).filter(
-            or_(
-                models.Notification.recipient == username,
-                models.Notification.recipient.in_(groups)
-            )
+            or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups))
         )
         if filter.get('read'):
             q = q.filter(
@@ -52,20 +49,13 @@ class NotificationRepository:
             )
         if filter.get('archived'):
             q = q.filter(models.Notification.deleted.isnot(None))
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
 
     @staticmethod
     def count_unread_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(
-                or_(
-                    models.Notification.recipient == username,
-                    models.Notification.recipient.in_(groups)
-                )
-            )
+            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
             .filter(models.Notification.is_read == False)
             .filter(models.Notification.deleted.is_(None))
             .scalar()
@@ -76,12 +66,7 @@ class NotificationRepository:
     def count_read_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(
-                or_(
-                    models.Notification.recipient == username,
-                    models.Notification.recipient.in_(groups)
-                )
-            )
+            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
             .filter(models.Notification.is_read == True)
             .filter(models.Notification.deleted.is_(None))
             .scalar()
@@ -92,12 +77,7 @@ class NotificationRepository:
     def count_deleted_notifications(session, username, groups):
         count = (
             session.query(func.count(models.Notification.notificationUri))
-            .filter(
-                or_(
-                    models.Notification.recipient == username,
-                    models.Notification.recipient.in_(groups)
-                )
-            )
+            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
             .filter(models.Notification.deleted.isnot(None))
             .scalar()
         )

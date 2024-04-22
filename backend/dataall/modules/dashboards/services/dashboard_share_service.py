@@ -1,11 +1,15 @@
 from dataall.base.context import get_context
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db.exceptions import InvalidInput, UnauthorizedOperation
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.dashboards import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import DashboardShareStatus, Dashboard
-from dataall.modules.dashboards.services.dashboard_permissions import SHARE_DASHBOARD, MANAGE_DASHBOARDS, GET_DASHBOARD, \
-    CREATE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_permissions import (
+    SHARE_DASHBOARD,
+    MANAGE_DASHBOARDS,
+    GET_DASHBOARD,
+    CREATE_DASHBOARD,
+)
 
 
 class DashboardShareService:
@@ -16,7 +20,7 @@ class DashboardShareService:
         return dashboard.dashboardUri
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
     def request_dashboard_share(uri: str, principal_id: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -39,8 +43,8 @@ class DashboardShareService:
             return share
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD, parent_resource=_get_dashboard_uri_by_share_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(SHARE_DASHBOARD, parent_resource=_get_dashboard_uri_by_share_uri)
     def approve_dashboard_share(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share = DashboardRepository.get_dashboard_share_by_uri(session, uri)
@@ -49,14 +53,14 @@ class DashboardShareService:
             return share
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD, parent_resource=_get_dashboard_uri_by_share_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(SHARE_DASHBOARD, parent_resource=_get_dashboard_uri_by_share_uri)
     def reject_dashboard_share(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share = DashboardRepository.get_dashboard_share_by_uri(session, uri)
             DashboardShareService._change_share_status(share, DashboardShareStatus.REJECTED)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 group=share.SamlGroupName,
                 resource_uri=share.dashboardUri,
@@ -78,8 +82,8 @@ class DashboardShareService:
             )
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
+    @ResourcePolicyService.has_resource_permission(SHARE_DASHBOARD)
     def share_dashboard(uri: str, principal_id: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -89,7 +93,7 @@ class DashboardShareService:
                 username=context.username,
                 dashboard=dashboard,
                 principal_id=principal_id,
-                init_status=DashboardShareStatus.APPROVED
+                init_status=DashboardShareStatus.APPROVED,
             )
 
             DashboardShareService._create_share_policy(session, principal_id, dashboard.dashboardUri)
@@ -114,7 +118,7 @@ class DashboardShareService:
 
     @staticmethod
     def _create_share_policy(session, principal_id, dashboard_uri):
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=principal_id,
             permissions=[GET_DASHBOARD],

@@ -40,17 +40,10 @@ def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group
         username='alice',
         groups=[group.name],
         datasetUri=dataset_fixture.datasetUri,
-        input={
-            'terms': [t1.nodeUri],
-            'KmsAlias': ''
-        },
+        input={'terms': [t1.nodeUri], 'KmsAlias': ''},
     )
     with db.scoped_session() as session:
-        link: TermLink = (
-            session.query(TermLink)
-            .filter(TermLink.nodeUri == t1.nodeUri)
-            .first()
-        )
+        link: TermLink = session.query(TermLink).filter(TermLink.nodeUri == t1.nodeUri).first()
     r = client.query(
         """
         mutation ApproveTermAssociation($linkUri:String!){

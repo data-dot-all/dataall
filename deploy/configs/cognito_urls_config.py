@@ -12,6 +12,7 @@ def shuffle_password(pwd):
     random.shuffle(chars)
     return ''.join(chars)
 
+
 def setup_cognito(
     region,
     resource_prefix,
@@ -21,39 +22,33 @@ def setup_cognito(
     enable_cw_canaries='False',
 ):
     ssm = boto3.client('ssm', region_name=region)
-    user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')[
-        'Parameter'
-    ]['Value']
+    user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')['Parameter']['Value']
     print(f'Cognito Pool ID: {user_pool_id}')
-    app_client = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/appclient')[
-        'Parameter'
-    ]['Value']
+    app_client = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/appclient')['Parameter']['Value']
 
     if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
-        signin_singout_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/CloudfrontDistributionDomainName'
-        )['Parameter']['Value']
+        signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/CloudfrontDistributionDomainName')[
+            'Parameter'
+        ]['Value']
         user_guide_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
         )['Parameter']['Value']
     else:
-        signin_singout_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/frontend/custom_domain_name'
-        )['Parameter']['Value']
-        user_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/userguide/custom_domain_name'
-        )['Parameter']['Value']
+        signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/frontend/custom_domain_name')['Parameter'][
+            'Value'
+        ]
+        user_guide_link = ssm.get_parameter(Name=f'/dataall/{envname}/userguide/custom_domain_name')['Parameter'][
+            'Value'
+        ]
 
     print(f'UI: {signin_singout_link}')
     print(f'USERGUIDE: {user_guide_link}')
 
     cognito = boto3.client('cognito-idp', region_name=region)
     try:
-        user_pool = cognito.describe_user_pool_client(
-            UserPoolId=user_pool_id, ClientId=app_client
-        )
+        user_pool = cognito.describe_user_pool_client(UserPoolId=user_pool_id, ClientId=app_client)
 
         del user_pool['UserPoolClient']['CreationDate']
         del user_pool['UserPoolClient']['LastModifiedDate']
@@ -65,16 +60,12 @@ def setup_cognito(
         existing_callbacks = user_pool['UserPoolClient'].get('CallbackURLs', [])
         if 'https://example.com' in existing_callbacks:
             existing_callbacks.remove('https://example.com')
-        updated_callbacks = existing_callbacks + list(
-            set(config_callbacks) - set(existing_callbacks)
-        )
+        updated_callbacks = existing_callbacks + list(set(config_callbacks) - set(existing_callbacks))
         print(f'Updated CallBackUrls: {updated_callbacks}')
 
         config_logout_urls = [f'https://{signin_singout_link}']
         existing_logout_urls = user_pool['UserPoolClient'].get('LogoutURLs', [])
-        updated_logout_urls = existing_logout_urls + list(
-            set(config_logout_urls) - set(existing_logout_urls)
-        )
+        updated_logout_urls = existing_logout_urls + list(set(config_logout_urls) - set(existing_logout_urls))
         print(f'Updated LogOutUrls: {updated_logout_urls}')
 
         user_pool['UserPoolClient']['CallbackURLs'] = updated_callbacks
@@ -101,28 +92,21 @@ def setup_cognito(
 
         if enable_cw_canaries == 'True':
             sm = boto3.client('secretsmanager', region_name=region)
-            secret = sm.get_secret_value(
-                SecretId=f'{resource_prefix}-{envname}-cognito-canary-user'
-            )
+            secret = sm.get_secret_value(SecretId=f'{resource_prefix}-{envname}-cognito-canary-user')
             creds = json.loads(secret['SecretString'])
             username = creds['username']
-            print(f'Creating Canaries user...')
+            print('Creating Canaries user...')
             try:
                 response = cognito.admin_create_user(
                     UserPoolId=user_pool_id,
                     Username=username,
-                    UserAttributes=[
-                        {'Name': 'email', 'Value': f'{username}@amazonaws.com'}
-                    ],
+                    UserAttributes=[{'Name': 'email', 'Value': f'{username}@amazonaws.com'}],
                     TemporaryPassword='da@'
                     + shuffle_password(
                         random.SystemRandom().choice(string.ascii_uppercase)
                         + random.SystemRandom().choice(string.digits)
                         + ''.join(
-                            random.SystemRandom().choice(
-                                string.ascii_uppercase + string.digits
-                            )
-                            for _ in range(11)
+                            random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(11)
                         )
                     ),
                     MessageAction='SUPPRESS',
@@ -134,7 +118,7 @@ def setup_cognito(
                 else:
                     raise e
 
-            print(f'Updating Canaries user password...')
+            print('Updating Canaries user password...')
             response = cognito.admin_set_user_password(
                 UserPoolId=user_pool_id,
                 Username=username,
@@ -166,7 +150,7 @@ def setup_cognito(
 
 
 if __name__ == '__main__':
-    print(f'Starting Cognito Configuration...')
+    print('Starting Cognito Configuration...')
     envname = os.environ.get('envname')
     region = os.environ.get('deployment_region')
     internet_facing = os.environ.get('internet_facing')
@@ -181,4 +165,4 @@ if __name__ == '__main__':
         custom_domain,
         enable_cw_canaries,
     )
-    print(f'Cognito Configuration Finished Successfully')
+    print('Cognito Configuration Finished Successfully')

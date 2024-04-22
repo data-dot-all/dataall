@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 
 class GlueTableClient:
     """Makes requests to AWS Glue API"""
+
     def __init__(self, aws_session, table: DatasetTable):
         self._client = aws_session.client('glue', region_name=table.region)
         self._table = table
@@ -37,11 +38,7 @@ class GlueTableClient:
                 DatabaseName=self._table.GlueDatabaseName,
                 TableInput=table_input,
             )
-            log.info(
-                f'Column {column_name} updated successfully: {response}'
-            )
+            log.info(f'Column {column_name} updated successfully: {response}')
         except ClientError as e:
-            log.error(
-                f'Failed to update table column {column_name} description: {e}'
-            )
+            log.error(f'Failed to update table column {column_name} description: {e}')
             raise e

@@ -30,9 +30,7 @@ class ECRRepositoryStack(Stack):
 
         repo.add_lifecycle_rule(max_image_count=200)
         if target_envs:
-            principals: [iam.AccountPrincipal] = [
-                iam.AccountPrincipal(account['account']) for account in target_envs
-            ]
+            principals: [iam.AccountPrincipal] = [iam.AccountPrincipal(account['account']) for account in target_envs]
             repo.add_to_resource_policy(
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,

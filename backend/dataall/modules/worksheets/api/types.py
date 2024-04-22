@@ -21,9 +21,7 @@ AthenaResultRecordCell = gql.ObjectType(
 
 AthenaResultRecord = gql.ObjectType(
     name='AthenaResultRecord',
-    fields=[
-        gql.Field(name='cells', type=gql.ArrayType(gql.Ref('AthenaResultRecordCell')))
-    ],
+    fields=[gql.Field(name='cells', type=gql.ArrayType(gql.Ref('AthenaResultRecordCell')))],
 )
 
 
@@ -38,9 +36,7 @@ AthenaQueryResult = gql.ObjectType(
         gql.Field(name='ElapsedTimeInMs', type=gql.Integer),
         gql.Field(name='DataScannedInBytes', type=gql.Integer),
         gql.Field(name='Status', type=gql.String),
-        gql.Field(
-            name='columns', type=gql.ArrayType(gql.Ref('AthenaResultColumnDescriptor'))
-        ),
+        gql.Field(name='columns', type=gql.ArrayType(gql.Ref('AthenaResultColumnDescriptor'))),
         gql.Field(name='rows', type=gql.ArrayType(gql.Ref('AthenaResultRecord'))),
     ],
 )
@@ -120,11 +116,7 @@ WorksheetChartConfig = gql.ObjectType(
     name='WorksheetChartConfig',
     fields=[
         gql.Field(name='AthenaQueryId', type=gql.String),
-        gql.Field(
-            name='dimensions', type=gql.ArrayType(gql.Ref('WorksheetChartDimension'))
-        ),
-        gql.Field(
-            name='measures', type=gql.ArrayType(gql.Ref('WorksheetChartMeasure'))
-        ),
+        gql.Field(name='dimensions', type=gql.ArrayType(gql.Ref('WorksheetChartDimension'))),
+        gql.Field(name='measures', type=gql.ArrayType(gql.Ref('WorksheetChartMeasure'))),
     ],
 )

@@ -31,7 +31,7 @@ class SecretsManagerStack(pyNestedClass):
 
         self.canary_user = sm.Secret(
             self,
-            f'canary-user',
+            'canary-user',
             secret_name=f'{resource_prefix}-{envname}-cognito-canary-user',
             generate_secret_string=sm.SecretStringGenerator(
                 secret_string_template=json.dumps({'username': f'cwcanary-{self.account}'}),
@@ -40,7 +40,7 @@ class SecretsManagerStack(pyNestedClass):
                 password_length=12,
             ),
             encryption_key=self.secrets_manager_key,
-            description=f'Stores dataall Cognito canary user',
+            description='Stores dataall Cognito canary user',
             removal_policy=RemovalPolicy.DESTROY,
         )
         self.canary_user.add_rotation_schedule(

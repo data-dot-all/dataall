@@ -7,6 +7,7 @@ from sqlalchemy.sql import and_
 from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareItemSM
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
 from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 from dataall.base.utils import json_utils
 
@@ -14,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class DatasetTableRepository:
-
     @staticmethod
     def save(session, table: DatasetTable):
         session.add(table)
@@ -33,9 +33,7 @@ class DatasetTableRepository:
             S3Prefix=table.get('StorageDescriptor', {}).get('Location'),
             GlueTableName=table['Name'],
             LastGlueTableStatus='InSync',
-            GlueTableProperties=json_utils.to_json(
-                table.get('Parameters', {})
-            ),
+            GlueTableProperties=json_utils.to_json(table.get('Parameters', {})),
         )
         session.add(updated_table)
         session.commit()
@@ -69,6 +67,8 @@ class DatasetTableRepository:
                     ShareObject.datasetUri == dataset_uri,  # for this dataset
                     ShareObject.environmentUri == environment_uri,  # for this environment
                     ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.principalType
+                    != PrincipalType.ConsumptionRole.value,  # Exclude Consumption roles shares
                     or_(
                         ShareObject.owner == username,
                         ShareObject.principalId.in_(groups),
@@ -92,10 +92,11 @@ class DatasetTableRepository:
         for existing_table in existing_tables:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
                 existing_table.LastGlueTableStatus = 'Deleted'
-                logger.info(
-                    f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue'
-                )
-            elif existing_table.GlueTableName in [t['Name'] for t in glue_tables] and existing_table.LastGlueTableStatus == 'Deleted':
+                logger.info(f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue')
+            elif (
+                existing_table.GlueTableName in [t['Name'] for t in glue_tables]
+                and existing_table.LastGlueTableStatus == 'Deleted'
+            ):
                 existing_table.LastGlueTableStatus = 'InSync'
                 logger.info(
                     f'Updating Existing Table {existing_table.GlueTableName} status set to InSync from Deleted after found in Glue'
@@ -129,12 +130,10 @@ class DatasetTableRepository:
 
     @staticmethod
     def sync_table_columns(session, dataset_table, glue_table):
-
         DatasetTableRepository.delete_all_table_columns(session, dataset_table)
 
         columns = [
-            {**item, **{'columnType': 'column'}}
-            for item in glue_table.get('StorageDescriptor', {}).get('Columns', [])
+            {**item, **{'columnType': 'column'}} for item in glue_table.get('StorageDescriptor', {}).get('Columns', [])
         ]
         partitions = [
             {**item, **{'columnType': f'partition_{index}'}}
@@ -187,18 +186,12 @@ class DatasetTableRepository:
         if not table:
             logging.info(f'No table found for  {s3_prefix}|{accountid}|{region}')
         else:
-            logging.info(
-                f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}'
-            )
+            logging.info(f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}')
             return table
 
     @staticmethod
     def find_dataset_tables(session, dataset_uri):
-        return (
-            session.query(DatasetTable)
-            .filter(DatasetTable.datasetUri == dataset_uri)
-            .all()
-        )
+        return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).all()
 
     @staticmethod
     def delete_dataset_tables(session, dataset_uri) -> bool:

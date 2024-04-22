@@ -22,13 +22,13 @@ class CloudfrontStage(Stage):
 
         cloudfront_stack = CloudfrontStack(
             self,
-            f'cloudfront-stack',
+            'cloudfront-stack',
             envname=envname,
             resource_prefix=resource_prefix,
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
-            custom_auth=custom_auth
+            custom_auth=custom_auth,
         )
 
         Tags.of(cloudfront_stack).add('Application', f'{resource_prefix}-{envname}')
@@ -38,9 +38,7 @@ class CloudfrontStage(Stage):
         NagSuppressions.add_stack_suppressions(
             cloudfront_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed['id'], reason=rule_suppressed['reason'])
                 for rule_suppressed in CLOUDFRONT_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

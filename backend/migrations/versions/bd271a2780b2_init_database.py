@@ -5,6 +5,7 @@ Revises:
 Create Date: 2021-05-19 15:10:53.506962
 
 """
+
 import os
 
 import sqlalchemy as sa
@@ -315,9 +316,7 @@ def upgrade():
                 sa.Column('GlueTriggerName', sa.String(), nullable=True),
                 sa.Column('GlueTableName', sa.String(), nullable=True),
                 sa.Column('AwsAccountId', sa.String(), nullable=True),
-                sa.Column(
-                    'results', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('results', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('status', sa.String(), nullable=True),
                 sa.PrimaryKeyConstraint('profilingRunUri'),
             )
@@ -336,9 +335,7 @@ def upgrade():
                 sa.Column('ruleUri', sa.String(), nullable=False),
                 sa.Column('query', sa.String(), nullable=False),
                 sa.Column('status', sa.String(), nullable=False),
-                sa.Column(
-                    'logs', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('logs', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.PrimaryKeyConstraint('ruleUri'),
             )
         if not has_table('dataset_query', engine):
@@ -386,9 +383,7 @@ def upgrade():
                 sa.Column('created', sa.DateTime(), nullable=True),
                 sa.Column('updated', sa.DateTime(), nullable=True),
                 sa.Column('deleted', sa.DateTime(), nullable=True),
-                sa.Column(
-                    'userRoleForDatasetStorageLocation', sa.String(), nullable=False
-                ),
+                sa.Column('userRoleForDatasetStorageLocation', sa.String(), nullable=False),
                 sa.PrimaryKeyConstraint('userName', 'locationUri'),
             )
         if not has_table('dataset_table', engine):
@@ -529,9 +524,7 @@ def upgrade():
                 sa.Column('cognitoGroupName', sa.String(), nullable=True),
                 sa.Column('validated', sa.Boolean(), nullable=True),
                 sa.Column('environmentType', sa.String(), nullable=False),
-                sa.Column(
-                    'isOrganizationDefaultEnvironment', sa.Boolean(), nullable=True
-                ),
+                sa.Column('isOrganizationDefaultEnvironment', sa.Boolean(), nullable=True),
                 sa.Column('EnvironmentDefaultIAMRoleName', sa.String(), nullable=False),
                 sa.Column('EnvironmentDefaultIAMRoleArn', sa.String(), nullable=False),
                 sa.Column('EnvironmentDefaultBucketName', sa.String(), nullable=True),
@@ -540,18 +533,10 @@ def upgrade():
                 sa.Column('SamlGroupName', sa.String(), nullable=True),
                 sa.Column('CDKRoleArn', sa.String(), nullable=False),
                 sa.Column('subscriptionsEnabled', sa.Boolean(), nullable=True),
-                sa.Column(
-                    'subscriptionsProducersTopicName', sa.String(), nullable=True
-                ),
-                sa.Column(
-                    'subscriptionsProducersTopicImported', sa.Boolean(), nullable=True
-                ),
-                sa.Column(
-                    'subscriptionsConsumersTopicName', sa.String(), nullable=True
-                ),
-                sa.Column(
-                    'subscriptionsConsumersTopicImported', sa.Boolean(), nullable=True
-                ),
+                sa.Column('subscriptionsProducersTopicName', sa.String(), nullable=True),
+                sa.Column('subscriptionsProducersTopicImported', sa.Boolean(), nullable=True),
+                sa.Column('subscriptionsConsumersTopicName', sa.String(), nullable=True),
+                sa.Column('subscriptionsConsumersTopicImported', sa.Boolean(), nullable=True),
                 sa.PrimaryKeyConstraint('environmentUri'),
             )
             op.create_table(
@@ -688,12 +673,8 @@ def upgrade():
                 'metadata_facet',
                 sa.Column('facetId', sa.String(), nullable=False),
                 sa.Column('guid', sa.String(), nullable=False),
-                sa.Column(
-                    '_schema', postgresql.JSON(astext_type=sa.Text()), nullable=False
-                ),
-                sa.Column(
-                    'doc', postgresql.JSON(astext_type=sa.Text()), nullable=False
-                ),
+                sa.Column('_schema', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+                sa.Column('doc', postgresql.JSON(astext_type=sa.Text()), nullable=False),
                 sa.PrimaryKeyConstraint('facetId'),
             )
         if not has_table('metadata_tag', engine):
@@ -914,15 +895,9 @@ def upgrade():
                 sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
                 sa.Column('environmentUri', sa.String(), nullable=False),
                 sa.Column('sagemakerStudioUserProfileUri', sa.String(), nullable=False),
-                sa.Column(
-                    'sagemakerStudioUserProfileStatus', sa.String(), nullable=False
-                ),
-                sa.Column(
-                    'sagemakerStudioUserProfileName', sa.String(), nullable=False
-                ),
-                sa.Column(
-                    'sagemakerStudioUserProfileNameSlugify', sa.String(), nullable=False
-                ),
+                sa.Column('sagemakerStudioUserProfileStatus', sa.String(), nullable=False),
+                sa.Column('sagemakerStudioUserProfileName', sa.String(), nullable=False),
+                sa.Column('sagemakerStudioUserProfileNameSlugify', sa.String(), nullable=False),
                 sa.Column('sagemakerStudioDomainID', sa.String(), nullable=False),
                 sa.Column('AWSAccountId', sa.String(), nullable=False),
                 sa.Column('RoleArn', sa.String(), nullable=False),
@@ -1100,21 +1075,13 @@ def upgrade():
                 sa.Column('cronexpr', sa.String(), nullable=True),
                 sa.Column('status', sa.String(), nullable=False),
                 sa.Column('stack', sa.String(), nullable=False),
-                sa.Column(
-                    'payload', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('payload', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('created', sa.DateTime(), nullable=True),
                 sa.Column('updated', sa.DateTime(), nullable=True),
                 sa.Column('stackid', sa.String(), nullable=True),
-                sa.Column(
-                    'outputs', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
-                sa.Column(
-                    'resources', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
-                sa.Column(
-                    'error', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('outputs', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+                sa.Column('resources', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+                sa.Column('error', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('lastSeen', sa.DateTime(), nullable=True),
                 sa.PrimaryKeyConstraint('stackUri'),
             )
@@ -1135,17 +1102,11 @@ def upgrade():
                 sa.Column('cronexpr', sa.String(), nullable=True),
                 sa.Column('status', sa.String(), nullable=False),
                 sa.Column('action', sa.String(), nullable=False),
-                sa.Column(
-                    'payload', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('payload', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('created', sa.DateTime(), nullable=True),
                 sa.Column('updated', sa.DateTime(), nullable=True),
-                sa.Column(
-                    'response', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
-                sa.Column(
-                    'error', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('response', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+                sa.Column('error', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('lastSeen', sa.DateTime(), nullable=True),
                 sa.PrimaryKeyConstraint('taskUri'),
             )
@@ -1226,9 +1187,7 @@ def upgrade():
                 sa.Column('worksheetUri', sa.String(), nullable=False),
                 sa.Column('SamlAdminGroupName', sa.String(), nullable=False),
                 sa.Column('sqlBody', sa.String(), nullable=True),
-                sa.Column(
-                    'chartConfig', postgresql.JSON(astext_type=sa.Text()), nullable=True
-                ),
+                sa.Column('chartConfig', postgresql.JSON(astext_type=sa.Text()), nullable=True),
                 sa.Column('lastSavedAthenaQueryIdForQuery', sa.String(), nullable=True),
                 sa.Column('lastSavedAthenaQueryIdForChart', sa.String(), nullable=True),
                 sa.PrimaryKeyConstraint('worksheetUri'),

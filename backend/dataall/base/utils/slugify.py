@@ -17,9 +17,7 @@ NUMBERS_PATTERN = re.compile(r'(?<=\d),(?=\d)')
 DEFAULT_SEPARATOR = '-'
 
 
-def smart_truncate(
-    string, max_length=0, word_boundary=False, separator=' ', save_order=False
-):
+def smart_truncate(string, max_length=0, word_boundary=False, separator=' ', save_order=False):
     """
     Truncate a string.
     :param string (str): string for modification
@@ -162,9 +160,7 @@ def slugify(
     if stopwords:
         if lowercase:
             stopwords_lower = [s.lower() for s in stopwords]
-            words = [
-                w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords_lower
-            ]
+            words = [w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords_lower]
         else:
             words = [w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords]
         text = DEFAULT_SEPARATOR.join(words)
@@ -176,9 +172,7 @@ def slugify(
 
     # smart truncate if requested
     if max_length > 0:
-        text = smart_truncate(
-            text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order
-        )
+        text = smart_truncate(text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order)
 
     if separator != DEFAULT_SEPARATOR:
         text = text.replace(DEFAULT_SEPARATOR, separator)

@@ -8,7 +8,7 @@ from dataall.base.api import get_executable_schema
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.base.config import config
 
-config.set_property("cdk_proxy_url", "mock_url")
+config.set_property('cdk_proxy_url', 'mock_url')
 
 
 class ClientWrapper:
@@ -66,13 +66,7 @@ def create_app(db):
         success, result = graphql_sync(
             schema,
             data,
-            context_value={
-                'schema': None,
-                'engine': db,
-                'username': username,
-                'groups': groups,
-                'user_id': user_id
-            },
+            context_value={'schema': None, 'engine': db, 'username': username, 'groups': groups, 'user_id': user_id},
             debug=app.debug,
         )
 

@@ -12,7 +12,7 @@ class LakeFormationTableClient:
 
     def __init__(self, table: DatasetTable, aws_session=None):
         if not aws_session:
-            aws_session = SessionHelper.remote_session(table.AWSAccountId)
+            aws_session = SessionHelper.remote_session(table.AWSAccountId, table.region)
         self._client = aws_session.client('lakeformation', region_name=table.region)
         self._table = table
 
@@ -22,7 +22,7 @@ class LakeFormationTableClient:
         for tables managed inside dataall
         """
         table = self._table
-        principal = SessionHelper.get_delegation_role_arn(table.AWSAccountId)
+        principal = SessionHelper.get_delegation_role_arn(table.AWSAccountId, table.region)
         self._grant_permissions_to_table(principal, ['SELECT', 'ALTER', 'DROP', 'INSERT'])
 
     def grant_principals_all_table_permissions(self, principals: [str]):

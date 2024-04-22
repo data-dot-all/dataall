@@ -7,9 +7,7 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocati
 
 
 @is_feature_enabled('modules.datasets.features.file_actions')
-def create_storage_location(
-    context, source, datasetUri: str = None, input: dict = None
-):
+def create_storage_location(context, source, datasetUri: str = None, input: dict = None):
     if 'prefix' not in input:
         raise RequiredParameter('prefix')
     if 'label' not in input:
@@ -33,9 +31,7 @@ def get_storage_location(context, source, locationUri=None):
 
 
 @is_feature_enabled('modules.datasets.features.file_actions')
-def update_storage_location(
-    context, source, locationUri: str = None, input: dict = None
-):
+def update_storage_location(context, source, locationUri: str = None, input: dict = None):
     return DatasetLocationService.update_storage_location(uri=locationUri, data=input)
 
 
@@ -52,12 +48,8 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     return d
 
 
-def resolve_glossary_terms(
-    context: Context, source: DatasetStorageLocation, **kwargs
-):
+def resolve_glossary_terms(context: Context, source: DatasetStorageLocation, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return GlossaryRepository.get_glossary_terms_links(
-            session, source.locationUri, 'Folder'
-        )
+        return GlossaryRepository.get_glossary_terms_links(session, source.locationUri, 'Folder')

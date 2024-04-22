@@ -4,12 +4,16 @@ import pytest
 
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareObjectStatus,
+    ShareItemStatus,
+    ShareableType,
+    PrincipalType,
+)
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
 from dataall.core.environment.api.enums import EnvironmentPermission
-
 
 
 @pytest.fixture(scope='module')
@@ -45,7 +49,6 @@ def share(
     otherenv: Environment,
 ):
     with db.scoped_session() as session:
-
         table = DatasetTable(
             label='foo',
             name='foo',
@@ -87,10 +90,7 @@ def share(
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
     sns_client = MagicMock()
-    mocker.patch(
-        'dataall.modules.datasets.tasks.dataset_subscription_task.SnsDatasetClient',
-        sns_client
-    )
+    mocker.patch('dataall.modules.datasets.tasks.dataset_subscription_task.SnsDatasetClient', sns_client)
     sns_client.publish_dataset_message.return_value = True
     subscriber = DatasetSubscriptionService(db)
     messages = [

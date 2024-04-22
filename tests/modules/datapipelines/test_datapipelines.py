@@ -24,7 +24,7 @@ def test_create_pipeline_environment(client, tenant, group, env_fixture, pipelin
             'pipelineUri': pipeline.DataPipelineUri,
             'environmentUri': env_fixture.environmentUri,
             'environmentLabel': env_fixture.label,
-            'samlGroupName': group.name
+            'samlGroupName': group.name,
         },
         username='alice',
         groups=[group.name],

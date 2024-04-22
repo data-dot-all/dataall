@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from dataall.base.db import exceptions
 from dataall.core.vpc.db.vpc_models import Vpc
@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 
 class VpcRepository:
-
     @staticmethod
     def save_network(session, vpc):
         session.add(vpc)
@@ -31,22 +30,24 @@ class VpcRepository:
 
     @staticmethod
     def find_vpc_by_id_environment(session, vpc_id, environment_uri) -> Vpc:
-        vpc = (
-            session.query(Vpc)
-            .filter(
-                and_(
-                    Vpc.VpcId == vpc_id,
-                    Vpc.environmentUri == environment_uri
-                )
-            )
-            .first()
-        )
+        vpc = session.query(Vpc).filter(and_(Vpc.VpcId == vpc_id, Vpc.environmentUri == environment_uri)).first()
         return vpc
 
     @staticmethod
     def get_environment_networks(session, environment_uri):
-        return (
-            session.query(Vpc)
-            .filter(Vpc.environmentUri == environment_uri)
-            .all()
+        return session.query(Vpc).filter(Vpc.environmentUri == environment_uri).all()
+
+    @staticmethod
+    def query_environment_networks(session, uri, filter):
+        query = session.query(Vpc).filter(
+            Vpc.environmentUri == uri,
         )
+        if filter.get('term'):
+            term = filter.get('term')
+            query = query.filter(
+                or_(
+                    Vpc.label.ilike('%' + term + '%'),
+                    Vpc.VpcId.ilike('%' + term + '%'),
+                )
+            )
+        return query

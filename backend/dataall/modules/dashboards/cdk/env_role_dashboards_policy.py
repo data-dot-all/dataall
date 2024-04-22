@@ -6,10 +6,11 @@ from dataall.modules.dashboards.services.dashboard_permissions import CREATE_DAS
 
 class QuickSightPolicy(ServicePolicy):
     """
-        Class including all permissions needed to work with Amazon Quicksight.
-        It allows data.all users to:
-        -
+    Class including all permissions needed to work with Amazon Quicksight.
+    It allows data.all users to:
+    -
     """
+
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_DASHBOARD not in group_permissions:
             return []

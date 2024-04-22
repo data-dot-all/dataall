@@ -1,15 +1,17 @@
 from dataall.base.api import gql
-from dataall.modules.datapipelines.api.resolvers import create_pipeline, update_pipeline, delete_pipeline, \
-    create_pipeline_environment, delete_pipeline_environment, update_pipeline_environment
+from dataall.modules.datapipelines.api.resolvers import (
+    create_pipeline,
+    update_pipeline,
+    delete_pipeline,
+    create_pipeline_environment,
+    delete_pipeline_environment,
+    update_pipeline_environment,
+)
 
 createDataPipeline = gql.MutationField(
     name='createDataPipeline',
     type=gql.Ref('DataPipeline'),
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineInput'))
-        )
-    ],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineInput')))],
     resolver=create_pipeline,
 )
 
@@ -36,30 +38,20 @@ deleteDataPipeline = gql.MutationField(
 createDataPipelineEnvironment = gql.MutationField(
     name='createDataPipelineEnvironment',
     type=gql.Ref('DataPipelineEnvironment'),
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineEnvironmentInput'))
-        )
-    ],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineEnvironmentInput')))],
     resolver=create_pipeline_environment,
 )
 
 deleteDataPipelineEnvironment = gql.MutationField(
     name='deleteDataPipelineEnvironment',
     type=gql.Boolean,
-    args=[
-        gql.Argument(name='envPipelineUri', type=gql.NonNullableType(gql.String))
-    ],
+    args=[gql.Argument(name='envPipelineUri', type=gql.NonNullableType(gql.String))],
     resolver=delete_pipeline_environment,
 )
 
 updateDataPipelineEnvironment = gql.MutationField(
     name='updateDataPipelineEnvironment',
     type=gql.Ref('DataPipelineEnvironment'),
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineEnvironmentInput'))
-        )
-    ],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineEnvironmentInput')))],
     resolver=update_pipeline_environment,
 )

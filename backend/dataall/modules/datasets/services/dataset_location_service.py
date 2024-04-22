@@ -1,14 +1,22 @@
 from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER, MANAGE_DATASETS, \
-    CREATE_DATASET_FOLDER, LIST_DATASET_FOLDERS, DELETE_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_permissions import (
+    UPDATE_DATASET_FOLDER,
+    MANAGE_DATASETS,
+    CREATE_DATASET_FOLDER,
+    LIST_DATASET_FOLDERS,
+    DELETE_DATASET_FOLDER,
+)
+from dataall.modules.datasets_base.services.permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
 
 
 class DatasetLocationService:
@@ -18,8 +26,8 @@ class DatasetLocationService:
         return location.datasetUri
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET_FOLDER)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(CREATE_DATASET_FOLDER)
     def create_storage_location(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             exists = DatasetLocationRepository.exists(session, uri, data['prefix'])
@@ -32,6 +40,7 @@ class DatasetLocationService:
 
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             location = DatasetLocationRepository.create_dataset_location(session, dataset, data)
+            DatasetLocationService._attach_dataset_folder_read_permission(session, dataset, location.locationUri)
 
             if 'terms' in data.keys():
                 DatasetLocationService._create_glossary_links(session, location, data['terms'])
@@ -42,24 +51,22 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(uri: str, filter: dict = None):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetLocationRepository.list_dataset_locations(
-                session=session, uri=uri, data=filter
-            )
+            return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
     def get_storage_location(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.get_location_by_uri(session, uri)
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
     def update_storage_location(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
@@ -74,11 +81,12 @@ class DatasetLocationService:
             return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(DELETE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(DELETE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
     def remove_storage_location(uri: str = None):
         with get_context().db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
             has_shares = ShareObjectRepository.has_shared_items(session, location.locationUri)
             if has_shares:
                 raise ResourceShared(
@@ -87,6 +95,7 @@ class DatasetLocationService:
                 )
 
             ShareObjectRepository.delete_shares(session, location.locationUri)
+            DatasetLocationService._delete_dataset_folder_read_permission(session, dataset, location.locationUri)
             DatasetLocationRepository.delete(session, location)
             GlossaryRepository.delete_glossary_terms_links(
                 session,
@@ -99,9 +108,35 @@ class DatasetLocationService:
     @staticmethod
     def _create_glossary_links(session, location, terms):
         GlossaryRepository.set_glossary_terms_links(
-            session,
-            get_context().username,
-            location.locationUri,
-            'Folder',
-            terms
+            session, get_context().username, location.locationUri, 'Folder', terms
         )
+
+    @staticmethod
+    def _attach_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
+        """
+        Attach Folder permissions to dataset groups
+        """
+        permission_group = {
+            dataset.SamlAdminGroupName,
+            dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
+        }
+        for group in permission_group:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=group,
+                permissions=DATASET_FOLDER_READ,
+                resource_uri=location_uri,
+                resource_type=DatasetStorageLocation.__name__,
+            )
+
+    @staticmethod
+    def _delete_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
+        """
+        Delete Folder permissions to dataset groups
+        """
+        permission_group = {
+            dataset.SamlAdminGroupName,
+            dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
+        }
+        for group in permission_group:
+            ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)

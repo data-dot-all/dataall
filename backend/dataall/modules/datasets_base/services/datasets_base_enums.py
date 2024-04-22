@@ -28,16 +28,22 @@ class ConfidentialityClassification(GraphQLEnumMapper):
 
     @staticmethod
     def get_confidentiality_level(confidentiality):
-        return confidentiality if not custom_confidentiality_mapping else custom_confidentiality_mapping.get(
-            confidentiality, None)
+        return (
+            confidentiality
+            if not custom_confidentiality_mapping
+            else custom_confidentiality_mapping.get(confidentiality, None)
+        )
 
     @staticmethod
     def validate_confidentiality_level(confidentiality):
         if config.get_property('modules.datasets.features.confidentiality_dropdown', False):
             confidentiality = ConfidentialityClassification.get_confidentiality_level(confidentiality)
             if confidentiality not in [item.value for item in list(ConfidentialityClassification)]:
-                raise InvalidInput('Confidentiality Name', confidentiality,
-                                   'does not conform to the confidentiality classification. Hint: Check your confidentiality value OR check your mapping if you are using custom confidentiality values')
+                raise InvalidInput(
+                    'Confidentiality Name',
+                    confidentiality,
+                    'does not conform to the confidentiality classification. Hint: Check your confidentiality value OR check your mapping if you are using custom confidentiality values',
+                )
         return True
 
 

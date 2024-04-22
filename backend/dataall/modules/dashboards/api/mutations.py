@@ -1,24 +1,27 @@
 from dataall.base.api import gql
-from dataall.modules.dashboards.api.resolvers import *
+from dataall.modules.dashboards.api.resolvers import (
+    approve_dashboard_share,
+    create_quicksight_data_source_set,
+    delete_dashboard,
+    import_dashboard,
+    reject_dashboard_share,
+    request_dashboard_share,
+    share_dashboard,
+    update_dashboard,
+)
 
 
 importDashboard = gql.MutationField(
     name='importDashboard',
     type=gql.Ref('Dashboard'),
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('ImportDashboardInput'))
-        )
-    ],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('ImportDashboardInput')))],
     resolver=import_dashboard,
 )
 
 updateDashboard = gql.MutationField(
     name='updateDashboard',
     args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('UpdateDashboardInput'))
-        ),
+        gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('UpdateDashboardInput'))),
     ],
     type=gql.Ref('Dashboard'),
     resolver=update_dashboard,
@@ -73,9 +76,7 @@ rejectDashboardShare = gql.MutationField(
 
 createQuicksightDataSourceSet = gql.MutationField(
     name='createQuicksightDataSourceSet',
-    args=[
-        gql.Argument(name='vpcConnectionId', type=gql.NonNullableType(gql.String))
-    ],
+    args=[gql.Argument(name='vpcConnectionId', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=create_quicksight_data_source_set,
 )

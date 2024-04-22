@@ -1,4 +1,5 @@
 """Load modules that are specified in the configuration file"""
+
 import importlib
 import logging
 import sys
@@ -11,7 +12,7 @@ from dataall.base.config import config
 
 log = logging.getLogger(__name__)
 
-_MODULE_PREFIX = "dataall.modules"
+_MODULE_PREFIX = 'dataall.modules'
 
 # This needed not to load the same module twice. Should happen only in tests
 _ACTIVE_MODES = set()
@@ -43,13 +44,14 @@ class ModuleInterface(ABC):
     An interface of the module. The implementation should be part of __init__.py of the module
     Contains an API that will be called from core part
     """
+
     @staticmethod
     @abstractmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         """
         Return True if the module interface supports any of the ImportMode and should be loaded
         """
-        raise NotImplementedError("is_supported is not implemented")
+        raise NotImplementedError('is_supported is not implemented')
 
     @classmethod
     def name(cls) -> str:
@@ -85,7 +87,7 @@ def load_modules(modes: Set[ImportMode]) -> None:
     _initialize_modules(to_load)
     _describe_loading(in_config, inactive)
 
-    log.info("All modules have been imported")
+    log.info('All modules have been imported')
 
 
 def list_loaded_modules() -> List[str]:
@@ -111,14 +113,13 @@ def _load_modules():
     inactive = set()
     in_config = set()
     for name, props in modules.items():
+        if 'active' not in props:
+            raise ValueError(f'Status is not defined for {name} module')
 
-        if "active" not in props:
-            raise ValueError(f"Status is not defined for {name} module")
-
-        active = props["active"]
+        active = props['active']
 
         if not active:
-            log.info(f"Module {name} is not active. Skipping...")
+            log.info(f'Module {name} is not active. Skipping...')
             inactive.add(name)
             continue
 
@@ -126,17 +127,17 @@ def _load_modules():
         if not _load_module(name):
             raise ValueError(f"Couldn't find module {name} under modules directory")
 
-        log.info(f"Module {name} is loaded")
+        log.info(f'Module {name} is loaded')
     return in_config, inactive
 
 
 def _get_modules_from_config():
     try:
-        modules = config.get_property("modules")
+        modules = config.get_property('modules')
     except KeyError as e:
         raise KeyError('"modules" has not been found in the config file. Nothing to load') from e
 
-    log.info("Found %d modules that have been found in the config", len(modules))
+    log.info('Found %d modules that have been found in the config', len(modules))
     return modules
 
 
@@ -145,7 +146,7 @@ def _load_module(name: str):
     Loads a module but not initializing it
     """
     try:
-        importlib.import_module(f"{_MODULE_PREFIX}.{name}")  # nosemgrep
+        importlib.import_module(f'{_MODULE_PREFIX}.{name}')  # nosemgrep
         # semgrep finding ignored as no upstream user input is passed to the import_module function
         # Only code admins will have access to the parameters of the f-string
         return True
@@ -191,11 +192,11 @@ def _initialize_modules(modes: Set[ImportMode]):
     if initialized < len(degrees):
         # Happens if the ModuleInterface for dependency doesn't support import mode
         # The case when there is circular imports should already be covered by python loader
-        raise ImportError("Not all modules have been initialized. Check if your import modes are correct")
+        raise ImportError('Not all modules have been initialized. Check if your import modes are correct')
 
 
 def _get_module_name(module):
-    return module[len(_MODULE_PREFIX) + 1:].split(".")[0]  # gets only top level module name
+    return module[len(_MODULE_PREFIX) + 1 :].split('.')[0]  # gets only top level module name
 
 
 def _initialize_module(module: Type[ModuleInterface]):
@@ -236,8 +237,8 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
     for module in _all_modules():
         if module.is_supported(modes) and module not in expected_load:
             raise ImportError(
-                f"ModuleInterface has not been initialized for module {module.name()}. "
-                "Declare the module in depends_on"
+                f'ModuleInterface has not been initialized for module {module.name()}. '
+                'Declare the module in depends_on'
             )
 
     # 4) Checks all references for modules (when ModuleInterfaces don't exist or not supported)
@@ -255,19 +256,23 @@ def _describe_loading(in_config: Set[str], inactive: Set[str]):
     modules = _all_modules()
     for module in modules:
         name = module.name()
-        log.debug(f"The {name} module was loaded")
+        log.debug(f'The {name} module was loaded')
         if name in inactive:
-            log.info(f"There is a module that depends on {module.name()}. "
-                     "The module has been loaded despite it's inactive.")
+            log.info(
+                f'There is a module that depends on {module.name()}. '
+                "The module has been loaded despite it's inactive."
+            )
         elif name not in in_config:
-            log.info(f"There is a module that depends on {module.name()}. "
-                     "The module has been loaded despite it's not specified in the configuration file.")
+            log.info(
+                f'There is a module that depends on {module.name()}. '
+                "The module has been loaded despite it's not specified in the configuration file."
+            )
 
 
 def _remove_module_prefix(module: str):
     if module.startswith(_MODULE_PREFIX):
-        return module[len(_MODULE_PREFIX) + 1:]
-    raise ValueError(f"Module  {module} should always starts with {_MODULE_PREFIX}")
+        return module[len(_MODULE_PREFIX) + 1 :]
+    raise ValueError(f'Module  {module} should always starts with {_MODULE_PREFIX}')
 
 
 def _all_modules():

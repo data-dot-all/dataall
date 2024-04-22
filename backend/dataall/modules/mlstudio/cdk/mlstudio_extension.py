@@ -1,6 +1,7 @@
-""""
+""" "
 Extends an environment stack for SageMaker Studio Domain
 """
+
 import logging
 
 from aws_cdk import (
@@ -23,13 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDomainExtension(EnvironmentStackExtension):
-
     @staticmethod
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
         with setup.get_engine().scoped_session() as session:
-            enabled = EnvironmentService.get_boolean_env_param(session, _environment, "mlStudiosEnabled")
-            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(session, _environment.environmentUri)
+            enabled = EnvironmentService.get_boolean_env_param(session, _environment, 'mlStudiosEnabled')
+            domain = SageMakerStudioRepository.get_sagemaker_studio_domain_by_env_uri(
+                session, _environment.environmentUri
+            )
             if not enabled or not domain:
                 return
 
@@ -48,14 +50,14 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                 AwsAccountId=_environment.AwsAccountId, region=_environment.region, role=cdk_look_up_role_arn
             )
             if existing_default_vpc:
-                logger.info("Using default VPC for Sagemaker Studio domain")
+                logger.info('Using default VPC for Sagemaker Studio domain')
                 # Use default VPC - initial configuration (to be migrated)
                 vpc = ec2.Vpc.from_lookup(setup, 'VPCStudio', is_default=True)
                 subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
                 subnet_ids += [public_subnet.subnet_id for public_subnet in vpc.public_subnets]
                 subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in vpc.isolated_subnets]
             else:
-                logger.info("Default VPC not found, Exception. Creating a VPC for SageMaker resources...")
+                logger.info('Default VPC not found, Exception. Creating a VPC for SageMaker resources...')
                 # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
                 log_group = logs.LogGroup(
                     setup,
@@ -65,42 +67,36 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                     removal_policy=RemovalPolicy.DESTROY,
                 )
                 vpc_flow_role = iam.Role(
-                    setup, 'FlowLog',
-                    assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
+                    setup, 'FlowLog', assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
                 )
                 vpc = ec2.Vpc(
                     setup,
-                    "SageMakerVPC",
+                    'SageMakerVPC',
                     max_azs=3,
-                    cidr="10.10.0.0/16",
+                    cidr='10.10.0.0/16',
                     subnet_configuration=[
+                        ec2.SubnetConfiguration(subnet_type=ec2.SubnetType.PUBLIC, name='Public', cidr_mask=24),
                         ec2.SubnetConfiguration(
-                            subnet_type=ec2.SubnetType.PUBLIC,
-                            name="Public",
-                            cidr_mask=24
-                        ),
-                        ec2.SubnetConfiguration(
-                            subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT,
-                            name="Private",
-                            cidr_mask=24
+                            subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, name='Private', cidr_mask=24
                         ),
                     ],
                     enable_dns_hostnames=True,
                     enable_dns_support=True,
                 )
                 ec2.FlowLog(
-                    setup, "StudioVPCFlowLog",
+                    setup,
+                    'StudioVPCFlowLog',
                     resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
-                    destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
+                    destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role),
                 )
                 subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
 
         # setup security group to be used for sagemaker studio domain
         sagemaker_sg = ec2.SecurityGroup(
             setup,
-            "SecurityGroup",
+            'SecurityGroup',
             vpc=vpc,
-            description="Security Group for SageMaker Studio",
+            description='Security Group for SageMaker Studio',
             security_group_name=domain.sagemakerStudioDomainName,
         )
 
@@ -131,49 +127,46 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             'SagemakerDomainKmsKey',
             alias=domain.sagemakerStudioDomainName,
             enable_key_rotation=True,
-            admins=[
-                iam.ArnPrincipal(_environment.CDKRoleArn)
-            ],
+            admins=[iam.ArnPrincipal(_environment.CDKRoleArn)],
             policy=iam.PolicyDocument(
                 assign_sids=True,
                 statements=[
                     iam.PolicyStatement(
                         actions=[
-                            "kms:Encrypt",
-                            "kms:Decrypt",
-                            "kms:ReEncrypt*",
-                            "kms:GenerateDataKey*",
-                            "kms:CreateGrant"
+                            'kms:Encrypt',
+                            'kms:Decrypt',
+                            'kms:ReEncrypt*',
+                            'kms:GenerateDataKey*',
+                            'kms:CreateGrant',
                         ],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            sagemaker_domain_role,
-                            iam.ArnPrincipal(_environment.CDKRoleArn)
-                        ] + sagemaker_principals,
-                        resources=["*"],
+                        principals=[sagemaker_domain_role, iam.ArnPrincipal(_environment.CDKRoleArn)]
+                        + sagemaker_principals,
+                        resources=['*'],
                         conditions={
-                            "StringEquals": {
-                                "kms:ViaService": [
-                                    f"sagemaker.{_environment.region}.amazonaws.com",
-                                    f"elasticfilesystem.{_environment.region}.amazonaws.com",
-                                    f"ec2.{_environment.region}.amazonaws.com",
-                                    f"s3.{_environment.region}.amazonaws.com"
+                            'StringEquals': {
+                                'kms:ViaService': [
+                                    f'sagemaker.{_environment.region}.amazonaws.com',
+                                    f'elasticfilesystem.{_environment.region}.amazonaws.com',
+                                    f'ec2.{_environment.region}.amazonaws.com',
+                                    f's3.{_environment.region}.amazonaws.com',
                                 ]
                             }
-                        }
+                        },
                     ),
                     iam.PolicyStatement(
                         actions=[
-                            "kms:DescribeKey",
-                            "kms:List*",
-                            "kms:GetKeyPolicy",
+                            'kms:DescribeKey',
+                            'kms:List*',
+                            'kms:GetKeyPolicy',
                         ],
                         effect=iam.Effect.ALLOW,
                         principals=[
                             sagemaker_domain_role,
-                        ] + sagemaker_principals,
-                        resources=["*"],
-                    )
+                        ]
+                        + sagemaker_principals,
+                        resources=['*'],
+                    ),
                 ],
             ),
         )

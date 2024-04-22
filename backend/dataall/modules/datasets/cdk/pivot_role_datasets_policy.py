@@ -1,6 +1,9 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements, split_policy_with_mutiple_value_condition_in_statements
+from dataall.base.utils.iam_policy_utils import (
+    split_policy_with_resources_in_statements,
+    split_policy_with_mutiple_value_condition_in_statements,
+)
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
@@ -18,6 +21,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
     - Imported Datasets' buckets
     - Imported KMS keys alias
     """
+
     def get_statements(self):
         statements = [
             # For dataset preview
@@ -25,10 +29,10 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 sid='AthenaWorkgroupsDataset',
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "athena:GetQueryExecution",
-                    "athena:GetQueryResults",
-                    "athena:GetWorkGroup",
-                    "athena:StartQueryExecution"
+                    'athena:GetQueryExecution',
+                    'athena:GetQueryResults',
+                    'athena:GetWorkGroup',
+                    'athena:StartQueryExecution',
                 ],
                 resources=[f'arn:aws:athena:*:{self.account}:workgroup/{self.env_resource_prefix}*'],
             ),
@@ -115,7 +119,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 ],
             ),
             iam.PolicyStatement(
-                sid="PassRoleGlue",
+                sid='PassRoleGlue',
                 actions=[
                     'iam:PassRole',
                 ],
@@ -123,13 +127,13 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     f'arn:aws:iam::{self.account}:role/{self.env_resource_prefix}*',
                 ],
                 conditions={
-                    "StringEquals": {
-                        "iam:PassedToService": [
-                            "glue.amazonaws.com",
+                    'StringEquals': {
+                        'iam:PassedToService': [
+                            'glue.amazonaws.com',
                         ]
                     }
-                }
-            )
+                },
+            ),
         ]
         # Adding permissions for Imported Dataset S3 Buckets, created bucket permissions are added in core S3 permissions
         # Adding permissions for Imported KMS keys
@@ -162,7 +166,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     's3:PutObjectAcl',
                     's3:PutBucketOwnershipControls',
                 ],
-                resources=imported_buckets
+                resources=imported_buckets,
             )
             statements.extend(dataset_statement)
         if imported_kms_alias:
@@ -179,11 +183,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'kms:TagResource',
                     'kms:UntagResource',
                 ],
-                resources=[f"arn:aws:kms:{self.region}:{self.account}:key/*"],
+                resources=[f'arn:aws:kms:{self.region}:{self.account}:key/*'],
                 condition_dict={
-                    "key": 'ForAnyValue:StringLike',
-                    "resource": 'kms:ResourceAliases',
-                    "values": imported_kms_alias
+                    'key': 'ForAnyValue:StringLike',
+                    'resource': 'kms:ResourceAliases',
+                    'values': imported_kms_alias,
                 },
             )
             statements.extend(kms_statement)

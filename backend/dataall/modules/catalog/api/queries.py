@@ -1,6 +1,8 @@
 from dataall.base.api import gql
 from dataall.modules.catalog.api.resolvers import (
-    get_node, list_glossaries, search_glossary,
+    get_node,
+    list_glossaries,
+    search_glossary,
 )
 
 getGlossary = gql.QueryField(

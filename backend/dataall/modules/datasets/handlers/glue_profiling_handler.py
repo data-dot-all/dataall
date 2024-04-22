@@ -17,14 +17,12 @@ class DatasetProfilingGlueHandler:
     @Worker.handler('glue.job.profiling_run_status')
     def get_profiling_run(engine, task: Task):
         with engine.scoped_session() as session:
-            profiling: DatasetProfilingRun = (
-                DatasetProfilingRepository.get_profiling_run(
-                    session, profiling_run_uri=task.targetUri
-                )
+            profiling: DatasetProfilingRun = DatasetProfilingRepository.get_profiling_run(
+                session, profiling_run_uri=task.targetUri
             )
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, profiling.datasetUri)
             status = GlueDatasetProfilerClient(dataset).get_job_status(profiling)
 
             profiling.status = status
             session.commit()
-            return {"profiling_status": profiling.status}
+            return {'profiling_status': profiling.status}

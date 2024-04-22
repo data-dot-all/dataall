@@ -18,13 +18,15 @@ class SharingApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
+
         return [DatasetBaseModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
+        from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
-        log.info("API of dataset sharing has been imported")
+        log.info('API of dataset sharing has been imported')
 
 
 class SharingAsyncHandlersModuleInterface(ModuleInterface):
@@ -37,11 +39,13 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
+
         return [DatasetBaseModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         import dataall.modules.dataset_sharing.handlers
-        log.info("Sharing handlers have been imported")
+
+        log.info('Sharing handlers have been imported')
 
 
 class DataSharingCdkModuleInterface(ModuleInterface):
@@ -53,5 +57,6 @@ class DataSharingCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.dataset_sharing.cdk
+        from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 
-        log.info("CDK module data_sharing has been imported")
+        log.info('CDK module data_sharing has been imported')

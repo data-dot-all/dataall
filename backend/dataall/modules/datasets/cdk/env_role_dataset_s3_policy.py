@@ -2,13 +2,11 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
 
 class DatasetS3Policy(S3Policy):
-
     def get_statements(self, session):
         datasets = DatasetRepository.list_group_datasets(
             session,
@@ -27,33 +25,31 @@ class DatasetS3Policy(S3Policy):
             for dataset in datasets:
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
                 allowed_access_points.append(
-                    f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*')
-            allowed_buckets_content = [f"{bucket}/*" for bucket in allowed_buckets]
+                    f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*'
+                )
+            allowed_buckets_content = [f'{bucket}/*' for bucket in allowed_buckets]
             statements = [
                 iam.PolicyStatement(
-                    sid="ListDatasetsBuckets",
-                    actions=[
-                        "s3:ListBucket",
-                        "s3:GetBucketLocation"
-                    ],
+                    sid='ListDatasetsBuckets',
+                    actions=['s3:ListBucket', 's3:GetBucketLocation'],
                     resources=allowed_buckets,
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    sid="ReadWriteDatasetsBuckets",
+                    sid='ReadWriteDatasetsBuckets',
                     actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl",
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion",
-                        "s3:DeleteObject"
+                        's3:PutObject',
+                        's3:PutObjectAcl',
+                        's3:GetObject',
+                        's3:GetObjectAcl',
+                        's3:GetObjectVersion',
+                        's3:DeleteObject',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=allowed_buckets_content,
                 ),
                 iam.PolicyStatement(
-                    sid="ReadAccessPointsDatasetBucket",
+                    sid='ReadAccessPointsDatasetBucket',
                     actions=[
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
@@ -73,7 +69,7 @@ class DatasetS3Policy(S3Policy):
         imported_kms_alias = []
         if datasets:
             # Datasets belonging to a team and an environment are present in same region and aws account
-            imported_dataset_resources = [f"arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*"]
+            imported_dataset_resources = [f'arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*']
             dataset: Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
@@ -81,20 +77,10 @@ class DatasetS3Policy(S3Policy):
 
             if len(imported_kms_alias):
                 return iam.PolicyStatement(
-                    sid="KMSImportedDatasetAccess",
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:Encrypt",
-                        "kms:ReEncrypt*",
-                        "kms:DescribeKey",
-                        "kms:GenerateDataKey"
-                    ],
+                    sid='KMSImportedDatasetAccess',
+                    actions=['kms:Decrypt', 'kms:Encrypt', 'kms:ReEncrypt*', 'kms:DescribeKey', 'kms:GenerateDataKey'],
                     effect=iam.Effect.ALLOW,
                     resources=imported_dataset_resources,
-                    conditions={
-                        'ForAnyValue:StringLike': {
-                            'kms:ResourceAliases' : imported_kms_alias
-                        }
-                    }
+                    conditions={'ForAnyValue:StringLike': {'kms:ResourceAliases': imported_kms_alias}},
                 )
         return None

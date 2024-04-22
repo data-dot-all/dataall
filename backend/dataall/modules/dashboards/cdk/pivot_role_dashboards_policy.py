@@ -8,6 +8,7 @@ class DashboardsPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

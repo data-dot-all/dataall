@@ -6,22 +6,22 @@ from aws_cdk import (
 class CDKDashboard:
     def build_cloudFront_errorRate_widget(cls, DistributionId):
         wid = cw.GraphWidget(
-            title="AWS/CloudFront",
+            title='AWS/CloudFront',
             left=[
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="4xxErrorRate",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='4xxErrorRate',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="5xxErrorRate",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='5xxErrorRate',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="TotalErrorRate",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='TotalErrorRate',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
             ],
         )
@@ -29,17 +29,17 @@ class CDKDashboard:
 
     def build_cloudFront_bytes_widget(cls, DistributionId):
         wid = cw.GraphWidget(
-            title="AWS/CloudFront",
+            title='AWS/CloudFront',
             left=[
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="BytesDownloaded",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='BytesDownloaded',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="BytesUploaded",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='BytesUploaded',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
             ],
         )
@@ -47,12 +47,12 @@ class CDKDashboard:
 
     def build_cloudFront_requests_widget(cls, DistributionId):
         wid = cw.GraphWidget(
-            title="AWS/CloudFront",
+            title='AWS/CloudFront',
             left=[
                 cw.Metric(
-                    namespace="AWS/CloudFront",
-                    metric_name="Requests",
-                    dimensions={"DistributionId": DistributionId, "Region": "Global"},
+                    namespace='AWS/CloudFront',
+                    metric_name='Requests',
+                    dimensions={'DistributionId': DistributionId, 'Region': 'Global'},
                 ),
             ],
         )
@@ -63,9 +63,9 @@ class CDKDashboard:
             title=LoadBalancerName,
             left=[
                 cw.Metric(
-                    namespace="AWS/ELB",
-                    metric_name="RequestCount",
-                    dimensions={"LoadBalancerName": LoadBalancerName},
+                    namespace='AWS/ELB',
+                    metric_name='RequestCount',
+                    dimensions={'LoadBalancerName': LoadBalancerName},
                 ),
             ],
         )
@@ -76,39 +76,39 @@ class CDKDashboard:
             title=LoadBalancerFullName,
             left=[
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="ActiveConnectionCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='ActiveConnectionCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="ClientTLSNegotiationErrorCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='ClientTLSNegotiationErrorCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="RequestCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='RequestCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="RejectedConnectionCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='RejectedConnectionCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="HealthyHostCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='HealthyHostCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="UnHealthyHostCount",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='UnHealthyHostCount',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="RequestCountPerTarget",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='RequestCountPerTarget',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
             ],
         )
@@ -119,9 +119,9 @@ class CDKDashboard:
             title=LoadBalancerFullName,
             left=[
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="ProcessedBytes",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='ProcessedBytes',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
             ],
         )
@@ -132,19 +132,19 @@ class CDKDashboard:
             title=LoadBalancerFullName,
             left=[
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="HTTPCode_ELB_3XX_Count",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='HTTPCode_ELB_3XX_Count',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="HTTPCode_ELB_4XX_Count",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='HTTPCode_ELB_4XX_Count',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
                 cw.Metric(
-                    namespace="AWS/ApplicationELB",
-                    metric_name="HTTPCode_ELB_5XX_Count",
-                    dimensions={"LoadBalancer": LoadBalancerFullName},
+                    namespace='AWS/ApplicationELB',
+                    metric_name='HTTPCode_ELB_5XX_Count',
+                    dimensions={'LoadBalancer': LoadBalancerFullName},
                 ),
             ],
         )

@@ -22,9 +22,7 @@ DatasetTableColumn = gql.ObjectType(
         gql.Field(name='classification', type=gql.String),
         gql.Field(name='topics', type=gql.ArrayType(gql.String)),
         gql.Field(name='tags', type=gql.ArrayType(gql.String)),
-        gql.Field(
-            name='terms', type=gql.Ref('TermLinkSearchResults'), resolver=resolve_terms
-        ),
+        gql.Field(name='terms', type=gql.Ref('TermLinkSearchResults'), resolver=resolve_terms),
     ],
 )
 

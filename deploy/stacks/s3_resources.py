@@ -25,9 +25,7 @@ class S3ResourcesStack(pyNestedClass):
             versioned=True,
             auto_delete_objects=True,
         )
-        self.bucket_name = (
-            f'{resource_prefix}-{envname}-{self.account}-{self.region}-resources'
-        )
+        self.bucket_name = f'{resource_prefix}-{envname}-{self.account}-{self.region}-resources'
         self.bucket = s3.Bucket(
             self,
             f'ResourcesBucket{envname}',
@@ -37,7 +35,7 @@ class S3ResourcesStack(pyNestedClass):
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
             server_access_logs_bucket=s3.Bucket.from_bucket_name(
-                self, f'AccessLogsBucket', self.logs_bucket.bucket_name
+                self, 'AccessLogsBucket', self.logs_bucket.bucket_name
             ),
             server_access_logs_prefix=f'access_logs/{self.bucket_name}',
             versioned=True,
@@ -51,13 +49,9 @@ class S3ResourcesStack(pyNestedClass):
             string_value=self.bucket.bucket_name,
         )
 
-        pivot_role = os.path.realpath(
-            os.path.abspath(os.path.join(__file__, '..', '..', 'pivot_role'))
-        )
+        pivot_role = os.path.realpath(os.path.abspath(os.path.join(__file__, '..', '..', 'pivot_role')))
 
-        cdk_exec_policy = os.path.realpath(
-            os.path.abspath(os.path.join(__file__, '..', '..', 'cdk_exec_policy'))
-        )
+        cdk_exec_policy = os.path.realpath(os.path.abspath(os.path.join(__file__, '..', '..', 'cdk_exec_policy')))
 
         s3d.BucketDeployment(
             self,

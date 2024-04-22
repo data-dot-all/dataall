@@ -21,10 +21,12 @@ def _validate_input(data):
 
 def create_network(context: Context, source, input):
     _validate_input(input)
-    return VpcService.create_network(uri=input.get('environmentUri'), admin_group=input.get('SamlGroupName'), data=input)
+    return VpcService.create_network(
+        uri=input.get('environmentUri'), admin_group=input.get('SamlGroupName'), data=input
+    )
 
 
 def delete_network(context: Context, source, vpcUri=None):
     if not vpcUri:
-        raise exceptions.RequiredParameter("vpcUri")
+        raise exceptions.RequiredParameter('vpcUri')
     return VpcService.delete_network(uri=vpcUri)

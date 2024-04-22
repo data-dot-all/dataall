@@ -72,21 +72,17 @@ class DatasetSubscriptionService:
         if not table:
             log.info(f'No table for message {message}')
         else:
-            log.info(
-                f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}'
-            )
+            log.info(f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}')
 
             message['table'] = table.GlueTableName
             self._publish_update_message(session, message, table, table)
 
     def publish_location_update_message(self, session, message):
-        location: DatasetStorageLocation = (
-            DatasetLocationRepository.get_location_by_s3_prefix(
-                session,
-                message.get('prefix'),
-                message.get('accountid'),
-                message.get('region'),
-            )
+        location: DatasetStorageLocation = DatasetLocationRepository.get_location_by_s3_prefix(
+            session,
+            message.get('prefix'),
+            message.get('accountid'),
+            message.get('region'),
         )
         if not location:
             log.info(f'No location found for message {message}')
@@ -98,33 +94,21 @@ class DatasetSubscriptionService:
     def _publish_update_message(self, session, message, entity, table: DatasetTable = None):
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
 
-        log.info(
-            f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}'
-        )
+        log.info(f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}')
         share_items: [ShareObjectItem] = ShareObjectRepository.find_share_items_by_item_uri(session, entity.uri())
         log.info(f'Found shared items for location {share_items}')
 
-        return self.publish_sns_message(
-            session, message, dataset, share_items, entity.S3Prefix, table
-        )
+        return self.publish_sns_message(session, message, dataset, share_items, entity.S3Prefix, table)
 
-    def publish_sns_message(
-        self, session, message, dataset, share_items, prefix, table: DatasetTable = None
-    ):
+    def publish_sns_message(self, session, message, dataset, share_items, prefix, table: DatasetTable = None):
         for item in share_items:
             share_object = ShareObjectRepository.get_approved_share_object(session, item)
             if not share_object or not share_object.principalId:
-                log.error(
-                    f'Share Item with no share object or no principalId ? {item.shareItemUri}'
-                )
+                log.error(f'Share Item with no share object or no principalId ? {item.shareItemUri}')
             else:
-                environment = session.query(Environment).get(
-                    share_object.principalId
-                )
+                environment = session.query(Environment).get(share_object.principalId)
                 if not environment:
-                    log.error(
-                        f'Environment of share owner was deleted ? {share_object.principalId}'
-                    )
+                    log.error(f'Environment of share owner was deleted ? {share_object.principalId}')
                 else:
                     log.info(f'Notifying share owner {share_object.owner}')
 
@@ -133,9 +117,7 @@ class DatasetSubscriptionService:
                     )
 
                     try:
-                        log.info(
-                            f'Producer message before notifications: {message}'
-                        )
+                        log.info(f'Producer message before notifications: {message}')
 
                         message = {
                             'location': prefix,
@@ -149,17 +131,13 @@ class DatasetSubscriptionService:
                         log.info(f'SNS update publish response {response}')
 
                         notifications = ShareNotificationService(
-                            session=session,
-                            dataset=dataset,
-                            share=share_object
+                            session=session, dataset=dataset, share=share_object
                         ).notify_new_data_available_from_owners(s3_prefix=prefix)
 
                         log.info(f'Notifications for share owners {notifications}')
 
                     except ClientError as e:
-                        log.error(
-                            f'Failed to deliver message {message} due to: {e}'
-                        )
+                        log.error(f'Failed to deliver message {message} due to: {e}')
 
 
 if __name__ == '__main__':

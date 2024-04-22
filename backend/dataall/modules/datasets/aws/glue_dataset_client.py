@@ -9,9 +9,8 @@ log = logging.getLogger(__name__)
 
 class DatasetCrawler:
     def __init__(self, dataset: Dataset):
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        region = dataset.region if dataset.region else 'eu-west-1'
-        self._client = session.client('glue', region_name=region)
+        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
+        self._client = session.client('glue', region_name=dataset.region)
         self._dataset = dataset
 
     def get_crawler(self, crawler_name=None):
@@ -46,8 +45,8 @@ class DatasetCrawler:
             self._client.stop_crawler(Name=crawler_name)
         except ClientError as e:
             if (
-                    e.response['Error']['Code'] == 'CrawlerStoppingException'
-                    or e.response['Error']['Code'] == 'CrawlerNotRunningException'
+                e.response['Error']['Code'] == 'CrawlerStoppingException'
+                or e.response['Error']['Code'] == 'CrawlerNotRunningException'
             ):
                 log.error('Failed to stop crawler %s', e)
         try:
@@ -77,7 +76,7 @@ class DatasetCrawler:
                 return found_tables
 
             pages = self.get_pages(database, account_id)
-            dataset_s3_bucket = f"s3://{dataset_s3_bucket_name}/"
+            dataset_s3_bucket = f's3://{dataset_s3_bucket_name}/'
             found_tables = [
                 table
                 for page in pages

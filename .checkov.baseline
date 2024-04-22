@@ -59,13 +59,6 @@
                 {
                     "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy1",
                     "check_ids": [
-                        "CKV_AWS_109",
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.PivotRolepolicy3",
-                    "check_ids": [
                         "CKV_AWS_109"
                     ]
                 }

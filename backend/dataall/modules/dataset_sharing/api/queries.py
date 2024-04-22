@@ -1,5 +1,10 @@
 from dataall.base.api import gql
-from dataall.modules.dataset_sharing.api.resolvers import *
+from dataall.modules.dataset_sharing.api.resolvers import (
+    get_share_object,
+    list_shared_with_environment_data_items,
+    list_shares_in_my_inbox,
+    list_shares_in_my_outbox,
+)
 
 getShareObject = gql.QueryField(
     name='getShareObject',

@@ -1,5 +1,10 @@
 from dataall.base.api import gql
-from dataall.modules.datapipelines.api.resolvers import resolve_pipeline_environments, resolve_clone_url_http, resolve_stack, resolve_user_role
+from dataall.modules.datapipelines.api.resolvers import (
+    resolve_pipeline_environments,
+    resolve_clone_url_http,
+    resolve_stack,
+    resolve_user_role,
+)
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.core.environment.api.resolvers import resolve_environment
 from dataall.core.organizations.api.resolvers import resolve_organization_by_env
@@ -17,12 +22,8 @@ DataPipeline = gql.ObjectType(
         gql.Field('owner', type=gql.String),
         gql.Field('repo', type=gql.String),
         gql.Field('SamlGroupName', type=gql.String),
-        gql.Field(
-            'organization', type=gql.Ref('Organization'), resolver=resolve_organization_by_env
-        ),
-        gql.Field(
-            'environment', type=gql.Ref('Environment'), resolver=resolve_environment
-        ),
+        gql.Field('organization', type=gql.Ref('Organization'), resolver=resolve_organization_by_env),
+        gql.Field('environment', type=gql.Ref('Environment'), resolver=resolve_environment),
         gql.Field(
             'developmentEnvironments',
             type=gql.Ref('DataPipelineEnvironmentSearchResults'),

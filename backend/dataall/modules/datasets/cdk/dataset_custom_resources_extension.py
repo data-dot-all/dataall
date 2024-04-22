@@ -26,23 +26,17 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
         kms_key = DatasetCustomResourcesExtension.set_cr_kms_key(
-            setup=setup,
-            environment=_environment,
-            group_roles=setup.group_roles,
-            default_role=setup.default_role
+            setup=setup, environment=_environment, group_roles=setup.group_roles, default_role=setup.default_role
         )
 
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__),
-                              './assets/lakeformationdefaultsettings').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), './assets/lakeformationdefaultsettings').resolve()
         )
 
         lakeformation_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
-            setup=setup,
-            queue_name=f'{_environment.resourcePrefix}-lfcr-{_environment.environmentUri}',
-            kms_key=kms_key
+            setup=setup, queue_name=f'{_environment.resourcePrefix}-lfcr-{_environment.environmentUri}', kms_key=kms_key
         )
         lf_default_settings_custom_resource = _lambda.Function(
             setup,
@@ -81,7 +75,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
                 'DataLakeAdmins': [
                     f'arn:aws:iam::{_environment.AwsAccountId}:role/{setup.pivot_role_name}',
                 ],
-                'Version': "data.all V2"
+                'Version': 'data.all V2',
             },
         )
 
@@ -100,14 +94,12 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         )
         # Glue database custom resource
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
-        entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), './assets/gluedatabasecustomresource').resolve()
-        )
+        entry_point = str(pathlib.PosixPath(os.path.dirname(__file__), './assets/gluedatabasecustomresource').resolve())
 
         gluedb_lf_cr_dlq = DatasetCustomResourcesExtension.set_dlq(
             setup=setup,
             queue_name=f'{_environment.resourcePrefix}-gluedb-lf-cr-{_environment.environmentUri}',
-            kms_key=kms_key
+            kms_key=kms_key,
         )
         gluedb_lf_custom_resource = _lambda.Function(
             setup,
@@ -137,7 +129,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         glue_db_provider = cr.Provider(
             setup,
             f'{_environment.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=gluedb_lf_custom_resource
+            on_event_handler=gluedb_lf_custom_resource,
         )
         ssm.StringParameter(
             setup,
@@ -167,33 +159,33 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "kms:Encrypt",
-                        "kms:Decrypt",
-                        "kms:ReEncrypt*",
-                        "kms:GenerateDataKey*",
+                        'kms:Encrypt',
+                        'kms:Decrypt',
+                        'kms:ReEncrypt*',
+                        'kms:GenerateDataKey*',
                     ],
                     effect=iam.Effect.ALLOW,
                     principals=[
                         default_role,
-                    ] + group_roles,
-                    resources=["*"],
-                    conditions={
-                        "StringEquals": {"kms:ViaService": f"sqs.{environment.region}.amazonaws.com"}
-                    }
+                    ]
+                    + group_roles,
+                    resources=['*'],
+                    conditions={'StringEquals': {'kms:ViaService': f'sqs.{environment.region}.amazonaws.com'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        "kms:DescribeKey",
-                        "kms:List*",
-                        "kms:GetKeyPolicy",
+                        'kms:DescribeKey',
+                        'kms:List*',
+                        'kms:GetKeyPolicy',
                     ],
                     effect=iam.Effect.ALLOW,
                     principals=[
                         default_role,
-                    ] + group_roles,
-                    resources=["*"],
-                )
-            ]
+                    ]
+                    + group_roles,
+                    resources=['*'],
+                ),
+            ],
         )
 
         kms_key = kms.Key(
@@ -205,7 +197,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             admins=[
                 iam.ArnPrincipal(environment.CDKRoleArn),
             ],
-            policy=key_policy
+            policy=key_policy,
         )
         return kms_key
 

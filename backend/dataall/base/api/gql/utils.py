@@ -1,6 +1,6 @@
 import types
 
-from .graphql_type_modifiers import *
+from .graphql_type_modifiers import ArrayType, Enum, InputType, NonNullableType, ObjectType, Scalar
 from .ref import Ref
 from .thunk import Thunk
 

@@ -5,6 +5,7 @@ Revises: 4392a0c9747f
 Create Date: 2022-09-16 10:45:21.612824
 
 """
+
 from alembic import op
 import os
 import sqlalchemy as sa
@@ -971,15 +972,48 @@ def upgrade():
         """
 
         # ### Clean-up old tables ###
-        old_tables = ['all_permissions', 'apikey', 'athena_query_execution', 'data_access_request', 'dataset_access_point', 'dataset_loader', 'dataset_query', 'dataset_storage_location_permission', 'dataset_table_permission', 'dataset_topic', 'dataset_user_permission', 'document', 'EnvironmentRedshiftCluster', 'environment_permission', 'environment_user_permission', 'key_value_pair', 'lineage_store', 'metadata_facet', 'metadata_tag', 'metric', 'organization_topic', 'organization_user', 'redshift_cluster_user_permission', 'saved_query', 'scheduled_query', 'search_index', 'share_object_history', 'share_object_item_v2', 'share_object_v2', 'userprofile']
+        old_tables = [
+            'all_permissions',
+            'apikey',
+            'athena_query_execution',
+            'data_access_request',
+            'dataset_access_point',
+            'dataset_loader',
+            'dataset_query',
+            'dataset_storage_location_permission',
+            'dataset_table_permission',
+            'dataset_topic',
+            'dataset_user_permission',
+            'document',
+            'EnvironmentRedshiftCluster',
+            'environment_permission',
+            'environment_user_permission',
+            'key_value_pair',
+            'lineage_store',
+            'metadata_facet',
+            'metadata_tag',
+            'metric',
+            'organization_topic',
+            'organization_user',
+            'redshift_cluster_user_permission',
+            'saved_query',
+            'scheduled_query',
+            'search_index',
+            'share_object_history',
+            'share_object_item_v2',
+            'share_object_v2',
+            'userprofile',
+        ]
         for table in old_tables:
             if has_table(table, engine):
-                print(f"Dropping table: {table}")
+                print(f'Dropping table: {table}')
                 op.drop_table(table)
 
     except Exception as e:
         print('Failed to init database due to:', e)
         pass
+
+
 # ### end Alembic commands ###
 
 

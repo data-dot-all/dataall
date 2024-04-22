@@ -249,6 +249,7 @@ export const GenericAuthProvider = (props) => {
           }
         });
       }
+      sessionStorage.removeItem('window-location');
     } catch (error) {
       console.error('Failed to signout', error);
     }
@@ -279,6 +280,7 @@ export const GenericAuthProvider = (props) => {
         }
       });
     }
+    sessionStorage.removeItem('window-location');
   };
 
   return (

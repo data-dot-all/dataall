@@ -1,4 +1,5 @@
 """Contains the code related to datapipelines"""
+
 import logging
 from typing import List, Type
 
@@ -6,8 +7,7 @@ from dataall.base.loader import ModuleInterface, ImportMode
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
-from dataall.modules.datapipelines.services.datapipelines_permissions import \
-    GET_PIPELINE, UPDATE_PIPELINE
+from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, UPDATE_PIPELINE
 
 log = logging.getLogger(__name__)
 
@@ -31,14 +31,15 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.datapipelines.api
-        FeedRegistry.register(FeedDefinition("DataPipeline", DataPipeline))
 
-        TargetType("pipeline", GET_PIPELINE, UPDATE_PIPELINE)
-        TargetType("cdkpipeline", GET_PIPELINE, UPDATE_PIPELINE)
+        FeedRegistry.register(FeedDefinition('DataPipeline', DataPipeline))
+
+        TargetType('pipeline', GET_PIPELINE, UPDATE_PIPELINE)
+        TargetType('cdkpipeline', GET_PIPELINE, UPDATE_PIPELINE)
 
         EnvironmentResourceManager.register(DatapipelinesRepository())
 
-        log.info("API of datapipelines has been imported")
+        log.info('API of datapipelines has been imported')
 
 
 class DatapipelinesAsyncHandlersModuleInterface(ModuleInterface):
@@ -50,11 +51,12 @@ class DatapipelinesAsyncHandlersModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datapipelines.handlers
-        log.info("Datapipelines handlers have been imported")
+
+        log.info('Datapipelines handlers have been imported')
 
 
 class DatapipelinesCdkModuleInterface(ModuleInterface):
-    """Loads datapipelines cdk stacks """
+    """Loads datapipelines cdk stacks"""
 
     @staticmethod
     def is_supported(modes: List[ImportMode]):
@@ -68,11 +70,11 @@ class DatapipelinesCdkModuleInterface(ModuleInterface):
         from dataall.modules.datapipelines.cdk.env_role_datapipelines_cicd_policy import AwsCICD
         from dataall.modules.datapipelines.cdk.pivot_role_datapipelines_policy import PipelinesPivotRole
 
-        log.info("Datapipelines stacks have been imported")
+        log.info('Datapipelines stacks have been imported')
 
 
 class DatapipelinesCdkCLIExtensionModuleInterface(ModuleInterface):
-    """Loads datapipelines cdk CLI extension - for cdkpipelines """
+    """Loads datapipelines cdk CLI extension - for cdkpipelines"""
 
     @staticmethod
     def is_supported(modes: List[ImportMode]):
@@ -82,9 +84,10 @@ class DatapipelinesCdkCLIExtensionModuleInterface(ModuleInterface):
     def __init__(self):
         from dataall.base.cdkproxy.cdk_cli_wrapper import _CDK_CLI_WRAPPER_EXTENSIONS
         from dataall.modules.datapipelines.cdk import datapipelines_cdk_pipeline
-        from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import \
-            DatapipelinesCDKCliWrapperExtension
+        from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import (
+            DatapipelinesCDKCliWrapperExtension,
+        )
 
         _CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension()
 
-        log.info("Datapipelines cdkpipeline stack has been imported as CDK_CLI_WRAPPER_EXTENSION")
+        log.info('Datapipelines cdkpipeline stack has been imported as CDK_CLI_WRAPPER_EXTENSION')

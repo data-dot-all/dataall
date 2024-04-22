@@ -7,7 +7,7 @@ from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
 
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
@@ -19,10 +19,7 @@ mocked_key_id = 'some_key'
 @pytest.fixture(scope='module', autouse=True)
 def mock_s3_client(module_mocker):
     s3_client = MagicMock()
-    module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.S3DatasetClient',
-        s3_client
-    )
+    module_mocker.patch('dataall.modules.datasets.services.dataset_service.S3DatasetClient', s3_client)
 
     s3_client().get_bucket_encryption.return_value = ('aws:kms', mocked_key_id)
     yield s3_client
@@ -37,10 +34,7 @@ def dataset1(
     group,
 ) -> Dataset:
     kms_client = MagicMock()
-    module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.KmsClient',
-        kms_client
-    )
+    module_mocker.patch('dataall.modules.datasets.services.dataset_service.KmsClient', kms_client)
 
     kms_client().get_key_id.return_value = mocked_key_id
 
@@ -116,7 +110,7 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
             'label': 'dataset1updated',
             'stewards': group2.name,
             'confidentiality': ConfidentialityClassification.Secret.value,
-            'KmsAlias': ''
+            'KmsAlias': '',
         },
         groups=[group.name],
     )
@@ -162,7 +156,7 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
             'label': 'dataset1updated2',
             'stewards': dataset1.SamlAdminGroupName,
             'confidentiality': ConfidentialityClassification.Official.value,
-            'KmsAlias': ''
+            'KmsAlias': '',
         },
         groups=[group.name],
     )
@@ -170,11 +164,12 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
     assert response.data.updateDataset.stewards == dataset1.SamlAdminGroupName
     assert response.data.updateDataset.confidentiality == ConfidentialityClassification.Official.value
 
-@pytest.mark.skipif(not config.get_property("modules.datasets.features.glue_crawler"), reason="Feature Disabled by Config")
+
+@pytest.mark.skipif(
+    not config.get_property('modules.datasets.features.glue_crawler'), reason='Feature Disabled by Config'
+)
 def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):
-    module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock()
-    )
+    module_mocker.patch('dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock())
     mutation = """
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
                         startGlueCrawler(datasetUri:$datasetUri,input:$input){
@@ -210,10 +205,7 @@ def test_update_dataset_unauthorized(dataset1, client, group):
         """,
         username='anonymoususer',
         datasetUri=dataset1.datasetUri,
-        input={
-            'label': 'dataset1updated',
-            'KmsAlias': ''
-        },
+        input={'label': 'dataset1updated', 'KmsAlias': ''},
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
 
@@ -351,19 +343,16 @@ def test_dataset_in_environment(client, env_fixture, dataset1, group):
         q, username=env_fixture.owner, groups=[group.name], environmentUri=env_fixture.environmentUri
     )
     assert response.data.listDatasetsCreatedInEnvironment.count == 1
-    assert (
-        response.data.listDatasetsCreatedInEnvironment.nodes[0].datasetUri
-        == dataset1.datasetUri
-    )
+    assert response.data.listDatasetsCreatedInEnvironment.nodes[0].datasetUri == dataset1.datasetUri
 
 
 def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mocker, group, user):
+    # Delete any Dataset before effectuating the test
     with db.scoped_session() as session:
+        session.query(DatasetLock).delete()
         session.query(Dataset).delete()
         session.commit()
-    deleted_dataset = dataset(
-        org=org_fixture, env=env_fixture, name='dataset1', owner=user.username, group=group.name
-    )
+    deleted_dataset = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=user.username, group=group.name)
     response = client.query(
         """
         mutation deleteDataset($datasetUri:String!,$deleteFromAWS:Boolean){
@@ -487,13 +476,7 @@ def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
             session,
             bucket='s3a://insite-data-lake-raw-alpha-eu-west-1/booker/volume_constraints/insite_version=1/volume_constraints.delta'.split(
                 '//'
-            )[
-                1
-            ].split(
-                '/'
-            )[
-                0
-            ],
+            )[1].split('/')[0],
         )
         assert dataset_found.S3BucketName == 'insite-data-lake-raw-alpha-eu-west-1'
 

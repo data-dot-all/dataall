@@ -8,6 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 
+
 @pytest.fixture(scope='module', autouse=True)
 def dataset(db, env_fixture: Environment) -> Dataset:
     with db.scoped_session() as session:
@@ -38,12 +39,10 @@ def dataset(db, env_fixture: Environment) -> Dataset:
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, dataset, env_fixture, org_fixture):
     mocker.patch('dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_engine', return_value=db)
-    mocker.patch(
-        'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
-    )
+    mocker.patch('dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset)
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
-        return_value="dataall-pivot-role-name-pytest",
+        return_value='dataall-pivot-role-name-pytest',
     )
     lf_client = MagicMock()
     mocker.patch(

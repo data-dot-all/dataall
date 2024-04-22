@@ -45,11 +45,7 @@ class Parameter:
             return param_value
         except ClientError as e:
             if e.response['Error']['Code'] == 'ParameterNotFound':
-                log.warning(
-                    'Parameter `{}` not found for env `{}`, defaulting to None'.format(
-                        path, env
-                    )
-                )
+                log.warning('Parameter `{}` not found for env `{}`, defaulting to None'.format(path, env))
                 return None
             else:
                 log.error('Error trying to retrieve parameter from SSM')
@@ -72,10 +68,7 @@ class Parameter:
         page_iterator = paginator.paginate(**operation_parameters)
         for page in page_iterator:
             parameters = page['Parameters']
-            response[env] += [
-                {'Name': p['Name'].replace(pname, ''), 'Value': p['Value']}
-                for p in parameters
-            ]
+            response[env] += [{'Name': p['Name'].replace(pname, ''), 'Value': p['Value']} for p in parameters]
 
         return response
 
@@ -83,7 +76,7 @@ class Parameter:
     def load(cls, filename, env='dev'):
         try:
             f = open(filename)
-        except Exception as e:
+        except Exception:
             raise Exception('Could not load', filename)
 
         body = '\n'.join(f.readlines())
@@ -95,9 +88,7 @@ class Parameter:
         for topic in config.keys():
             for param in config[topic].keys():
                 print('     %(done)s/%(total)s written' % vars())
-                Parameter.put_parameter(
-                    env=env, path='/'.join([topic, param]), value=config[topic][param]
-                )
+                Parameter.put_parameter(env=env, path='/'.join([topic, param]), value=config[topic][param])
                 done += 1
 
 

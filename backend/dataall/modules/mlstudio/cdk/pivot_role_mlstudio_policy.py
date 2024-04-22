@@ -8,6 +8,7 @@ class MLStudioPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -28,11 +29,7 @@ class MLStudioPivotRole(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='SageMakerDomainsAppsList',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:ListDomains',
-                    'sagemaker:ListApps',
-                    'sagemaker:DeleteApp',
-                ],
+                actions=['sagemaker:ListDomains', 'sagemaker:ListApps'],
                 resources=['*'],
             ),
             iam.PolicyStatement(

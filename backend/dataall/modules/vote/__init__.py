@@ -4,7 +4,6 @@ from dataall.base.loader import ModuleInterface, ImportMode
 
 
 class VoteApiModuleInterface(ModuleInterface):
-
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.API in modes

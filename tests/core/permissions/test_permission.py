@@ -1,10 +1,12 @@
 import pytest
 
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.db.permission.permission_models import PermissionType
+from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.base.db import exceptions
-from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL, TENANT_ALL
+from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_ALL
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
+from dataall.core.permissions.services.tenant_permissions import MANAGE_GROUPS, TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 
 def permissions(db, all_perms):
@@ -12,7 +14,7 @@ def permissions(db, all_perms):
         permissions = []
         for p in all_perms:
             permissions.append(
-                Permission.save_permission(
+                PermissionService.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -21,7 +23,7 @@ def permissions(db, all_perms):
             )
         for p in TENANT_ALL:
             permissions.append(
-                Permission.save_permission(
+                PermissionService.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -34,26 +36,26 @@ def permissions(db, all_perms):
 def test_attach_tenant_policy(db, group, tenant):
     permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
-        TenantPolicy.attach_group_tenant_policy(
+        TenantPolicyService.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=[MANAGE_GROUPS],
-            tenant_name='dataall',
+            tenant_name=TenantPolicyService.TENANT_NAME,
         )
 
-        assert TenantPolicy.check_user_tenant_permission(
+        assert TenantPolicyService.check_user_tenant_permission(
             session=session,
             username='alice',
             groups=[group.name],
             permission_name=MANAGE_GROUPS,
-            tenant_name='dataall',
+            tenant_name=TenantPolicyService.TENANT_NAME,
         )
 
 
 def test_unauthorized_tenant_policy(db, group):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
-            assert TenantPolicy.check_user_tenant_permission(
+            assert TenantPolicyService.check_user_tenant_permission(
                 session=session,
                 username='alice',
                 groups=[group.name],

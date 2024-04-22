@@ -1,1 +1,1 @@
-"""Contains code that send requests to AWS Athena """
+"""Contains code that send requests to AWS Athena"""

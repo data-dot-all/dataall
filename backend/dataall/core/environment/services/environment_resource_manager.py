@@ -29,6 +29,7 @@ class EnvironmentResourceManager:
     API for managing environment and environment group lifecycle.
     Contains callbacks that are invoked when something is happened with the environment.
     """
+
     _resources: List[EnvironmentResource] = []
 
     @classmethod

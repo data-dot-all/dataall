@@ -41,9 +41,7 @@ class SqsStack(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
-        dlq_queue.add_to_resource_policy(
-            self.get_enforce_ssl_policy(dlq_queue.queue_arn)
-        )
+        dlq_queue.add_to_resource_policy(self.get_enforce_ssl_policy(dlq_queue.queue_arn))
 
         self.dlq = sqs.DeadLetterQueue(
             max_receive_count=1,
@@ -64,9 +62,7 @@ class SqsStack(pyNestedClass):
             visibility_timeout=Duration.seconds(900),
         )
 
-        self.queue.add_to_resource_policy(
-            self.get_enforce_ssl_policy(self.queue.queue_arn)
-        )
+        self.queue.add_to_resource_policy(self.get_enforce_ssl_policy(self.queue.queue_arn))
 
         ssm.StringParameter(
             self,

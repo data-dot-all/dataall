@@ -2,14 +2,20 @@ import logging
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.base.db import exceptions
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
-from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
-    WORKSHEET_ALL, GET_WORKSHEET, DELETE_WORKSHEET, RUN_ATHENA_QUERY
+from dataall.modules.worksheets.services.worksheet_permissions import (
+    MANAGE_WORKSHEETS,
+    UPDATE_WORKSHEET,
+    WORKSHEET_ALL,
+    GET_WORKSHEET,
+    DELETE_WORKSHEET,
+    RUN_ATHENA_QUERY,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +32,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
-    @has_tenant_permission(MANAGE_WORKSHEETS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(session, username, uri, data=None) -> Worksheet:
         worksheet = Worksheet(
             owner=username,
@@ -50,7 +56,7 @@ class WorksheetService:
         )
         session.add(activity)
 
-        ResourcePolicy.attach_resource_policy(
+        ResourcePolicyService.attach_resource_policy(
             session=session,
             group=data['SamlAdminGroupName'],
             permissions=WORKSHEET_ALL,
@@ -60,7 +66,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
-    @has_resource_permission(UPDATE_WORKSHEET)
+    @ResourcePolicyService.has_resource_permission(UPDATE_WORKSHEET)
     def update_worksheet(session, username, uri, data=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         for field in data.keys():
@@ -79,17 +85,17 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
-    @has_resource_permission(GET_WORKSHEET)
+    @ResourcePolicyService.has_resource_permission(GET_WORKSHEET)
     def get_worksheet(session, uri):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         return worksheet
 
     @staticmethod
-    @has_resource_permission(DELETE_WORKSHEET)
+    @ResourcePolicyService.has_resource_permission(DELETE_WORKSHEET)
     def delete_worksheet(session, uri) -> bool:
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         session.delete(worksheet)
-        ResourcePolicy.delete_resource_policy(
+        ResourcePolicyService.delete_resource_policy(
             session=session,
             group=worksheet.SamlAdminGroupName,
             resource_uri=uri,
@@ -98,7 +104,7 @@ class WorksheetService:
         return True
 
     @staticmethod
-    @has_resource_permission(RUN_ATHENA_QUERY)
+    @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     def run_sql_query(session, uri, worksheetUri, sqlQuery):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
@@ -112,7 +118,7 @@ class WorksheetService:
             env_group=env_group,
             s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
             region=environment.region,
-            sql=sqlQuery
+            sql=sqlQuery,
         )
 
         return AthenaClient.convert_query_output(cursor)

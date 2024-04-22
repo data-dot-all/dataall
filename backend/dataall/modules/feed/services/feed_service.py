@@ -2,6 +2,7 @@
 A service layer for Feeds
 Central part for working with Feeds
 """
+
 import logging
 
 from dataall.base.context import get_context
@@ -37,16 +38,16 @@ class FeedService:
 
     @staticmethod
     def get_feed(
-            targetUri: str = None,
-            targetType: str = None,
+        targetUri: str = None,
+        targetType: str = None,
     ) -> Feed:
         return Feed(targetUri=targetUri, targetType=targetType)
 
     @staticmethod
     def post_feed_message(
-            targetUri: str = None,
-            targetType: str = None,
-            content: str = None,
+        targetUri: str = None,
+        targetType: str = None,
+        content: str = None,
     ):
         with _session() as session:
             m = FeedMessage(

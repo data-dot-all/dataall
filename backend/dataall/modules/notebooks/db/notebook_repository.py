@@ -2,6 +2,7 @@
 DAO layer that encapsulates the logic and interaction with the database for notebooks
 Provides the API to retrieve / update / delete notebooks
 """
+
 from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
@@ -13,6 +14,7 @@ from dataall.core.environment.services.environment_resource_manager import Envir
 
 class NotebookRepository(EnvironmentResource):
     """DAO layer for notebooks"""
+
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
@@ -46,9 +48,7 @@ class NotebookRepository(EnvironmentResource):
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    SagemakerNotebook.description.ilike(
-                        filter.get('term') + '%%'
-                    ),
+                    SagemakerNotebook.description.ilike(filter.get('term') + '%%'),
                     SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
                 )
             )
@@ -60,7 +60,7 @@ class NotebookRepository(EnvironmentResource):
             .filter(
                 and_(
                     SagemakerNotebook.environmentUri == environment_uri,
-                    SagemakerNotebook.SamlAdminGroupName == group_uri
+                    SagemakerNotebook.SamlAdminGroupName == group_uri,
                 )
             )
             .count()

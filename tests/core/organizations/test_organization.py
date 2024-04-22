@@ -222,7 +222,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     assert response.data.getOrganization.userRoleInOrganization == 'Invited'
     assert response.data.getOrganization.stats.groups == 1
 
-
     response = client.query(
         """
         query listOrganizationGroups($organizationUri: String!, $filter:GroupFilter){

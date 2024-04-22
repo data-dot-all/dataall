@@ -20,6 +20,7 @@ _request_storage = local()
 @dataclass(frozen=True)
 class RequestContext:
     """Contains API for every graphql request"""
+
     db_engine: Engine
     username: str
     groups: List[str]

@@ -43,9 +43,7 @@ class WorkerHandler:
 
                     error, response, status = self.handle_task(engine, task, handler)
                     if save_response:
-                        WorkerHandler.update_task(
-                            engine, taskid, error, to_json(response), status
-                        )
+                        WorkerHandler.update_task(engine, taskid, error, to_json(response), status)
 
                     else:
                         WorkerHandler.update_task(engine, taskid, error, {}, status)
@@ -68,13 +66,9 @@ class WorkerHandler:
         with engine.scoped_session() as session:
             task = session.query(Task).get(taskid)
             handler = self.handlers.get(task.action)
-            log.info(
-                f' found handler {handler} for task action {task.action}|{task.taskUri}'
-            )
+            log.info(f' found handler {handler} for task action {task.action}|{task.taskUri}')
             if task.status != 'pending':
-                raise Exception(
-                    f'Could not start task {task.taskUri} as its status is {task.status}'
-                )
+                raise Exception(f'Could not start task {task.taskUri} as its status is {task.status}')
             if not handler:
                 raise Exception(f'No handler defined for {task.action}')
             task.status = 'started'
@@ -89,9 +83,7 @@ class WorkerHandler:
             response = handler(engine, task)
             status = 'completed'
         except Exception as e:
-            log.error(
-                f'Failed to execute Task {task.taskUri} due to {e}', exc_info=True
-            )
+            log.error(f'Failed to execute Task {task.taskUri} due to {e}', exc_info=True)
             error = {'message': str(e)}
             status = 'failed'
         return error, response, status

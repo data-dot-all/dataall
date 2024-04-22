@@ -1,4 +1,5 @@
 """Contains the code related to datasets"""
+
 import logging
 from typing import List, Type, Set
 
@@ -23,8 +24,11 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.modules.vote import VoteApiModuleInterface
 
         return [
-            SharingApiModuleInterface, DatasetBaseModuleInterface, CatalogApiModuleInterface,
-            FeedApiModuleInterface, VoteApiModuleInterface
+            SharingApiModuleInterface,
+            DatasetBaseModuleInterface,
+            CatalogApiModuleInterface,
+            FeedApiModuleInterface,
+            VoteApiModuleInterface,
         ]
 
     def __init__(self):
@@ -43,38 +47,39 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
         from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
-        FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
-        FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
-        FeedRegistry.register(FeedDefinition("Dataset", Dataset))
+        FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
+        FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
+        FeedRegistry.register(FeedDefinition('Dataset', Dataset))
 
-        GlossaryRegistry.register(GlossaryDefinition(
-            target_type="Folder",
-            object_type="DatasetStorageLocation",
-            model=DatasetStorageLocation,
-            reindexer=DatasetLocationIndexer
-        ))
+        GlossaryRegistry.register(
+            GlossaryDefinition(
+                target_type='Folder',
+                object_type='DatasetStorageLocation',
+                model=DatasetStorageLocation,
+                reindexer=DatasetLocationIndexer,
+            )
+        )
 
-        GlossaryRegistry.register(GlossaryDefinition(
-            target_type="Dataset",
-            object_type="Dataset",
-            model=Dataset,
-            reindexer=DatasetIndexer
-        ))
+        GlossaryRegistry.register(
+            GlossaryDefinition(target_type='Dataset', object_type='Dataset', model=Dataset, reindexer=DatasetIndexer)
+        )
 
-        GlossaryRegistry.register(GlossaryDefinition(
-            target_type="DatasetTable",
-            object_type="DatasetTable",
-            model=DatasetTable,
-            reindexer=DatasetTableIndexer
-        ))
+        GlossaryRegistry.register(
+            GlossaryDefinition(
+                target_type='DatasetTable',
+                object_type='DatasetTable',
+                model=DatasetTable,
+                reindexer=DatasetTableIndexer,
+            )
+        )
 
-        add_vote_type("dataset", DatasetIndexer)
+        add_vote_type('dataset', DatasetIndexer)
 
-        TargetType("dataset", GET_DATASET, UPDATE_DATASET)
+        TargetType('dataset', GET_DATASET, UPDATE_DATASET)
 
         EnvironmentResourceManager.register(DatasetRepository())
 
-        log.info("API of datasets has been imported")
+        log.info('API of datasets has been imported')
 
 
 class DatasetAsyncHandlersModuleInterface(ModuleInterface):
@@ -86,7 +91,8 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets.handlers
-        log.info("Dataset handlers have been imported")
+
+        log.info('Dataset handlers have been imported')
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
@@ -97,7 +103,7 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 
 
 class DatasetCdkModuleInterface(ModuleInterface):
-    """Loads dataset cdk stacks """
+    """Loads dataset cdk stacks"""
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]):
@@ -107,6 +113,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets_base import DatasetBaseModuleInterface
         from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
+
         return [DatasetBaseModuleInterface, DataSharingCdkModuleInterface]
 
     def __init__(self):
@@ -118,11 +125,10 @@ class DatasetCdkModuleInterface(ModuleInterface):
         EnvironmentSetup.register(DatasetGlueProfilerExtension)
         EnvironmentSetup.register(DatasetCustomResourcesExtension)
 
-        log.info("Dataset stacks have been imported")
+        log.info('Dataset stacks have been imported')
 
 
 class DatasetStackUpdaterModuleInterface(ModuleInterface):
-
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
@@ -137,11 +143,10 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
         from dataall.modules.datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
         DatasetStackFinder()
-        log.info("Dataset stack updater task has been loaded")
+        log.info('Dataset stack updater task has been loaded')
 
 
 class DatasetCatalogIndexerModuleInterface(ModuleInterface):
-
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CATALOG_INDEXER_TASK in modes
@@ -157,4 +162,4 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
         from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer
 
         DatasetCatalogIndexer()
-        log.info("Dataset catalog indexer task has been loaded")
+        log.info('Dataset catalog indexer task has been loaded')

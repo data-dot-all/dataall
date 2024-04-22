@@ -8,21 +8,16 @@ from dataall.modules.notebooks.cdk.notebook_stack import NotebookStack
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, notebook, env_fixture, org_fixture):
-    mocker.patch(
-        'dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_engine',
-        return_value=db
-    )
+    mocker.patch('dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_engine', return_value=db)
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
-        return_value="dataall-pivot-role-name-pytest",
+        return_value='dataall-pivot-role-name-pytest',
     )
     mocker.patch(
         'dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_target',
         return_value=notebook,
     )
-    mocker.patch(
-        'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
-    )
+    mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=notebook,

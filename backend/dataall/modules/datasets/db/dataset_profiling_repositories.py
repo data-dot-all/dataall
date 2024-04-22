@@ -38,13 +38,9 @@ class DatasetProfilingRepository:
         return run
 
     @staticmethod
-    def get_profiling_run(
-        session, profiling_run_uri=None, glue_job_run_id=None, glue_table_name=None
-    ):
+    def get_profiling_run(session, profiling_run_uri=None, glue_job_run_id=None, glue_table_name=None):
         if profiling_run_uri:
-            run: DatasetProfilingRun = session.query(
-                DatasetProfilingRun
-            ).get(profiling_run_uri)
+            run: DatasetProfilingRun = session.query(DatasetProfilingRun).get(profiling_run_uri)
         else:
             run: DatasetProfilingRun = (
                 session.query(DatasetProfilingRun)
@@ -63,9 +59,7 @@ class DatasetProfilingRepository:
             .filter(DatasetProfilingRun.datasetUri == dataset_uri)
             .order_by(DatasetProfilingRun.created.desc())
         )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
 
     @staticmethod
     def list_table_profiling_runs(session, table_uri):
@@ -85,9 +79,7 @@ class DatasetProfilingRepository:
             )
             .order_by(DatasetProfilingRun.created.desc())
         )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
 
     @staticmethod
     def get_table_last_profiling_run(session, table_uri):
@@ -98,10 +90,7 @@ class DatasetProfilingRepository:
                 DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
             )
             .filter(DatasetTable.tableUri == table_uri)
-            .filter(
-                DatasetTable.GlueTableName
-                == DatasetProfilingRun.GlueTableName
-            )
+            .filter(DatasetTable.GlueTableName == DatasetProfilingRun.GlueTableName)
             .order_by(DatasetProfilingRun.created.desc())
             .first()
         )
@@ -115,10 +104,7 @@ class DatasetProfilingRepository:
                 DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
             )
             .filter(DatasetTable.tableUri == table_uri)
-            .filter(
-                DatasetTable.GlueTableName
-                == DatasetProfilingRun.GlueTableName
-            )
+            .filter(DatasetTable.GlueTableName == DatasetProfilingRun.GlueTableName)
             .filter(DatasetProfilingRun.results.isnot(None))
             .order_by(DatasetProfilingRun.created.desc())
             .first()

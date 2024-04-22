@@ -24,13 +24,12 @@ class AuroraServerlessStack(pyNestedClass):
         ecs_security_groups: [aws_ec2.SecurityGroup] = None,
         codebuild_dbmigration_sg: aws_ec2.SecurityGroup = None,
         prod_sizing=False,
-        quicksight_monitoring_sg = None,
+        quicksight_monitoring_sg=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
 
         # if exclude_characters property is set make sure that the pwd regex in DbConfig is changed accordingly
-
 
         db_subnet_group = rds.SubnetGroup(
             self,
@@ -39,9 +38,7 @@ class AuroraServerlessStack(pyNestedClass):
             subnet_group_name=f'{resource_prefix}-{envname}-db-subnet-group',
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
-                subnets=vpc.select_subnets(
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True
-                ).subnets
+                subnets=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True).subnets
             ),
         )
 
@@ -51,19 +48,17 @@ class AuroraServerlessStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-aurora-sg',
             vpc=vpc,
             allow_all_outbound=False,
-            disable_inline_rules=True
+            disable_inline_rules=True,
         )
 
         key = aws_kms.Key(
             self,
-            f'AuroraKMSKey',
-            removal_policy=RemovalPolicy.DESTROY
-            if envname == 'dev'
-            else RemovalPolicy.RETAIN,
+            'AuroraKMSKey',
+            removal_policy=RemovalPolicy.DESTROY if envname == 'dev' else RemovalPolicy.RETAIN,
             alias=f'{resource_prefix}-{envname}-aurora',
             enable_key_rotation=True,
         )
-        
+
         db_credentials = rds.DatabaseSecret(
             self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin', encryption_key=key
         )
@@ -71,9 +66,7 @@ class AuroraServerlessStack(pyNestedClass):
         database = rds.ServerlessCluster(
             self,
             f'AuroraDatabase{envname}',
-            engine=rds.DatabaseClusterEngine.aurora_postgres(
-                version=rds.AuroraPostgresEngineVersion.VER_13_12
-            ),
+            engine=rds.DatabaseClusterEngine.aurora_postgres(version=rds.AuroraPostgresEngineVersion.VER_13_12),
             deletion_protection=True,
             cluster_identifier=f'{resource_prefix}-{envname}-db',
             parameter_group=rds.ParameterGroup.from_parameter_group_name(
@@ -88,12 +81,8 @@ class AuroraServerlessStack(pyNestedClass):
             security_groups=[db_security_group],
             scaling=rds.ServerlessScalingOptions(
                 auto_pause=Duration.days(1) if prod_sizing else Duration.minutes(10),
-                max_capacity=rds.AuroraCapacityUnit.ACU_16
-                if prod_sizing
-                else rds.AuroraCapacityUnit.ACU_8,
-                min_capacity=rds.AuroraCapacityUnit.ACU_4
-                if prod_sizing
-                else rds.AuroraCapacityUnit.ACU_2,
+                max_capacity=rds.AuroraCapacityUnit.ACU_16 if prod_sizing else rds.AuroraCapacityUnit.ACU_8,
+                min_capacity=rds.AuroraCapacityUnit.ACU_4 if prod_sizing else rds.AuroraCapacityUnit.ACU_2,
             ),
             storage_encryption_key=key,
         )
@@ -115,7 +104,7 @@ class AuroraServerlessStack(pyNestedClass):
                 database.connections.allow_from(
                     ec2.Connections(security_groups=[sg]),
                     ec2.Port.tcp(5432),
-                    f'Allow dataall ecs to db connection',
+                    'Allow dataall ecs to db connection',
                 )
 
         # Allow CodeBuild DB Migration Connections

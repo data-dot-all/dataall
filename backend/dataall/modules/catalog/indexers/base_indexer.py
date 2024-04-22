@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 
 class BaseIndexer(ABC):
     """API to work with OpenSearch"""
+
     _INDEX = 'dataall-index'
     _es = None
 
@@ -31,7 +32,7 @@ class BaseIndexer(ABC):
     @staticmethod
     @abstractmethod
     def upsert(session, target_id):
-        raise NotImplementedError("Method upsert is not implemented")
+        raise NotImplementedError('Method upsert is not implemented')
 
     @classmethod
     def delete_doc(cls, doc_id):
@@ -60,9 +61,7 @@ class BaseIndexer(ABC):
                 with_expression(TermLink.label, GlossaryNode.label),
                 with_expression(TermLink.readme, GlossaryNode.readme),
             )
-            .join(
-                GlossaryNode, GlossaryNode.nodeUri == TermLink.nodeUri
-            )
+            .join(GlossaryNode, GlossaryNode.nodeUri == TermLink.nodeUri)
             .filter(
                 and_(
                     TermLink.targetUri == target_uri,

@@ -1,8 +1,22 @@
 from dataall.base.api import gql
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
-    resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
-    resolve_group, list_shareable_objects, resolve_user_role
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareableType,
+    PrincipalType,
+    ShareItemHealthStatus,
+)
+from dataall.modules.dataset_sharing.api.resolvers import (
+    union_resolver,
+    resolve_shared_item,
+    resolve_dataset,
+    resolve_consumption_data,
+    resolve_existing_shared_items,
+    resolve_share_object_statistics,
+    resolve_principal,
+    resolve_group,
+    list_shareable_objects,
+    resolve_user_role,
+    resolve_shared_database_name,
+)
 from dataall.core.environment.api.resolvers import resolve_environment
 
 ShareableObject = gql.Union(
@@ -23,6 +37,9 @@ ShareItem = gql.ObjectType(
         gql.Field('itemType', ShareableType.toGraphQLEnum()),
         gql.Field('itemName', gql.String),
         gql.Field('description', gql.String),
+        gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
+        gql.Field('healthMessage', gql.String),
+        gql.Field('lastVerificationTime', gql.String),
         gql.Field(
             name='sharedObject',
             type=gql.Ref('ShareableObject'),
@@ -132,9 +149,7 @@ ShareObject = gql.ObjectType(
             type=gql.Ref('ShareObjectStatistic'),
             resolver=resolve_share_object_statistics,
         ),
-        gql.Field(
-            name='principal', resolver=resolve_principal, type=gql.Ref('Principal')
-        ),
+        gql.Field(name='principal', resolver=resolve_principal, type=gql.Ref('Principal')),
         gql.Field(
             name='environment',
             resolver=resolve_environment,
@@ -184,6 +199,7 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='itemAccess', type=gql.NonNullableType(gql.String)),
         gql.Field(name='itemType', type=gql.NonNullableType(gql.String)),
         gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='targetEnvironmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
         gql.Field(name='environmentName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='organizationUri', type=gql.NonNullableType(gql.String)),
@@ -192,6 +208,11 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='GlueDatabaseName', type=gql.String),
         gql.Field(name='GlueTableName', type=gql.String),
         gql.Field(name='S3AccessPointName', type=gql.String),
+        gql.Field(
+            'sharedGlueDatabaseName',
+            type=gql.String,
+            resolver=resolve_shared_database_name,
+        ),
     ],
 )
 

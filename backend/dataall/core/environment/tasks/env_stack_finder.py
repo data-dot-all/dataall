@@ -14,4 +14,4 @@ class StackFinder(ABC):
 
     def find_stack_uris(self, session) -> List[str]:
         """Finds stacks to update"""
-        raise NotImplementedError("find_stack_uris is not implemented")
+        raise NotImplementedError('find_stack_uris is not implemented')

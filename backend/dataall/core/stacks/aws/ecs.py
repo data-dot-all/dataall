@@ -35,16 +35,10 @@ class Ecs:
             envname = os.environ.get('envname', 'local')
             cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
             subnets = Parameter().get_parameter(env=envname, path='ecs/private_subnets')
-            security_groups = Parameter().get_parameter(
-                env=envname, path='ecs/security_groups'
-            )
+            security_groups = Parameter().get_parameter(env=envname, path='ecs/security_groups')
 
-            task_definition = Parameter().get_parameter(
-                env=envname, path=task_definition_param
-            )
-            container_name = Parameter().get_parameter(
-                env=envname, path=container_name_param
-            )
+            task_definition = Parameter().get_parameter(env=envname, path=task_definition_param)
+            container_name = Parameter().get_parameter(env=envname, path=container_name_param)
 
             response = boto3.client('ecs').run_task(
                 cluster=cluster_name,
@@ -68,7 +62,7 @@ class Ecs:
                                     'name': 'AWS_REGION',
                                     'value': os.getenv('AWS_REGION', 'eu-west-1'),
                                 },
-                                *context
+                                *context,
                             ],
                         }
                     ]
@@ -79,9 +73,7 @@ class Ecs:
                 raise Exception(
                     ', '.join(
                         [
-                            'fail to run task {0} reason: {1}'.format(
-                                failure['arn'], failure['reason']
-                            )
+                            'fail to run task {0} reason: {1}'.format(failure['arn'], failure['reason'])
                             for failure in response['failures']
                         ]
                     )
@@ -97,9 +89,7 @@ class Ecs:
     def is_task_running(cluster_name, started_by):
         try:
             client = boto3.client('ecs')
-            running_tasks = client.list_tasks(
-                cluster=cluster_name, startedBy=started_by, desiredStatus='RUNNING'
-            )
+            running_tasks = client.list_tasks(cluster=cluster_name, startedBy=started_by, desiredStatus='RUNNING')
             if running_tasks and running_tasks.get('taskArns'):
                 return True
             return False

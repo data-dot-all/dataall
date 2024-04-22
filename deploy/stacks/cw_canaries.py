@@ -46,9 +46,7 @@ class CloudWatchCanariesStack(pyNestedClass):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
-            server_access_logs_bucket=s3.Bucket.from_bucket_name(
-                self, f'AccessLogsBucket', logs_bucket.bucket_name
-            ),
+            server_access_logs_bucket=s3.Bucket.from_bucket_name(self, 'AccessLogsBucket', logs_bucket.bucket_name),
             server_access_logs_prefix=f'access_logs/{resource_prefix}-{envname}-canaries',
             versioned=True,
             auto_delete_objects=True,
@@ -68,9 +66,7 @@ class CloudWatchCanariesStack(pyNestedClass):
 
         vpc_config = synthetics.CfnCanary.VPCConfigProperty(
             vpc_id=vpc.vpc_id,
-            subnet_ids=vpc.select_subnets(
-                subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True
-            ).subnet_ids,
+            subnet_ids=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT, one_per_az=True).subnet_ids,
             security_group_ids=[canary_sg.security_group_id],
         )
         canary_name = f'{resource_prefix[:6]}-{envname}-canary'
@@ -145,7 +141,7 @@ class CloudWatchCanariesStack(pyNestedClass):
                     ],
                     resources=[
                         f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*'
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
                     ],
                 ),
                 iam.PolicyStatement(
@@ -172,9 +168,7 @@ class CloudWatchCanariesStack(pyNestedClass):
                 iam.PolicyStatement(
                     actions=['cloudwatch:PutMetricData'],
                     resources=['*'],
-                    conditions={
-                        'StringEquals': {'cloudwatch:namespace': 'CloudWatchSynthetics'}
-                    },
+                    conditions={'StringEquals': {'cloudwatch:namespace': 'CloudWatchSynthetics'}},
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -193,9 +187,7 @@ class CloudWatchCanariesStack(pyNestedClass):
         canary_role = iam.Role(
             self,
             f'{resource_prefix}-{envname}-canary-role',
-            inline_policies={
-                f'CanaryRoleInlinePolicy{envname}': role_inline_policy.document
-            },
+            inline_policies={f'CanaryRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
         return canary_role

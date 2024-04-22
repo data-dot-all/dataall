@@ -17,7 +17,7 @@ class CloudFormation:
 
     @staticmethod
     def client(AwsAccountId, region, role=None):
-        session = SessionHelper.remote_session(accountid=AwsAccountId, role=role)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, region=region, role=role)
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
@@ -46,7 +46,7 @@ class CloudFormation:
         region = data['region']
         stack_name = data['stack_name']
         try:
-            aws_session = SessionHelper.remote_session(accountid=accountid)
+            aws_session = SessionHelper.remote_session(accountid=accountid, region=region)
             cfnclient = aws_session.client('cloudformation', region_name=region)
             response = cfnclient.delete_stack(
                 StackName=stack_name,
@@ -63,7 +63,7 @@ class CloudFormation:
             accountid = data['accountid']
             region = data['region']
             stack_name = data['stack_name']
-            aws_session = SessionHelper.remote_session(accountid=accountid)
+            aws_session = SessionHelper.remote_session(accountid=accountid, region=region)
             cfnclient = aws_session.client('cloudformation', region_name=region)
             response = cfnclient.describe_stacks(StackName=stack_name)
             return response['Stacks'][0]
@@ -90,14 +90,10 @@ class CloudFormation:
                 for output in stack_outputs:
                     print(output)
                     filtered_outputs[output['OutputKey']] = output['OutputValue']
-            resources = CloudFormation._describe_stack_resources(**data)[
-                'StackResources'
-            ]
+            resources = CloudFormation._describe_stack_resources(**data)['StackResources']
             events = CloudFormation._describe_stack_events(**data)['StackEvents']
             with engine.scoped_session() as session:
-                stack: Stack = session.query(Stack).get(
-                    task.payload['stackUri']
-                )
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
                 stack.status = status
                 stack.stackid = stack_arn
                 stack.outputs = filtered_outputs
@@ -131,13 +127,9 @@ class CloudFormation:
                 session.commit()
         except ClientError as e:
             with engine.scoped_session() as session:
-                stack: Stack = session.query(Stack).get(
-                    task.payload['stackUri']
-                )
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
                 if not stack.error:
-                    stack.error = {
-                        'error': json_utils.to_string(e.response['Error']['Message'])
-                    }
+                    stack.error = {'error': json_utils.to_string(e.response['Error']['Message'])}
                 session.commit()
 
     @staticmethod
@@ -145,7 +137,7 @@ class CloudFormation:
         accountid = data['accountid']
         region = data.get('region', 'eu-west-1')
         stack_name = data['stack_name']
-        aws_session = SessionHelper.remote_session(accountid=accountid)
+        aws_session = SessionHelper.remote_session(accountid=accountid, region=region)
         client = aws_session.client('cloudformation', region_name=region)
         try:
             stack_resources = client.describe_stack_resources(StackName=stack_name)
@@ -159,7 +151,7 @@ class CloudFormation:
         accountid = data['accountid']
         region = data.get('region', 'eu-west-1')
         stack_name = data['stack_name']
-        aws_session = SessionHelper.remote_session(accountid=accountid)
+        aws_session = SessionHelper.remote_session(accountid=accountid, region=region)
         client = aws_session.client('cloudformation', region_name=region)
         try:
             stack_events = client.describe_stack_events(StackName=stack_name)

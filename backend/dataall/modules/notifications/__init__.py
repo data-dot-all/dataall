@@ -8,10 +8,7 @@ class NotificationsModuleInterface(ModuleInterface):
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
-        supported_modes = {
-            ImportMode.API,
-            ImportMode.HANDLERS
-        }
+        supported_modes = {ImportMode.API, ImportMode.HANDLERS}
         return modes & supported_modes
 
     def __init__(self):

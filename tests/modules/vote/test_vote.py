@@ -1,4 +1,3 @@
-
 def count_votes_query(client, target_uri, target_type, group):
     response = client.query(
         """

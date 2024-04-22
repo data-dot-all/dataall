@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class DashboardCatalogIndexer(CatalogIndexer):
-
     def index(self, session) -> int:
         all_dashboards: [Dashboard] = session.query(Dashboard).all()
         log.info(f'Found {len(all_dashboards)} dashboards')

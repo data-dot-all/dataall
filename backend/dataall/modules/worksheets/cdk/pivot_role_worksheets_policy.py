@@ -8,16 +8,17 @@ class WorksheetsPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
                 sid='AthenaWorkgroups',
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "athena:GetQueryExecution",
-                    "athena:GetQueryResults",
-                    "athena:GetWorkGroup",
-                    "athena:StartQueryExecution"
+                    'athena:GetQueryExecution',
+                    'athena:GetQueryResults',
+                    'athena:GetWorkGroup',
+                    'athena:StartQueryExecution',
                 ],
                 resources=[f'arn:aws:athena:*:{self.account}:workgroup/{self.env_resource_prefix}*'],
             )

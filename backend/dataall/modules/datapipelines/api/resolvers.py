@@ -1,11 +1,11 @@
-import json
 import logging
 
 from dataall.base.api.context import Context
-from dataall.core.stacks.api import stack_helper
 from dataall.base.db import exceptions
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
-from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 
 log = logging.getLogger(__name__)
@@ -51,14 +51,9 @@ def update_pipeline_environment(context: Context, source, input=None):
     return DataPipelineService.update_pipeline_environment(data=input, uri=input['pipelineUri'])
 
 
-def delete_pipeline(
-    context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
-):
+def delete_pipeline(context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None):
     _required_uri(DataPipelineUri)
-    return DataPipelineService.delete_pipeline(
-        uri=DataPipelineUri,
-        deleteFromAWS=deleteFromAWS
-    )
+    return DataPipelineService.delete_pipeline(uri=DataPipelineUri, deleteFromAWS=deleteFromAWS)
 
 
 def delete_pipeline_environment(context: Context, source, envPipelineUri: str = None):
@@ -108,7 +103,7 @@ def resolve_clone_url_http(context: Context, source: DataPipeline, **kwargs):
 def resolve_stack(context, source: DataPipeline, **kwargs):
     if not source:
         return None
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.DataPipelineUri,
         environmentUri=source.environmentUri,
     )

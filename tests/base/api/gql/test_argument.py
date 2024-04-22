@@ -20,9 +20,7 @@ def test_base():
     arg = gql.Argument(name='foo', type=gql.Thunk(lambda: gql.String))
     assert arg.gql() == 'foo : String'
 
-    arg = gql.Argument(
-        name='foo', type=gql.Thunk(lambda: gql.NonNullableType(gql.String))
-    )
+    arg = gql.Argument(name='foo', type=gql.Thunk(lambda: gql.NonNullableType(gql.String)))
     assert arg.gql() == 'foo : String!'
 
     arg = gql.Argument(name='foo', type=gql.Thunk(lambda: gql.ArrayType(gql.String)))
@@ -100,10 +98,7 @@ def test_nested_input():
     )
     print(shape_input_type.gql())
 
-    assert (
-        shape_input_type.gql()
-        == 'input NewShapeInputType{  points : NewPointInputType }'
-    )
+    assert shape_input_type.gql() == 'input NewShapeInputType{  points : NewPointInputType }'
 
     square_input_type = gql.InputType(
         name='NewSquare',

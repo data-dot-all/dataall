@@ -36,35 +36,35 @@ class AuthAtEdge(pyNestedClass):
 
         self.parse = ssm.StringParameter(
             self,
-            f'ParseParam',
+            'ParseParam',
             parameter_name=f'/dataall/{envname}/authatedge/parseauth',
             string_value=devdoc_app.get_att('Outputs.ParseAuthHandler').to_string(),
         )
 
         self.refresh = ssm.StringParameter(
             self,
-            f'RefreshParam',
+            'RefreshParam',
             parameter_name=f'/dataall/{envname}/authatedge/refreshauth',
             string_value=devdoc_app.get_att('Outputs.RefreshAuthHandler').to_string(),
         )
 
         self.signout = ssm.StringParameter(
             self,
-            f'SignoutParam',
+            'SignoutParam',
             parameter_name=f'/dataall/{envname}/authatedge/singoutauth',
             string_value=devdoc_app.get_att('Outputs.SignOutHandler').to_string(),
         )
 
         self.check = ssm.StringParameter(
             self,
-            f'CheckParam',
+            'CheckParam',
             parameter_name=f'/dataall/{envname}/authatedge/checkauth',
             string_value=devdoc_app.get_att('Outputs.CheckAuthHandler').to_string(),
         )
 
         self.httpheaders = ssm.StringParameter(
             self,
-            f'HttpHeadersParam',
+            'HttpHeadersParam',
             parameter_name=f'/dataall/{envname}/authatedge/httpheadersauth',
             string_value=devdoc_app.get_att('Outputs.HttpHeadersHandler').to_string(),
         )

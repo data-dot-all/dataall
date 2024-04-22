@@ -12,7 +12,7 @@ class GlueDatasetProfilerClient:
     """Controls glue profiling jobs in AWS"""
 
     def __init__(self, dataset: Dataset):
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = session.client('glue', region_name=dataset.region)
         self._name = dataset.GlueProfilingJobName
 
@@ -30,9 +30,7 @@ class GlueDatasetProfilerClient:
         """Run glue job. Returns id of the job"""
         args = {'--table': profiling.GlueTableName} if profiling.GlueTableName else {}
         try:
-            response = self._client.start_job_run(
-                JobName=self._name, Arguments=args
-            )
+            response = self._client.start_job_run(JobName=self._name, Arguments=args)
 
             return response['JobRunId']
         except ClientError as e:

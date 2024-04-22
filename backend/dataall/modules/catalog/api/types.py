@@ -1,10 +1,18 @@
 from dataall.base.api import gql
 from dataall.modules.catalog.api.enums import GlossaryRole
 from dataall.modules.catalog.api.resolvers import (
-    resolve_glossary_node, resolve_user_role, resolve_link, resolve_term_glossary, resolve_stats,
-    resolve_node_tree, resolve_node_children, resolve_categories, resolve_term_associations, resolve_terms,
-    resolve_link_node, resolve_link_target,
-
+    resolve_glossary_node,
+    resolve_user_role,
+    resolve_link,
+    resolve_term_glossary,
+    resolve_stats,
+    resolve_node_tree,
+    resolve_node_children,
+    resolve_categories,
+    resolve_term_associations,
+    resolve_terms,
+    resolve_link_node,
+    resolve_link_target,
 )
 
 GlossaryNode = gql.Union(
@@ -56,22 +64,16 @@ Glossary = gql.ObjectType(
             resolver=resolve_link,
             type=gql.Ref('GlossaryTermLink'),
         ),
-        gql.Field(
-            name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')
-        ),
+        gql.Field(name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')),
         gql.Field(
             resolver=resolve_node_tree,
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))],
             name='tree',
             type=gql.Ref('GlossaryChildrenSearchResult'),
         ),
         gql.Field(
             resolver=resolve_node_children,
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))],
             name='children',
             type=gql.Ref('GlossaryChildrenSearchResult'),
         ),
@@ -83,9 +85,7 @@ Glossary = gql.ObjectType(
         ),
         gql.Field(
             name='associations',
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))],
             resolver=resolve_term_associations,
             type=gql.Ref('TermLinkSearchResults'),
         ),
@@ -114,14 +114,10 @@ Category = gql.ObjectType(
             resolver=resolve_link,
             type=gql.Ref('GlossaryTermLink'),
         ),
-        gql.Field(
-            name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')
-        ),
+        gql.Field(name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')),
         gql.Field(
             resolver=resolve_node_children,
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))],
             name='children',
             type=gql.Ref('GlossaryChildrenSearchResult'),
         ),
@@ -143,9 +139,7 @@ Category = gql.ObjectType(
         ),
         gql.Field(
             name='associations',
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))],
             resolver=resolve_term_associations,
             type=gql.Ref('TermLinkSearchResults'),
         ),
@@ -175,23 +169,15 @@ Term = gql.ObjectType(
         ),
         gql.Field(
             resolver=resolve_node_children,
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))],
             name='children',
             type=gql.Ref('GlossaryChildrenSearchResult'),
         ),
-        gql.Field(
-            name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')
-        ),
-        gql.Field(
-            name='glossary', type=gql.Ref('Glossary'), resolver=resolve_term_glossary
-        ),
+        gql.Field(name='stats', resolver=resolve_stats, type=gql.Ref('GlossaryNodeStatistics')),
+        gql.Field(name='glossary', type=gql.Ref('Glossary'), resolver=resolve_term_glossary),
         gql.Field(
             name='associations',
-            args=[
-                gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))
-            ],
+            args=[gql.Argument(name='filter', type=gql.Ref('GlossaryTermTargetFilter'))],
             resolver=resolve_term_associations,
             type=gql.Ref('TermLinkSearchResults'),
         ),
@@ -251,9 +237,7 @@ GlossarySearchResult = gql.ObjectType(
 
 GlossaryTermLinkTarget = gql.ObjectType(
     name='GlossaryTermLinkTarget',
-    fields=[
-        gql.Field(name='label', type=gql.String)
-    ],
+    fields=[gql.Field(name='label', type=gql.String)],
 )
 
 GlossaryTermLink = gql.ObjectType(

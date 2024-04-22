@@ -15,5 +15,5 @@ class DatapipelineCodeCommitHandler:
             aws_account_id = task.payload.get('accountid', '111111111111')
             region = task.payload.get('region', 'eu-west-1')
             return DatapipelineCodecommitClient(aws_account_id, region).delete_repository(
-                repository=task.payload.get("repo_name", "dataall-repo")
+                repository=task.payload.get('repo_name', 'dataall-repo')
             )

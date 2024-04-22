@@ -2,6 +2,7 @@
 A service layer for sagemaker notebooks
 Central part for working with notebooks
 """
+
 import dataclasses
 import logging
 from dataclasses import dataclass, field
@@ -9,19 +10,25 @@ from typing import List, Dict
 
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
-    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
+from dataall.modules.notebooks.services.notebook_permissions import (
+    MANAGE_NOTEBOOKS,
+    CREATE_NOTEBOOK,
+    NOTEBOOK_ALL,
+    GET_NOTEBOOK,
+    UPDATE_NOTEBOOK,
+    DELETE_NOTEBOOK,
+)
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -34,24 +41,22 @@ logger = logging.getLogger(__name__)
 @dataclass
 class NotebookCreationRequest:
     """A request dataclass for notebook creation. Adds default values for missed parameters"""
+
     label: str
     VpcId: str
     SubnetId: str
     SamlAdminGroupName: str
     environment: Dict = field(default_factory=dict)
-    description: str = "No description provided"
+    description: str = 'No description provided'
     VolumeSizeInGB: int = 32
-    InstanceType: str = "ml.t3.medium"
+    InstanceType: str = 'ml.t3.medium'
     tags: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, env):
         """Copies only required fields from the dictionary and creates an instance of class"""
         fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{
-            k: v for k, v in env.items()
-            if k in fields
-        })
+        return cls(**{k: v for k, v in env.items() if k in fields})
 
 
 class NotebookService:
@@ -59,12 +64,12 @@ class NotebookService:
     Encapsulate the logic of interactions with sagemaker notebooks.
     """
 
-    _NOTEBOOK_RESOURCE_TYPE = "notebook"
+    _NOTEBOOK_RESOURCE_TYPE = 'notebook'
 
     @staticmethod
-    @has_tenant_permission(MANAGE_NOTEBOOKS)
-    @has_resource_permission(CREATE_NOTEBOOK)
-    @has_group_permission(CREATE_NOTEBOOK)
+    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
+    @ResourcePolicyService.has_resource_permission(CREATE_NOTEBOOK)
+    @GroupPolicyService.has_group_permission(CREATE_NOTEBOOK)
     def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
@@ -73,7 +78,7 @@ class NotebookService:
 
         with _session() as session:
             env = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, env, "notebooksEnabled")
+            enabled = EnvironmentService.get_boolean_env_param(session, env, 'notebooksEnabled')
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -116,7 +121,7 @@ class NotebookService:
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
 
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=NOTEBOOK_ALL,
@@ -125,7 +130,7 @@ class NotebookService:
             )
 
             if env.SamlGroupName != admin_group:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
                     permissions=NOTEBOOK_ALL,
@@ -133,15 +138,14 @@ class NotebookService:
                     resource_type=SagemakerNotebook.__name__,
                 )
 
-            Stack.create_stack(
+            StackRepository.create_stack(
                 session=session,
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',
                 target_uri=notebook.notebookUri,
-                target_label=notebook.label,
             )
 
-        stack_helper.deploy_stack(targetUri=notebook.notebookUri)
+        StackService.deploy_stack(targetUri=notebook.notebookUri)
 
         return notebook
 
@@ -150,71 +154,64 @@ class NotebookService:
         """List existed user notebooks. Filters only required notebooks by the filter param"""
         with _session() as session:
             return NotebookRepository(session).paginated_user_notebooks(
-                username=context().username,
-                groups=context().groups,
-                filter=filter
+                username=context().username, groups=context().groups, filter=filter
             )
 
     @staticmethod
-    @has_resource_permission(GET_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
     def get_notebook(*, uri) -> SagemakerNotebook:
         """Gets a notebook by uri"""
         with _session() as session:
             return NotebookService._get_notebook(session, uri)
 
     @staticmethod
-    @has_resource_permission(UPDATE_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
     def start_notebook(*, uri):
         """Starts notebooks instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).start_instance()
 
     @staticmethod
-    @has_resource_permission(UPDATE_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
     def stop_notebook(*, uri: str) -> None:
         """Stop notebook instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).stop_instance()
 
     @staticmethod
-    @has_resource_permission(GET_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
     def get_notebook_presigned_url(*, uri: str) -> str:
         """Creates and returns a presigned url for a notebook"""
         notebook = NotebookService.get_notebook(uri=uri)
         return client(notebook).presigned_url()
 
     @staticmethod
-    @has_resource_permission(GET_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
     def get_notebook_status(*, uri) -> str:
         """Retrieves notebook status"""
         notebook = NotebookService.get_notebook(uri=uri)
         return client(notebook).get_notebook_instance_status()
 
     @staticmethod
-    @has_resource_permission(DELETE_NOTEBOOK)
+    @ResourcePolicyService.has_resource_permission(DELETE_NOTEBOOK)
     def delete_notebook(*, uri: str, delete_from_aws: bool):
         """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             notebook = NotebookService._get_notebook(session, uri)
-            KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+            KeyValueTagRepository.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
             session.delete(notebook)
 
-            ResourcePolicy.delete_resource_policy(
+            ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=notebook.notebookUri,
                 group=notebook.SamlAdminGroupName,
             )
 
-            env: Environment = EnvironmentService.get_environment_by_uri(
-                session, notebook.environmentUri
-            )
+            env: Environment = EnvironmentService.get_environment_by_uri(session, notebook.environmentUri)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
-                target_uri=uri,
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region
+            StackService.delete_stack(
+                target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
             )
 
     @staticmethod

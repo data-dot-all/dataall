@@ -8,6 +8,7 @@ class S3PivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # Read Buckets
@@ -18,7 +19,7 @@ class S3PivotRole(PivotRoleStatementSet):
                     's3:ListAllMyBuckets',
                     's3:GetBucketLocation',
                     's3:PutBucketTagging',
-                    's3:GetEncryptionConfiguration'
+                    's3:GetEncryptionConfiguration',
                 ],
                 resources=['*'],
             ),
@@ -26,22 +27,14 @@ class S3PivotRole(PivotRoleStatementSet):
             iam.PolicyStatement(
                 sid='ManagedBuckets',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:List*',
-                    's3:Delete*',
-                    's3:Get*',
-                    's3:Put*'
-                ],
+                actions=['s3:List*', 's3:Delete*', 's3:Get*', 's3:Put*'],
                 resources=[f'arn:aws:s3:::{self.env_resource_prefix}*'],
             ),
             # AWS Logging Buckets
             iam.PolicyStatement(
                 sid='AWSLoggingBuckets',
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    's3:PutBucketAcl',
-                    's3:PutBucketNotification'
-                ],
+                actions=['s3:PutBucketAcl', 's3:PutBucketNotification'],
                 resources=[f'arn:aws:s3:::{self.env_resource_prefix}-logging-*'],
             ),
         ]

@@ -5,6 +5,7 @@ Revises: 97050ec09354
 Create Date: 2021-12-22 12:56:28.698754
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -60,15 +61,9 @@ def downgrade():
         'dataset_topic',
         sa.Column('datasetUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('topicUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('datasetUri', 'topicUri', name='dataset_topic_pkey'),
     )
     op.create_table(
@@ -76,15 +71,9 @@ def downgrade():
         sa.Column('objectUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('permission', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'scope', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('scope', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('objectUri', 'userName', name='all_permissions_pkey'),
     )
     op.create_table(
@@ -97,12 +86,8 @@ def downgrade():
             autoincrement=False,
             nullable=False,
         ),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=False
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=False),
         sa.Column('emitter', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('AwsAccountId', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('region', sa.VARCHAR(), autoincrement=False, nullable=False),
@@ -114,19 +99,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('username', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('bio', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('b64EncodedAvatar', sa.VARCHAR(), autoincrement=False, nullable=True),
@@ -138,20 +115,14 @@ def downgrade():
         sa.Column('objectType', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('searcAttribute1', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('searcAttribute2', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('searcAttribute3', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('searcAttribute4', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('objectUri', name='search_index_pkey'),
     )
     op.create_table(
@@ -159,19 +130,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('datasetUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('projectUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('locationUri', sa.VARCHAR(), autoincrement=False, nullable=False),
@@ -180,12 +143,8 @@ def downgrade():
         sa.Column('S3BucketName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('S3Prefix', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('region', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'S3AccessPointName', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.Column(
-            'accessPointCreated', sa.BOOLEAN(), autoincrement=False, nullable=False
-        ),
+        sa.Column('S3AccessPointName', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.Column('accessPointCreated', sa.BOOLEAN(), autoincrement=False, nullable=False),
         sa.PrimaryKeyConstraint('accessPointUri', name='dataset_access_point_pkey'),
     )
     op.create_table(
@@ -201,43 +160,23 @@ def downgrade():
         'dataset_table_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('tableUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'userRoleForTable', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'tableUri', name='dataset_table_permission_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('userRoleForTable', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.PrimaryKeyConstraint('userName', 'tableUri', name='dataset_table_permission_pkey'),
     )
     op.create_table(
         'saved_query',
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'scheduledQueryUri', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
+        sa.Column('scheduledQueryUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('savedQueryUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('queryOrder', sa.INTEGER(), autoincrement=False, nullable=False),
         sa.Column('sqlBody', sa.VARCHAR(), autoincrement=False, nullable=True),
@@ -248,19 +187,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('shareUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('historyUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('actionName', sa.VARCHAR(), autoincrement=False, nullable=False),
@@ -295,9 +226,7 @@ def downgrade():
         sa.Column('ref', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('location', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('created', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'inputs', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('inputs', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column(
             'outputs',
             postgresql.ARRAY(sa.VARCHAR()),
@@ -311,19 +240,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('parentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('md', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('parentUri', name='document_pkey'),
@@ -333,18 +254,10 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('organizationUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('clusterUri', sa.VARCHAR(), autoincrement=False, nullable=False),
@@ -383,9 +296,7 @@ def downgrade():
         sa.Column('airflowVersion', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('dagS3Path', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('pluginsS3Path', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'requirementsS3Path', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
+        sa.Column('requirementsS3Path', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('environmentClass', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column(
             'loggingConfiguration',
@@ -394,9 +305,7 @@ def downgrade():
             nullable=True,
         ),
         sa.Column('sourceBucketArn', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'webServerAccessMode', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
+        sa.Column('webServerAccessMode', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('maxWorkers', sa.INTEGER(), autoincrement=False, nullable=True),
         sa.Column('SamlGroupName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('webServerUrl', sa.VARCHAR(), autoincrement=False, nullable=True),
@@ -405,18 +314,10 @@ def downgrade():
     op.create_table(
         'redshift_cluster_user_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'redshiftClusterUri', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('redshiftClusterUri', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column(
             'userRoleForRedshiftCluster',
             sa.VARCHAR(),
@@ -433,51 +334,31 @@ def downgrade():
         'dataset_user_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('datasetUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'userRoleForDataset', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'datasetUri', name='dataset_user_permission_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('userRoleForDataset', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.PrimaryKeyConstraint('userName', 'datasetUri', name='dataset_user_permission_pkey'),
     )
     op.create_table(
         'airflow_cluster_user_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('clusterUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column(
             'userRoleForAirflowCluster',
             sa.VARCHAR(),
             autoincrement=False,
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'clusterUri', name='airflow_cluster_user_permission_pkey'
-        ),
+        sa.PrimaryKeyConstraint('userName', 'clusterUri', name='airflow_cluster_user_permission_pkey'),
     )
     op.create_table(
         'apikey',
         sa.Column('ApiKeyId', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'ApiKeySecretHash', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
+        sa.Column('ApiKeySecretHash', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column(
             'SamlGroups',
@@ -485,27 +366,17 @@ def downgrade():
             autoincrement=False,
             nullable=True,
         ),
-        sa.Column(
-            'expires', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('expires', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('ApiKeyId', name='apikey_pkey'),
     )
     op.create_table(
         'organization_user',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('organizationUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'userRoleInOrganization', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'organizationUri', name='organization_user_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('userRoleInOrganization', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.PrimaryKeyConstraint('userName', 'organizationUri', name='organization_user_pkey'),
     )
     op.create_table(
         'data_access_request',
@@ -515,12 +386,8 @@ def downgrade():
         sa.Column('principalType', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('principalName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('requester', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('message', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.PrimaryKeyConstraint('requestUri', name='data_access_request_pkey'),
     )
@@ -528,21 +395,11 @@ def downgrade():
         'environment_user_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'userRoleInEnvironment', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'environmentUri', name='environment_user_permission_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('userRoleInEnvironment', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.PrimaryKeyConstraint('userName', 'environmentUri', name='environment_user_permission_pkey'),
     )
     op.create_table(
         'airflow_project',
@@ -553,18 +410,10 @@ def downgrade():
         sa.Column('cfnStackName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('cfnStackArn', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('cfnStackStatus', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'codeRepositoryName', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'codeRepositoryLink', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'codeRepositoryStatus', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'codePipelineStatus', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
+        sa.Column('codeRepositoryName', sa.VARCHAR(), autoincrement=False, nullable=True),
+        sa.Column('codeRepositoryLink', sa.VARCHAR(), autoincrement=False, nullable=True),
+        sa.Column('codeRepositoryStatus', sa.VARCHAR(), autoincrement=False, nullable=True),
+        sa.Column('codePipelineStatus', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('codePipelineName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('codePipelineLink', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('codePipelineArn', sa.VARCHAR(), autoincrement=False, nullable=True),
@@ -575,61 +424,39 @@ def downgrade():
     op.create_table(
         'athena_query_execution',
         sa.Column('parentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'QueryExecutionId', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
+        sa.Column('QueryExecutionId', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('AwsAccountId', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('queryid', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('status', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'completed', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('completed', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('QueryExecutionId', name='athena_query_execution_pkey'),
     )
     op.create_table(
         'dataset_storage_location_permission',
         sa.Column('userName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('locationUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column(
             'userRoleForDatasetStorageLocation',
             sa.VARCHAR(),
             autoincrement=False,
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint(
-            'userName', 'locationUri', name='dataset_storage_location_permission_pkey'
-        ),
+        sa.PrimaryKeyConstraint('userName', 'locationUri', name='dataset_storage_location_permission_pkey'),
     )
     op.create_table(
         'dataset_loader',
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('loaderUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('datasetUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('IAMPrincipalArn', sa.VARCHAR(), autoincrement=False, nullable=False),
@@ -641,19 +468,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('organizationUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('topicUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.PrimaryKeyConstraint('topicUri', name='organization_topic_pkey'),
@@ -662,18 +481,10 @@ def downgrade():
         'EnvironmentRedshiftCluster',
         sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('clusterUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.PrimaryKeyConstraint(
-            'environmentUri', 'clusterUri', name='EnvironmentRedshiftCluster_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.PrimaryKeyConstraint('environmentUri', 'clusterUri', name='EnvironmentRedshiftCluster_pkey'),
     )
     op.create_table(
         'metadata_facet',
@@ -698,21 +509,11 @@ def downgrade():
         sa.Column('entityUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('entityType', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'entityRoleInEnvironment', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.PrimaryKeyConstraint(
-            'entityUri', 'environmentUri', name='environment_permission_pkey'
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('entityRoleInEnvironment', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.PrimaryKeyConstraint('entityUri', 'environmentUri', name='environment_permission_pkey'),
     )
     op.create_table(
         'key_value_pair',
@@ -727,19 +528,11 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('datasetUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('queryUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('body', sa.VARCHAR(), autoincrement=False, nullable=True),
@@ -753,18 +546,12 @@ def downgrade():
         sa.Column('itemType', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('itemUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('itemName', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=False
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=False),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('GlueDatabaseName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('GlueTableName', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'S3AccessPointName', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
+        sa.Column('S3AccessPointName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('shareItemUri', name='share_object_item_v2_pkey'),
     )
     op.create_table(
@@ -777,15 +564,9 @@ def downgrade():
         sa.Column('principalId', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('principalType', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('status', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.PrimaryKeyConstraint('shareUri', 'version', name='share_object_v2_pkey'),
     )
@@ -794,26 +575,14 @@ def downgrade():
         sa.Column('label', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('owner', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.Column(
-            'tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True
-        ),
+        sa.Column('tags', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
         sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'scheduledQueryUri', sa.VARCHAR(), autoincrement=False, nullable=False
-        ),
-        sa.Column(
-            'SamlAdminGroupName', sa.VARCHAR(), autoincrement=False, nullable=True
-        ),
+        sa.Column('scheduledQueryUri', sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.Column('SamlAdminGroupName', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('cronexpr', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('scheduledQueryUri', name='scheduled_query_pkey'),
     )

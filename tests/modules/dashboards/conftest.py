@@ -6,16 +6,13 @@ import pytest
 @pytest.fixture(scope='module', autouse=True)
 def env_params():
     # Overrides environment parameters for env_fixture
-    yield {"dashboardsEnabled": "true"}
+    yield {'dashboardsEnabled': 'true'}
 
 
 @pytest.fixture(scope='module')
 def dashboard(client, env_fixture, group, module_mocker):
     mock_client = MagicMock()
-    module_mocker.patch(
-        'dataall.modules.dashboards.services.dashboard_service.DashboardQuicksightClient',
-        mock_client
-    )
+    module_mocker.patch('dataall.modules.dashboards.services.dashboard_service.DashboardQuicksightClient', mock_client)
     response = client.query(
         """
             mutation importDashboard(

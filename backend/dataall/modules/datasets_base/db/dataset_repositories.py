@@ -4,13 +4,12 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetLock
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -41,15 +40,11 @@ class DatasetRepository(EnvironmentResource):
             environmentUri=env.environmentUri,
             organizationUri=env.organizationUri,
             language=data.get('language', Language.English.value),
-            confidentiality=data.get(
-                'confidentiality', ConfidentialityClassification.Unclassified.value
-            ),
+            confidentiality=data.get('confidentiality', ConfidentialityClassification.Unclassified.value),
             topics=data.get('topics', []),
             businessOwnerEmail=data.get('businessOwnerEmail'),
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
-            stewards=data.get('stewards')
-            if data.get('stewards')
-            else data['SamlAdminGroupName'],
+            stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
         )
 
@@ -67,19 +62,13 @@ class DatasetRepository(EnvironmentResource):
     def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(Dataset)
-            .filter(
-                and_(
-                    Dataset.environmentUri == environment.environmentUri,
-                    Dataset.SamlAdminGroupName == group_uri
-                ))
+            .filter(and_(Dataset.environmentUri == environment.environmentUri, Dataset.SamlAdminGroupName == group_uri))
             .count()
         )
 
     @classmethod
     def create_dataset(cls, session, env: Environment, dataset: Dataset, data: dict):
-        organization = OrganizationRepository.get_organization_by_uri(
-            session, env.organizationUri
-        )
+        organization = OrganizationRepository.get_organization_by_uri(session, env.organizationUri)
         session.add(dataset)
         session.commit()
 
@@ -98,7 +87,6 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def _set_dataset_aws_resources(dataset: Dataset, data, environment):
-
         bucket_name = NamingConventionService(
             target_uri=dataset.datasetUri,
             target_label=dataset.label,
@@ -126,12 +114,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         iam_role_arn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}'
         if data.get('adminRoleName'):
-            dataset.IAMDatasetAdminRoleArn = (
-                f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            )
-            dataset.IAMDatasetAdminUserArn = (
-                f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            )
+            dataset.IAMDatasetAdminRoleArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
+            dataset.IAMDatasetAdminUserArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
         else:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
@@ -143,14 +127,26 @@ class DatasetRepository(EnvironmentResource):
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
 
-        dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
-        dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
+        dataset.GlueCrawlerName = f'{glue_etl_basename}-crawler'
+        dataset.GlueProfilingJobName = f'{glue_etl_basename}-profiler'
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
-        dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
+        dataset.GlueProfilingTriggerName = f'{glue_etl_basename}-trigger'
+        dataset.GlueDataQualityJobName = f'{glue_etl_basename}-dataquality'
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
+        dataset.GlueDataQualityTriggerName = f'{glue_etl_basename}-dqtrigger'
         return dataset
+
+    @staticmethod
+    def create_dataset_lock(session, dataset: Dataset):
+        dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
+        session.add(dataset_lock)
+        session.commit()
+
+    @staticmethod
+    def delete_dataset_lock(session, dataset: Dataset):
+        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
+        session.delete(dataset_lock)
+        session.commit()
 
     @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
@@ -169,15 +165,11 @@ class DatasetRepository(EnvironmentResource):
                 or_(
                     *[
                         DatasetTable.name.ilike('%' + data.get('term') + '%'),
-                        DatasetTable.GlueTableName.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
+                        DatasetTable.GlueTableName.ilike('%' + data.get('term') + '%'),
                     ]
                 )
             )
-        return paginate(
-            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
+        return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
 
     @staticmethod
     def update_dataset_activity(session, dataset, username):
@@ -212,11 +204,7 @@ class DatasetRepository(EnvironmentResource):
     @staticmethod
     def get_dataset_tables(session, dataset_uri):
         """return the dataset tables"""
-        return (
-            session.query(DatasetTable)
-            .filter(DatasetTable.datasetUri == dataset_uri)
-            .all()
-        )
+        return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).all()
 
     @staticmethod
     def delete_dataset(session, dataset) -> bool:
@@ -229,25 +217,15 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def list_all_active_datasets(session) -> [Dataset]:
-        return (
-            session.query(Dataset).filter(Dataset.deleted.is_(None)).all()
-        )
+        return session.query(Dataset).filter(Dataset.deleted.is_(None)).all()
 
     @staticmethod
     def get_dataset_by_bucket_name(session, bucket) -> [Dataset]:
-        return (
-            session.query(Dataset)
-            .filter(Dataset.S3BucketName == bucket)
-            .first()
-        )
+        return session.query(Dataset).filter(Dataset.S3BucketName == bucket).first()
 
     @staticmethod
     def count_dataset_tables(session, dataset_uri):
-        return (
-            session.query(DatasetTable)
-            .filter(DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
+        return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).count()
 
     @staticmethod
     def query_environment_group_datasets(session, env_uri, group_uri, filter) -> Query:
@@ -293,11 +271,7 @@ class DatasetRepository(EnvironmentResource):
     @staticmethod
     def query_environment_imported_datasets(session, uri, filter) -> Query:
         query = session.query(Dataset).filter(
-            and_(
-                Dataset.environmentUri == uri,
-                Dataset.deleted.is_(None),
-                Dataset.imported.is_(True)
-            )
+            and_(Dataset.environmentUri == uri, Dataset.deleted.is_(None), Dataset.imported.is_(True))
         )
         if filter and filter.get('term'):
             term = filter['term']
@@ -313,24 +287,20 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def paginated_environment_datasets(
-            session, uri, data=None,
+        session,
+        uri,
+        data=None,
     ) -> dict:
         return paginate(
-            query=DatasetRepository.query_environment_datasets(
-                session, uri, data
-            ),
+            query=DatasetRepository.query_environment_datasets(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    def paginated_environment_group_datasets(
-            session, env_uri, group_uri, data=None
-    ) -> dict:
+    def paginated_environment_group_datasets(session, env_uri, group_uri, data=None) -> dict:
         return paginate(
-            query=DatasetRepository.query_environment_group_datasets(
-                session, env_uri, group_uri, data
-            ),
+            query=DatasetRepository.query_environment_group_datasets(session, env_uri, group_uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -349,9 +319,7 @@ class DatasetRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def paginated_user_datasets(
-            session, username, groups, data=None
-    ) -> dict:
+    def paginated_user_datasets(session, username, groups, data=None) -> dict:
         return paginate(
             query=DatasetRepository._query_user_datasets(session, username, groups, data),
             page=data.get('page', 1),
@@ -360,14 +328,11 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def _query_user_datasets(session, username, groups, filter) -> Query:
-        query = (
-            session.query(Dataset)
-            .filter(
-                or_(
-                    Dataset.owner == username,
-                    Dataset.SamlAdminGroupName.in_(groups),
-                    Dataset.stewards.in_(groups),
-                )
+        query = session.query(Dataset).filter(
+            or_(
+                Dataset.owner == username,
+                Dataset.SamlAdminGroupName.in_(groups),
+                Dataset.stewards.in_(groups),
             )
         )
         if filter and filter.get('term'):
@@ -387,4 +352,4 @@ class DatasetRepository(EnvironmentResource):
         dataset.importedKmsKey = True if data.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if data.get('adminRoleName') else False
         if data.get('imported'):
-            dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else "SSE-S3"
+            dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else 'SSE-S3'

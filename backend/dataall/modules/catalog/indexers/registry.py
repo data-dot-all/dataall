@@ -9,13 +9,13 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 class Identifiable(Protocol):
     @classmethod
-    def uri(cls):
-        ...
+    def uri(cls): ...
 
 
 @dataclass
 class GlossaryDefinition:
     """Glossary's definition used for registration references of other modules"""
+
     target_type: str
     object_type: str
     model: Union[Type[Resource], Identifiable]  # should be an intersection, but python typing doesn't have one yet
@@ -27,6 +27,7 @@ class GlossaryDefinition:
 
 class GlossaryRegistry(UnionTypeRegistry):
     """Registry of glossary definition and API to retrieve and reindex data"""
+
     _DEFINITIONS: Dict[str, GlossaryDefinition] = {}
 
     @classmethod

@@ -8,19 +8,15 @@ class IAMPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # IAM - needed for consumption roles and for S3 sharing
             iam.PolicyStatement(
-                sid='IAMListGet',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'iam:ListRoles',
-                    'iam:Get*'
-                ], resources=['*']
+                sid='IAMListGet', effect=iam.Effect.ALLOW, actions=['iam:ListRoles', 'iam:Get*'], resources=['*']
             ),
             iam.PolicyStatement(
-                sid="PassRole",
+                sid='PassRole',
                 actions=[
                     'iam:PassRole',
                 ],

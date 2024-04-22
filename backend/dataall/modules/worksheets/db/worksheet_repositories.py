@@ -1,6 +1,7 @@
 """
 DAO layer that encapsulates the logic and interaction with the database for worksheets
 """
+
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
@@ -11,6 +12,7 @@ from dataall.modules.worksheets.db.worksheet_models import Worksheet, WorksheetQ
 
 class WorksheetRepository(EnvironmentResource):
     """DAO layer for worksheets"""
+
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
@@ -18,9 +20,7 @@ class WorksheetRepository(EnvironmentResource):
     def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(WorksheetQueryResult)
-            .filter(
-                WorksheetQueryResult.AwsAccountId == environment.AwsAccountId
-            )
+            .filter(WorksheetQueryResult.AwsAccountId == environment.AwsAccountId)
             .count()
         )
 
@@ -47,9 +47,7 @@ class WorksheetRepository(EnvironmentResource):
         return query
 
     @staticmethod
-    def paginated_user_worksheets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_worksheets(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=WorksheetRepository.query_user_worksheets(session, username, groups, data),
             page=data.get('page', WorksheetRepository._DEFAULT_PAGE),

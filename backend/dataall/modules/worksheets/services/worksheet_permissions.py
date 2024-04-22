@@ -1,5 +1,14 @@
-from dataall.core.permissions.permissions import TENANT_ALL, TENANT_ALL_WITH_DESC, RESOURCES_ALL, \
-    RESOURCES_ALL_WITH_DESC, ENVIRONMENT_INVITED, ENVIRONMENT_INVITATION_REQUEST, ENVIRONMENT_ALL
+from dataall.core.permissions.services.resources_permissions import (
+    RESOURCES_ALL,
+    RESOURCES_ALL_WITH_DESC,
+)
+from dataall.core.permissions.services.environment_permissions import (
+    ENVIRONMENT_INVITED,
+    ENVIRONMENT_INVITATION_REQUEST,
+    ENVIRONMENT_ALL,
+)
+
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 
 MANAGE_WORKSHEETS = 'MANAGE_WORKSHEETS'
 
@@ -37,4 +46,4 @@ ENVIRONMENT_INVITATION_REQUEST.append(RUN_ATHENA_QUERY)
 ENVIRONMENT_ALL.append(RUN_ATHENA_QUERY)
 
 RESOURCES_ALL.append(RUN_ATHENA_QUERY)
-RESOURCES_ALL_WITH_DESC[RUN_ATHENA_QUERY] = "Run Worksheet Athena queries on this environment"
+RESOURCES_ALL_WITH_DESC[RUN_ATHENA_QUERY] = 'Run Worksheet Athena queries on this environment'

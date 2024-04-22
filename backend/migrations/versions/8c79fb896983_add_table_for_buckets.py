@@ -5,6 +5,7 @@ Revises: 5781fdf1f877
 Create Date: 2023-09-06 12:01:53.841149
 
 """
+
 import os
 from sqlalchemy import orm, Column, String, Boolean, ForeignKey, DateTime, inspect
 from sqlalchemy.orm import query_expression
@@ -32,7 +33,7 @@ Base = declarative_base()
 
 class Dataset(Resource, Base):
     __tablename__ = 'dataset'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     organizationUri = Column(String, nullable=False)
     datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
     region = Column(String, default='eu-west-1')
@@ -107,9 +108,7 @@ class DatasetBucket(Resource, Base):
 class ShareObjectItem(Base):
     __tablename__ = 'share_object_item'
     shareUri = Column(String, nullable=False)
-    shareItemUri = Column(
-        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
-    )
+    shareItemUri = Column(String, default=utils.uuid('shareitem'), nullable=False, primary_key=True)
     itemType = Column(String, nullable=False)
     itemUri = Column(String, nullable=False)
     itemName = Column(String, nullable=False)
@@ -185,7 +184,7 @@ def column_exists(table_name, column_name):
     bind = op.get_context().bind
     insp = inspect(bind)
     columns = insp.get_columns(table_name)
-    return any(c["name"] == column_name for c in columns)
+    return any(c['name'] == column_name for c in columns)
 
 
 def downgrade():

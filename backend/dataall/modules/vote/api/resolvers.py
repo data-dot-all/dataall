@@ -17,25 +17,16 @@ def upvote(context, source, input=None):
     _required_param(param=input['targetUri'], name='URI')
     _required_param(param=input['targetType'], name='targetType')
     _required_param(param=input['upvote'], name='Upvote')
-    return VoteService.upvote(
-        targetUri=input['targetUri'],
-        targetType=input['targetType'],
-        upvote=input['upvote']
-    )
+    return VoteService.upvote(targetUri=input['targetUri'], targetType=input['targetType'], upvote=input['upvote'])
 
 
 def get_vote(context, source, targetUri: str = None, targetType: str = None):
     _required_param(param=targetUri, name='URI')
     _required_param(param=targetType, name='targetType')
-    return VoteService.get_vote(
-        targetUri=targetUri,
-        targetType=targetType
-    )
+    return VoteService.get_vote(targetUri=targetUri, targetType=targetType)
 
 
-def count_upvotes(
-    context, source, targetUri: str = None, targetType: str = None
-):
+def count_upvotes(context, source, targetUri: str = None, targetType: str = None):
     _required_param(param=targetUri, name='URI')
     _required_param(param=targetType, name='targetType')
     return VoteService.count_upvotes(targetUri=targetUri, targetType=targetType)

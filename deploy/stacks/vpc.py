@@ -11,6 +11,7 @@ from aws_cdk import (
 
 from .pyNestedStack import pyNestedClass
 
+
 class VpcStack(pyNestedClass):
     def __init__(
         self,
@@ -27,22 +28,22 @@ class VpcStack(pyNestedClass):
         super().__init__(scope, id, **kwargs)
 
         if vpc_id:
-            self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
+            self.vpc = ec2.Vpc.from_lookup(self, 'vpc', vpc_id=vpc_id)
         else:
             self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
-                self, id=f'VpceSg', security_group_id=vpc_endpoints_sg, mutable=False
+                self, id='VpceSg', security_group_id=vpc_endpoints_sg, mutable=False
             )
         else:
             self.vpce_security_group = ec2.SecurityGroup(
-                self, 
-                'vpc-sg', 
+                self,
+                'vpc-sg',
                 security_group_name=f'{resource_prefix}-{envname}-vpce-sg',
-                vpc=cast(ec2.IVpc, self.vpc), 
-                allow_all_outbound=False, 
-                disable_inline_rules=True
+                vpc=cast(ec2.IVpc, self.vpc),
+                allow_all_outbound=False,
+                disable_inline_rules=True,
             )
             self._create_vpc_endpoints()
 
@@ -66,9 +67,7 @@ class VpcStack(pyNestedClass):
         )
 
         if self.vpc.public_subnets:
-            self.public_subnets = [
-                subnet.subnet_id for subnet in self.vpc.public_subnets
-            ]
+            self.public_subnets = [subnet.subnet_id for subnet in self.vpc.public_subnets]
             ssm.StringParameter(
                 self,
                 'VpcPublicSubnets',
@@ -116,9 +115,7 @@ class VpcStack(pyNestedClass):
             max_azs=2,
             cidr=cidr or '172.31.0.0/16',
             subnet_configuration=[
-                ec2.SubnetConfiguration(
-                    subnet_type=ec2.SubnetType.PUBLIC, name='Public', cidr_mask=20
-                ),
+                ec2.SubnetConfiguration(subnet_type=ec2.SubnetType.PUBLIC, name='Public', cidr_mask=20),
                 ec2.SubnetConfiguration(
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT,
                     name='Private',
@@ -130,52 +127,52 @@ class VpcStack(pyNestedClass):
 
         if restricted_nacl:
             nacl = ec2.NetworkAcl(
-                self, "RestrictedNACL",
+                self,
+                'RestrictedNACL',
                 vpc=self.vpc,
                 network_acl_name=f'{resource_prefix}-{envname}-restrictedNACL',
                 subnet_selection=ec2.SubnetSelection(subnets=self.vpc.private_subnets + self.vpc.public_subnets),
             )
             nacl.add_entry(
-                "entryOutbound",
+                'entryOutbound',
                 cidr=ec2.AclCidr.any_ipv4(),
                 traffic=ec2.AclTraffic.all_traffic(),
                 rule_number=100,
                 direction=ec2.TrafficDirection.EGRESS,
-                rule_action=ec2.Action.ALLOW
+                rule_action=ec2.Action.ALLOW,
             )
             nacl.add_entry(
-                "entryInboundHTTPS",
+                'entryInboundHTTPS',
                 cidr=ec2.AclCidr.any_ipv4(),
                 traffic=ec2.AclTraffic.tcp_port(443),
                 rule_number=100,
                 direction=ec2.TrafficDirection.INGRESS,
-                rule_action=ec2.Action.ALLOW
+                rule_action=ec2.Action.ALLOW,
             )
             nacl.add_entry(
-                "entryInboundHTTP",
+                'entryInboundHTTP',
                 cidr=ec2.AclCidr.any_ipv4(),
                 traffic=ec2.AclTraffic.tcp_port(80),
                 rule_number=101,
                 direction=ec2.TrafficDirection.INGRESS,
-                rule_action=ec2.Action.ALLOW
+                rule_action=ec2.Action.ALLOW,
             )
             nacl.add_entry(
-                "entryInboundCustomTCP",
+                'entryInboundCustomTCP',
                 cidr=ec2.AclCidr.any_ipv4(),
                 traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
                 rule_number=102,
                 direction=ec2.TrafficDirection.INGRESS,
-                rule_action=ec2.Action.ALLOW
+                rule_action=ec2.Action.ALLOW,
             )
             nacl.add_entry(
-                "entryInboundAllInVPC",
+                'entryInboundAllInVPC',
                 cidr=ec2.AclCidr.ipv4(self.vpc.vpc_cidr_block),
                 traffic=ec2.AclTraffic.all_traffic(),
                 rule_number=103,
                 direction=ec2.TrafficDirection.INGRESS,
-                rule_action=ec2.Action.ALLOW
+                rule_action=ec2.Action.ALLOW,
             )
-
 
         flowlog_log_group = logs.LogGroup(
             self,
@@ -202,9 +199,7 @@ class VpcStack(pyNestedClass):
             self,
             f'{resource_prefix}-{envname}-flowlogs-role',
             assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com'),
-            inline_policies={
-                f'{resource_prefix}-{envname}-flowlogs-policy': iam_policy
-            },
+            inline_policies={f'{resource_prefix}-{envname}-flowlogs-policy': iam_policy},
         )
         ec2.CfnFlowLog(
             self,

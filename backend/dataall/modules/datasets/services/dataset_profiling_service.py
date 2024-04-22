@@ -1,11 +1,10 @@
 import json
 
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
@@ -21,7 +20,7 @@ from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_T
 
 class DatasetProfilingService:
     @staticmethod
-    @has_resource_permission(PROFILE_DATASET_TABLE)
+    @ResourcePolicyService.has_resource_permission(PROFILE_DATASET_TABLE)
     def start_profiling_run(uri, table_uri, glue_table_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -58,14 +57,12 @@ class DatasetProfilingService:
     def resolve_profiling_run_status(run_uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            task = Task(
-                targetUri=run_uri, action='glue.job.profiling_run_status'
-            )
+            task = Task(targetUri=run_uri, action='glue.job.profiling_run_status')
             session.add(task)
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
     @staticmethod
-    @has_resource_permission(GET_DATASET)
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
     def list_profiling_runs(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, uri)
@@ -74,9 +71,7 @@ class DatasetProfilingService:
     def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session, table_uri=uri)
-            run: DatasetProfilingRun = (
-                DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
-            )
+            run: DatasetProfilingRun = DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
 
             if run:
                 if not run.results:
@@ -89,8 +84,8 @@ class DatasetProfilingService:
                         run.results = results
 
                 if not run.results:
-                    run_with_results = (
-                        DatasetProfilingRepository.get_table_last_profiling_run_with_results(session, uri)
+                    run_with_results = DatasetProfilingRepository.get_table_last_profiling_run_with_results(
+                        session, uri
                     )
                     if run_with_results:
                         run = run_with_results
@@ -106,12 +101,13 @@ class DatasetProfilingService:
     @staticmethod
     def _check_preview_permissions_if_needed(session, table_uri):
         context = get_context()
-        table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
-            session, table_uri
-        )
+        table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-        if ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality) != ConfidentialityClassification.Unclassified.value:
-            ResourcePolicy.check_user_resource_permission(
+        if (
+            ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
+            != ConfidentialityClassification.Unclassified.value
+        ):
+            ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
                 groups=context.groups,

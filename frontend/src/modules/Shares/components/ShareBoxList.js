@@ -15,6 +15,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import SecurityIcon from '@mui/icons-material/Security';
+import { LoadingButton } from '@mui/lab';
 import {
   listAllGroups,
   listAllConsumptionRoles,
@@ -24,6 +26,7 @@ import {
 import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
+import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
 import { ShareStatusList } from '../constants';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
@@ -45,7 +48,16 @@ export const ShareBoxList = (props) => {
   const [roleOptions, setRoleOptions] = useState([]);
   const [datasetGroupOptions, setDatasetGroupOptions] = useState([]);
   const [datasets, setDatasets] = useState([]);
+  const [isVerifyObjectItemsModalOpen, setIsVerifyObjectItemsModalOpen] =
+    useState(false);
   const statusOptions = ShareStatusList;
+
+  const handleVerifyObjectItemsModalOpen = () => {
+    setIsVerifyObjectItemsModalOpen(true);
+  };
+  const handleVerifyObjectItemsModalClose = () => {
+    setIsVerifyObjectItemsModalOpen(false);
+  };
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
@@ -301,6 +313,20 @@ export const ShareBoxList = (props) => {
           py: 1
         }}
       >
+        {dataset && (
+          <LoadingButton
+            color="info"
+            align="right"
+            startIcon={<SecurityIcon />}
+            sx={{ m: 1 }}
+            onClick={handleVerifyObjectItemsModalOpen}
+            type="button"
+            variant="outlined"
+          >
+            Verify Share Objects Item(s) Health Status
+          </LoadingButton>
+        )}
+
         <Container maxWidth={settings.compact ? 'xl' : false}>
           <Box
             sx={{
@@ -494,6 +520,15 @@ export const ShareBoxList = (props) => {
           </Box>
         </Container>
       </Box>
+      {isVerifyObjectItemsModalOpen && (
+        <ShareObjectSelectorModal
+          shares={items.nodes}
+          dataset={dataset}
+          onApply={handleVerifyObjectItemsModalClose}
+          onClose={handleVerifyObjectItemsModalClose}
+          open={isVerifyObjectItemsModalOpen}
+        />
+      )}
     </>
   );
 };

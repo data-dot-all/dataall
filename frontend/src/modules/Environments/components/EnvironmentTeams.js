@@ -648,6 +648,64 @@ export const EnvironmentTeams = ({ environment }) => {
                     valueOptions: groupOptions.map((group) => group.label)
                   },
                   {
+                    field: 'dataallManaged',
+                    headerName: 'Policy Management',
+                    valueGetter: (params) => {
+                      return `${
+                        params.row.dataallManaged
+                          ? 'Data.all managed'
+                          : 'Customer managed'
+                      }`;
+                    },
+                    flex: 0.6
+                  },
+                  {
+                    field: 'policiesNames',
+                    headerName: 'IAM Policies',
+                    flex: 0.5,
+                    renderCell: (params: GridRenderCellParams<any, Date>) => (
+                      <Box>
+                        <Label
+                          sx={{ ml: 5 }}
+                          color={
+                            params.row.managedPolicies
+                              .map((policy) => policy.attached)
+                              .includes(false)
+                              ? 'error'
+                              : 'success'
+                          }
+                        >
+                          {params.row.managedPolicies
+                            .map((policy) => policy.attached)
+                            .includes(false)
+                            ? 'Not Attached'
+                            : 'Attached'}
+                        </Label>
+                        <LoadingButton
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(
+                              params.row.managedPolicies.map(
+                                (policy) => policy.policy_name
+                              )
+                            );
+                            enqueueSnackbar(
+                              'Policy Name is copied to clipboard',
+                              {
+                                anchorOrigin: {
+                                  horizontal: 'right',
+                                  vertical: 'top'
+                                },
+                                variant: 'success'
+                              }
+                            );
+                          }}
+                        >
+                          <CopyAllOutlined />
+                        </LoadingButton>
+                      </Box>
+                    )
+                  },
+                  {
                     field: 'actions',
                     headerName: 'Actions',
                     flex: 0.5,

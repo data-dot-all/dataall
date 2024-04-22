@@ -16,10 +16,9 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
-from dataall.core.permissions.db import save_permissions_with_tenant
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.base.db import get_engine
-from dataall.core.permissions import permissions
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
@@ -37,8 +36,6 @@ REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
-
-save_permissions_with_tenant(ENGINE)
 
 
 def resolver_adapter(resolver):
@@ -72,9 +69,7 @@ def get_cognito_groups(claims):
     groups = list()
     saml_groups = claims.get('custom:saml.groups', '')
     if len(saml_groups):
-        groups: list = (
-            saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
-        )
+        groups: list = saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
     cognito_groups = claims.get('cognito:groups', '')
     if len(cognito_groups):
         groups.extend(cognito_groups.split(','))
@@ -138,25 +133,21 @@ def handler(event, context):
         log.debug('username is %s', username)
         try:
             groups = []
-            if (os.environ.get('custom_auth', None)):
+            if os.environ.get('custom_auth', None):
                 groups.extend(get_custom_groups(user_id))
             else:
                 groups.extend(get_cognito_groups(claims))
-            log.debug('groups are %s', ",".join(groups))
+            log.debug('groups are %s', ','.join(groups))
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = TenantPolicy.find_tenant_policy(
-                        session, group, 'dataall'
-                    )
+                    policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
                     if not policy:
-                        print(
-                            f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
-                        )
-                        TenantPolicy.attach_group_tenant_policy(
+                        print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
+                        TenantPolicyService.attach_group_tenant_policy(
                             session=session,
                             group=group,
-                            permissions=permissions.TENANT_ALL,
-                            tenant_name='dataall',
+                            permissions=TENANT_ALL,
+                            tenant_name=TenantPolicyService.TENANT_NAME,
                         )
 
         except Exception as e:
@@ -174,9 +165,11 @@ def handler(event, context):
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{ENVNAME}/reauth/apis").split(',')
-        except Exception as e:
-            log.info("No ReAuth APIs Found in SSM")
+            reauth_apis = ParameterStoreManager.get_parameter_value(
+                region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+            ).split(',')
+        except Exception:
+            log.info('No ReAuth APIs Found in SSM')
             reauth_apis = None
     else:
         raise Exception(f'Could not initialize user context from event {event}')
@@ -187,23 +180,21 @@ def handler(event, context):
     if reauth_apis and query.get('operationName', None) in reauth_apis:
         now = datetime.datetime.now(datetime.timezone.utc)
         try:
-            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims["auth_time"]), tz=datetime.timezone.utc)
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims['auth_time']), tz=datetime.timezone.utc)
             if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
-                raise Exception("ReAuth")
+                raise Exception('ReAuth')
         except Exception as e:
             log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
             response = {
-                "data": {query.get('operationName', 'operation') : None},
-                "errors": [
+                'data': {query.get('operationName', 'operation'): None},
+                'errors': [
                     {
-                        "message": f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
-                        "locations": None,
-                        "path": [query.get('operationName', '')],
-                        "extensions": {
-                            "code": "REAUTH"
-                        }
+                        'message': f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                        'locations': None,
+                        'path': [query.get('operationName', '')],
+                        'extensions': {'code': 'REAUTH'},
                     }
-                ]
+                ],
             }
             return {
                 'statusCode': 401,
@@ -213,12 +204,10 @@ def handler(event, context):
                     'Access-Control-Allow-Headers': '*',
                     'Access-Control-Allow-Methods': '*',
                 },
-                'body': json.dumps(response)
+                'body': json.dumps(response),
             }
 
-    success, response = graphql_sync(
-        schema=executable_schema, data=query, context_value=app_context
-    )
+    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
 
     dispose_context()
     response = json.dumps(response)

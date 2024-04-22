@@ -29,11 +29,7 @@ class SchemaVisitor:
         for object_type in self.schema.types:
             self.enter_type(object_type=object_type, schema=self.schema)
             for field in object_type.fields:
-                self.enter_field(
-                    field=field, object_type=object_type, schema=self.schema
-                )
-                self.leave_field(
-                    field=field, object_type=object_type, schema=self.schema
-                )
+                self.enter_field(field=field, object_type=object_type, schema=self.schema)
+                self.leave_field(field=field, object_type=object_type, schema=self.schema)
             self.leave_type(object_type=object_type, schema=self.schema)
         self.leave_schema(schema=self.schema)

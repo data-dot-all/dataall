@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 class S3DatasetBucketPolicyClient:
     def __init__(self, dataset: Dataset):
-        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
+        session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = session.client('s3')
         self._dataset = dataset
 
@@ -35,9 +35,7 @@ class S3DatasetBucketPolicyClient:
                     f"resource='{dataset.S3BucketName}')"
                 )
             else:
-                log.exception(
-                    f"Failed to get '{dataset.S3BucketName}' policy in {dataset.AwsAccountId}"
-                )
+                log.exception(f"Failed to get '{dataset.S3BucketName}' policy in {dataset.AwsAccountId}")
             policy = {
                 'Version': '2012-10-17',
                 'Statement': [
@@ -49,9 +47,7 @@ class S3DatasetBucketPolicyClient:
                             f'arn:aws:s3:::{dataset.S3BucketName}',
                             f'arn:aws:s3:::{dataset.S3BucketName}/*',
                         ],
-                        'Principal': {
-                            'AWS': f'arn:aws:iam::{dataset.AwsAccountId}:root'
-                        },
+                        'Principal': {'AWS': f'arn:aws:iam::{dataset.AwsAccountId}:root'},
                     }
                 ],
             }
@@ -67,20 +63,12 @@ class S3DatasetBucketPolicyClient:
         }
         try:
             policy_json = json.dumps(policy) if isinstance(policy, dict) else policy
-            log.info(
-                f"Putting new bucket policy on '{dataset.S3BucketName}' policy {policy_json}"
-            )
-            response = self._client.put_bucket_policy(
-                Bucket=dataset.S3BucketName, Policy=policy_json
-            )
+            log.info(f"Putting new bucket policy on '{dataset.S3BucketName}' policy {policy_json}")
+            response = self._client.put_bucket_policy(Bucket=dataset.S3BucketName, Policy=policy_json)
             log.info(f'Bucket Policy updated: {response}')
             update_policy_report.update({'status': 'SUCCEEDED'})
         except ClientError as e:
-            log.error(
-                f'Failed to update bucket policy '
-                f"on '{dataset.S3BucketName}' policy {policy} "
-                f'due to {e} '
-            )
+            log.error(f'Failed to update bucket policy ' f"on '{dataset.S3BucketName}' policy {policy} " f'due to {e} ')
             update_policy_report.update({'status': 'FAILED'})
 
         return update_policy_report

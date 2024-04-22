@@ -10,11 +10,9 @@ class SagemakerNotebook(Resource, Base):
     """Describes ORM model for sagemaker notebooks"""
 
     __tablename__ = 'sagemaker_notebook'
-    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     notebookUri = Column(String, primary_key=True, default=utils.uuid('notebook'))
-    NotebookInstanceName = Column(
-        String, nullable=False, default=utils.slugifier('label')
-    )
+    NotebookInstanceName = Column(String, nullable=False, default=utils.slugifier('label'))
     NotebookInstanceStatus = Column(String, nullable=False)
     AWSAccountId = Column(String, nullable=False)
     RoleArn = Column(String, nullable=False)

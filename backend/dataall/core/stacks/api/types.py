@@ -1,6 +1,11 @@
 from dataall.base.api import gql
 from dataall.core.stacks.api.resolvers import (
-    resolve_link, resolve_resources, resolve_outputs, resolve_events, resolve_task_id, resolve_error
+    resolve_link,
+    resolve_resources,
+    resolve_outputs,
+    resolve_events,
+    resolve_task_id,
+    resolve_error,
 )
 
 Stack = gql.ObjectType(

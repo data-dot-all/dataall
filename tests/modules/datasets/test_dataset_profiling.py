@@ -42,9 +42,7 @@ def test_start_profiling_run_authorized(client, dataset_fixture, table_fixture, 
     profiling = response.data.startDatasetProfilingRun
     assert profiling.profilingRunUri
     with db.scoped_session() as session:
-        profiling = session.query(DatasetProfilingRun).get(
-            profiling.profilingRunUri
-        )
+        profiling = session.query(DatasetProfilingRun).get(profiling.profilingRunUri)
         profiling.GlueJobRunId = 'jr_111111111111'
         session.commit()
 
@@ -54,9 +52,7 @@ def test_start_profiling_run_unauthorized(dataset_fixture, table_fixture, client
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_get_table_profiling_run_authorized(
-    client, dataset_fixture, table_fixture, db, user, group
-):
+def test_get_table_profiling_run_authorized(client, dataset_fixture, table_fixture, db, user, group):
     response = client.query(
         """
         query getDatasetTableProfilingRun($tableUri:String!){
@@ -76,9 +72,7 @@ def test_get_table_profiling_run_authorized(
     assert response.data.getDatasetTableProfilingRun['GlueTableName'] == 'table1'
 
 
-def test_get_table_profiling_run_unauthorized(
-    client, dataset_fixture, table_confidential_fixture, db, user2, group2
-):
+def test_get_table_profiling_run_unauthorized(client, dataset_fixture, table_confidential_fixture, db, user2, group2):
     response = client.query(
         """
         query getDatasetTableProfilingRun($tableUri:String!){
@@ -96,9 +90,7 @@ def test_get_table_profiling_run_unauthorized(
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_list_table_profiling_runs_authorized(
-    client, dataset_fixture, table_fixture, db, user, group
-):
+def test_list_table_profiling_runs_authorized(client, dataset_fixture, table_fixture, db, user, group):
     response = client.query(
         """
         query listDatasetTableProfilingRuns($tableUri:String!){
@@ -119,18 +111,11 @@ def test_list_table_profiling_runs_authorized(
     )
     assert response.data.listDatasetTableProfilingRuns['count'] == 1
     assert response.data.listDatasetTableProfilingRuns['nodes'][0]['profilingRunUri']
-    assert (
-        response.data.listDatasetTableProfilingRuns['nodes'][0]['status'] == 'RUNNING'
-    )
-    assert (
-        response.data.listDatasetTableProfilingRuns['nodes'][0]['GlueTableName']
-        == 'table1'
-    )
+    assert response.data.listDatasetTableProfilingRuns['nodes'][0]['status'] == 'RUNNING'
+    assert response.data.listDatasetTableProfilingRuns['nodes'][0]['GlueTableName'] == 'table1'
 
 
-def test_list_table_profiling_runs_unauthorized(
-    client, dataset_fixture, table_confidential_fixture, db, user2, group2
-):
+def test_list_table_profiling_runs_unauthorized(client, dataset_fixture, table_confidential_fixture, db, user2, group2):
     response = client.query(
         """
         query listDatasetTableProfilingRuns($tableUri:String!){

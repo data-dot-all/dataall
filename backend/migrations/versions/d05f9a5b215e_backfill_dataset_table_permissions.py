@@ -5,6 +5,7 @@ Revises: 04d92886fabe
 Create Date: 2022-12-22 10:18:55.835315
 
 """
+
 from alembic import op
 from sqlalchemy import orm, Column, String, Text, DateTime, and_
 from sqlalchemy.orm import query_expression
@@ -12,11 +13,17 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.base.db import utils, Resource
 from datetime import datetime
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareableType, ShareItemStatus
+
+from dataall.core.permissions.services.permission_service import PermissionService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+    ShareObjectStatus,
+    ShareableType,
+    ShareItemStatus,
+)
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -56,9 +63,7 @@ class DatasetTable(Resource, Base):
 class ShareObjectItem(Base):
     __tablename__ = 'share_object_item'
     shareUri = Column(String, nullable=False)
-    shareItemUri = Column(
-        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
-    )
+    shareItemUri = Column(String, default=utils.uuid('shareitem'), nullable=False, primary_key=True)
     itemType = Column(String, nullable=False)
     itemUri = Column(String, nullable=False)
     itemName = Column(String, nullable=False)
@@ -79,7 +84,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        Permission.init_permissions(session)
+        PermissionService.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -93,9 +98,13 @@ def upgrade():
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
 
-            groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
+            groups = {
+                dataset.SamlAdminGroupName,
+                env.SamlGroupName,
+                dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
+            }
             for group in groups:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     resource_uri=table.tableUri,
                     group=group,
@@ -110,17 +119,21 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Back-filling dataset table permissions for shared principals...')
-        share_table_items: [ShareObjectItem] = session.query(ShareObjectItem).filter(
-            (
-                and_(
-                    ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                    ShareObjectItem.itemType == ShareableType.Table.value
+        share_table_items: [ShareObjectItem] = (
+            session.query(ShareObjectItem)
+            .filter(
+                (
+                    and_(
+                        ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        ShareObjectItem.itemType == ShareableType.Table.value,
+                    )
                 )
             )
-        ).all()
+            .all()
+        )
         for shared_table in share_table_items:
             share = ShareObjectRepository.get_share_by_uri(session, shared_table.shareUri)
-            ResourcePolicy.attach_resource_policy(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=share.principalId,
                 permissions=DATASET_TABLE_READ,

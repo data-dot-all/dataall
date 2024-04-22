@@ -5,6 +5,7 @@ Revises: e72009ab3b9a
 Create Date: 2022-06-10 15:27:40.777295
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -16,12 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        'datapipeline', sa.Column('inputDatasetUri', sa.String(), nullable=True)
-    )
-    op.add_column(
-        'datapipeline', sa.Column('outputDatasetUri', sa.String(), nullable=True)
-    )
+    op.add_column('datapipeline', sa.Column('inputDatasetUri', sa.String(), nullable=True))
+    op.add_column('datapipeline', sa.Column('outputDatasetUri', sa.String(), nullable=True))
     pass
 
 

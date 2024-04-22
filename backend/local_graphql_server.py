@@ -1,6 +1,5 @@
 import os
 
-import boto3
 import jwt
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
@@ -9,9 +8,9 @@ from flask_cors import CORS
 
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
-from dataall.core.permissions import permissions
-from dataall.core.permissions.db import save_permissions_with_tenant
-from dataall.core.permissions.db.tenant_policy_repositories import TenantPolicy
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+
 from dataall.base.db import get_engine, Base
 from dataall.base.searchproxy import connect, run_query
 from dataall.base.loader import load_modules, ImportMode
@@ -33,12 +32,10 @@ logger.info('Connected')
 # create_schema_and_tables(engine, envname=ENVNAME)
 load_modules(modes={ImportMode.API, ImportMode.HANDLERS})
 Base.metadata.create_all(engine.engine)
-CDKPROXY_URL = (
-    'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
-)
-config.set_property("cdk_proxy_url", CDKPROXY_URL)
+CDKPROXY_URL = 'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
+config.set_property('cdk_proxy_url', CDKPROXY_URL)
 
-save_permissions_with_tenant(engine)
+TenantPolicyService.save_permissions_with_tenant(engine)
 
 
 class Context:
@@ -61,17 +58,12 @@ def request_context(headers, mock=False):
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')
         try:
-            decoded = jwt.decode(headers.get('Authorization'), options={"verify_signature": False})
+            decoded = jwt.decode(headers.get('Authorization'), options={'verify_signature': False})
             username = decoded.get('email', 'anonymous')
             groups = []
             saml_groups = decoded.get('custom:saml.groups', [])
             if len(saml_groups):
-                groups: list = (
-                    saml_groups.replace('[', '')
-                    .replace(']', '')
-                    .replace(', ', ',')
-                    .split(',')
-                )
+                groups: list = saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
             cognito_groups = decoded.get('cognito:groups', [])
             groups.extend(cognito_groups)
         except Exception as e:
@@ -80,23 +72,17 @@ def request_context(headers, mock=False):
 
     for group in groups:
         with engine.scoped_session() as session:
-            TenantPolicy.attach_group_tenant_policy(
+            TenantPolicyService.attach_group_tenant_policy(
                 session=session,
                 group=group,
-                permissions=permissions.TENANT_ALL,
-                tenant_name='dataall',
+                permissions=TENANT_ALL,
+                tenant_name=TenantPolicyService.TENANT_NAME,
             )
 
     set_context(RequestContext(db_engine=engine, username=username, groups=groups, user_id=username))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
-    context = Context(
-        engine=engine,
-        schema=schema,
-        username=username,
-        groups=groups,
-        user_id=username
-    )
+    context = Context(engine=engine, schema=schema, username=username, groups=groups, user_id=username)
     return context.__dict__
 
 

@@ -8,6 +8,7 @@ class SSMPivotRole(PivotRoleStatementSet):
     It allows pivot role to:
     - ....
     """
+
     def get_statements(self):
         statements = [
             # SSM Parameter Store

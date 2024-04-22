@@ -5,8 +5,10 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
+  FormControlLabel,
   FormHelperText,
   MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -108,7 +110,14 @@ export const RequestAccessModal = (props) => {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionRoleUri,
-            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join('')
+            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
+            dataallManaged: g.dataallManaged,
+            isSharePolicyAttached: g.managedPolicies.find(
+              (policy) => policy.policy_type === 'SharePolicy'
+            ).attached,
+            policyName: g.managedPolicies.find(
+              (policy) => policy.policy_type === 'SharePolicy'
+            ).policy_name
           }))
         );
       } else {
@@ -145,7 +154,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -161,7 +171,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -177,7 +188,8 @@ export const RequestAccessModal = (props) => {
               groupUri: values.groupUri,
               principalId: principal,
               principalType: type,
-              requestPurpose: values.comment
+              requestPurpose: values.comment,
+              attachMissingPolicies: values.attachMissingPolicies
             }
           })
         );
@@ -237,7 +249,8 @@ export const RequestAccessModal = (props) => {
           <Formik
             initialValues={{
               environment: '',
-              comment: ''
+              comment: '',
+              attachMissingPolicies: false
             }}
             validationSchema={Yup.object().shape({
               environment: Yup.object().required('*Environment is required'),
@@ -418,15 +431,19 @@ export const RequestAccessModal = (props) => {
                                 onChange={(event) => {
                                   setFieldValue(
                                     'consumptionRole',
+                                    event.target.value.value
+                                  );
+                                  setFieldValue(
+                                    'consumptionRoleObj',
                                     event.target.value
                                   );
                                 }}
                                 select
-                                value={values.consumptionRole}
+                                value={values.consumptionRoleObj}
                                 variant="outlined"
                               >
                                 {roleOptions.map((role) => (
-                                  <MenuItem key={role.value} value={role.value}>
+                                  <MenuItem key={role.value} value={role}>
                                     {role.label}
                                   </MenuItem>
                                 ))}
@@ -452,6 +469,56 @@ export const RequestAccessModal = (props) => {
                         )}
                       </CardContent>
                     </Box>
+                  )}
+
+                  {!values.consumptionRole ||
+                  values.consumptionRoleObj.dataallManaged ||
+                  values.consumptionRoleObj.isSharePolicyAttached ? (
+                    <Box />
+                  ) : (
+                    <CardContent sx={{ ml: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={values.attachMissingPolicies}
+                            onChange={handleChange}
+                            color="primary"
+                            edge="start"
+                            name="attachMissingPolicies"
+                          />
+                        }
+                        label={
+                          <div>
+                            Let Data.All attach policies to this role
+                            <Typography
+                              color="textSecondary"
+                              component="p"
+                              variant="caption"
+                            ></Typography>
+                            {values.consumptionRoleObj &&
+                            !(
+                              values.consumptionRoleObj.dataallManaged ||
+                              values.consumptionRoleObj.isSharePolicyAttached ||
+                              values.attachMissingPolicies
+                            ) ? (
+                              <FormHelperText error>
+                                Selected consumption role is managed by
+                                customer, but the share policy{' '}
+                                <strong>
+                                  {values.consumptionRoleObj.policyName}
+                                </strong>{' '}
+                                is not attached.
+                                <br />
+                                Please attach it or let Data.all attach it for
+                                you.
+                              </FormHelperText>
+                            ) : (
+                              ''
+                            )}
+                          </div>
+                        }
+                      />
+                    </CardContent>
                   )}
                   <CardContent>
                     <TextField
@@ -486,7 +553,15 @@ export const RequestAccessModal = (props) => {
                     fullWidth
                     startIcon={<SendIcon fontSize="small" />}
                     color="primary"
-                    disabled={isSubmitting}
+                    disabled={
+                      isSubmitting ||
+                      (values.consumptionRoleObj &&
+                        !(
+                          values.consumptionRoleObj.dataallManaged ||
+                          values.consumptionRoleObj.isSharePolicyAttached ||
+                          values.attachMissingPolicies
+                        ))
+                    }
                     type="submit"
                     variant="contained"
                   >

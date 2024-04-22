@@ -4,9 +4,7 @@ def test_update_stack(
     group,
     env_fixture,
 ):
-    response = update_stack_query(
-        client, env_fixture.environmentUri, 'environment', group.name
-    )
+    response = update_stack_query(client, env_fixture.environmentUri, 'environment', group.name)
     assert response.data.updateStack.targetUri == env_fixture.environmentUri
 
 

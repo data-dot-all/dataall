@@ -2,24 +2,23 @@ import { SyncAlt } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { Box, Card, Dialog, Divider, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getShareObject, revokeItemsShareObject } from '../services';
+import { getShareObject } from '../services';
 import { generateShareItemLabel } from 'utils';
 
-export const RevokeShareItemsModal = (props) => {
+export const ShareItemsSelectorModal = (props) => {
   const client = useClient();
-  const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
-  const { enqueueSnackbar } = useSnackbar();
+  const { share, onApply, onClose, open, submit, name, filter, ...other } =
+    props;
   const [rows, setRows] = useState([]);
   const dispatch = useDispatch();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectionModel, setSelectionModel] = useState([]);
   const [pageSize, setPageSize] = useState(5);
 
@@ -28,12 +27,7 @@ export const RevokeShareItemsModal = (props) => {
     const response = await client.query(
       getShareObject({
         shareUri: params.uri,
-        filter: {
-          ...Defaults.filter,
-          pageSize: 1000,
-          isShared: true,
-          isRevokable: true
-        }
+        filter: filter
       })
     );
     if (!response.errors) {
@@ -51,29 +45,9 @@ export const RevokeShareItemsModal = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri, Defaults.filter]);
 
-  const revoke = async () => {
+  const submitting = async (shareUri, selectionModel) => {
     setLoading(true);
-    const response = await client.mutate(
-      revokeItemsShareObject({
-        input: {
-          shareUri: share.shareUri,
-          revokedItemUris: selectionModel
-        }
-      })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Items revoked', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await fetchShareItems();
-      reloadSharedItems(true);
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
+    await submit(shareUri, selectionModel);
     setLoading(false);
   };
 
@@ -106,12 +80,10 @@ export const RevokeShareItemsModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Revoke access to items from share object {share.dataset.datasetName}
+          {name} access to items from share object {share.dataset.datasetName}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          {
-            'After selecting the items that you want to revoke, click on Revoke Selected Items'
-          }
+          After selecting the items, click {name} on Selected Items
         </Typography>
         <Divider />
         <Box sx={{ p: 3 }} />
@@ -131,7 +103,7 @@ export const RevokeShareItemsModal = (props) => {
             />
           ) : (
             <Typography color="textPrimary" variant="subtitle2">
-              No items to revoke.
+              No items to {name.toLowerCase()}.
             </Typography>
           )}
         </Card>
@@ -146,12 +118,12 @@ export const RevokeShareItemsModal = (props) => {
           <LoadingButton
             loading={loading}
             color="primary"
-            onClick={revoke}
+            onClick={() => submitting(share.shareUri, selectionModel)}
             startIcon={<SyncAlt fontSize="small" />}
             sx={{ m: 1 }}
             variant="outlined"
           >
-            Revoke Selected Items
+            {name} Selected Items
           </LoadingButton>
         </Box>
       </Box>
@@ -159,10 +131,12 @@ export const RevokeShareItemsModal = (props) => {
   );
 };
 
-RevokeShareItemsModal.propTypes = {
+ShareItemsSelectorModal.propTypes = {
   share: PropTypes.object.isRequired,
   onApply: PropTypes.func,
   onClose: PropTypes.func,
-  reloadSharedItems: PropTypes.func,
-  open: PropTypes.bool.isRequired
+  open: PropTypes.bool.isRequired,
+  submit: PropTypes.func.isRequired,
+  name: PropTypes.string.isRequired,
+  filter: PropTypes.object
 };

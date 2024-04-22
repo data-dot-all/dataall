@@ -3,7 +3,7 @@ from dataall.base.api import gql
 from dataall.modules.datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,
-    resolve_glossary_terms
+    resolve_glossary_terms,
 )
 
 TablePermission = gql.ObjectType(
@@ -75,9 +75,7 @@ DatasetTableSearchResult = gql.ObjectType(
     ],
 )
 
-DatasetTableRecord = gql.ObjectType(
-    name='DatasetTableRecord', fields=[gql.Field(name='data', type=gql.String)]
-)
+DatasetTableRecord = gql.ObjectType(name='DatasetTableRecord', fields=[gql.Field(name='data', type=gql.String)])
 
 DatasetTableMetadataItem = gql.ObjectType(
     name='DatasetTableMetadataItem',
@@ -92,5 +90,5 @@ SharedDatasetTableItem = gql.ObjectType(
     fields=[
         gql.Field(name='tableUri', type=gql.String),
         gql.Field(name='GlueTableName', type=gql.String),
-    ]
+    ],
 )

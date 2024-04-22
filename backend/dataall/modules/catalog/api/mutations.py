@@ -1,7 +1,12 @@
 from dataall.base.api import gql
 from dataall.modules.catalog.api.resolvers import (
-    create_glossary, update_node, delete_node, create_category, create_term,
-    approve_term_association, dismiss_term_association
+    create_glossary,
+    update_node,
+    delete_node,
+    create_category,
+    create_term,
+    approve_term_association,
+    dismiss_term_association,
 )
 
 

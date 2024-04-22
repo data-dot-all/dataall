@@ -20,9 +20,7 @@ class DashboardIndexer(BaseIndexer):
             org = OrganizationRepository.get_organization_by_uri(session, env.organizationUri)
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dashboard_uri)
-            count_upvotes = VoteRepository.count_upvotes(
-                session, dashboard_uri, target_type='dashboard'
-            )
+            count_upvotes = VoteRepository.count_upvotes(session, dashboard_uri, target_type='dashboard')
             BaseIndexer._index(
                 doc_id=dashboard_uri,
                 doc={

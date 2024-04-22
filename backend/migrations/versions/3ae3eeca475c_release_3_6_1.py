@@ -5,6 +5,7 @@ Revises: bd4bea86de30
 Create Date: 2021-11-29 07:30:10.790084
 
 """
+
 import datetime
 
 import sqlalchemy as sa
@@ -28,9 +29,7 @@ Base = declarative_base()
 
 class Stack(Base):
     __tablename__ = 'stack'
-    stackUri = Column(
-        String, nullable=False, default=utils.uuid('stack'), primary_key=True
-    )
+    stackUri = Column(String, nullable=False, default=utils.uuid('stack'), primary_key=True)
     name = Column(String, nullable=True)
     targetUri = Column(String, nullable=False)
     accountid = Column(String, nullable=False)
@@ -46,9 +45,7 @@ class Stack(Base):
     resources = Column(postgresql.JSON)
     error = Column(postgresql.JSON)
     events = Column(postgresql.JSON)
-    lastSeen = Column(
-        DateTime, default=lambda: datetime.datetime(year=1900, month=1, day=1)
-    )
+    lastSeen = Column(DateTime, default=lambda: datetime.datetime(year=1900, month=1, day=1))
     EcsTaskArn = Column(String, nullable=True)
 
 

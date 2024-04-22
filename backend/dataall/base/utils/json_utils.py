@@ -76,8 +76,6 @@ def dict_compare(new_dict, old_dict):
     shared_keys = d1_keys.intersection(d2_keys)
     added = d1_keys - d2_keys
     removed = d2_keys - d1_keys
-    modified = {
-        o: (new_dict[o], old_dict[o]) for o in shared_keys if new_dict[o] != old_dict[o]
-    }
+    modified = {o: (new_dict[o], old_dict[o]) for o in shared_keys if new_dict[o] != old_dict[o]}
     same = set(o for o in shared_keys if new_dict[o] == old_dict[o])
     return added, removed, modified, same

@@ -7,4 +7,4 @@ from . import (
     types,
 )
 
-__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations', "enums"]
+__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations', 'enums']

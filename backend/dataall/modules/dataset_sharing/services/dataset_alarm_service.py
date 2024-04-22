@@ -13,10 +13,10 @@ class DatasetAlarmService(AlarmService):
     """Contains set of alarms for datasets"""
 
     def trigger_table_sharing_failure_alarm(
-            self,
-            table: DatasetTable,
-            share: ShareObject,
-            target_environment: Environment,
+        self,
+        table: DatasetTable,
+        share: ShareObject,
+        target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = f'Data.all Share Failure for Table {table.GlueTableName}'[:100]
@@ -43,10 +43,10 @@ class DatasetAlarmService(AlarmService):
         return self.publish_message_to_alarms_topic(subject, message)
 
     def trigger_revoke_table_sharing_failure_alarm(
-            self,
-            table: DatasetTable,
-            share: ShareObject,
-            target_environment: Environment,
+        self,
+        table: DatasetTable,
+        share: ShareObject,
+        target_environment: Environment,
     ):
         log.info('Triggering share failure alarm...')
         subject = f'Data.all Revoke LF Permissions Failure for Table {table.GlueTableName}'[:100]
@@ -143,27 +143,26 @@ Alarm Details:
         return self.publish_message_to_alarms_topic(subject, message)
 
     def trigger_s3_bucket_sharing_failure_alarm(
-            self,
-            bucket: DatasetBucket,
-            share: ShareObject,
-            target_environment: Environment,
+        self,
+        bucket: DatasetBucket,
+        share: ShareObject,
+        target_environment: Environment,
     ):
-        alarm_type = "Share"
+        alarm_type = 'Share'
         return self.handle_bucket_sharing_failure(bucket, share, target_environment, alarm_type)
 
     def trigger_revoke_s3_bucket_sharing_failure_alarm(
-            self,
-            bucket: DatasetBucket,
-            share: ShareObject,
-            target_environment: Environment,
+        self,
+        bucket: DatasetBucket,
+        share: ShareObject,
+        target_environment: Environment,
     ):
-        alarm_type = "Sharing Revoke"
+        alarm_type = 'Sharing Revoke'
         return self.handle_bucket_sharing_failure(bucket, share, target_environment, alarm_type)
 
-    def handle_bucket_sharing_failure(self, bucket: DatasetBucket,
-                                      share: ShareObject,
-                                      target_environment: Environment,
-                                      alarm_type: str):
+    def handle_bucket_sharing_failure(
+        self, bucket: DatasetBucket, share: ShareObject, target_environment: Environment, alarm_type: str
+    ):
         log.info(f'Triggering {alarm_type} failure alarm...')
         subject = f'Data.all S3 Bucket Failure for {bucket.S3BucketName} {alarm_type}'[:100]
         message = f"""

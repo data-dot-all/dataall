@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.groups.api.resolvers import *
+from dataall.core.groups.api.resolvers import resolve_group_environment_permissions, resolve_group_tenant_permissions
 
 Group = gql.ObjectType(
     name='Group',
@@ -18,11 +18,7 @@ Group = gql.ObjectType(
         gql.Field(name='environmentAthenaWorkGroup', type=gql.String),
         gql.Field(
             name='environmentPermissions',
-            args=[
-                gql.Argument(
-                    name='environmentUri', type=gql.NonNullableType(gql.String)
-                )
-            ],
+            args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
             type=gql.ArrayType(gql.Ref('Permission')),
             resolver=resolve_group_environment_permissions,
         ),

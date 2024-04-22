@@ -34,6 +34,7 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
           S3AccessPointName
           created
           principalId
+          sharedGlueDatabaseName
         }
       }
     }

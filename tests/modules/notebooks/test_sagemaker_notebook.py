@@ -40,7 +40,7 @@ def test_list_notebooks(client, user, group, sgm_notebook):
 
     response = client.query(
         query,
-        filter={"term": "my best"},
+        filter={'term': 'my best'},
         username=user.username,
         groups=[group.name],
     )
@@ -75,7 +75,6 @@ def test_nopermissions_list_notebooks(client, user2, group2, sgm_notebook):
 
 
 def test_get_notebook(client, user, group, sgm_notebook):
-
     response = client.query(
         """
         query getSagemakerNotebook($notebookUri:String!){
@@ -119,7 +118,6 @@ def test_action_notebook(client, user, group, sgm_notebook):
 
 
 def test_delete_notebook(client, user, group, sgm_notebook):
-
     response = client.query(
         """
         mutation deleteSagemakerNotebook($notebookUri:String!,$deleteFromAWS:Boolean){

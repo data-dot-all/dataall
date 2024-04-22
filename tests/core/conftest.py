@@ -10,7 +10,7 @@ def env(client):
 
     def factory(org, envname, owner, group, account, region, desc='test', parameters=None):
         if not parameters:
-            parameters = {"dashboardsEnabled": "true"}
+            parameters = {'dashboardsEnabled': 'true'}
 
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
@@ -44,7 +44,7 @@ def env(client):
                 'tags': ['a', 'b', 'c'],
                 'region': f'{region}',
                 'SamlGroupName': f'{group}',
-                'parameters': [{'key': k, 'value': v} for k, v in parameters.items()]
+                'parameters': [{'key': k, 'value': v} for k, v in parameters.items()],
             },
         )
         cache[key] = response.data.createEnvironment
@@ -53,7 +53,7 @@ def env(client):
     yield factory
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def environment(db):
     def factory(
         organization: Organization,
@@ -67,15 +67,15 @@ def environment(db):
             env = Environment(
                 organizationUri=organization.organizationUri,
                 AwsAccountId=awsAccountId,
-                region="eu-central-1",
+                region='eu-central-1',
                 label=label,
                 owner=owner,
                 tags=[],
-                description="desc",
+                description='desc',
                 SamlGroupName=samlGroupName,
-                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleArn.split("/")[-1],
+                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleArn.split('/')[-1],
                 EnvironmentDefaultIAMRoleArn=environmentDefaultIAMRoleArn,
-                CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
+                CDKRoleArn=f'arn:aws::{awsAccountId}:role/EnvRole',
             )
             session.add(env)
             session.commit()

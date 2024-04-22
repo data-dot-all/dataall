@@ -5,6 +5,7 @@ Revises: d922057f0d91
 Create Date: 2022-11-29 10:57:27.641565
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
@@ -13,13 +14,15 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.permission_repositories import Permission
-from dataall.core.permissions.db.resource_policy_repositories import ResourcePolicy
 from dataall.base.db import utils
-from dataall.core.permissions import permissions
 from datetime import datetime
 
+from dataall.core.permissions.services.permission_service import PermissionService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
+from dataall.core.permissions.services.environment_permissions import (
+    CONSUMPTION_ENVIRONMENT_ROLE_ALL,
+)
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'
@@ -47,9 +50,7 @@ class EnvironmentGroup(Base):
 
 class ShareObject(Base):
     __tablename__ = 'share_object'
-    shareUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('share')
-    )
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
     groupUri = Column(String)
@@ -73,15 +74,9 @@ def upgrade():
         sa.Column('groupUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('IAMRoleName', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('IAMRoleArn', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column(
-            'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.Column(
-            'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
+        sa.Column('created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('updated', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+        sa.Column('deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
         sa.PrimaryKeyConstraint('consumptionRoleUri', name='consumptionRoleUri_pkey'),
     )
 
@@ -94,14 +89,18 @@ def upgrade():
         print('Back-filling share_object table...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            env_group: [EnvironmentGroup] = session.query(EnvironmentGroup).filter(
-                (
-                    and_(
-                        EnvironmentGroup.groupUri == share.principalId,
-                        EnvironmentGroup.environmentUri == share.environmentUri,
+            env_group: [EnvironmentGroup] = (
+                session.query(EnvironmentGroup)
+                .filter(
+                    (
+                        and_(
+                            EnvironmentGroup.groupUri == share.principalId,
+                            EnvironmentGroup.environmentUri == share.environmentUri,
+                        )
                     )
                 )
-            ).first()
+                .first()
+            )
             if not share.groupUri:
                 share.groupUri = share.principalId
                 share.principalIAMRoleName = env_group.environmentIAMRoleName
@@ -114,7 +113,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        Permission.init_permissions(session)
+        PermissionService.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -126,15 +125,13 @@ def upgrade():
         print('Back-filling consumer role permissions for environments...')
         envs = EnvironmentService.list_all_active_environments(session=session)
         for env in envs:
-            groups = EnvironmentService.query_all_environment_groups(
-                session=session, uri=env.environmentUri, filter=None
-            )
+            groups = EnvironmentService.get_all_environment_groups(session=session, uri=env.environmentUri, filter=None)
             for group in groups:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicyService.attach_resource_policy(
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,
-                    permissions=permissions.CONSUMPTION_ENVIRONMENT_ROLE_ALL,
+                    permissions=CONSUMPTION_ENVIRONMENT_ROLE_ALL,
                     resource_type=Environment.__name__,
                 )
         print('Consumer Role Permissions created successfully')

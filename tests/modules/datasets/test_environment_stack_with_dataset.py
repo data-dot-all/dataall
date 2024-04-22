@@ -10,9 +10,9 @@ from dataall.modules.datasets_base.db.dataset_models import Dataset
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
     for extension in EnvironmentSetup._EXTENSIONS:
-        if extension.__name__ not in ["DatasetCustomResourcesExtension", "DatasetGlueProfilerExtension"]:
+        if extension.__name__ not in ['DatasetCustomResourcesExtension', 'DatasetGlueProfilerExtension']:
             mocker.patch(
-                f"{extension.__module__}.{extension.__name__}.extent",
+                f'{extension.__module__}.{extension.__name__}.extent',
                 return_value=True,
             )
 
@@ -93,8 +93,11 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     )
 
 
-def test_resources_created(env_fixture, org_fixture):
+def test_resources_created(env_fixture, org_fixture, mocker):
     app = App()
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.get_all_policies', return_value=[]
+    )
 
     # Create the Stack
     stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)
@@ -104,38 +107,36 @@ def test_resources_created(env_fixture, org_fixture):
 
     # Assert that we have created:
     template.resource_properties_count_is(
-        type="AWS::S3::Bucket",
+        type='AWS::S3::Bucket',
         props={
             'BucketName': env_fixture.EnvironmentDefaultBucketName,
             'BucketEncryption': {
-                'ServerSideEncryptionConfiguration': [{
-                    'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}
-                }]
+                'ServerSideEncryptionConfiguration': [{'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]
             },
             'PublicAccessBlockConfiguration': {
                 'BlockPublicAcls': True,
                 'BlockPublicPolicy': True,
                 'IgnorePublicAcls': True,
-                'RestrictPublicBuckets': True
+                'RestrictPublicBuckets': True,
             },
         },
-        count=1
+        count=1,
     )
     template.resource_properties_count_is(
-        type="AWS::Lambda::Function",
+        type='AWS::Lambda::Function',
         props={
-            'FunctionName': Match.string_like_regexp("^.*lf-settings-handler.*$"),
+            'FunctionName': Match.string_like_regexp('^.*lf-settings-handler.*$'),
         },
-        count=1
+        count=1,
     )
     template.resource_properties_count_is(
-        type="AWS::Lambda::Function",
+        type='AWS::Lambda::Function',
         props={
-            'FunctionName': Match.string_like_regexp("^.*gluedb-lf-handler.*$"),
+            'FunctionName': Match.string_like_regexp('^.*gluedb-lf-handler.*$'),
         },
-        count=1
+        count=1,
     )
-    template.resource_count_is("AWS::Lambda::Function", 5)
-    template.resource_count_is("AWS::SSM::Parameter", 5)
-    template.resource_count_is("AWS::IAM::Role", 5)
-    template.resource_count_is("AWS::IAM::Policy", 4)
+    template.resource_count_is('AWS::Lambda::Function', 5)
+    template.resource_count_is('AWS::SSM::Parameter', 5)
+    template.resource_count_is('AWS::IAM::Role', 5)
+    template.resource_count_is('AWS::IAM::Policy', 4)

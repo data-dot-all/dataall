@@ -30,7 +30,7 @@ class AlbFrontStage(Stage):
             image_tag=image_tag,
             custom_domain=custom_domain,
             ip_ranges=ip_ranges,
-            custom_auth=custom_auth
+            custom_auth=custom_auth,
         )
 
         Tags.of(albfront_stack).add('Application', f'{resource_prefix}-{envname}')
@@ -40,9 +40,7 @@ class AlbFrontStage(Stage):
         NagSuppressions.add_stack_suppressions(
             albfront_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed['id'], reason=rule_suppressed['reason'])
                 for rule_suppressed in ALBFRONT_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,
