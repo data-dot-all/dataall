@@ -8,6 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Dict
 
+from dataall.base.aws.event_bridge import EventBridge
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.env_permission_checker import has_group_permission
@@ -49,6 +50,9 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='PENDING' ,maintenance_mode=mode)
+            # Disable scheduled ECS tasks
+            event_bridge_session = EventBridge()
+            event_bridge_session.disable_scheduled_ecs_tasks(['dataall-staging-catalog-indexer-schedule'])
             return True
         except Exception as e:
             logger.error(f"Error occurred while starting maintenance window due to {e}")
@@ -62,7 +66,11 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
-                return True
+
+            # Enable scheduled ECS tasks
+            event_bridge_session = EventBridge()
+            event_bridge_session.enable_scheduled_ecs_tasks(['dataall-staging-catalog-indexer-schedule'])
+            return True
         except Exception as e:
             logger.error(f"Error occurred while stopping maintenance window due to {e}")
             return False
