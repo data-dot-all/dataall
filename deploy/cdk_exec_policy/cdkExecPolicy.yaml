@@ -271,7 +271,7 @@ Resources:
               - 'cloudformation:*'
             Resource: 
               - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
-              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/{EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*'
 
           - Sid: ECR
             Effect: Allow
