@@ -34,7 +34,7 @@ class SagemakerStudioPolicy(ServicePolicy):
             iam.PolicyStatement(
                 actions=['sagemaker:AddTags'],
                 resources=['*'],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 actions=['sagemaker:Delete*'],
@@ -56,7 +56,7 @@ class SagemakerStudioPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:app/*',
                 ],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(actions=['sagemaker:CreateApp'], resources=['*']),
             iam.PolicyStatement(
@@ -75,7 +75,7 @@ class SagemakerStudioPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:transform-job/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:automl-job/*',
                 ],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 actions=['sagemaker:Update*'],
@@ -94,12 +94,12 @@ class SagemakerStudioPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
                 ],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 actions=['sagemaker:InvokeEndpoint', 'sagemaker:InvokeEndpointAsync'],
                 resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*'],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
                 actions=['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
