@@ -415,15 +415,6 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
-    def get_dataset_stack(dataset: Dataset):
-        env = EnvironmentService.find_environment_by_uri(uri=dataset.environmentUri)
-
-        return StackService.get_stack_with_cfn_resources(
-            targetUri=dataset.datasetUri,
-            env=env,
-        )
-
-    @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
