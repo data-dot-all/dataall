@@ -86,10 +86,13 @@ class Ecs:
             raise e
 
     @staticmethod
-    def is_task_running(cluster_name, started_by):
+    def is_task_running(cluster_name, started_by=None):
         try:
             client = boto3.client('ecs')
-            running_tasks = client.list_tasks(cluster=cluster_name, startedBy=started_by, desiredStatus='RUNNING')
+            if started_by is None:
+                running_tasks = client.list_tasks(cluster=cluster_name, desiredStatus='RUNNING')
+            else:
+                running_tasks = client.list_tasks(cluster=cluster_name, startedBy=started_by, desiredStatus='RUNNING')
             if running_tasks and running_tasks.get('taskArns'):
                 return True
             return False

@@ -23,22 +23,7 @@ from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
 from dataall.modules.maintenance.api.enums import MaintenanceStatus
 from dataall.modules.maintenance.db.maintenance_repository import MaintenanceRepository
-from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
-from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
-from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
-from dataall.modules.notebooks.services.notebook_permissions import (
-    MANAGE_NOTEBOOKS,
-    CREATE_NOTEBOOK,
-    NOTEBOOK_ALL,
-    GET_NOTEBOOK,
-    UPDATE_NOTEBOOK,
-    DELETE_NOTEBOOK,
-)
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
-from dataall.base.utils import slugify
+from dataall.core.stacks.aws.ecs import Ecs
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +36,6 @@ class MaintenanceService:
         logger.info("Putting data.all into maintenance")
         try:
             with engine.scoped_session() as session:
-                # Todo:  Check the current status of maintenance mode and then execute the update query
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
                 if maintenance_record.status == MaintenanceStatus.PENDING or maintenance_record.status == MaintenanceStatus.ACTIVE:
                     logger.error("Maintenance window already in PENDING or ACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
@@ -82,7 +66,7 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
-                if maintenance_record.status == MaintenanceStatus.PENDING or maintenance_record.status == MaintenanceStatus.INACTIVE:
+                if maintenance_record.status == MaintenanceStatus.INACTIVE:
                     logger.error("Maintenance window already in PENDING or INACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
                     return False
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
@@ -107,15 +91,30 @@ class MaintenanceService:
     def get_maintenance_window_status(engine):
         logger.info("Checking maintenance window status")
         with engine.scoped_session() as session:
-            maintenance_record = MaintenanceRepository(session).get_maintenance_record()
-            if maintenance_record.status == MaintenanceStatus.PENDING:
-                # Check all the ECS tasks
-                return False
-                # Fetch the name of ECS services
-
-
+            try:
+                maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+                if maintenance_record.status == MaintenanceStatus.PENDING:
+                    # Check all the ECS tasks
+                    ecs_cluster_name = ParameterStoreManager.get_parameter_value(
+                        region=os.getenv('AWS_REGION', 'eu-west-1'),
+                        parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/cluster/name"
+                    )
+                    if Ecs.is_task_running(cluster_name=ecs_cluster_name):
+                        return maintenance_record
+                    else:
+                        maintenance_record.status = MaintenanceStatus.ACTIVE
+                        session.commit()
+                        return maintenance_record
+                else:
+                    logger.info("Maintenance window is not in PENDING state")
+                    return maintenance_record
+            except Exception as e:
+                logger.error(f'Error while getting maintenance window status due to {e}')
+                raise e
 
     @staticmethod
-    def get_maintenance_window_mode():
-        logger.info("Gettting the maintenance window mode")
-        return "READ-ONLY"
+    def get_maintenance_window_mode(engine):
+        logger.info("Fetching status of maintenance window")
+        with engine.scoped_session() as session:
+            maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+            return maintenance_record.mode

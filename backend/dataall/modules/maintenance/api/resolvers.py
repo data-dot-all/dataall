@@ -17,7 +17,6 @@ def start_maintenance_window(context: Context, source: Maintenance, mode: str):
     if mode not in [item.value for item in list(MaintenanceModes)]:
         raise Exception('Mode is not conforming to the MaintenanceModes enums')
     # Check from the context if the groups contains the DataAdminstrators group
-    logging.info(context.groups)
     if not TenantPolicyValidationService.is_tenant_admin(context.groups):
         raise Exception('Only data.all admin group members can start maintenance window')
     return MaintenanceService.start_maintenance_window(engine=context.engine, mode=mode)
@@ -33,4 +32,4 @@ def get_maintenance_window_status(context: Context, source: Maintenance):
     return MaintenanceService.get_maintenance_window_status(engine=context.engine)
 
 def get_maintenance_window_mode(context: Context, source: Maintenance):
-    return MaintenanceService.get_maintenance_window_mode()
+    return MaintenanceService.get_maintenance_window_mode(engine=context.engine)
