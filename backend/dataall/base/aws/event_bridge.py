@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class EventBridge:
 
-    def __init__(self):
-        self.client = boto3.client('events', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
+    def __init__(self, region=None):
+        self.client = boto3.client('events', region_name=region)
 
     def enable_scheduled_ecs_tasks(self, list_of_tasks):
         logger.info("Enabling ecs tasks")

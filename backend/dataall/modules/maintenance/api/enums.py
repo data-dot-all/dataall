@@ -9,3 +9,9 @@ class MaintenanceModes(GraphQLEnumMapper):
     READONLY = 'READ-ONLY'
     NOACCESS = 'NO-ACCESS'
 
+class MaintenanceStatus():
+    """Describe the various statuses for maintenance"""
+
+    PENDING = 'PENDING'
+    INACTIVE = 'INACTIVE'
+    ACTIVE = 'ACTIVE'

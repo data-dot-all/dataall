@@ -5,10 +5,12 @@ Central part for working with notebooks
 
 import dataclasses
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.aws.event_bridge import EventBridge
+from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.env_permission_checker import has_group_permission
@@ -19,6 +21,7 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
 from dataall.core.stacks.db.stack_repositories import Stack
 from dataall.base.db import exceptions
+from dataall.modules.maintenance.api.enums import MaintenanceStatus
 from dataall.modules.maintenance.db.maintenance_repository import MaintenanceRepository
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
@@ -42,17 +45,30 @@ logger = logging.getLogger(__name__)
 
 class MaintenanceService:
 
-    # Todo : Check what permissions you need to give here
     @staticmethod
     def start_maintenance_window(engine, mode: str = None):
         # Update the RDS table with the mode and status to PENDING
-        logger.info("Putting data.all into maintenance window")
+        logger.info("Putting data.all into maintenance")
         try:
             with engine.scoped_session() as session:
-                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='PENDING' ,maintenance_mode=mode)
+                # Todo:  Check the current status of maintenance mode and then execute the update query
+                maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+                if maintenance_record.status == MaintenanceStatus.PENDING or maintenance_record.status == MaintenanceStatus.ACTIVE:
+                    logger.error("Maintenance window already in PENDING or ACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
+                    return False
+                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status=MaintenanceStatus.PENDING ,maintenance_mode=mode)
             # Disable scheduled ECS tasks
-            event_bridge_session = EventBridge()
-            event_bridge_session.disable_scheduled_ecs_tasks(['dataall-staging-catalog-indexer-schedule'])
+            # Get all the SSMs related to the scheduled tasks
+            ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
+                region=os.getenv('AWS_REGION', 'eu-west-1'),
+                parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule"
+            )
+            logger.info(ecs_scheduled_rules)
+            ecs_scheduled_rules_list = [item['Value'] for item in ecs_scheduled_rules]
+            logger.info("Value of ecs scheduled tasks")
+            logger.info(ecs_scheduled_rules_list)
+            event_bridge_session = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
+            event_bridge_session.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f"Error occurred while starting maintenance window due to {e}")
@@ -62,14 +78,25 @@ class MaintenanceService:
     def stop_maintenance_window(engine):
         # Update the RDS table by changing mode to - ''
         # Update the RDS table by changing the status to INACTIVE
-        logger.info("Stopping maintenance window")
+        logger.info("Stopping maintenance")
         try:
             with engine.scoped_session() as session:
+                maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+                if maintenance_record.status == MaintenanceStatus.PENDING or maintenance_record.status == MaintenanceStatus.INACTIVE:
+                    logger.error("Maintenance window already in PENDING or INACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
+                    return False
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
-
             # Enable scheduled ECS tasks
+            ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
+                region=os.getenv('AWS_REGION', 'eu-west-1'),
+                parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule"
+            )
+            logger.info(ecs_scheduled_rules)
+            ecs_scheduled_rules_list = [item['Value'] for item in ecs_scheduled_rules]
+            logger.info("Value of ecs scheduled tasks")
+            logger.info(ecs_scheduled_rules_list)
             event_bridge_session = EventBridge()
-            event_bridge_session.enable_scheduled_ecs_tasks(['dataall-staging-catalog-indexer-schedule'])
+            event_bridge_session.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f"Error occurred while stopping maintenance window due to {e}")
@@ -80,200 +107,15 @@ class MaintenanceService:
     def get_maintenance_window_status(engine):
         logger.info("Checking maintenance window status")
         with engine.scoped_session() as session:
-            return MaintenanceRepository(session).get_maintenance_record()
+            maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+            if maintenance_record.status == MaintenanceStatus.PENDING:
+                # Check all the ECS tasks
+                return False
+                # Fetch the name of ECS services
+
 
 
     @staticmethod
     def get_maintenance_window_mode():
         logger.info("Gettting the maintenance window mode")
         return "READ-ONLY"
-
-
-@dataclass
-class NotebookCreationRequest:
-    """A request dataclass for notebook creation. Adds default values for missed parameters"""
-
-    label: str
-    VpcId: str
-    SubnetId: str
-    SamlAdminGroupName: str
-    environment: Dict = field(default_factory=dict)
-    description: str = 'No description provided'
-    VolumeSizeInGB: int = 32
-    InstanceType: str = 'ml.t3.medium'
-    tags: List[str] = field(default_factory=list)
-
-    @classmethod
-    def from_dict(cls, env):
-        """Copies only required fields from the dictionary and creates an instance of class"""
-        fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{k: v for k, v in env.items() if k in fields})
-
-
-class NotebookService:
-    """
-    Encapsulate the logic of interactions with sagemaker notebooks.
-    """
-
-    _NOTEBOOK_RESOURCE_TYPE = 'notebook'
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
-    @ResourcePolicyService.has_resource_permission(CREATE_NOTEBOOK)
-    @has_group_permission(CREATE_NOTEBOOK)
-    def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
-        """
-        Creates a notebook and attach policies to it
-        Throws an exception if notebook are not enabled for the environment
-        """
-
-        with _session() as session:
-            env = EnvironmentService.get_environment_by_uri(session, uri)
-            enabled = EnvironmentService.get_boolean_env_param(session, env, 'notebooksEnabled')
-
-            if not enabled:
-                raise exceptions.UnauthorizedOperation(
-                    action=CREATE_NOTEBOOK,
-                    message=f'Notebooks feature is disabled for the environment {env.label}',
-                )
-
-            env_group = request.environment
-            if not env_group:
-                env_group = EnvironmentService.get_environment_group(
-                    session,
-                    group_uri=admin_group,
-                    environment_uri=env.environmentUri,
-                )
-
-            notebook = SagemakerNotebook(
-                label=request.label,
-                environmentUri=env.environmentUri,
-                description=request.description,
-                NotebookInstanceName=slugify(request.label, separator=''),
-                NotebookInstanceStatus='NotStarted',
-                AWSAccountId=env.AwsAccountId,
-                region=env.region,
-                RoleArn=env_group.environmentIAMRoleArn,
-                owner=context().username,
-                SamlAdminGroupName=admin_group,
-                tags=request.tags,
-                VpcId=request.VpcId,
-                SubnetId=request.SubnetId,
-                VolumeSizeInGB=request.VolumeSizeInGB,
-                InstanceType=request.InstanceType,
-            )
-
-            NotebookRepository(session).save_notebook(notebook)
-
-            notebook.NotebookInstanceName = NamingConventionService(
-                target_uri=notebook.notebookUri,
-                target_label=notebook.label,
-                pattern=NamingConventionPattern.NOTEBOOK,
-                resource_prefix=env.resourcePrefix,
-            ).build_compliant_name()
-
-            ResourcePolicyService.attach_resource_policy(
-                session=session,
-                group=request.SamlAdminGroupName,
-                permissions=NOTEBOOK_ALL,
-                resource_uri=notebook.notebookUri,
-                resource_type=SagemakerNotebook.__name__,
-            )
-
-            if env.SamlGroupName != admin_group:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=env.SamlGroupName,
-                    permissions=NOTEBOOK_ALL,
-                    resource_uri=notebook.notebookUri,
-                    resource_type=SagemakerNotebook.__name__,
-                )
-
-            Stack.create_stack(
-                session=session,
-                environment_uri=notebook.environmentUri,
-                target_type='notebook',
-                target_uri=notebook.notebookUri,
-                target_label=notebook.label,
-            )
-
-        stack_helper.deploy_stack(targetUri=notebook.notebookUri)
-
-        return notebook
-
-    @staticmethod
-    def list_user_notebooks(filter) -> dict:
-        """List existed user notebooks. Filters only required notebooks by the filter param"""
-        with _session() as session:
-            return NotebookRepository(session).paginated_user_notebooks(
-                username=context().username, groups=context().groups, filter=filter
-            )
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
-    def get_notebook(*, uri) -> SagemakerNotebook:
-        """Gets a notebook by uri"""
-        with _session() as session:
-            return NotebookService._get_notebook(session, uri)
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
-    def start_notebook(*, uri):
-        """Starts notebooks instance"""
-        notebook = NotebookService.get_notebook(uri=uri)
-        client(notebook).start_instance()
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
-    def stop_notebook(*, uri: str) -> None:
-        """Stop notebook instance"""
-        notebook = NotebookService.get_notebook(uri=uri)
-        client(notebook).stop_instance()
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
-    def get_notebook_presigned_url(*, uri: str) -> str:
-        """Creates and returns a presigned url for a notebook"""
-        notebook = NotebookService.get_notebook(uri=uri)
-        return client(notebook).presigned_url()
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
-    def get_notebook_status(*, uri) -> str:
-        """Retrieves notebook status"""
-        notebook = NotebookService.get_notebook(uri=uri)
-        return client(notebook).get_notebook_instance_status()
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(DELETE_NOTEBOOK)
-    def delete_notebook(*, uri: str, delete_from_aws: bool):
-        """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
-        with _session() as session:
-            notebook = NotebookService._get_notebook(session, uri)
-            KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
-            session.delete(notebook)
-
-            ResourcePolicyService.delete_resource_policy(
-                session=session,
-                resource_uri=notebook.notebookUri,
-                group=notebook.SamlAdminGroupName,
-            )
-
-            env: Environment = EnvironmentService.get_environment_by_uri(session, notebook.environmentUri)
-
-        if delete_from_aws:
-            stack_helper.delete_stack(
-                target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
-            )
-
-    @staticmethod
-    def _get_notebook(session, uri) -> SagemakerNotebook:
-        notebook = NotebookRepository(session).find_notebook(uri)
-
-        if not notebook:
-            raise exceptions.ObjectNotFound('SagemakerNotebook', uri)
-        return notebook
-
-
-def _session():
-    return context().db_engine.scoped_session()
