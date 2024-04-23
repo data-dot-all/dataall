@@ -37,6 +37,11 @@ class SagemakerStudioPolicy(ServicePolicy):
                 conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             iam.PolicyStatement(
+                actions=['sagemaker:AddTags'],
+                resources=['*'],
+                conditions={'Null': {'sagemaker:TaggingAction': 'false'}},
+            ),
+            iam.PolicyStatement(
                 actions=['sagemaker:Delete*'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
@@ -58,7 +63,6 @@ class SagemakerStudioPolicy(ServicePolicy):
                 ],
                 conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
-            iam.PolicyStatement(actions=['sagemaker:CreateApp'], resources=['*']),
             iam.PolicyStatement(
                 actions=['sagemaker:Create*'],
                 resources=['*'],
