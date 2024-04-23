@@ -402,7 +402,7 @@ def _get_environment_group_aws_session(session, username, groups, environment, g
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+        env_group = EnvironmentService.get_environment_group(session, groupUri, environment.environmentUri)
         if not env_group:
             raise exceptions.UnauthorizedOperation(
                 action='ENVIRONMENT_AWS_ACCESS',
@@ -479,7 +479,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 def get_environment_stack(context: Context, source: Environment, **kwargs):
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
-        env=source,
+        environmentUri=source.environmentUri,
     )
 
 
@@ -679,7 +679,7 @@ def resolve_environment(context, source, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):
