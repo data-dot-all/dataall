@@ -90,6 +90,15 @@ class DatasetService:
         cls._interfaces.append(interface)
 
     @classmethod
+    def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
+        """All other user role types that might come from other modules"""
+        for interface in cls._interfaces:
+            role = interface.resolve_additional_dataset_user_role(session, uri, username, groups)
+            if role is not None:
+                return role
+        return None
+
+    @classmethod
     def check_before_delete(cls, session, uri, **kwargs) -> bool:
         """All actions from other modules that need to be executed before deletion"""
         can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]

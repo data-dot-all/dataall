@@ -46,9 +46,11 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
         return DatasetRole.DataSteward.value
     else:
         with context.engine.scoped_session() as session:
-            share = session.query(ShareObject).filter(ShareObject.datasetUri == source.datasetUri).first()
-            if share and (share.owner == context.username or share.principalId in context.groups):
-                return DatasetRole.Shared.value
+            other_modules_user_role = DatasetService.get_other_modules_dataset_user_role(
+                session, source.datasetUri, context.username, context.groups
+            )
+            if other_modules_user_role is not None:
+                return other_modules_user_role
     return DatasetRole.NoPermission.value
 
 

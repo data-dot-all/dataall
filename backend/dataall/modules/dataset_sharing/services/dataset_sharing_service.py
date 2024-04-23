@@ -20,6 +20,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
 
 
@@ -29,6 +30,14 @@ log = logging.getLogger(__name__)
 
 
 class DatasetSharingService(DatasetServiceInterface):
+    @staticmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Implemented as part of the DatasetServiceInterface"""
+        share = ShareObjectRepository.get_share_by_dataset_attributes(session, uri, username, groups)
+        if share is not None:
+            return DatasetRole.Shared.value
+        return None
+
     @staticmethod
     def check_before_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
