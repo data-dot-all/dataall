@@ -67,7 +67,7 @@ class MaintenanceService:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
                 if maintenance_record.status == MaintenanceStatus.INACTIVE:
-                    logger.error("Maintenance window already in PENDING or INACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
+                    logger.error("Maintenance window already in INACTIVE state. Cannot stop maintenance window")
                     return False
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
             # Enable scheduled ECS tasks

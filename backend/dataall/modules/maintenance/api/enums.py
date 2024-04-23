@@ -1,11 +1,9 @@
 """Contains the enums GraphQL mapping for SageMaker notebooks"""
+from enum import Enum
 
-from dataall.base.api.constants import GraphQLEnumMapper
 
-
-class MaintenanceModes(GraphQLEnumMapper):
+class MaintenanceModes(Enum):
     """Describes the Maintenance Modes"""
-
     READONLY = 'READ-ONLY'
     NOACCESS = 'NO-ACCESS'
 

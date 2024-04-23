@@ -16,10 +16,12 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService, TenantPolicyValidationService
 from dataall.base.db import get_engine
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
+from dataall.modules.maintenance.api.enums import MaintenanceModes, MaintenanceStatus
+from dataall.modules.maintenance.services.maintenance_service import MaintenanceService
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -81,6 +83,29 @@ def get_cognito_groups(claims):
 def get_custom_groups(user_id):
     service_provider = ServiceProviderFactory.get_service_provider_instance()
     return service_provider.get_groups_for_user(user_id)
+
+
+def send_unauthorized_response(query, message=''):
+    response = {
+        'data': {query.get('operationName', 'operation'): None},
+        'errors': [
+            {
+                'message': message,
+                'locations': None,
+                'path': [query.get('operationName', '')],
+            }
+        ],
+    }
+    return {
+        'statusCode': 401,
+        'headers': {
+            'content-type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Methods': '*',
+        },
+        'body': json.dumps(response),
+    }
 
 
 def handler(event, context):
@@ -165,10 +190,19 @@ def handler(event, context):
             'schema': SCHEMA,
         }
 
-        # If maintenance mode is enabled -> Check Status by using the graphQL Endpoint
-          # If groups doesn't contain data.all administrator group
-          # Check what is the access mode
-          # Return response with error "Maintenance Window is ON"
+        query = json.loads(event.get('body'))
+
+        # Logic to block when in maintenance
+        # Check if in some maintenance mode
+        # Check if in maintenance status is not INACTIVE
+        # Check if the user belongs to a 'DAAdministrators' group
+        if (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.NOACCESS.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE) and not TenantPolicyValidationService.is_tenant_admin(groups):
+            send_unauthorized_response(query=query, message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.')
+        elif (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.READONLY.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE) and not TenantPolicyValidationService.is_tenant_admin(groups):
+            # If its mutation then block and return
+            if query.get('query', '').split(' ')[0] == 'mutation':
+                send_unauthorized_response(query=query, message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.')
+
 
         # Determine if there are any Operations that Require ReAuth From SSM Parameter
         try:
@@ -181,7 +215,7 @@ def handler(event, context):
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
-    query = json.loads(event.get('body'))
+
 
     # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
