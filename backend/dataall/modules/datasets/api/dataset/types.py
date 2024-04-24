@@ -11,7 +11,7 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     list_dataset_share_objects,
     get_dataset_glossary_terms,
-    get_dataset_stack,
+    resolve_dataset_stack,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -132,7 +132,7 @@ Dataset = gql.ObjectType(
             args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
             type=gql.Boolean,
         ),
-        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=get_dataset_stack),
+        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_dataset_stack),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )

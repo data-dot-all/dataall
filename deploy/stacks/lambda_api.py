@@ -71,24 +71,12 @@ class LambdaApiStack(pyNestedClass):
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
 
-        esproxy_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
-        )
-        graphql_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
-        )
-        awsworker_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
-        )
-
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
-            log_group=esproxy_loggroup
-            if esproxy_loggroup is not None
-            else logs.LogGroup(
-                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+            log_group=logs.LogGroup(
+                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-esproxy'
             ),
             description='dataall es search function',
             role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
@@ -118,10 +106,8 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
-            log_group=graphql_loggroup
-            if graphql_loggroup is not None
-            else logs.LogGroup(
-                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+            log_group=logs.LogGroup(
+                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-graphql'
             ),
             description='dataall graphql function',
             role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
@@ -150,10 +136,8 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
-            log_group=awsworker_loggroup
-            if awsworker_loggroup is not None
-            else logs.LogGroup(
-                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+            log_group=logs.LogGroup(
+                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-awsworker'
             ),
             description='dataall aws worker for aws asynchronous tasks function',
             role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
