@@ -7,7 +7,7 @@ class MaintenanceModes(Enum):
     READONLY = 'READ-ONLY'
     NOACCESS = 'NO-ACCESS'
 
-class MaintenanceStatus():
+class MaintenanceStatus(Enum):
     """Describe the various statuses for maintenance"""
 
     PENDING = 'PENDING'

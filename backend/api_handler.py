@@ -196,9 +196,9 @@ def handler(event, context):
         # Check if in some maintenance mode
         # Check if in maintenance status is not INACTIVE
         # Check if the user belongs to a 'DAAdministrators' group
-        if (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.NOACCESS.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE) and not TenantPolicyValidationService.is_tenant_admin(groups):
+        if (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.NOACCESS.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE.value) and not TenantPolicyValidationService.is_tenant_admin(groups):
             send_unauthorized_response(query=query, message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.')
-        elif (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.READONLY.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE) and not TenantPolicyValidationService.is_tenant_admin(groups):
+        elif (MaintenanceService.get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.READONLY.value) and (MaintenanceService.get_maintenance_window_status(engine=ENGINE).status is not MaintenanceStatus.INACTIVE.value) and not TenantPolicyValidationService.is_tenant_admin(groups):
             # If its mutation then block and return
             if query.get('query', '').split(' ')[0] == 'mutation':
                 send_unauthorized_response(query=query, message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.')

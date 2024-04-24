@@ -37,10 +37,10 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
-                if maintenance_record.status == MaintenanceStatus.PENDING or maintenance_record.status == MaintenanceStatus.ACTIVE:
+                if maintenance_record.status == MaintenanceStatus.PENDING.value or maintenance_record.status == MaintenanceStatus.ACTIVE.value:
                     logger.error("Maintenance window already in PENDING or ACTIVE state. Cannot start maintenance window. Stop the maintenance window and start again")
                     return False
-                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status=MaintenanceStatus.PENDING ,maintenance_mode=mode)
+                MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status=MaintenanceStatus.PENDING.value ,maintenance_mode=mode)
             # Disable scheduled ECS tasks
             # Get all the SSMs related to the scheduled tasks
             ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
@@ -66,7 +66,7 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
-                if maintenance_record.status == MaintenanceStatus.INACTIVE:
+                if maintenance_record.status == MaintenanceStatus.INACTIVE.value:
                     logger.error("Maintenance window already in INACTIVE state. Cannot stop maintenance window")
                     return False
                 MaintenanceRepository(session).save_maintenance_status_and_mode(maintenance_status='INACTIVE', maintenance_mode='')
@@ -93,7 +93,7 @@ class MaintenanceService:
         with engine.scoped_session() as session:
             try:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
-                if maintenance_record.status == MaintenanceStatus.PENDING:
+                if maintenance_record.status == MaintenanceStatus.PENDING.value:
                     # Check all the ECS tasks
                     ecs_cluster_name = ParameterStoreManager.get_parameter_value(
                         region=os.getenv('AWS_REGION', 'eu-west-1'),
@@ -102,7 +102,7 @@ class MaintenanceService:
                     if Ecs.is_task_running(cluster_name=ecs_cluster_name):
                         return maintenance_record
                     else:
-                        maintenance_record.status = MaintenanceStatus.ACTIVE
+                        maintenance_record.status = MaintenanceStatus.ACTIVE.value
                         session.commit()
                         return maintenance_record
                 else:
