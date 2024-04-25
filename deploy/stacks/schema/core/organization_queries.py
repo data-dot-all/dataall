@@ -33,23 +33,19 @@ class OrganizationQueries:
         )
 
         if True:
-            app_sync_stack.schema.add_query(
-                'listOrganizationsDirect',
-                ResolvableField(
-                    return_type=org_types.organization.attribute(is_list=True),
-                    # args={'filter': org_inputs.organization_filter.attribute()},
-                    # pipeline_config=[data_source_func],
-                    data_source=app_sync_stack.rds_data_source,
-                    code=Code.from_asset(str(Path(__file__).parent.parent.parent.joinpath('schema/function_code.js'))),
-                    runtime=FunctionRuntime.JS_1_0_0,
-                ),
+            get_organization = ResolvableField(
+                return_type=org_types.organization.attribute(),
+                args={'organizationUri': GraphqlType.string()},
+                data_source=app_sync_stack.rds_data_source,
+                code=Code.from_asset(str(Path(__file__).parent.joinpath('get_organization_query.js'))),
+                runtime=FunctionRuntime.JS_1_0_0,
             )
-
-        get_organization = ResolvableField(
-            return_type=org_types.organization.attribute(),
-            args={'organizationUri': GraphqlType.string()},
-            data_source=app_sync_stack.data_source,
-        )
+        else:
+            get_organization = ResolvableField(
+                return_type=org_types.organization.attribute(),
+                args={'organizationUri': GraphqlType.string()},
+                data_source=app_sync_stack.data_source,
+            )
         app_sync_stack.schema.add_query('getOrganization', get_organization)
         env_types.environment.add_field(field_name='organization', field=get_organization)
 

@@ -7,9 +7,18 @@ import {select, createPgStatement, toJsonObject} from '@aws-appsync/utils/rds';
  * @returns {*} the request
  */
 export function request(ctx) {
-    return createPgStatement(select({table: 'dev.organization'}));
+    const statement = select({
+        table: 'dev.organization',
+        columns: '*',
+        where: {
+            organizationUri: {
+                eq: ctx.args.organizationUri,
+            },
+        },
+        limit: 1,
+    });
+    return createPgStatement(statement);
 }
-
 
 /**
  * Returns the result or throws an error if the operation failed.
@@ -21,5 +30,5 @@ export function response(ctx) {
     if (error) {
         return util.appendError(error.message, error.type, result);
     }
-    return toJsonObject(result)[0];
+    return toJsonObject(result)[0][0];
 }
