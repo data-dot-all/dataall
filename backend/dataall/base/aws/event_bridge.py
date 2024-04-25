@@ -1,5 +1,4 @@
 import logging
-import os
 
 import boto3
 
@@ -25,5 +24,5 @@ class EventBridge:
             for ecs_task in list_of_tasks:
                 self.client.disable_rule(Name=ecs_task)
         except Exception as e:
-            logger.error(f'Error while re-enabling scheduled ecs tasks due to {e}')
+            logger.error(f'Error while disabling scheduled ecs tasks due to {e}')
             raise e

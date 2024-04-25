@@ -24,4 +24,3 @@ def stop_maintenance_window(context: Context, source: Maintenance):
 
 def get_maintenance_window_status(context: Context, source: Maintenance):
     return MaintenanceService.get_maintenance_window_status(engine=context.engine)
-

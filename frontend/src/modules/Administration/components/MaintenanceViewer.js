@@ -32,9 +32,9 @@ const maintenanceModes = [
 
 const START_MAINTENANCE = 'Start Maintenance';
 const END_MAINTENANCE = 'End Maintenance';
-export const PENDING_STATUS = 'PENDING'
-export const ACTIVE_STATUS = 'ACTIVE'
-export const INACTIVE_STATUS = 'INACTIVE'
+export const PENDING_STATUS = 'PENDING';
+export const ACTIVE_STATUS = 'ACTIVE';
+export const INACTIVE_STATUS = 'INACTIVE';
 
 export const MaintenanceConfirmationPopUp = (props) => {
   const {
@@ -67,6 +67,7 @@ export const MaintenanceConfirmationPopUp = (props) => {
         const respData = response.data.startMaintenanceWindow;
         if (respData === true) {
           setMaintenanceButtonText(END_MAINTENANCE);
+          setMaintenanceWindowStatus(PENDING_STATUS);
           setDropDownStatus(false);
           enqueueSnackbar(
             'Maintenance Window Started. Please check the status',
@@ -183,7 +184,7 @@ export const MaintenanceViewer = () => {
   const refreshMaintenanceView = async () => {
     setUpdating(true);
     setRefreshing(true);
-    getMaintenanceWindowStatus()
+    _getMaintenanceWindowStatus()
       .then((data) => {
         setMaintenanceWindowStatus(data.status);
         if (data.status === INACTIVE_STATUS) {
@@ -204,7 +205,7 @@ export const MaintenanceViewer = () => {
       .catch((e) => dispatch({ type: SET_ERROR, e }));
   };
 
-  const getMaintenanceWindowStatus = async () => {
+  const _getMaintenanceWindowStatus = async () => {
     if (client) {
       const response = await client.query(getMaintenanceStatus());
       if (
@@ -225,7 +226,7 @@ export const MaintenanceViewer = () => {
     // Check if proper maintenance mode is selected
     if (
       !maintenanceModes.map((obj) => obj.value).includes(mode) &&
-      maintenanceButtonText === 'Start Maintenance'
+      maintenanceButtonText === START_MAINTENANCE
     ) {
       dispatch({
         type: SET_ERROR,
@@ -260,7 +261,7 @@ export const MaintenanceViewer = () => {
                   sx={{ color: '#fff' }}
                   variant="subtitle2"
                 >
-                  Maintenance Window Status is being updated !!
+                  Maintenance Window Status is being updated
                 </Typography>
               </Grid>
             </Grid>
@@ -301,7 +302,7 @@ export const MaintenanceViewer = () => {
         maintenanceStatusData.status === PENDING_STATUS ||
         maintenanceStatusData.status === ACTIVE_STATUS
       ) {
-        setMaintenanceButtonText('End Maintenance');
+        setMaintenanceButtonText(END_MAINTENANCE);
         setMaintenanceWindowStatus(maintenanceStatusData.status);
         setConfirmedMode(
           maintenanceModes.find(
@@ -310,7 +311,7 @@ export const MaintenanceViewer = () => {
         );
         setDropDownStatus(false);
       } else if (maintenanceStatusData.status === INACTIVE_STATUS) {
-        setMaintenanceButtonText('Start Maintenance');
+        setMaintenanceButtonText(START_MAINTENANCE);
         setConfirmedMode('');
         setDropDownStatus(true);
       }
@@ -327,7 +328,6 @@ export const MaintenanceViewer = () => {
       initializeMaintenanceView().catch((e) =>
         dispatch({ type: SET_ERROR, e })
       );
-
       const setTimer = setInterval(() => {
         refreshStatus().catch((e) =>
           dispatch({ type: SET_ERROR, error: e.message })

@@ -42,13 +42,12 @@ class ParameterStoreManager:
         if not parameter_path:
             raise Exception('Parameter name is None')
         try:
-            parameter_value = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
+            parameter_values = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
                 Path=parameter_path
             )['Parameters']
-            log.info(ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(Path=parameter_path))
         except ClientError as e:
             raise Exception(e)
-        return parameter_value
+        return parameter_values
 
     @staticmethod
     def update_parameter(AwsAccountId, region, parameter_name, parameter_value):
