@@ -483,7 +483,8 @@ the different configuration options.
     },
     "core": {
         "features": {
-            "env_aws_actions": true
+            "env_aws_actions": true,
+            "cdk_pivot_role_multiple_environments_same_account": false
         }
     }
 }
@@ -576,23 +577,26 @@ In addition to disabling / enabling, some module features allow for additional c
 | custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
 
 
-### Disable core features
+### Disable and customize core features
 In some cases, customers need to disable features that belong to the core functionalities of data.all. One way to restrict 
 a particular feature in the core is to add it to the core section of the `config.json` and enable/disable it. 
 
 ```json
     "core": {
         "features": {
-            "env_aws_actions": true
+            "env_aws_actions": true,
+            "cdk_pivot_role_multiple_environments_same_account": false
         }
     }
 ```
-This is the list of core features that can be switched on/off at the moment. Take it as an example if you need to 
-disable any other core feature.
+This is the list of core features that can currently be customized. Take it as an example if you need to 
+disable or modify the bahavior any other core feature.
 
-| **Feature**           | **Module**     | **Description**                                                                  |   
-|-----------------------|----------------|----------------------------------------------------------------------------------|
-| env_aws_actions       | environments   | Get AWS Credentials and assume Environment Group IAM roles from data.all's UI    |
+| **Feature**           | **Module**     | **Description**                                                                                                                                                                                                                                     |   
+|-----------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| env_aws_actions       | environments   | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
+| cdk_pivot_role_multiple_environments_same_account       | environments   | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
+
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
@@ -754,14 +758,16 @@ When setting the value to `false`, backend resources become smaller but you save
 
 These are the resources affected:
 
-| Backend Service |prod_sizing| Configuration
-|-----------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|Aurora           |true       | - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU                                              |
-|Aurora           |false      | - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU                                                  |
-|OpenSearch       |true       | - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it         |
-|OpenSearch       |false      | - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it    |
-|Lambda function  |true       | - Lambda functions are configured with more memory                                                                                                                                                                                 |
-|Lambda function  |false      | - Lambda functions are configured with less memory                                                                                                                                                                                 |
+| Backend Service     | prod_sizing | Configuration                                                                                                                                                                                                                   
+|---------------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Aurora              | true        | - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU                                           |
+| Aurora              | false       | - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU                                               |
+| OpenSearch          | true        | - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it      |
+| OpenSearch          | false       | - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it |
+| Lambda function     | true        | - Lambda functions are configured with more memory                                                                                                                                                                              |
+| Lambda function     | false       | - Lambda functions are configured with less memory                                                                                                                                                                              |
+| SSM Parameter Store | true        | - SSM in the AWS account is configured for high throughput  (check [service quotas](https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm))                                                                         |
+| SSM Parameter Store | false       | - SSM in the AWS account is configured for default throughput  (check [service quotas](https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm))                                                                      |
 
 ### I used the wrong accounts or made another mistake in the deployment. How do I un-deploy data.all?
 In the above steps we are only deploying data.all tooling resources. Hence, if the CI/CD CodePipeline pipeline has not 
