@@ -144,13 +144,12 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
 
 
-def get_dataset_stack(context: Context, source: Dataset, **kwargs):
+def resolve_dataset_stack(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
-    env = EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.datasetUri,
-        env=env,
+        environmentUri=source.environmentUri,
     )
 
 
