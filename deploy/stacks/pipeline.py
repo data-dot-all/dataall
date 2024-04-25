@@ -182,6 +182,9 @@ class PipelineStack(Stack):
                     )
                 )
 
+            if target_env.get('with_approval_tests', True):
+                self.set_approval_tests_stage(target_env)
+
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
 
@@ -648,6 +651,42 @@ class PipelineStack(Stack):
             )
         )
         return backend_stage
+
+    def set_approval_tests_stage(
+        self,
+        target_env,
+    ):
+        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
+        wave.add_post(
+            pipelines.CodeBuildStep(
+                id='ApprovalTests',
+                build_environment=codebuild.BuildEnvironment(
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+                ),
+                partial_build_spec=codebuild.BuildSpec.from_object(
+                    dict(
+                        version='0.2',
+                        phases={
+                            'build': {
+                                'commands': [
+                                    'set -eu',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    f'export ENVNAME={target_env["envname"]}',
+                                    f'export AWS_REGION={target_env["region"]}',
+                                    'python -m venv env',
+                                    '. env/bin/activate',
+                                    'make integration-tests',
+                                ]
+                            },
+                        },
+                    )
+                ),
+                commands=[],
+                role=self.baseline_codebuild_role.without_policy_updates(),
+                vpc=self.vpc,
+                security_groups=[self.codebuild_sg],
+            )
+        )
 
     def set_stacks_updater_stage(
         self,
