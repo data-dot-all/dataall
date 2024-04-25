@@ -36,7 +36,8 @@
             "active": true
         },
         "maintenance": {
-            "active" : true
+            "active" : true,
+            "custom_maintenance_text" : "data.all in maintenance. Please reach out to us at #data-users slack channel"
         }
     },
     "core": {

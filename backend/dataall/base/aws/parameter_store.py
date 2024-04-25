@@ -42,9 +42,9 @@ class ParameterStoreManager:
         if not parameter_path:
             raise Exception('Parameter name is None')
         try:
-            parameter_value = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(Path=parameter_path)[
-                'Parameters'
-            ]
+            parameter_value = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
+                Path=parameter_path
+            )['Parameters']
             log.info(ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(Path=parameter_path))
         except ClientError as e:
             raise Exception(e)

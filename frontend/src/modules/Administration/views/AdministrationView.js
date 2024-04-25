@@ -13,13 +13,21 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import { AdministrationTeams, DashboardViewer, MaintenanceViewer } from '../components';
+import config from '../../../generated/config.json';
+import {
+  AdministrationTeams,
+  DashboardViewer,
+  MaintenanceViewer
+} from '../components';
 
 const tabs = [
   { label: 'Teams', value: 'teams' },
-  { label: 'Monitoring', value: 'dashboard' },
-  { label: 'Maintenance', value: 'maintenance' }
+  { label: 'Monitoring', value: 'dashboard' }
 ];
+// Using 'config' as the isModulesEnabled needs Modules.MAINTENANCE which involves much bigger setup which is not needed for maintenance module
+if (config.modules.maintenance.active) {
+  tabs.push({ label: 'Maintenance', value: 'maintenance' });
+}
 
 const AdministrationView = () => {
   const { settings } = useSettings();

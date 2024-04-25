@@ -5,6 +5,7 @@ Revises: 194608b1ff7f
 Create Date: 2024-04-16 19:30:05.226603
 
 """
+
 import os
 
 from alembic import op
@@ -45,7 +46,7 @@ def upgrade():
             op.create_table(
                 'maintenance',
                 sa.Column('status', sa.String(), nullable=False, primary_key=True),
-                sa.Column('mode', sa.String(), nullable=True, default='')
+                sa.Column('mode', sa.String(), nullable=True, default=''),
             )
 
             maintenance_record: [Maintenance] = Maintenance(status='INACTIVE', mode='')
@@ -54,7 +55,7 @@ def upgrade():
         session.commit()
 
     except Exception as e:
-        print(f'Failed to create migration for maintenance table')
+        print('Failed to create migration for maintenance table')
         raise e
 
 

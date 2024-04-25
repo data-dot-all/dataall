@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Login } from '../views/Login';
 import { useAuth } from '../hooks';
@@ -7,16 +7,43 @@ import {
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
 } from '../../utils';
-import {isMaintenanceMode} from "../../services/graphql/MaintenanceWindow";
-import {useClient} from "../../services";
-import {NoAccessMaintenanceWindow} from "../../design";
+import {useClient, useGroups} from '../../services';
+import { NoAccessMaintenanceWindow } from '../../design';
+import {getMaintenanceStatus} from "../../services/graphql/MaintenanceWindow";
+import {ACTIVE_STATUS, PENDING_STATUS} from "../../modules/Administration/components";
+import config from "../../generated/config.json"
+import {SET_ERROR, useDispatch} from "../../globalErrors";
 
 export const AuthGuard = (props) => {
   const { children } = props;
   const auth = useAuth();
   const location = useLocation();
   const [requestedLocation, setRequestedLocation] = useState(null);
+  const [isNoAccessMaintenance, setNoAccessMaintenanceFlag] = useState(false)
   const client = useClient();
+  const groups = useGroups();
+  const dispatch = useDispatch();
+
+  const checkMaintenanceMode = async ()=>{
+     const response = await client.query(getMaintenanceStatus());
+     if (!response.errors && response.data.getMaintenanceWindowStatus != null){
+       if ([PENDING_STATUS, ACTIVE_STATUS].includes(response.data.getMaintenanceWindowStatus.status) && response.data.getMaintenanceWindowStatus.mode === 'NO-ACCESS'
+       && !groups.includes('DAAdministrators')){
+         setNoAccessMaintenanceFlag(true)
+       }
+     }
+  }
+
+  useEffect(async () => {
+    // Check if the maintenance window is enabled and has NO-ACCESS Status
+    // If yes then display a blank screen with a message that data.all is in maintenance mode ( Check use of isNoAccessMaintenance state )
+    if (config.modules.maintenance.active === true){
+      if (client){
+         checkMaintenanceMode().catch((e) => dispatch({ type: SET_ERROR, e }))
+      }
+    }
+  }, [client, groups]);
+
 
   if (!auth.isAuthenticated) {
     if (location.pathname !== requestedLocation) {
@@ -59,15 +86,9 @@ export const AuthGuard = (props) => {
     sessionStorage.removeItem('window-location');
   }
 
-  // Check if the maintenance window is enabled and has NO-ACCESS Status
-  // If yes then display a blank screen with a message that data.all is in maintenance mode
-  if (client){
-    // Replace this call with query call getting mode
-    if (isMaintenanceMode()){
-      return <NoAccessMaintenanceWindow/>
-    }
+  if (isNoAccessMaintenance){
+    return <NoAccessMaintenanceWindow />;
   }
-
 
   return <>{children}</>;
 };

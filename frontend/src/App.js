@@ -5,11 +5,10 @@ import {
   createMaterialTheme,
   useScrollReset,
   useSettings,
-  LoadingScreen, SplashScreen
+  LoadingScreen
 } from './design';
 import routes from './routes';
 import { useAuth } from './authentication';
-import {isMaintenanceMode} from "./services/graphql/MaintenanceWindow";
 
 export const App = () => {
   const content = useRoutes(routes);
@@ -27,8 +26,7 @@ export const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      {/*{auth.isInitialized ?  isMaintenanceMode() ? content : <SplashScreen /> : <LoadingScreen />}*/}
-      {auth.isInitialized ?  content :  <LoadingScreen />}
+      {auth.isInitialized ? content : <LoadingScreen />}
     </ThemeProvider>
   );
 };

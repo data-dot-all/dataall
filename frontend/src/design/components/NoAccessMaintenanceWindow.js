@@ -1,6 +1,5 @@
-import {Box, Typography} from '@mui/material';
-import { Logo } from './Logo';
-import React from "react";
+import { Box, Typography } from '@mui/material';
+import React from 'react';
 
 export const NoAccessMaintenanceWindow = () => (
   <Box
@@ -19,9 +18,9 @@ export const NoAccessMaintenanceWindow = () => (
       zIndex: 2000
     }}
   >
-      <Typography variant="subtitle2" align={'center'} fontSize={'20px'}>
-            data.all is in maintenance mode. Please contact data.all administrators for any assistance.
-      </Typography>
-
+    <Typography variant="subtitle2" align={'center'} fontSize={'20px'}>
+      data.all is in maintenance mode. Please contact data.all administrators
+      for any assistance.
+    </Typography>
   </Box>
 );

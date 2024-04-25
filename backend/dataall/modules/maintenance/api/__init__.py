@@ -1,5 +1,5 @@
 """The package defines the schema for Maintenance Module"""
 
-from dataall.modules.maintenance.api import input_types, mutations, queries, types, resolvers
+from dataall.modules.maintenance.api import mutations, queries, types, resolvers, enums
 
-__all__ = ['types', 'input_types', 'queries', 'mutations', 'resolvers']
+__all__ = ['types', 'queries', 'mutations', 'resolvers', 'enums']

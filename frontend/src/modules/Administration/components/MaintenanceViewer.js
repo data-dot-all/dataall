@@ -1,289 +1,439 @@
 import {
-    Box,
-    Button,
-    Card,
-    CardHeader,
-    CircularProgress,
-    Dialog,
-    Divider,
-    Grid, IconButton,
-    MenuItem,
-    TextField,
-    Typography
-} from "@mui/material";
-import React, {useCallback, useEffect, useState} from "react";
-import {Article, CancelRounded, SystemUpdate} from "@mui/icons-material";
-import {LoadingButton} from "@mui/lab";
-import {Label} from "../../../design";
-import {isMaintenanceMode} from "../../../services/graphql/MaintenanceWindow";
-import {useClient} from "../../../services";
-import {SET_ERROR, useDispatch} from "../../../globalErrors";
-import {useSnackbar} from "notistack";
+  Box,
+  Button,
+  Card,
+  CardHeader,
+  CircularProgress,
+  Dialog,
+  Divider,
+  Grid,
+  IconButton,
+  MenuItem,
+  TextField,
+  Typography
+} from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Article, CancelRounded, SystemUpdate } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import { Label } from '../../../design';
+import {
+  getMaintenanceStatus,
+  stopMaintenanceWindow,
+  startMaintenanceWindow
+} from '../../../services/graphql/MaintenanceWindow';
+import { useClient } from '../../../services';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useSnackbar } from 'notistack';
 
 const maintenanceModes = [
-    {value: "READ-ONLY", label: "Read-Only"},
-    {value: "NO-ACCESS", label: "No-Access"}
-]
+  { value: 'READ-ONLY', label: 'Read-Only' },
+  { value: 'NO-ACCESS', label: 'No-Access' }
+];
 
-export const MaintenanceConfirmationPopUp = ({popUp, setPopUp, mode, confirmedMode, setConfirmedMode, maintenanceButtonText, setMaintenanceButtonText, setDropDownStatus, refreshingTimer, startRefreshPolling}) => {
+const START_MAINTENANCE = 'Start Maintenance';
+const END_MAINTENANCE = 'End Maintenance';
+export const PENDING_STATUS = 'PENDING'
+export const ACTIVE_STATUS = 'ACTIVE'
+export const INACTIVE_STATUS = 'INACTIVE'
 
-    const handlePopUpModal = () => {
-        // Call the GrapQL API and then after the success is received change the UI
-        if (maintenanceButtonText === 'Start Maintenance') {
-            // Call the GraphQL to enable maintenance window
-            setMaintenanceButtonText('End Maintenance')
-            // Freeze the dropdown menu
-            setDropDownStatus(true)
-            // Start the Timer
-            startRefreshPolling()
-        }else if (maintenanceButtonText === 'End Maintenance'){
-            // Call the GraphQL to disable maintenance window
-            setMaintenanceButtonText('Start Maintenance')
-            // Unfreeze the dropdown menu
-            setDropDownStatus(false)
-            // End the running timer as well
-            clearInterval(refreshingTimer)
-        }
-        setConfirmedMode(mode)
-        setPopUp(false)
-    }
+export const MaintenanceConfirmationPopUp = (props) => {
+  const {
+    popUp,
+    setPopUp,
+    confirmedMode,
+    setConfirmedMode,
+    maintenanceButtonText,
+    setMaintenanceButtonText,
+    setDropDownStatus,
+    refreshingTimer,
+    setMaintenanceWindowStatus
+  } = props;
+  const client = useClient();
+  const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
 
-    return (
-        <Dialog  maxWidth="md" fullWidth open={popUp}>
-            <Box sx={{p : 2}}>
-                <Card>
-                    <CardHeader title={
-                    <Box>
-                        Are you sure you want to {maintenanceButtonText.toLowerCase()}?
-                    </Box>
-                  }/>
-                    <Divider/>
-                    <Box display="flex" sx={{ p: 1 }}>
-                        <Button
-                          color="primary"
-                          startIcon={<Article fontSize="small" />}
-                          sx={{ m: 1 }}
-                          variant="outlined"
-                          onClick={handlePopUpModal}
-                        >
-                          Yes
-                        </Button>
-                        <Button
-                          color="primary"
-                          startIcon={<Article fontSize="small" />}
-                          sx={{ m: 1 }}
-                          variant="outlined"
-                          onClick={() => {setPopUp(false)} }
-                        >
-                          No
-                        </Button>
-                    </Box>
-                </Card>
-            </Box>
-        </Dialog>
-    )
-}
-
-export const MaintenanceViewer = () => {
-    const client = useClient();
-    const [updating, setUpdating] = useState(false);
-    const [mode, setMode] = useState('')
-    const [popUp, setPopUp] = useState(false)
-    const [confirmedMode, setConfirmedMode] = useState('')
-    const [maintenanceButtonText, setMaintenanceButtonText] = useState('Start Maintenance')
-    const [maintenanceWindowStatus, setMaintenanceWindowStatus] = useState('INACTIVE')
-    const [dropDownStatus, setDropDownStatus] = useState(false)
-    const [refreshingTimer, setRefreshingTimer] = useState('')
-    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-    const dispatch = useDispatch();
-
-    const refreshMaintenanceView = async () =>{
-        console.log("Refreshing the maintenance view now!!!")
-        // Call the que
-        setUpdating(true)
-        setTimeout(() =>{
-            setUpdating(false)
-        }, 2000)
-
-        refreshStatus().catch((e) => dispatch({ type: SET_ERROR, error: e.message }))
-        return true
-    }
-
-    const startMaintenanceWindow = () => {
-        // Check if proper maintenance mode is selected
-        // Use Formik forms for this in the future
-        console.log(`value of the mode is ${mode}`)
-        if (!['READ-ONLY', 'NO-ACCESS'].includes(mode) && maintenanceButtonText === 'Start Maintenance'){
-            dispatch({ type: SET_ERROR, error: 'Please select correct maintenance mode' })
-            return false;
-        }
-        setPopUp(true)
-        return true;
-    }
-
-    const startRefreshPolling = useCallback(
-        async () => {
-            console.log("I am here in the refresh polling ")
-            if (client){
-                    const setTimer = setInterval(() => {
-                    refreshStatus().catch((e) => dispatch({ type: SET_ERROR, error: e.message }))}
-                    , [10000])
-                    setRefreshingTimer(setTimer)
-            }
-        }
-        , [client])
-
-    const refreshStatus = async () => {
-        closeSnackbar();
-        await console.log("gsdlfjslf")
-        console.log("Refreshing the status of the maintenance window")
-        // Call the query to get the status of the maintenance window
-        // Update the status of the maintenance window
-        // Enqueue Snack bar to show that the maintenance window status is being polled
-        enqueueSnackbar(
-            <Box>
-              <Grid container spacing={2}>
-                <Grid item sx={1}>
-                  <CircularProgress sx={{ color: '#fff' }} size={15} />
-                </Grid>
-                <Grid item sx={11}>
-                  <Typography
-                    color="textPrimary"
-                    sx={{ color: '#fff' }}
-                    variant="subtitle2"
-                  >
-                    Maintenance Window Status is being updated !!
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>,
+  const handlePopUpModal = async () => {
+    if (maintenanceButtonText === START_MAINTENANCE) {
+      if (!client) {
+        dispatch({
+          type: SET_ERROR,
+          error: 'Client not initialized for starting maintenance window'
+        });
+      }
+      const response = await client.mutate(
+        startMaintenanceWindow({ mode: confirmedMode })
+      );
+      if (!response.errors && response.data.startMaintenanceWindow != null) {
+        const respData = response.data.startMaintenanceWindow;
+        if (respData === true) {
+          setMaintenanceButtonText(END_MAINTENANCE);
+          setDropDownStatus(false);
+          enqueueSnackbar(
+            'Maintenance Window Started. Please check the status',
             {
-              key: new Date().getTime() + Math.random(),
               anchorOrigin: {
                 horizontal: 'right',
                 vertical: 'top'
               },
-              variant: 'info',
-              persist: true,
-              action: (key) => (
-                <IconButton
-                  onClick={() => {
-                    closeSnackbar(key);
-                  }}
-                >
-                  <CancelRounded sx={{ color: '#fff' }} />
-                </IconButton>
-              )
+              variant: 'success'
             }
           );
-    }
-
-    useEffect(() => {
-        if (client) {
-            // For the first time
-            // Check if the maintenance mode is ON
-            if (isMaintenanceMode()){
-                 // If ON, then
-                // Fetch the value of the maintenance mode and paste it on the text field, disable the text field
-                // Make the button say "End Maintenance" mode
-                // Fetch the Status of the maintenance mode
-                // Also, edit the Maintenance mode value
-                const maintenanceMode = 'READ-ONLY' // GET THIS FROM GRAPHQL ENDPOINT
-                setMaintenanceButtonText('End Maintenance')
-                setMaintenanceWindowStatus('PENDING') // GET THIS FROM GRAPHQL ENDPOINT
-                setConfirmedMode(maintenanceMode)
-                setDropDownStatus(true)
-
-                const setTimer = setInterval(() => {
-                    refreshStatus().catch((e) => dispatch({ type: SET_ERROR, error: e.message }))}
-                    , [10000])
-                setRefreshingTimer(setTimer)
-                return () => clearInterval(setTimer)
-
-            }else{
-                // If OFF, then
-                // Make the button say "Start Maintenance"
-                // Clear the status and maintenance mode values
-                setMaintenanceButtonText('Start Maintenance')
-                setConfirmedMode('')
-            }
+        } else {
+          enqueueSnackbar('Could not start maintenance window', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
         }
-    }, [client]);
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'Something went wrong while starting maintenance window. Please check gql logs';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } else if (maintenanceButtonText === END_MAINTENANCE) {
+      const response = await client.mutate(stopMaintenanceWindow());
+      if (
+        !response.errors &&
+        response.data.stopMaintenanceWindow != null &&
+        response.data.stopMaintenanceWindow === true
+      ) {
+        setMaintenanceButtonText(START_MAINTENANCE);
+        // Unfreeze the dropdown menu
+        setDropDownStatus(true);
+        // End the running timer as well
+        clearInterval(refreshingTimer);
+        setConfirmedMode('');
+        setMaintenanceWindowStatus(INACTIVE_STATUS);
+        enqueueSnackbar('Maintenance Window Stopped', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'Something went wrong while stopping maintenance window. Please check gql logs';
+        dispatch({ type: SET_ERROR, error });
+      }
+    }
+    setPopUp(false);
+  };
 
+  return (
+    <Dialog maxWidth="md" fullWidth open={popUp}>
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardHeader
+            title={
+              <Box>
+                Are you sure you want to {maintenanceButtonText.toLowerCase()}?
+              </Box>
+            }
+          />
+          <Divider />
+          <Box display="flex" sx={{ p: 1 }}>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={handlePopUpModal}
+            >
+              Yes
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                setPopUp(false);
+              }}
+            >
+              No
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    </Dialog>
+  );
+};
 
-    return (
+export const MaintenanceViewer = () => {
+  const client = useClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [mode, setMode] = useState('');
+  const [popUp, setPopUp] = useState(false);
+  const [confirmedMode, setConfirmedMode] = useState('');
+  const [maintenanceButtonText, setMaintenanceButtonText] =
+    useState(START_MAINTENANCE);
+  const [maintenanceWindowStatus, setMaintenanceWindowStatus] =
+    useState(INACTIVE_STATUS);
+  const [dropDownStatus, setDropDownStatus] = useState(false);
+  const [refreshingTimer, setRefreshingTimer] = useState('');
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const dispatch = useDispatch();
+
+  const refreshMaintenanceView = async () => {
+    setUpdating(true);
+    setRefreshing(true);
+    getMaintenanceWindowStatus()
+      .then((data) => {
+        setMaintenanceWindowStatus(data.status);
+        if (data.status === INACTIVE_STATUS) {
+          setMaintenanceButtonText(START_MAINTENANCE);
+          setConfirmedMode('');
+          setDropDownStatus(true);
+          clearInterval(refreshingTimer);
+        } else {
+          setMaintenanceButtonText(END_MAINTENANCE);
+          setConfirmedMode(
+            maintenanceModes.find((obj) => obj.value === data.mode).label
+          );
+          setDropDownStatus(false);
+        }
+        setUpdating(false);
+        setRefreshing(false);
+      })
+      .catch((e) => dispatch({ type: SET_ERROR, e }));
+  };
+
+  const getMaintenanceWindowStatus = async () => {
+    if (client) {
+      const response = await client.query(getMaintenanceStatus());
+      if (
+        !response.errors &&
+        response.data.getMaintenanceWindowStatus !== null
+      ) {
+        return response.data.getMaintenanceWindowStatus;
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'Could not fetch status of maintenance window';
+        dispatch({ type: SET_ERROR, error });
+      }
+    }
+  };
+
+  const startMaintenanceWindow = () => {
+    // Check if proper maintenance mode is selected
+    if (
+      !maintenanceModes.map((obj) => obj.value).includes(mode) &&
+      maintenanceButtonText === 'Start Maintenance'
+    ) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Please select correct maintenance mode'
+      });
+    }
+    setConfirmedMode(mode);
+    setPopUp(true);
+  };
+
+  const refreshStatus = async () => {
+    closeSnackbar();
+    const response = await client.query(getMaintenanceStatus());
+    if (!response.errors && response.data.getMaintenanceWindowStatus !== null) {
+      const maintenanceStatusData = response.data.getMaintenanceWindowStatus;
+      setMaintenanceWindowStatus(maintenanceStatusData.status);
+      if (
+        maintenanceStatusData.status === INACTIVE_STATUS ||
+        maintenanceStatusData.status === ACTIVE_STATUS
+      ) {
+        clearInterval(refreshingTimer);
+      } else {
+        enqueueSnackbar(
+          <Box>
+            <Grid container spacing={2}>
+              <Grid item sx={1}>
+                <CircularProgress sx={{ color: '#fff' }} size={15} />
+              </Grid>
+              <Grid item sx={11}>
+                <Typography
+                  color="textPrimary"
+                  sx={{ color: '#fff' }}
+                  variant="subtitle2"
+                >
+                  Maintenance Window Status is being updated !!
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>,
+          {
+            key: new Date().getTime() + Math.random(),
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'info',
+            persist: true,
+            action: (key) => (
+              <IconButton
+                onClick={() => {
+                  closeSnackbar(key);
+                }}
+              >
+                <CancelRounded sx={{ color: '#fff' }} />
+              </IconButton>
+            )
+          }
+        );
+      }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Maintenance Status not found. Something went wrong';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
+
+  const initializeMaintenanceView = useCallback(async () => {
+    const response = await client.query(getMaintenanceStatus());
+    if (!response.errors && response.data.getMaintenanceWindowStatus !== null) {
+      const maintenanceStatusData = response.data.getMaintenanceWindowStatus;
+      if (
+        maintenanceStatusData.status === PENDING_STATUS ||
+        maintenanceStatusData.status === ACTIVE_STATUS
+      ) {
+        setMaintenanceButtonText('End Maintenance');
+        setMaintenanceWindowStatus(maintenanceStatusData.status);
+        setConfirmedMode(
+          maintenanceModes.find(
+            (obj) => obj.value === maintenanceStatusData.mode
+          ).label
+        );
+        setDropDownStatus(false);
+      } else if (maintenanceStatusData.status === INACTIVE_STATUS) {
+        setMaintenanceButtonText('Start Maintenance');
+        setConfirmedMode('');
+        setDropDownStatus(true);
+      }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Maintenance Status not found. Something went wrong';
+      dispatch({ type: SET_ERROR, error });
+    }
+  }, [client]);
+
+  useEffect(() => {
+    if (client) {
+      initializeMaintenanceView().catch((e) =>
+        dispatch({ type: SET_ERROR, e })
+      );
+
+      const setTimer = setInterval(() => {
+        refreshStatus().catch((e) =>
+          dispatch({ type: SET_ERROR, error: e.message })
+        );
+      }, [10000]);
+      setRefreshingTimer(setTimer);
+      return () => clearInterval(setTimer);
+    }
+  }, [client]);
+
+  return (
+    <Box>
+      {refreshing ? (
+        <CircularProgress />
+      ) : (
         <Box>
-            <Card>
-                <CardHeader
-                    title={
-                    <Box>
-                        Create a Maintenance Window
-                    </Box>
-                  } />
-                <Divider />
-                <Box>
-                    <Box display="flex"  sx={{ p: 1 }} >
-                        <Box sx={{ flexGrow: 1 }}>
-                            <TextField
-                            style={{width:500}}
-                            label="Mode"
-                            name="MaintenanceMode"
-                            onChange={(event)=>{setMode(event.target.value)}}
-                            select
-                            value={mode}
-                            variant="outlined"
-                            disabled={dropDownStatus}
-                          >
-                            {maintenanceModes.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </Box>
-                         <Button
-                          color="primary"
-                          startIcon={<Article fontSize="small" />}
-                          sx={{ m: 1 }}
-                          variant="outlined"
-                          onClick={startMaintenanceWindow}
-                          value={"Start Maintenance"}
-                        >
-                             <div>{maintenanceButtonText}</div>
-                        </Button>
+          <Card>
+            <CardHeader title={<Box>Create a Maintenance Window</Box>} />
+            <Divider />
+            <Box>
+              <Box display="flex" sx={{ p: 1 }}>
+                <Box sx={{ flexGrow: 1 }}>
+                  <TextField
+                    style={{ width: 500 }}
+                    label="Mode"
+                    name="MaintenanceMode"
+                    onChange={(event) => {
+                      setMode(event.target.value);
+                    }}
+                    select
+                    value={mode}
+                    variant="outlined"
+                    disabled={!dropDownStatus}
+                  >
+                    {maintenanceModes.map((group) => (
+                      <MenuItem key={group.value} value={group.value}>
+                        {group.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+                <Button
+                  color="primary"
+                  startIcon={<Article fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={startMaintenanceWindow}
+                  value={'Start Maintenance'}
+                >
+                  <div>{maintenanceButtonText}</div>
+                </Button>
 
-                         <LoadingButton
-                          color="primary"
-                          loading={updating}
-                          onClick={refreshMaintenanceView}
-                          startIcon={<SystemUpdate fontSize="small" />}
-                          sx={{ m: 1 }}
-                          variant="contained"
-                        >
-                          Refresh
-                        </LoadingButton>
-                         </Box>
-                </Box>
-                <Divider/>
-                <Box display="flex"  sx={{ p: 3 }}>
-                    <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
-                        Maintenance window status : {maintenanceWindowStatus === 'ACTIVE' ? (<Label color={'success'}>ACTIVE</Label>) : maintenanceWindowStatus === 'PENDING' ? (<Label color={'warning'}>PENDING</Label>) : maintenanceWindowStatus === 'INACTIVE' ? (<Label color={'secondary'}>INACTIVE</Label>) : <> - </> }
-                    </Typography>
-                     <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
-                        |
-                    </Typography>
-                    <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
-                        Current maintenance mode : {confirmedMode}
-                    </Typography>
-                </Box>
-                <Divider/>
-                <Box>
-                     <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 3 }}>
-                        Note - For safe deployments, please deploy when the status is ACTIVE
-                    </Typography>
-                </Box>
-            </Card>
-            <MaintenanceConfirmationPopUp popUp={popUp} setPopUp={setPopUp} mode={mode} confirmedMode={confirmedMode} setConfirmedMode={setConfirmedMode} maintenanceButtonText={maintenanceButtonText} setMaintenanceButtonText={setMaintenanceButtonText} setDropDownStatus={setDropDownStatus} refreshingTimer={refreshingTimer} startRefreshPolling={startRefreshPolling}/>
+                <LoadingButton
+                  color="primary"
+                  loading={updating}
+                  onClick={refreshMaintenanceView}
+                  startIcon={<SystemUpdate fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="contained"
+                >
+                  Refresh
+                </LoadingButton>
+              </Box>
+            </Box>
+            <Divider />
+            <Box display="flex" sx={{ p: 3 }}>
+              <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
+                Maintenance window status :{' '}
+                {maintenanceWindowStatus === ACTIVE_STATUS ? (
+                  <Label color={'success'}>ACTIVE</Label>
+                ) : maintenanceWindowStatus === PENDING_STATUS ? (
+                  <Label color={'warning'}>PENDING</Label>
+                ) : maintenanceWindowStatus === INACTIVE_STATUS ? (
+                  <Label color={'error'}>INACTIVE</Label>
+                ) : (
+                  <> - </>
+                )}
+              </Typography>
+              <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
+                |
+              </Typography>
+              <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 2 }}>
+                Current maintenance mode : {confirmedMode}
+              </Typography>
+            </Box>
+            <Divider />
+            <Box>
+              <Typography variant="subtitle2" fontSize={'15px'} sx={{ p: 3 }}>
+                Note - For safe deployments, please deploy when the status is{' '}
+                <Label color={'success'}>ACTIVE</Label>
+              </Typography>
+            </Box>
+          </Card>
+          <MaintenanceConfirmationPopUp
+            popUp={popUp}
+            setPopUp={setPopUp}
+            confirmedMode={confirmedMode}
+            setConfirmedMode={setConfirmedMode}
+            maintenanceButtonText={maintenanceButtonText}
+            setMaintenanceButtonText={setMaintenanceButtonText}
+            setDropDownStatus={setDropDownStatus}
+            refreshingTimer={refreshingTimer}
+            setMaintenanceWindowStatus={setMaintenanceWindowStatus}
+          />
         </Box>
-    )
-}
+      )}
+    </Box>
+  );
+};

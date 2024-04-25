@@ -57,6 +57,6 @@ OrganizationSimplified = gql.ObjectType(
     fields=[
         gql.Field(name='organizationUri', type=gql.ID),
         gql.Field(name='label', type=gql.String),
-        gql.Field(name='name', type=gql.String)
+        gql.Field(name='name', type=gql.String),
     ],
 )

@@ -3,9 +3,9 @@ import { createContext, useEffect, useReducer } from 'react';
 import { SET_ERROR } from 'globalErrors';
 
 const anonymousUser = {
-  id: 'someone@amazon.com',
-  email: 'someone@amazon.com',
-  name: 'someone@amazon.com'
+  id: 'anonymous@amazon.com',
+  email: 'anonymous@amazon.com',
+  name: 'anonymous@amazon.com'
 };
 const initialState = {
   isAuthenticated: true,
