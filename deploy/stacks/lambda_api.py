@@ -70,7 +70,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             f'{resource_prefix}-lambda-env-var-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias= f'{resource_prefix}-lambda-env-var-key',
+            alias=f'{resource_prefix}-lambda-env-var-key',
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
