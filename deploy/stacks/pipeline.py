@@ -182,7 +182,7 @@ class PipelineStack(Stack):
                     )
                 )
 
-            if target_env.get('with_approval_tests', True):
+            if target_env.get('with_approval_tests', False):
                 self.set_approval_tests_stage(target_env)
 
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):

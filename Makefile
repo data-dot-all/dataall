@@ -55,7 +55,7 @@ test:
 	export PYTHONPATH=./backend:/./tests && \
 	python -m pytest -v -ra tests/
 
-integration-test: install-integration-tests
+integration-tests: upgrade-pip install-backend install-cdkproxy install-integration-tests
 	export PYTHONPATH=./backend:/./tests_new && \
 	python -m pytest -v -ra tests_new/integration_tests/
 
