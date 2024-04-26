@@ -679,6 +679,13 @@ class PipelineStack(Stack):
                                 ]
                             },
                         },
+                        reports={
+                            'PytestReports': {
+                                'files': ['integration_tests.xml'],
+                                'base-directory': '$CODEBUILD_SRC_DIR',
+                                'file-format': 'JUNITXML',
+                            }
+                        },
                     )
                 ),
                 commands=[],
