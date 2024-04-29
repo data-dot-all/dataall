@@ -276,72 +276,71 @@ const DatasetView = () => {
             </Grid>
 
             <Grid item>
-              {isAdmin ? (
-                <Box sx={{ m: -1 }}>
-                  <UpVoteButton
-                    upVoted={isUpVoted}
-                    onClick={() => upVoteDataset(dataset.datasetUri)}
-                    upVotes={upVotes}
-                  />
-                  <Button
-                    color="primary"
-                    startIcon={<ForumOutlined fontSize="small" />}
-                    sx={{ mt: 1, mr: 1 }}
-                    onClick={() => setOpenFeed(true)}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Chat
-                  </Button>
-                  {isFeatureEnabled('datasets', 'aws_actions') && (
-                    <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
-                  )}
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ mt: 1, mr: 1 }}
-                    to={`/console/datasets/${dataset.datasetUri}/edit`}
-                    variant="outlined"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<FaTrash size={15} />}
-                    sx={{ mt: 1 }}
-                    onClick={handleDeleteObjectModalOpen}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              ) : (
-                <Box sx={{ m: -1 }}>
-                  {isOpeningModal ? (
-                    <CircularProgress size={20} />
-                  ) : (
+              <Box sx={{ m: -1 }}>
+                {isAdmin && (
+                  <span>
+                    <UpVoteButton
+                      upVoted={isUpVoted}
+                      onClick={() => upVoteDataset(dataset.datasetUri)}
+                      upVotes={upVotes}
+                    />
                     <Button
                       color="primary"
-                      startIcon={<LockOpen size={15} />}
-                      onClick={handleRequestAccessModalOpen}
+                      startIcon={<ForumOutlined fontSize="small" />}
+                      sx={{ mt: 1, mr: 1 }}
+                      onClick={() => setOpenFeed(true)}
                       type="button"
-                      sx={{ mt: 1 }}
                       variant="outlined"
                     >
-                      Request Access
+                      Chat
                     </Button>
-                  )}
-                  <RequestAccessModal
-                    onApply={handleRequestAccessModalClose}
-                    onClose={handleRequestAccessModalClose}
-                    open={isRequestAccessOpen}
-                    stopLoader={() => setIsOpeningModal(false)}
-                    hit={{ _id: dataset.datasetUri, resourceKind: 'dataset' }}
-                  />
-                </Box>
-              )}
+                    {isFeatureEnabled('datasets', 'aws_actions') && (
+                      <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                    )}
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ mt: 1, mr: 1 }}
+                      to={`/console/datasets/${dataset.datasetUri}/edit`}
+                      variant="outlined"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      color="primary"
+                      startIcon={<FaTrash size={15} />}
+                      sx={{ mt: 1 }}
+                      onClick={handleDeleteObjectModalOpen}
+                      type="button"
+                      variant="outlined"
+                    >
+                      Delete
+                    </Button>
+                  </span>
+                )}
+                {isOpeningModal ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <Button
+                    color="primary"
+                    startIcon={<LockOpen size={15} />}
+                    onClick={handleRequestAccessModalOpen}
+                    type="button"
+                    sx={{ mt: 1, ml: 1 }}
+                    variant="outlined"
+                  >
+                    Request Access
+                  </Button>
+                )}
+                <RequestAccessModal
+                  onApply={handleRequestAccessModalClose}
+                  onClose={handleRequestAccessModalClose}
+                  open={isRequestAccessOpen}
+                  stopLoader={() => setIsOpeningModal(false)}
+                  hit={{ _id: dataset.datasetUri, resourceKind: 'dataset' }}
+                />
+              </Box>
             </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
