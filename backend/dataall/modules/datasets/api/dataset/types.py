@@ -9,7 +9,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     list_locations,
     resolve_user_role,
     get_dataset_statistics,
-    list_dataset_share_objects,
     get_dataset_glossary_terms,
     resolve_dataset_stack,
 )
@@ -100,20 +99,6 @@ Dataset = gql.ObjectType(
         ),
         gql.Field(name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
         gql.Field(name='statistics', type=DatasetStatistics, resolver=get_dataset_statistics),
-        gql.Field(
-            name='shares',
-            args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
-            type=gql.Ref('ShareSearchResult'),
-            resolver=list_dataset_share_objects,
-            test_scope='ShareObject',
-            test_cases=[
-                'anonymous',
-                'businessowner',
-                'admins',
-                'stewards',
-                'unauthorized',
-            ],
-        ),
         gql.Field(
             name='terms',
             resolver=get_dataset_glossary_terms,
