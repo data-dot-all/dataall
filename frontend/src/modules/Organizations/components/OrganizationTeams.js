@@ -26,6 +26,7 @@ import { HiUserRemove } from 'react-icons/hi';
 import { VscChecklist } from 'react-icons/vsc';
 import {
   Defaults,
+  DeleteObjectWithFrictionModal,
   Label,
   Pager,
   RefreshTableMenu,
@@ -49,6 +50,16 @@ function TeamRow({ team, organization, fetchItems }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [isPermissionModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpenId] = useState(false);
+
+  const handleDeleteGroupModalClosed = () => {
+    setIsDeleteGroupModalOpenId(false);
+  };
+
+  const handleDeleteGroupModalOpen = () => {
+    setIsDeleteGroupModalOpenId(true);
+  };
+
   const handlePermissionsModalClose = () => {
     setIsPermissionsModalOpen(false);
   };
@@ -125,7 +136,7 @@ function TeamRow({ team, organization, fetchItems }) {
       <TableCell>
         <Box>
           {team.groupUri !== organization.SamlGroupName && (
-            <LoadingButton onClick={() => removeGroup(team.groupUri)}>
+            <LoadingButton onClick={() => handleDeleteGroupModalOpen()}>
               <HiUserRemove
                 size={25}
                 color={
@@ -135,6 +146,16 @@ function TeamRow({ team, organization, fetchItems }) {
                 }
               />
             </LoadingButton>
+          )}
+          {team.groupUri !== organization.SamlGroupName && (
+            <DeleteObjectWithFrictionModal
+              objectName={team.groupUri}
+              onApply={() => handleDeleteGroupModalClosed()}
+              onClose={() => handleDeleteGroupModalClosed()}
+              open={isDeleteGroupModalOpen}
+              isAWSResource={false}
+              deleteFunction={() => removeGroup(team.groupUri)}
+            />
           )}
         </Box>
       </TableCell>
