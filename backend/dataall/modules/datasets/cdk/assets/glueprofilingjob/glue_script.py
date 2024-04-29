@@ -1,15 +1,19 @@
-import json
 import os
+
+# workaround: SPARK_VERSION must be already set before import of pydeequ packages
+# ruff: noqa: E402
+os.environ['SPARK_VERSION'] = '3.1'
+
+import json
 import logging
 import pprint
 import sys
 import boto3
 from botocore.exceptions import ClientError
 from awsglue.context import GlueContext
-from awsglue.transforms import ColumnProfilerRunner
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
-from pydeequ.profiles import *
+from pydeequ.profiles import ColumnProfilerRunner
 
 sc = SparkContext.getOrCreate()
 sc._jsc.hadoopConfiguration().set('fs.s3.canned.acl', 'BucketOwnerFullControl')
