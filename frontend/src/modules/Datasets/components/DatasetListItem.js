@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Card,
+  CircularProgress,
   Divider,
   Grid,
   Link,
@@ -9,13 +10,12 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import { BsTable } from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
-import { Link as RouterLink } from 'react-router-dom';
 import {
   IconAvatar,
   Label,
@@ -23,8 +23,21 @@ import {
   UpVotesReadOnly,
   useCardStyle
 } from 'design';
+import { LockOpen } from '@mui/icons-material';
+import { RequestAccessModal } from '../../Catalog/components';
 
 export const DatasetListItem = (props) => {
+  const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const handleRequestAccessModalOpen = () => {
+    setIsOpeningModal(true);
+    setIsRequestAccessOpen(true);
+  };
+
+  const handleRequestAccessModalClose = () => {
+    setIsRequestAccessOpen(false);
+  };
+
   const { dataset } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -246,13 +259,31 @@ export const DatasetListItem = (props) => {
               display: 'flex'
             }}
           >
-            <Button
-              color="primary"
-              component={RouterLink}
-              to={`/console/datasets/${dataset.datasetUri}`}
-            >
-              Learn More
-            </Button>
+            {isOpeningModal ? (
+              <CircularProgress size={20} />
+            ) : (
+              <Button
+                color="primary"
+                edge="end"
+                onClick={handleRequestAccessModalOpen}
+              >
+                <LockOpen fontSize="small" />
+                <Typography
+                  color="PrimaryContrastText"
+                  variant="subtitle2"
+                  sx={{ ml: 0.5 }}
+                >
+                  Request Access
+                </Typography>
+              </Button>
+            )}
+            <RequestAccessModal
+              onApply={handleRequestAccessModalClose}
+              onClose={handleRequestAccessModalClose}
+              open={isRequestAccessOpen}
+              stopLoader={() => setIsOpeningModal(false)}
+              hit={{ _id: dataset.datasetUri, resourceKind: 'dataset' }}
+            />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <UpVotesReadOnly upvotes={dataset.statistics.upvotes} />
