@@ -2,6 +2,7 @@ import {
   ForumOutlined,
   Info,
   LocalOffer,
+  LockOpen,
   ShareOutlined,
   Upload,
   ViewArrayOutlined
@@ -49,6 +50,7 @@ import {
   DatasetUpload
 } from '../components';
 import { isFeatureEnabled } from 'utils';
+import { RequestAccessModal } from '../../Catalog/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -122,6 +124,16 @@ const DatasetView = () => {
     [client]
   );
 
+  const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const handleRequestAccessModalOpen = () => {
+    setIsOpeningModal(true);
+    setIsRequestAccessOpen(true);
+  };
+
+  const handleRequestAccessModalClose = () => {
+    setIsRequestAccessOpen(false);
+  };
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
     if (!response.errors && response.data.countUpVotes !== null) {
@@ -262,8 +274,9 @@ const DatasetView = () => {
                 </Link>
               </Breadcrumbs>
             </Grid>
-            {isAdmin && (
-              <Grid item>
+
+            <Grid item>
+              {isAdmin ? (
                 <Box sx={{ m: -1 }}>
                   <UpVoteButton
                     upVoted={isUpVoted}
@@ -304,8 +317,32 @@ const DatasetView = () => {
                     Delete
                   </Button>
                 </Box>
-              </Grid>
-            )}
+              ) : (
+                <Box sx={{ m: -1 }}>
+                  {isOpeningModal ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <Button
+                      color="primary"
+                      startIcon={<LockOpen size={15} />}
+                      onClick={handleRequestAccessModalOpen}
+                      type="button"
+                      sx={{ mt: 1 }}
+                      variant="outlined"
+                    >
+                      Request Access
+                    </Button>
+                  )}
+                  <RequestAccessModal
+                    onApply={handleRequestAccessModalClose}
+                    onClose={handleRequestAccessModalClose}
+                    open={isRequestAccessOpen}
+                    stopLoader={() => setIsOpeningModal(false)}
+                    hit={{ _id: dataset.datasetUri, resourceKind: 'dataset' }}
+                  />
+                </Box>
+              )}
+            </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
             <Tabs

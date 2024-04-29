@@ -284,21 +284,15 @@ export const GlossarySearchResultItem = ({ hit }) => {
           ) : (
             <Button
               color="primary"
-              edge="end"
+              startIcon={<LockOpen fontSize="small" />}
               onClick={() =>
                 hit.resourceKind === 'dashboard'
                   ? handleRequestDashboardAccessModalOpen()
                   : handleRequestAccessModalOpen()
               }
+              type="button"
             >
-              <LockOpen fontSize="small" />
-              <Typography
-                color="PrimaryContrastText"
-                variant="subtitle2"
-                sx={{ ml: 0.5 }}
-              >
-                Request Access
-              </Typography>
+              Request Access
             </Button>
           )}
           <RequestAccessModal
