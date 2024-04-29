@@ -15,8 +15,12 @@ class Client:
         self.token = self._get_jwt_token()
 
     def query(self, query: str):
-        endpoint = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/apiGateway/backendUrl'
+        endpoint = (
+            os.getenv('API_ENDPOINT', False)
+            if os.getenv('API_ENDPOINT', False)
+            else ParameterStoreManager.get_parameter_value(
+                region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/apiGateway/backendUrl'
+            )
         )
         graphql_endpoint = f'{endpoint}graphql/api'
         headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
@@ -27,8 +31,12 @@ class Client:
 
     def _get_jwt_token(self):
         cognito_client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
-        client_id = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/cognito/appclient'
+        client_id = (
+            os.getenv('COGNITO_CLIENT', False)
+            if os.getenv('COGNITO_CLIENT', False)
+            else ParameterStoreManager.get_parameter_value(
+                region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/cognito/appclient'
+            )
         )
         kwargs = {
             'ClientId': client_id,

@@ -656,6 +656,11 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
+        if target_env.get('custom_auth', None) is None:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role'
+        else:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
+
         wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
         wave.add_post(
             pipelines.CodeBuildStep(
@@ -670,9 +675,16 @@ class PipelineStack(Stack):
                             'build': {
                                 'commands': [
                                     'set -eu',
-                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    'mkdir ~/.aws/ && touch ~/.aws/config',
+                                    'echo "[profile buildprofile]" > ~/.aws/config',
+                                    f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
+                                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                                    'aws sts get-caller-identity --profile buildprofile',
+                                    f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
                                     f'export AWS_REGION={target_env["region"]}',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                     'python -m venv env',
                                     '. env/bin/activate',
                                     'make integration-tests',
@@ -689,7 +701,7 @@ class PipelineStack(Stack):
                     )
                 ),
                 commands=[],
-                role=self.baseline_codebuild_role.without_policy_updates(),
+                role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
                 security_groups=[self.codebuild_sg],
             )
