@@ -7,6 +7,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  Button,
   Link,
   Tooltip,
   Typography
@@ -281,19 +282,24 @@ export const GlossarySearchResultItem = ({ hit }) => {
           {isOpeningModal || isOpeningDashboardModal ? (
             <CircularProgress size={20} />
           ) : (
-            <Tooltip title="Request Access">
-              <IconButton
-                color="primary"
-                edge="end"
-                onClick={() =>
-                  hit.resourceKind === 'dashboard'
-                    ? handleRequestDashboardAccessModalOpen()
-                    : handleRequestAccessModalOpen()
-                }
+            <Button
+              color="primary"
+              edge="end"
+              onClick={() =>
+                hit.resourceKind === 'dashboard'
+                  ? handleRequestDashboardAccessModalOpen()
+                  : handleRequestAccessModalOpen()
+              }
+            >
+              <LockOpen fontSize="small" />
+              <Typography
+                color="PrimaryContrastText"
+                variant="subtitle2"
+                sx={{ ml: 0.5 }}
               >
-                <LockOpen fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                Request Access
+              </Typography>
+            </Button>
           )}
           <RequestAccessModal
             hit={hit}
