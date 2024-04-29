@@ -10,7 +10,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.modules.datasets.aws.kms_dataset_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
