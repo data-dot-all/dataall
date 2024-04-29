@@ -1,5 +1,4 @@
 import pytest
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, MANAGE_ORGANIZATIONS
 from .queries import archive_organization, create_organization, invite_team_to_organization, update_tenant_permissions
 
 
@@ -38,7 +37,7 @@ def organization2_with_invited_group2(client1, user1, group1, create_organizatio
 
 @pytest.fixture(scope='module')
 def client_noTenantPermissions(clientTenant, group4, client4):
-    permissions = [p for p in TENANT_ALL if p != MANAGE_ORGANIZATIONS]
+    permissions = ['MANAGE_OTHER_THINGS']
     update_tenant_permissions(client=clientTenant, group=group4, permissions=permissions)
     yield client4
-    update_tenant_permissions(clientTenant, group4, TENANT_ALL)
+    update_tenant_permissions(clientTenant, group4, ['MANAGE_ORGANIZATIONS'])
