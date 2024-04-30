@@ -1,20 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardHeader,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow
-} from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
+import { Box, Card, CardHeader, Divider } from '@mui/material';
+// import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
+import { DataGrid } from '@mui/x-data-grid';
 
 import { useClient } from 'services';
-import { Defaults, Pager, Scrollbar } from 'design';
+import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 import { listOmicsRuns } from '../services';
@@ -36,12 +27,6 @@ export const OmicsRunList = () => {
     }
     setLoading(false);
   }, [client, dispatch, filter]);
-
-  const handlePageChange = async (event, value) => {
-    if (value <= items.pages && value !== items.page) {
-      await setFilter({ ...filter, page: value });
-    }
-  };
 
   useEffect(() => {
     if (client) {
@@ -66,61 +51,55 @@ export const OmicsRunList = () => {
         <Card>
           <CardHeader title="Omics Run History" />
           <Divider />
-          <Scrollbar>
-            <Box sx={{ minWidth: 600 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Run identifier</TableCell>
-                    <TableCell>Run name</TableCell>
-                    <TableCell>Workflow id</TableCell>
-                    <TableCell>Workflow name</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell>Owner</TableCell>
-                    <TableCell>Team</TableCell>
-                    <TableCell>Environment</TableCell>
-                    <TableCell>Output S3</TableCell>
-                    <TableCell>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <Divider />
-                {loading ? (
-                  <CircularProgress sx={{ mt: 1 }} size={20} />
-                ) : (
-                  <TableBody>
-                    {items.nodes.length > 0 ? (
-                      items.nodes.map((item) => (
-                        <TableRow hover>
-                          <TableCell>{item.runUri}</TableCell>
-                          <TableCell>{item.label}</TableCell>
-                          <TableCell>{item.workflow.id}</TableCell>
-                          <TableCell>{item.workflow.name}</TableCell>
-                          <TableCell>{item.created}</TableCell>
-                          <TableCell>{item.owner}</TableCell>
-                          <TableCell>{item.SamlAdminGroupName}</TableCell>
-                          <TableCell>{item.environment.label}</TableCell>
-                          <TableCell>{item.outputUri}</TableCell>
-                          <TableCell>{item.status.status}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell>No items added.</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                )}
-              </Table>
-              {items.nodes.length > 0 && (
-                <Pager
-                  mgTop={2}
-                  mgBottom={2}
-                  items={items}
-                  onChange={handlePageChange}
-                />
-              )}
-            </Box>
-          </Scrollbar>
+          <Box sx={{ minWidth: 600, height: 400 }}>
+            <DataGrid
+              rows={items.nodes}
+              columns={[
+                { field: 'runUri', headerName: 'Run identifier', flex: 1 },
+                { field: 'label', headerName: 'Run name', flex: 1 },
+                {
+                  field: 'workflow.id',
+                  headerName: 'Workflow id',
+                  flex: 1,
+                  valueGetter: (params) => params.row.workflow.id
+                },
+                {
+                  field: 'workflow.name',
+                  headerName: 'Workflow name',
+                  flex: 1,
+                  valueGetter: (params) => params.row.workflow.name
+                },
+                { field: 'created', headerName: 'Created', flex: 1 },
+                { field: 'owner', headerName: 'Owner', flex: 1 },
+                { field: 'SamlAdminGroupName', headerName: 'Team', flex: 1 },
+                {
+                  field: 'environment.label',
+                  headerName: 'Environment',
+                  flex: 1,
+                  valueGetter: (params) => params.row.environment.label
+                },
+                { field: 'outputUri', headerName: 'Output S3', flex: 1 },
+                {
+                  field: 'status.status',
+                  headerName: 'Status',
+                  flex: 1,
+                  valueGetter: (params) => params.row.status.status
+                }
+              ]}
+              getRowId={(row) => row.runUri}
+              checkboxSelection
+              disableRowSelectionOnClick
+              pageSize={filter.limit}
+              rowsPerPageOptions={[filter.limit]}
+              pagination
+              paginationMode="server"
+              onPageChange={(newPage) =>
+                setFilter({ ...filter, page: newPage + 1 })
+              }
+              rowCount={items.totalCount}
+              loading={loading}
+            />
+          </Box>
         </Card>
       </Box>
     </>

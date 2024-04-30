@@ -133,7 +133,7 @@ if __name__ == '__main__':
     resource_prefix = os.environ.get('resource_prefix', 'dataall')
     internet_facing = os.environ.get('internet_facing', 'True')
     custom_domain = os.environ.get('custom_domain', 'False')
-    region = os.environ.get('deployment_region', 'eu-west-1')
+    region = os.environ.get('deployment_region', 'us-east-1')
     enable_cw_rum = os.environ.get('enable_cw_rum', 'False')
     reauth_ttl = os.environ.get('reauth_ttl', '5')
     custom_auth_properties = {}
