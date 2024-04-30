@@ -16,7 +16,7 @@ from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient, S3Cli
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
-from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import (
     SharePolicyService,
     IAM_S3_BUCKETS_STATEMENT_SID,
@@ -591,7 +591,7 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_s3_bucket_sharing_failure_alarm(
+        DatasetSharingAlarmService().trigger_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True
@@ -609,7 +609,7 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
+        DatasetSharingAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True
