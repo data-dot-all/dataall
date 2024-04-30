@@ -93,7 +93,7 @@ class DatasetService:
     def check_before_delete(cls, session, uri, **kwargs) -> bool:
         """All actions from other modules that need to be executed before deletion"""
         can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
-        return False not in set(can_be_deleted)
+        return all(can_be_deleted)
 
     @classmethod
     def execute_on_delete(cls, session, uri, **kwargs) -> bool:
