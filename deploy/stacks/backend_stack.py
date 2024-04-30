@@ -303,6 +303,7 @@ class BackendStack(Stack):
             lambdas=[
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
+                self.lambda_api_stack.elasticsearch_proxy_handler,
             ],
             ecs_security_groups=self.ecs_stack.ecs_security_groups,
             prod_sizing=prod_sizing,

@@ -8,7 +8,7 @@ import {
   WindowPathLengthThreshold
 } from '../../utils';
 import { useClient, useGroups } from '../../services';
-import { NoAccessMaintenanceWindow } from '../../design';
+import { LoadingScreen, NoAccessMaintenanceWindow } from '../../design';
 import { getMaintenanceStatus } from '../../services/graphql/MaintenanceWindow';
 import {
   ACTIVE_STATUS,
@@ -22,7 +22,7 @@ export const AuthGuard = (props) => {
   const auth = useAuth();
   const location = useLocation();
   const [requestedLocation, setRequestedLocation] = useState(null);
-  const [isNoAccessMaintenance, setNoAccessMaintenanceFlag] = useState(false);
+  const [isNoAccessMaintenance, setNoAccessMaintenanceFlag] = useState(null);
   const client = useClient();
   const groups = useGroups();
   const dispatch = useDispatch();
@@ -38,6 +38,8 @@ export const AuthGuard = (props) => {
         !groups.includes('DAAdministrators')
       ) {
         setNoAccessMaintenanceFlag(true);
+      } else {
+        setNoAccessMaintenanceFlag(false);
       }
     }
   };
@@ -69,6 +71,17 @@ export const AuthGuard = (props) => {
     return <Login />;
   }
 
+  if (
+    isNoAccessMaintenance == null &&
+    config.modules.maintenance.active === true
+  ) {
+    return <LoadingScreen />;
+  }
+
+  if (isNoAccessMaintenance === true) {
+    return <NoAccessMaintenanceWindow />;
+  }
+
   if (requestedLocation && location.pathname !== requestedLocation) {
     setRequestedLocation(null);
     return <Navigate to={requestedLocation} />;
@@ -91,10 +104,6 @@ export const AuthGuard = (props) => {
     return <Navigate to={windowPathLocation} replace={true} />;
   } else {
     sessionStorage.removeItem('window-location');
-  }
-
-  if (isNoAccessMaintenance) {
-    return <NoAccessMaintenanceWindow />;
   }
 
   return <>{children}</>;

@@ -45,7 +45,6 @@ export const MaintenanceConfirmationPopUp = (props) => {
     maintenanceButtonText,
     setMaintenanceButtonText,
     setDropDownStatus,
-    refreshingTimer,
     setMaintenanceWindowStatus
   } = props;
   const client = useClient();
@@ -104,8 +103,6 @@ export const MaintenanceConfirmationPopUp = (props) => {
         setMaintenanceButtonText(START_MAINTENANCE);
         // Unfreeze the dropdown menu
         setDropDownStatus(true);
-        // End the running timer as well
-        clearInterval(refreshingTimer);
         setConfirmedMode('');
         setMaintenanceWindowStatus(INACTIVE_STATUS);
         enqueueSnackbar('Maintenance Window Stopped', {
@@ -295,6 +292,7 @@ export const MaintenanceViewer = () => {
   };
 
   const initializeMaintenanceView = useCallback(async () => {
+    setRefreshing(true);
     const response = await client.query(getMaintenanceStatus());
     if (!response.errors && response.data.getMaintenanceWindowStatus !== null) {
       const maintenanceStatusData = response.data.getMaintenanceWindowStatus;
@@ -321,6 +319,7 @@ export const MaintenanceViewer = () => {
         : 'Maintenance Status not found. Something went wrong';
       dispatch({ type: SET_ERROR, error });
     }
+    setRefreshing(false);
   }, [client]);
 
   useEffect(() => {

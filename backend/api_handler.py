@@ -41,6 +41,10 @@ ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
+TenantPolicyService.save_permissions_with_tenant(ENGINE)
+
+MAINTENANCE_ALLOWED_OPERATIONS = ["getGroupsForUser", "getMaintenanceWindowStatus"]
+
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
@@ -162,10 +166,11 @@ def handler(event, context):
                 )
                 and not TenantPolicyValidationService.is_tenant_admin(groups)
             ):
-                send_unauthorized_response(
-                    query=query,
-                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                )
+                if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
+                    return send_unauthorized_response(
+                        query=query,
+                        message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                    )
             elif (
                 (MaintenanceService._get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.READONLY.value)
                 and (
@@ -175,8 +180,8 @@ def handler(event, context):
                 and not TenantPolicyValidationService.is_tenant_admin(groups)
             ):
                 # If its mutation then block and return
-                if query.get('query', '').split(' ')[0] == 'mutation':
-                    send_unauthorized_response(
+                if query.get('query', '').split()[0] == 'mutation':
+                    return send_unauthorized_response(
                         query=query,
                         message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
                     )
