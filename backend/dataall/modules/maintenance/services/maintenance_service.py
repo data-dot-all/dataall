@@ -16,10 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class MaintenanceService:
+
+    # Update the RDS table with the mode and status to PENDING
+    # Disable all scheduled ECS tasks which are created by data.all
     @staticmethod
     def start_maintenance_window(engine, mode: str = None):
-        # Update the RDS table with the mode and status to PENDING
-        # Disable all scheduled ECS tasks which are created by data.all
         logger.info('Putting data.all into maintenance')
         try:
             with engine.scoped_session() as session:
@@ -36,7 +37,7 @@ class MaintenanceService:
                     maintenance_status=MaintenanceStatus.PENDING.value, maintenance_mode=mode
                 )
             # Disable scheduled ECS tasks
-            # Get all the SSMs related to the scheduled tasks
+            # Get all the SSM Params related to the scheduled tasks
             ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
                 region=os.getenv('AWS_REGION', 'eu-west-1'),
                 parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule",
@@ -50,11 +51,12 @@ class MaintenanceService:
             logger.error(f'Error occurred while starting maintenance window due to {e}')
             return False
 
+    # Update the RDS table by changing mode to - ''
+    # Update the RDS table by changing the status to INACTIVE
+    # Enable all the ECS Scheduled task
     @staticmethod
     def stop_maintenance_window(engine):
-        # Update the RDS table by changing mode to - ''
-        # Update the RDS table by changing the status to INACTIVE
-        # Enabled all the ECS Scheduled task
+
         logger.info('Stopping maintenance mode')
         try:
             with engine.scoped_session() as session:
@@ -79,11 +81,11 @@ class MaintenanceService:
             logger.error(f'Error occurred while stopping maintenance window due to {e}')
             return False
 
+    # Checks if all ECS tasks in the data.all infra account have completed
+    # Updates the maintenance status and returns maintenance record
     @staticmethod
     def get_maintenance_window_status(engine):
         logger.info('Checking maintenance window status')
-        # Checks if all ECS tasks in the data.all infra account have completed
-        # Updates the maintenance status and returns maintenance record
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
@@ -106,9 +108,10 @@ class MaintenanceService:
             logger.error(f'Error while getting maintenance window status due to {e}')
             raise e
 
+    # Fetches the mode of maintenance window
     @staticmethod
     def _get_maintenance_window_mode(engine):
-        logger.info('Fetching status of maintenance window')
+        logger.info('Fetching mode of maintenance window')
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()

@@ -11,7 +11,6 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
-from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.base.utils.api_handler_utils import get_custom_groups, get_cognito_groups, send_unauthorized_response
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
@@ -41,7 +40,6 @@ ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
-TenantPolicyService.save_permissions_with_tenant(ENGINE)
 
 MAINTENANCE_ALLOWED_OPERATIONS = ['getGroupsForUser', 'getMaintenanceWindowStatus']
 
@@ -156,7 +154,6 @@ def handler(event, context):
         # Check if in some maintenance mode
         # Check if in maintenance status is not INACTIVE
         # Check if the user belongs to a 'DAAdministrators' group
-        # Todo : Add check to see if maintenance module is enabled or not from the config
         if config.get_property('modules.maintenance.active'):
             if (
                 (MaintenanceService._get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.NOACCESS.value)
