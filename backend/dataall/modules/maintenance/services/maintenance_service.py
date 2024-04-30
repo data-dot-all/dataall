@@ -3,24 +3,11 @@ A service layer for maintenance activity
 Defines functions and business logic to be performed for maintenance window
 """
 
-import dataclasses
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import List, Dict
 
 from dataall.base.aws.event_bridge import EventBridge
 from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.base.context import get_context as context
-from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.env_permission_checker import has_group_permission
-from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
-from dataall.base.db import exceptions
 from dataall.modules.maintenance.api.enums import MaintenanceStatus
 from dataall.modules.maintenance.db.maintenance_repository import MaintenanceRepository
 from dataall.core.stacks.aws.ecs import Ecs
