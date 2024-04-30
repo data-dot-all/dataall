@@ -12,7 +12,7 @@ from dataall.core.vpc.services.vpc_service import VpcService
 
 from dataall.base.feature_toggle_checker import is_feature_enabled
 
-from dataall.core.organizations.api.resolvers import Context, get_organization_simplified
+from dataall.core.organizations.api.resolvers import Context,exceptions, get_organization_simplified
 
 
 log = logging.getLogger()
@@ -203,7 +203,8 @@ def resolve_user_role(context: Context, source: Environment):
 
 
 def list_environment_group_permissions(context, source, environmentUri: str = None, groupUri: str = None):
-    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=groupUri)
+    with context.engine.scoped_session() as session:
+        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=groupUri)
 
 
 @is_feature_enabled('core.features.env_aws_actions')
@@ -225,7 +226,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 def get_environment_stack(context: Context, source: Environment, **kwargs):
     return StackService.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
-        env=source,
+        environmentUri=source.environmentUri,
     )
 
 
@@ -275,8 +276,8 @@ def resolve_environment(context, source, **kwargs):
     """Resolves the environment for a environmental resource"""
     if not source:
         return None
-
-    return EnvironmentService.find_environment_by_uri(source.environmentUri)
+    with context.engine.scoped_session() as session:
+        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):

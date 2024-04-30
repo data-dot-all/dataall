@@ -21,7 +21,7 @@ from dataall.modules.dataset_sharing.aws.kms_client import (
 )
 from dataall.base.aws.iam import IAM
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -736,7 +736,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_folder_sharing_failure_alarm(
+        DatasetSharingAlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
 
@@ -753,7 +753,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+        DatasetSharingAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
         return True

@@ -18,6 +18,7 @@ from dataall.base.db.exceptions import AWSResourceNotFound
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.stacks.db.target_type_repositories import TargetType
 from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
 log = logging.getLogger(__name__)
 
@@ -45,9 +46,10 @@ class StackRequestVerifier:
 
 class StackService:
     @staticmethod
-    def get_stack_with_cfn_resources(targetUri: str, env: Environment):
+    def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
+            env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
             if not stack:
                 stack = Stack(

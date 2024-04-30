@@ -97,12 +97,12 @@ def upgrade():
                 .all()
             )
 
-            for location in share_folder_items:
+            for item in share_folder_items:
                 ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=share.groupUri,
                     permissions=DATASET_FOLDER_READ,
-                    resource_uri=location.locationUri,
+                    resource_uri=item.itemUri,
                     resource_type=DatasetStorageLocation.__name__,
                 )
 

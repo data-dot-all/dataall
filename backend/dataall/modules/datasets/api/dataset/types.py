@@ -9,9 +9,8 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     list_locations,
     resolve_user_role,
     get_dataset_statistics,
-    list_dataset_share_objects,
     get_dataset_glossary_terms,
-    get_dataset_stack,
+    resolve_dataset_stack,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -101,20 +100,6 @@ Dataset = gql.ObjectType(
         gql.Field(name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
         gql.Field(name='statistics', type=DatasetStatistics, resolver=get_dataset_statistics),
         gql.Field(
-            name='shares',
-            args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
-            type=gql.Ref('ShareSearchResult'),
-            resolver=list_dataset_share_objects,
-            test_scope='ShareObject',
-            test_cases=[
-                'anonymous',
-                'businessowner',
-                'admins',
-                'stewards',
-                'unauthorized',
-            ],
-        ),
-        gql.Field(
             name='terms',
             resolver=get_dataset_glossary_terms,
             type=gql.Ref('TermSearchResult'),
@@ -132,7 +117,7 @@ Dataset = gql.ObjectType(
             args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
             type=gql.Boolean,
         ),
-        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=get_dataset_stack),
+        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_dataset_stack),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )

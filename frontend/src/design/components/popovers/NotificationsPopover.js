@@ -1,4 +1,5 @@
 import { DeleteOutlined } from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Avatar,
   Badge,
@@ -163,6 +164,10 @@ export const NotificationsPopover = () => {
                           color="textPrimary"
                           sx={{ cursor: 'pointer' }}
                           variant="subtitle2"
+                          component={RouterLink}
+                          to={`/console/shares/${
+                            notification.target_uri.split('|')[0]
+                          }`}
                         >
                           {notification.message}
                         </Link>
