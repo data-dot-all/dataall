@@ -287,7 +287,7 @@ app.synth()
 
     @staticmethod
     def _set_env_vars(pipeline_environment):
-        aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
+        aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId, pipeline_environment.region)
         env_creds = aws.get_credentials()
 
         python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')

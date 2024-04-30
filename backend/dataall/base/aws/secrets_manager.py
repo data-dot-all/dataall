@@ -14,7 +14,7 @@ _DEFAULT_REGION = os.environ.get('AWS_REGION', 'eu-west-1')
 class SecretsManager:
     def __init__(self, account_id=None, region=_DEFAULT_REGION):
         if account_id:
-            session = SessionHelper.remote_session(account_id)
+            session = SessionHelper.remote_session(account_id, region)
             self._client = session.client('secretsmanager', region_name=region)
         else:
             self._client = boto3.client('secretsmanager', region_name=region)

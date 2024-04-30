@@ -36,7 +36,7 @@ class GroupService:
 
         invited_groups = []
         if category == 'environment':
-            invited_groups = EnvironmentService.query_all_environment_groups(
+            invited_groups = EnvironmentService.get_all_environment_groups(
                 session=session,
                 uri=category_uri,
                 filter=None,

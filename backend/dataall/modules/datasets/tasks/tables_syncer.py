@@ -13,7 +13,7 @@ from dataall.modules.datasets.services.dataset_table_service import DatasetTable
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -60,7 +60,7 @@ def sync_tables(engine):
                     for table in tables:
                         LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
-                                SessionHelper.get_delegation_role_arn(env.AwsAccountId),
+                                SessionHelper.get_delegation_role_arn(env.AwsAccountId, env.region),
                                 env_group.environmentIAMRoleArn,
                             ],
                         )
@@ -79,7 +79,7 @@ def sync_tables(engine):
 
 
 def is_assumable_pivot_role(env: Environment):
-    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId)
+    aws_session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
     if not aws_session:
         log.error(f'Failed to assume dataall pivot role in environment {env.AwsAccountId}')
         return False

@@ -66,6 +66,34 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+        lambda_env_key = kms.Key(
+            self,
+            f'{resource_prefix}-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
         esproxy_env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
@@ -75,8 +103,11 @@ class LambdaApiStack(pyNestedClass):
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
+            log_group=logs.LogGroup(
+                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-esproxy'
+            ),
             description='dataall es search function',
-            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
@@ -85,6 +116,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             environment=esproxy_env,
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.esproxy_dlq,
             on_failure=lambda_destination.SqsDestination(self.esproxy_dlq),
@@ -103,8 +135,11 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
+            log_group=logs.LogGroup(
+                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-graphql'
+            ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -113,6 +148,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
             environment=api_handler_env,
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -130,12 +166,16 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
+            log_group=logs.LogGroup(
+                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-awsworker'
+            ),
             description='dataall aws worker for aws asynchronous tasks function',
-            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name),
+            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
             environment=awshandler_env,
+            environment_encryption=lambda_env_key,
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
@@ -195,6 +235,11 @@ class LambdaApiStack(pyNestedClass):
                 self,
                 f'CustomAuthorizerFunction-{envname}',
                 function_name=f'{resource_prefix}-{envname}-custom-authorizer',
+                log_group=logs.LogGroup(
+                    self,
+                    'customauthorizerloggroup',
+                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
+                ),
                 handler='custom_authorizer_lambda.lambda_handler',
                 code=_lambda.Code.from_asset(
                     path=custom_authorizer_assets,
@@ -280,7 +325,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -319,7 +364,7 @@ class LambdaApiStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:iam::*:role/{pivot_role_name}',
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
                     ],
                 ),
@@ -350,6 +395,12 @@ class LambdaApiStack(pyNestedClass):
                         'logs:StartQuery',
                         'logs:DescribeLogGroups',
                         'logs:DescribeLogStreams',
+                        'logs:DescribeQueries',
+                        'logs:StopQuery',
+                        'logs:GetQueryResults',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents',
                     ],
                     resources=[
                         f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
@@ -360,17 +411,7 @@ class LambdaApiStack(pyNestedClass):
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        'logs:DescribeQueries',
-                        'logs:StopQuery',
-                        'logs:GetQueryResults',
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                        'ec2:CreateNetworkInterface',
                         'ec2:DescribeNetworkInterfaces',
-                        'ec2:DeleteNetworkInterface',
-                        'ec2:AssignPrivateIpAddresses',
-                        'ec2:UnassignPrivateIpAddresses',
                         'xray:PutTraceSegments',
                         'xray:PutTelemetryRecords',
                         'xray:GetSamplingRules',
@@ -380,6 +421,25 @@ class LambdaApiStack(pyNestedClass):
                         'cognito-idp:ListUsersInGroup',
                     ],
                     resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
                 ),
                 iam.PolicyStatement(
                     actions=[

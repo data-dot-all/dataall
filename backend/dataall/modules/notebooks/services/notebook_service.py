@@ -10,14 +10,14 @@ from typing import List, Dict
 
 from dataall.base.context import get_context as context
 from dataall.core.environment.db.environment_models import Environment
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTag
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
@@ -69,7 +69,7 @@ class NotebookService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(CREATE_NOTEBOOK)
-    @has_group_permission(CREATE_NOTEBOOK)
+    @GroupPolicyService.has_group_permission(CREATE_NOTEBOOK)
     def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
@@ -138,15 +138,14 @@ class NotebookService:
                     resource_type=SagemakerNotebook.__name__,
                 )
 
-            Stack.create_stack(
+            StackRepository.create_stack(
                 session=session,
                 environment_uri=notebook.environmentUri,
                 target_type='notebook',
                 target_uri=notebook.notebookUri,
-                target_label=notebook.label,
             )
 
-        stack_helper.deploy_stack(targetUri=notebook.notebookUri)
+        StackService.deploy_stack(targetUri=notebook.notebookUri)
 
         return notebook
 
@@ -199,7 +198,7 @@ class NotebookService:
         """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             notebook = NotebookService._get_notebook(session, uri)
-            KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+            KeyValueTagRepository.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
             session.delete(notebook)
 
             ResourcePolicyService.delete_resource_policy(
@@ -211,7 +210,7 @@ class NotebookService:
             env: Environment = EnvironmentService.get_environment_by_uri(session, notebook.environmentUri)
 
         if delete_from_aws:
-            stack_helper.delete_stack(
+            StackService.delete_stack(
                 target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
             )
 

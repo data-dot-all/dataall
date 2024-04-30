@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 class EC2:
     @staticmethod
     def get_client(account_id: str, region: str, role=None):
-        session = SessionHelper.remote_session(accountid=account_id, role=role)
+        session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
         return session.client('ec2', region_name=region)
 
     @staticmethod

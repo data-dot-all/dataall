@@ -13,9 +13,10 @@ class ManagedPolicy(ABC):
     """
 
     @abstractmethod
-    def __init__(self, role_name, account, environmentUri, resource_prefix):
+    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
         self.role_name = role_name
         self.account = account
+        self.region = region
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
 
@@ -43,17 +44,17 @@ class ManagedPolicy(ABC):
 
     def check_if_policy_exists(self) -> bool:
         policy_name = self.generate_policy_name()
-        share_policy = IAM.get_managed_policy_by_name(self.account, policy_name)
+        share_policy = IAM.get_managed_policy_by_name(self.account, self.region, policy_name)
         return share_policy is not None
 
     def check_if_policy_attached(self):
         policy_name = self.generate_policy_name()
-        return IAM.is_policy_attached(self.account, policy_name, self.role_name)
+        return IAM.is_policy_attached(self.account, self.region, policy_name, self.role_name)
 
     def attach_policy(self):
         policy_arn = f'arn:aws:iam::{self.account}:policy/{self.generate_policy_name()}'
         try:
-            IAM.attach_role_policy(self.account, self.role_name, policy_arn)
+            IAM.attach_role_policy(self.account, self.region, self.role_name, policy_arn)
         except Exception as e:
             raise Exception(f"Required customer managed policy {policy_arn} can't be attached: {e}")
 
@@ -63,11 +64,13 @@ class PolicyManager(object):
         self,
         role_name,
         account,
+        region,
         environmentUri,
         resource_prefix,
     ):
         self.role_name = role_name
         self.account = account
+        self.region = region
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
         self.ManagedPolicies = ManagedPolicy.__subclasses__()
@@ -78,6 +81,7 @@ class PolicyManager(object):
         return managedPolicy(
             role_name=self.role_name,
             account=self.account,
+            region=self.region,
             environmentUri=self.environmentUri,
             resource_prefix=self.resource_prefix,
         )
@@ -94,12 +98,16 @@ class PolicyManager(object):
                 logger.info(f'Creating policy {policy_name}')
 
                 IAM.create_managed_policy(
-                    account_id=self.account, policy_name=policy_name, policy=json.dumps(empty_policy)
+                    account_id=self.account,
+                    region=self.region,
+                    policy_name=policy_name,
+                    policy=json.dumps(empty_policy),
                 )
 
                 if managed:
                     IAM.attach_role_policy(
                         account_id=self.account,
+                        region=self.region,
                         role_name=self.role_name,
                         policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
                     )
@@ -118,11 +126,15 @@ class PolicyManager(object):
                 logger.info(f'Deleting policy {policy_name}')
                 if Policy.check_if_policy_attached():
                     IAM.detach_policy_from_role(
-                        account_id=self.account, role_name=self.role_name, policy_name=policy_name
+                        account_id=self.account, region=self.region, role_name=self.role_name, policy_name=policy_name
                     )
                 if Policy.check_if_policy_exists():
-                    IAM.delete_managed_policy_non_default_versions(account_id=self.account, policy_name=policy_name)
-                    IAM.delete_managed_policy_by_name(account_id=self.account, policy_name=policy_name)
+                    IAM.delete_managed_policy_non_default_versions(
+                        account_id=self.account, region=self.region, policy_name=policy_name
+                    )
+                    IAM.delete_managed_policy_by_name(
+                        account_id=self.account, region=self.region, policy_name=policy_name
+                    )
         except Exception as e:
             raise e
         return True

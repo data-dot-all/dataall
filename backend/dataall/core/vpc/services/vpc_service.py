@@ -1,6 +1,6 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
-from dataall.core.environment.env_permission_checker import has_group_permission
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -20,7 +20,7 @@ class VpcService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(CREATE_NETWORK)
-    @has_group_permission(CREATE_NETWORK)
+    @GroupPolicyService.has_group_permission(CREATE_NETWORK)
     def create_network(uri: str, admin_group: str, data: dict):
         with _session() as session:
             username = get_context().username

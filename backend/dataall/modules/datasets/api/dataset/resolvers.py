@@ -1,8 +1,8 @@
 import logging
 
-from dataall.core.stacks.api import stack_helper
 from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -131,23 +131,15 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 
 
-def list_dataset_share_objects(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_dataset_share_objects(source, filter)
-
-
 @is_feature_enabled('modules.datasets.features.aws_actions')
 def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
 
 
-def get_dataset_stack(context: Context, source: Dataset, **kwargs):
+def resolve_dataset_stack(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
-    return stack_helper.get_stack_with_cfn_resources(
+    return StackService.get_stack_with_cfn_resources(
         targetUri=source.datasetUri,
         environmentUri=source.environmentUri,
     )
@@ -178,13 +170,6 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
 
-def verify_dataset_share_objects(context: Context, source, input):
-    RequestValidator.validate_dataset_share_selector_input(input)
-    dataset_uri = input.get('datasetUri')
-    verify_share_uris = input.get('shareUris')
-    return DatasetService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
-
-
 class RequestValidator:
     @staticmethod
     def validate_creation_request(data):
@@ -205,12 +190,3 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
-
-    @staticmethod
-    def validate_dataset_share_selector_input(data):
-        if not data:
-            raise RequiredParameter(data)
-        if not data.get('datasetUri'):
-            raise RequiredParameter('datasetUri')
-        if not data.get('shareUris'):
-            raise RequiredParameter('shareUris')

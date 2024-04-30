@@ -118,7 +118,6 @@ class EnvironmentSetup(Stack):
         )
         # Read input
         self.target_uri = target_uri
-        self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
 
@@ -130,6 +129,7 @@ class EnvironmentSetup(Stack):
         self.engine = self.get_engine()
 
         self._environment = self.get_target(target_uri=target_uri)
+        self.pivot_role_name = SessionHelper.get_delegation_role_name(region=self._environment.region)
 
         self.environment_groups: [EnvironmentGroup] = self.get_environment_groups(
             self.engine, environment=self._environment
@@ -438,6 +438,7 @@ class EnvironmentSetup(Stack):
             resource_prefix=self._environment.resourcePrefix,
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
+            region=self._environment.region,
         )
         try:
             managed_policies = policy_manager.get_all_policies()

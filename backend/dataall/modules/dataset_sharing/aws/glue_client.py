@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 class GlueClient:
     def __init__(self, account_id, region, database):
-        aws_session = SessionHelper.remote_session(accountid=account_id)
+        aws_session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = aws_session.client('glue', region_name=region)
         self._database = database
         self._account_id = account_id

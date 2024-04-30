@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from dataall.core.environment.services.env_stack_finder import StackFinder
+from dataall.core.environment.tasks.env_stack_finder import StackFinder
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import Dataset
 

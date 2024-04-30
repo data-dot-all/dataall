@@ -292,7 +292,7 @@ class ContainerStack(pyNestedClass):
             command=[
                 'python3.9',
                 '-m',
-                'dataall.modules.datasets.tasks.dataset_subscription_task',
+                'dataall.modules.dataset_sharing.tasks.dataset_subscription_task',
             ],
             container_id='container',
             ecr_repository=self._ecr_repository,
@@ -472,7 +472,7 @@ class ContainerStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:iam::*:role/{pivot_role_name}',
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
                     ],

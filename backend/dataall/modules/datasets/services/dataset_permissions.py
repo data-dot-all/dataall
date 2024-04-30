@@ -11,7 +11,7 @@ from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL,
     RESOURCES_ALL_WITH_DESC,
 )
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 
 MANAGE_DATASETS = 'MANAGE_DATASETS'
 
@@ -64,6 +64,7 @@ DATASET_ALL = list(set(DATASET_WRITE + DATASET_READ))
 RESOURCES_ALL.extend(DATASET_ALL)
 
 RESOURCES_ALL.extend(DATASET_TABLE_READ)
+RESOURCES_ALL.extend(DATASET_FOLDER_READ)
 
 """
 DATASET PERMISSIONS FOR ENVIRONMENT
@@ -84,7 +85,7 @@ ENVIRONMENT_ALL.append(LIST_ENVIRONMENT_DATASETS)
 RESOURCES_ALL.append(CREATE_DATASET)
 RESOURCES_ALL.append(LIST_ENVIRONMENT_DATASETS)
 
-for perm in chain(DATASET_ALL, DATASET_TABLE_READ):
+for perm in chain(DATASET_ALL, DATASET_TABLE_READ, DATASET_FOLDER_READ):
     RESOURCES_ALL_WITH_DESC[perm] = perm
 
 RESOURCES_ALL_WITH_DESC[CREATE_DATASET] = 'Create datasets on this environment'

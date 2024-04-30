@@ -1,11 +1,14 @@
-from dataall.core.permissions.api.enums import PermissionType
-from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
+import logging
+from collections import Counter
+
+from sqlalchemy.orm import Session
+
 from dataall.base.db import exceptions
+from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.db.permission.permission_models import Permission
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.services.resources_permissions import RESOURCES_ALL_WITH_DESC
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL_WITH_DESC
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,42 +42,50 @@ class PermissionService:
         return permission
 
     @staticmethod
-    def init_permissions(session):
+    def check_and_save_permissions(
+        session: Session, db_perms: [str], app_perms: dict[str, str], perm_type: PermissionType
+    ):
         perms = []
-        count_resource_permissions = PermissionRepository.count_resource_permissions(session)
+        logger.info(f'db  perms {sorted(db_perms)}')
+        logger.info(f'app perms {sorted(app_perms)}')
 
-        logger.debug(
-            f'count_resource_permissions: {count_resource_permissions}, RESOURCES_ALL: {len(RESOURCES_ALL_WITH_DESC)}'
-        )
+        for perm, freq in Counter(db_perms).items():
+            if freq > 1:
+                logger.warning('%50s permission appears %3d times in the db', perm, freq)
 
-        if count_resource_permissions < len(RESOURCES_ALL_WITH_DESC):
-            for name, desc in RESOURCES_ALL_WITH_DESC.items():
-                perms.append(
-                    PermissionService.save_permission(
-                        session,
-                        name=name,
-                        description=desc,
-                        permission_type=PermissionType.RESOURCE.name,
-                    )
+        for obsolete_param in set(db_perms) - set(app_perms.keys()):
+            logger.warning('obsolete parameter %s', obsolete_param)
+
+        missing_perms = set(app_perms.keys()) - set(db_perms)
+        for perm in missing_perms:
+            logger.info('inserting %50s permission', perm)
+            perms.append(
+                PermissionService.save_permission(
+                    session,
+                    name=perm,
+                    description=app_perms[perm],
+                    permission_type=perm_type.name,
                 )
-                logger.info(f'Saved permission {name} successfully')
-            logger.info(f'Saved {len(perms)} resource permissions successfully')
-
-        count_tenant_permissions = PermissionRepository.count_tenant_permissions(session)
-
-        logger.debug(f'count_tenant_permissions: {count_tenant_permissions}, TENANT_ALL: {len(TENANT_ALL_WITH_DESC)}')
-
-        if count_tenant_permissions < len(TENANT_ALL_WITH_DESC):
-            for name, desc in TENANT_ALL_WITH_DESC.items():
-                perms.append(
-                    PermissionService.save_permission(
-                        session,
-                        name=name,
-                        description=desc,
-                        permission_type=PermissionType.TENANT.name,
-                    )
-                )
-                logger.info(f'Saved permission {name} successfully')
-            logger.info(f'Saved {len(perms)} permissions successfully')
-            session.commit()
+            )
+        session.commit()
         return perms
+
+    @staticmethod
+    def init_permissions(session: Session) -> [str]:
+        return PermissionService.check_and_save_permissions(
+            session,
+            [
+                perm.name
+                for perm in session.query(Permission).filter(Permission.type == PermissionType.RESOURCE.name).all()
+            ],
+            RESOURCES_ALL_WITH_DESC,
+            PermissionType.RESOURCE,
+        ) + PermissionService.check_and_save_permissions(
+            session,
+            [
+                perm.name
+                for perm in session.query(Permission).filter(Permission.type == PermissionType.TENANT.name).all()
+            ],
+            TENANT_ALL_WITH_DESC,
+            PermissionType.TENANT,
+        )

@@ -821,6 +821,26 @@ class ShareObjectRepository:
         )
 
     @staticmethod
+    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
+        (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
+            session, share_uri, status, healthStatus
+        )
+        uris = []
+        uris.extend([table.tableUri for table in tables])
+        uris.extend([folder.locationUri for folder in folders])
+        uris.extend([bucket.bucketUri for bucket in buckets])
+        return (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.itemUri.in_(uris),
+                    ShareObjectItem.shareUri == share_uri,
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
     def get_share_data_items(session, share_uri, status=None, healthStatus=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
@@ -1271,3 +1291,40 @@ class ShareObjectRepository:
             )
             .count()
         )
+
+    @staticmethod
+    def query_dataset_tables_shared_with_env(
+        session, environment_uri: str, dataset_uri: str, username: str, groups: [str]
+    ):
+        """For a given dataset, returns the list of Tables shared with the environment
+        This means looking at approved ShareObject items
+        for the share object associating the dataset and environment
+        """
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        env_tables_shared = (
+            session.query(DatasetTable)  # all tables
+            .join(
+                ShareObjectItem,  # found in ShareObjectItem
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
+            )
+            .join(
+                ShareObject,  # jump to share object
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,  # for this dataset
+                    ShareObject.environmentUri == environment_uri,  # for this environment
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.principalType
+                    != PrincipalType.ConsumptionRole.value,  # Exclude Consumption roles shares
+                    or_(
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
+                    ),
+                )
+            )
+            .all()
+        )
+
+        return env_tables_shared

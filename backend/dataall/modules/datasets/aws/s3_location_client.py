@@ -12,7 +12,7 @@ class S3LocationClient:
         It first starts a session assuming the pivot role,
         then we define another session assuming the dataset role from the pivot role
         """
-        pivot_role_session = SessionHelper.remote_session(accountid=location.AWSAccountId)
+        pivot_role_session = SessionHelper.remote_session(accountid=location.AWSAccountId, region=location.region)
         session = SessionHelper.get_session(base_session=pivot_role_session, role_arn=dataset.IAMDatasetAdminRoleArn)
         self._client = session.client('s3', region_name=location.region)
         self._location = location

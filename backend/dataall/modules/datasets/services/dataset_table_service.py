@@ -110,17 +110,6 @@ class DatasetTableService:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
-    @staticmethod
-    def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return [
-                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in DatasetTableRepository.query_dataset_tables_shared_with_env(
-                    session, env_uri, dataset_uri, context.username, context.groups
-                )
-            ]
-
     @classmethod
     @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
     def sync_tables_for_dataset(cls, uri):
@@ -164,11 +153,11 @@ class DatasetTableService:
 
     @staticmethod
     def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
-        # ADD DATASET TABLE PERMISSIONS
-        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        """
+        Attach Table permissions to dataset groups
+        """
         permission_group = {
             dataset.SamlAdminGroupName,
-            env.SamlGroupName,
             dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName,
         }
         for group in permission_group:

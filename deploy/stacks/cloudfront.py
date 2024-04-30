@@ -171,7 +171,9 @@ class CloudfrontDistro(pyNestedClass):
             parameter_name=f'/dataall/{envname}/CloudfrontDistributionBucket',
             string_value=cloudfront_bucket.bucket_name,
         )
-
+        cloudfront_resources = [
+            f'arn:aws:cloudfront::{self.account}:distribution/{cloudfront_distribution.distribution_id}'
+        ]
         self.user_docs_bucket = None
         if custom_auth is None:
             userguide_docs_distribution, user_docs_bucket = self.build_static_site(
@@ -189,6 +191,9 @@ class CloudfrontDistro(pyNestedClass):
 
             self.userguide_docs_distribution = userguide_docs_distribution
             self.user_docs_bucket = user_docs_bucket
+            cloudfront_resources += [
+                f'arn:aws:cloudfront::{self.account}:distribution/{userguide_docs_distribution.distribution_id}'
+            ]
 
             if userguide_alternate_domain:
                 route53.ARecord(
@@ -232,10 +237,15 @@ class CloudfrontDistro(pyNestedClass):
             )
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
-                    actions=['cloudfront:CreateInvalidation', 's3:List*'],
+                    actions=['s3:List*'],
                     resources=['*'],
                 )
             )
+
+            cross_account_deployment_role.add_to_policy(
+                iam.PolicyStatement(actions=['cloudfront:CreateInvalidation'], resources=cloudfront_resources)
+            )
+
             cross_account_deployment_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[
