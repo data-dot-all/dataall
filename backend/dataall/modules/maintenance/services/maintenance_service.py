@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class MaintenanceService:
-
     # Update the RDS table with the mode and status to PENDING
     # Disable all scheduled ECS tasks which are created by data.all
     @staticmethod
@@ -56,7 +55,6 @@ class MaintenanceService:
     # Enable all the ECS Scheduled task
     @staticmethod
     def stop_maintenance_window(engine):
-
         logger.info('Stopping maintenance mode')
         try:
             with engine.scoped_session() as session:
