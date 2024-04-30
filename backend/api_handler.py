@@ -43,7 +43,7 @@ Worker.queue = SqsQueue.send
 
 TenantPolicyService.save_permissions_with_tenant(ENGINE)
 
-MAINTENANCE_ALLOWED_OPERATIONS = ["getGroupsForUser", "getMaintenanceWindowStatus"]
+MAINTENANCE_ALLOWED_OPERATIONS = ['getGroupsForUser', 'getMaintenanceWindowStatus']
 
 
 def resolver_adapter(resolver):
