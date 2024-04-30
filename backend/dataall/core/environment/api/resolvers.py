@@ -12,7 +12,7 @@ from dataall.core.vpc.services.vpc_service import VpcService
 
 from dataall.base.feature_toggle_checker import is_feature_enabled
 
-from dataall.core.organizations.api.resolvers import Context,exceptions, get_organization_simplified
+from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
 
 
 log = logging.getLogger()
