@@ -75,7 +75,6 @@ class DatasetTableService:
                     message='Revoke all table shares before deletion',
                 )
 
-
             ShareObjectRepository.delete_shares(session, table.tableUri)
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
@@ -173,10 +172,11 @@ class DatasetTableService:
                 resource_type=DatasetTable.__name__,
             )
 
-
     @staticmethod
     def _delete_dataset_table_read_permission(session, table_uri):
         """
         Delete Table  permissions to dataset groups
         """
-        ResourcePolicyService.delete_resource_policy(session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__)
+        ResourcePolicyService.delete_resource_policy(
+            session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
+        )

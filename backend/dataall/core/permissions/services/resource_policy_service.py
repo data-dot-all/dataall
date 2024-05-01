@@ -86,21 +86,20 @@ class ResourcePolicyService:
         :param resource_type: The type of the resource. -- required, if the group is None
         :return: list: A list of ResourcePolicy objects matching the given criteria.
         """
-        ResourcePolicyRequestValidationService.validate_find_or_delete_resource_policy_params(group, resource_uri,
-                                                                                              resource_type)
-        policies = ResourcePolicyRepository.find_all_resource_policies(session,
-                                                                       group_uri=group,
-                                                                       resource_uri=resource_uri,
-                                                                       resource_type=resource_type
-                                                                       )
+        ResourcePolicyRequestValidationService.validate_find_or_delete_resource_policy_params(
+            group, resource_uri, resource_type
+        )
+        policies = ResourcePolicyRepository.find_all_resource_policies(
+            session, group_uri=group, resource_uri=resource_uri, resource_type=resource_type
+        )
         return policies
 
     @staticmethod
     def delete_resource_policy(
-            session,
-            group: str | None,
-            resource_uri: str,
-            resource_type: str | None = None,
+        session,
+        group: str | None,
+        resource_uri: str,
+        resource_type: str | None = None,
     ) -> bool:
         """
         Deletes all resources policy for given group, resource_uri, resource_type
@@ -124,7 +123,7 @@ class ResourcePolicyService:
 
     @staticmethod
     def update_resource_policy(
-            session, resource_uri: str, resource_type: str, old_group: str, new_group: str, new_permissions: [str]
+        session, resource_uri: str, resource_type: str, old_group: str, new_group: str, new_permissions: [str]
     ) -> ResourcePolicy:
         ResourcePolicyService.delete_resource_policy(
             session=session,
@@ -142,11 +141,11 @@ class ResourcePolicyService:
 
     @staticmethod
     def attach_resource_policy(
-            session,
-            group: str,
-            permissions: [str],
-            resource_uri: str,
-            resource_type: str,
+        session,
+        group: str,
+        permissions: [str],
+        resource_uri: str,
+        resource_type: str,
     ) -> ResourcePolicy:
         ResourcePolicyRequestValidationService.validate_attach_resource_policy_params(
             group, permissions, resource_uri, resource_type
@@ -225,14 +224,14 @@ class ResourcePolicyService:
 
     @staticmethod
     def has_resource_permission(
-            permission: str, param_name: str = None, resource_name: str = None, parent_resource: Callable = None
+        permission: str, param_name: str = None, resource_name: str = None, parent_resource: Callable = None
     ):
         """
-            Decorator that check if a user has access to the resource.
-            The method or function decorated with this decorator must have a URI of accessing resource
-            Good rule of thumb: if there is a URI that accesses a specific resource,
-            hence it has URI - it must be decorated with this decorator
-            """
+        Decorator that check if a user has access to the resource.
+        The method or function decorated with this decorator must have a URI of accessing resource
+        Good rule of thumb: if there is a URI that accesses a specific resource,
+        hence it has URI - it must be decorated with this decorator
+        """
         if not param_name:
             param_name = 'uri'
 
