@@ -25,7 +25,7 @@ def upgrade():
 
     bind = op.get_bind()
     if engine.dialect.has_table(connection=bind, table_name='redshiftcluster_datasettable'):
-        op.drop_table('redshiftcluster_datasettable')        
+        op.drop_table('redshiftcluster_datasettable')
     if engine.dialect.has_table(connection=bind, table_name='dataset_quality_rule'):
         op.drop_table('dataset_quality_rule')
     if engine.dialect.has_table(connection=bind, table_name='tag'):
