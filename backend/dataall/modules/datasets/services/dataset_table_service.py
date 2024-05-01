@@ -87,7 +87,6 @@ class DatasetTableService:
         return True
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(PREVIEW_DATASET_TABLE)
     def preview(uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
