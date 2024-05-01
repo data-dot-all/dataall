@@ -65,6 +65,7 @@ export const RequestAccessModal = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
       setLoadingEnvs(false);
+      stopLoader();
     }
   }, [client, dispatch]);
 
@@ -132,9 +133,8 @@ export const RequestAccessModal = (props) => {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      stopLoader();
     }
-  }, [client, open, fetchEnvironments, dispatch, stopLoader]);
+  }, [client, open, fetchEnvironments, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
