@@ -64,12 +64,9 @@ export const RequestAccessModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      if (stopLoader) {
-        stopLoader();
-      }
       setLoadingEnvs(false);
     }
-  }, [client, dispatch, stopLoader]);
+  }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
@@ -135,8 +132,9 @@ export const RequestAccessModal = (props) => {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      stopLoader();
     }
-  }, [client, open, fetchEnvironments, dispatch]);
+  }, [client, open, fetchEnvironments, dispatch, stopLoader]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
