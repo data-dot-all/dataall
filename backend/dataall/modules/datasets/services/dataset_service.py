@@ -255,24 +255,6 @@ class DatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=Dataset.__name__,
                 )
-
-                if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        permissions=DATASET_READ,
-                        resource_uri=dataset.datasetUri,
-                        resource_type=Dataset.__name__,
-                    )
-
-                if environment.SamlGroupName != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=environment.SamlGroupName,
-                        permissions=DATASET_ALL,
-                        resource_uri=dataset.datasetUri,
-                        resource_type=Dataset.__name__,
-                    )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetRepository.update_dataset_activity(session, dataset, username)
