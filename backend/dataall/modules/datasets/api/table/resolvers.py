@@ -28,7 +28,7 @@ def delete_table(context, source, tableUri: str = None):
 def preview(context, source, tableUri: str = None):
     if not tableUri:
         return None
-    return DatasetTableService.preview(table_uri=tableUri)
+    return DatasetTableService.preview(uri=tableUri)
 
 
 def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):

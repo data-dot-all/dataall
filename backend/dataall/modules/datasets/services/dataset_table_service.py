@@ -38,6 +38,7 @@ class DatasetTableService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -84,10 +85,11 @@ class DatasetTableService:
         return True
 
     @staticmethod
-    def preview(table_uri: str):
+    @ResourcePolicyService.has_resource_permission(PREVIEW_DATASET_TABLE)
+    def preview(uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
@@ -128,10 +130,11 @@ class DatasetTableService:
             )
 
     @staticmethod
-    def sync_existing_tables(session, dataset_uri, glue_tables=None):
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+    @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
+    def sync_existing_tables(session, uri, glue_tables=None):
+        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         if dataset:
-            existing_tables = DatasetTableRepository.find_dataset_tables(session, dataset_uri)
+            existing_tables = DatasetTableRepository.find_dataset_tables(session, uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
