@@ -130,30 +130,7 @@ class DatasetService:
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
-            ResourcePolicyService.attach_resource_policy(
-                session=session,
-                group=dataset.SamlAdminGroupName,
-                permissions=DATASET_ALL,
-                resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
-            )
-            if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    permissions=DATASET_READ,
-                    resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
-                )
-
-            if environment.SamlGroupName != dataset.SamlAdminGroupName:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=DATASET_ALL,
-                    resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
-                )
+            DatasetService.grant_admin_permissions_on_dataset(session, dataset, environment)
 
             DatasetService._create_dataset_stack(session, dataset)
 
@@ -218,6 +195,34 @@ class DatasetService:
             )
 
     @staticmethod
+    def grant_admin_permissions_on_dataset(session, dataset, environment):
+        ResourcePolicyService.attach_resource_policy(
+            session=session,
+            group=dataset.SamlAdminGroupName,
+            permissions=DATASET_ALL,
+            resource_uri=dataset.datasetUri,
+            resource_type=Dataset.__name__,
+        )
+
+        if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=DATASET_READ,
+                resource_uri=dataset.datasetUri,
+                resource_type=Dataset.__name__,
+            )
+
+        if environment.SamlGroupName != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=environment.SamlGroupName,
+                permissions=DATASET_ALL,
+                resource_uri=dataset.datasetUri,
+                resource_type=Dataset.__name__,
+            )
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def update_dataset(uri: str, data: dict):
@@ -248,31 +253,8 @@ class DatasetService:
                         DatasetService._transfer_stewardship_to_owners(session, dataset)
                         dataset.stewards = dataset.SamlAdminGroupName
 
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=DATASET_ALL,
-                    resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
-                )
+                DatasetService.grant_admin_permissions_on_dataset(session, dataset, environment)
 
-                if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        permissions=DATASET_READ,
-                        resource_uri=dataset.datasetUri,
-                        resource_type=Dataset.__name__,
-                    )
-
-                if environment.SamlGroupName != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.attach_resource_policy(
-                        session=session,
-                        group=environment.SamlGroupName,
-                        permissions=DATASET_ALL,
-                        resource_uri=dataset.datasetUri,
-                        resource_type=Dataset.__name__,
-                    )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetRepository.update_dataset_activity(session, dataset, username)
