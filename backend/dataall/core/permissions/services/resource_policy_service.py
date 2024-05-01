@@ -97,9 +97,9 @@ class ResourcePolicyService:
     @staticmethod
     def delete_resource_policy(
         session,
-        group: str | None,
+        group: str,
         resource_uri: str,
-        resource_type: str | None = None,
+        resource_type: str = None,
     ) -> bool:
         """
         Deletes all resources policy for given group, resource_uri, resource_type

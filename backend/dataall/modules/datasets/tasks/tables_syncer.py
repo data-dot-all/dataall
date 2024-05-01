@@ -51,7 +51,7 @@ def sync_tables(engine):
 
                     log.info(f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}')
 
-                    DatasetTableService.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+                    DatasetTableService.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
 
                     tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
 

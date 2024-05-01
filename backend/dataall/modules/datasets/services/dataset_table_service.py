@@ -120,7 +120,7 @@ class DatasetTableService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             S3Prefix = dataset.S3BucketName
             tables = DatasetCrawler(dataset).list_glue_database_tables(S3Prefix)
-            cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+            cls.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             return DatasetRepository.paginated_dataset_tables(
@@ -130,7 +130,6 @@ class DatasetTableService:
             )
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
     def sync_existing_tables(session, uri, glue_tables=None):
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         if dataset:
