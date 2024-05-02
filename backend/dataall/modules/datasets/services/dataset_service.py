@@ -56,19 +56,19 @@ class DatasetServiceInterface(ABC):
     @abstractmethod
     def check_before_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
-        raise NotImplementedError('Method check_before_delete is not implemented')
+        ...
 
     @staticmethod
     @abstractmethod
     def execute_on_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
-        raise NotImplementedError('Method execute_on_delete is not implemented')
+        ...
 
     @staticmethod
     @abstractmethod
     def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
-        raise NotImplementedError('Method append_to_list_user_datasets is not implemented')
+        ...
 
 
 class DatasetService:
