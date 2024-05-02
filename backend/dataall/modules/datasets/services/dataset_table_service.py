@@ -18,7 +18,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets.services.permissions import (
+from dataall.modules.datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_READ,
     GET_DATASET_TABLE,
