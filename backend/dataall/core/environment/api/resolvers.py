@@ -146,7 +146,6 @@ def list_all_environment_consumption_roles(context: Context, source, environment
 def list_environment_group_invitation_permissions(
     context: Context,
     source,
-    environmentUri=None,
 ):
     return EnvironmentService.list_group_invitation_permissions()
 
@@ -180,7 +179,7 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 
 def get_policies(context: Context, source, **kwargs):
-    environment = EnvironmentService.find_environment_by_uri(source.environmentUri)
+    environment = EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
     return PolicyManager(
         role_name=source.IAMRoleName,
         environmentUri=environment.environmentUri,

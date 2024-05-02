@@ -768,7 +768,7 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def paginated_all_environment_consumption_roles(session, uri, data=None) -> dict:
+    def paginated_all_environment_consumption_roles(uri, data=None) -> dict:
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
