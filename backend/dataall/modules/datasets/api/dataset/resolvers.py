@@ -7,7 +7,6 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.datasets.db.dataset_models import Dataset
 from dataall.modules.datasets.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_service import DatasetService

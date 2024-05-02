@@ -17,13 +17,11 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.dataset_sharing import SharingApiModuleInterface
         from dataall.modules.catalog import CatalogApiModuleInterface
         from dataall.modules.feed import FeedApiModuleInterface
         from dataall.modules.vote import VoteApiModuleInterface
 
         return [
-            SharingApiModuleInterface,
             CatalogApiModuleInterface,
             FeedApiModuleInterface,
             VoteApiModuleInterface,
@@ -96,12 +94,6 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 
         log.info('Dataset handlers have been imported')
 
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.dataset_sharing import SharingAsyncHandlersModuleInterface
-
-        return [SharingAsyncHandlersModuleInterface]
-
 
 class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks"""
@@ -109,12 +101,6 @@ class DatasetCdkModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
-
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
-
-        return [DataSharingCdkModuleInterface]
 
     def __init__(self):
         import dataall.modules.datasets.cdk
