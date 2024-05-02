@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.base.db import utils, Resource
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification, Language
 
 
 revision = '5e5c84138af7'

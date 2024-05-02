@@ -9,9 +9,9 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification
+from dataall.modules.datasets.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
 from dataall.modules.datasets.services.dataset_permissions import DATASET_ALL
 
 
@@ -33,13 +33,13 @@ def patch_dataset_methods(module_mocker):
     glue_mock_client().run_job.return_value = True
 
     module_mocker.patch(
-        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification.validate_confidentiality_level',
+        'dataall.modules.datasets.services.datasets_base_enums.ConfidentialityClassification.validate_confidentiality_level',
         return_value=True,
     )
 
     confidentiality_classification_mocker = MagicMock()
     module_mocker.patch(
-        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification',
+        'dataall.modules.datasets.services.datasets_base_enums.ConfidentialityClassification',
         return_value=confidentiality_classification_mocker,
     )
     # Return the input when mocking. This mock avoids checking the custom_confidentiality_mapping value in the actual function and just returns  whatever confidentiality value is supplied for pytests

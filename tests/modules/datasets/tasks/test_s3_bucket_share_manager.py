@@ -10,7 +10,7 @@ from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_managers import S3BucketShareManager
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetBucket
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetBucket
 
 SOURCE_ENV_ACCOUNT = '111111111111'
 SOURCE_ENV_ROLE_NAME = 'dataall-ProducerEnvironment-i6v1v1c2'

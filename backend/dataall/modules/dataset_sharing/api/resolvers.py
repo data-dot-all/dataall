@@ -12,8 +12,8 @@ from dataall.modules.dataset_sharing.services.share_item_service import ShareIte
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
 

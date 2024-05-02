@@ -6,11 +6,11 @@ import pytest
 from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
 
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification
 
 
 mocked_key_id = 'some_key'

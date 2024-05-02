@@ -2,7 +2,7 @@ from operator import or_
 
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
-from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn
+from dataall.modules.datasets.db.dataset_models import DatasetTableColumn
 
 
 class DatasetColumnRepository:

@@ -43,10 +43,10 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +69,24 @@ class DatasetServiceInterface(ABC):
     def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
         ...
+
+    @staticmethod
+    @abstractmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
+        raise NotImplementedError('Method resolve_additional_dataset_user_role is not implemented')
+
+    @staticmethod
+    @abstractmethod
+    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        raise NotImplementedError('Method extend_attach_steward_permissions is not implemented')
+
+    @staticmethod
+    @abstractmethod
+    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        raise NotImplementedError('Method extend_delete_steward_permissions is not implemented')
 
 
 class DatasetService:

@@ -16,7 +16,7 @@ from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets.services.datasets_base_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 revision = 'e1cd4927482b'

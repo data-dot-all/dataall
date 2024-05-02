@@ -8,7 +8,7 @@ from dataall.base.db import exceptions
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareItemSM
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
-from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 from dataall.base.utils import json_utils
 
 logger = logging.getLogger(__name__)
