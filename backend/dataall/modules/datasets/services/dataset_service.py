@@ -105,12 +105,12 @@ class DatasetService:
     @classmethod
     def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
         """All list_datasets from other modules that need to be appended to the list of datasets"""
-        all_subqueries = []
-        for interface in cls._interfaces:
-            interface_subquery = interface.append_to_list_user_datasets(session, username, groups)
-            if interface_subquery.first() is not None:
-                all_subqueries.append(interface_subquery)
-        return all_subqueries
+        return [
+            query
+            for interface in cls._interfaces
+            for query in [interface.append_to_list_user_datasets(session, username, groups)]
+            if query.first() is not None
+        ]
 
     @staticmethod
     def check_dataset_account(session, environment):
@@ -355,7 +355,7 @@ class DatasetService:
             else:
                 raise exceptions.UnauthorizedOperation(
                     action=CREDENTIALS_DATASET,
-                    message=f'User: {context.username} is not a member of the group {dataset.SamlAdminGroupName}',
+                    message=f'{context.username=} is not a member of the group {dataset.SamlAdminGroupName}',
                 )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
