@@ -42,8 +42,8 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     )
     response = client.query(
         """
-        query listEnvironmentGroupInvitationPermissions($environmentUri:String){
-            listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
+        query listEnvironmentGroupInvitationPermissions{
+            listEnvironmentGroupInvitationPermissions{
                     permissionUri
                     name
                     type
