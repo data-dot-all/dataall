@@ -92,8 +92,8 @@ class StackService:
             return StackRepository.create_stack(
                 session=session,
                 environment_uri=environment_uri,
-                target_type='environment',
-                target_uri=environment_uri,
+                target_type=target_type,
+                target_uri=target_uri,
             )
 
     @staticmethod

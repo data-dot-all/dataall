@@ -770,9 +770,9 @@ class EnvironmentService:
         data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
-                    query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
-                    page=data.get('page', 1),
-                    page_size=data.get('pageSize', 10),
+                query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
+                page=data.get('page', 1),
+                page_size=data.get('pageSize', 10),
             ).to_dict()
 
     @staticmethod
