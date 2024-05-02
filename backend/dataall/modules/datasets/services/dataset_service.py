@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from typing import List
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -53,33 +53,22 @@ log = logging.getLogger(__name__)
 
 class DatasetServiceInterface(ABC):
     @staticmethod
+    @abstractmethod
     def check_before_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
-        return True
+        raise NotImplementedError('Method check_before_delete is not implemented')
 
     @staticmethod
+    @abstractmethod
     def execute_on_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
-        return True
+        raise NotImplementedError('Method execute_on_delete is not implemented')
 
     @staticmethod
+    @abstractmethod
     def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
-        return True
-
-    @staticmethod
-    def resolve_additional_dataset_user_role(session, uri, username, groups):
-        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
-        return None
-
-    @staticmethod
-    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        return True
-
-    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        return True
+        raise NotImplementedError('Method append_to_list_user_datasets is not implemented')
 
 
 class DatasetService:
