@@ -92,7 +92,7 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
         import dataall.modules.datasets.db.dataset_models
         import dataall.modules.datasets.db.dataset_repositories
         import dataall.modules.datasets.services.dataset_permissions
-        import dataall.modules.datasets.services.datasets_base_enums
+        import dataall.modules.datasets.services.datasets_enums
 
         log.info('Dataset handlers have been imported')
 

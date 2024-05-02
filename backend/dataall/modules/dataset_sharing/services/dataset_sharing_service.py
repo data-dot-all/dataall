@@ -22,7 +22,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.datasets.db.dataset_models import Dataset
-from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.services.datasets_enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
 
 

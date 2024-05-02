@@ -44,7 +44,7 @@ from dataall.modules.datasets.services.dataset_permissions import (
     IMPORT_DATASET,
 )
 from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.services.datasets_enums import DatasetRole
 from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable
 from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
