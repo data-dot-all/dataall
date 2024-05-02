@@ -1,7 +1,7 @@
 """remove_dataset_table_read_permissions_from_env_admins
 
 Revision ID: 458572580709
-Revises: 59ab197fe648
+Revises: c6d01930179d
 Create Date: 2024-05-01 17:14:08.190904
 
 """
@@ -11,21 +11,15 @@ from sqlalchemy import orm
 from sqlalchemy import and_
 
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.api.enums import PermissionType
-from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.datasets_base.services.permissions import (
-    DATASET_TABLE_READ,
-    GET_DATASET_TABLE,
-    PREVIEW_DATASET_TABLE,
-)
+
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType, PrincipalType
 
 # revision identifiers, used by Alembic.
 revision = '458572580709'
-down_revision = '59ab197fe648'
+down_revision = 'c6d01930179d'
 branch_labels = None
 depends_on = None
 
