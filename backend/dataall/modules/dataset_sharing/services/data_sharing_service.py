@@ -10,6 +10,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectRepository,
     ShareItemSM,
 )
+from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import (
     ProcessLakeFormationShare,
@@ -291,7 +292,9 @@ class DataSharingService:
                     env_group,
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-
+                if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                    log.info('Deleting FOLDER READ permissions...')
+                    ShareItemService.delete_dataset_folder_read_permission(session, share)
                 log.info('Revoking permissions to S3 buckets')
 
                 revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(
@@ -310,7 +313,11 @@ class DataSharingService:
                 revoked_tables_succeed = ProcessLakeFormationShare(
                     session, dataset, share, revoked_tables, source_environment, target_environment, env_group
                 ).process_revoked_shares()
+
                 log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
+                if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                    log.info('Deleting TABLE READ permissions...')
+                    ShareItemService.delete_dataset_table_read_permission(session, share)
 
                 existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
                 if existing_pending_items:

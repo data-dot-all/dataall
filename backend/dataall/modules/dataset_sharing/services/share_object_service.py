@@ -531,7 +531,7 @@ class ShareObjectService:
         Attach Table permissions to share groups
         """
         share_table_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
+            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Succeeded.value]
         )
         for table in share_table_items:
             ResourcePolicyService.attach_resource_policy(
@@ -548,7 +548,7 @@ class ShareObjectService:
         Attach Table permissions to share groups
         """
         share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Approved.value]
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Succeeded.value]
         )
         for location in share_folder_items:
             ResourcePolicyService.attach_resource_policy(
