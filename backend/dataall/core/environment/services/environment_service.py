@@ -32,7 +32,6 @@ from dataall.base.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.base.db import exceptions
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 from dataall.core.stacks.aws.cloudformation import CloudFormation
