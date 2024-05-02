@@ -1,7 +1,8 @@
 import os
 import json
 import logging
-
+from typing import List
+from abc import ABC, abstractmethod
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -50,7 +51,56 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 log = logging.getLogger(__name__)
 
 
+class DatasetServiceInterface(ABC):
+    @staticmethod
+    @abstractmethod
+    def check_before_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def execute_on_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
+        ...
+
+
 class DatasetService:
+    _interfaces: List[DatasetServiceInterface] = []
+
+    @classmethod
+    def register(cls, interface: DatasetServiceInterface):
+        cls._interfaces.append(interface)
+
+    @classmethod
+    def check_before_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed before deletion"""
+        can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
+        return all(can_be_deleted)
+
+    @classmethod
+    def execute_on_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed during deletion"""
+        for interface in cls._interfaces:
+            interface.execute_on_delete(session, uri, **kwargs)
+        return True
+
+    @classmethod
+    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
+        """All list_datasets from other modules that need to be appended to the list of datasets"""
+        return [
+            query
+            for interface in cls._interfaces
+            for query in [interface.append_to_list_user_datasets(session, username, groups)]
+            if query.first() is not None
+        ]
+
     @staticmethod
     def check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
@@ -187,10 +237,13 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_owned_shared_datasets(data: dict):
+    def list_all_user_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+            all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
+            return DatasetRepository.paginated_all_user_datasets(
+                session, context.username, context.groups, all_subqueries, data=data
+            )
 
     @staticmethod
     def list_owned_datasets(data: dict):
@@ -291,7 +344,7 @@ class DatasetService:
             else:
                 raise exceptions.UnauthorizedOperation(
                     action=CREDENTIALS_DATASET,
-                    message=f'User: {context.username} is not a member of the group {dataset.SamlAdminGroupName}',
+                    message=f'{context.username=} is not a member of the group {dataset.SamlAdminGroupName}',
                 )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
@@ -357,15 +410,7 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
-            )
-            if shares:
-                raise exceptions.UnauthorizedOperation(
-                    action=DELETE_DATASET,
-                    message=f'Dataset {dataset.name} is shared with other teams. '
-                    'Revoke all dataset shares before deletion.',
-                )
+            DatasetService.check_before_delete(session, uri, action=DELETE_DATASET)
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
             for tableUri in tables:
@@ -377,7 +422,7 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
