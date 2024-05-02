@@ -1,8 +1,6 @@
 import boto3
 from botocore.config import Config
 
-from dataall.base.db.exceptions import AWSResourceNotFound
-from dataall.base.utils import Parameter
 from botocore.exceptions import ClientError
 import logging
 

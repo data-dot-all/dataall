@@ -162,7 +162,7 @@ def list_groups(context: Context, source, filter=None):
     return EnvironmentService.paginated_user_groups(filter)
 
 
-def list_consumption_roles(context: Context, source, environmentUri=None, filter=None):
+def list_consumption_roles(context: Context, source, filter=None):
     return EnvironmentService.paginated_user_consumption_roles(filter)
 
 

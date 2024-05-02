@@ -215,7 +215,6 @@ class EnvironmentService:
         with context.db_engine.scoped_session() as session:
             EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
             cdk_role_name = EnvironmentService.check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
-            organization = OrganizationRepository.get_organization_by_uri(session, uri)
             env = Environment(
                 organizationUri=data.get('organizationUri'),
                 label=data.get('label', 'Unnamed'),
@@ -233,8 +232,6 @@ class EnvironmentService:
                 CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{cdk_role_name}",
                 resourcePrefix=data.get('resourcePrefix'),
             )
-
-            env.userRoleInEnvironment = EnvironmentPermission.Owner.value
 
             session.add(env)
             session.commit()
@@ -293,7 +290,7 @@ class EnvironmentService:
                 action='ENVIRONMENT:CREATE',
                 label='ENVIRONMENT:CREATE',
                 owner=context.username,
-                summary=f'{context.username} linked environment {env.AwsAccountId} to organization {organization.name}',
+                summary=f'{context.username} linked environment {env.AwsAccountId} to organization {uri}',
                 targetUri=env.environmentUri,
                 targetType='env',
             )
@@ -653,8 +650,7 @@ class EnvironmentService:
     @staticmethod
     def paginated_user_environments(data=None) -> dict:
         context = get_context()
-        if data is None:
-            data = {}
+        data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_user_environments(session, context.username, context.groups, data),
@@ -665,6 +661,7 @@ class EnvironmentService:
     @staticmethod
     def list_valid_user_environments(data=None) -> dict:
         context = get_context()
+        data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             query = EnvironmentRepository.query_user_environments(session, context.username, context.groups, data)
             valid_environments = []
@@ -685,8 +682,7 @@ class EnvironmentService:
     @staticmethod
     def paginated_user_groups(data=None) -> dict:
         context = get_context()
-        if data is None:
-            data = {}
+        data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_user_groups(session, context.username, context.groups, data),
@@ -697,8 +693,7 @@ class EnvironmentService:
     @staticmethod
     def paginated_user_consumption_roles(data=None) -> dict:
         context = get_context()
-        if data is None:
-            data = {}
+        data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_user_consumption_roles(
@@ -711,6 +706,7 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_user_environment_groups(uri, data=None) -> dict:
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_user_environment_groups(session, get_context().groups, uri, data),
@@ -725,6 +721,7 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_all_environment_groups(uri, data=None) -> dict:
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentService.get_all_environment_groups(session, uri, data),
@@ -757,6 +754,7 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_user_environment_consumption_roles(uri, data=None) -> dict:
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_user_environment_consumption_roles(
@@ -769,11 +767,12 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_all_environment_consumption_roles(uri, data=None) -> dict:
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
-                query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
-                page=data.get('page', 1),
-                page_size=data.get('pageSize', 10),
+                    query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
+                    page=data.get('page', 1),
+                    page_size=data.get('pageSize', 10),
             ).to_dict()
 
     @staticmethod
@@ -783,8 +782,7 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_NETWORKS)
     def paginated_environment_networks(uri, data=None) -> dict:
-        if data is None:
-            data = {}
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=VpcRepository.query_environment_networks(session, uri, data),
