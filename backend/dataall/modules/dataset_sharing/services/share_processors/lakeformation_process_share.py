@@ -8,10 +8,8 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareObjectActions,
     ShareItemActions,
     ShareableType,
-    PrincipalType,
 )
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService

@@ -24,7 +24,6 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemHealthStatus,
     ShareObjectActions,
     ShareItemStatus,
-    ShareableType,
     PrincipalType,
 )
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock

@@ -13,7 +13,6 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
-    PrincipalType,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
