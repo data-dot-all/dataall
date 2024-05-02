@@ -45,7 +45,7 @@ def upgrade():
         env_admin_group = environment.SamlGroupName
 
         # if envAdmis is also Dataset admin, no need to delete permissions
-        if env_admin_group == dataset.SamlAdminGroupName:
+        if env_admin_group == dataset.SamlAdminGroupName or env_admin_group == dataset.stewards:
             continue
 
         tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()

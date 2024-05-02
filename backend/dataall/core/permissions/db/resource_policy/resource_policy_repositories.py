@@ -72,7 +72,6 @@ class ResourcePolicyRepository:
 
     def query_all_resource_policies(session, group_uri: str, resource_uri: str, resource_type: str = None):
         resource_policy = session.query(ResourcePolicy).filter(
-            ResourcePolicy.principalId == group_uri,
             ResourcePolicy.resourceUri == resource_uri,
         )
         if group_uri is not None:
