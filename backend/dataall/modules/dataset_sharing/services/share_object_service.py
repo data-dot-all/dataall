@@ -312,11 +312,6 @@ class ShareObjectService:
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
-            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
-                log.info('Attaching TABLE/FOLDER READ permissions...')
-                ShareObjectService._attach_dataset_table_read_permission(session, share)
-                ShareObjectService._attach_dataset_folder_read_permission(session, share)
-
             share.rejectPurpose = ''
             session.commit()
 
@@ -531,7 +526,7 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _attach_dataset_table_read_permission(session, share):
+    def attach_dataset_table_read_permission(session, share):
         """
         Attach Table permissions to share groups
         """
@@ -548,7 +543,7 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _attach_dataset_folder_read_permission(session, share):
+    def attach_dataset_folder_read_permission(session, share):
         """
         Attach Table permissions to share groups
         """

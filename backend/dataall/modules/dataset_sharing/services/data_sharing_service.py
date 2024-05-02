@@ -24,6 +24,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareObjectActions,
     ShareItemStatus,
     ShareableType,
+    PrincipalType,
 )
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
@@ -175,6 +176,15 @@ class DataSharingService:
 
                 new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share, new_share_state)
+
+                if share_successful:
+                    if (
+                        share.groupUri != dataset.SamlAdminGroupName
+                        and share.principalType == PrincipalType.Group.value
+                    ):
+                        log.info('Attaching TABLE/FOLDER READ permissions...')
+                        ShareObjectService.attach_dataset_table_read_permission(session, share)
+                        ShareObjectService.attach_dataset_folder_read_permission(session, share)
 
                 return share_successful
 

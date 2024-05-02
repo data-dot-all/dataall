@@ -102,11 +102,6 @@ class ShareItemService:
 
             share_sm.update_state(session, share, new_share_state)
 
-            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
-                log.info('Deleting TABLE/FOLDER READ permissions...')
-                ShareItemService._delete_dataset_table_read_permission(session, share)
-                ShareItemService._delete_dataset_folder_read_permission(session, share)
-
             ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
                 email_id=context.username
             )
@@ -243,7 +238,7 @@ class ShareItemService:
             raise e
 
     @staticmethod
-    def _delete_dataset_table_read_permission(session, share):
+    def delete_dataset_table_read_permission(session, share):
         """
         Delete Table permissions to share groups
         """
@@ -256,7 +251,7 @@ class ShareItemService:
             )
 
     @staticmethod
-    def _delete_dataset_folder_read_permission(session, share):
+    def delete_dataset_folder_read_permission(session, share):
         """
         Delete Folder permissions to share groups
         """

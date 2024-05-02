@@ -3,6 +3,7 @@ from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
+from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
@@ -11,6 +12,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
+    PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
@@ -186,6 +188,9 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                         removing_folder.delete_dataset_bucket_key_policy(dataset=dataset)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
+                if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                    log.info('Deleting FOLDER READ permissions...')
+                    ShareItemService._delete_dataset_folder_read_permission(session, share)
                 ShareObjectRepository.update_share_item_health_status(
                     session, removing_item, None, None, removing_item.lastVerificationTime
                 )
