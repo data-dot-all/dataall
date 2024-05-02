@@ -740,6 +740,7 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_environment_invited_groups(uri, data=None) -> dict:
+        data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=EnvironmentRepository.query_environment_invited_groups(session, uri, data),
