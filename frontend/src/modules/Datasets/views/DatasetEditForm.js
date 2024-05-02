@@ -482,22 +482,27 @@ const DatasetEditForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            label="Auto Approval"
-                            name="autoApprovalEnabled"
-                            onChange={handleChange}
-                            select
-                            value={values.autoApprovalEnabled}
-                            variant="outlined"
-                          >
-                            <MenuItem key={'Enabled'} value={true}>
-                              Enabled
-                            </MenuItem>
-                            <MenuItem key={'Enabled'} value={false}>
-                              Disabled
-                            </MenuItem>
-                          </TextField>
+                          {config.modules.datasets.features
+                            .auto_approval_for_confidentiality_level[
+                            values.confidentiality
+                          ] === true && (
+                            <TextField
+                              fullWidth
+                              label="Auto Approval"
+                              name="autoApprovalEnabled"
+                              onChange={handleChange}
+                              select
+                              value={values.autoApprovalEnabled}
+                              variant="outlined"
+                            >
+                              <MenuItem key={'Enabled'} value={true}>
+                                Enabled
+                              </MenuItem>
+                              <MenuItem key={'Enabled'} value={false}>
+                                Disabled
+                              </MenuItem>
+                            </TextField>
+                          )}
                         </CardContent>
                       </Card>
                     </Grid>
