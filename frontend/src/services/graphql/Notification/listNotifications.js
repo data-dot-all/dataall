@@ -17,6 +17,7 @@ export const listNotifications = (filter) => ({
           message
           type
           is_read
+          target_uri
         }
       }
     }

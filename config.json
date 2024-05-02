@@ -26,7 +26,12 @@
                 "preview_data": true,
                 "glue_crawler": true,
                 "confidentiality_dropdown" : true,
-                "topics_dropdown" : true
+                "topics_dropdown" : true,
+                "auto_approval_for_confidentiality_level" : {
+                    "Unclassified" : true,
+                    "Official" : true,
+                    "Secret" : true
+                }
             }
         },
         "worksheets": {

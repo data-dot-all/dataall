@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from typing import List
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -11,7 +11,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.dataset_sharing.aws.kms_client import KmsClient
+from dataall.modules.datasets.aws.kms_dataset_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -53,33 +53,22 @@ log = logging.getLogger(__name__)
 
 class DatasetServiceInterface(ABC):
     @staticmethod
+    @abstractmethod
     def check_before_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
-        return True
+        raise NotImplementedError('Method check_before_delete is not implemented')
 
     @staticmethod
+    @abstractmethod
     def execute_on_delete(session, uri, **kwargs) -> bool:
         """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
-        return True
+        raise NotImplementedError('Method execute_on_delete is not implemented')
 
     @staticmethod
+    @abstractmethod
     def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
-        return True
-
-    @staticmethod
-    def resolve_additional_dataset_user_role(session, uri, username, groups):
-        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
-        return None
-
-    @staticmethod
-    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        return True
-
-    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        return True
+        raise NotImplementedError('Method append_to_list_user_datasets is not implemented')
 
 
 class DatasetService:
@@ -102,7 +91,7 @@ class DatasetService:
     def check_before_delete(cls, session, uri, **kwargs) -> bool:
         """All actions from other modules that need to be executed before deletion"""
         can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
-        return False not in set(can_be_deleted)
+        return all(can_be_deleted)
 
     @classmethod
     def execute_on_delete(cls, session, uri, **kwargs) -> bool:
@@ -114,12 +103,12 @@ class DatasetService:
     @classmethod
     def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
         """All list_datasets from other modules that need to be appended to the list of datasets"""
-        all_subqueries = []
-        for interface in cls._interfaces:
-            interface_subquery = interface.append_to_list_user_datasets(session, username, groups)
-            if interface_subquery.first() is not None:
-                all_subqueries.append(interface_subquery)
-        return all_subqueries
+        return [
+            query
+            for interface in cls._interfaces
+            for query in [interface.append_to_list_user_datasets(session, username, groups)]
+            if query.first() is not None
+        ]
 
     @classmethod
     def _attach_additional_steward_permissions(cls, session, dataset, new_stewards):
@@ -376,7 +365,7 @@ class DatasetService:
             else:
                 raise exceptions.UnauthorizedOperation(
                     action=CREDENTIALS_DATASET,
-                    message=f'User: {context.username} is not a member of the group {dataset.SamlAdminGroupName}',
+                    message=f'{context.username=} is not a member of the group {dataset.SamlAdminGroupName}',
                 )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)

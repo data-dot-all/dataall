@@ -29,6 +29,7 @@ class SharingApiModuleInterface(ModuleInterface):
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
         DatasetService.register(DatasetSharingService())
+        log.info('API of dataset sharing has been imported')
 
 
 class SharingAsyncHandlersModuleInterface(ModuleInterface):

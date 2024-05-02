@@ -66,6 +66,34 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+        lambda_env_key = kms.Key(
+            self,
+            f'{resource_prefix}-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
 
@@ -86,6 +114,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.esproxy_dlq,
             on_failure=lambda_destination.SqsDestination(self.esproxy_dlq),
@@ -117,6 +146,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
             environment=api_handler_env,
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -143,6 +173,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
             environment=awshandler_env,
+            environment_encryption=lambda_env_key,
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,

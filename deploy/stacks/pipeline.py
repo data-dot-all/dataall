@@ -182,6 +182,9 @@ class PipelineStack(Stack):
                     )
                 )
 
+            if target_env.get('with_approval_tests', False):
+                self.set_approval_tests_stage(target_env)
+
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
 
@@ -648,6 +651,61 @@ class PipelineStack(Stack):
             )
         )
         return backend_stage
+
+    def set_approval_tests_stage(
+        self,
+        target_env,
+    ):
+        if target_env.get('custom_auth', None) is None:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role'
+        else:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
+
+        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
+        wave.add_post(
+            pipelines.CodeBuildStep(
+                id='ApprovalTests',
+                build_environment=codebuild.BuildEnvironment(
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+                ),
+                partial_build_spec=codebuild.BuildSpec.from_object(
+                    dict(
+                        version='0.2',
+                        phases={
+                            'build': {
+                                'commands': [
+                                    'set -eu',
+                                    'mkdir ~/.aws/ && touch ~/.aws/config',
+                                    'echo "[profile buildprofile]" > ~/.aws/config',
+                                    f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
+                                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                                    'aws sts get-caller-identity --profile buildprofile',
+                                    f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export ENVNAME={target_env["envname"]}',
+                                    f'export AWS_REGION={target_env["region"]}',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    'python -m venv env',
+                                    '. env/bin/activate',
+                                    'make integration-tests',
+                                ]
+                            },
+                        },
+                        reports={
+                            'PytestReports': {
+                                'files': ['reports/integration_tests.xml'],
+                                'base-directory': '$CODEBUILD_SRC_DIR',
+                                'file-format': 'JUNITXML',
+                            }
+                        },
+                    )
+                ),
+                commands=[],
+                role=self.expanded_codebuild_role.without_policy_updates(),
+                vpc=self.vpc,
+                security_groups=[self.codebuild_sg],
+            )
+        )
 
     def set_stacks_updater_stage(
         self,
