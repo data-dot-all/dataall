@@ -49,7 +49,7 @@ class NotificationRepository:
             )
         if filter.get('archived'):
             q = q.filter(models.Notification.deleted.isnot(None))
-        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
+        return paginate(q.order_by(models.Notification.created.desc()), page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
 
     @staticmethod
     def count_unread_notifications(session, username, groups):

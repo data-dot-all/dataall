@@ -44,7 +44,7 @@ class SageMakerStudioRepository:
                     SagemakerStudioUser.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(SagemakerStudioUser.label).distinct()
 
     @staticmethod
     def paginated_sagemaker_studio_users(session, username, groups, filter={}) -> dict:

@@ -113,4 +113,4 @@ class DatasetLocationRepository:
                     ]
                 )
             )
-        return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+        return paginate(query=query.order_by(DatasetStorageLocation.label).distinct(), page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()

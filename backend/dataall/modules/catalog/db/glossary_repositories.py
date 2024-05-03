@@ -82,7 +82,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike('%' + term + '%'),
                 )
             )
-        return paginate(q, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+        return paginate(q.order_by(GlossaryNode.path), page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
 
     @staticmethod
     def list_node_children(session, path, filter):
@@ -102,7 +102,7 @@ class GlossaryRepository:
             )
         if nodeType:
             q = q.filter(GlossaryNode.nodeType == nodeType)
-        return paginate(q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
+        return paginate(q.order_by(GlossaryNode.path), page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
 
     @staticmethod
     def get_node_tree(session, path, filter):
@@ -124,7 +124,7 @@ class GlossaryRepository:
         if nodeType:
             q = q.filter(GlossaryNode.nodeType == nodeType)
 
-        return paginate(q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
+        return paginate(q.order_by(GlossaryNode.path), page_size=filter.get('pageSize', 10), page=filter.get('page', 1)).to_dict()
 
     @staticmethod
     def get_node_link_to_target(session, username, uri, targetUri):
@@ -259,7 +259,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(q.order_by(GlossaryNode.nodeUri), page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def list_terms(session, uri, data=None):
@@ -278,7 +278,7 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(q.order_by(GlossaryNode.path), page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def get_node(session, uri) -> GlossaryNode:
@@ -399,7 +399,7 @@ class GlossaryRepository:
                     TermLink.targetType == target_type,
                 )
             )
-        )
+        ).order_by(GlossaryNode.path)
 
         return paginate(terms, page_size=10000, page=1).to_dict()
 

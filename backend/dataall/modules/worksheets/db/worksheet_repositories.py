@@ -44,7 +44,7 @@ class WorksheetRepository(EnvironmentResource):
                     Worksheet.tags.contains(f"{{{filter.get('term')}}}"),
                 )
             )
-        return query
+        return query.order_by(Worksheet.label).distinct()
 
     @staticmethod
     def paginated_user_worksheets(session, username, groups, uri, data=None, check_perm=None) -> dict:

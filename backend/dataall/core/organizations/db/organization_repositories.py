@@ -48,7 +48,7 @@ class OrganizationRepository:
                     models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
                 )
             )
-        return query
+        return query.order_by(models.Organization.label)
 
     @staticmethod
     def paginated_user_organizations(session, data=None) -> dict:
@@ -69,7 +69,7 @@ class OrganizationRepository:
                     Environment.description.ilike('%' + filter.get('term') + '%'),
                 )
             )
-        return query
+        return query.order_by(Environment.label)
 
     @staticmethod
     def paginated_organization_environments(session, uri, data=None) -> dict:
@@ -104,7 +104,7 @@ class OrganizationRepository:
                     models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
                 )
             )
-        return query
+        return query.order_by(models.OrganizationGroup.groupUri)
 
     @staticmethod
     def paginated_organization_groups(session, uri, data=None) -> dict:

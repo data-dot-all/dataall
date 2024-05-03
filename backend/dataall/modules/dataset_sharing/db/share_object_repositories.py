@@ -594,7 +594,7 @@ class ShareObjectRepository:
                     else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
                 )
 
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query.order_by(shareable_objects.c.itemUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def list_user_received_share_requests(session, username, groups, data=None):
@@ -629,7 +629,7 @@ class ShareObjectRepository:
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
                 query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def list_user_sent_share_requests(session, username, groups, data=None):
@@ -668,7 +668,7 @@ class ShareObjectRepository:
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
                 query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
@@ -1006,7 +1006,7 @@ class ShareObjectRepository:
                 ShareObject.datasetUri == dataset_uri,
                 ShareObject.deleted.is_(None),
             )
-        )
+        ).order_by(ShareObject.shareUri)
 
     @staticmethod
     def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
@@ -1163,7 +1163,7 @@ class ShareObjectRepository:
             term = data.get('term')
             q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
 
-        return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(query=q.order_by(ShareObjectItem.itemUri), page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def find_share_items_by_item_uri(session, item_uri):
