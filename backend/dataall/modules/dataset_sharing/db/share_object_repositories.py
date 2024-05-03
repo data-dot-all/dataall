@@ -1157,13 +1157,15 @@ class ShareObjectRepository:
 
         if data.get('uniqueShares', False):
             q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
-            q = q.distinct(ShareObject.shareUri)
+            q = q.order_by(ShareObject.shareUri).distinct(ShareObject.shareUri)
+        else:
+            q = q.order_by(ShareObjectItem.itemName).distinct()
 
         if data.get('term'):
             term = data.get('term')
             q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
 
-        return paginate(query=q.order_by(ShareObjectItem.itemName).distinct(), page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def find_share_items_by_item_uri(session, item_uri):
