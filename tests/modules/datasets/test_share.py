@@ -22,7 +22,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectSM,
 )
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='function')

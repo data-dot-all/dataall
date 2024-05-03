@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dataall.modules.datasets_base.db.dataset_models import DatasetProfilingRun, Dataset, DatasetTable
+from dataall.modules.datasets.db.dataset_models import DatasetProfilingRun, Dataset, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)

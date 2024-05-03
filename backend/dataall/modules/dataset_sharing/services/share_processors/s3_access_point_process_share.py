@@ -5,7 +5,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,

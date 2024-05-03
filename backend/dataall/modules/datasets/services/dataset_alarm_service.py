@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_models import Dataset
 from dataall.base.utils.alarm_service import AlarmService
 
 log = logging.getLogger(__name__)

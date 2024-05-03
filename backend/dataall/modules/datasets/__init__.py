@@ -17,15 +17,11 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-        from dataall.modules.dataset_sharing import SharingApiModuleInterface
         from dataall.modules.catalog import CatalogApiModuleInterface
         from dataall.modules.feed import FeedApiModuleInterface
         from dataall.modules.vote import VoteApiModuleInterface
 
         return [
-            SharingApiModuleInterface,
-            DatasetBaseModuleInterface,
             CatalogApiModuleInterface,
             FeedApiModuleInterface,
             VoteApiModuleInterface,
@@ -44,8 +40,8 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         import dataall.modules.datasets.api
         from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
-        from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-        from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+        from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+        from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
         FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
@@ -91,15 +87,12 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets.handlers
+        import dataall.modules.datasets.db.dataset_models
+        import dataall.modules.datasets.db.dataset_repositories
+        import dataall.modules.datasets.services.dataset_permissions
+        import dataall.modules.datasets.services.datasets_enums
 
         log.info('Dataset handlers have been imported')
-
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-        from dataall.modules.dataset_sharing import SharingAsyncHandlersModuleInterface
-
-        return [SharingAsyncHandlersModuleInterface, DatasetBaseModuleInterface]
 
 
 class DatasetCdkModuleInterface(ModuleInterface):
@@ -108,13 +101,6 @@ class DatasetCdkModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
-
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-        from dataall.modules.dataset_sharing import DataSharingCdkModuleInterface
-
-        return [DatasetBaseModuleInterface, DataSharingCdkModuleInterface]
 
     def __init__(self):
         import dataall.modules.datasets.cdk
@@ -133,12 +119,6 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
 
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-
-        return [DatasetBaseModuleInterface]
-
     def __init__(self):
         from dataall.modules.datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
@@ -153,10 +133,9 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
         from dataall.modules.catalog import CatalogIndexerModuleInterface
 
-        return [DatasetBaseModuleInterface, CatalogIndexerModuleInterface]
+        return [CatalogIndexerModuleInterface]
 
     def __init__(self):
         from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer

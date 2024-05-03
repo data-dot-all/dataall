@@ -31,7 +31,7 @@ from dataall.modules.dataset_sharing.services.managed_share_policy_service impor
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import PrincipalType
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30

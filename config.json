@@ -34,6 +34,9 @@
                 }
             }
         },
+        "dataset_sharing": {
+            "active": true
+        },
         "worksheets": {
             "active": true
         },

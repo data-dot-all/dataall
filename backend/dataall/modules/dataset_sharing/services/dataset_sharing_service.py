@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
 )
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
@@ -21,8 +21,8 @@ from dataall.modules.datasets.services.dataset_permissions import (
     CREDENTIALS_DATASET,
 )
 
-from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset
+from dataall.modules.datasets.services.datasets_enums import DatasetRole
 from dataall.modules.datasets.services.dataset_service import DatasetServiceInterface
 
 

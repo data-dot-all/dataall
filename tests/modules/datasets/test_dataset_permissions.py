@@ -9,8 +9,8 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
 )
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_models import Dataset
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 from tests.core.permissions.test_permission import *
 from dataall.core.organizations.services.organization_service import OrganizationService

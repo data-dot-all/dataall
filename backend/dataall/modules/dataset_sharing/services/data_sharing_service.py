@@ -25,7 +25,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareableType,
 )
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+from dataall.modules.datasets.db.dataset_models import DatasetLock
 
 log = logging.getLogger(__name__)
 

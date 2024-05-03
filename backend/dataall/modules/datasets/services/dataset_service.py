@@ -22,10 +22,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -43,10 +39,10 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +64,24 @@ class DatasetServiceInterface(ABC):
     @abstractmethod
     def append_to_list_user_datasets(session, username, groups):
         """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
         ...
 
 
@@ -582,18 +596,3 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
-    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    def verify_dataset_share_objects(uri: str, share_uris: list):
-        with get_context().db_engine.scoped_session() as session:
-            for share_uri in share_uris:
-                share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-                states = ShareItemSM.get_share_item_revokable_states()
-                items = ShareObjectRepository.list_shareable_items(
-                    session, share, states, {'pageSize': 1000, 'isShared': True}
-                )
-                item_uris = [item.shareItemUri for item in items.get('nodes', [])]
-                ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
-        return True
