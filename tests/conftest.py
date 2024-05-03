@@ -169,11 +169,12 @@ def patch_stack_tasks(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_env(module_mocker):
     module_mocker.patch(
-        'dataall.core.environment.api.resolvers.check_environment',
+        'dataall.core.environment.services.environment_service.EnvironmentService.check_cdk_resources',
         return_value='CDKROLENAME',
     )
     module_mocker.patch(
-        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+        'dataall.core.environment.services.environment_service.EnvironmentService.get_pivot_role_as_part_of_environment',
+        return_value=False,
     )
 
 

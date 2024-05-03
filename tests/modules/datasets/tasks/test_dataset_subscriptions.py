@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
+from dataall.modules.dataset_sharing.tasks.dataset_subscription_task import DatasetSubscriptionService
 from dataall.core.environment.api.enums import EnvironmentPermission
 
 
@@ -90,7 +90,7 @@ def share(
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
     sns_client = MagicMock()
-    mocker.patch('dataall.modules.datasets.tasks.dataset_subscription_task.SnsDatasetClient', sns_client)
+    mocker.patch('dataall.modules.dataset_sharing.tasks.dataset_subscription_task.SnsDatasetClient', sns_client)
     sns_client.publish_dataset_message.return_value = True
     subscriber = DatasetSubscriptionService(db)
     messages = [

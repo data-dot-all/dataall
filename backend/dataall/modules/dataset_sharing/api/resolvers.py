@@ -5,10 +5,12 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
@@ -36,6 +38,15 @@ class RequestValidator:
             raise RequiredParameter('shareUri')
         if not data.get('itemUris'):
             raise RequiredParameter('itemUris')
+
+    @staticmethod
+    def validate_dataset_share_selector_input(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('datasetUri'):
+            raise RequiredParameter('datasetUri')
+        if not data.get('shareUris'):
+            raise RequiredParameter('shareUris')
 
 
 def create_share_object(
@@ -303,3 +314,27 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             uri=shareUri,
             reject_purpose=rejectPurpose,
         )
+
+
+def verify_dataset_share_objects(context: Context, source, input):
+    RequestValidator.validate_dataset_share_selector_input(input)
+    dataset_uri = input.get('datasetUri')
+    verify_share_uris = input.get('shareUris')
+    return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+
+
+def list_dataset_share_objects(context, source, filter: dict = None):
+    if not source:
+        return None
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetSharingService.list_dataset_share_objects(source, filter)
+
+
+def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
+    return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+
+
+@is_feature_enabled('modules.datasets.features.aws_actions')
+def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
+    return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)

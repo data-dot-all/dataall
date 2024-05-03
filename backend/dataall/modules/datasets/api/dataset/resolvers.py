@@ -57,10 +57,10 @@ def get_file_upload_presigned_url(context, source, datasetUri: str = None, input
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
-def list_owned_shared_datasets(context: Context, source, filter: dict = None):
+def list_all_user_datasets(context: Context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_owned_shared_datasets(filter)
+    return DatasetService.list_all_user_datasets(filter)
 
 
 def list_owned_datasets(context: Context, source, filter: dict = None):
@@ -131,14 +131,6 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 
 
-def list_dataset_share_objects(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_dataset_share_objects(source, filter)
-
-
 @is_feature_enabled('modules.datasets.features.aws_actions')
 def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
@@ -178,13 +170,6 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
 
-def verify_dataset_share_objects(context: Context, source, input):
-    RequestValidator.validate_dataset_share_selector_input(input)
-    dataset_uri = input.get('datasetUri')
-    verify_share_uris = input.get('shareUris')
-    return DatasetService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
-
-
 class RequestValidator:
     @staticmethod
     def validate_creation_request(data):
@@ -205,12 +190,3 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
-
-    @staticmethod
-    def validate_dataset_share_selector_input(data):
-        if not data:
-            raise RequiredParameter(data)
-        if not data.get('datasetUri'):
-            raise RequiredParameter('datasetUri')
-        if not data.get('shareUris'):
-            raise RequiredParameter('shareUris')

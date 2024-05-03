@@ -2,11 +2,10 @@ from dataall.base.api import gql
 from dataall.modules.datasets.api.dataset.input_types import DatasetFilter
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset,
-    list_owned_shared_datasets,
+    list_all_user_datasets,
     list_owned_datasets,
     get_dataset_assume_role_url,
     get_file_upload_presigned_url,
-    list_dataset_share_objects,
     list_datasets_owned_by_env_group,
     list_datasets_created_in_environment,
 )
@@ -25,7 +24,7 @@ listDatasets = gql.QueryField(
     name='listDatasets',
     args=[gql.Argument('filter', DatasetFilter)],
     type=DatasetSearchResult,
-    resolver=list_owned_shared_datasets,
+    resolver=list_all_user_datasets,
     test_scope='Dataset',
 )
 
@@ -55,17 +54,6 @@ getDatasetPresignedUrl = gql.QueryField(
     ],
     type=gql.String,
     resolver=get_file_upload_presigned_url,
-)
-
-listShareObjects = gql.QueryField(
-    name='listDatasetShareObjects',
-    resolver=list_dataset_share_objects,
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='environmentUri', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-    ],
-    type=gql.Ref('ShareSearchResult'),
 )
 
 listDatasetsOwnedByEnvGroup = gql.QueryField(

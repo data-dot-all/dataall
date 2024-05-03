@@ -150,7 +150,7 @@ class OrganizationService:
                     session=session, uri=organization.organizationUri, groups=context.groups
                 ):
                     return OrganisationUserRole.Invited.value
-        return OrganisationUserRole.NoPermission.value
+        return OrganisationUserRole.NotMember.value
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
