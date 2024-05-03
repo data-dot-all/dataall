@@ -38,7 +38,6 @@ class DatasetTableService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
-    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
