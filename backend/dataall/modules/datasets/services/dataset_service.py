@@ -70,19 +70,19 @@ class DatasetServiceInterface(ABC):
     @abstractmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
         """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
-        raise NotImplementedError('Method resolve_additional_dataset_user_role is not implemented')
+        ...
 
     @staticmethod
     @abstractmethod
     def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
         """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        raise NotImplementedError('Method extend_attach_steward_permissions is not implemented')
+        ...
 
     @staticmethod
     @abstractmethod
     def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
         """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        raise NotImplementedError('Method extend_delete_steward_permissions is not implemented')
+        ...
 
 
 class DatasetService:
