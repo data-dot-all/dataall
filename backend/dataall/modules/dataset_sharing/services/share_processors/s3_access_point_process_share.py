@@ -185,6 +185,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
                     if not dataset.imported or dataset.importedKmsKey:
                         removing_folder.delete_dataset_bucket_key_policy(dataset=dataset)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
+                revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 ShareObjectRepository.update_share_item_health_status(
                     session, removing_item, None, None, removing_item.lastVerificationTime
                 )

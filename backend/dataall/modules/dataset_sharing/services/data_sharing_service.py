@@ -73,6 +73,10 @@ class DataSharingService:
                 new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
                 share_sm.update_state(session, share, new_share_state)
 
+                need_grant_permissions = (
+                    share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value
+                )
+
                 (shared_tables, shared_folders, shared_buckets) = ShareObjectRepository.get_share_data_items(
                     session, share_uri, ShareItemStatus.Share_Approved.value
                 )
@@ -177,14 +181,9 @@ class DataSharingService:
                 new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share, new_share_state)
 
-                if share_successful:
-                    if (
-                        share.groupUri != dataset.SamlAdminGroupName
-                        and share.principalType == PrincipalType.Group.value
-                    ):
-                        log.info('Attaching TABLE/FOLDER READ permissions...')
-                        ShareObjectService.attach_dataset_table_read_permission(session, share)
-                        ShareObjectService.attach_dataset_folder_read_permission(session, share)
+                log.info('Attaching TABLE/FOLDER READ permissions to successfully shared items...')
+                ShareObjectService.attach_dataset_table_read_permission(session, share)
+                ShareObjectService.attach_dataset_folder_read_permission(session, share)
 
                 return share_successful
 

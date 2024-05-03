@@ -13,13 +13,13 @@ from sqlalchemy import and_
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType, PrincipalType
 
 # revision identifiers, used by Alembic.
 revision = '458572580709'
-down_revision = 'c6d01930179d'
+down_revision = 'a991ac7a85a2'
 branch_labels = None
 depends_on = None
 
