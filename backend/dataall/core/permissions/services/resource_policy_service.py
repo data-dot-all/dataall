@@ -16,9 +16,10 @@ class Identifiable(Protocol):
 
 class ResourcePolicyRequestValidationService:
     @staticmethod
-    def validate_find_or_delete_resource_policy_params(group_uri, resource_uri):
+    def validate_find_or_delete_resource_policy_params(group_uri, resource_uri, resource_type):
         if not group_uri:
-            raise exceptions.RequiredParameter(param_name='group')
+            if not resource_type:
+                raise exceptions.RequiredParameter(param_name='group | resource_type')
         if not resource_uri:
             raise exceptions.RequiredParameter(param_name='resource_uri')
 
@@ -76,20 +77,48 @@ class ResourcePolicyService:
             return resource_policy
 
     @staticmethod
+    def find_resource_policies(session, group, resource_uri, resource_type):
+        """
+
+        :param session:
+        :param group: The group URI for which to find the resource policy. If None -- resource policies for all groups will be found
+        :param resource_uri: The resource URI for which to find the resource policy.
+        :param resource_type: The type of the resource. -- required, if the group is None
+        :return: list: A list of ResourcePolicy objects matching the given criteria.
+        """
+        ResourcePolicyRequestValidationService.validate_find_or_delete_resource_policy_params(
+            group, resource_uri, resource_type
+        )
+        policies = ResourcePolicyRepository.find_all_resource_policies(
+            session, group_uri=group, resource_uri=resource_uri, resource_type=resource_type
+        )
+        return policies
+
+    @staticmethod
     def delete_resource_policy(
         session,
         group: str,
         resource_uri: str,
         resource_type: str = None,
     ) -> bool:
-        ResourcePolicyRequestValidationService.validate_find_or_delete_resource_policy_params(group, resource_uri)
-        policy = ResourcePolicyRepository.find_resource_policy(session, group_uri=group, resource_uri=resource_uri)
-        if policy:
-            for permission in policy.permissions:
-                session.delete(permission)
-            session.delete(policy)
+        """
+        Deletes all resources policy for given group, resource_uri, resource_type
+        :param session:
+        :param group:
+        :param resource_uri:
+        :param resource_type:
+        :return:
+        """
+        policies = ResourcePolicyService.find_resource_policies(session, group, resource_uri, resource_type)
+        try:
+            for policy in policies:
+                for permission in policy.permissions:
+                    session.delete(permission)
+                session.delete(policy)
             session.commit()
-
+        except Exception as e:
+            session.rollback()
+            raise e
         return True
 
     @staticmethod
@@ -193,6 +222,7 @@ class ResourcePolicyService:
             permissions.append(p.permission)
         return permissions
 
+    @staticmethod
     def has_resource_permission(
         permission: str, param_name: str = None, resource_name: str = None, parent_resource: Callable = None
     ):

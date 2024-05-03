@@ -13,7 +13,6 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
-    PrincipalType,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
@@ -101,11 +100,6 @@ class ShareItemService:
                         item_sm.update_state_single_item(session, item, new_state)
 
             share_sm.update_state(session, share, new_share_state)
-
-            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
-                log.info('Deleting TABLE/FOLDER READ permissions...')
-                ShareItemService._delete_dataset_table_read_permission(session, share)
-                ShareItemService._delete_dataset_folder_read_permission(session, share)
 
             ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
                 email_id=context.username
@@ -243,12 +237,12 @@ class ShareItemService:
             raise e
 
     @staticmethod
-    def _delete_dataset_table_read_permission(session, share):
+    def delete_dataset_table_read_permission(session, share):
         """
         Delete Table permissions to share groups
         """
         share_table_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Revoke_Approved.value]
+            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Revoke_Succeeded.value]
         )
         for table in share_table_items:
             ResourcePolicyService.delete_resource_policy(
@@ -256,12 +250,12 @@ class ShareItemService:
             )
 
     @staticmethod
-    def _delete_dataset_folder_read_permission(session, share):
+    def delete_dataset_folder_read_permission(session, share):
         """
         Delete Folder permissions to share groups
         """
         share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Revoke_Approved.value]
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Revoke_Succeeded.value]
         )
         for location in share_folder_items:
             ResourcePolicyService.delete_resource_policy(
