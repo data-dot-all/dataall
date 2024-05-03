@@ -375,7 +375,7 @@ class DatasetRepository(EnvironmentResource):
                     Dataset.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query.order_by(Dataset.label)
+        return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
 
     @staticmethod
     def _set_import_data(dataset, data):

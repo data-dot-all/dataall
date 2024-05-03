@@ -39,7 +39,7 @@ def paginate(query, page, page_size):
         raise AttributeError('page needs to be >= 1')
     if page_size <= 0:
         raise AttributeError('page_size needs to be >= 1')
-    items = query.limit(page_size).offset((page - 1) * page_size).enable_assertions(True).all()
+    items = query.limit(page_size).offset((page - 1) * page_size).all()
     # count doesn't de-duplicate the rows as described here https://tinyurl.com/3f7d8d5a
     # nosemgrep: python.sqlalchemy.performance.performance-improvements.len-all-count
     total = len(query.order_by(None).all())
