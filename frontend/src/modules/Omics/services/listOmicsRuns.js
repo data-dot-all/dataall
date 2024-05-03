@@ -19,6 +19,7 @@ export const listOmicsRuns = (filter) => ({
           owner
           SamlAdminGroupName
           outputDatasetUri
+          outputUri
           description
           label
           created
