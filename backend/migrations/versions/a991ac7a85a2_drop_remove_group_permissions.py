@@ -46,8 +46,7 @@ def upgrade():
         )
         for group in suspicious_permissions_principals:
             permissions = ResourcePolicyService.get_resource_policy_permissions(session, group, env.environmentUri)
-            if REMOVE_ENVIRONMENT_GROUP in permissions:
-                permissions.remove(REMOVE_ENVIRONMENT_GROUP)
+            permissions = [permission.name for permission in permissions if permission.name != REMOVE_ENVIRONMENT_GROUP]
             ResourcePolicyService.update_resource_policy(
                 session,
                 resource_uri=env.environmentUri,
