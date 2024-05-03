@@ -594,7 +594,9 @@ class ShareObjectRepository:
                     else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
                 )
 
-        return paginate(query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(
+            query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
+        ).to_dict()
 
     @staticmethod
     def list_user_received_share_requests(session, username, groups, data=None):
@@ -1001,12 +1003,16 @@ class ShareObjectRepository:
 
     @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
-        return session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                )
             )
-        ).order_by(ShareObject.shareUri)
+            .order_by(ShareObject.shareUri)
+        )
 
     @staticmethod
     def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
