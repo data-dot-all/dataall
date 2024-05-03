@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock
-from dataall.base.context import set_context, RequestContext
 
 import pytest
 from dataall.modules.datasets.db.dataset_models import DatasetTable
