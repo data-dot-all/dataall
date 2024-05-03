@@ -48,7 +48,7 @@ class OrganizationRepository:
                     models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
                 )
             )
-        return query.order_by(models.Organization.label)
+        return query.order_by(models.Organization.label).distinct()
 
     @staticmethod
     def paginated_user_organizations(session, data=None) -> dict:

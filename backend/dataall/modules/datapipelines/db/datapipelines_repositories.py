@@ -135,7 +135,7 @@ class DatapipelinesRepository(EnvironmentResource):
         if filter and filter.get('type'):
             if len(filter.get('type')) > 0:
                 query = query.filter(DataPipeline.devStrategy.in_(filter.get('type')))
-        return query.order_by(DataPipeline.label).distinct()
+        return query.order_by(DataPipeline.label)
 
     @staticmethod
     def paginated_user_pipelines(session, username, groups, data=None) -> dict:

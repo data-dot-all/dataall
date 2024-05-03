@@ -279,7 +279,7 @@ class DatasetRepository(EnvironmentResource):
                     Dataset.region.ilike('%' + term + '%'),
                 )
             )
-        return query.order_by(Dataset.label).distinct()
+        return query.order_by(Dataset.label)
 
     @staticmethod
     def query_environment_datasets(session, uri, filter) -> Query:
@@ -299,7 +299,7 @@ class DatasetRepository(EnvironmentResource):
                     Dataset.region.ilike('%' + term + '%'),
                 )
             )
-        return query.order_by(Dataset.label).distinct()
+        return query.order_by(Dataset.label)
 
     @staticmethod
     def query_environment_imported_datasets(session, uri, filter) -> Query:
@@ -375,7 +375,7 @@ class DatasetRepository(EnvironmentResource):
                     Dataset.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
+        return query.order_by(Dataset.label)
 
     @staticmethod
     def _set_import_data(dataset, data):
