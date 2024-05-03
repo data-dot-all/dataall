@@ -79,6 +79,15 @@ class DatasetService:
         cls._interfaces.append(interface)
 
     @classmethod
+    def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
+        """All other user role types that might come from other modules"""
+        for interface in cls._interfaces:
+            role = interface.resolve_additional_dataset_user_role(session, uri, username, groups)
+            if role is not None:
+                return role
+        return None
+
+    @classmethod
     def check_before_delete(cls, session, uri, **kwargs) -> bool:
         """All actions from other modules that need to be executed before deletion"""
         can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
@@ -100,6 +109,18 @@ class DatasetService:
             for query in [interface.append_to_list_user_datasets(session, username, groups)]
             if query.first() is not None
         ]
+
+    @classmethod
+    def _attach_additional_steward_permissions(cls, session, dataset, new_stewards):
+        """All permissions from other modules that need to be granted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_attach_steward_permissions(session, dataset, new_stewards)
+
+    @classmethod
+    def _delete_additional_steward__permissions(cls, session, dataset):
+        """All permissions from other modules that need to be deleted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_delete_steward_permissions(session, dataset)
 
     @staticmethod
     def check_dataset_account(session, environment):
@@ -515,15 +536,7 @@ class DatasetService:
                     resource_uri=tableUri,
                 )
 
-        # Remove Steward Resource Policy on Dataset Share Objects
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
+        DatasetService._delete_additional_steward__permissions(session, dataset)
         return dataset
 
     @staticmethod
@@ -559,22 +572,8 @@ class DatasetService:
                 resource_type=DatasetTable.__name__,
             )
 
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=new_stewards,
-                    permissions=SHARE_OBJECT_APPROVER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
+        DatasetService._attach_additional_steward_permissions(session, dataset, new_stewards)
+
         return dataset
 
     @staticmethod
