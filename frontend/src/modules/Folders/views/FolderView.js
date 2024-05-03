@@ -32,7 +32,8 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   useClient,
   deleteDatasetStorageLocation,
-  getDatasetAssumeRoleUrl
+  getDatasetAssumeRoleUrl,
+  getDatasetSharedAssumeRoleUrl
 } from 'services';
 import { getDatasetStorageLocation } from '../services';
 
@@ -51,13 +52,24 @@ function FolderPageHeader(props) {
 
   const goToS3Console = async () => {
     setIsLoadingUI(true);
-    const response = await client.query(
-      getDatasetAssumeRoleUrl(folder.dataset.datasetUri)
-    );
-    if (!response.errors) {
-      window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
+    if (isAdmin) {
+      const response = await client.query(
+        getDatasetAssumeRoleUrl(folder.dataset.datasetUri)
+      );
+      if (!response.errors) {
+        window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
     } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      const response = await client.query(
+        getDatasetSharedAssumeRoleUrl(folder.dataset.datasetUri)
+      );
+      if (!response.errors) {
+        window.open(response.data.getDatasetSharedAssumeRoleUrl, '_blank');
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
     }
     setIsLoadingUI(false);
   };

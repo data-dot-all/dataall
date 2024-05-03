@@ -5,8 +5,6 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.db.exceptions import ResourceShared
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
@@ -17,14 +15,15 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DELETE_DATASET_TABLE,
     SYNC_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import (
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_READ,
     GET_DATASET_TABLE,
 )
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
@@ -67,14 +66,8 @@ class DatasetTableService:
     def delete_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            has_share = ShareObjectRepository.has_shared_items(session, table.tableUri)
-            if has_share:
-                raise ResourceShared(
-                    action=DELETE_DATASET_TABLE,
-                    message='Revoke all table shares before deletion',
-                )
-
-            ShareObjectRepository.delete_shares(session, table.tableUri)
+            DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
 

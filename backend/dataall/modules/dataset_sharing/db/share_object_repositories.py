@@ -20,8 +20,8 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 logger = logging.getLogger(__name__)
 
@@ -368,11 +368,11 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner):
+    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
         share: ShareObject = (
             session.query(ShareObject)
             .filter(ShareObject.datasetUri == dataset_uri)
-            .filter(ShareObject.owner == dataset_owner)
+            .filter(or_(ShareObject.owner == dataset_owner, ShareObject.principalId.in_(groups)))
             .first()
         )
         return share
@@ -971,7 +971,7 @@ class ShareObjectRepository:
             session.delete(share_obj)
 
     @staticmethod
-    def _query_user_datasets(session, username, groups, filter) -> Query:
+    def query_user_shared_datasets(session, username, groups) -> Query:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(Dataset)
@@ -982,9 +982,6 @@ class ShareObjectRepository:
             .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
                 or_(
-                    Dataset.owner == username,
-                    Dataset.SamlAdminGroupName.in_(groups),
-                    Dataset.stewards.in_(groups),
                     and_(
                         ShareObject.principalId.in_(groups),
                         ShareObjectItem.status.in_(share_item_shared_states),
@@ -996,22 +993,7 @@ class ShareObjectRepository:
                 )
             )
         )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    Dataset.description.ilike(filter.get('term') + '%%'),
-                    Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
         return query.distinct(Dataset.datasetUri)
-
-    @staticmethod
-    def paginated_user_datasets(session, username, groups, data=None) -> dict:
-        return paginate(
-            query=ShareObjectRepository._query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):

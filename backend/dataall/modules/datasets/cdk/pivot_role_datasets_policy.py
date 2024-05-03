@@ -5,8 +5,8 @@ from dataall.base.utils.iam_policy_utils import (
     split_policy_with_mutiple_value_condition_in_statements,
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import Dataset
 from aws_cdk import aws_iam as iam
 
 

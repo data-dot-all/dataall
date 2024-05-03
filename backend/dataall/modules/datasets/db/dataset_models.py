@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification, Language
 
 
 class DatasetTableColumn(Resource, Base):
@@ -165,7 +165,7 @@ class DatasetBucket(Resource, Base):
 class DatasetLock(Base):
     __tablename__ = 'dataset_lock'
     datasetUri = Column(String, ForeignKey('dataset.datasetUri'), nullable=False, primary_key=True)
-    isLocked = Column(Boolean, default=False)
+    isLocked = Column(Boolean, default=False, nullable=False)
     acquiredBy = Column(String, nullable=True)
 
     def __init__(self, datasetUri, isLocked=False, acquiredBy=None):

@@ -1,6 +1,6 @@
 import logging
 
-from dataall.modules.datasets_base.db.dataset_models import DatasetBucket, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetBucket, Dataset
 
 logger = logging.getLogger(__name__)
 

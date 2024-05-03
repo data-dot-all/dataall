@@ -1,4 +1,4 @@
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetLock
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetLock
 from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
@@ -42,8 +42,8 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     )
     response = client.query(
         """
-        query listEnvironmentGroupInvitationPermissions($environmentUri:String){
-            listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
+        query listEnvironmentGroupInvitationPermissions{
+            listEnvironmentGroupInvitationPermissions{
                     permissionUri
                     name
                     type

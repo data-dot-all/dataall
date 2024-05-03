@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable
+from dataall.modules.datasets.db.dataset_models import DatasetTable
 from dataall.base.utils import json_utils, sql_utils
 
 log = logging.getLogger(__name__)

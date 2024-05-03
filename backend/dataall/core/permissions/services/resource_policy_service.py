@@ -3,7 +3,7 @@ from dataall.core.permissions.db.resource_policy.resource_policy_repositories im
 from dataall.base.db import exceptions
 from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy, ResourcePolicyPermission
 from dataall.core.permissions.services.permission_service import PermissionService
-from typing import Protocol, Callable
+from typing import Protocol, Callable, List
 from dataall.base.context import get_context
 from functools import wraps
 
@@ -207,7 +207,7 @@ class ResourcePolicyService:
         session.commit()
 
     @staticmethod
-    def get_resource_policy_permissions(session, group_uri, resource_uri):
+    def get_resource_policy_permissions(session, group_uri, resource_uri) -> List[ResourcePolicyPermission]:
         if not group_uri:
             raise exceptions.RequiredParameter(param_name='group_uri')
         if not resource_uri:

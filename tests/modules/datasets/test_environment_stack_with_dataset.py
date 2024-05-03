@@ -4,7 +4,7 @@ from aws_cdk.assertions import Template, Match
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
 from dataall.core.environment.db.environment_models import EnvironmentGroup
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_models import Dataset
 
 
 @pytest.fixture(scope='function', autouse=True)

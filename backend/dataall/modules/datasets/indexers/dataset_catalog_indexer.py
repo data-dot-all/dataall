@@ -3,8 +3,8 @@ import logging
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.db.dataset_models import Dataset
 from dataall.modules.catalog.indexers.catalog_indexer import CatalogIndexer
 
 log = logging.getLogger(__name__)

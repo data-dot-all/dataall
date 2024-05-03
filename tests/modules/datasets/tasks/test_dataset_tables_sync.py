@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 from dataall.base.context import set_context, RequestContext
 
 import pytest
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable
+from dataall.modules.datasets.db.dataset_models import DatasetTable
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
 

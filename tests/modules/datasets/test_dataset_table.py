@@ -1,6 +1,5 @@
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
-from dataall.base.context import set_context, RequestContext
+from dataall.modules.datasets.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 
 
 def test_add_tables(table, dataset_fixture, db):
@@ -142,8 +141,7 @@ def test_update_dataset_table_column(client, table, dataset_fixture, db):
         assert 'Unauthorized' in response.errors[0].message
 
 
-def test_sync_tables_and_columns(client, table, dataset_fixture, db, mocker):
-    set_context(RequestContext(db, dataset_fixture.owner, [dataset_fixture.SamlAdminGroupName], dataset_fixture.owner))
+def test_sync_tables_and_columns(client, table, dataset_fixture, db):
     with db.scoped_session() as session:
         table = session.query(DatasetTable).filter(DatasetTable.name == 'table1').first()
         column = session.query(DatasetTableColumn).filter(DatasetTableColumn.tableUri == table.tableUri).first()

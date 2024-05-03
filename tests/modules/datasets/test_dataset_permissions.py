@@ -9,8 +9,8 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
 )
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets_base.db.dataset_models import Dataset
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_models import Dataset
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 from tests.core.permissions.test_permission import *
 from dataall.core.organizations.services.organization_service import OrganizationService
@@ -85,7 +85,6 @@ def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
             },
         )
         env_with_perm = EnvironmentService.create_environment(
-            session=session,
             uri=org_with_perm.organizationUri,
             data={
                 'label': 'EnvWithPerm',

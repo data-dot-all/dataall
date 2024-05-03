@@ -8,6 +8,7 @@ from sqlalchemy.sql import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import exceptions
+from typing import List
 
 
 class EnvironmentParameterRepository:
@@ -301,3 +302,11 @@ class EnvironmentRepository:
             .first()
         )
         return env_group is not None
+
+    @staticmethod
+    def query_all_active_environments(session) -> List[Environment]:
+        return session.query(Environment).filter(Environment.deleted.is_(None)).all()
+
+    @staticmethod
+    def query_environment_groups(session, uri):
+        return session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()

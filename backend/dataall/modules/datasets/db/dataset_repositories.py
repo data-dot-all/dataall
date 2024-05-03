@@ -7,9 +7,9 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetLock
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset, DatasetLock
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -147,6 +147,39 @@ class DatasetRepository(EnvironmentResource):
         dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
         session.delete(dataset_lock)
         session.commit()
+
+    @staticmethod
+    def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
+        return paginate(
+            query=DatasetRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def _query_all_user_datasets(session, username, groups, all_subqueries, filter) -> Query:
+        query = session.query(Dataset).filter(
+            or_(
+                Dataset.owner == username,
+                Dataset.SamlAdminGroupName.in_(groups),
+                Dataset.stewards.in_(groups),
+            )
+        )
+        if query.first() is not None:
+            all_subqueries.append(query)
+        if len(all_subqueries) == 1:
+            query = all_subqueries[0]
+        elif len(all_subqueries) > 1:
+            query = all_subqueries[0].union(*all_subqueries[1:])
+
+        if filter and filter.get('term'):
+            union_query = query.filter(
+                or_(
+                    Dataset.description.ilike(filter.get('term') + '%%'),
+                    Dataset.label.ilike(filter.get('term') + '%%'),
+                )
+            )
+        return query.distinct(Dataset.datasetUri)
 
     @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:

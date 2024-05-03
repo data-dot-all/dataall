@@ -1,7 +1,8 @@
 import os
 import json
 import logging
-
+from typing import List
+from abc import ABC, abstractmethod
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -21,10 +22,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
-from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -42,15 +39,103 @@ from dataall.modules.datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
 )
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.services.datasets_base_enums import DatasetRole
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets.services.datasets_enums import DatasetRole
+from dataall.modules.datasets.db.dataset_models import Dataset, DatasetTable
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
 
 
+class DatasetServiceInterface(ABC):
+    @staticmethod
+    @abstractmethod
+    def check_before_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def execute_on_delete(session, uri, **kwargs) -> bool:
+        """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def append_to_list_user_datasets(session, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def resolve_additional_dataset_user_role(session, uri, username, groups):
+        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
+        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
+        ...
+
+
 class DatasetService:
+    _interfaces: List[DatasetServiceInterface] = []
+
+    @classmethod
+    def register(cls, interface: DatasetServiceInterface):
+        cls._interfaces.append(interface)
+
+    @classmethod
+    def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
+        """All other user role types that might come from other modules"""
+        for interface in cls._interfaces:
+            role = interface.resolve_additional_dataset_user_role(session, uri, username, groups)
+            if role is not None:
+                return role
+        return None
+
+    @classmethod
+    def check_before_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed before deletion"""
+        can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
+        return all(can_be_deleted)
+
+    @classmethod
+    def execute_on_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed during deletion"""
+        for interface in cls._interfaces:
+            interface.execute_on_delete(session, uri, **kwargs)
+        return True
+
+    @classmethod
+    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
+        """All list_datasets from other modules that need to be appended to the list of datasets"""
+        return [
+            query
+            for interface in cls._interfaces
+            for query in [interface.append_to_list_user_datasets(session, username, groups)]
+            if query.first() is not None
+        ]
+
+    @classmethod
+    def _attach_additional_steward_permissions(cls, session, dataset, new_stewards):
+        """All permissions from other modules that need to be granted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_attach_steward_permissions(session, dataset, new_stewards)
+
+    @classmethod
+    def _delete_additional_steward__permissions(cls, session, dataset):
+        """All permissions from other modules that need to be deleted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_delete_steward_permissions(session, dataset)
+
     @staticmethod
     def check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
@@ -187,10 +272,13 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_owned_shared_datasets(data: dict):
+    def list_all_user_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+            all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
+            return DatasetRepository.paginated_all_user_datasets(
+                session, context.username, context.groups, all_subqueries, data=data
+            )
 
     @staticmethod
     def list_owned_datasets(data: dict):
@@ -283,24 +371,16 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            if dataset.SamlAdminGroupName not in context.groups:
-                share = ShareObjectRepository.get_share_by_dataset_attributes(
-                    session=session, dataset_uri=uri, dataset_owner=context.username
-                )
-                shared_environment = EnvironmentService.get_environment_by_uri(
-                    session=session, uri=share.environmentUri
-                )
-                env_group = EnvironmentService.get_environment_group(
-                    session=session, group_uri=share.principalId, environment_uri=share.environmentUri
-                )
-                role_arn = env_group.environmentIAMRoleArn
-                account_id = shared_environment.AwsAccountId
-                region = shared_environment.region
-            else:
+            if dataset.SamlAdminGroupName in context.groups:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
                 region = dataset.region
 
+            else:
+                raise exceptions.UnauthorizedOperation(
+                    action=CREDENTIALS_DATASET,
+                    message=f'{context.username=} is not a member of the group {dataset.SamlAdminGroupName}',
+                )
         pivot_session = SessionHelper.remote_session(account_id, region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=role_arn)
         url = SessionHelper.get_console_access_url(
@@ -365,15 +445,7 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
-            )
-            if shares:
-                raise exceptions.UnauthorizedOperation(
-                    action=DELETE_DATASET,
-                    message=f'Dataset {dataset.name} is shared with other teams. '
-                    'Revoke all dataset shares before deletion.',
-                )
+            DatasetService.check_before_delete(session, uri, action=DELETE_DATASET)
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
             for tableUri in tables:
@@ -385,7 +457,7 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
             DatasetService.delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
@@ -478,15 +550,7 @@ class DatasetService:
                     resource_uri=tableUri,
                 )
 
-        # Remove Steward Resource Policy on Dataset Share Objects
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
+        DatasetService._delete_additional_steward__permissions(session, dataset)
         return dataset
 
     @staticmethod
@@ -522,22 +586,8 @@ class DatasetService:
                 resource_type=DatasetTable.__name__,
             )
 
-        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=new_stewards,
-                    permissions=SHARE_OBJECT_APPROVER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
+        DatasetService._attach_additional_steward_permissions(session, dataset, new_stewards)
+
         return dataset
 
     @staticmethod
@@ -546,18 +596,3 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
-    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    def verify_dataset_share_objects(uri: str, share_uris: list):
-        with get_context().db_engine.scoped_session() as session:
-            for share_uri in share_uris:
-                share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-                states = ShareItemSM.get_share_item_revokable_states()
-                items = ShareObjectRepository.list_shareable_items(
-                    session, share, states, {'pageSize': 1000, 'isShared': True}
-                )
-                item_uris = [item.shareItemUri for item in items.get('nodes', [])]
-                ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
-        return True

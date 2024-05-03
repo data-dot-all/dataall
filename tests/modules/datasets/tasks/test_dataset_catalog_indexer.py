@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets.db.dataset_models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
