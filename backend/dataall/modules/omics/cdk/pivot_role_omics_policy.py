@@ -23,7 +23,7 @@ class OmicsPolicy(PivotRoleStatementSet):
                 sid='OmicsRunActions',
                 actions=['omics:DeleteRun', 'omics:GetRun', 'omics:CancelRun'],
                 resources=[
-                    f'arn:aws:omics:{self.region}:{self.account}:run/{self.env_resource_prefix}*',
+                    f'arn:aws:omics:{self.region}:{self.account}:run/*',
                 ],
             ),
             iam.PolicyStatement(
