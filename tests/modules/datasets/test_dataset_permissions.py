@@ -85,7 +85,6 @@ def test_create_dataset(db, user, group, dataset_fixture, permissions, tenant):
             },
         )
         env_with_perm = EnvironmentService.create_environment(
-            session=session,
             uri=org_with_perm.organizationUri,
             data={
                 'label': 'EnvWithPerm',
