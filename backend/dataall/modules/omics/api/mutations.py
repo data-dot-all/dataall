@@ -21,14 +21,13 @@ createOmicsRun = gql.MutationField(
 #     resolver=update_omics_pipeline,
 # )
 
-# TODO: not used in the frontend at the moment
-# If we implement it, we need to add the test
-# deleteOmicsRun = gql.MutationField(
-#     name="deleteOmicsRun",
-#     type=gql.Boolean,
-#     args=[
-#         gql.Argument(name="runUri", type=gql.NonNullableType(gql.String)),
-#         gql.Argument(name="deleteFromAWS", type=gql.Boolean),
-#     ],
-#     resolver=delete_omics_run,
-# )
+# TODO: need to add the test
+deleteOmicsRun = gql.MutationField(
+    name="deleteOmicsRun",
+    type=gql.Boolean,
+    args=[
+        gql.Argument(name="runUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="deleteFromAWS", type=gql.Boolean),
+    ],
+    resolver=delete_omics_run,
+)

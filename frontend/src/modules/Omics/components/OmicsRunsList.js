@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Card, CardHeader, Divider } from '@mui/material';
-// import CircularProgress from '@mui/material/CircularProgress';
+import { Box, Card, CardHeader, Divider, Button } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
+import { FaTrash } from 'react-icons/fa';
 import { DataGrid } from '@mui/x-data-grid';
+import { useSnackbar } from 'notistack';
 
 import { useClient } from 'services';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-import { listOmicsRuns } from '../services';
+// import { listOmicsRuns } from '../services';
+import { listOmicsRuns, deleteOmicsRun } from '../services';
 
 export const OmicsRunList = () => {
   const dispatch = useDispatch();
@@ -16,6 +18,7 @@ export const OmicsRunList = () => {
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
   const client = useClient();
+  const { enqueueSnackbar } = useSnackbar();
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -36,6 +39,43 @@ export const OmicsRunList = () => {
     }
   }, [client, filter.page, dispatch, fetchItems]);
 
+  const handleDeleteRuns = async () => {
+    const selectedRunUris = items.nodes
+      .filter((row) => row.selected)
+      .map((row) => row.runUri);
+
+    if (selectedRunUris.length === 0) {
+      return;
+    }
+
+    // TODO: Uncomment the following lines to enable actual deletion
+    try {
+      await Promise.all(
+        selectedRunUris.map((runUri) =>
+          client.mutate(deleteOmicsRun(runUri, true))
+        )
+      );
+      enqueueSnackbar('Omics runs deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      fetchItems();
+    } catch (error) {
+      dispatch({ type: SET_ERROR, error: error.message });
+    }
+
+    enqueueSnackbar('Omics runs deleted', {
+      anchorOrigin: {
+        horizontal: 'right',
+        vertical: 'top'
+      },
+      variant: 'success'
+    });
+  };
+
   return (
     <>
       <Helmet>
@@ -49,14 +89,31 @@ export const OmicsRunList = () => {
         }}
       >
         <Card>
-          <CardHeader title="Omics Run History" />
+          <CardHeader
+            title="Omics Run History"
+            action={
+              <Button
+                color="primary"
+                startIcon={<FaTrash size={15} />}
+                onClick={handleDeleteRuns}
+                type="button"
+                variant="outlined"
+              >
+                Delete Runs
+              </Button>
+            }
+          />
           <Divider />
           <Box sx={{ minWidth: 600, height: 400 }}>
             <DataGrid
               rows={items.nodes}
               columns={[
                 { field: 'runUri', headerName: 'Run identifier', flex: 1 },
-                { field: 'label', headerName: 'Run name', flex: 1 },
+                {
+                  field: 'label',
+                  headerName: 'Run name',
+                  flex: 1
+                },
                 {
                   field: 'workflow.id',
                   headerName: 'Workflow id',
