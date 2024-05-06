@@ -25,7 +25,9 @@ def patch_dataset_methods(module_mocker):
     )
     s3_mock_client = MagicMock()
     glue_mock_client = MagicMock()
-    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client)
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
+    )
     module_mocker.patch(
         'dataall.modules.s3_datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
     )

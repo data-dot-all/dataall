@@ -9,7 +9,7 @@
         "datapipelines": {
             "active": true
         },
-        "datasets": {
+        "s3_datasets": {
             "active": true,
             "features": {
                 "file_uploads": true,
