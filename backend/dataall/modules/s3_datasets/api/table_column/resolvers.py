@@ -29,7 +29,7 @@ def resolve_terms(context, source: DatasetTableColumn, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         q = session.query(TermLink).filter(TermLink.targetUri == source.columnUri)
-    return paginate(q, page=1, page_size=15).to_dict()
+    return paginate(q.order_by(TermLink.linkUri), page=1, page_size=15).to_dict()
 
 
 def update_table_column(context: Context, source, columnUri: str = None, input: dict = None):
