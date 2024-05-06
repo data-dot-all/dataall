@@ -6,7 +6,7 @@ export const CatalogsModule = {
   isEnvironmentModule: false,
   resolve_dependency: () => {
     return (
-      getModuleActiveStatus(ModuleNames.DATASETS) ||
+      getModuleActiveStatus(ModuleNames.S3_DATASETS) ||
       getModuleActiveStatus(ModuleNames.DASHBOARDS)
     );
   }

@@ -276,12 +276,12 @@ const DatasetEditForm = (props) => {
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
                 KmsAlias: Yup.string().max(255),
-                topics: isFeatureEnabled('datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 confidentiality: isFeatureEnabled(
-                  'datasets',
+                  's3_datasets',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -363,7 +363,7 @@ const DatasetEditForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          'datasets',
+                          's3_datasets',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>

@@ -239,7 +239,7 @@ const DatasetImportForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
-                topics: isFeatureEnabled('datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
@@ -250,7 +250,7 @@ const DatasetImportForm = (props) => {
                   .max(255)
                   .required('*S3 bucket name is required'),
                 confidentiality: isFeatureEnabled(
-                  'datasets',
+                  's3_datasets',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -332,7 +332,7 @@ const DatasetImportForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          'datasets',
+                          's3_datasets',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>

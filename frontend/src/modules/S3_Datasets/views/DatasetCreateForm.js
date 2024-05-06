@@ -231,14 +231,14 @@ const DatasetCreateForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Owners team is required'),
-                topics: isFeatureEnabled('datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: isFeatureEnabled(
-                  'datasets',
+                  's3_datasets',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -319,7 +319,7 @@ const DatasetCreateForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          'datasets',
+                          's3_datasets',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>

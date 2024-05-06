@@ -81,7 +81,7 @@ const DatasetView = () => {
         value: 'shares',
         icon: <ShareOutlined fontSize="small" />
       });
-      if (isFeatureEnabled('datasets', 'file_uploads')) {
+      if (isFeatureEnabled('s3_datasets', 'file_uploads')) {
         tabs.push({
           label: 'Upload',
           value: 'upload',
