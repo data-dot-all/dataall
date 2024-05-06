@@ -6,7 +6,7 @@ from dataall.base.config import config
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
-from dataall.modules.datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import Dataset
 from dataall.base.context import get_context
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
@@ -139,7 +139,7 @@ class ShareNotificationService:
             - dataset.stewards
             - share.owner (person that opened the request) OR share.groupUri (if group_notifications=true)
         """
-        share_notification_config = config.get_property('modules.datasets.features.share_notifications', default=None)
+        share_notification_config = config.get_property('modules.s3_datasets.features.share_notifications', default=None)
         if share_notification_config:
             for share_notification_config_type in share_notification_config.keys():
                 n_config = share_notification_config[share_notification_config_type]

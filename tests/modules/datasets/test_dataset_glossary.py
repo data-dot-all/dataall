@@ -1,7 +1,7 @@
 from typing import List
 
 from dataall.modules.catalog.db.glossary_models import TermLink
-from dataall.modules.datasets.db.dataset_models import DatasetTableColumn
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn
 from tests.modules.catalog.test_glossary import *
 
 
