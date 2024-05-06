@@ -55,10 +55,10 @@ const DatasetEditForm = (props) => {
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.datasets.features.confidentiality_dropdown === true &&
-      config.modules.datasets.features.custom_confidentiality_mapping
+    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
+      config.modules.s3_datasets.features.custom_confidentiality_mapping
       ? Object.keys(
-          config.modules.datasets.features.custom_confidentiality_mapping
+          config.modules.s3_datasets.features.custom_confidentiality_mapping
         )
       : ConfidentialityList
   );
@@ -482,7 +482,7 @@ const DatasetEditForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.datasets.features
+                          {config.modules.s3_datasets.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (
