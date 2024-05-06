@@ -13,7 +13,7 @@ export const DatasetData = (props) => {
       <Box>
         <DatasetTables dataset={dataset} isAdmin={isAdmin} />
       </Box>
-      {isFeatureEnabled('datasets', 'file_actions') && (
+      {isFeatureEnabled('s3_datasets', 'file_actions') && (
         <Box sx={{ mt: 3 }}>
           <DatasetFolders dataset={dataset} isAdmin={isAdmin} />
         </Box>

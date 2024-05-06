@@ -280,7 +280,7 @@ const DatasetView = () => {
                   >
                     Chat
                   </Button>
-                  {isFeatureEnabled('datasets', 'aws_actions') && (
+                  {isFeatureEnabled('s3_datasets', 'aws_actions') && (
                     <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
                   )}
                   <Button

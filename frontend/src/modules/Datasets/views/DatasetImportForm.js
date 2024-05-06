@@ -361,7 +361,7 @@ const DatasetImportForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
                           <CardContent>
                             <Autocomplete
                               multiple

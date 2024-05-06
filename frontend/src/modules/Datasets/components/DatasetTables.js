@@ -217,7 +217,7 @@ export const DatasetTables = (props) => {
                 Synchronize
               </LoadingButton>
 
-              {isFeatureEnabled('datasets', 'glue_crawler') && (
+              {isFeatureEnabled('s3_datasets', 'glue_crawler') && (
                 <LoadingButton
                   color="primary"
                   onClick={handleStartCrawlerModalOpen}
