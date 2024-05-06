@@ -150,7 +150,7 @@ class DatapipelinesRepository(EnvironmentResource):
         query = session.query(DataPipelineEnvironment).filter(
             DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
         )
-        return query.order_by(DataPipelineEnvironment.envPipelineUri)
+        return query.order_by(DataPipelineEnvironment.stage)
 
     @staticmethod
     def paginated_pipeline_environments(session, uri, data=None) -> dict:
