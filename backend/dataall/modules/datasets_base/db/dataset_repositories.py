@@ -6,6 +6,7 @@ from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetLock
+from dataall.modules.datasets_base.services.datasets_enums import DatasetType
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +95,18 @@ class DatasetListRepository(EnvironmentResource):
         return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
 
     @staticmethod
-    def list_all_datasets(session) -> [Dataset]:
+    def list_all_datasets(session, dataset_type: DatasetType=None) -> [Dataset]:
+        if dataset_type:
+            return session.query(Dataset).filter(Dataset.datasetType==dataset_type.value).all()
         return session.query(Dataset).all()
 
     @staticmethod
-    def list_all_active_datasets(session) -> [Dataset]:
+    def list_all_active_datasets(session, dataset_type: DatasetType=None) -> [Dataset]:
+        if dataset_type:
+            return session.query(Dataset).filter(and_(
+                    Dataset.deleted.is_(None)),
+                    Dataset.datasetType == dataset_type.value
+                ).all()
         return session.query(Dataset).filter(Dataset.deleted.is_(None)).all()
 
 
