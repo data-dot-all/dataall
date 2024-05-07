@@ -1,4 +1,5 @@
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetLock
+from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 

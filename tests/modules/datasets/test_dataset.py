@@ -7,7 +7,8 @@ from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
 
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
