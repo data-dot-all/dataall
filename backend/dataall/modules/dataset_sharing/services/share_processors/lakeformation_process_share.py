@@ -242,6 +242,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
                 ShareObjectRepository.update_share_item_health_status(
                     self.session, share_item, None, None, share_item.lastVerificationTime
                 )

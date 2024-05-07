@@ -82,7 +82,9 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike('%' + term + '%'),
                 )
             )
-        return paginate(q, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+        return paginate(
+            q.order_by(GlossaryNode.label), page_size=data.get('pageSize', 10), page=data.get('page', 1)
+        ).to_dict()
 
     @staticmethod
     def list_node_children(session, path, filter):
@@ -259,7 +261,9 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(
+            q.order_by(GlossaryNode.label), page=data.get('page', 1), page_size=data.get('pageSize', 10)
+        ).to_dict()
 
     @staticmethod
     def list_terms(session, uri, data=None):
@@ -278,7 +282,9 @@ class GlossaryRepository:
                     GlossaryNode.readme.ilike(term),
                 )
             )
-        return paginate(q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
+        return paginate(
+            q.order_by(GlossaryNode.label), page=data.get('page', 1), page_size=data.get('pageSize', 10)
+        ).to_dict()
 
     @staticmethod
     def get_node(session, uri) -> GlossaryNode:
@@ -399,7 +405,7 @@ class GlossaryRepository:
                     TermLink.targetType == target_type,
                 )
             )
-        )
+        ).order_by(GlossaryNode.path)
 
         return paginate(terms, page_size=10000, page=1).to_dict()
 

@@ -99,7 +99,7 @@ class TenantPolicyRepository:
             query = query.filter(TenantPolicy.principalId.ilike('%' + data.get('term') + '%'))
 
         return paginate(
-            query=query,
+            query=query.order_by(TenantPolicy.principalId),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()

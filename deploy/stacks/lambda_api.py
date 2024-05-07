@@ -250,6 +250,7 @@ class LambdaApiStack(pyNestedClass):
                 description='dataall Custom authorizer replacing cognito authorizer',
                 timeout=Duration.seconds(20),
                 environment=custom_lambda_env,
+                environment_encryption=lambda_env_key,
                 vpc=vpc,
                 security_groups=[authorizer_fn_sg],
                 runtime=_lambda.Runtime.PYTHON_3_9,

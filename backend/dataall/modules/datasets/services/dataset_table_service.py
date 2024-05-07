@@ -69,6 +69,7 @@ class DatasetTableService:
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetTableRepository.delete(session, table)
+            DatasetTableService._delete_dataset_table_read_permission(session, uri)
 
             GlossaryRepository.delete_glossary_terms_links(
                 session, target_uri=table.tableUri, target_type='DatasetTable'
@@ -77,10 +78,10 @@ class DatasetTableService:
         return True
 
     @staticmethod
-    def preview(table_uri: str):
+    def preview(uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
@@ -111,7 +112,7 @@ class DatasetTableService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             S3Prefix = dataset.S3BucketName
             tables = DatasetCrawler(dataset).list_glue_database_tables(S3Prefix)
-            cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+            cls.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             return DatasetRepository.paginated_dataset_tables(
@@ -121,10 +122,10 @@ class DatasetTableService:
             )
 
     @staticmethod
-    def sync_existing_tables(session, dataset_uri, glue_tables=None):
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+    def sync_existing_tables(session, uri, glue_tables=None):
+        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         if dataset:
-            existing_tables = DatasetTableRepository.find_dataset_tables(session, dataset_uri)
+            existing_tables = DatasetTableRepository.find_dataset_tables(session, uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
@@ -161,3 +162,12 @@ class DatasetTableService:
                 resource_uri=table_uri,
                 resource_type=DatasetTable.__name__,
             )
+
+    @staticmethod
+    def _delete_dataset_table_read_permission(session, table_uri):
+        """
+        Delete Table  permissions to dataset groups
+        """
+        ResourcePolicyService.delete_resource_policy(
+            session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
+        )

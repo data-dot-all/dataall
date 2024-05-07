@@ -50,4 +50,4 @@ class VpcRepository:
                     Vpc.VpcId.ilike('%' + term + '%'),
                 )
             )
-        return query
+        return query.order_by(Vpc.label)
