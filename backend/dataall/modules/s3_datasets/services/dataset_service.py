@@ -40,7 +40,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     IMPORT_DATASET,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetTable
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
