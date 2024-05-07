@@ -15,7 +15,6 @@ class ResourcePolicy(Base):
 
     resourceUri = Column(String, nullable=False, index=True)
     resourceType = Column(String, nullable=False, index=True)
-    groundsForPermission = Column(String, index=True)
 
     principalId = Column(String, nullable=False, index=True)
     principalType = Column(DBEnum('USER', 'GROUP', 'SERVICE', name='rp_principal_type'), default='GROUP')
