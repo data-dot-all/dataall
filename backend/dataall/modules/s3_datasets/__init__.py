@@ -43,11 +43,11 @@ class DatasetApiModuleInterface(ModuleInterface):
         import dataall.modules.s3_datasets.api
         from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
         from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-        from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
         FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
-        FeedRegistry.register(FeedDefinition('Dataset', Dataset))
+        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
@@ -59,7 +59,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         )
 
         GlossaryRegistry.register(
-            GlossaryDefinition(target_type='Dataset', object_type='Dataset', model=Dataset, reindexer=DatasetIndexer)
+            GlossaryDefinition(target_type='Dataset', object_type='Dataset', model=S3Dataset, reindexer=DatasetIndexer)
         )
 
         GlossaryRegistry.register(

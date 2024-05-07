@@ -13,7 +13,7 @@ from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType
 
@@ -30,7 +30,7 @@ def get_session():
     return session
 
 
-def attach_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
+def attach_dataset_folder_read_permission(session, dataset: S3Dataset, location_uri):
     """
     Attach Folder permissions to dataset groups
     """
@@ -61,7 +61,7 @@ def upgrade():
 
     # Grant folder read permissions to all dataset owners and stewards
     print('Getting all Datasets and granting folder permissions...')
-    datasets: [Dataset] = session.query(Dataset).all()
+    datasets: [S3Dataset] = session.query(S3Dataset).all()
     for dataset in datasets:
         locations: [DatasetStorageLocation] = (
             session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset.datasetUri).all()
@@ -73,7 +73,7 @@ def upgrade():
     print('Getting all Shares and granting folder permissions...')
     shares: [ShareObject] = session.query(ShareObject).all()
     for share in shares:
-        dataset: Dataset = session.query(Dataset).get(share.datasetUri)
+        dataset: S3Dataset = session.query(S3Dataset).get(share.datasetUri)
 
         # Attach data.all read permissions to folders
         if dataset and share.groupUri != dataset.SamlAdminGroupName:
