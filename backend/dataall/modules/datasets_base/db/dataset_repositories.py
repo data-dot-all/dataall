@@ -95,12 +95,6 @@ class DatasetListRepository(EnvironmentResource):
         return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
 
     @staticmethod
-    def list_all_datasets(session, dataset_type: DatasetType=None) -> [Dataset]:
-        if dataset_type:
-            return session.query(Dataset).filter(Dataset.datasetType==dataset_type.value).all()
-        return session.query(Dataset).all()
-
-    @staticmethod
     def list_all_active_datasets(session, dataset_type: DatasetType=None) -> [Dataset]:
         if dataset_type:
             return session.query(Dataset).filter(and_(
