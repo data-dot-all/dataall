@@ -110,7 +110,6 @@ class S3Dataset(Dataset):
     importedGlueDatabase = Column(Boolean, default=False)
     importedKmsKey = Column(Boolean, default=False)
     importedAdminRole = Column(Boolean, default=False)
-    imported = Column(Boolean, default=False)
 
     __mapper_args__ = {
         "polymorphic_identity": DatasetType.S3.value,
