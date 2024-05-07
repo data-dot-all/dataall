@@ -29,7 +29,7 @@ class DatasetBase(Resource, Base):
     SamlAdminGroupName = Column(String, nullable=True)
     autoApprovalEnabled = Column(Boolean, default=False)
 
-    datasetType = Column(String, nullable=True)
+    datasetType = Column(String, nullable=False)
     imported = Column(Boolean, default=False)
     # TODO: migration script to add datasetType: "S3"
     # TODO: migration script: rename current datasets to s3_datasets and backfill new datasets
