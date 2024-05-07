@@ -1,5 +1,5 @@
-from dataall.modules.datasets.db.dataset_models import Dataset, DatasetLock
-from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
+from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetLock
+from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 
 def get_env(client, env_fixture, group):

@@ -136,7 +136,7 @@ function FolderPageHeader(props) {
               Chat
             </Button>
           )}
-          {isFeatureEnabled('datasets', 'aws_actions') && (
+          {isFeatureEnabled('s3_datasets', 'aws_actions') && (
             <LoadingButton
               loading={isLoadingUI}
               startIcon={<FaExternalLinkAlt size={15} />}

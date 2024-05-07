@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from dataall.base.config import config
-from dataall.modules.datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import Dataset
 
 
 @pytest.fixture(scope='module')
@@ -11,11 +11,11 @@ def dataset1(env_fixture, org_fixture, dataset, group) -> Dataset:
 
 
 @pytest.mark.skipif(
-    not config.get_property('modules.datasets.features.file_actions'), reason='Feature Disabled by Config'
+    not config.get_property('modules.s3_datasets.features.file_actions'), reason='Feature Disabled by Config'
 )
 def test_create_location(client, dataset1, user, group, patch_es, module_mocker):
     mock_client = MagicMock()
-    module_mocker.patch('dataall.modules.datasets.services.dataset_location_service.S3LocationClient', mock_client)
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_location_service.S3LocationClient', mock_client)
     response = client.query(
         """
         mutation createDatasetStorageLocation($datasetUri:String!, $input:NewDatasetStorageLocationInput!){
@@ -43,7 +43,7 @@ def test_create_location(client, dataset1, user, group, patch_es, module_mocker)
 
 
 @pytest.mark.skipif(
-    not config.get_property('modules.datasets.features.file_actions'), reason='Feature Disabled by Config'
+    not config.get_property('modules.s3_datasets.features.file_actions'), reason='Feature Disabled by Config'
 )
 def test_manage_dataset_location(client, dataset1, user, group):
     response = client.query(

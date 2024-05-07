@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.base.db import utils, Resource
-from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification, Language
+from dataall.modules.s3_datasets.services.datasets_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 

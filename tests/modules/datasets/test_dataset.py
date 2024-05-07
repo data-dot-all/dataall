@@ -6,11 +6,11 @@ import pytest
 from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
 
-from dataall.modules.datasets.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.s3_datasets.services.datasets_enums import ConfidentialityClassification
 
 
 mocked_key_id = 'some_key'
@@ -19,7 +19,7 @@ mocked_key_id = 'some_key'
 @pytest.fixture(scope='module', autouse=True)
 def mock_s3_client(module_mocker):
     s3_client = MagicMock()
-    module_mocker.patch('dataall.modules.datasets.services.dataset_service.S3DatasetClient', s3_client)
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.S3DatasetClient', s3_client)
 
     s3_client().get_bucket_encryption.return_value = ('aws:kms', mocked_key_id)
     yield s3_client
@@ -34,7 +34,7 @@ def dataset1(
     group,
 ) -> Dataset:
     kms_client = MagicMock()
-    module_mocker.patch('dataall.modules.datasets.services.dataset_service.KmsClient', kms_client)
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.KmsClient', kms_client)
 
     kms_client().get_key_id.return_value = mocked_key_id
 
@@ -166,10 +166,10 @@ def test_update_dataset(dataset1, client, group, group2, module_mocker):
 
 
 @pytest.mark.skipif(
-    not config.get_property('modules.datasets.features.glue_crawler'), reason='Feature Disabled by Config'
+    not config.get_property('modules.s3_datasets.features.glue_crawler'), reason='Feature Disabled by Config'
 )
 def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module_mocker):
-    module_mocker.patch('dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock())
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.DatasetCrawler', MagicMock())
     mutation = """
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
                         startGlueCrawler(datasetUri:$datasetUri,input:$input){

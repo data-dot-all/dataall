@@ -17,14 +17,14 @@ class SharingApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
-        from dataall.modules.datasets import DatasetApiModuleInterface
+        from dataall.modules.s3_datasets import DatasetApiModuleInterface
 
         return [DatasetApiModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
         from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
-        from dataall.modules.datasets.services.dataset_service import DatasetService
+        from dataall.modules.s3_datasets.services.dataset_service import DatasetService
         from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
@@ -42,7 +42,7 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
-        from dataall.modules.datasets import DatasetAsyncHandlersModuleInterface
+        from dataall.modules.s3_datasets import DatasetAsyncHandlersModuleInterface
 
         return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface]
 
