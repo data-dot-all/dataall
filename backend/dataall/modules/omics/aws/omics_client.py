@@ -92,6 +92,22 @@ class OmicsClient:
         except ClientError as e:
             logger.error(f'Could not retrieve {type} Omics Workflows status due to: {e} ')
             return 'ERROR LISTING WORKFLOWS'
+    
+    # TODO: need to delete runs from array passed in runUris
+    """ @staticmethod
+    def delete_omics_runs(session, runUri: str):
+        omics_db = OmicsRepository(session)
+        omics_run = omics_db.get_omics_run(runUri=runUri)
+        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
+        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+        try:
+            response = client.delete_run(id=omics_run.runUri)
+            # TODO: remove prints
+            print(response)
+            return response
+        except ClientError as e:
+            logger.error(f'Could not retrieve workflow run status due to: {e} ')
+            return 'ERROR GETTING WORKFLOW RUN' """
 
 
 def client() -> OmicsClient:

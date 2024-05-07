@@ -144,11 +144,17 @@ class OmicsService:
         """List Omics workflows."""
         with _session() as session:
             return OmicsRepository(session).paginated_omics_workflows(filter=filter)
+    
+    @staticmethod
+    def delete_omics_runs(uris: List[str]) -> bool:
+        """Deletes Omics runs from the database and if delete_from_aws is True from AWS as well"""
+        for uri in uris:
+            OmicsService.delete_omics_run(uri)
+        return True
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_OMICS_RUN)
     def delete_omics_run(uri: str):
-        # TODO: IMPLEMENT _get_omics_run and in FRONTEND
         """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_run = OmicsService._get_omics_run(session, uri)

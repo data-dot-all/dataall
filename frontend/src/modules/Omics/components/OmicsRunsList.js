@@ -9,7 +9,6 @@ import { useClient } from 'services';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-// import { listOmicsRuns } from '../services';
 import { listOmicsRuns, deleteOmicsRun } from '../services';
 
 export const OmicsRunList = () => {
@@ -19,6 +18,7 @@ export const OmicsRunList = () => {
   const [loading, setLoading] = useState(true);
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
+  const [selectionModel, setSelectionModel] = useState([]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -40,21 +40,8 @@ export const OmicsRunList = () => {
   }, [client, filter.page, dispatch, fetchItems]);
 
   const handleDeleteRuns = async () => {
-    const selectedRunUris = items.nodes
-      .filter((row) => row.selected)
-      .map((row) => row.runUri);
-
-    if (selectedRunUris.length === 0) {
-      return;
-    }
-
-    // TODO: Uncomment the following lines to enable actual deletion
-    try {
-      await Promise.all(
-        selectedRunUris.map((runUri) =>
-          client.mutate(deleteOmicsRun(runUri, true))
-        )
-      );
+    const response = await client.mutate(deleteOmicsRun(selectionModel, true));
+    if (!response.errors) {
       enqueueSnackbar('Omics runs deleted', {
         anchorOrigin: {
           horizontal: 'right',
@@ -63,17 +50,9 @@ export const OmicsRunList = () => {
         variant: 'success'
       });
       fetchItems();
-    } catch (error) {
-      dispatch({ type: SET_ERROR, error: error.message });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-
-    enqueueSnackbar('Omics runs deleted', {
-      anchorOrigin: {
-        horizontal: 'right',
-        vertical: 'top'
-      },
-      variant: 'success'
-    });
   };
 
   return (
@@ -153,6 +132,10 @@ export const OmicsRunList = () => {
               onPageChange={(newPage) =>
                 setFilter({ ...filter, page: newPage + 1 })
               }
+              onSelectionModelChange={(newSelection) => {
+                setSelectionModel(newSelection);
+              }}
+              selectionModel={selectionModel}
               rowCount={items.totalCount}
               loading={loading}
             />

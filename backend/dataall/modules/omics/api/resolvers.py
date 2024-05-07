@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from dataall.base.api.context import Context
 from dataall.base.db import exceptions
 from dataall.modules.omics.services.omics_service import OmicsService
@@ -58,9 +59,9 @@ def get_omics_workflow(context: Context, source, workflowUri: str = None):
     return OmicsService.get_omics_workflow(workflowUri)
 
 
-def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):
-    RequestValidator.required_uri(runUri)
-    return OmicsService.delete_omics_run(uri=runUri, delete_from_aws=deleteFromAWS)
+def delete_omics_run(context: Context, source, runUris: List[str] = None, deleteFromAWS: bool = None):
+    RequestValidator.required_uri(runUris)
+    return OmicsService.delete_omics_runs(uris=runUris, delete_from_aws=deleteFromAWS)
 
 
 def resolve_omics_workflow(context, source: OmicsRun, **kwargs):
