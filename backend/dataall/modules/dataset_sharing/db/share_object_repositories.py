@@ -21,7 +21,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
 
 logger = logging.getLogger(__name__)
 
@@ -337,7 +337,7 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
-    def find_share(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
+    def find_share(session, dataset: S3Dataset, env, principal_id, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)
             .filter(
@@ -603,15 +603,15 @@ class ShareObjectRepository:
         query = (
             session.query(ShareObject)
             .join(
-                Dataset,
-                Dataset.datasetUri == ShareObject.datasetUri,
+                S3Dataset,
+                S3Dataset.datasetUri == ShareObject.datasetUri,
             )
             .filter(
                 or_(
-                    Dataset.businessOwnerEmail == username,
-                    Dataset.businessOwnerDelegationEmails.contains(f'{{{username}}}'),
-                    Dataset.stewards.in_(groups),
-                    Dataset.SamlAdminGroupName.in_(groups),
+                    S3Dataset.businessOwnerEmail == username,
+                    S3Dataset.businessOwnerDelegationEmails.contains(f'{{{username}}}'),
+                    S3Dataset.stewards.in_(groups),
+                    S3Dataset.SamlAdminGroupName.in_(groups),
                 )
             )
         )
@@ -621,7 +621,7 @@ class ShareObjectRepository:
                 query = query.filter(ShareObject.status.in_(data.get('status')))
         if data and data.get('dataset_owners'):
             if len(data.get('dataset_owners')) > 0:
-                query = query.filter(Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
+                query = query.filter(S3Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
         if data and data.get('datasets_uris'):
             if len(data.get('datasets_uris')) > 0:
                 query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
@@ -642,8 +642,8 @@ class ShareObjectRepository:
                 Environment.environmentUri == ShareObject.environmentUri,
             )
             .join(
-                Dataset,
-                Dataset.datasetUri == ShareObject.datasetUri,
+                S3Dataset,
+                S3Dataset.datasetUri == ShareObject.datasetUri,
             )
             .filter(
                 or_(
@@ -660,7 +660,7 @@ class ShareObjectRepository:
                 query = query.filter(ShareObject.status.in_(data.get('status')))
         if data and data.get('dataset_owners'):
             if len(data.get('dataset_owners')) > 0:
-                query = query.filter(Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
+                query = query.filter(S3Dataset.SamlAdminGroupName.in_(data.get('dataset_owners')))
         if data and data.get('datasets_uris'):
             if len(data.get('datasets_uris')) > 0:
                 query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
@@ -771,7 +771,7 @@ class ShareObjectRepository:
     def get_share_data(session, share_uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
         source_environment: Environment = session.query(Environment).get(dataset.environmentUri)
         if not source_environment:
@@ -976,10 +976,10 @@ class ShareObjectRepository:
     def query_user_shared_datasets(session, username, groups) -> Query:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
-            session.query(Dataset)
+            session.query(S3Dataset)
             .outerjoin(
                 ShareObject,
-                ShareObject.datasetUri == Dataset.datasetUri,
+                ShareObject.datasetUri == S3Dataset.datasetUri,
             )
             .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
@@ -995,7 +995,7 @@ class ShareObjectRepository:
                 )
             )
         )
-        return query.distinct(Dataset.datasetUri)
+        return query.distinct(S3Dataset.datasetUri)
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):
@@ -1088,9 +1088,9 @@ class ShareObjectRepository:
         q = (
             session.query(
                 ShareObjectItem.shareUri.label('shareUri'),
-                Dataset.datasetUri.label('datasetUri'),
-                Dataset.name.label('datasetName'),
-                Dataset.description.label('datasetDescription'),
+                S3Dataset.datasetUri.label('datasetUri'),
+                S3Dataset.name.label('datasetName'),
+                S3Dataset.description.label('datasetDescription'),
                 Environment.environmentUri.label('environmentUri'),
                 Environment.name.label('environmentName'),
                 ShareObject.created.label('created'),
@@ -1126,12 +1126,12 @@ class ShareObjectRepository:
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                Dataset,
-                ShareObject.datasetUri == Dataset.datasetUri,
+                S3Dataset,
+                ShareObject.datasetUri == S3Dataset.datasetUri,
             )
             .join(
                 Environment,
-                Environment.environmentUri == Dataset.environmentUri,
+                Environment.environmentUri == S3Dataset.environmentUri,
             )
             .join(
                 Organization,

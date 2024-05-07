@@ -17,7 +17,7 @@ from dataall.modules.s3_datasets.db.dataset_location_repositories import Dataset
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.dataset_sharing.tasks.subscriptions import poll_queues
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
