@@ -22,7 +22,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
     ShareObjectSM,
 )
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 
 @pytest.fixture(scope='function')
@@ -71,23 +71,23 @@ def env1group(environment_group: typing.Callable, env1, user, group) -> Environm
 
 
 @pytest.fixture(scope='module')
-def dataset1(dataset_model: typing.Callable, org1: Organization, env1: Environment) -> Dataset:
+def dataset1(dataset_model: typing.Callable, org1: Organization, env1: Environment) -> S3Dataset:
     yield dataset_model(organization=org1, environment=env1, label='datasettoshare')
 
 
 @pytest.fixture(scope='module')
-def tables1(table: typing.Callable, dataset1: Dataset):
+def tables1(table: typing.Callable, dataset1: S3Dataset):
     for i in range(1, 100):
         table(dataset1, name=random_table_name(), username=dataset1.owner)
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
+def table1(table: typing.Callable, dataset1: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset1, name='table1', username='alice')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table1_1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
+def table1_1(table: typing.Callable, dataset1: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset1, name='table5', username='alice')
 
 
@@ -110,7 +110,7 @@ def env2(env: typing.Callable, org2: Organization, user2, group2) -> Environment
 
 
 @pytest.fixture(scope='module')
-def dataset2(dataset_model: typing.Callable, org2: Organization, env2: Environment) -> Dataset:
+def dataset2(dataset_model: typing.Callable, org2: Organization, env2: Environment) -> S3Dataset:
     yield dataset_model(organization=org2, environment=env2, label='datasettoshare2')
 
 
@@ -121,7 +121,7 @@ def tables2(table, dataset2):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table2(table: typing.Callable, dataset2: Dataset) -> DatasetTable:
+def table2(table: typing.Callable, dataset2: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset2, name='table2', username='bob')
 
 
@@ -134,7 +134,7 @@ def env2group(environment_group: typing.Callable, env2, user2, group2) -> Enviro
 
 
 @pytest.fixture(scope='module')
-def dataset3(dataset_model: typing.Callable, org2: Organization, env2: Environment) -> Dataset:
+def dataset3(dataset_model: typing.Callable, org2: Organization, env2: Environment) -> S3Dataset:
     yield dataset_model(organization=org2, environment=env2, label='datasettoshare3', autoApprovalEnabled=True)
 
 
@@ -145,7 +145,7 @@ def tables3(table, dataset3):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table3(table: typing.Callable, dataset3: Dataset) -> DatasetTable:
+def table3(table: typing.Callable, dataset3: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset3, name='table3', username='bob')
 
 
@@ -156,7 +156,7 @@ def share1_draft(
     user2,
     group2,
     share: typing.Callable,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     env2: Environment,
     env2group: EnvironmentGroup,
 ) -> ShareObject:
@@ -208,7 +208,7 @@ def share_autoapprove_draft(
     user2,
     group2,
     share: typing.Callable,
-    dataset3: Dataset,
+    dataset3: S3Dataset,
     env2: Environment,
     env2group: EnvironmentGroup,
 ) -> ShareObject:
@@ -244,7 +244,7 @@ def share2_submitted(
     user2,
     group2,
     share: typing.Callable,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     env2: Environment,
     env2group: EnvironmentGroup,
 ) -> ShareObject:
@@ -299,7 +299,7 @@ def share3_processed(
     user2,
     group2,
     share: typing.Callable,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     env2: Environment,
     env2group: EnvironmentGroup,
 ) -> ShareObject:
@@ -353,7 +353,7 @@ def share3_item_shared(
 def share4_draft(
     user2,
     share: typing.Callable,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     env2: Environment,
     env2group: EnvironmentGroup,
 ) -> ShareObject:

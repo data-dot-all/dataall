@@ -16,7 +16,7 @@ from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import (
     ProcessLakeFormationShare,
@@ -63,23 +63,23 @@ def target_environment_group(
 
 
 @pytest.fixture(scope='module')
-def dataset1(create_dataset: Callable, org_fixture: Organization, source_environment: Environment) -> Dataset:
+def dataset1(create_dataset: Callable, org_fixture: Organization, source_environment: Environment) -> S3Dataset:
     yield create_dataset(organization=org_fixture, environment=source_environment, label='dataset1')
 
 
 @pytest.fixture(scope='module')
-def table1(table: Callable, dataset1: Dataset) -> DatasetTable:
+def table1(table: Callable, dataset1: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset1, label='table1')
 
 
 @pytest.fixture(scope='module')
-def table2(table: Callable, dataset1: Dataset) -> DatasetTable:
+def table2(table: Callable, dataset1: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset1, label='table2')
 
 
 @pytest.fixture(scope='module')
 def share(
-    share: Callable, dataset1: Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
+    share: Callable, dataset1: S3Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
 ) -> ShareObject:
     yield share(dataset=dataset1, environment=target_environment, env_group=target_environment_group)
 
@@ -176,7 +176,7 @@ def test_get_share_principals(
     get_iam_role_arn_mock.assert_called_once()
 
 
-def test_build_shared_db_name(processor_with_mocks, dataset1: Dataset, mock_glue_client):
+def test_build_shared_db_name(processor_with_mocks, dataset1: S3Dataset, mock_glue_client):
     # Given a new share, build db_share name
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = False
@@ -187,7 +187,7 @@ def test_build_shared_db_name(processor_with_mocks, dataset1: Dataset, mock_glue
     mock_glue_client().get_glue_database.assert_called_once()
 
 
-def test_build_shared_db_name_old(processor_with_mocks, dataset1: Dataset, share: ShareObject, mock_glue_client):
+def test_build_shared_db_name_old(processor_with_mocks, dataset1: S3Dataset, share: ShareObject, mock_glue_client):
     # Given an existing old share (shared db name with shareUri), build db_share name
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     mock_glue_client().get_glue_database.return_value = True
@@ -263,7 +263,7 @@ def test_revoke_iam_allowed_principals_from_table(processor_with_mocks, table1: 
 
 
 def test_grant_pivot_role_all_database_permissions_to_source_database(
-    processor_with_mocks, dataset1: Dataset, source_environment: Environment, mocker
+    processor_with_mocks, dataset1: S3Dataset, source_environment: Environment, mocker
 ):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     lf_client.grant_permissions_to_database.return_value = True
@@ -281,7 +281,7 @@ def test_grant_pivot_role_all_database_permissions_to_source_database(
     )
 
 
-def test_check_if_exists_and_create_shared_database_in_target(processor_with_mocks, dataset1: Dataset):
+def test_check_if_exists_and_create_shared_database_in_target(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     glue_client.create_database.return_value = True
     # When
@@ -291,7 +291,7 @@ def test_check_if_exists_and_create_shared_database_in_target(processor_with_moc
     glue_client.create_database.assert_called_with(location=f's3://{dataset1.S3BucketName}')
 
 
-def test_grant_pivot_role_all_database_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset, mocker):
+def test_grant_pivot_role_all_database_permissions_to_shared_database(processor_with_mocks, dataset1: S3Dataset, mocker):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
@@ -308,7 +308,7 @@ def test_grant_pivot_role_all_database_permissions_to_shared_database(processor_
     )
 
 
-def test_grant_principals_database_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset):
+def test_grant_principals_database_permissions_to_shared_database(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     # When
     processor.grant_principals_database_permissions_to_shared_database()
@@ -430,7 +430,7 @@ def test_grant_principals_permissions_to_table_in_target(
     )
 
 
-def test_check_pivot_role_permissions_to_source_database(processor_with_mocks, dataset1: Dataset, mocker):
+def test_check_pivot_role_permissions_to_source_database(processor_with_mocks, dataset1: S3Dataset, mocker):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = True
     mocker.patch(
@@ -449,7 +449,7 @@ def test_check_pivot_role_permissions_to_source_database(processor_with_mocks, d
     )
 
 
-def test_check_shared_database_in_target(processor_with_mocks, dataset1: Dataset):
+def test_check_shared_database_in_target(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     glue_client.get_glue_database.return_value = True
     # When
@@ -459,7 +459,7 @@ def test_check_shared_database_in_target(processor_with_mocks, dataset1: Dataset
     assert len(processor.db_level_errors) == 0
 
 
-def test_check_shared_database_in_target_failed(processor_with_mocks, dataset1: Dataset):
+def test_check_shared_database_in_target_failed(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     glue_client.get_glue_database.return_value = False
     # When
@@ -468,7 +468,7 @@ def test_check_shared_database_in_target_failed(processor_with_mocks, dataset1: 
     assert len(processor.db_level_errors) == 1
 
 
-def test_check_pivot_role_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset, mocker):
+def test_check_pivot_role_permissions_to_shared_database(processor_with_mocks, dataset1: S3Dataset, mocker):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
@@ -487,7 +487,7 @@ def test_check_pivot_role_permissions_to_shared_database(processor_with_mocks, d
     )
 
 
-def test_check_principals_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset):
+def test_check_principals_permissions_to_shared_database(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = True
     # When
@@ -502,7 +502,7 @@ def test_check_principals_permissions_to_shared_database(processor_with_mocks, d
     )
 
 
-def test_check_principals_permissions_to_shared_database_failed(processor_with_mocks, dataset1: Dataset):
+def test_check_principals_permissions_to_shared_database_failed(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     lf_client.check_permissions_to_database.return_value = False
     # When
@@ -694,7 +694,7 @@ def test_delete_resource_link_table_in_shared_database_true(processor_with_mocks
     glue_client.delete_table.assert_called_once()
 
 
-def test_revoke_principals_database_permissions_to_shared_database(processor_with_mocks, dataset1: Dataset):
+def test_revoke_principals_database_permissions_to_shared_database(processor_with_mocks, dataset1: S3Dataset):
     processor, lf_client, glue_client, mock_glue_client = processor_with_mocks
     # When
     processor.revoke_principals_database_permissions_to_shared_database()
