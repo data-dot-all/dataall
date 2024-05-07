@@ -17,7 +17,7 @@ class DatasetCatalogIndexer(CatalogIndexer):
     """
 
     def index(self, session) -> int:
-        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session)
+        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session) #TODO: implement list_by_dataset_type
         log.info(f'Found {len(all_datasets)} datasets')
         indexed = 0
         for dataset in all_datasets:

@@ -8,7 +8,8 @@ from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetCo
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetTableColumn
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
 
@@ -29,7 +30,7 @@ class DatasetColumnService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value

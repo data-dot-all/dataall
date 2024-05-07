@@ -5,7 +5,8 @@ import re
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
@@ -16,7 +17,7 @@ class DatasetTableIndexer(BaseIndexer):
         table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
 
         if table:
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
             glossary = BaseIndexer._get_target_glossary_terms(session, table_uri)

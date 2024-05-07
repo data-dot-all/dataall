@@ -7,7 +7,6 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
@@ -17,8 +16,8 @@ from dataall.base.utils.naming_convention import (
 logger = logging.getLogger(__name__)
 
 
-class DatasetRepository(EnvironmentResource):
-    """DAO layer for Datasets"""
+class S3DatasetRepository:
+    """DAO layer for S3Datasets"""
 
     @classmethod
     def build_dataset(cls, username: str, env: Environment, data: dict) -> S3Dataset:
@@ -155,7 +154,7 @@ class DatasetRepository(EnvironmentResource):
         """
         helper method to update the dataset bucket status
         """
-        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+        dataset = S3DatasetRepository.get_dataset_by_uri(session, dataset_uri)
         dataset.bucketCreated = True
         return dataset
 
@@ -164,7 +163,7 @@ class DatasetRepository(EnvironmentResource):
         """
         helper method to update the dataset db status
         """
-        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+        dataset = S3DatasetRepository.get_dataset_by_uri(session, dataset_uri)
         dataset.glueDatabaseCreated = True
 
     @staticmethod

@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session)
+        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session) #todo list by type
         log.info(f'Found {len(all_datasets)} datasets for tables sync')
         dataset: S3Dataset
         for dataset in all_datasets:

@@ -6,7 +6,7 @@ import pytest
 from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 from tests.core.stacks.test_stack import update_stack_query
@@ -473,7 +473,7 @@ def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
         )
         session.add(dataset)
         session.commit()
-        dataset_found: S3Dataset = DatasetRepository.get_dataset_by_bucket_name(
+        dataset_found: S3Dataset = S3DatasetRepository.get_dataset_by_bucket_name(
             session,
             bucket='s3a://insite-data-lake-raw-alpha-eu-west-1/booker/volume_constraints/insite_version=1/volume_constraints.delta'.split(
                 '//'

@@ -15,7 +15,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET_FOLDER,
 )
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 
@@ -38,7 +38,7 @@ class DatasetLocationService:
                     message=f'Folder: {data["prefix"]} already exist on dataset {uri}',
                 )
 
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             location = DatasetLocationRepository.create_dataset_location(session, dataset, data)
             DatasetLocationService._attach_dataset_folder_read_permission(session, dataset, location.locationUri)
 
@@ -88,7 +88,7 @@ class DatasetLocationService:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
             DatasetService.check_before_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
             DatasetService.execute_on_delete(session, location.locationUri, action=DELETE_DATASET_FOLDER)
-            dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
             DatasetLocationService._delete_dataset_folder_read_permission(session, dataset, location.locationUri)
             DatasetLocationRepository.delete(session, location)
             GlossaryRepository.delete_glossary_terms_links(

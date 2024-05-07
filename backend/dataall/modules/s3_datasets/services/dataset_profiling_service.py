@@ -12,7 +12,8 @@ from dataall.modules.s3_datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.s3_datasets.db.dataset_profiling_repositories import DatasetProfilingRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun, DatasetTable
 from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
@@ -24,7 +25,7 @@ class DatasetProfilingService:
     def start_profiling_run(uri, table_uri, glue_table_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
 
             if table_uri and not glue_table_name:
                 table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
@@ -76,7 +77,7 @@ class DatasetProfilingService:
             if run:
                 if not run.results:
                     table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-                    dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+                    dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
                     environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
                     content = S3ProfilerClient(environment).get_profiling_results_from_s3(dataset, table, run)
                     if content:
@@ -102,7 +103,7 @@ class DatasetProfilingService:
     def _check_preview_permissions_if_needed(session, table_uri):
         context = get_context()
         table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
-        dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+        dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
         if (
             ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
             != ConfidentialityClassification.Unclassified.value

@@ -8,7 +8,7 @@ from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 class DatasetS3Policy(S3Policy):
     def get_statements(self, session):
-        datasets = DatasetRepository.list_group_datasets(
+        datasets = DatasetRepository.list_group_datasets( #TODO: implement list_by_dataset_type
             session,
             environment_id=self.environment.environmentUri,
             group_uri=self.team.groupUri,

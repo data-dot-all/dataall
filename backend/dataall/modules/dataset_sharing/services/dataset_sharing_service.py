@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.db.share_object_repositories import (
 )
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
@@ -150,7 +150,7 @@ class DatasetSharingService(DatasetServiceInterface):
     def get_dataset_shared_assume_role_url(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
 
             if dataset.SamlAdminGroupName in context.groups:
                 role_arn = dataset.IAMDatasetAdminRoleArn

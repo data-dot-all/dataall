@@ -15,7 +15,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET_TABLE,
     SYNC_DATASET,
 )
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -82,7 +82,7 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
@@ -109,13 +109,13 @@ class DatasetTableService:
     def sync_tables_for_dataset(cls, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             S3Prefix = dataset.S3BucketName
             tables = DatasetCrawler(dataset).list_glue_database_tables(S3Prefix)
             cls.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
-            return DatasetRepository.paginated_dataset_tables(
+            return S3DatasetRepository.paginated_dataset_tables(
                 session=session,
                 uri=uri,
                 data={'page': 1, 'pageSize': 10},
@@ -123,7 +123,7 @@ class DatasetTableService:
 
     @staticmethod
     def sync_existing_tables(session, uri, glue_tables=None):
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+        dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
         if dataset:
             existing_tables = DatasetTableRepository.find_dataset_tables(session, uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]

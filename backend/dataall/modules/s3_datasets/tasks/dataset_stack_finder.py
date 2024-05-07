@@ -15,6 +15,6 @@ class DatasetStackFinder(StackFinder):
     """
 
     def find_stack_uris(self, session) -> List[str]:
-        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session)
+        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session) #todo LIST BY TYPE
         log.info(f'Found {len(all_datasets)} datasets')
         return [dataset.datasetUri for dataset in all_datasets]

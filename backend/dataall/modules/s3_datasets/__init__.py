@@ -42,7 +42,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         import dataall.modules.s3_datasets.api
         from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
-        from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+        from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
         from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
         FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))

@@ -14,7 +14,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'
@@ -38,7 +38,7 @@ def upgrade():
         print('Getting all Share Objects...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             # Env Admins
@@ -106,7 +106,7 @@ def downgrade():
         print('Getting all Share Objects...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             # Env Admins

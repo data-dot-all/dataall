@@ -63,7 +63,7 @@ class DatasetListRepository(EnvironmentResource):
     @staticmethod
     def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
         return paginate(
-            query=DatasetRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
+            query=DatasetListRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -168,7 +168,7 @@ class DatasetListRepository(EnvironmentResource):
         data=None,
     ) -> dict:
         return paginate(
-            query=DatasetRepository.query_environment_datasets(session, uri, data),
+            query=DatasetListRepository.query_environment_datasets(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -176,7 +176,7 @@ class DatasetListRepository(EnvironmentResource):
     @staticmethod
     def paginated_environment_group_datasets(session, env_uri, group_uri, data=None) -> dict:
         return paginate(
-            query=DatasetRepository.query_environment_group_datasets(session, env_uri, group_uri, data),
+            query=DatasetListRepository.query_environment_group_datasets(session, env_uri, group_uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -197,7 +197,7 @@ class DatasetListRepository(EnvironmentResource):
     @staticmethod
     def paginated_user_datasets(session, username, groups, data=None) -> dict:
         return paginate(
-            query=DatasetRepository._query_user_datasets(session, username, groups, data),
+            query=DatasetListRepository._query_user_datasets(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()

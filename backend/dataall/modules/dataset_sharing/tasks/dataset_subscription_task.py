@@ -16,7 +16,7 @@ from dataall.modules.s3_datasets.aws.sns_dataset_client import SnsDatasetClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.dataset_sharing.tasks.subscriptions import poll_queues
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
 root = logging.getLogger()
@@ -92,7 +92,7 @@ class DatasetSubscriptionService:
             self._publish_update_message(session, message, location)
 
     def _publish_update_message(self, session, message, entity, table: DatasetTable = None):
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
+        dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
 
         log.info(f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}')
         share_items: [ShareObjectItem] = ShareObjectRepository.find_share_items_by_item_uri(session, entity.uri())

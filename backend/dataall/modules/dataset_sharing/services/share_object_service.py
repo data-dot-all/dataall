@@ -40,8 +40,8 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     GET_SHARE_OBJECT,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetStorageLocation
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
@@ -101,7 +101,7 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
@@ -434,7 +434,7 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
+            dataset = S3DatasetRepository.get_dataset_by_uri(session, datasetUri)
             if dataset:
                 environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
                 S3AccessPointName = utils.slugify(
@@ -503,7 +503,7 @@ class ShareObjectService:
     @staticmethod
     def _get_share_data(session, uri):
         share = ShareObjectRepository.get_share_by_uri(session, uri)
-        dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
         return share, dataset, share_items_states
 

@@ -142,7 +142,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
 
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
-            datasets = DatasetRepository.query_environment_imported_datasets(
+            datasets = DatasetRepository.query_environment_imported_datasets( #TODO: implement list_by_dataset_type
                 session, uri=self.environmentUri, filter=None
             )
             if datasets:

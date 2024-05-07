@@ -20,7 +20,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
 
 logger = logging.getLogger(__name__)
@@ -771,7 +771,7 @@ class ShareObjectRepository:
     def get_share_data(session, share_uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
         source_environment: Environment = session.query(Environment).get(dataset.environmentUri)
         if not source_environment:
@@ -1069,7 +1069,7 @@ class ShareObjectRepository:
             query = query.filter(ShareObjectItem.itemType == item_type)
         shares_datasets = []
         for share in query.all():
-            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             shares_datasets.append(
                 {'shareUri': share.shareUri, 'databaseName': f'{dataset.GlueDatabaseName}_shared_{share.shareUri}'}
             )

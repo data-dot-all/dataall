@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.services.share_item_service import ShareIte
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
 log = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
 
         can_approve = (
             True
@@ -168,7 +168,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: S3Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        ds: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             env: Environment = EnvironmentService.get_environment_by_uri(session, ds.environmentUri)
             return {
