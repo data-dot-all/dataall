@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.s3_datasets.db.dataset_models import Dataset
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetRole, ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)

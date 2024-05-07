@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset_environment,
     get_dataset_organization,
