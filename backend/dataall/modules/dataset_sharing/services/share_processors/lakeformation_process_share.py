@@ -13,7 +13,7 @@ from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalR
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -242,6 +242,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
                 ShareObjectRepository.update_share_item_health_status(
                     self.session, share_item, None, None, share_item.lastVerificationTime
                 )

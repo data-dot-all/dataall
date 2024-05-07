@@ -20,8 +20,8 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 logger = logging.getLogger(__name__)
 
@@ -368,11 +368,11 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner):
+    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
         share: ShareObject = (
             session.query(ShareObject)
             .filter(ShareObject.datasetUri == dataset_uri)
-            .filter(ShareObject.owner == dataset_owner)
+            .filter(or_(ShareObject.owner == dataset_owner, ShareObject.principalId.in_(groups)))
             .first()
         )
         return share
@@ -594,7 +594,9 @@ class ShareObjectRepository:
                     else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
                 )
 
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(
+            query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
+        ).to_dict()
 
     @staticmethod
     def list_user_received_share_requests(session, username, groups, data=None):
@@ -629,7 +631,7 @@ class ShareObjectRepository:
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
                 query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def list_user_sent_share_requests(session, username, groups, data=None):
@@ -668,7 +670,7 @@ class ShareObjectRepository:
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
                 query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
@@ -1001,11 +1003,15 @@ class ShareObjectRepository:
 
     @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
-        return session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                )
             )
+            .order_by(ShareObject.shareUri)
         )
 
     @staticmethod
@@ -1157,7 +1163,9 @@ class ShareObjectRepository:
 
         if data.get('uniqueShares', False):
             q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
-            q = q.distinct(ShareObject.shareUri)
+            q = q.order_by(ShareObject.shareUri).distinct(ShareObject.shareUri)
+        else:
+            q = q.order_by(ShareObjectItem.itemName).distinct()
 
         if data.get('term'):
             term = data.get('term')

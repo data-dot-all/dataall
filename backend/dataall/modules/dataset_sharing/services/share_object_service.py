@@ -18,7 +18,6 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
-    ShareItemHealthStatus,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import (
@@ -41,9 +40,9 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     GET_SHARE_OBJECT,
 )
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
 import logging
@@ -312,11 +311,6 @@ class ShareObjectService:
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
-            if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
-                log.info('Attaching TABLE/FOLDER READ permissions...')
-                ShareObjectService._attach_dataset_table_read_permission(session, share)
-                ShareObjectService._attach_dataset_folder_read_permission(session, share)
-
             share.rejectPurpose = ''
             session.commit()
 
@@ -531,12 +525,12 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _attach_dataset_table_read_permission(session, share):
+    def attach_dataset_table_read_permission(session, share):
         """
         Attach Table permissions to share groups
         """
         share_table_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Approved.value]
+            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Succeeded.value]
         )
         for table in share_table_items:
             ResourcePolicyService.attach_resource_policy(
@@ -548,12 +542,12 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _attach_dataset_folder_read_permission(session, share):
+    def attach_dataset_folder_read_permission(session, share):
         """
         Attach Table permissions to share groups
         """
         share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Approved.value]
+            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Succeeded.value]
         )
         for location in share_folder_items:
             ResourcePolicyService.attach_resource_policy(

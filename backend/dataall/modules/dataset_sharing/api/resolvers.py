@@ -12,8 +12,8 @@ from dataall.modules.dataset_sharing.services.share_item_service import ShareIte
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
 
@@ -335,6 +335,6 @@ def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str,
     return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)
 
 
-@is_feature_enabled('modules.datasets.features.aws_actions')
+@is_feature_enabled('modules.s3_datasets.features.aws_actions')
 def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)

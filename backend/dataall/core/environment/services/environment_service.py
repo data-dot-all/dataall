@@ -130,7 +130,7 @@ class EnvironmentService:
         g_permissions: coming from frontend = ENVIRONMENT_INVITATION_REQUEST
 
         """
-        if environment_permissions.INVITE_ENVIRONMENT_GROUP in g_permissions:
+        if environment_permissions.UPDATE_ENVIRONMENT_GROUP in g_permissions:
             g_permissions.append(environment_permissions.REMOVE_ENVIRONMENT_GROUP)
 
         g_permissions.extend(environment_permissions.ENVIRONMENT_INVITED_DEFAULT)
