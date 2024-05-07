@@ -41,7 +41,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetTable
+from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetTable #TODO SEPARATE DATASETS FROM S3DATASETS
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)

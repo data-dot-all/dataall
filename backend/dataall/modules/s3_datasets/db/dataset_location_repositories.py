@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import and_, or_
 
 from dataall.base.db import paginate, exceptions
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class DatasetLocationRepository:
         )
 
     @staticmethod
-    def create_dataset_location(session, dataset: Dataset, data: dict = None) -> DatasetStorageLocation:
+    def create_dataset_location(session, dataset: S3Dataset, data: dict = None) -> DatasetStorageLocation:
         location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
