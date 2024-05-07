@@ -10,7 +10,7 @@ from dataall.modules.catalog.indexers.catalog_indexer import CatalogIndexer
 log = logging.getLogger(__name__)
 
 
-class DatasetCatalogIndexer(CatalogIndexer):
+class DatasetCatalogIndexer(CatalogIndexer): #TODO: maybe move to datasets_base
     """
     Dataset indexer for the catalog. Indexes all tables and folders of datasets
     Register automatically itself when CatalogIndexer instance is created

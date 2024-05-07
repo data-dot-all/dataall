@@ -39,9 +39,11 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
 )
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetTable #TODO SEPARATE DATASETS FROM S3DATASETS
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository, DatasetListRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import S3DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, Dataset #TODO WE SHOULD NOT NEED DATASETS HERE
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
@@ -151,7 +153,7 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: Dataset):
+    def check_imported_resources(dataset: S3Dataset):
         if dataset.importedGlueDatabase:
             if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
                 raise exceptions.InvalidInput(
@@ -205,12 +207,12 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
-            dataset = DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
+            dataset: S3Dataset = S3DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
 
             if dataset.imported:
                 DatasetService.check_imported_resources(dataset)
 
-            dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
+            dataset: S3Dataset = S3DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
             DatasetRepository.create_dataset_lock(session=session, dataset=dataset)
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -220,7 +222,7 @@ class DatasetService:
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
+                resource_type=Dataset.__name__, #todo: MOVE TO DATASETS_BASE SERVICE
             )
             if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicyService.attach_resource_policy(
@@ -228,7 +230,7 @@ class DatasetService:
                     group=dataset.stewards,
                     permissions=DATASET_READ,
                     resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
+                    resource_type=Dataset.__name__, #todo: MOVE TO DATASETS_BASE SERVICE
                 )
 
             if environment.SamlGroupName != dataset.SamlAdminGroupName:
@@ -237,7 +239,7 @@ class DatasetService:
                     group=environment.SamlGroupName,
                     permissions=DATASET_ALL,
                     resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
+                    resource_type=Dataset.__name__, #todo: MOVE TO DATASETS_BASE SERVICE
                 )
 
             DatasetService._create_dataset_stack(session, dataset)
@@ -260,7 +262,7 @@ class DatasetService:
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
@@ -268,23 +270,23 @@ class DatasetService:
     @staticmethod
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_all_user_datasets(data: dict):
+    def list_all_user_datasets(data: dict): #TODO:move to base service
         context = get_context()
         with context.db_engine.scoped_session() as session:
             all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
-            return DatasetRepository.paginated_all_user_datasets(
+            return DatasetListRepository.paginated_all_user_datasets(
                 session, context.username, context.groups, all_subqueries, data=data
             )
 
     @staticmethod
-    def list_owned_datasets(data: dict):
+    def list_owned_datasets(data: dict): #TODO:move to base service
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+            return DatasetListRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
 
     @staticmethod
     def list_locations(dataset_uri, data: dict):
@@ -299,7 +301,7 @@ class DatasetService:
     def list_tables(dataset_uri, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_dataset_tables(
+            return S3DatasetRepository.paginated_dataset_tables(
                 session=session,
                 uri=dataset_uri,
                 data=data,
@@ -310,12 +312,12 @@ class DatasetService:
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     def update_dataset(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
 
             username = get_context().username
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
                 if data.get('imported', False):
                     DatasetService.check_imported_resources(dataset)
@@ -341,7 +343,7 @@ class DatasetService:
                     group=dataset.SamlAdminGroupName,
                     permissions=DATASET_ALL,
                     resource_uri=dataset.datasetUri,
-                    resource_type=Dataset.__name__,
+                    resource_type=Dataset.__name__, #todo: MOVE TO DATASETS_BASE SERVICE
                 )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
@@ -354,9 +356,9 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def get_dataset_statistics(dataset: Dataset):
+    def get_dataset_statistics(dataset: S3Dataset):
         with get_context().db_engine.scoped_session() as session:
-            count_tables = DatasetRepository.count_dataset_tables(session, dataset.datasetUri)
+            count_tables = S3DatasetRepository.count_dataset_tables(session, dataset.datasetUri)
             count_locations = DatasetLocationRepository.count_dataset_locations(session, dataset.datasetUri)
             count_upvotes = VoteRepository.count_upvotes(session, dataset.datasetUri, target_type='dataset')
         return {
@@ -370,7 +372,7 @@ class DatasetService:
     def get_dataset_assume_role_url(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 role_arn = dataset.IAMDatasetAdminRoleArn
                 account_id = dataset.AwsAccountId
@@ -395,7 +397,7 @@ class DatasetService:
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
         with engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             location = os.path.join('s3://', dataset.S3BucketName, data.get('prefix', ''), '')
             crawler = DatasetCrawler(dataset).get_crawler()
             if not crawler:
@@ -425,7 +427,7 @@ class DatasetService:
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
 
         pivot_session = SessionHelper.remote_session(dataset.AwsAccountId, dataset.region)
         aws_session = SessionHelper.get_session(base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn)
@@ -443,11 +445,11 @@ class DatasetService:
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            dataset: S3Dataset = S3DatasetRepository.get_dataset_by_uri(session, uri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_before_delete(session, uri, action=DELETE_DATASET)
 
-            tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
+            tables = [t.tableUri for t in S3DatasetRepository.get_dataset_tables(session, uri)]
             for tableUri in tables:
                 DatasetIndexer.delete_doc(doc_id=tableUri)
 
@@ -474,7 +476,7 @@ class DatasetService:
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
             DatasetRepository.delete_dataset_lock(session=session, dataset=dataset)
-            DatasetRepository.delete_dataset(session, dataset)
+            DatasetRepository.delete_dataset(session, dataset) #TODO IMPORTANT: verify if we need to delete both entries (S3Dataset and Dataset)
 
         if delete_from_aws:
             StackService.delete_stack(
@@ -487,7 +489,7 @@ class DatasetService:
         return True
 
     @staticmethod
-    def _deploy_dataset_stack(dataset: Dataset):
+    def _deploy_dataset_stack(dataset: S3Dataset):
         """
         Each dataset stack deployment triggers environment stack update
         to rebuild teams IAM roles data access policies
@@ -496,7 +498,7 @@ class DatasetService:
         StackService.deploy_stack(dataset.environmentUri)
 
     @staticmethod
-    def _create_dataset_stack(session, dataset: Dataset) -> Stack:
+    def _create_dataset_stack(session, dataset: S3Dataset) -> Stack:
         return StackRepository.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
@@ -512,18 +514,18 @@ class DatasetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
-    def list_datasets_created_in_environment(uri: str, data: dict):
+    def list_datasets_created_in_environment(uri: str, data: dict): #TODO:move to base service
         with get_context().db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_environment_datasets(
+            return DatasetListRepository.paginated_environment_datasets(
                 session=session,
                 uri=uri,
                 data=data,
             )
 
     @staticmethod
-    def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):
+    def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):#TODO:move to base service
         with get_context().db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_environment_group_datasets(
+            return DatasetListRepository.paginated_environment_group_datasets(
                 session=session,
                 env_uri=env_uri,
                 group_uri=group_uri,
@@ -541,7 +543,7 @@ class DatasetService:
             )
 
         # Remove Steward Resource Policy on Dataset Tables
-        dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
+        dataset_tables = [t.tableUri for t in S3DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
             if dataset.stewards != env.SamlGroupName:
                 ResourcePolicyService.delete_resource_policy(
@@ -567,10 +569,10 @@ class DatasetService:
             group=new_stewards,
             permissions=DATASET_READ,
             resource_uri=dataset.datasetUri,
-            resource_type=Dataset.__name__,
+            resource_type=Dataset.__name__, #TODO: FOR THE MOMENT S3DATASET until we move the services
         )
 
-        dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
+        dataset_tables = [t.tableUri for t in S3DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
             if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicyService.delete_resource_policy(
@@ -592,7 +594,7 @@ class DatasetService:
 
     @staticmethod
     def delete_dataset_term_links(session, dataset_uri):
-        tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
+        tables = [t.tableUri for t in S3DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')

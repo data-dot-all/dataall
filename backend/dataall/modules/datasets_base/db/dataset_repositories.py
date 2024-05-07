@@ -62,15 +62,15 @@ class DatasetListRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
+    def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None, dataset_type: DatasetType=None) -> dict:
         return paginate(
-            query=DatasetListRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
+            query=DatasetListRepository._query_all_user_datasets(session, username, groups, all_subqueries, data, dataset_type),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    def _query_all_user_datasets(session, username, groups, all_subqueries, filter) -> Query:
+    def _query_all_user_datasets(session, username, groups, all_subqueries, filter, dataset_type) -> Query:
         query = session.query(Dataset).filter(
             or_(
                 Dataset.owner == username,
@@ -78,6 +78,8 @@ class DatasetListRepository(EnvironmentResource):
                 Dataset.stewards.in_(groups),
             )
         )
+        if dataset_type:
+            query.filter()
         if query.first() is not None:
             all_subqueries.append(query)
         if len(all_subqueries) == 1:
