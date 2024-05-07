@@ -4,5 +4,5 @@ from dataall.base.api import gql
 
 
 Maintenance = gql.ObjectType(
-    name='Maintenance', fields=[gql.Field(name='status', type=gql.String), gql.Field(name='mode', type=gql.String)]
+    name='Maintenance', fields=[gql.NonNullableType(name='status', type=gql.String), gql.Field(name='mode', type=gql.String)]
 )

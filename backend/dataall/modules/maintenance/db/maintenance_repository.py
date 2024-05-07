@@ -21,7 +21,3 @@ class MaintenanceRepository:
 
     def get_maintenance_record(self):
         return self._session.query(Maintenance).one()
-
-    def get_maintenance_mode(self):
-        maintenance_record = self._session.query(Maintenance)
-        return maintenance_record.mode

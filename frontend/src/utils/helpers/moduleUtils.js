@@ -63,6 +63,7 @@ function _modulesNameMap() {
     const upperCaseModule = module.name.toUpperCase();
     map[upperCaseModule] = module.name;
   }
+  console.log(map)
   return map;
 }
 

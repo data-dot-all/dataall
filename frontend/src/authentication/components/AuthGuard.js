@@ -4,16 +4,14 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Login } from '../views/Login';
 import { useAuth } from '../hooks';
 import {
+  isModuleEnabled, ModuleNames,
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
 } from '../../utils';
 import { useClient, useGroups } from '../../services';
 import { LoadingScreen, NoAccessMaintenanceWindow } from '../../design';
-import { getMaintenanceStatus } from '../../services/graphql/MaintenanceWindow';
-import {
-  ACTIVE_STATUS,
-  PENDING_STATUS
-} from '../../modules/Administration/components';
+import { getMaintenanceStatus } from '../../modules/Maintenance/services';
+import {PENDING_STATUS, ACTIVE_STATUS} from "../../modules/Maintenance/views/MaintenanceViewer";
 import config from '../../generated/config.json';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 
@@ -47,7 +45,7 @@ export const AuthGuard = (props) => {
   useEffect(async () => {
     // Check if the maintenance window is enabled and has NO-ACCESS Status
     // If yes then display a blank screen with a message that data.all is in maintenance mode ( Check use of isNoAccessMaintenance state )
-    if (config.modules.maintenance.active === true) {
+    if (isModuleEnabled(ModuleNames.MAINTENANCE) === true) {
       if (client) {
         checkMaintenanceMode().catch((e) => dispatch({ type: SET_ERROR, e }));
       }
@@ -73,7 +71,7 @@ export const AuthGuard = (props) => {
 
   if (
     isNoAccessMaintenance == null &&
-    config.modules.maintenance.active === true
+    isModuleEnabled(ModuleNames.MAINTENANCE) === true
   ) {
     return <LoadingScreen />;
   }

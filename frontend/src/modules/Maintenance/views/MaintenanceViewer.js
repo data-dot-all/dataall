@@ -20,7 +20,7 @@ import {
   getMaintenanceStatus,
   stopMaintenanceWindow,
   startMaintenanceWindow
-} from '../../../services/graphql/MaintenanceWindow';
+} from '../services';
 import { useClient } from '../../../services';
 import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import { useSnackbar } from 'notistack';

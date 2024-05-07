@@ -8,12 +8,9 @@ import { Logo } from '../Logo';
 import { SettingsDrawer } from '../SettingsDrawer';
 import { ModuleNames, isModuleEnabled } from 'utils';
 import config from '../../../generated/config.json';
-import {
-  ACTIVE_STATUS,
-  PENDING_STATUS
-} from '../../../modules/Administration/components';
+import {PENDING_STATUS, ACTIVE_STATUS} from "../../../modules/Maintenance/views/MaintenanceViewer";
 import { useClient } from '../../../services';
-import { getMaintenanceStatus } from '../../../services/graphql/MaintenanceWindow';
+import { getMaintenanceStatus } from '../../../modules/Maintenance/services';
 import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import { SanitizedHTML } from '../SanitizedHTML';
 
@@ -30,31 +27,37 @@ export const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
   const dispatch = useDispatch();
   const client = useClient();
 
-  useEffect(async () => {
-    if (client) {
+  const _getMaintenanceStatus = async() =>{
       const response = await client.query(getMaintenanceStatus());
       if (
-        !response.errors &&
-        response.data.getMaintenanceWindowStatus !== null
+          !response.errors &&
+          response.data.getMaintenanceWindowStatus !== null
       ) {
         if (
-          response.data.getMaintenanceWindowStatus.status === ACTIVE_STATUS ||
-          response.data.getMaintenanceWindowStatus.status === PENDING_STATUS
+            response.data.getMaintenanceWindowStatus.status === ACTIVE_STATUS ||
+            response.data.getMaintenanceWindowStatus.status === PENDING_STATUS
         ) {
           setMaintenanceFlag(true);
         }
       } else {
         const error = response.errors
-          ? response.errors[0].message
-          : 'Could not fetch status of maintenance window';
-        dispatch({ type: SET_ERROR, error });
+            ? response.errors[0].message
+            : 'Could not fetch status of maintenance window';
+        dispatch({type: SET_ERROR, error});
       }
+    }
+
+
+  useEffect(async () => {
+    console.log("Loading the useffect of deafult nav bar ")
+    if (client && isModuleEnabled(ModuleNames.MAINTENANCE)) {
+      _getMaintenanceStatus().catch((err) => dispatch({ type: SET_ERROR, err }));
     }
   }, [client]);
 
   return (
     <AppBar position="fixed" className={classes.appBar}>
-      {config.modules.maintenance.active && isMaintenance ? (
+      {isModuleEnabled(ModuleNames.MAINTENANCE) && isMaintenance ? (
         <AppBar position="sticky" sx={{ bgcolor: 'red' }}>
           {config.modules.maintenance.custom_maintenance_text !== undefined ? (
             <Typography variant="subtitle2" align={'center'} fontSize={'20px'}>

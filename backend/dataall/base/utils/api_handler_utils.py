@@ -11,8 +11,9 @@ def get_cognito_groups(claims):
         )
     groups = list()
     saml_groups = claims.get('custom:saml.groups', '')
+    translation_table = str.maketrans({'[': None, ']': None, ', ': ','})
     if len(saml_groups):
-        groups: list = saml_groups.replace('[', '').replace(']', '').replace(', ', ',').split(',')
+        groups = saml_groups.translate(translation_table).split(',')
     cognito_groups = claims.get('cognito:groups', '')
     if len(cognito_groups):
         groups.extend(cognito_groups.split(','))

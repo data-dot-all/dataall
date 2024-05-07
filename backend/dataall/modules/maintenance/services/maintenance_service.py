@@ -8,6 +8,7 @@ import os
 
 from dataall.base.aws.event_bridge import EventBridge
 from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.maintenance.api.enums import MaintenanceStatus
 from dataall.modules.maintenance.db.maintenance_repository import MaintenanceRepository
 from dataall.core.stacks.aws.ecs import Ecs
@@ -19,7 +20,13 @@ class MaintenanceService:
     # Update the RDS table with the mode and status to PENDING
     # Disable all scheduled ECS tasks which are created by data.all
     @staticmethod
-    def start_maintenance_window(engine, mode: str = None):
+    def start_maintenance_window(engine, mode: str = None, groups=None):
+        # Check from the context if the groups contains the DAAAdminstrators group
+        if groups is None:
+            groups = []
+        if not TenantPolicyValidationService.is_tenant_admin(groups):
+            raise Exception('Only data.all admin group members can start maintenance window')
+
         logger.info('Putting data.all into maintenance')
         try:
             with engine.scoped_session() as session:
@@ -54,7 +61,12 @@ class MaintenanceService:
     # Update the RDS table by changing the status to INACTIVE
     # Enable all the ECS Scheduled task
     @staticmethod
-    def stop_maintenance_window(engine):
+    def stop_maintenance_window(engine, groups=None):
+        # Check from the context if the groups contains the DAAAdminstrators group
+        if groups is None:
+            groups = []
+        if not TenantPolicyValidationService.is_tenant_admin(groups):
+            raise Exception('Only data.all admin group members can stop maintenance window')
         logger.info('Stopping maintenance mode')
         try:
             with engine.scoped_session() as session:

@@ -33,7 +33,6 @@ def init_maintenance_record(db):
         session.commit()
 
 
-@pytest.mark.skipif(not config.get_property('modules.maintenance.active'), reason='Module disabled by config')
 def test_start_maintenance_window(db, client, mock_ecs_client, init_maintenance_record):
     response = client.query(
         """
@@ -55,7 +54,6 @@ def test_start_maintenance_window(db, client, mock_ecs_client, init_maintenance_
         assert maintenance_record.mode == 'READ-ONLY'
 
 
-@pytest.mark.skipif(not config.get_property('modules.maintenance.active'), reason='Module disabled by config')
 def test_start_maintenance_window_with_team_not_a_data_admin(client, mock_ecs_client, init_maintenance_record):
     response = client.query(
         """
@@ -72,7 +70,6 @@ def test_start_maintenance_window_with_team_not_a_data_admin(client, mock_ecs_cl
     assert 'Only data.all admin group members can start maintenance window' in response.errors[0]['message']
 
 
-@pytest.mark.skipif(not config.get_property('modules.maintenance.active'), reason='Module disabled by config')
 def test_stop_maintenance_window(db, client, mock_ecs_client, init_maintenance_record):
     # Initialize the maintenance window with ACTIVE status and READ-ONLY mode
     with db.scoped_session() as session:
@@ -95,8 +92,29 @@ def test_stop_maintenance_window(db, client, mock_ecs_client, init_maintenance_r
     assert response
     assert response.data.stopMaintenanceWindow is True
 
+def test_stop_maintenance_window_no_dataall_admin(db, client, mock_ecs_client, init_maintenance_record):
+    # Initialize the maintenance window with ACTIVE status and READ-ONLY mode
+    with db.scoped_session() as session:
+        maintenance_record = session.query(Maintenance).one()
+        maintenance_record.mode = 'READ-ONLY'
+        maintenance_record.status = 'ACTIVE'
+        session.add(maintenance_record)
+        session.commit()
 
-@pytest.mark.skipif(not config.get_property('modules.maintenance.active'), reason='Module disabled by config')
+    response = client.query(
+        """
+            mutation stopMaintenanceWindow{
+                stopMaintenanceWindow
+            }
+            """,
+        username='alice',
+        groups=['Engineers'],
+    )
+
+    assert response
+    assert 'Only data.all admin group members can stop maintenance window' in response.errors[0]['message']
+
+
 def test_get_maintenance_window_status(db, client, mock_ecs_client, init_maintenance_record):
     # Initialize the maintenance window with ACTIVE status and READ-ONLY mode
     with db.scoped_session() as session:
