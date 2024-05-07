@@ -85,7 +85,7 @@ class DatasetTable(Resource, Base):
 
 class S3Dataset(DatasetBase):
     __tablename__ = 's3_dataset'
-    datasetUri = Column(String, ForeignKey('employee.id'), primary_key=True)
+    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
     GlueCrawlerName = Column(String)
