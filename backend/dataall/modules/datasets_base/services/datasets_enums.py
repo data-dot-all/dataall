@@ -4,6 +4,8 @@ from dataall.base.db.exceptions import InvalidInput
 
 custom_confidentiality_mapping = config.get_property('modules.s3_datasets.features.custom_confidentiality_mapping', {})
 
+class DatasetType(GraphQLEnumMapper):
+    S3 = 'S3'
 
 class DatasetRole(GraphQLEnumMapper):
     # Permissions on a dataset
