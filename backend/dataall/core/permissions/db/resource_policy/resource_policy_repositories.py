@@ -70,7 +70,9 @@ class ResourcePolicyRepository:
         else:
             return policy
 
-    def query_all_resource_policies(session, group_uri: str, resource_uri: str, resource_type: str = None):
+    def query_all_resource_policies(
+        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
+    ):
         resource_policy = session.query(ResourcePolicy).filter(
             ResourcePolicy.resourceUri == resource_uri,
         )
@@ -84,6 +86,9 @@ class ResourcePolicyRepository:
                 ResourcePolicy.resourceType == resource_type,
             )
 
+        if permissions is not None:
+            resource_policy = resource_policy.filter(ResourcePolicy.permissions.in_(permissions))
+
         return resource_policy
 
     @staticmethod
@@ -95,9 +100,9 @@ class ResourcePolicyRepository:
 
     @staticmethod
     def find_all_resource_policies(
-        session, group_uri: str, resource_uri: str, resource_type: str = None
+        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
     ) -> List[ResourcePolicy]:
         resource_policy = ResourcePolicyRepository.query_all_resource_policies(
-            session, group_uri, resource_uri, resource_type
+            session, group_uri, resource_uri, resource_type, permissions
         )
         return resource_policy.all()

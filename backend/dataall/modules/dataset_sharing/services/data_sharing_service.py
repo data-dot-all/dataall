@@ -73,10 +73,6 @@ class DataSharingService:
                 new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
                 share_sm.update_state(session, share, new_share_state)
 
-                need_grant_permissions = (
-                    share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value
-                )
-
                 (shared_tables, shared_folders, shared_buckets) = ShareObjectRepository.get_share_data_items(
                     session, share_uri, ShareItemStatus.Share_Approved.value
                 )
@@ -290,7 +286,7 @@ class DataSharingService:
                     env_group,
                 )
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-                if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                if share.groupUri != dataset.SamlAdminGroupName and share.groupUri != dataset.stewards:
                     log.info('Deleting FOLDER READ permissions...')
                     ShareItemService.delete_dataset_folder_read_permission(session, share)
                 log.info('Revoking permissions to S3 buckets')
@@ -313,7 +309,7 @@ class DataSharingService:
                 ).process_revoked_shares()
 
                 log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
-                if share.groupUri != dataset.SamlAdminGroupName and share.principalType == PrincipalType.Group.value:
+                if share.groupUri != dataset.SamlAdminGroupName and share.groupUri != dataset.stewards:
                     log.info('Deleting TABLE READ permissions...')
                     ShareItemService.delete_dataset_table_read_permission(session, share)
 
