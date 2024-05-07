@@ -5,7 +5,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -23,7 +23,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         share_folder: DatasetStorageLocation,
         source_environment: Environment,
@@ -47,7 +47,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
     def process_approved_shares(
         cls,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         share_folders: [DatasetStorageLocation],
         source_environment: Environment,
@@ -130,7 +130,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
     def process_revoked_shares(
         cls,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         revoke_folders: [DatasetStorageLocation],
         source_environment: Environment,
@@ -205,7 +205,7 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
     def verify_shares(
         cls,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         share_folders: [DatasetStorageLocation],
         source_environment: Environment,

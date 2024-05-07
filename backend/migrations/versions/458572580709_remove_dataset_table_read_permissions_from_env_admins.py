@@ -13,7 +13,7 @@ from sqlalchemy import and_
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType, PrincipalType
 
@@ -33,7 +33,7 @@ def get_session():
 def upgrade():
     session = get_session()
 
-    datasets: [Dataset] = session.query(Dataset).all()
+    datasets: [S3Dataset] = session.query(S3Dataset).all()
     for dataset in datasets:
         environment = EnvironmentService.get_environment_by_uri(session, uri=dataset.environmentUri)
         env_admin_group = environment.SamlGroupName
