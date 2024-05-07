@@ -23,7 +23,7 @@ from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.s3_datasets.aws.lf_dataset_client import LakeFormationDatasetClient
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 from dataall.base.config import config
 
