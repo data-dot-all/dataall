@@ -245,9 +245,23 @@ class ShareItemService:
             session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Revoke_Succeeded.value]
         )
         for table in share_table_items:
-            ResourcePolicyService.delete_resource_policy(
-                session=session, group=share.groupUri, resource_uri=table.itemUri
+            other_shares = ShareObjectRepository.find_all_other_share_items(
+                session,
+                not_this_share_uri=share.shareUri,
+                item_uri=table.itemUri,
+                share_type=ShareableType.Table,
+                principal_type='GROUP',
+                principal_uri=share.groupUri,
+                item_status=[ShareItemStatus.Share_Succeeded],
             )
+            log.info(
+                f'Table {table.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
+            )
+            if len(other_shares) == 0:
+                log.info('Delete permissions...')
+                ResourcePolicyService.delete_resource_policy(
+                    session=session, group=share.groupUri, resource_uri=table.itemUri
+                )
 
     @staticmethod
     def delete_dataset_folder_read_permission(session, share):
@@ -258,8 +272,22 @@ class ShareItemService:
             session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Revoke_Succeeded.value]
         )
         for location in share_folder_items:
-            ResourcePolicyService.delete_resource_policy(
-                session=session,
-                group=share.groupUri,
-                resource_uri=location.itemUri,
+            other_shares = ShareObjectRepository.find_all_other_share_items(
+                session,
+                not_this_share_uri=share.shareUri,
+                item_uri=location.itemUri,
+                share_type=ShareableType.StorageLocation,
+                principal_type='GROUP',
+                principal_uri=share.groupUri,
+                item_status=[ShareItemStatus.Share_Succeeded],
             )
+            log.info(
+                f'Location {location.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
+            )
+            if len(other_shares) == 0:
+                log.info('Delete permissions...')
+                ResourcePolicyService.delete_resource_policy(
+                    session=session,
+                    group=share.groupUri,
+                    resource_uri=location.itemUri,
+                )

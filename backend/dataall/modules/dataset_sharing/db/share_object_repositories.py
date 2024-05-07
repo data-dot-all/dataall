@@ -900,6 +900,36 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
+    def find_all_other_share_items(
+        session, not_this_share_uri, item_uri, share_type, principal_type, principal_uri, item_status=None
+    ) -> List[ShareObjectItem]:
+        """
+        Find all shares from principal (principal_uri) to item (item_uri), that are not from specified share (not_this_share_uri)
+        """
+        shares = (
+            session.query(ShareObject.shareUri)
+            .filter(
+                ShareObject.principalType == principal_type,
+                ShareObject.principalId == principal_uri,
+                ShareObject.shareUri != not_this_share_uri,
+            )
+            .all()
+        )
+
+        query = session.query(ShareObjectItem).filter(
+            (
+                and_(
+                    ShareObjectItem.itemUri == item_uri,
+                    ShareObjectItem.itemType == share_type,
+                    ShareObject.shareUri.in_(shares),
+                )
+            )
+        )
+        if item_status:
+            query = query.filter(ShareObjectItem.status.in_(item_status))
+        return query.all()
+
+    @staticmethod
     def other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         return (
