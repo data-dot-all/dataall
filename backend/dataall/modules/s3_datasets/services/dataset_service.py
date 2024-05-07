@@ -220,7 +220,7 @@ class DatasetService:
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=S3Dataset.__name__, #todo: SEE HOW IT AFFECTS BACKWARDS COMPATIBILITY
+                resource_type=S3Dataset.__name__,  # todo: SEE HOW IT AFFECTS BACKWARDS COMPATIBILITY
             )
             if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicyService.attach_resource_policy(

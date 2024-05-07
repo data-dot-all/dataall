@@ -30,7 +30,7 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         tables: [DatasetTable],
         source_environment: Environment,

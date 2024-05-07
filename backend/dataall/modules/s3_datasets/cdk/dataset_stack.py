@@ -61,18 +61,18 @@ class DatasetStack(Stack):
             env = EnvironmentService.get_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
         return env
 
-    def get_target_with_uri(self, target_uri) -> Dataset:
+    def get_target_with_uri(self, target_uri) -> S3Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(Dataset).get(target_uri)
+            dataset = session.query(S3Dataset).get(target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_target(self) -> Dataset:
+    def get_target(self) -> S3Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(Dataset).get(self.target_uri)
+            dataset = session.query(S3Dataset).get(self.target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
@@ -504,6 +504,6 @@ class DatasetStack(Stack):
         if config.get_property('modules.s3_datasets.features.confidentiality_dropdown', False):
             Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(stack=self, model=Dataset, target_type='dataset')
+        TagsUtil.add_tags(stack=self, model=S3Dataset, target_type='dataset')
 
         CDKNagUtil.check_rules(self)

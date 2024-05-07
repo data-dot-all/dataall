@@ -10,7 +10,7 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Datase
 log = logging.getLogger(__name__)
 
 
-def get_table(context, source: Dataset, tableUri: str = None):
+def get_table(context, source: S3Dataset, tableUri: str = None):
     return DatasetTableService.get_table(uri=tableUri)
 
 

@@ -12,7 +12,7 @@ from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 SOURCE_ENV_ACCOUNT = '111111111111'
 SOURCE_ENV_ROLE_NAME = 'dataall-ProducerEnvironment-i6v1v1c2'
@@ -75,13 +75,13 @@ def dataset1(create_dataset: Callable, org_fixture: Organization, source_environ
 
 
 @pytest.fixture(scope='module')
-def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
+def location1(location: Callable, dataset1: S3Dataset) -> DatasetStorageLocation:
     yield location(dataset1, 'location1')
 
 
 @pytest.fixture(scope='module')
 def share1(
-    share: Callable, dataset1: Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
+    share: Callable, dataset1: S3Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
 ) -> ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
     yield share1
@@ -307,7 +307,7 @@ def test_manage_bucket_policy_existing_policy(mocker, admin_ap_delegation_bucket
 
 def test_grant_target_role_access_policy_test_empty_policy(
     mocker,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
@@ -812,7 +812,7 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
 
 def test_dont_delete_access_point_with_policy(
-    mocker, dataset1: Dataset, share1: ShareObject, target_environment: Environment, share_manager
+    mocker, dataset1: S3Dataset, share1: ShareObject, target_environment: Environment, share_manager
 ):
     # Given
     existing_ap_policy = _generate_ap_policy_object(
@@ -836,7 +836,7 @@ def test_dont_delete_access_point_with_policy(
 
 
 def test_delete_access_point_without_policy(
-    mocker, dataset1: Dataset, share1: ShareObject, share_manager, target_environment
+    mocker, dataset1: S3Dataset, share1: ShareObject, share_manager, target_environment
 ):
     # Given ap policy that contains no statements
     existing_ap_policy = _generate_ap_policy_object('access-point-arn', [])
@@ -860,7 +860,7 @@ def test_delete_access_point_without_policy(
 
 def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     share1: ShareObject,
     location1: DatasetStorageLocation,
     target_environment: Environment,
@@ -944,7 +944,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
 def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
-    dataset1: Dataset,
+    dataset1: S3Dataset,
     share1: ShareObject,
     location1: DatasetStorageLocation,
     target_environment: Environment,
@@ -1049,7 +1049,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 # The kms key policy includes the target env admin to be removed aswell as one additional target env
 # admin, that should remain
 def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target_env(
-    mocker, dataset1: Dataset, share1: ShareObject, target_environment: Environment, share_manager
+    mocker, dataset1: S3Dataset, share1: ShareObject, target_environment: Environment, share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -1100,7 +1100,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
 
 # The kms key policy only includes the target env admin
 def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_target_env(
-    mocker, dataset1: Dataset, share1: ShareObject, target_environment: Environment, share_manager
+    mocker, dataset1: S3Dataset, share1: ShareObject, target_environment: Environment, share_manager
 ):
     # Given
     kms_client = mock_kms_client(mocker)

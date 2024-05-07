@@ -33,7 +33,7 @@ class S3BucketShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         target_bucket: DatasetBucket,
         source_environment: Environment,

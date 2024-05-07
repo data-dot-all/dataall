@@ -92,7 +92,7 @@ class DatasetSubscriptionService:
             self._publish_update_message(session, message, location)
 
     def _publish_update_message(self, session, message, entity, table: DatasetTable = None):
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
+        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
 
         log.info(f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}')
         share_items: [ShareObjectItem] = ShareObjectRepository.find_share_items_by_item_uri(session, entity.uri())

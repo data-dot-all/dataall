@@ -62,7 +62,9 @@ class DatasetRepository(EnvironmentResource):
     def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(S3Dataset)
-            .filter(and_(S3Dataset.environmentUri == environment.environmentUri, S3Dataset.SamlAdminGroupName == group_uri))
+            .filter(
+                and_(S3Dataset.environmentUri == environment.environmentUri, S3Dataset.SamlAdminGroupName == group_uri)
+            )
             .count()
         )
 

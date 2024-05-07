@@ -42,7 +42,7 @@ class S3AccessPointShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         target_folder: DatasetStorageLocation,
         source_environment: Environment,
@@ -700,7 +700,7 @@ class S3AccessPointShareManager:
 
     def delete_dataset_bucket_key_policy(
         self,
-        dataset: Dataset,
+        dataset: S3Dataset,
     ):
         logger.info('Deleting dataset bucket KMS key policy...')
         key_alias = f'alias/{dataset.KmsAlias}'
