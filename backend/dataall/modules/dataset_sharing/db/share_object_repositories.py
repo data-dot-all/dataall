@@ -906,22 +906,18 @@ class ShareObjectRepository:
         """
         Find all shares from principal (principal_uri) to item (item_uri), that are not from specified share (not_this_share_uri)
         """
-        shares = (
-            session.query(ShareObject.shareUri)
+        query = (
+            session.query(ShareObjectItem)
+            .join(ShareObject, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
-                ShareObject.principalType == principal_type,
-                ShareObject.principalId == principal_uri,
-                ShareObject.shareUri != not_this_share_uri,
-            )
-            .all()
-        )
-
-        query = session.query(ShareObjectItem).filter(
-            (
-                and_(
-                    ShareObjectItem.itemUri == item_uri,
-                    ShareObjectItem.itemType == share_type,
-                    ShareObject.shareUri.in_(shares),
+                (
+                    and_(
+                        ShareObjectItem.itemUri == item_uri,
+                        ShareObjectItem.itemType == share_type,
+                        ShareObject.principalType == principal_type,
+                        ShareObject.principalId == principal_uri,
+                        ShareObject.shareUri != not_this_share_uri,
+                    )
                 )
             )
         )
