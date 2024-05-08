@@ -52,12 +52,7 @@ class MaintenanceService:
                 )
             # Disable scheduled ECS tasks
             # Get all the SSM Params related to the scheduled tasks
-            ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
-                region=os.getenv('AWS_REGION', 'eu-west-1'),
-                parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule",
-            )
-            logger.debug(ecs_scheduled_rules)
-            ecs_scheduled_rules_list = [item['Value'] for item in ecs_scheduled_rules]
+            ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
             event_bridge_session = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
             event_bridge_session.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
@@ -93,12 +88,7 @@ class MaintenanceService:
                     maintenance_status='INACTIVE', maintenance_mode=''
                 )
             # Enable scheduled ECS tasks
-            ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
-                region=os.getenv('AWS_REGION', 'eu-west-1'),
-                parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule",
-            )
-            logger.debug(ecs_scheduled_rules)
-            ecs_scheduled_rules_list = [item['Value'] for item in ecs_scheduled_rules]
+            ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
             event_bridge_session = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
             event_bridge_session.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
@@ -152,3 +142,12 @@ class MaintenanceService:
         except Exception as e:
             logger.error(f'Error while getting maintenance window mode due to {e}')
             raise e
+
+    @staticmethod
+    def _get_ecs_rules():
+        ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule",
+        )
+        logger.debug(ecs_scheduled_rules)
+        return [item['Value'] for item in ecs_scheduled_rules]
