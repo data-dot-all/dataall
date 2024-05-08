@@ -27,6 +27,7 @@ class S3DatasetClient:
         dataset_client = session.client(
             's3',
             region_name=self._dataset.region,
+            endpoint_url=f'https://s3.{self._dataset.region}.amazonaws.com',
             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}),
         )
         return dataset_client
