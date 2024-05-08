@@ -116,31 +116,11 @@ def handler(event, context):
         if 'user_id' in event['requestContext']['authorizer']:
             user_id = event['requestContext']['authorizer']['user_id']
         log.debug('username is %s', username)
-        try:
-            groups = []
-            if os.environ.get('custom_auth', None):
-                groups.extend(get_custom_groups(user_id))
-            else:
-                groups.extend(get_cognito_groups(claims))
-            log.debug('groups are %s', ','.join(groups))
-            with ENGINE.scoped_session() as session:
-                for group in groups:
-                    policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
-                    if not policy:
-                        print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
-                        TenantPolicyService.attach_group_tenant_policy(
-                            session=session,
-                            group=group,
-                            permissions=TENANT_ALL,
-                            tenant_name=TenantPolicyService.TENANT_NAME,
-                        )
 
-        except Exception as e:
-            print(f'Error managing groups due to: {e}')
-            groups = []
+        groups: list = extract_groups_and_attach_tenant_policy(user_id=user_id, claims=claims)
 
+        # Set Context
         set_context(RequestContext(ENGINE, username, groups, user_id))
-
         app_context = {
             'engine': ENGINE,
             'username': username,
@@ -150,55 +130,50 @@ def handler(event, context):
 
         query = json.loads(event.get('body'))
 
-        # Logic to block when in maintenance
-        # Check if in some maintenance mode
-        # Check if in maintenance status is not INACTIVE
-        # Check if the user belongs to a 'DAAdministrators' group
-        if config.get_property('modules.maintenance.active'):
-            if (
-                (MaintenanceService._get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.NOACCESS.value)
-                and (
-                    MaintenanceService.get_maintenance_window_status(engine=ENGINE).status
-                    is not MaintenanceStatus.INACTIVE.value
-                )
-                and not TenantPolicyValidationService.is_tenant_admin(groups)
-            ):
-                if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
-                    return send_unauthorized_response(
-                        query=query,
-                        message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                    )
-            elif (
-                (MaintenanceService._get_maintenance_window_mode(engine=ENGINE) == MaintenanceModes.READONLY.value)
-                and (
-                    MaintenanceService.get_maintenance_window_status(engine=ENGINE).status
-                    is not MaintenanceStatus.INACTIVE.value
-                )
-                and not TenantPolicyValidationService.is_tenant_admin(groups)
-            ):
-                # If its mutation then block and return
-                if query.get('query', '').split()[0] == 'mutation':
-                    return send_unauthorized_response(
-                        query=query,
-                        message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                    )
+        isBlockedResponse = validate_and_block_if_maintenance_window(query=query, groups=groups)
+        if isBlockedResponse is not None:
+            return isBlockedResponse
+        isReauthResponse = check_reauth(query=query, auth_time=claims['auth_time'], username=username)
+        if isReauthResponse is not None:
+            return isReauthResponse
 
-        # Determine if there are any Operations that Require ReAuth From SSM Parameter
-        try:
-            reauth_apis = ParameterStoreManager.get_parameter_value(
-                region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
-            ).split(',')
-        except Exception:
-            log.info('No ReAuth APIs Found in SSM')
-            reauth_apis = None
     else:
         raise Exception(f'Could not initialize user context from event {event}')
+
+    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
+
+    dispose_context()
+    response = json.dumps(response)
+
+    log.info('Lambda Response %s', response)
+
+    return {
+        'statusCode': 200 if success else 400,
+        'headers': {
+            'content-type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Methods': '*',
+        },
+        'body': response,
+    }
+
+
+def check_reauth(query, auth_time, username):
+    # Determine if there are any Operations that Require ReAuth From SSM Parameter
+    try:
+        reauth_apis = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+        ).split(',')
+    except Exception:
+        log.info('No ReAuth APIs Found in SSM')
+        reauth_apis = None
 
     # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
     if reauth_apis and query.get('operationName', None) in reauth_apis:
         now = datetime.datetime.now(datetime.timezone.utc)
         try:
-            auth_time_datetime = datetime.datetime.fromtimestamp(int(claims['auth_time']), tz=datetime.timezone.utc)
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(auth_time), tz=datetime.timezone.utc)
             if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
                 raise Exception('ReAuth')
         except Exception as e:
@@ -225,20 +200,60 @@ def handler(event, context):
                 'body': json.dumps(response),
             }
 
-    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
 
-    dispose_context()
-    response = json.dumps(response)
+def validate_and_block_if_maintenance_window(query, groups):
+    # Logic to block when in maintenance
+    # Check if in some maintenance mode
+    # Check if in maintenance status is not INACTIVE
+    # Check if the user belongs to a 'DAAdministrators' group
+    if config.get_property('modules.maintenance.active'):
+        maintenance_mode = MaintenanceService._get_maintenance_window_mode(engine=ENGINE)
+        maintenance_status = MaintenanceService.get_maintenance_window_status(engine=ENGINE).status
+        isAdmin = TenantPolicyValidationService.is_tenant_admin(groups)
 
-    log.info('Lambda Response %s', response)
+        if (
+            (maintenance_mode == MaintenanceModes.NOACCESS.value)
+            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
+            and not isAdmin
+        ):
+            if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
+                return send_unauthorized_response(
+                    query=query,
+                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                )
+        elif (
+            (maintenance_mode == MaintenanceModes.READONLY.value)
+            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
+            and not isAdmin
+        ):
+            # If its mutation then block and return
+            if query.get('query', '').split()[0] == 'mutation':
+                return send_unauthorized_response(
+                    query=query,
+                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                )
 
-    return {
-        'statusCode': 200 if success else 400,
-        'headers': {
-            'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Methods': '*',
-        },
-        'body': response,
-    }
+
+def extract_groups_and_attach_tenant_policy(user_id, claims):
+    groups = []
+    try:
+        if os.environ.get('custom_auth', None):
+            groups.extend(get_custom_groups(user_id))
+        else:
+            groups.extend(get_cognito_groups(claims))
+        log.debug('groups are %s', ','.join(groups))
+        with ENGINE.scoped_session() as session:
+            for group in groups:
+                policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
+                if not policy:
+                    print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
+                    TenantPolicyService.attach_group_tenant_policy(
+                        session=session,
+                        group=group,
+                        permissions=TENANT_ALL,
+                        tenant_name=TenantPolicyService.TENANT_NAME,
+                    )
+        return groups
+    except Exception as e:
+        print(f'Error managing groups due to: {e}')
+        return groups

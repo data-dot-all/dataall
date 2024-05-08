@@ -13,7 +13,7 @@ def start_maintenance_window(context: Context, source: Maintenance, mode: str):
 
 
 def stop_maintenance_window(context: Context, source: Maintenance):
-    return MaintenanceService.stop_maintenance_window(engine=context.engine, groups=None)
+    return MaintenanceService.stop_maintenance_window(engine=context.engine, groups=context.groups)
 
 
 def get_maintenance_window_status(context: Context, source: Maintenance):

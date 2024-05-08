@@ -92,6 +92,7 @@ def test_stop_maintenance_window(db, client, mock_ecs_client, init_maintenance_r
     assert response
     assert response.data.stopMaintenanceWindow is True
 
+
 def test_stop_maintenance_window_no_dataall_admin(db, client, mock_ecs_client, init_maintenance_record):
     # Initialize the maintenance window with ACTIVE status and READ-ONLY mode
     with db.scoped_session() as session:

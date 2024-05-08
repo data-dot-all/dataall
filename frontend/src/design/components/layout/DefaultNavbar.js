@@ -8,7 +8,10 @@ import { Logo } from '../Logo';
 import { SettingsDrawer } from '../SettingsDrawer';
 import { ModuleNames, isModuleEnabled } from 'utils';
 import config from '../../../generated/config.json';
-import {PENDING_STATUS, ACTIVE_STATUS} from "../../../modules/Maintenance/views/MaintenanceViewer";
+import {
+  PENDING_STATUS,
+  ACTIVE_STATUS
+} from '../../../modules/Maintenance/views/MaintenanceViewer';
 import { useClient } from '../../../services';
 import { getMaintenanceStatus } from '../../../modules/Maintenance/services';
 import { SET_ERROR, useDispatch } from '../../../globalErrors';
@@ -27,31 +30,28 @@ export const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
   const dispatch = useDispatch();
   const client = useClient();
 
-  const _getMaintenanceStatus = async() =>{
-      const response = await client.query(getMaintenanceStatus());
+  const _getMaintenanceStatus = async () => {
+    const response = await client.query(getMaintenanceStatus());
+    if (!response.errors && response.data.getMaintenanceWindowStatus !== null) {
       if (
-          !response.errors &&
-          response.data.getMaintenanceWindowStatus !== null
+        response.data.getMaintenanceWindowStatus.status === ACTIVE_STATUS ||
+        response.data.getMaintenanceWindowStatus.status === PENDING_STATUS
       ) {
-        if (
-            response.data.getMaintenanceWindowStatus.status === ACTIVE_STATUS ||
-            response.data.getMaintenanceWindowStatus.status === PENDING_STATUS
-        ) {
-          setMaintenanceFlag(true);
-        }
-      } else {
-        const error = response.errors
-            ? response.errors[0].message
-            : 'Could not fetch status of maintenance window';
-        dispatch({type: SET_ERROR, error});
+        setMaintenanceFlag(true);
       }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Could not fetch status of maintenance window';
+      dispatch({ type: SET_ERROR, error });
     }
-
+  };
 
   useEffect(async () => {
-    console.log("Loading the useffect of deafult nav bar ")
     if (client && isModuleEnabled(ModuleNames.MAINTENANCE)) {
-      _getMaintenanceStatus().catch((err) => dispatch({ type: SET_ERROR, err }));
+      _getMaintenanceStatus().catch((err) =>
+        dispatch({ type: SET_ERROR, err })
+      );
     }
   }, [client]);
 

@@ -17,10 +17,18 @@ logger = logging.getLogger(__name__)
 
 
 class MaintenanceService:
-    # Update the RDS table with the mode and status to PENDING
-    # Disable all scheduled ECS tasks which are created by data.all
     @staticmethod
     def start_maintenance_window(engine, mode: str = None, groups=None):
+        """
+        Start maintenance window by performing following actions
+            1. Perform validation to check if the user belongs to the DAAdministrators group
+            2. Put the maintenance window status to PENDING and update the maintenance mode
+            3. Get all the ECS Scheduled tasks and disable the schedule for them
+        @param engine: db engine
+        @param mode: mode to set for maintenance window
+        @param groups: user groups from context.groups
+        @return: returns True if successful or False
+        """
         # Check from the context if the groups contains the DAAAdminstrators group
         if groups is None:
             groups = []
@@ -57,11 +65,18 @@ class MaintenanceService:
             logger.error(f'Error occurred while starting maintenance window due to {e}')
             return False
 
-    # Update the RDS table by changing mode to - ''
-    # Update the RDS table by changing the status to INACTIVE
-    # Enable all the ECS Scheduled task
     @staticmethod
     def stop_maintenance_window(engine, groups=None):
+        """
+        Stop maintenance window by performing following actions
+            1. Perform validation to check if the user belongs to the DAAdministrators group
+            2. Update the RDS table by changing the status to INACTIVE and mode to '-'
+            3. Enable all data.all related ECS scheduled tasks
+        @param engine: db engine
+        @param groups: user groups from context.groups
+        @return: return True if successful or False
+        """
+
         # Check from the context if the groups contains the DAAAdminstrators group
         if groups is None:
             groups = []
@@ -91,10 +106,14 @@ class MaintenanceService:
             logger.error(f'Error occurred while stopping maintenance window due to {e}')
             return False
 
-    # Checks if all ECS tasks in the data.all infra account have completed
-    # Updates the maintenance status and returns maintenance record
     @staticmethod
     def get_maintenance_window_status(engine):
+        """
+        Get the status of maintenance window
+        Maintenance record is returned after checking if all ECS tasks in the data.all created cluster have completed.
+        @param engine: db object
+        @return: Maintenance object containing status and mode
+        """
         logger.info('Checking maintenance window status')
         try:
             with engine.scoped_session() as session:
@@ -106,13 +125,17 @@ class MaintenanceService:
                         parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/cluster/name",
                     )
                     if Ecs.is_task_running(cluster_name=ecs_cluster_name):
+                        logger.info(f'Current maintenance window status - {maintenance_record.status}')
                         return maintenance_record
                     else:
+                        logger.info(
+                            'All pending ECS tasks have completed running. Setting Maintenance Status to ACTIVE'
+                        )
                         maintenance_record.status = MaintenanceStatus.ACTIVE.value
                         session.commit()
                         return maintenance_record
                 else:
-                    logger.info('Maintenance window is not in PENDING state')
+                    logger.info(f'Current maintenance window status - {maintenance_record.status}')
                     return maintenance_record
         except Exception as e:
             logger.error(f'Error while getting maintenance window status due to {e}')

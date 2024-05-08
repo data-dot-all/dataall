@@ -4,15 +4,18 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Login } from '../views/Login';
 import { useAuth } from '../hooks';
 import {
-  isModuleEnabled, ModuleNames,
+  isModuleEnabled,
+  ModuleNames,
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
 } from '../../utils';
 import { useClient, useGroups } from '../../services';
 import { LoadingScreen, NoAccessMaintenanceWindow } from '../../design';
 import { getMaintenanceStatus } from '../../modules/Maintenance/services';
-import {PENDING_STATUS, ACTIVE_STATUS} from "../../modules/Maintenance/views/MaintenanceViewer";
-import config from '../../generated/config.json';
+import {
+  PENDING_STATUS,
+  ACTIVE_STATUS
+} from '../../modules/Maintenance/views/MaintenanceViewer';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 
 export const AuthGuard = (props) => {

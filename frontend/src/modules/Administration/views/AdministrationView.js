@@ -13,12 +13,9 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
-import {
-  AdministrationTeams,
-  DashboardViewer,
-} from '../components';
-import {MaintenanceViewer} from "../../Maintenance/views/MaintenanceViewer";
-import {isModuleEnabled, ModuleNames} from "../../../utils";
+import { AdministrationTeams, DashboardViewer } from '../components';
+import { MaintenanceViewer } from '../../Maintenance/views/MaintenanceViewer';
+import { isModuleEnabled, ModuleNames } from '../../../utils';
 
 const tabs = [
   { label: 'Teams', value: 'teams' },
