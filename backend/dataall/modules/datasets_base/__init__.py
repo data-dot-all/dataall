@@ -15,4 +15,4 @@ class DatasetBaseModuleInterface(ModuleInterface):
         return modes & supported_modes
 
     def __init__(self):
-        import dataall.modules.datasets_base.api
+        import dataall.modules.datasets_base.services.datasets_enums

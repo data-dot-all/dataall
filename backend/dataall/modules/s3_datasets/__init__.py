@@ -98,7 +98,6 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
         import dataall.modules.s3_datasets.db.dataset_models
         import dataall.modules.s3_datasets.db.dataset_repositories
         import dataall.modules.s3_datasets.services.dataset_permissions
-        import dataall.modules.datasets_base.services.datasets_enums
 
         log.info('Dataset handlers have been imported')
 
