@@ -1,6 +1,6 @@
-from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.modules.s3_datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 
 
 def test_es_request():

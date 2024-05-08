@@ -38,7 +38,7 @@ import {
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 
-const previewDataEnabled = isFeatureEnabled('datasets', 'preview_data');
+const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 
 const tabs = [
   { label: 'Overview', value: 'overview' },

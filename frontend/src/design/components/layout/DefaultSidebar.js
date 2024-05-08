@@ -35,7 +35,7 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       title: 'Datasets',
       path: '/console/datasets',
       icon: <FiPackage size={15} />,
-      active: isModuleEnabled(ModuleNames.DATASETS)
+      active: isModuleEnabled(ModuleNames.S3_DATASETS)
     };
 
     const sharesSection = {

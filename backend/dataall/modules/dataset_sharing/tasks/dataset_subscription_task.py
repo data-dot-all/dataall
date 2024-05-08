@@ -12,12 +12,12 @@ from dataall.base.db import get_engine
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
-from dataall.modules.datasets.aws.sns_dataset_client import SnsDatasetClient
-from dataall.modules.datasets.db.dataset_location_repositories import DatasetLocationRepository
-from dataall.modules.datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.s3_datasets.aws.sns_dataset_client import SnsDatasetClient
+from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
+from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.dataset_sharing.tasks.subscriptions import poll_queues
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

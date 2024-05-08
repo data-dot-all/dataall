@@ -1,5 +1,6 @@
 from dataall.base.api import gql
 from dataall.modules.dataset_sharing.api.resolvers import (
+    get_dataset_shared_assume_role_url,
     get_share_object,
     list_shared_with_environment_data_items,
     list_shares_in_my_inbox,
@@ -60,4 +61,12 @@ getSharedDatasetTables = gql.QueryField(
     ],
     type=gql.ArrayType(gql.Ref('SharedDatasetTableItem')),
     resolver=list_shared_tables_by_env_dataset,
+)
+
+getDatasetSharedAssumeRoleUrl = gql.QueryField(
+    name='getDatasetSharedAssumeRoleUrl',
+    args=[gql.Argument(name='datasetUri', type=gql.String)],
+    type=gql.String,
+    resolver=get_dataset_shared_assume_role_url,
+    test_scope='Dataset',
 )

@@ -5,14 +5,15 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.dataset_sharing.services.dataset_sharing_service import DatasetSharingService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
 
@@ -332,3 +333,8 @@ def list_dataset_share_objects(context, source, filter: dict = None):
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
     return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+
+
+@is_feature_enabled('modules.s3_datasets.features.aws_actions')
+def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
+    return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)

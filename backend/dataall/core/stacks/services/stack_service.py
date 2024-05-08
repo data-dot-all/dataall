@@ -87,6 +87,16 @@ class StackService:
         return cfn_task
 
     @staticmethod
+    def create_stack(environment_uri, target_type, target_uri):
+        with get_context().db_engine.scoped_session() as session:
+            return StackRepository.create_stack(
+                session=session,
+                environment_uri=environment_uri,
+                target_type=target_type,
+                target_uri=target_uri,
+            )
+
+    @staticmethod
     def deploy_stack(targetUri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
