@@ -77,7 +77,7 @@ class ResourcePolicyService:
             return resource_policy
 
     @staticmethod
-    def find_resource_policies(session, group, resource_uri, resource_type):
+    def find_resource_policies(session, group, resource_uri, resource_type, permissions: List[str] = None):
         """
 
         :param session:
@@ -90,7 +90,7 @@ class ResourcePolicyService:
             group, resource_uri, resource_type
         )
         policies = ResourcePolicyRepository.find_all_resource_policies(
-            session, group_uri=group, resource_uri=resource_uri, resource_type=resource_type
+            session, group_uri=group, resource_uri=resource_uri, resource_type=resource_type, permissions=permissions
         )
         return policies
 
