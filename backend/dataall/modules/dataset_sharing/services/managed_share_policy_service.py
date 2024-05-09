@@ -209,7 +209,7 @@ class SharePolicyService(ManagedPolicy):
             additional_policy = {
                 'Sid': f'{statement_sid}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:*'],
+                'Action': ['s3:*','s3:List*','s3:Describe*'],
                 'Resource': existing_s3,
             }
             policy['Statement'].append(additional_policy)
