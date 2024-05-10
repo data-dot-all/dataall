@@ -12,11 +12,13 @@ createOmicsRun = gql.MutationField(
 
 # TODO: need to add the test
 deleteOmicsRun = gql.MutationField(
-    name="deleteOmicsRun",
+    name='deleteOmicsRun',
     type=gql.Boolean,
     args=[
-        gql.Argument(name="runUris", type=gql.NonNullableType(gql.ArrayType(gql.String))), # type=gql.NonNullableType(gql.String))
-        gql.Argument(name="deleteFromAWS", type=gql.Boolean),
+        gql.Argument(
+            name='runUris', type=gql.NonNullableType(gql.ArrayType(gql.String))
+        ),
+        gql.Argument(name='deleteFromAWS', type=gql.Boolean),
     ],
     resolver=delete_omics_run,
 )

@@ -144,7 +144,7 @@ class OmicsService:
         """List Omics workflows."""
         with _session() as session:
             return OmicsRepository(session).paginated_omics_workflows(filter=filter)
-    
+
     @staticmethod
     def delete_omics_runs(uris: List[str]) -> bool:
         """Deletes Omics runs from the database and if delete_from_aws is True from AWS as well"""
@@ -160,6 +160,7 @@ class OmicsService:
             omics_run = OmicsService._get_omics_run(session, uri)
             if not omics_run:
                 raise exceptions.ObjectNotFound('OmicsRun', uri)
+            OmicsClient.delete_omics_run(session=session, runUri=omics_run)
             session.delete(omics_run)
 
             ResourcePolicyService.delete_resource_policy(
