@@ -21,7 +21,7 @@ def upgrade():
     print('Renaming dataset as s3_dataset...')
     op.rename_table('dataset', 's3_dataset')
     op.execute('ALTER INDEX dataset_pkey RENAME TO s3_dataset_pkey')
-    op.drop_constraint(constraint_name='dataset_environmentUri_fkey', table_name='s3_dataset', type_='foreignkey')
+    op.drop_constraint(constraint_name='fk_dataset_env_uri', table_name='s3_dataset', type_='foreignkey')
     op.create_foreign_key(
         constraint_name='s3_dataset_environmentUri_fkey',
         source_table='s3_dataset',
@@ -29,15 +29,22 @@ def upgrade():
         local_cols=['environmentUri'],
         remote_cols=['environmentUri'],
     )
+    op.add_column(
+        's3_dataset',
+        sa.Column('datasetType', sa.String(), nullable=True),
+    )
+    op.execute('UPDATE s3_dataset SET "datasetType" = \'S3\'')
+    op.alter_column('s3_dataset', 'datasetType', nullable=False)
 
 
 def downgrade():
     print('Renaming s3_dataset as dataset...')
+    op.drop_column('s3_dataset', 'datasetType')
     op.rename_table('s3_dataset', 'dataset')
     op.execute('ALTER INDEX s3_dataset_pkey RENAME TO dataset_pkey')
     op.drop_constraint(constraint_name='s3_dataset_environmentUri_fkey', table_name='dataset', type_='foreignkey')
     op.create_foreign_key(
-        constraint_name='dataset_environmentUri_fkey',
+        constraint_name='fk_dataset_env_uri',
         source_table='dataset',
         referent_table='environment',
         local_cols=['environmentUri'],

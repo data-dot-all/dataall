@@ -31,8 +31,6 @@ class DatasetBase(Resource, Base):
 
     datasetType = Column(String, nullable=False)
     imported = Column(Boolean, default=False)
-    # TODO: migration script to add datasetType: "S3"
-    # TODO: migration script: rename current datasets to s3_datasets and backfill new datasets
 
     __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}
 
