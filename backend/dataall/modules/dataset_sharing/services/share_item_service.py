@@ -252,7 +252,7 @@ class ShareItemService:
                 share_type=ShareableType.Table.value,
                 principal_type='GROUP',
                 principal_uri=share.groupUri,
-                item_status=[ShareItemStatus.Share_Succeeded],
+                item_status=[ShareItemStatus.Share_Succeeded.value],
             )
             log.info(
                 f'Table {table.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
@@ -279,7 +279,7 @@ class ShareItemService:
                 share_type=ShareableType.StorageLocation.value,
                 principal_type='GROUP',
                 principal_uri=share.groupUri,
-                item_status=[ShareItemStatus.Share_Succeeded],
+                item_status=[ShareItemStatus.Share_Succeeded.value],
             )
             log.info(
                 f'Location {location.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
