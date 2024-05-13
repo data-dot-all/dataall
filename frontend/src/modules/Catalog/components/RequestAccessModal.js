@@ -64,12 +64,10 @@ export const RequestAccessModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      if (stopLoader) {
-        stopLoader();
-      }
       setLoadingEnvs(false);
+      stopLoader();
     }
-  }, [client, dispatch, stopLoader]);
+  }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
