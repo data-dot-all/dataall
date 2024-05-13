@@ -8,6 +8,7 @@ import os
 
 from dataall.base.aws.event_bridge import EventBridge
 from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.context import get_context
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.maintenance.api.enums import MaintenanceStatus
 from dataall.modules.maintenance.db.maintenance_repository import MaintenanceRepository
@@ -18,26 +19,23 @@ logger = logging.getLogger(__name__)
 
 class MaintenanceService:
     @staticmethod
-    def start_maintenance_window(engine, mode: str = None, groups=None):
+    def start_maintenance_window(mode: str = None):
         """
         Start maintenance window by performing following actions
             1. Perform validation to check if the user belongs to the DAAdministrators group
             2. Put the maintenance window status to PENDING and update the maintenance mode
             3. Get all the ECS Scheduled tasks and disable the schedule for them
-        @param engine: db engine
         @param mode: mode to set for maintenance window
-        @param groups: user groups from context.groups
         @return: returns True if successful or False
         """
         # Check from the context if the groups contains the DAAAdminstrators group
-        if groups is None:
-            groups = []
+        groups = get_context().groups if get_context().groups is not None else []
         if not TenantPolicyValidationService.is_tenant_admin(groups):
             raise Exception('Only data.all admin group members can start maintenance window')
 
         logger.info('Putting data.all into maintenance')
         try:
-            with engine.scoped_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
                 if (
                     maintenance_record.status == MaintenanceStatus.PENDING.value
@@ -53,33 +51,31 @@ class MaintenanceService:
             # Disable scheduled ECS tasks
             # Get all the SSM Params related to the scheduled tasks
             ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
-            event_bridge_session = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
-            event_bridge_session.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
+            event_bridge_client = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
+            event_bridge_client.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f'Error occurred while starting maintenance window due to {e}')
             return False
 
     @staticmethod
-    def stop_maintenance_window(engine, groups=None):
+    def stop_maintenance_window():
         """
         Stop maintenance window by performing following actions
             1. Perform validation to check if the user belongs to the DAAdministrators group
             2. Update the RDS table by changing the status to INACTIVE and mode to '-'
             3. Enable all data.all related ECS scheduled tasks
-        @param engine: db engine
-        @param groups: user groups from context.groups
         @return: return True if successful or False
         """
 
         # Check from the context if the groups contains the DAAAdminstrators group
-        if groups is None:
-            groups = []
+        groups = get_context().groups if get_context().groups is not None else []
+
         if not TenantPolicyValidationService.is_tenant_admin(groups):
             raise Exception('Only data.all admin group members can stop maintenance window')
         logger.info('Stopping maintenance mode')
         try:
-            with engine.scoped_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
                 if maintenance_record.status == MaintenanceStatus.INACTIVE.value:
                     logger.error('Maintenance window already in INACTIVE state. Cannot stop maintenance window')
@@ -89,24 +85,23 @@ class MaintenanceService:
                 )
             # Enable scheduled ECS tasks
             ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
-            event_bridge_session = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
-            event_bridge_session.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
+            event_bridge_client = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
+            event_bridge_client.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f'Error occurred while stopping maintenance window due to {e}')
             return False
 
     @staticmethod
-    def get_maintenance_window_status(engine):
+    def get_maintenance_window_status():
         """
         Get the status of maintenance window
         Maintenance record is returned after checking if all ECS tasks in the data.all created cluster have completed.
-        @param engine: db object
         @return: Maintenance object containing status and mode
         """
         logger.info('Checking maintenance window status')
         try:
-            with engine.scoped_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
                 if maintenance_record.status == MaintenanceStatus.PENDING.value:
                     # Check if ECS tasks are running

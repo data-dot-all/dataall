@@ -11,10 +11,10 @@ import config from '../../../generated/config.json';
 import {
   PENDING_STATUS,
   ACTIVE_STATUS
-} from '../../../modules/Maintenance/views/MaintenanceViewer';
-import { useClient } from '../../../services';
+} from '../../../modules/Maintenance/components/MaintenanceViewer';
+import { useClient } from 'services';
 import { getMaintenanceStatus } from '../../../modules/Maintenance/services';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import { SanitizedHTML } from '../SanitizedHTML';
 
 const useStyles = makeStyles((theme) => ({

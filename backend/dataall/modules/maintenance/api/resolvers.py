@@ -9,12 +9,12 @@ def start_maintenance_window(context: Context, source: Maintenance, mode: str):
     """Starts the maintenance window"""
     if mode not in [item.value for item in list(MaintenanceModes)]:
         raise Exception('Mode is not conforming to the MaintenanceModes enum')
-    return MaintenanceService.start_maintenance_window(engine=context.engine, mode=mode, groups=context.groups)
+    return MaintenanceService.start_maintenance_window(mode=mode)
 
 
 def stop_maintenance_window(context: Context, source: Maintenance):
-    return MaintenanceService.stop_maintenance_window(engine=context.engine, groups=context.groups)
+    return MaintenanceService.stop_maintenance_window()
 
 
 def get_maintenance_window_status(context: Context, source: Maintenance):
-    return MaintenanceService.get_maintenance_window_status(engine=context.engine)
+    return MaintenanceService.get_maintenance_window_status()

@@ -15,14 +15,14 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { Article, CancelRounded, SystemUpdate } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import { Label } from '../../../design';
+import { Label } from 'design';
 import {
   getMaintenanceStatus,
   stopMaintenanceWindow,
   startMaintenanceWindow
 } from '../services';
-import { useClient } from '../../../services';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useClient } from 'services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
 
 const maintenanceModes = [

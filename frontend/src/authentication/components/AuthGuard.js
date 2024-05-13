@@ -8,15 +8,15 @@ import {
   ModuleNames,
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
-} from '../../utils';
-import { useClient, useGroups } from '../../services';
-import { LoadingScreen, NoAccessMaintenanceWindow } from '../../design';
+} from 'utils';
+import { useClient, useGroups } from 'services';
+import { LoadingScreen, NoAccessMaintenanceWindow } from 'design';
 import { getMaintenanceStatus } from '../../modules/Maintenance/services';
 import {
   PENDING_STATUS,
   ACTIVE_STATUS
-} from '../../modules/Maintenance/views/MaintenanceViewer';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
+} from '../../modules/Maintenance/components/MaintenanceViewer';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 
 export const AuthGuard = (props) => {
   const { children } = props;

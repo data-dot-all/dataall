@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import datetime
 from argparse import Namespace
 from time import perf_counter
 
@@ -11,18 +10,14 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
-from dataall.base.utils.api_handler_utils import get_custom_groups, get_cognito_groups, send_unauthorized_response
+from dataall.base.utils.api_handler_utils import extract_groups, attach_tenant_policy_for_groups, check_reauth, \
+    validate_and_block_if_maintenance_window
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
-from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import set_context, dispose_context, RequestContext
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService, TenantPolicyValidationService
 from dataall.base.db import get_engine
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.base.loader import load_modules, ImportMode
-from dataall.modules.maintenance.api.enums import MaintenanceModes, MaintenanceStatus
-from dataall.modules.maintenance.services.maintenance_service import MaintenanceService
-from dataall.base.config import config
+
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -35,14 +30,9 @@ for name in ['boto3', 's3transfer', 'botocore', 'boto']:
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
-REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
-
-
-MAINTENANCE_ALLOWED_OPERATIONS = ['getGroupsForUser', 'getMaintenanceWindowStatus']
-
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
@@ -117,7 +107,8 @@ def handler(event, context):
             user_id = event['requestContext']['authorizer']['user_id']
         log.debug('username is %s', username)
 
-        groups: list = extract_groups_and_attach_tenant_policy(user_id=user_id, claims=claims)
+        groups: list = extract_groups(user_id=user_id, claims=claims)
+        attach_tenant_policy_for_groups(groups=groups)
 
         # Set Context
         set_context(RequestContext(ENGINE, username, groups, user_id))
@@ -130,12 +121,12 @@ def handler(event, context):
 
         query = json.loads(event.get('body'))
 
-        isBlockedResponse = validate_and_block_if_maintenance_window(query=query, groups=groups)
-        if isBlockedResponse is not None:
-            return isBlockedResponse
-        isReauthResponse = check_reauth(query=query, auth_time=claims['auth_time'], username=username)
-        if isReauthResponse is not None:
-            return isReauthResponse
+        maintenance_window_validation_response = validate_and_block_if_maintenance_window(query=query, groups=groups)
+        if maintenance_window_validation_response is not None:
+            return maintenance_window_validation_response
+        reauth_validation_response = check_reauth(query=query, auth_time=claims['auth_time'], username=username)
+        if reauth_validation_response is not None:
+            return reauth_validation_response
 
     else:
         raise Exception(f'Could not initialize user context from event {event}')
@@ -158,102 +149,3 @@ def handler(event, context):
         'body': response,
     }
 
-
-def check_reauth(query, auth_time, username):
-    # Determine if there are any Operations that Require ReAuth From SSM Parameter
-    try:
-        reauth_apis = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
-        ).split(',')
-    except Exception:
-        log.info('No ReAuth APIs Found in SSM')
-        reauth_apis = None
-
-    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
-    if reauth_apis and query.get('operationName', None) in reauth_apis:
-        now = datetime.datetime.now(datetime.timezone.utc)
-        try:
-            auth_time_datetime = datetime.datetime.fromtimestamp(int(auth_time), tz=datetime.timezone.utc)
-            if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
-                raise Exception('ReAuth')
-        except Exception as e:
-            log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
-            response = {
-                'data': {query.get('operationName', 'operation'): None},
-                'errors': [
-                    {
-                        'message': f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
-                        'locations': None,
-                        'path': [query.get('operationName', '')],
-                        'extensions': {'code': 'REAUTH'},
-                    }
-                ],
-            }
-            return {
-                'statusCode': 401,
-                'headers': {
-                    'content-type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Methods': '*',
-                },
-                'body': json.dumps(response),
-            }
-
-
-def validate_and_block_if_maintenance_window(query, groups):
-    # Logic to block when in maintenance
-    # Check if in some maintenance mode
-    # Check if in maintenance status is not INACTIVE
-    # Check if the user belongs to a 'DAAdministrators' group
-    if config.get_property('modules.maintenance.active'):
-        maintenance_mode = MaintenanceService._get_maintenance_window_mode(engine=ENGINE)
-        maintenance_status = MaintenanceService.get_maintenance_window_status(engine=ENGINE).status
-        isAdmin = TenantPolicyValidationService.is_tenant_admin(groups)
-
-        if (
-            (maintenance_mode == MaintenanceModes.NOACCESS.value)
-            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
-            and not isAdmin
-        ):
-            if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
-                return send_unauthorized_response(
-                    query=query,
-                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                )
-        elif (
-            (maintenance_mode == MaintenanceModes.READONLY.value)
-            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
-            and not isAdmin
-        ):
-            # If its mutation then block and return
-            if query.get('query', '').split()[0] == 'mutation':
-                return send_unauthorized_response(
-                    query=query,
-                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                )
-
-
-def extract_groups_and_attach_tenant_policy(user_id, claims):
-    groups = []
-    try:
-        if os.environ.get('custom_auth', None):
-            groups.extend(get_custom_groups(user_id))
-        else:
-            groups.extend(get_cognito_groups(claims))
-        log.debug('groups are %s', ','.join(groups))
-        with ENGINE.scoped_session() as session:
-            for group in groups:
-                policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
-                if not policy:
-                    print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
-                    TenantPolicyService.attach_group_tenant_policy(
-                        session=session,
-                        group=group,
-                        permissions=TENANT_ALL,
-                        tenant_name=TenantPolicyService.TENANT_NAME,
-                    )
-        return groups
-    except Exception as e:
-        print(f'Error managing groups due to: {e}')
-        return groups

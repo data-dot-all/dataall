@@ -1,6 +1,26 @@
+import datetime
 import json
+import os
+import logging
 
+from dataall.base.aws.parameter_store import ParameterStoreManager
+from dataall.base.db import get_engine
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.modules.maintenance.api.enums import MaintenanceModes, MaintenanceStatus
+from dataall.modules.maintenance.services.maintenance_service import MaintenanceService
+from dataall.base.config import config
+from dataall.core.permissions.services.tenant_policy_service import  TenantPolicyValidationService
+
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+log = logging.getLogger(__name__)
+
+ENVNAME = os.getenv('envname', 'local')
+REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
+MAINTENANCE_ALLOWED_OPERATIONS = ['getGroupsForUser', 'getMaintenanceWindowStatus']
+ENGINE = get_engine(envname=ENVNAME)
 
 
 def get_cognito_groups(claims):
@@ -25,17 +45,19 @@ def get_custom_groups(user_id):
     return service_provider.get_groups_for_user(user_id)
 
 
-def send_unauthorized_response(query, message=''):
+def send_unauthorized_response(operation='', message='', extension=None):
     response = {
-        'data': {query.get('operationName', 'operation'): None},
+        'data': { operation : None},
         'errors': [
             {
                 'message': message,
                 'locations': None,
-                'path': [query.get('operationName', '')],
+                'path': [operation],
             }
         ],
     }
+    if extension is not None:
+        response['errors'][0]['extensions'] = extension
     return {
         'statusCode': 401,
         'headers': {
@@ -46,3 +68,88 @@ def send_unauthorized_response(query, message=''):
         },
         'body': json.dumps(response),
     }
+
+def extract_groups(user_id, claims):
+    groups = []
+    try:
+        if os.environ.get('custom_auth', None):
+            groups.extend(get_custom_groups(user_id))
+        else:
+            groups.extend(get_cognito_groups(claims))
+        log.debug('groups are %s', ','.join(groups))
+        return groups
+    except Exception as e:
+        log.exception(f'Error managing groups due to: {e}')
+        return groups
+
+def attach_tenant_policy_for_groups(groups=None):
+    if groups is None:
+        groups = []
+    with ENGINE.scoped_session() as session:
+        for group in groups:
+            policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
+            if not policy:
+                print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
+                TenantPolicyService.attach_group_tenant_policy(
+                    session=session,
+                    group=group,
+                    permissions=TENANT_ALL,
+                    tenant_name=TenantPolicyService.TENANT_NAME,
+                )
+
+def check_reauth(query, auth_time, username):
+    # Determine if there are any Operations that Require ReAuth From SSM Parameter
+    try:
+        reauth_apis = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+        ).split(',')
+    except Exception:
+        log.info('No ReAuth APIs Found in SSM')
+        reauth_apis = None
+
+    # If The Operation is a ReAuth Operation - Ensure A Non-Expired Session or Return Error
+    if reauth_apis and query.get('operationName', None) in reauth_apis:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        try:
+            auth_time_datetime = datetime.datetime.fromtimestamp(int(auth_time), tz=datetime.timezone.utc)
+            if auth_time_datetime + datetime.timedelta(minutes=REAUTH_TTL) < now:
+                raise Exception('ReAuth')
+        except Exception as e:
+            log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
+            return send_unauthorized_response(operation=query.get('operationName', 'operation'),
+                                       message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                                       extension={'code': 'REAUTH'})
+
+def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode=None):
+    # Logic to block when in maintenance
+    # Check if in some maintenance mode
+    # Check if in maintenance status is not INACTIVE
+    # Check if the user belongs to a 'DAAdministrators' group
+    if config.get_property('modules.maintenance.active'):
+        maintenance_mode = MaintenanceService._get_maintenance_window_mode(engine=ENGINE)
+        maintenance_status = MaintenanceService.get_maintenance_window_status().status
+        isAdmin = TenantPolicyValidationService.is_tenant_admin(groups)
+
+        if (
+            (maintenance_mode == MaintenanceModes.NOACCESS.value)
+            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
+            and not isAdmin
+            and (blocked_for_mode is None or blocked_for_mode == MaintenanceModes.NOACCESS.value)
+        ):
+            if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
+                return send_unauthorized_response(
+                    operation=query.get('operationName', 'operation'),
+                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                )
+        elif (
+            (maintenance_mode == MaintenanceModes.READONLY.value)
+            and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
+            and not isAdmin
+            and (blocked_for_mode is None or blocked_for_mode == MaintenanceModes.READONLY.value)
+        ):
+            # If its mutation then block and return
+            if query.get('query', '').split()[0] == 'mutation':
+                return send_unauthorized_response(
+                    operation=query.get('operationName', 'operation'),
+                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                )
