@@ -188,9 +188,10 @@ class DataSharingService:
             return False
 
         finally:
-            lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
-            if not lock_released:
-                log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
+            with engine.scoped_session() as session:
+                lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+                if not lock_released:
+                    log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str):
@@ -327,9 +328,10 @@ class DataSharingService:
             return False
 
         finally:
-            lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
-            if not lock_released:
-                log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
+            with engine.scoped_session() as session:
+                lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+                if not lock_released:
+                    log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
 
     @staticmethod
     def acquire_lock(dataset_uri, session, share_uri):
@@ -638,6 +640,7 @@ class DataSharingService:
             return False
 
         finally:
-            lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
-            if not lock_released:
-                log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
+            with engine.scoped_session() as session:
+                lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+                if not lock_released:
+                    log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')

@@ -87,7 +87,17 @@ class ResourcePolicyRepository:
             )
 
         if permissions is not None:
-            resource_policy = resource_policy.filter(ResourcePolicy.permissions.in_(permissions))
+            resource_policy = (
+                resource_policy.join(
+                    ResourcePolicyPermission,
+                    ResourcePolicy.sid == ResourcePolicyPermission.sid,
+                )
+                .join(
+                    Permission,
+                    ResourcePolicyPermission.permissionUri == Permission.permissionUri,
+                )
+                .filter(Permission.name.in_(permissions))
+            )
 
         return resource_policy
 
