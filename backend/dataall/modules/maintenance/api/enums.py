@@ -1,16 +1,15 @@
 """Contains the enums used in maintenance module"""
+from dataall.base.api import GraphQLEnumMapper
 
-from enum import Enum
 
-
-class MaintenanceModes(Enum):
+class MaintenanceModes(GraphQLEnumMapper):
     """Describes the Maintenance Modes"""
 
     READONLY = 'READ-ONLY'
     NOACCESS = 'NO-ACCESS'
 
 
-class MaintenanceStatus(Enum):
+class MaintenanceStatus(GraphQLEnumMapper):
     """Describe the various statuses for maintenance"""
 
     PENDING = 'PENDING'
