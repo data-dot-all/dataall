@@ -431,23 +431,6 @@ const OmicsRunCreateForm = (props) => {
                             ))}
                           </TextField>
                         </CardContent>
-                        {/*<CardContent>*/}
-                        {/*  <TextField*/}
-                        {/*    fullWidth*/}
-                        {/*    error={Boolean(*/}
-                        {/*      touched.destination && errors.destination*/}
-                        {/*    )}*/}
-                        {/*    helperText={*/}
-                        {/*      touched.destination && errors.destination*/}
-                        {/*    }*/}
-                        {/*    label="Select S3 Output Destination"*/}
-                        {/*    name="destination"*/}
-                        {/*    value={values.destination} //TODO: datasetUri*/}
-                        {/*    variant="outlined"*/}
-                        {/*    onBlur={handleBlur}*/}
-                        {/*    onChange={handleChange}*/}
-                        {/*  />*/}
-                        {/*</CardContent>*/}
                       </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>

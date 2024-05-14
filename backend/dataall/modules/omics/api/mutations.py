@@ -10,7 +10,6 @@ createOmicsRun = gql.MutationField(
     resolver=create_omics_run,
 )
 
-# TODO: need to add the test
 deleteOmicsRun = gql.MutationField(
     name='deleteOmicsRun',
     type=gql.Boolean,

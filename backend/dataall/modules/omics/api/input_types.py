@@ -14,20 +14,6 @@ NewOmicsRunInput = gql.InputType(
     ],
 )
 
-# TODO: review if needed
-# UpdateOmicsRunInput = gql.InputType(
-#     name="UpdateOmicsRunInput",
-#     arguments=[
-#         gql.Argument(name="label", type=gql.String),
-#         gql.Argument(name="description", type=gql.String),
-#         gql.Argument(name="tags", type=gql.ArrayType(gql.String)),
-#         gql.Argument(name="S3InputBucket", type=gql.String),
-#         gql.Argument(name="S3InputPrefix", type=gql.String),
-#         gql.Argument(name="S3OutputBucket", type=gql.String),
-#         gql.Argument(name="S3OutputPrefix", type=gql.String),
-#     ],
-# )
-
 OmicsFilter = gql.InputType(
     name='OmicsFilter',
     arguments=[
