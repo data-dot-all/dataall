@@ -133,6 +133,7 @@ class MaintenanceService:
         try:
             with engine.scoped_session() as session:
                 maintenance_record = MaintenanceRepository(session).get_maintenance_record()
+                logger.debug(f'Current maintenance window mode - {maintenance_record.mode}')
                 return maintenance_record.mode
         except Exception as e:
             logger.error(f'Error while getting maintenance window mode due to {e}')

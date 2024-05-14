@@ -45,7 +45,11 @@ def handler(event, context):
             set_context(RequestContext(ENGINE, username, groups, user_id))
 
             # Check if maintenance window is enabled AND if the maintenance mode is NO-ACCESS
-            maintenance_window_validation_response = validate_and_block_if_maintenance_window(query={'operationName': 'OpensearchIndex'}, groups=groups, blocked_for_mode=MaintenanceModes.NOACCESS)
+            maintenance_window_validation_response = validate_and_block_if_maintenance_window(
+                query={'operationName': 'OpensearchIndex'},
+                groups=groups,
+                blocked_for_mode_enum=MaintenanceModes.NOACCESS
+            )
             if maintenance_window_validation_response is not None:
                 return maintenance_window_validation_response
 

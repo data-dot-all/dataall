@@ -3,6 +3,7 @@ import json
 import os
 import logging
 
+from graphql import parse, utilities, OperationType, GraphQLSyntaxError
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.db import get_engine
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
@@ -19,7 +20,8 @@ log = logging.getLogger(__name__)
 
 ENVNAME = os.getenv('envname', 'local')
 REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
-MAINTENANCE_ALLOWED_OPERATIONS = ['getGroupsForUser', 'getMaintenanceWindowStatus']
+# ALLOWED OPERATIONS WHEN A USER IS NOT DATAALL ADMIN AND NO-ACCESS MODE IS SELECTED
+MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [item.casefold() for item in ['getGroupsForUser', 'getMaintenanceWindowStatus']]
 ENGINE = get_engine(envname=ENVNAME)
 
 
@@ -120,11 +122,19 @@ def check_reauth(query, auth_time, username):
                                        message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
                                        extension={'code': 'REAUTH'})
 
-def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode=None):
-    # Logic to block when in maintenance
-    # Check if in some maintenance mode
-    # Check if in maintenance status is not INACTIVE
-    # Check if the user belongs to a 'DAAdministrators' group
+def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode_enum=None):
+    """
+    When the maintenance module is set to active, checks
+        - If the maintenance mode is enabled
+        - Based on the maintenance mode, actions which can be taken by user can be modified
+            - READ-ONLY -> Block All Mutation calls and allow query graphql calls
+            - NO-ACCESS -> Block All graphql query call irrespective of type
+        - Check if the user belongs to the DAAdministrators group
+    @param query: graphql query dict containing operation, query, variables
+    @param groups: user groups
+    @param blocked_for_mode_enum: sets the mode for blocking only specific modes. When set to None, both graphql types ( Query and Mutation ) will be blocked. When a specific mode is set, blocking will only occure for that mode
+    @return: error response if maintenance window is blocking gql calls else None
+    """
     if config.get_property('modules.maintenance.active'):
         maintenance_mode = MaintenanceService._get_maintenance_window_mode(engine=ENGINE)
         maintenance_status = MaintenanceService.get_maintenance_window_status().status
@@ -134,9 +144,9 @@ def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode=Non
             (maintenance_mode == MaintenanceModes.NOACCESS.value)
             and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
             and not isAdmin
-            and (blocked_for_mode is None or blocked_for_mode == MaintenanceModes.NOACCESS.value)
+            and (blocked_for_mode_enum is None or blocked_for_mode_enum == MaintenanceModes.NOACCESS)
         ):
-            if query.get('operationName', '') not in MAINTENANCE_ALLOWED_OPERATIONS:
+            if query.get('operationName', '').casefold() not in MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS:
                 return send_unauthorized_response(
                     operation=query.get('operationName', 'operation'),
                     message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
@@ -145,11 +155,17 @@ def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode=Non
             (maintenance_mode == MaintenanceModes.READONLY.value)
             and (maintenance_status is not MaintenanceStatus.INACTIVE.value)
             and not isAdmin
-            and (blocked_for_mode is None or blocked_for_mode == MaintenanceModes.READONLY.value)
+            and (blocked_for_mode_enum is None or blocked_for_mode_enum == MaintenanceModes.READONLY)
         ):
             # If its mutation then block and return
-            if query.get('query', '').split()[0] == 'mutation':
-                return send_unauthorized_response(
-                    operation=query.get('operationName', 'operation'),
-                    message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
-                )
+            try:
+                parsed_query_document = parse(query.get('query', ''))
+                graphQL_operation_type = utilities.get_operation_ast(parsed_query_document)
+                if graphQL_operation_type.operation == OperationType.MUTATION:
+                    return send_unauthorized_response(
+                        operation=query.get('operationName', 'operation'),
+                        message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
+                    )
+            except GraphQLSyntaxError as e:
+                log.error(f'Error occured while parsing query when validating for {maintenance_mode} maintenance mode due to - {e}')
+                raise e
