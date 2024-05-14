@@ -5,6 +5,7 @@ from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from graphql import parse
 
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
@@ -127,6 +128,10 @@ def graphql_server():
     logger.debug(request.data)
     data = request.get_json()
     print('*** Request ***', request.data)
+
+    query = parse(data)
+    print("*****    Printing Query      ****** \n\n")
+    print(query)
 
     context = request_context(request.headers, mock=True)
     logger.debug(context)
