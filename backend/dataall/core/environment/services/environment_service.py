@@ -13,6 +13,7 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
     CREDENTIALS_ENVIRONMENT,
@@ -25,6 +26,7 @@ from dataall.core.environment.db.environment_repositories import EnvironmentPara
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.db.permission.permission_models import PermissionType
+from dataall.core.organizations.db.organization_models import Organization
 
 from dataall.base.db.paginator import paginate
 from dataall.base.utils.naming_convention import (
@@ -213,6 +215,12 @@ class EnvironmentService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
+            if not OrganizationRepository.is_group_invited(session, uri, data['SamlGroupName']):
+                raise Exception(
+                    f'Group {data["SamlGroupName"]} is not a member of the organization {data.get("organizationUri")}. '
+                    f'Invite this group to the organisation before linking the environment.'
+                )
+
             cdk_role_name = EnvironmentService.check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
             env = Environment(
                 organizationUri=data.get('organizationUri'),

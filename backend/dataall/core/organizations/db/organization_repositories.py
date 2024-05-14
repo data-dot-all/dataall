@@ -107,6 +107,19 @@ class OrganizationRepository:
         return query.order_by(models.OrganizationGroup.groupUri)
 
     @staticmethod
+    def is_group_invited(session, uri, group) -> bool:
+        return (
+            session.query(models.OrganizationGroup)
+            .filter(
+                and_(
+                    models.OrganizationGroup.organizationUri == uri,
+                    models.OrganizationGroup.groupUri == group,
+                )
+            )
+            .count()
+        ) > 0
+
+    @staticmethod
     def paginated_organization_groups(session, uri, data=None) -> dict:
         return paginate(
             query=OrganizationRepository.query_organization_groups(session, uri, data),
