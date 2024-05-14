@@ -65,7 +65,7 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/data-dot-all/dataall.git --branch v2.4.0
+git clone https://github.com/data-dot-all/dataall.git --branch v2.5.0
 cd dataall
 ```
 ## 2. Setup Python virtualenv <a name="env"></a>
@@ -445,14 +445,21 @@ the different configuration options.
 ```json
 {
     "modules": {
-        "datasets": {
+        "mlstudio": {
+            "active": true
+        },
+        "notebooks": {
+            "active": true
+        },
+        "datapipelines": {
+            "active": true
+        },
+        "s3_datasets": {
             "active": true,
             "features": {
-                "file_uploads": false,
+                "file_uploads": true,
                 "file_actions": true,
                 "aws_actions": true,
-                "preview_data": true,
-                "glue_crawler": true,
                 "share_notifications": {
                     "email": {
                         "active": false,
@@ -461,17 +468,18 @@ the different configuration options.
                         }
                     }
                 },
+                "preview_data": true,
+                "glue_crawler": true,
                 "confidentiality_dropdown" : true,
-                "topics_dropdown" : true
-            },
+                "topics_dropdown" : true,
+                "auto_approval_for_confidentiality_level" : {
+                    "Unclassified" : true,
+                    "Official" : true,
+                    "Secret" : true
+                }
+            }
         },
-        "mlstudio": {
-            "active": true
-        },
-        "notebooks": {
-            "active": true
-        },
-        "datapipelines": {
+        "dataset_sharing": {
             "active": true
         },
         "worksheets": {
@@ -507,9 +515,9 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 | catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.         |
 | feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
 | vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
-| datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
+| s3_datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
 | dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
-| datasets_base   | None                                                | Shared code related to Datasets.                                                      |
+| datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                      |
 | worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                         |
 | datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
@@ -519,19 +527,17 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 
 
 ### Disable module features
-As you probably noticed, the `dataset` module contains an additional field called `features` in the `config.json`. 
+As you probably noticed, the `s3_datasets` module contains an additional field called `features` in the `config.json`. 
 If there is a particular functionality that you want to enable or disable you can do so in this section. 
 In the example config.json, the feature that enables file upload from data.all UI has been disabled.
 
 ```json
-    "datasets": {
+    "s3_datasets": {
         "active": true,
         "features": {
-            "file_uploads": false,
+            "file_uploads": true,
             "file_actions": true,
             "aws_actions": true,
-            "preview_data": true,
-            "glue_crawler": true,
             "share_notifications": {
                 "email": {
                     "active": false,
@@ -540,6 +546,15 @@ In the example config.json, the feature that enables file upload from data.all U
                     }
                 }
             },
+            "preview_data": true,
+            "glue_crawler": true,
+            "confidentiality_dropdown" : true,
+            "topics_dropdown" : true,
+            "auto_approval_for_confidentiality_level" : {
+                "Unclassified" : true,
+                "Official" : true,
+                "Secret" : true
+            }
         }
     },
 ```
@@ -547,34 +562,37 @@ In the example config.json, the feature that enables file upload from data.all U
 
 | **Feature**         | **Module** | **Description**                                                                                                                                                                                                                                                                              |   
 |---------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| file_uploads        | datasets   | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
-| file_actions        | datasets   | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
-| aws_actions         | datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
-| preview_data        | datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
-| glue_crawler        | datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
-| share_notifications | datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
-| confidentiality_dropdown | datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
-| topics_dropdown | datasets | Disable / Enable use of topics for a dataset | 
+| file_uploads        | s3_datasets   | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
+| file_actions        | s3_datasets   | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
+| aws_actions         | s3_datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
+| preview_data        | s3_datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
+| glue_crawler        | s3_datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
+| share_notifications | s3_datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
+| confidentiality_dropdown | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
+| topics_dropdown | s3_datasets | Disable / Enable use of topics for a dataset | 
+|auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all |
 
 ### Customizing Module Features
 
 In addition to disabling / enabling, some module features allow for additional customization to create a tailored data.all for your needs. Below is one such example of how one could customize module features in the config.json. Please refer to the list for all customization options
 ```json
-    "datasets": {
+    "s3_datasets": {
         "features": {
+            "..."
             "custom_confidentiality_mapping": {
                  "Public" : "Unclassified",
                  "Private" : "Official", 
                  "Confidential" : "Secret",
                  "Very Highly Confidential" : "Secret"
-             }
+            },
+            "..."
         }
     }
 ```
 
 | **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
 |--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| custom_confidentiality_mapping | datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
+| custom_confidentiality_mapping | s3_datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
 
 
 ### Disable and customize core features
