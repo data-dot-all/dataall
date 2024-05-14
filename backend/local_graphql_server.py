@@ -130,7 +130,7 @@ def graphql_server():
     print('*** Request ***', request.data)
 
     query = parse(data)
-    print("*****    Printing Query      ****** \n\n")
+    print('*****    Printing Query      ****** \n\n')
     print(query)
 
     context = request_context(request.headers, mock=True)

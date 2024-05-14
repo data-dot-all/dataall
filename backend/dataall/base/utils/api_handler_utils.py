@@ -12,7 +12,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.maintenance.api.enums import MaintenanceModes, MaintenanceStatus
 from dataall.modules.maintenance.services.maintenance_service import MaintenanceService
 from dataall.base.config import config
-from dataall.core.permissions.services.tenant_policy_service import  TenantPolicyValidationService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -21,7 +21,9 @@ log = logging.getLogger(__name__)
 ENVNAME = os.getenv('envname', 'local')
 REAUTH_TTL = int(os.environ.get('REAUTH_TTL', '5'))
 # ALLOWED OPERATIONS WHEN A USER IS NOT DATAALL ADMIN AND NO-ACCESS MODE IS SELECTED
-MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [item.casefold() for item in ['getGroupsForUser', 'getMaintenanceWindowStatus']]
+MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
+    item.casefold() for item in ['getGroupsForUser', 'getMaintenanceWindowStatus']
+]
 ENGINE = get_engine(envname=ENVNAME)
 
 
@@ -49,7 +51,7 @@ def get_custom_groups(user_id):
 
 def send_unauthorized_response(operation='', message='', extension=None):
     response = {
-        'data': { operation : None},
+        'data': {operation: None},
         'errors': [
             {
                 'message': message,
@@ -71,6 +73,7 @@ def send_unauthorized_response(operation='', message='', extension=None):
         'body': json.dumps(response),
     }
 
+
 def extract_groups(user_id, claims):
     groups = []
     try:
@@ -83,6 +86,7 @@ def extract_groups(user_id, claims):
     except Exception as e:
         log.exception(f'Error managing groups due to: {e}')
         return groups
+
 
 def attach_tenant_policy_for_groups(groups=None):
     if groups is None:
@@ -98,6 +102,7 @@ def attach_tenant_policy_for_groups(groups=None):
                     permissions=TENANT_ALL,
                     tenant_name=TenantPolicyService.TENANT_NAME,
                 )
+
 
 def check_reauth(query, auth_time, username):
     # Determine if there are any Operations that Require ReAuth From SSM Parameter
@@ -118,9 +123,12 @@ def check_reauth(query, auth_time, username):
                 raise Exception('ReAuth')
         except Exception as e:
             log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
-            return send_unauthorized_response(operation=query.get('operationName', 'operation'),
-                                       message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
-                                       extension={'code': 'REAUTH'})
+            return send_unauthorized_response(
+                operation=query.get('operationName', 'operation'),
+                message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                extension={'code': 'REAUTH'},
+            )
+
 
 def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode_enum=None):
     """
@@ -167,5 +175,7 @@ def validate_and_block_if_maintenance_window(query, groups, blocked_for_mode_enu
                         message='Access Restricted: data.all is currently undergoing maintenance, and your actions are temporarily blocked.',
                     )
             except GraphQLSyntaxError as e:
-                log.error(f'Error occured while parsing query when validating for {maintenance_mode} maintenance mode due to - {e}')
+                log.error(
+                    f'Error occured while parsing query when validating for {maintenance_mode} maintenance mode due to - {e}'
+                )
                 raise e

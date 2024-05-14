@@ -1,4 +1,5 @@
 """Contains the enums used in maintenance module"""
+
 from dataall.base.api import GraphQLEnumMapper
 
 

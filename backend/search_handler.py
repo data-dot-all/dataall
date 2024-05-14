@@ -48,7 +48,7 @@ def handler(event, context):
             maintenance_window_validation_response = validate_and_block_if_maintenance_window(
                 query={'operationName': 'OpensearchIndex'},
                 groups=groups,
-                blocked_for_mode_enum=MaintenanceModes.NOACCESS
+                blocked_for_mode_enum=MaintenanceModes.NOACCESS,
             )
             if maintenance_window_validation_response is not None:
                 return maintenance_window_validation_response

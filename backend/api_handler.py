@@ -10,8 +10,12 @@ from ariadne import (
 )
 
 from dataall.base.api import bootstrap as bootstrap_schema, get_executable_schema
-from dataall.base.utils.api_handler_utils import extract_groups, attach_tenant_policy_for_groups, check_reauth, \
-    validate_and_block_if_maintenance_window
+from dataall.base.utils.api_handler_utils import (
+    extract_groups,
+    attach_tenant_policy_for_groups,
+    check_reauth,
+    validate_and_block_if_maintenance_window,
+)
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
 from dataall.base.context import set_context, dispose_context, RequestContext
@@ -33,6 +37,7 @@ TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
+
 
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
@@ -148,4 +153,3 @@ def handler(event, context):
         },
         'body': response,
     }
-
