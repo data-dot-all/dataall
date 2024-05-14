@@ -95,7 +95,7 @@ def attach_tenant_policy_for_groups(groups=None):
         for group in groups:
             policy = TenantPolicyService.find_tenant_policy(session, group, TenantPolicyService.TENANT_NAME)
             if not policy:
-                print(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
+                log.exception(f'No policy found for Team {group}. Attaching TENANT_ALL permissions')
                 TenantPolicyService.attach_group_tenant_policy(
                     session=session,
                     group=group,
