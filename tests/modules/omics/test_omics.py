@@ -206,27 +206,21 @@ def test_delete_omics_run_does_not_exist():
     pass
     '''
     query = """
-        query getOmicsWorkflow($workflowUri: String!) {
-          getOmicsWorkflow(workflowUri: $workflowUri) {
-            workflowUri
-            id
-            name
-            description
-            parameterTemplate
-            type
-          }
+        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
+          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
         }
         """
 
     response = client.query(
         query,
-        workflowUri=workflow1.workflowUri,
+        runUris=run1.runUri,
+        deleteFromAWS=True,
         username=user.username,
         groups=[group.name],
     )
-    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
-    assert response.data.getOmicsWorkflow['id'] == workflow1.id
-    assert response.data.getOmicsWorkflow['type'] == workflow1.type
+    assert response.data.deleteOmicsRun['workflowUri'] == workflow1.workflowUri
+    assert response.data.deleteOmicsRun['id'] == workflow1.id
+    assert response.data.deleteOmicsRun['type'] == workflow1.type
     '''
 
 
@@ -235,54 +229,98 @@ def test_nopermissions_delete_omics_run():
     pass
     '''
     query = """
-        query getOmicsWorkflow($workflowUri: String!) {
-          getOmicsWorkflow(workflowUri: $workflowUri) {
-            workflowUri
-            id
-            name
-            description
-            parameterTemplate
-            type
-          }
+        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
+          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
         }
         """
 
     response = client.query(
         query,
-        workflowUri=workflow1.workflowUri,
+        runUris=run1.runUri,
+        deleteFromAWS=True,
         username=user.username,
         groups=[group.name],
     )
-    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
-    assert response.data.getOmicsWorkflow['id'] == workflow1.id
-    assert response.data.getOmicsWorkflow['type'] == workflow1.type
+    assert response.data.deleteOmicsRun['workflowUri'] == workflow1.workflowUri
+    assert response.data.deleteOmicsRun['id'] == workflow1.id
+    assert response.data.deleteOmicsRun['type'] == workflow1.type
     '''
 
 
 # TODO: test delete omics run with permissions
-def test_delete_omics_run():
-    pass
-    '''
+def test_delete_omics_run(client, user, group, run1):
+    # pass
     query = """
-        query getOmicsWorkflow($workflowUri: String!) {
-          getOmicsWorkflow(workflowUri: $workflowUri) {
-            workflowUri
-            id
-            name
-            description
-            parameterTemplate
-            type
+        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
+          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
+        }
+        """
+
+    response = client.query(
+        query,
+        runUris=[run1.runUri], # run1.runUri
+        deleteFromAWS=True,
+        username=user.username,
+        groups=[group.name],
+    )
+    print(response.data)
+    assert response.data.deleteOmicsRun
+    query = """
+        query listOmicsRuns($filter: OmicsFilter) {
+          listOmicsRuns(filter: $filter) {
+            count
+            page
+            pages
+            hasNext
+            hasPrevious
+            nodes {
+              runUri
+              workflowUri
+              name
+              owner
+              SamlAdminGroupName
+              outputDatasetUri
+              description
+              label
+              created
+              tags
+              environment {
+                label
+                name
+                environmentUri
+                AwsAccountId
+                region
+                SamlGroupName
+              }
+              organization {
+                label
+                name
+                organizationUri
+              }
+              workflow {
+                label
+                name
+                workflowUri
+                id
+                description
+                parameterTemplate
+                type
+              }
+              status {
+                status
+                statusMessage
+              }
+            }
           }
         }
         """
 
     response = client.query(
         query,
-        workflowUri=workflow1.workflowUri,
+        filter=None,
         username=user.username,
         groups=[group.name],
     )
-    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
-    assert response.data.getOmicsWorkflow['id'] == workflow1.id
-    assert response.data.getOmicsWorkflow['type'] == workflow1.type
-    '''
+
+    assert response.data.listOmicsRuns['count'] == 0
+    assert len(response.data.listOmicsRuns['nodes']) == 0
