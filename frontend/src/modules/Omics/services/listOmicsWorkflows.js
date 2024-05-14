@@ -1,6 +1,4 @@
 import { gql } from 'apollo-boost';
-
-// TODO: review API output
 export const listOmicsWorkflows = (filter) => ({
   variables: {
     filter
