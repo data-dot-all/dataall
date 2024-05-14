@@ -322,6 +322,16 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[aurora_stack.cluster],
             connectables=[aurora_stack.cluster],
+            additional_policy_statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['rds:AddTagsToResource', 'rds:CreateDBClusterSnapshot', 'rds:DescribeDBClusters'],
+                    resources=[
+                        f'arn:aws:rds:*:{self.account}:snapshot:dataall*',
+                        f'arn:aws:rds:*:{self.account}:cluster:dataall*',
+                    ],
+                )
+            ],
             **kwargs,
         )
 

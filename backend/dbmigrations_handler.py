@@ -38,7 +38,7 @@ def handler(event, context) -> None:
         current_rev = context.get_current_revision()
 
     if head_rev != current_rev:
-        snapshot_id = f'migration-{head_rev}-{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
+        snapshot_id = f'dataall-migration-{head_rev}-{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
         cluster_id = engine.dbconfig.host.split('.')[0]
         logger.info(
             f'Creating RDS snapshot for cluster {cluster_id}, head revision {head_rev} is ahead of {current_rev}...'

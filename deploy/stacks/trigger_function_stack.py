@@ -27,6 +27,7 @@ class TriggerFunctionStack(pyNestedClass):
         vpce_connection: ec2.IConnectable = None,
         connectables: List[ec2.IConnectable] = [],
         execute_after: List[Construct] = [],
+        additional_policy_statements: List[iam.PolicyStatement] = [],
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -38,13 +39,14 @@ class TriggerFunctionStack(pyNestedClass):
         env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
 
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
+        policy_statements = self.get_policy_statements(resource_prefix).append(additional_policy_statements)
 
         self.trigger_function = TriggerFunction(
             self,
             f'TriggerFunction-{handler}',
             function_name=f'{resource_prefix}-{envname}-{handler.replace(".", "_")}',
             description=f'dataall {handler} trigger function',
-            initial_policy=self.get_policy_statements(resource_prefix),
+            initial_policy=policy_statements,
             code=_lambda.Code.from_ecr_image(repository=ecr_repository, tag=image_tag, cmd=[handler]),
             vpc=vpc,
             security_groups=[function_sgs],
