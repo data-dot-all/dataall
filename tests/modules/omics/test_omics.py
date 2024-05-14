@@ -199,3 +199,90 @@ def test_get_omics_workflow(client, user, group, workflow1):
     assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
     assert response.data.getOmicsWorkflow['id'] == workflow1.id
     assert response.data.getOmicsWorkflow['type'] == workflow1.type
+
+
+# TODO: test delete omics run that does not exist
+def test_delete_omics_run_does_not_exist():
+    pass
+    '''
+    query = """
+        query getOmicsWorkflow($workflowUri: String!) {
+          getOmicsWorkflow(workflowUri: $workflowUri) {
+            workflowUri
+            id
+            name
+            description
+            parameterTemplate
+            type
+          }
+        }
+        """
+
+    response = client.query(
+        query,
+        workflowUri=workflow1.workflowUri,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
+    assert response.data.getOmicsWorkflow['id'] == workflow1.id
+    assert response.data.getOmicsWorkflow['type'] == workflow1.type
+    '''
+
+
+# TODO: test delete omics run with no permissions
+def test_nopermissions_delete_omics_run():
+    pass
+    '''
+    query = """
+        query getOmicsWorkflow($workflowUri: String!) {
+          getOmicsWorkflow(workflowUri: $workflowUri) {
+            workflowUri
+            id
+            name
+            description
+            parameterTemplate
+            type
+          }
+        }
+        """
+
+    response = client.query(
+        query,
+        workflowUri=workflow1.workflowUri,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
+    assert response.data.getOmicsWorkflow['id'] == workflow1.id
+    assert response.data.getOmicsWorkflow['type'] == workflow1.type
+    '''
+
+
+# TODO: test delete omics run with permissions
+def test_delete_omics_run():
+    pass
+    '''
+    query = """
+        query getOmicsWorkflow($workflowUri: String!) {
+          getOmicsWorkflow(workflowUri: $workflowUri) {
+            workflowUri
+            id
+            name
+            description
+            parameterTemplate
+            type
+          }
+        }
+        """
+
+    response = client.query(
+        query,
+        workflowUri=workflow1.workflowUri,
+        username=user.username,
+        groups=[group.name],
+    )
+    assert response.data.getOmicsWorkflow['workflowUri'] == workflow1.workflowUri
+    assert response.data.getOmicsWorkflow['id'] == workflow1.id
+    assert response.data.getOmicsWorkflow['type'] == workflow1.type
+    '''
