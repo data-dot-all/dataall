@@ -2,6 +2,7 @@ from dataall.base.api import gql
 from dataall.modules.dataset_sharing.api.resolvers import (
     get_dataset_shared_assume_role_url,
     get_share_object,
+    get_share_logs,
     list_shared_with_environment_data_items,
     list_shares_in_my_inbox,
     list_shares_in_my_outbox,
@@ -69,4 +70,12 @@ getDatasetSharedAssumeRoleUrl = gql.QueryField(
     type=gql.String,
     resolver=get_dataset_shared_assume_role_url,
     test_scope='Dataset',
+)
+
+
+getShareLogs = gql.QueryField(
+    name='getShareLogs',
+    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
+    type=gql.ArrayType(gql.Ref('ShareLog')),
+    resolver=get_share_logs,
 )

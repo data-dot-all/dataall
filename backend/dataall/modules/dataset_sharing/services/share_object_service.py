@@ -590,3 +590,22 @@ class ShareObjectService:
                 log.info(
                     f'Resource permission policy {DATASET_FOLDER_READ} to table {location.itemUri} for group {share.groupUri} already exists. Skip... '
                 )
+
+    @staticmethod
+    def get_share_logs_name_query(shareUri):
+        log.info(f'Get share Logs stream name for share {shareUri}')
+
+        query = """fields @logStream
+                        |filter  @message like 'bmm02skg'
+                        | sort @timestamp desc
+                        | limit 1
+                    """
+        return query
+
+    @staticmethod
+    def get_share_logs_query(log_stream_name):
+        query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
+                    | sort @timestamp asc
+                    | filter @logStream like "{log_stream_name}"
+                    """
+        return query

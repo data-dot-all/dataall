@@ -82,7 +82,7 @@ export const ShareLogs = (props) => {
                       value={
                         logs.length > 0
                           ? logs.join('\n')
-                          : 'No logs available. Logs may take few minutes after the share is processed...'
+                          : 'No logs available for the last 24 hours. Logs may take few minutes after the share is processed...'
                       }
                       options={{ minimap: { enabled: false } }}
                       theme="vs-dark"

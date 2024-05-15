@@ -261,3 +261,13 @@ PrincipalSearchResult = gql.ObjectType(
         gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )
+
+ShareLog = gql.ObjectType(
+    name='ShareLog',
+    fields=[
+        gql.Field(name='logStream', type=gql.String),
+        gql.Field(name='logGroup', type=gql.String),
+        gql.Field(name='timestamp', type=gql.String),
+        gql.Field(name='message', type=gql.String),
+    ],
+)

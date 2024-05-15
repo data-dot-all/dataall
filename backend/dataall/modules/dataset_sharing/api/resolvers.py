@@ -1,4 +1,5 @@
 import logging
+import os
 
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
@@ -6,6 +7,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
+from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
@@ -14,6 +16,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_service import Dat
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.base.utils import Parameter
 
 log = logging.getLogger(__name__)
 
@@ -130,6 +133,31 @@ def resolve_shared_item(context, source: ShareObjectItem, **kwargs):
 
 def get_share_object(context, source, shareUri: str = None):
     return ShareObjectService.get_share_object(uri=shareUri)
+
+
+def get_share_logs(context, source, shareUri: str):
+    envname = os.getenv('envname', 'local')
+    log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
+
+    query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
+    name_query_result = CloudWatch.run_query(
+        query=query_for_name,
+        log_group_name=log_group_name,
+        days=1,
+    )
+    if len(name_query_result) == 0:
+        return []
+
+    name = name_query_result[0]['logStream']
+
+    query = ShareObjectService.get_share_logs_query(log_stream_name=name)
+    results = CloudWatch.run_query(
+        query=query,
+        log_group_name=log_group_name,
+        days=1,
+    )
+    log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
+    return results
 
 
 def resolve_user_role(context: Context, source: ShareObject, **kwargs):
