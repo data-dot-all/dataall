@@ -45,14 +45,14 @@ def handler(event, context) -> None:
         )
         try:
             rds_client = boto3.client('rds', region_name=os.getenv('AWS_REGION'))
-            cluster_id = 'res-fr-db'
-            cluster_status = ''
-            while cluster_status != 'available':
-                # Edge case in which the cluster is performing backup and/or maintenance operations.
-                # If it times out the CICD pipeline fails and needs to be retried.
-                logger.info(f'Waiting while the cluster is available, status={cluster_status}')
-                response = rds_client.describe_db_clusters(DBClusterIdentifier=cluster_id)
-                cluster_status = response['DBClusters'][0]['Status']
+            # Edge case in which the cluster is performing backup and/or maintenance operations.
+            # If it times out the CICD pipeline fails and needs to be retried.
+            while (
+                cluster_status := rds_client.describe_db_clusters(DBClusterIdentifier=cluster_id)['DbClusters'][0][
+                    'Status'
+                ]
+            ) != 'available':
+                logger.info(f'Waiting while the cluster is available, {cluster_status=}')
                 time.sleep(30)
 
             rds_client.create_db_cluster_snapshot(
