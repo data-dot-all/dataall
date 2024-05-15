@@ -36,7 +36,7 @@ class TriggerFunctionStack(pyNestedClass):
             image_tag = self.node.try_get_context('image_tag')
         image_tag = f'lambdas-{image_tag}'
 
-        env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
+        env = {'envname': envname, 'resource_prefix': resource_prefix, 'LOG_LEVEL': 'INFO'}
 
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
         statements = self.get_policy_statements(resource_prefix) + (additional_policy_statements or [])

@@ -38,7 +38,7 @@ def handler(event, context) -> None:
         current_rev = context.get_current_revision()
 
     if head_rev != current_rev:
-        snapshot_id = f'dataall-migration-{head_rev}-{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
+        snapshot_id = f'{os.environ.get("resource_prefix", "dataall")}-migration-{head_rev}-{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
         cluster_id = engine.dbconfig.host.split('.')[0]
         logger.info(
             f'Creating RDS snapshot for cluster {cluster_id}, head revision {head_rev} is ahead of {current_rev}...'
@@ -48,7 +48,7 @@ def handler(event, context) -> None:
             # Edge case in which the cluster is performing backup and/or maintenance operations.
             # If it times out the CICD pipeline fails and needs to be retried.
             while (
-                cluster_status := rds_client.describe_db_clusters(DBClusterIdentifier=cluster_id)['DbClusters'][0][
+                cluster_status := rds_client.describe_db_clusters(DBClusterIdentifier=cluster_id)['DBClusters'][0][
                     'Status'
                 ]
             ) != 'available':
@@ -65,6 +65,3 @@ def handler(event, context) -> None:
         except Exception as e:
             logger.exception(f'Failed to create RDS snapshot: {e}')
             raise Exception(f'Failed to create RDS snapshot: {e}')
-
-    # Execute the alembic migration scripts
-    command.upgrade(alembic_cfg, 'head')  # logging breaks after this command
