@@ -92,6 +92,9 @@ class OmicsService:
             )
 
             OmicsRepository(session).save_omics_run(omics_run)
+
+            response = OmicsClient.run_omics_workflow(omics_run, session)
+            omics_run.runUri = response['id']
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=omics_run.SamlAdminGroupName,
@@ -99,10 +102,6 @@ class OmicsService:
                 resource_uri=omics_run.runUri,
                 resource_type=OmicsRun.__name__,
             )
-
-            response = OmicsClient.run_omics_workflow(omics_run, session)
-
-            omics_run.runUri = response['id']
             OmicsRepository(session).save_omics_run(omics_run)
 
             return omics_run
@@ -159,7 +158,7 @@ class OmicsService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_OMICS_RUN)
-    def delete_omics_run(uri: str, delete_from_aws: bool):
+    def delete_omics_run(*, uri: str, delete_from_aws: bool):
         """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_run = OmicsService._get_omics_run(uri)

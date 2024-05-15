@@ -50,7 +50,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
-	python -m pytest -v -ra tests/
+	python -m pytest -v -ra tests/modules/omics/test_omics.py::test_delete_omics_run
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \

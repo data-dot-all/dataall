@@ -94,7 +94,7 @@ def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> Dataset:
 
 
 @pytest.fixture(scope='module')
-def run1(client, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
+def run1(client, user, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
     response = client.query(
         """
             mutation createOmicsRun($input: NewOmicsRunInput) {
@@ -113,7 +113,7 @@ def run1(client, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun
             'destination': dataset1.datasetUri,
             'parameterTemplate': '{"something"}',
         },
-        username='alice',
+        username=user.username,
         groups=[group.name],
     )
     yield response.data.createOmicsRun
