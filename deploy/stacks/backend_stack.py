@@ -325,11 +325,16 @@ class BackendStack(Stack):
             additional_policy_statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=['rds:AddTagsToResource', 'rds:CreateDBClusterSnapshot', 'rds:DescribeDBClusters'],
+                    actions=['rds:AddTagsToResource', 'rds:CreateDBClusterSnapshot'],
                     resources=[
                         f'arn:aws:rds:*:{self.account}:snapshot:dataall*',
                         f'arn:aws:rds:*:{self.account}:cluster:dataall*',
                     ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['rds:DescribeDBClusters'],
+                    resources=["*"],
                 )
             ],
             **kwargs,
