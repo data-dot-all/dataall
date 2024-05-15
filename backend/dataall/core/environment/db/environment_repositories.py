@@ -304,6 +304,22 @@ class EnvironmentRepository:
         return env_group is not None
 
     @staticmethod
+    def is_group_invited_another_envs(session, organizationUri, group):
+        return (
+            session.query(EnvironmentGroup)
+            .join(Environment, EnvironmentGroup.environmentUri == Environment.environmentUri)
+            .filter(Environment.deleted.is_(None))
+            .filter(
+                and_(
+                    EnvironmentGroup.groupUri == group,
+                    Environment.organizationUri == organizationUri,
+                )
+            )
+            .count()
+            > 0
+        )
+
+    @staticmethod
     def query_all_active_environments(session) -> List[Environment]:
         return session.query(Environment).filter(Environment.deleted.is_(None)).all()
 

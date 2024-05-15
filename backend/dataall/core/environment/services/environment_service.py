@@ -417,6 +417,22 @@ class EnvironmentService:
                 resource_type=Environment.__name__,
             )
 
+            # Attach the organization policy to the group, if group hasn't it yet
+            if not ResourcePolicyService.check_group_resource_permission(
+                session=session,
+                group=group,
+                resource_uri=environment.organizationUri,
+                resource_type=Organization.__name__,
+                permission_name=GET_ORGANIZATION,
+            ):
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=group,
+                    resource_uri=environment.organizationUri,
+                    permissions=[GET_ORGANIZATION],
+                    resource_type=Organization.__name__,
+                )
+
             return environment, environment_group
 
     @staticmethod
@@ -471,6 +487,20 @@ class EnvironmentService:
                 resource_uri=environment.environmentUri,
                 resource_type=Environment.__name__,
             )
+
+            # if group is no longer invited to organization or environments inside it, remove GET_ORGAISATION policy
+            is_invited_to_org = OrganizationRepository.is_group_invited(session, environment.organizationUri, group)
+            is_invited_to_environments = EnvironmentRepository.is_group_invited_another_envs(
+                session, environment.organizationUri, group
+            )
+            if not (is_invited_to_environments or is_invited_to_org):
+                ResourcePolicyService.delete_resource_policy(
+                    session=session,
+                    group=group,
+                    resource_uri=environment.organizationUri,
+                    resource_type=Organization.__name__,
+                )
+
             return environment
 
     @staticmethod
