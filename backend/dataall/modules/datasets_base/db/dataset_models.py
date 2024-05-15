@@ -38,4 +38,5 @@ class DatasetBase(Resource, Base):
     def uri(cls):
         return cls.datasetUri
 
+
 DatasetBase.__name__ = 'Dataset'
