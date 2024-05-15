@@ -1,5 +1,4 @@
 import logging
-import os
 
 from dataall.base.api.context import Context
 from dataall.core.environment.db.environment_models import Environment
@@ -7,7 +6,6 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
-from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
@@ -16,8 +14,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_service import Dat
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
-from dataall.base.utils import Parameter
-from dataall.base.db import exceptions
+
 
 log = logging.getLogger(__name__)
 
