@@ -344,9 +344,6 @@ def downgrade():
     op.alter_column('s3_dataset', 'datasetType', nullable=False)
     op.alter_column('s3_dataset', 'imported', nullable=False)
 
-    # Drop dataset table
-    op.drop_table('dataset')
-
     # Update foreign keys of dataset_bucket -> to s3_dataset and dataset_lock -> to dataset tables
     op.drop_constraint('dataset_lock_datasetUri_fkey', 'dataset_lock', type_='foreignkey')
     op.create_foreign_key('fk_dataset_lock_datasetUri', 'dataset_lock', 's3_dataset', ['datasetUri'], ['datasetUri'])
@@ -360,4 +357,18 @@ def downgrade():
         ['datasetUri'],
         ondelete='CASCADE',
     )
+
+    op.drop_constraint('dataset_environmentUri_fkey', 'dataset', type_='foreignkey')
+    op.create_foreign_key(
+        'dataset_environmentUri_fkey',
+        's3_dataset',
+        'environment',
+        ['environmentUri'],
+        ['environmentUri'],
+        ondelete='CASCADE',
+    )
+    # Drop dataset table
+    op.drop_constraint('dataset_datasetUri_fkey', 's3_dataset', type_='foreignkey')
+    op.drop_table('dataset')
+
     # ### end Alembic commands ###
