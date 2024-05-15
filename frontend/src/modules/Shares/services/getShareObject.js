@@ -54,6 +54,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         dataset {
           datasetUri
           datasetName
+          canViewLogs
           SamlAdminGroupName
           environmentName
           AwsAccountId

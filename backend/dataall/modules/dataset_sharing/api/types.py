@@ -111,6 +111,7 @@ DatasetLink = gql.ObjectType(
     fields=[
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='datasetName', type=gql.String),
+        gql.Field(name='canViewLogs', type=gql.Boolean),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),

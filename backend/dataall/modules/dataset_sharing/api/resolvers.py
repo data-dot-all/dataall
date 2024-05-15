@@ -202,6 +202,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
+                'canViewLogs': ShareObjectService.check_view_log_permissions(context.username, context.groups, source),
                 'SamlAdminGroupName': ds.SamlAdminGroupName if ds else 'NotFound',
                 'environmentName': env.label if env else 'NotFound',
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',

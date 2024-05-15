@@ -257,15 +257,17 @@ function ShareViewHeader(props) {
               >
                 Refresh
               </Button>
-              <Button
-                color="primary"
-                startIcon={<Article fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-                onClick={handleOpenLogsModal}
-              >
-                Logs
-              </Button>
+              {share.dataset.canViewLogs && (
+                <Button
+                  color="primary"
+                  startIcon={<Article fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={handleOpenLogsModal}
+                >
+                  Logs
+                </Button>
+              )}
               {(share.userRoleForShareObject === 'Approvers' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -342,7 +344,7 @@ function ShareViewHeader(props) {
       <ShareLogs
         shareUri={share.shareUri}
         onClose={handleCloseOpenLogs}
-        open={openLogsModal}
+        open={openLogsModal && share.dataset.canViewLogs}
       />
     </>
   );
