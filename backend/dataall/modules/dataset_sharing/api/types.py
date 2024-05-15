@@ -16,6 +16,7 @@ from dataall.modules.dataset_sharing.api.resolvers import (
     list_shareable_objects,
     resolve_user_role,
     resolve_shared_database_name,
+    resolve_can_view_logs,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
 
@@ -111,7 +112,6 @@ DatasetLink = gql.ObjectType(
     fields=[
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='datasetName', type=gql.String),
-        gql.Field(name='canViewLogs', type=gql.Boolean),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),
@@ -166,6 +166,11 @@ ShareObject = gql.ObjectType(
             args=[gql.Argument(name='filter', type=gql.Ref('ShareableObjectFilter'))],
             type=gql.Ref('SharedItemSearchResult'),
             resolver=list_shareable_objects,
+        ),
+        gql.Field(
+            name='canViewLogs',
+            resolver=resolve_can_view_logs,
+            type=gql.Boolean,
         ),
         gql.Field(
             name='userRoleForShareObject',

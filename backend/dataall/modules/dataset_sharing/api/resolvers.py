@@ -17,6 +17,7 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.base.utils import Parameter
+from dataall.base.db import exceptions
 
 log = logging.getLogger(__name__)
 
@@ -136,28 +137,7 @@ def get_share_object(context, source, shareUri: str = None):
 
 
 def get_share_logs(context, source, shareUri: str):
-    envname = os.getenv('envname', 'local')
-    log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
-
-    query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
-    name_query_result = CloudWatch.run_query(
-        query=query_for_name,
-        log_group_name=log_group_name,
-        days=1,
-    )
-    if len(name_query_result) == 0:
-        return []
-
-    name = name_query_result[0]['logStream']
-
-    query = ShareObjectService.get_share_logs_query(log_stream_name=name)
-    results = CloudWatch.run_query(
-        query=query,
-        log_group_name=log_group_name,
-        days=1,
-    )
-    log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
-    return results
+    return ShareObjectService.get_share_logs(shareUri)
 
 
 def resolve_user_role(context: Context, source: ShareObject, **kwargs):
@@ -192,6 +172,10 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
         )
 
 
+def resolve_can_view_logs(context: Context, source: ShareObject):
+    return ShareObjectService.check_view_log_permissions(context.username, context.groups, source.shareUri)
+
+
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
@@ -202,7 +186,6 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
-                'canViewLogs': ShareObjectService.check_view_log_permissions(context.username, context.groups, source),
                 'SamlAdminGroupName': ds.SamlAdminGroupName if ds else 'NotFound',
                 'environmentName': env.label if env else 'NotFound',
                 'AwsAccountId': env.AwsAccountId if env else 'NotFound',

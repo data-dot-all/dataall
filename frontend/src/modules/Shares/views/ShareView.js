@@ -257,7 +257,7 @@ function ShareViewHeader(props) {
               >
                 Refresh
               </Button>
-              {share.dataset.canViewLogs && (
+              {share.canViewLogs && (
                 <Button
                   color="primary"
                   startIcon={<Article fontSize="small" />}
@@ -341,11 +341,13 @@ function ShareViewHeader(props) {
           rejectFunction={reject}
         />
       )}
-      <ShareLogs
-        shareUri={share.shareUri}
-        onClose={handleCloseOpenLogs}
-        open={openLogsModal && share.dataset.canViewLogs}
-      />
+      {share.canViewLogs && (
+        <ShareLogs
+          shareUri={share.shareUri}
+          onClose={handleCloseOpenLogs}
+          open={openLogsModal && share.canViewLogs}
+        />
+      )}
     </>
   );
 }

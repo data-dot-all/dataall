@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from warnings import warn
 
@@ -45,16 +46,21 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset,
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
+from dataall.base.utils import Parameter
+from dataall.base.db import exceptions
+from dataall.core.stacks.aws.cloudwatch import CloudWatch
+
+
 import logging
 
 log = logging.getLogger(__name__)
 
 
 class ShareObjectService:
-
     @staticmethod
-    def check_view_log_permissions(username, groups, share):
+    def check_view_log_permissions(username, groups, shareUri):
         with get_context().db_engine.scoped_session() as session:
+            share: ShareObject = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
 
@@ -67,10 +73,10 @@ class ShareObjectService:
 
     @staticmethod
     def update_all_share_items_status(
-            session, shareUri, new_health_status: str, message, previous_health_status: str = None
+        session, shareUri, new_health_status: str, message, previous_health_status: str = None
     ):
         for item in ShareObjectRepository.get_all_shareable_items(
-                session, shareUri, healthStatus=previous_health_status
+            session, shareUri, healthStatus=previous_health_status
         ):
             ShareObjectRepository.update_share_item_health_status(
                 session,
@@ -95,16 +101,16 @@ class ShareObjectService:
     @classmethod
     @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
-            cls,
-            uri: str,
-            dataset_uri: str,
-            item_uri: str,
-            item_type: str,
-            group_uri,
-            principal_id,
-            principal_type,
-            requestPurpose,
-            attachMissingPolicies,
+        cls,
+        uri: str,
+        dataset_uri: str,
+        item_uri: str,
+        item_type: str,
+        group_uri,
+        principal_id,
+        principal_type,
+        requestPurpose,
+        attachMissingPolicies,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -115,7 +121,7 @@ class ShareObjectService:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
                     message=f'Requester Team {group_uri} works in region {environment.region} '
-                            f'and the requested dataset is stored in region {dataset.region}',
+                    f'and the requested dataset is stored in region {dataset.region}',
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
@@ -133,9 +139,9 @@ class ShareObjectService:
                 managed = True
 
             if (
-                    (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                    and environment.environmentUri == dataset.environmentUri
-                    and principal_type == PrincipalType.Group.value
+                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
+                and environment.environmentUri == dataset.environmentUri
+                and principal_type == PrincipalType.Group.value
             ):
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
@@ -383,7 +389,7 @@ class ShareObjectService:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
-                            'Revoke access to these items before deleting the request.',
+                    'Revoke access to these items before deleting the request.',
                 )
 
             if new_state == ShareObjectStatus.Deleted.value:
@@ -523,8 +529,8 @@ class ShareObjectService:
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in EnvironmentService.list_environment_groups(
-                session=session,
-                uri=environment_uri,
+            session=session,
+            uri=environment_uri,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
@@ -616,3 +622,36 @@ class ShareObjectService:
                     | filter @logStream like "{log_stream_name}"
                     """
         return query
+
+    @staticmethod
+    def get_share_logs(shareUri):
+        context = get_context()
+        if not ShareObjectService.check_view_log_permissions(context.username, context.groups, shareUri):
+            raise exceptions.ResourceUnauthorized(
+                username=context.username,
+                action='view logs',
+                resource_uri=shareUri,
+            )
+
+        envname = os.getenv('envname', 'local')
+        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
+
+        query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
+        name_query_result = CloudWatch.run_query(
+            query=query_for_name,
+            log_group_name=log_group_name,
+            days=1,
+        )
+        if len(name_query_result) == 0:
+            return []
+
+        name = name_query_result[0]['logStream']
+
+        query = ShareObjectService.get_share_logs_query(log_stream_name=name)
+        results = CloudWatch.run_query(
+            query=query,
+            log_group_name=log_group_name,
+            days=1,
+        )
+        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
+        return results
