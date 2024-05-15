@@ -39,14 +39,13 @@ class TriggerFunctionStack(pyNestedClass):
         env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
 
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
-        policy_statements = self.get_policy_statements(resource_prefix).append(additional_policy_statements)
-
+        statements = self.get_policy_statements(resource_prefix) + (additional_policy_statements or [])
         self.trigger_function = TriggerFunction(
             self,
             f'TriggerFunction-{handler}',
             function_name=f'{resource_prefix}-{envname}-{handler.replace(".", "_")}',
             description=f'dataall {handler} trigger function',
-            initial_policy=policy_statements,
+            initial_policy=statements,
             code=_lambda.Code.from_ecr_image(repository=ecr_repository, tag=image_tag, cmd=[handler]),
             vpc=vpc,
             security_groups=[function_sgs],
