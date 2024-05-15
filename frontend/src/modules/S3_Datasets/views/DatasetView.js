@@ -338,7 +338,11 @@ const DatasetView = () => {
                   onClose={handleRequestAccessModalClose}
                   open={isRequestAccessOpen}
                   stopLoader={() => setIsOpeningModal(false)}
-                  hit={{ _id: dataset.datasetUri, resourceKind: 's3_datasets' }}
+                  hit={{
+                    _id: dataset.datasetUri,
+                    resourceKind: 'dataset',
+                    label: dataset.label
+                  }}
                 />
               </Box>
             </Grid>
