@@ -3,10 +3,7 @@
 import logging
 from typing import Type, List
 
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
-from dataall.modules.worksheets.db.worksheet_models import Worksheet
-from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +16,8 @@ class WorksheetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
+        from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
         import dataall.modules.worksheets.api
 
         EnvironmentResourceManager.register(WorksheetRepository())

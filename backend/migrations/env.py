@@ -12,8 +12,7 @@ import re
 # fmt: off
 from dataall.modules.catalog.db.glossary_models import GlossaryNode, TermLink
 from dataall.modules.dashboards.db.dashboard_models import DashboardShare, Dashboard
-from dataall.modules.datapipelines import DataPipeline
-from dataall.modules.datapipelines.db.datapipelines_models import DataPipelineEnvironment
+from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.feed.db.feed_models import FeedMessage
 from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.vote.db.vote_models import Vote
