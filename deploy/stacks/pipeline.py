@@ -557,7 +557,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        repository_name = f"{self.resource_prefix}-{target_env['envname']}-repository"
+        repository_name = f"{self.resource_prefix}-{target_env['envname']}-ecr-repository"
         ecr_stage = self.pipeline.add_stage(
             ECRStage(
                 self,
@@ -580,7 +580,7 @@ class PipelineStack(Stack):
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
+                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },

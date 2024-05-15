@@ -114,8 +114,7 @@ export const DatasetUpload = (props) => {
         .catch((e) => {
           dispatch({
             type: SET_ERROR,
-            error: `Failed to upload: ${e.message}.
-      S3 CORS configuration needs to be enabled on the bucket for the upload to succeed.`
+            error: `Failed to upload: ${e.message}.`
           });
         });
       setTimeout(() => {
