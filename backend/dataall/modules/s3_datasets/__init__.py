@@ -17,11 +17,13 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets_base import DatasetBaseModuleInterface
         from dataall.modules.catalog import CatalogApiModuleInterface
         from dataall.modules.feed import FeedApiModuleInterface
         from dataall.modules.vote import VoteApiModuleInterface
 
         return [
+            DatasetBaseModuleInterface,
             CatalogApiModuleInterface,
             FeedApiModuleInterface,
             VoteApiModuleInterface,
@@ -85,12 +87,17 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.HANDLERS in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets_base import DatasetBaseModuleInterface
+
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         import dataall.modules.s3_datasets.handlers
         import dataall.modules.s3_datasets.db.dataset_models
         import dataall.modules.s3_datasets.db.dataset_repositories
         import dataall.modules.s3_datasets.services.dataset_permissions
-        import dataall.modules.s3_datasets.services.datasets_enums
 
         log.info('Dataset handlers have been imported')
 
@@ -101,6 +108,12 @@ class DatasetCdkModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets_base import DatasetBaseModuleInterface
+
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         import dataall.modules.s3_datasets.cdk
@@ -119,6 +132,12 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.datasets_base import DatasetBaseModuleInterface
+
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         from dataall.modules.s3_datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
@@ -134,8 +153,9 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.catalog import CatalogIndexerModuleInterface
+        from dataall.modules.datasets_base import DatasetBaseModuleInterface
 
-        return [CatalogIndexerModuleInterface]
+        return [CatalogIndexerModuleInterface, DatasetBaseModuleInterface]
 
     def __init__(self):
         from dataall.modules.s3_datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer

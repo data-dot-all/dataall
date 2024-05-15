@@ -22,7 +22,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 
 from dataall.modules.s3_datasets.db.dataset_models import Dataset
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetRole
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.services.dataset_service import DatasetServiceInterface
 
 
