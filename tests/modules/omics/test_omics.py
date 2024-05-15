@@ -251,18 +251,21 @@ def test_nopermissions_delete_omics_run():
 def test_delete_omics_run(client, user, group, run1):
     # pass
     query = """
-        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
-          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
+        mutation deleteOmicsRun($input: OmicsDeleteInput) {
+          deleteOmicsRun(input: $input)
         }
         """
 
     response = client.query(
         query,
-        runUris=[run1.runUri], # run1.runUri
-        deleteFromAWS=True,
+        input={
+            'runUris': [run1.runUri],  # run1.runUri
+            'deleteFromAWS': True,
+        },
         username=user.username,
         groups=[group.name],
     )
+    print(response)
     print(response.data)
     assert response.data.deleteOmicsRun
     query = """

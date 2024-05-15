@@ -114,6 +114,11 @@ class OmicsService:
             return OmicsRepository.get_omics_run(session, uri)
 
     @staticmethod
+    def _get_omics_run(uri: str):
+        with _session() as session:
+            return OmicsRepository.get_omics_run(session, uri)
+
+    @staticmethod
     def get_omics_run_details_from_aws(uri: str):
         with _session() as session:
             return OmicsClient.get_omics_run(session, uri)
@@ -146,21 +151,22 @@ class OmicsService:
             return OmicsRepository(session).paginated_omics_workflows(filter=filter)
 
     @staticmethod
-    def delete_omics_runs(uris: List[str]) -> bool:
+    def delete_omics_runs(uris: List[str], delete_from_aws: bool) -> bool:
         """Deletes Omics runs from the database and if delete_from_aws is True from AWS as well"""
         for uri in uris:
-            OmicsService.delete_omics_run(uri)
+            OmicsService.delete_omics_run(uri=uri, delete_from_aws=delete_from_aws)
         return True
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_OMICS_RUN)
-    def delete_omics_run(uri: str):
+    def delete_omics_run(uri: str, delete_from_aws: bool):
         """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
-            omics_run = OmicsService._get_omics_run(session, uri)
+            omics_run = OmicsService._get_omics_run(uri)
             if not omics_run:
                 raise exceptions.ObjectNotFound('OmicsRun', uri)
-            OmicsClient.delete_omics_run(session=session, runUri=omics_run)
+            if delete_from_aws:
+                OmicsClient.delete_omics_run(session=session, omics_run=omics_run)
             session.delete(omics_run)
 
             ResourcePolicyService.delete_resource_policy(

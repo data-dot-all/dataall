@@ -13,9 +13,6 @@ createOmicsRun = gql.MutationField(
 deleteOmicsRun = gql.MutationField(
     name='deleteOmicsRun',
     type=gql.Boolean,
-    args=[
-        gql.Argument(name='runUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
-        gql.Argument(name='deleteFromAWS', type=gql.Boolean),
-    ],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('OmicsDeleteInput')))],
     resolver=delete_omics_run,
 )

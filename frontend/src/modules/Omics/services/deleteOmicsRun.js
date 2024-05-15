@@ -1,12 +1,11 @@
 import { gql } from 'apollo-boost';
-export const deleteOmicsRun = (runUris, deleteFromAWS) => ({
+export const deleteOmicsRun = ({ input }) => ({
   variables: {
-    runUris,
-    deleteFromAWS
+    input
   },
   mutation: gql`
-    mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
-      deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
+    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+      deleteOmicsRun(input: $input)
     }
   `
 });

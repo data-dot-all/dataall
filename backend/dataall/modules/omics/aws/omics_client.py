@@ -91,9 +91,7 @@ class OmicsClient:
             raise e
 
     @staticmethod
-    def delete_omics_run(session, runUri: str):
-        omics_db = OmicsRepository(session)
-        omics_run = omics_db.get_omics_run(runUri=runUri)
+    def delete_omics_run(session, omics_run: OmicsRun):
         environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
         client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
         try:

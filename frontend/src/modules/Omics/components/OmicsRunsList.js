@@ -40,7 +40,14 @@ export const OmicsRunList = () => {
   }, [client, filter.page, dispatch, fetchItems]);
 
   const handleDeleteRuns = async () => {
-    const response = await client.mutate(deleteOmicsRun(selectionModel, true));
+    const response = await client.mutate(
+      deleteOmicsRun({
+        input: {
+          runUris: selectionModel,
+          deleteFromAWS: true
+        }
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Omics runs deleted', {
         anchorOrigin: {

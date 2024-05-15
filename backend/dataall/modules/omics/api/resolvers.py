@@ -59,9 +59,9 @@ def get_omics_workflow(context: Context, source, workflowUri: str = None):
     return OmicsService.get_omics_workflow(workflowUri)
 
 
-def delete_omics_run(context: Context, source, runUris: List[str] = None, deleteFromAWS: bool = None):
-    RequestValidator.required_uri(runUris)
-    return OmicsService.delete_omics_runs(uris=runUris, delete_from_aws=deleteFromAWS)
+def delete_omics_run(context: Context, source, input):
+    RequestValidator.required_uri(input.get('runUris'))
+    return OmicsService.delete_omics_runs(uris=input.get('runUris'), delete_from_aws=input.get('deleteFromAWS', True))
 
 
 def resolve_omics_workflow(context, source: OmicsRun, **kwargs):

@@ -22,3 +22,11 @@ OmicsFilter = gql.InputType(
         gql.Argument(name='pageSize', type=gql.Integer),
     ],
 )
+
+OmicsDeleteInput = gql.InputType(
+    name='OmicsDeleteInput',
+    arguments=[
+        gql.Argument(name='runUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+        gql.Argument(name='deleteFromAWS', type=gql.Boolean),
+    ],
+)
