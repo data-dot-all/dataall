@@ -6,7 +6,6 @@ from dataall.modules.datasets_base.services.datasets_enums import Confidentialit
 
 
 class DatasetBase(Resource, Base):
-    __name__ = 'Dataset'
     __tablename__ = 'dataset'
     environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     organizationUri = Column(String, nullable=False)
@@ -38,3 +37,5 @@ class DatasetBase(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.datasetUri
+
+DatasetBase.__name__ = 'Dataset'
