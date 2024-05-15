@@ -9,9 +9,6 @@
         "datapipelines": {
             "active": true
         },
-        "datasets_base": {
-            "active": true
-        },
         "s3_datasets": {
             "active": true,
             "features": {

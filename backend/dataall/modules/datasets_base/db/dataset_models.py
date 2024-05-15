@@ -6,6 +6,7 @@ from dataall.modules.datasets_base.services.datasets_enums import Confidentialit
 
 
 class DatasetBase(Resource, Base):
+    __name__ = 'Dataset'
     __tablename__ = 'dataset'
     environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     organizationUri = Column(String, nullable=False)

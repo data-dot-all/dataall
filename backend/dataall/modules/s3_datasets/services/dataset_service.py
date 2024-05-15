@@ -42,6 +42,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
@@ -220,7 +221,7 @@ class DatasetService:
                 group=dataset.SamlAdminGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=S3Dataset.__name__,  # todo: SEE HOW IT AFFECTS BACKWARDS COMPATIBILITY
+                resource_type=DatasetBase.__name__,
             )
             if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicyService.attach_resource_policy(
@@ -228,7 +229,7 @@ class DatasetService:
                     group=dataset.stewards,
                     permissions=DATASET_READ,
                     resource_uri=dataset.datasetUri,
-                    resource_type=S3Dataset.__name__,
+                    resource_type=DatasetBase.__name__,
                 )
 
             if environment.SamlGroupName != dataset.SamlAdminGroupName:
@@ -237,7 +238,7 @@ class DatasetService:
                     group=environment.SamlGroupName,
                     permissions=DATASET_ALL,
                     resource_uri=dataset.datasetUri,
-                    resource_type=S3Dataset.__name__,
+                    resource_type=DatasetBase.__name__,
                 )
 
             DatasetService._create_dataset_stack(session, dataset)
@@ -341,7 +342,7 @@ class DatasetService:
                     group=dataset.SamlAdminGroupName,
                     permissions=DATASET_ALL,
                     resource_uri=dataset.datasetUri,
-                    resource_type=S3Dataset.__name__,
+                    resource_type=DatasetBase.__name__,
                 )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
@@ -567,7 +568,7 @@ class DatasetService:
             group=new_stewards,
             permissions=DATASET_READ,
             resource_uri=dataset.datasetUri,
-            resource_type=S3Dataset.__name__,
+            resource_type=DatasetBase.__name__,
         )
 
         dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]

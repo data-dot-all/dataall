@@ -12,6 +12,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJ
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 
 
@@ -307,7 +308,7 @@ def dataset_model(db):
                 group=environment.SamlGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=S3Dataset.__name__,
+                resource_type=DatasetBase.__name__,
             )
             return dataset
 
