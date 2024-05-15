@@ -4,7 +4,9 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.environment_permissions import (
     REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
 )
+from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.organizations.db.organization_models import Organization
 
 
 def get_env(client, env_fixture, group):
@@ -72,6 +74,50 @@ def test_create_environment_invalid_account_region(client, org_fixture, env_fixt
         },
     )
     assert 'InvalidInput' in response.errors[0].message
+
+
+def test_create_environment_with_external_group(db, client, org_fixture, user, group, not_in_org_group):
+    response = client.query(
+        """mutation CreateEnv($input:NewEnvironmentInput){
+            createEnvironment(input:$input){
+                organization{
+                    organizationUri
+                }
+                environmentUri
+                label
+                AwsAccountId
+                SamlGroupName
+                region
+                name
+                owner
+                EnvironmentDefaultIAMRoleName
+                EnvironmentDefaultIAMRoleImported
+                resourcePrefix
+                networks{
+                 VpcId
+                 region
+                 privateSubnetIds
+                 publicSubnetIds
+                 default
+                }
+            }
+        }""",
+        username=user.username,
+        groups=[group.name, not_in_org_group.name],
+        input={
+            'label': f'dev',
+            'description': f'test',
+            'EnvironmentDefaultIAMRoleArn': 'arn:aws:iam::444444444444:role/myOwnIamRole',
+            'organizationUri': org_fixture.organizationUri,
+            'AwsAccountId': '444444444444',
+            'tags': ['a', 'b', 'c'],
+            'region': 'eu-west-1',
+            'SamlGroupName': not_in_org_group.name,
+            'resourcePrefix': 'customer-prefix',
+        },
+    )
+
+    assert 'is not a member of the organization' in response.errors[0].message
 
 
 def test_get_environment(client, org_fixture, env_fixture, group):
@@ -607,6 +653,71 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
         filter={},
     )
     assert 'myteamrole' not in [g.environmentIAMRoleName for g in response.data.listEnvironmentGroups.nodes]
+
+
+def test_external_group_invitation_and_deletion(db, client, env_fixture, org_fixture, group, not_in_org_group, mocker):
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies', return_value=True
+    )
+
+    response = client.query(
+        """
+        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput){
+            inviteGroupOnEnvironment(input:$input){
+                environmentUri
+            }
+        }
+        """,
+        username='alice',
+        input=dict(
+            environmentUri=env_fixture.environmentUri,
+            groupUri=not_in_org_group.name,
+            permissions=['GET_ENVIRONMENT'],
+            environmentIAMRoleArn=f'arn:aws::{env_fixture.AwsAccountId}:role/myteamrole',
+        ),
+        groups=[group.name, not_in_org_group.name],
+    )
+    assert response.data.inviteGroupOnEnvironment
+
+    with db.scoped_session() as session:
+        org_policy = ResourcePolicyService.find_resource_policies(
+            session=session,
+            group=not_in_org_group.name,
+            resource_uri=org_fixture.organizationUri,
+            resource_type=Organization.__name__,
+            permissions=[GET_ORGANIZATION],
+        )
+
+        assert len(org_policy) > 0
+
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
+    )
+    response = client.query(
+        """
+        mutation removeGroupFromEnvironment($environmentUri: String!, $groupUri: String!){
+            removeGroupFromEnvironment(environmentUri: $environmentUri, groupUri: $groupUri){
+                environmentUri
+            }
+        }
+        """,
+        username='alice',
+        environmentUri=env_fixture.environmentUri,
+        groupUri=not_in_org_group.name,
+        groups=[group.name, not_in_org_group.name],
+    )
+    assert response.data.removeGroupFromEnvironment
+
+    with db.scoped_session() as session:
+        org_policy = ResourcePolicyService.find_resource_policies(
+            session=session,
+            group=not_in_org_group.name,
+            resource_uri=org_fixture.organizationUri,
+            resource_type=Organization.__name__,
+            permissions=[GET_ORGANIZATION],
+        )
+
+        assert len(org_policy) == 0
 
 
 def test_archive_env(client, org_fixture, env, group, group2, mocker):
