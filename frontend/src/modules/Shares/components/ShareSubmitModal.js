@@ -19,7 +19,7 @@ import SendIcon from '@mui/icons-material/Send';
 import React from 'react';
 import { updateShareRequestReason } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
-import { ArrowLeftIcon, ShareStatus } from '../../../design';
+import { ShareStatus } from '../../../design';
 
 export const ShareSubmitModal = (props) => {
   const {
@@ -168,17 +168,6 @@ export const ShareSubmitModal = (props) => {
                     variant="contained"
                   >
                     Submit Share
-                  </LoadingButton>
-                  <LoadingButton
-                    fullWidth
-                    startIcon={<ArrowLeftIcon fontSize="small" />}
-                    disabled={isSubmitting}
-                    type="button"
-                    onClick={onClose}
-                    sx={{ mt: 2 }}
-                    variant="outlined"
-                  >
-                    Cancel
                   </LoadingButton>
                 </CardContent>
               </form>
