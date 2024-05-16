@@ -347,7 +347,7 @@ const Catalog = () => {
                     innerClass={{ input: classes.mainSearch, list: listClass }}
                     autoSuggest
                     showIcon
-                    fuzziness="AUTO"
+                    fuzziness={0}
                     componentId="SearchSensor"
                     filterLabel="text"
                     dataField={dataFieldList}
