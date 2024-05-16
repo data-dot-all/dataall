@@ -9,7 +9,7 @@ from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTab
 from dataall.modules.s3_datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetTableColumn
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
 
 
