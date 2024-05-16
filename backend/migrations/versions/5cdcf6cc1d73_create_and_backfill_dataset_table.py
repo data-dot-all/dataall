@@ -13,7 +13,8 @@ from sqlalchemy import Boolean, Column, String, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
-from dataall.base.db import Base, Resource, utils
+from dataall.base.db import utils, Resource
+from sqlalchemy.ext.declarative import declarative_base
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.modules.datasets_base.services.datasets_enums import DatasetType
 
@@ -22,73 +23,6 @@ revision = '5cdcf6cc1d73'
 down_revision = 'd059eead99c2'
 branch_labels = None
 depends_on = None
-
-
-class DatasetBase(Resource, Base):
-    __tablename__ = 'dataset'
-    __table_args__ = {'extend_existing': True}
-    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
-    organizationUri = Column(String, nullable=False)
-    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
-    region = Column(String, default='eu-west-1')
-    AwsAccountId = Column(String, nullable=False)
-    userRoleForDataset = query_expression()
-    userRoleInEnvironment = query_expression()
-    isPublishedInEnvironment = query_expression()
-    projectPermission = query_expression()
-    language = Column(String, nullable=False, default=Language.English.value)
-    topics = Column(ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
-    tags = Column(ARRAY(String))
-    inProject = query_expression()
-
-    businessOwnerEmail = Column(String, nullable=True)
-    businessOwnerDelegationEmails = Column(ARRAY(String), nullable=True)
-    stewards = Column(String, nullable=True)
-
-    SamlAdminGroupName = Column(String, nullable=True)
-    autoApprovalEnabled = Column(Boolean, default=False)
-
-    datasetType = Column(String, nullable=False)
-    imported = Column(Boolean, default=False)
-
-    __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}
-
-
-class S3Dataset(DatasetBase):
-    __tablename__ = 's3_dataset'
-    __table_args__ = {'extend_existing': True}
-    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
-    S3BucketName = Column(String, nullable=False)
-    GlueDatabaseName = Column(String, nullable=False)
-    GlueCrawlerName = Column(String)
-    GlueCrawlerSchedule = Column(String)
-    GlueProfilingJobName = Column(String)
-    GlueProfilingTriggerSchedule = Column(String)
-    GlueProfilingTriggerName = Column(String)
-    GlueDataQualityJobName = Column(String)
-    GlueDataQualitySchedule = Column(String)
-    GlueDataQualityTriggerName = Column(String)
-    IAMDatasetAdminRoleArn = Column(String, nullable=False)
-    IAMDatasetAdminUserArn = Column(String, nullable=False)
-    KmsAlias = Column(String, nullable=False)
-
-    bucketCreated = Column(Boolean, default=False)
-    glueDatabaseCreated = Column(Boolean, default=False)
-    iamAdminRoleCreated = Column(Boolean, default=False)
-    iamAdminUserCreated = Column(Boolean, default=False)
-    kmsAliasCreated = Column(Boolean, default=False)
-    lakeformationLocationCreated = Column(Boolean, default=False)
-    bucketPolicyCreated = Column(Boolean, default=False)
-
-    importedS3Bucket = Column(Boolean, default=False)
-    importedGlueDatabase = Column(Boolean, default=False)
-    importedKmsKey = Column(Boolean, default=False)
-    importedAdminRole = Column(Boolean, default=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': DatasetType.S3.value,
-    }
 
 
 def upgrade():
@@ -115,16 +49,17 @@ def upgrade():
         sa.Column('businessOwnerDelegationEmails', postgresql.ARRAY(sa.String()), nullable=True),
         sa.Column('stewards', sa.String(), nullable=True),
         sa.Column('SamlAdminGroupName', sa.String(), nullable=True),
-        sa.Column('autoApprovalEnabled', sa.Boolean(), nullable=True),
-        sa.Column('datasetType', sa.String(), nullable=False),
-        sa.Column('imported', sa.Boolean(), nullable=True),
+        sa.Column('autoApprovalEnabled', sa.Boolean(), default=False),
+        sa.Column(
+            'datasetType', postgresql.ENUM(DatasetType.S3.value, name='datasettypes', create_type=False), nullable=False
+        ),
+        sa.Column('imported', sa.Boolean(), default=False),
         sa.ForeignKeyConstraint(
             ['environmentUri'],
             ['environment.environmentUri'],
         ),
         sa.PrimaryKeyConstraint('datasetUri'),
     )
-
     print('Backfill dataset with s3_dataset data...')
     # Read s3_datasets table rows
     conn = op.get_bind()
@@ -208,18 +143,99 @@ def upgrade():
 
 
 def downgrade():
+    Base = declarative_base()
+
+    # Define table classes without polymorphism, as 2 individual entities
+    class DatasetBase(Resource, Base):
+        __tablename__ = 'dataset'
+        environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+        organizationUri = Column(String, nullable=False)
+        datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
+        region = Column(String, default='eu-west-1')
+        AwsAccountId = Column(String, nullable=False)
+        userRoleForDataset = query_expression()
+        userRoleInEnvironment = query_expression()
+        isPublishedInEnvironment = query_expression()
+        projectPermission = query_expression()
+        language = Column(String, nullable=False, default=Language.English.value)
+        topics = Column(ARRAY(String), nullable=True)
+        confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
+        tags = Column(ARRAY(String))
+        inProject = query_expression()
+
+        businessOwnerEmail = Column(String, nullable=True)
+        businessOwnerDelegationEmails = Column(ARRAY(String), nullable=True)
+        stewards = Column(String, nullable=True)
+
+        SamlAdminGroupName = Column(String, nullable=True)
+        autoApprovalEnabled = Column(Boolean, default=False)
+
+        datasetType = Column(String, nullable=False)
+        imported = Column(Boolean, default=False)
+
+    class S3Dataset(Resource, Base):  # Old S3 Dataset class with all columns
+        __tablename__ = 's3_dataset'
+        environmentUri = Column(String, nullable=False)  # Foreign key to be added after backfilling
+        organizationUri = Column(String, nullable=False)
+        datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
+        region = Column(String, default='eu-west-1')
+        AwsAccountId = Column(String, nullable=False)
+        S3BucketName = Column(String, nullable=False)
+        GlueDatabaseName = Column(String, nullable=False)
+        GlueCrawlerName = Column(String)
+        GlueCrawlerSchedule = Column(String)
+        GlueProfilingJobName = Column(String)
+        GlueProfilingTriggerSchedule = Column(String)
+        GlueProfilingTriggerName = Column(String)
+        GlueDataQualityJobName = Column(String)
+        GlueDataQualitySchedule = Column(String)
+        GlueDataQualityTriggerName = Column(String)
+        IAMDatasetAdminRoleArn = Column(String, nullable=False)
+        IAMDatasetAdminUserArn = Column(String, nullable=False)
+        KmsAlias = Column(String, nullable=False)
+        userRoleForDataset = query_expression()
+        userRoleInEnvironment = query_expression()
+        isPublishedInEnvironment = query_expression()
+        projectPermission = query_expression()
+        language = Column(String, nullable=False, default=Language.English.value)
+        topics = Column(ARRAY(String), nullable=True)
+        confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
+        tags = Column(ARRAY(String))
+        inProject = query_expression()
+
+        bucketCreated = Column(Boolean, default=False)
+        glueDatabaseCreated = Column(Boolean, default=False)
+        iamAdminRoleCreated = Column(Boolean, default=False)
+        iamAdminUserCreated = Column(Boolean, default=False)
+        kmsAliasCreated = Column(Boolean, default=False)
+        lakeformationLocationCreated = Column(Boolean, default=False)
+        bucketPolicyCreated = Column(Boolean, default=False)
+        businessOwnerEmail = Column(String, nullable=True)
+        businessOwnerDelegationEmails = Column(ARRAY(String), nullable=True)
+        stewards = Column(String, nullable=True)
+
+        SamlAdminGroupName = Column(String, nullable=True)
+
+        importedS3Bucket = Column(Boolean, default=False)
+        importedGlueDatabase = Column(Boolean, default=False)
+        importedKmsKey = Column(Boolean, default=False)
+        importedAdminRole = Column(Boolean, default=False)
+        imported = Column(Boolean, default=False)
+
+        autoApprovalEnabled = Column(Boolean, default=False)
+
     # Create columns in s3_dataset table
     op.add_column(
         's3_dataset',
-        sa.Column('label', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('label', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('name', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('name', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('owner', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('owner', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
@@ -235,15 +251,15 @@ def downgrade():
     )
     op.add_column(
         's3_dataset',
-        sa.Column('description', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('description', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('environmentUri', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('environmentUri', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('organizationUri', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('organizationUri', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
@@ -251,11 +267,11 @@ def downgrade():
     )
     op.add_column(
         's3_dataset',
-        sa.Column('AwsAccountId', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('AwsAccountId', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('language', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('language', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
@@ -263,7 +279,7 @@ def downgrade():
     )
     op.add_column(
         's3_dataset',
-        sa.Column('confidentiality', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('confidentiality', sa.String(), nullable=False, server_default=''),
     )
     op.add_column(
         's3_dataset',
@@ -287,15 +303,20 @@ def downgrade():
     )
     op.add_column(
         's3_dataset',
-        sa.Column('autoApprovalEnabled', sa.Boolean(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('autoApprovalEnabled', sa.Boolean(), default=False),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('datasetType', sa.String(), nullable=True),  # needs to be updated after backfilling
+        sa.Column(
+            'datasetType',
+            sa.Enum(DatasetType.S3.value, name='datasettypes'),
+            nullable=False,
+            server_default=DatasetType.S3.value,
+        ),
     )
     op.add_column(
         's3_dataset',
-        sa.Column('imported', sa.Boolean(), nullable=True),  # needs to be updated after backfilling
+        sa.Column('imported', sa.Boolean(), default=False),
     )
     # Fill s3_dataset table with data from dataset table
     print('Backfill s3_dataset with dataset data...')
@@ -327,22 +348,7 @@ def downgrade():
         dataset.autoApprovalEnabled = generic_datasets[dataset.datasetUri].autoApprovalEnabled
         dataset.datasetType = generic_datasets[dataset.datasetUri].datasetType
         dataset.imported = generic_datasets[dataset.datasetUri].imported
-    session.commit()
-    session.close()
-
-    # Update non-nullable columns
-    op.alter_column('s3_dataset', 'label', nullable=False)
-    op.alter_column('s3_dataset', 'name', nullable=False)
-    op.alter_column('s3_dataset', 'owner', nullable=False)
-    op.alter_column('s3_dataset', 'description', nullable=False)
-    op.alter_column('s3_dataset', 'environmentUri', nullable=False)
-    op.alter_column('s3_dataset', 'organizationUri', nullable=False)
-    op.alter_column('s3_dataset', 'AwsAccountId', nullable=False)
-    op.alter_column('s3_dataset', 'language', nullable=False)
-    op.alter_column('s3_dataset', 'confidentiality', nullable=False)
-    op.alter_column('s3_dataset', 'autoApprovalEnabled', nullable=False)
-    op.alter_column('s3_dataset', 'datasetType', nullable=False)
-    op.alter_column('s3_dataset', 'imported', nullable=False)
+        session.commit()
 
     # Update foreign keys of dataset_bucket -> to s3_dataset and dataset_lock -> to dataset tables
     op.drop_constraint('dataset_lock_datasetUri_fkey', 'dataset_lock', type_='foreignkey')
@@ -360,7 +366,7 @@ def downgrade():
 
     op.drop_constraint('dataset_environmentUri_fkey', 'dataset', type_='foreignkey')
     op.create_foreign_key(
-        'dataset_environmentUri_fkey',
+        's3_dataset_environmentUri_fkey',
         's3_dataset',
         'environment',
         ['environmentUri'],

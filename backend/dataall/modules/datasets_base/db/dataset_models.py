@@ -1,8 +1,8 @@
-from sqlalchemy import Boolean, Column, String, Text, ForeignKey
+from sqlalchemy import Boolean, Column, String, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
-from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language, DatasetType
 
 
 class DatasetBase(Resource, Base):
@@ -29,7 +29,7 @@ class DatasetBase(Resource, Base):
     SamlAdminGroupName = Column(String, nullable=True)
     autoApprovalEnabled = Column(Boolean, default=False)
 
-    datasetType = Column(String, nullable=False)
+    datasetType = Column(Enum(DatasetType), nullable=False, default=DatasetType.S3)
     imported = Column(Boolean, default=False)
 
     __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}

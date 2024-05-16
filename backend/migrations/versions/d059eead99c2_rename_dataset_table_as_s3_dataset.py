@@ -8,13 +8,17 @@ Create Date: 2024-05-07 15:01:14.241572
 
 from alembic import op
 import sqlalchemy as sa
-
+from dataall.base.api.constants import GraphQLEnumMapper
 
 # revision identifiers, used by Alembic.
 revision = 'd059eead99c2'
 down_revision = '458572580709'
 branch_labels = None
 depends_on = None
+
+
+class DatasetType(GraphQLEnumMapper):
+    S3 = 'S3'
 
 
 def upgrade():
@@ -29,17 +33,24 @@ def upgrade():
         local_cols=['environmentUri'],
         remote_cols=['environmentUri'],
     )
+    op.execute("CREATE TYPE datasettypes AS ENUM('S3')")
+    # To add values to types: op.execute("ALTER TYPE datasettypes ADD VALUE 'REDSHIFT'")
     op.add_column(
         's3_dataset',
-        sa.Column('datasetType', sa.String(), nullable=True),
+        sa.Column(
+            'datasetType',
+            sa.Enum(DatasetType.S3.value, name='datasettypes'),
+            nullable=False,
+            server_default=DatasetType.S3.value,
+        ),
     )
-    op.execute('UPDATE s3_dataset SET "datasetType" = \'S3\'')
-    op.alter_column('s3_dataset', 'datasetType', nullable=False)
 
 
 def downgrade():
     print('Renaming s3_dataset as dataset...')
+    op.drop_constraint(constraint_name='s3_dataset_environmentUri_fkey', table_name='s3_dataset', type_='foreignkey')
     op.drop_column('s3_dataset', 'datasetType')
+    op.execute('DROP TYPE datasettypes')
     op.rename_table('s3_dataset', 'dataset')
     op.execute('ALTER INDEX s3_dataset_pkey RENAME TO dataset_pkey')
     op.create_foreign_key(
