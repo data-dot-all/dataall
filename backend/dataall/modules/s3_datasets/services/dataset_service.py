@@ -40,6 +40,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     IMPORT_DATASET,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
@@ -212,7 +213,7 @@ class DatasetService:
                 DatasetService.check_imported_resources(dataset)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
-            DatasetRepository.create_dataset_lock(session=session, dataset=dataset)
+            DatasetBaseRepository.create_dataset_lock(session=session, dataset=dataset)
 
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
@@ -346,7 +347,7 @@ class DatasetService:
                 )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
-                DatasetRepository.update_dataset_activity(session, dataset, username)
+                DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
 
@@ -474,7 +475,7 @@ class DatasetService:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
-            DatasetRepository.delete_dataset_lock(session=session, dataset=dataset)
+            DatasetBaseRepository.delete_dataset_lock(session=session, dataset=dataset)
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:

@@ -139,18 +139,6 @@ class DatasetRepository(EnvironmentResource):
         return dataset
 
     @staticmethod
-    def create_dataset_lock(session, dataset: S3Dataset):
-        dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
-        session.add(dataset_lock)
-        session.commit()
-
-    @staticmethod
-    def delete_dataset_lock(session, dataset: S3Dataset):
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
-        session.delete(dataset_lock)
-        session.commit()
-
-    @staticmethod
     def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
         return paginate(
             query=DatasetRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
@@ -205,19 +193,6 @@ class DatasetRepository(EnvironmentResource):
                 )
             )
         return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
-
-    @staticmethod
-    def update_dataset_activity(session, dataset, username):
-        activity = Activity(
-            action='dataset:update',
-            label='dataset:update',
-            owner=username,
-            summary=f'{username} updated dataset {dataset.name}',
-            targetUri=dataset.datasetUri,
-            targetType='dataset',
-        )
-        session.add(activity)
-        session.commit()
 
     @staticmethod
     def update_bucket_status(session, dataset_uri):
