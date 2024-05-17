@@ -132,6 +132,10 @@ def get_share_object(context, source, shareUri: str = None):
     return ShareObjectService.get_share_object(uri=shareUri)
 
 
+def get_share_logs(context, source, shareUri: str):
+    return ShareObjectService.get_share_logs(shareUri)
+
+
 def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
@@ -162,6 +166,10 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
             if can_request
             else ShareObjectPermission.NoPermission.value
         )
+
+
+def resolve_can_view_logs(context: Context, source: ShareObject):
+    return ShareObjectService.check_view_log_permissions(context.username, context.groups, source.shareUri)
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):

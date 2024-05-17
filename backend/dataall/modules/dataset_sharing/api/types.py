@@ -16,6 +16,7 @@ from dataall.modules.dataset_sharing.api.resolvers import (
     list_shareable_objects,
     resolve_user_role,
     resolve_shared_database_name,
+    resolve_can_view_logs,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
 
@@ -167,6 +168,11 @@ ShareObject = gql.ObjectType(
             resolver=list_shareable_objects,
         ),
         gql.Field(
+            name='canViewLogs',
+            resolver=resolve_can_view_logs,
+            type=gql.Boolean,
+        ),
+        gql.Field(
             name='userRoleForShareObject',
             type=gql.Ref('ShareObjectPermission'),
             resolver=resolve_user_role,
@@ -259,5 +265,15 @@ PrincipalSearchResult = gql.ObjectType(
         gql.Field(name='previousPage', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)
+
+ShareLog = gql.ObjectType(
+    name='ShareLog',
+    fields=[
+        gql.Field(name='logStream', type=gql.String),
+        gql.Field(name='logGroup', type=gql.String),
+        gql.Field(name='timestamp', type=gql.String),
+        gql.Field(name='message', type=gql.String),
     ],
 )

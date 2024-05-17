@@ -34,6 +34,7 @@ import { HiUserRemove } from 'react-icons/hi';
 import { VscChecklist } from 'react-icons/vsc';
 import {
   Defaults,
+  DeleteObjectWithFrictionModal,
   Label,
   Pager,
   RefreshTableMenu,
@@ -65,6 +66,16 @@ function TeamRow({ team, environment, fetchItems }) {
   const [accessingConsole, setAccessingConsole] = useState(false);
   const [loadingCreds, setLoadingCreds] = useState(false);
   const [isTeamEditModalOpen, setIsTeamEditModalOpen] = useState(false);
+  const [isDeleteTeamModalOpen, setIsDeleteTeamModalOpen] = useState(false);
+
+  const handleDeleteTeamModalOpen = () => {
+    setIsDeleteTeamModalOpen(true);
+  };
+
+  const handleDeleteTeamModalClose = () => {
+    setIsDeleteTeamModalOpen(false);
+  };
+
   const handleTeamEditModalClose = () => {
     setIsTeamEditModalOpen(false);
   };
@@ -215,7 +226,7 @@ function TeamRow({ team, environment, fetchItems }) {
             </>
           )}
           {team.groupUri !== environment.SamlGroupName && (
-            <LoadingButton onClick={() => removeGroup(team.groupUri)}>
+            <LoadingButton onClick={() => handleDeleteTeamModalOpen()}>
               <HiUserRemove
                 size={25}
                 color={
@@ -227,6 +238,14 @@ function TeamRow({ team, environment, fetchItems }) {
             </LoadingButton>
           )}
         </Box>
+        <DeleteObjectWithFrictionModal
+          objectName={team.groupUri}
+          onApply={handleDeleteTeamModalClose}
+          onClose={handleDeleteTeamModalClose}
+          open={isDeleteTeamModalOpen}
+          isAWSResource={false}
+          deleteFunction={() => removeGroup(team.groupUri)}
+        />
       </TableCell>
     </TableRow>
   );
@@ -252,6 +271,14 @@ export const EnvironmentTeams = ({ environment }) => {
   const [inputValueRoles, setInputValueRoles] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
   const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+  const [isDeleteRoleModalOpenId, setIsDeleteRoleModalOpen] = useState(0);
+  const handleDeleteRoleModalOpen = (id) => {
+    setIsDeleteRoleModalOpen(id);
+  };
+  const handleDeleteRoleModalClosed = (id) => {
+    setIsDeleteRoleModalOpen(0);
+  };
+
   const handleTeamInviteModalOpen = () => {
     setIsTeamInviteModalOpen(true);
   };
@@ -422,10 +449,6 @@ export const EnvironmentTeams = ({ environment }) => {
 
   const handleSaveClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-  };
-
-  const handleDeleteClick = (id) => () => {
-    removeConsumptionRole(id);
   };
 
   const handleCancelClick = (id) => () => {
@@ -711,7 +734,8 @@ export const EnvironmentTeams = ({ environment }) => {
                     flex: 0.5,
                     type: 'actions',
                     cellClassName: 'actions',
-                    getActions: ({ id }) => {
+                    getActions: ({ id, ...props }) => {
+                      const name = props.row.consumptionRoleName;
                       const isInEditMode =
                         rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -745,8 +769,16 @@ export const EnvironmentTeams = ({ environment }) => {
                         <GridActionsCellItem
                           icon={<DeleteIcon />}
                           label="Delete"
-                          onClick={handleDeleteClick(id)}
+                          onClick={() => handleDeleteRoleModalOpen(id)}
                           color="inherit"
+                        />,
+                        <DeleteObjectWithFrictionModal
+                          objectName={name}
+                          onApply={() => handleDeleteRoleModalClosed(id)}
+                          onClose={() => handleDeleteRoleModalClosed(id)}
+                          open={isDeleteRoleModalOpenId === id}
+                          isAWSResource={false}
+                          deleteFunction={() => removeConsumptionRole(id)}
                         />
                       ];
                     }
