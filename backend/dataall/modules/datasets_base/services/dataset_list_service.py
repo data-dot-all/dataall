@@ -43,3 +43,9 @@ class DatasetListService:
             return DatasetListRepository.paginated_all_user_datasets(
                 session, context.username, context.groups, all_subqueries, data=data
             )
+
+    @staticmethod
+    def list_owned_datasets(data: dict):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetListRepository.paginated_user_datasets(session, context.username, context.groups, data=data)

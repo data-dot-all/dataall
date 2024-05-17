@@ -72,3 +72,29 @@ class DatasetListRepository:
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
+
+    @staticmethod
+    def paginated_user_datasets(session, username, groups, data=None) -> dict:
+        return paginate(
+            query=DatasetListRepository._query_user_datasets(session, username, groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def _query_user_datasets(session, username, groups, filter) -> Query:
+        query = session.query(DatasetBase).filter(
+            or_(
+                DatasetBase.owner == username,
+                DatasetBase.SamlAdminGroupName.in_(groups),
+                DatasetBase.stewards.in_(groups),
+            )
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    DatasetBase.description.ilike(filter.get('term') + '%%'),
+                    DatasetBase.label.ilike(filter.get('term') + '%%'),
+                )
+            )
+        return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)

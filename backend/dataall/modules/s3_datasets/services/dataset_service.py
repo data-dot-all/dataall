@@ -226,12 +226,6 @@ class DatasetService:
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
 
     @staticmethod
-    def list_owned_datasets(data: dict):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
-
-    @staticmethod
     def list_locations(dataset_uri, data: dict):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.paginated_dataset_locations(

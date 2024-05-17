@@ -17,6 +17,12 @@ def list_all_user_datasets(context: Context, source, filter: dict = None):
     return DatasetListService.list_all_user_datasets(filter)
 
 
+def list_owned_datasets(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetListService.list_owned_datasets(filter)
+
+
 def resolve_user_role(context: Context, source: DatasetBase, **kwargs):
     if not source:
         return None

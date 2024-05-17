@@ -58,12 +58,6 @@ def get_file_upload_presigned_url(context, source, datasetUri: str = None, input
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
-def list_owned_datasets(context: Context, source, filter: dict = None):
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_owned_datasets(filter)
-
-
 def list_locations(context, source: S3Dataset, filter: dict = None):
     if not source:
         return None
