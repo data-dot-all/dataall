@@ -60,8 +60,8 @@ class ShareObjectService:
     @staticmethod
     def check_view_log_permissions(username, groups, shareUri):
         with get_context().db_engine.scoped_session() as session:
-            share: ShareObject = ShareObjectRepository.get_share_by_uri(session, shareUri)
-            ds: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
+            ds = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
 
     @staticmethod
