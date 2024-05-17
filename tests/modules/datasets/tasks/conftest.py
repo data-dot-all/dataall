@@ -2,13 +2,13 @@ import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
 
 

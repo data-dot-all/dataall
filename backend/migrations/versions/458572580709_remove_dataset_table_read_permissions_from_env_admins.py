@@ -14,8 +14,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType, PrincipalType
+from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareableType, PrincipalType
 
 # revision identifiers, used by Alembic.
 revision = '458572580709'
