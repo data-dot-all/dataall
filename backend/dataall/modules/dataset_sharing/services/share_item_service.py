@@ -31,7 +31,7 @@ from dataall.modules.dataset_sharing.services.share_permissions import (
     APPROVE_SHARE_OBJECT,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 log = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class ShareItemService:
             item_type = data.get('itemType')
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)

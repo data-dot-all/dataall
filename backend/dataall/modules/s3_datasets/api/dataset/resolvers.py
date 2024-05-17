@@ -7,7 +7,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 
@@ -34,7 +34,7 @@ def get_dataset(context, source, datasetUri=None):
     return DatasetService.get_dataset(uri=datasetUri)
 
 
-def resolve_user_role(context: Context, source: Dataset, **kwargs):
+def resolve_user_role(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None
     if source.owner == context.username:
@@ -70,7 +70,7 @@ def list_owned_datasets(context: Context, source, filter: dict = None):
     return DatasetService.list_owned_datasets(filter)
 
 
-def list_locations(context, source: Dataset, filter: dict = None):
+def list_locations(context, source: S3Dataset, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -78,7 +78,7 @@ def list_locations(context, source: Dataset, filter: dict = None):
     return DatasetService.list_locations(source.datasetUri, filter)
 
 
-def list_tables(context, source: Dataset, filter: dict = None):
+def list_tables(context, source: S3Dataset, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -86,27 +86,27 @@ def list_tables(context, source: Dataset, filter: dict = None):
     return DatasetService.list_tables(source.datasetUri, filter)
 
 
-def get_dataset_organization(context, source: Dataset, **kwargs):
+def get_dataset_organization(context, source: S3Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         return OrganizationRepository.get_organization_by_uri(session, source.organizationUri)
 
 
-def get_dataset_environment(context, source: Dataset, **kwargs):
+def get_dataset_environment(context, source: S3Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
-def get_dataset_owners_group(context, source: Dataset, **kwargs):
+def get_dataset_owners_group(context, source: S3Dataset, **kwargs):
     if not source:
         return None
     return source.SamlAdminGroupName
 
 
-def get_dataset_stewards_group(context, source: Dataset, **kwargs):
+def get_dataset_stewards_group(context, source: S3Dataset, **kwargs):
     if not source:
         return None
     return source.stewards
@@ -116,7 +116,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     return DatasetService.update_dataset(uri=datasetUri, data=input)
 
 
-def get_dataset_statistics(context: Context, source: Dataset, **kwargs):
+def get_dataset_statistics(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None
     return DatasetService.get_dataset_statistics(source)
@@ -137,7 +137,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
 
 
-def resolve_dataset_stack(context: Context, source: Dataset, **kwargs):
+def resolve_dataset_stack(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None
     return StackService.get_stack_with_cfn_resources(
@@ -150,7 +150,7 @@ def delete_dataset(context: Context, source, datasetUri: str = None, deleteFromA
     return DatasetService.delete_dataset(uri=datasetUri, delete_from_aws=deleteFromAWS)
 
 
-def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
+def get_dataset_glossary_terms(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:

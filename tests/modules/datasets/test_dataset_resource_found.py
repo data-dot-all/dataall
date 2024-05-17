@@ -1,4 +1,4 @@
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetLock
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetLock
 from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 
@@ -118,7 +118,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     with db.scoped_session() as session:
         dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
         session.delete(dataset_lock)
-        dataset = session.query(Dataset).get(dataset.datasetUri)
+        dataset = session.query(S3Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()
 

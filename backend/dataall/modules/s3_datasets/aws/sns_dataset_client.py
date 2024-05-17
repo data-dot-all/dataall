@@ -5,13 +5,13 @@ from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 log = logging.getLogger(__name__)
 
 
 class SnsDatasetClient:
-    def __init__(self, environment: Environment, dataset: Dataset):
+    def __init__(self, environment: Environment, dataset: S3Dataset):
         aws_session = SessionHelper.remote_session(accountid=environment.AwsAccountId, region=environment.region)
 
         self._client = aws_session.client('sns', region_name=environment.region)

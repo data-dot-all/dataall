@@ -2,7 +2,8 @@ from sqlalchemy import Boolean, Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
-from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.services.datasets_enums import DatasetType
 
 
 class DatasetTableColumn(Resource, Base):
@@ -82,13 +83,9 @@ class DatasetTable(Resource, Base):
         return cls.tableUri
 
 
-class Dataset(Resource, Base):
-    __tablename__ = 'dataset'
-    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
-    organizationUri = Column(String, nullable=False)
-    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
-    region = Column(String, default='eu-west-1')
-    AwsAccountId = Column(String, nullable=False)
+class S3Dataset(DatasetBase):
+    __tablename__ = 's3_dataset'
+    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
     GlueCrawlerName = Column(String)
@@ -102,15 +99,6 @@ class Dataset(Resource, Base):
     IAMDatasetAdminRoleArn = Column(String, nullable=False)
     IAMDatasetAdminUserArn = Column(String, nullable=False)
     KmsAlias = Column(String, nullable=False)
-    userRoleForDataset = query_expression()
-    userRoleInEnvironment = query_expression()
-    isPublishedInEnvironment = query_expression()
-    projectPermission = query_expression()
-    language = Column(String, nullable=False, default=Language.English.value)
-    topics = Column(ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
-    tags = Column(ARRAY(String))
-    inProject = query_expression()
 
     bucketCreated = Column(Boolean, default=False)
     glueDatabaseCreated = Column(Boolean, default=False)
@@ -120,31 +108,19 @@ class Dataset(Resource, Base):
     lakeformationLocationCreated = Column(Boolean, default=False)
     bucketPolicyCreated = Column(Boolean, default=False)
 
-    # bookmarked = Column(Integer, default=0)
-    # upvotes=Column(Integer, default=0)
-
-    businessOwnerEmail = Column(String, nullable=True)
-    businessOwnerDelegationEmails = Column(ARRAY(String), nullable=True)
-    stewards = Column(String, nullable=True)
-
-    SamlAdminGroupName = Column(String, nullable=True)
-
     importedS3Bucket = Column(Boolean, default=False)
     importedGlueDatabase = Column(Boolean, default=False)
     importedKmsKey = Column(Boolean, default=False)
     importedAdminRole = Column(Boolean, default=False)
-    imported = Column(Boolean, default=False)
 
-    autoApprovalEnabled = Column(Boolean, default=False)
-
-    @classmethod
-    def uri(cls):
-        return cls.datasetUri
+    __mapper_args__ = {
+        'polymorphic_identity': DatasetType.S3,
+    }
 
 
 class DatasetBucket(Resource, Base):
     __tablename__ = 'dataset_bucket'
-    datasetUri = Column(String, ForeignKey('dataset.datasetUri', ondelete='CASCADE'), nullable=False)
+    datasetUri = Column(String, ForeignKey('s3_dataset.datasetUri', ondelete='CASCADE'), nullable=False)
     bucketUri = Column(String, primary_key=True, default=utils.uuid('bucket'))
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
