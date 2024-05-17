@@ -1,4 +1,5 @@
 import {
+  Article,
   BlockOutlined,
   CheckCircleOutlined,
   CopyAllOutlined,
@@ -73,6 +74,7 @@ import {
   UpdateRequestReason
 } from '../components';
 import { generateShareItemLabel } from 'utils';
+import { ShareLogs } from '../components/ShareLogs';
 
 function ShareViewHeader(props) {
   const {
@@ -89,6 +91,8 @@ function ShareViewHeader(props) {
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
+  const [openLogsModal, setOpenLogsModal] = useState(null);
+
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -131,6 +135,13 @@ function ShareViewHeader(props) {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
+  };
+
+  const handleOpenLogsModal = () => {
+    setOpenLogsModal(true);
+  };
+  const handleCloseOpenLogs = () => {
+    setOpenLogsModal(false);
   };
 
   const handleRejectShareModalOpen = () => {
@@ -246,6 +257,17 @@ function ShareViewHeader(props) {
               >
                 Refresh
               </Button>
+              {share.canViewLogs && (
+                <Button
+                  color="primary"
+                  startIcon={<Article fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={handleOpenLogsModal}
+                >
+                  Logs
+                </Button>
+              )}
               {(share.userRoleForShareObject === 'Approvers' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -317,6 +339,13 @@ function ShareViewHeader(props) {
           onClose={handleRejectShareModalClose}
           open={isRejectShareModalOpen}
           rejectFunction={reject}
+        />
+      )}
+      {share.canViewLogs && (
+        <ShareLogs
+          shareUri={share.shareUri}
+          onClose={handleCloseOpenLogs}
+          open={openLogsModal && share.canViewLogs}
         />
       )}
     </>
