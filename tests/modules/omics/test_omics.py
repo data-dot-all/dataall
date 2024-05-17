@@ -201,55 +201,49 @@ def test_get_omics_workflow(client, user, group, workflow1):
     assert response.data.getOmicsWorkflow['type'] == workflow1.type
 
 
-# TODO: test delete omics run that does not exist
-def test_delete_omics_run_does_not_exist():
-    pass
-    '''
+def test_delete_omics_run_does_not_exist(client, user, group, run1):
     query = """
-        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
-          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
-        }
-        """
+    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+      deleteOmicsRun(input: $input)
+    }
+    """
 
     response = client.query(
         query,
-        runUris=run1.runUri,
-        deleteFromAWS=True,
+        input={
+            'runUris': ["random-string"],
+            'deleteFromAWS': True,
+        },
         username=user.username,
         groups=[group.name],
     )
-    assert response.data.deleteOmicsRun['workflowUri'] == workflow1.workflowUri
-    assert response.data.deleteOmicsRun['id'] == workflow1.id
-    assert response.data.deleteOmicsRun['type'] == workflow1.type
-    '''
+    print(response)
+    print(response.data)
+    assert not response.data.deleteOmicsRun
 
 
-# TODO: test delete omics run with no permissions
-def test_nopermissions_delete_omics_run():
-    pass
-    '''
+def test_nopermissions_delete_omics_run(client, user2, group2, run1):
     query = """
-        mutation deleteOmicsRun($runUris: [String!], $deleteFromAWS: Boolean) {
-          deleteOmicsRun(runUris: $runUris, deleteFromAWS: $deleteFromAWS)
-        }
-        """
+    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+      deleteOmicsRun(input: $input)
+    }
+    """
 
     response = client.query(
         query,
-        runUris=run1.runUri,
-        deleteFromAWS=True,
-        username=user.username,
-        groups=[group.name],
+        input={
+            'runUris': [run1.runUri],
+            'deleteFromAWS': True,
+        },
+        username=user2.username,
+        groups=[group2.name],
     )
-    assert response.data.deleteOmicsRun['workflowUri'] == workflow1.workflowUri
-    assert response.data.deleteOmicsRun['id'] == workflow1.id
-    assert response.data.deleteOmicsRun['type'] == workflow1.type
-    '''
+    print(response)
+    print(response.data)
+    assert not response.data.deleteOmicsRun
 
 
-# TODO: test delete omics run with permissions
 def test_delete_omics_run(client, user, group, run1):
-    # pass
     query = """
         mutation deleteOmicsRun($input: OmicsDeleteInput) {
           deleteOmicsRun(input: $input)
@@ -259,7 +253,7 @@ def test_delete_omics_run(client, user, group, run1):
     response = client.query(
         query,
         input={
-            'runUris': [run1.runUri],  # run1.runUri
+            'runUris': [run1.runUri],
             'deleteFromAWS': True,
         },
         username=user.username,
