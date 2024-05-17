@@ -110,12 +110,12 @@ class OmicsService:
     @ResourcePolicyService.has_resource_permission(GET_OMICS_RUN)
     def get_omics_run(*, uri: str):
         with _session() as session:
-            return OmicsRepository.get_omics_run(session, uri)
+            return OmicsRepository(session).get_omics_run(uri)
 
     @staticmethod
     def _get_omics_run(uri: str):
         with _session() as session:
-            return OmicsRepository.get_omics_run(session, uri)
+            return OmicsRepository(session).get_omics_run(uri)
 
     @staticmethod
     def get_omics_run_details_from_aws(uri: str):

@@ -25,6 +25,10 @@ def patch_aws(module_mocker):
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
         return_value={'id': 'wf-id', 'parameterTemplate': 'some', 'type': 'READY2RUN'},
     )
+    module_mocker.patch(
+        'dataall.modules.omics.aws.omics_client.OmicsClient.delete_omics_run',
+        return_value=True,
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
