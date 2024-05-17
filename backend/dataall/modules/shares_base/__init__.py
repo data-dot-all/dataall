@@ -16,3 +16,4 @@ class SharesBaseModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.shares_base.services.shares_enums
+        import dataall.modules.shares_base.services.share_permissions

@@ -13,7 +13,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
-from dataall.modules.s3_datasets_shares.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
+from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 
 # revision identifiers, used by Alembic.
