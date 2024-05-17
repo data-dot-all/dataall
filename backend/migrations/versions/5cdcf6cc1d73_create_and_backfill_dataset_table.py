@@ -295,7 +295,7 @@ def downgrade():
     )
     op.add_column(
         's3_dataset',
-        sa.Column('stewards', postgresql.ARRAY(sa.String()), nullable=True),
+        sa.Column('stewards', sa.String(), nullable=True),
     )
     op.add_column(
         's3_dataset',
