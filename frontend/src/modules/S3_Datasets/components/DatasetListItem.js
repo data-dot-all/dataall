@@ -10,19 +10,11 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React from 'react';
-import * as BsIcons from 'react-icons/bs';
-import { BsTable } from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  IconAvatar,
-  Label,
-  StackStatus,
-  UpVotesReadOnly,
-  useCardStyle
-} from 'design';
+import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 
 export const DatasetListItem = (props) => {
   const { dataset } = props;
@@ -166,44 +158,6 @@ export const DatasetListItem = (props) => {
           <Grid container>
             <Grid item md={4} xs={12}>
               <Typography color="textSecondary" variant="body2">
-                <BsTable /> Tables
-              </Typography>
-            </Grid>
-            <Grid item md={8} xs={6}>
-              <Typography color="textPrimary" variant="body2">
-                {dataset.statistics.tables}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-        <Box
-          sx={{
-            px: 3,
-            py: 0.5
-          }}
-        >
-          <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
-                <BsIcons.BsFolder /> Folders
-              </Typography>
-            </Grid>
-            <Grid item md={8} xs={6}>
-              <Typography color="textPrimary" variant="body2">
-                {dataset.statistics.locations}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-        <Box
-          sx={{
-            px: 3,
-            py: 0.5
-          }}
-        >
-          <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
                 <FiIcons.FiActivity /> Status
               </Typography>
             </Grid>
@@ -255,7 +209,6 @@ export const DatasetListItem = (props) => {
             </Button>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
-          <UpVotesReadOnly upvotes={dataset.statistics.upvotes} />
         </Box>
       </Card>
     </Grid>

@@ -37,6 +37,7 @@ export const listDatasets = ({ filter }) => ({
           stack {
             status
           }
+          datasetType
         }
       }
     }

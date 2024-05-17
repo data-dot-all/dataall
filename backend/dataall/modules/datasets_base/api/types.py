@@ -14,6 +14,7 @@ DatasetBase = gql.ObjectType(
     name='DatasetBase',
     fields=[
         gql.Field(name='datasetUri', type=gql.ID),
+        gql.Field(name='datasetType', type=gql.String),
         gql.Field(name='label', type=gql.String),
         gql.Field(name='name', type=gql.String),
         gql.Field(name='description', type=gql.String),

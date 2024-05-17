@@ -27,4 +27,3 @@ class DatasetBaseApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.datasets_base.api
         import dataall.modules.datasets_base.services.datasets_enums
-

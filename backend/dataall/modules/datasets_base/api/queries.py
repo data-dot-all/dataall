@@ -10,5 +10,4 @@ listDatasets = gql.QueryField(
     args=[gql.Argument('filter', DatasetFilter)],
     type=DatasetBaseSearchResult,
     resolver=list_all_user_datasets,
-    test_scope='Dataset',
 )
