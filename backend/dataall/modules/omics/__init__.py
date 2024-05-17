@@ -18,7 +18,7 @@ class OmicsApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets import DatasetApiModuleInterface
+        from dataall.modules.s3_datasets import DatasetApiModuleInterface
 
         return [DatasetApiModuleInterface]
 
