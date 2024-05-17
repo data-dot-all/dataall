@@ -174,9 +174,9 @@ const Catalog = () => {
   const [openMenu, setOpenMenu] = useState(false);
   const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
 
-  if (config.modules.datasets.features.topics_dropdown === true)
+  if (config.modules.s3_datasets.features.topics_dropdown === true)
     dataFieldList.push('topics');
-  if (config.modules.datasets.features.confidentiality_dropdown === true)
+  if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
     dataFieldList.push('classification');
 
   const filterItemsInit = [
@@ -200,14 +200,14 @@ const Catalog = () => {
     }
   ];
 
-  if (config.modules.datasets.features.topics_dropdown === true)
+  if (config.modules.s3_datasets.features.topics_dropdown === true)
     filterItemsInit.push({
       title: 'Topics',
       dataField: 'topics',
       componentId: 'TopicSensor',
       filterLabel: 'Topics'
     });
-  if (config.modules.datasets.features.confidentiality_dropdown === true)
+  if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
     filterItemsInit.push({
       title: 'Classification',
       dataField: 'classification',

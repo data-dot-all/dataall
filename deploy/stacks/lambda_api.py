@@ -66,27 +66,43 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+        lambda_env_key = kms.Key(
+            self,
+            f'{resource_prefix}-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
-
-        esproxy_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'esproxyloggroup', f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
-        )
-        graphql_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'graphqlloggroup', f'/aws/lambda/{resource_prefix}-{envname}-graphql'
-        )
-        awsworker_loggroup = logs.LogGroup.from_log_group_name(
-            self, 'awsworkerloggroup', f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
-        )
 
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
-            log_group=esproxy_loggroup
-            if esproxy_loggroup is not None
-            else logs.LogGroup(
-                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-esproxy'
+            log_group=logs.LogGroup(
+                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-esproxy'
             ),
             description='dataall es search function',
             role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
@@ -98,6 +114,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.esproxy_dlq,
             on_failure=lambda_destination.SqsDestination(self.esproxy_dlq),
@@ -116,10 +133,8 @@ class LambdaApiStack(pyNestedClass):
             self,
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
-            log_group=graphql_loggroup
-            if graphql_loggroup is not None
-            else logs.LogGroup(
-                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-graphql'
+            log_group=logs.LogGroup(
+                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-graphql'
             ),
             description='dataall graphql function',
             role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
@@ -131,6 +146,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
             environment=api_handler_env,
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
@@ -148,10 +164,8 @@ class LambdaApiStack(pyNestedClass):
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
-            log_group=awsworker_loggroup
-            if awsworker_loggroup is not None
-            else logs.LogGroup(
-                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-awsworker'
+            log_group=logs.LogGroup(
+                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-awsworker'
             ),
             description='dataall aws worker for aws asynchronous tasks function',
             role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
@@ -159,6 +173,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
             environment=awshandler_env,
+            environment_encryption=lambda_env_key,
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
@@ -235,6 +250,7 @@ class LambdaApiStack(pyNestedClass):
                 description='dataall Custom authorizer replacing cognito authorizer',
                 timeout=Duration.seconds(20),
                 environment=custom_lambda_env,
+                environment_encryption=lambda_env_key,
                 vpc=vpc,
                 security_groups=[authorizer_fn_sg],
                 runtime=_lambda.Runtime.PYTHON_3_9,

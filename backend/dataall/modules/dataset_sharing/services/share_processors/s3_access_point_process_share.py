@@ -2,8 +2,10 @@ import logging
 from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import S3AccessPointShareManager
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -92,6 +94,12 @@ class ProcessS3AccessPointShare(S3AccessPointShareManager):
             )
 
             try:
+                if not ShareObjectService.verify_principal_role(session, share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {share.principalIAMRoleName} is not found. Failed to update bucket policy',
+                    )
+
                 sharing_folder.manage_bucket_policy()
                 sharing_folder.grant_target_role_access_policy()
                 sharing_folder.manage_access_point_and_policy()

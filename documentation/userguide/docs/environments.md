@@ -49,7 +49,20 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
 In the above command we define the `--cloudformation-execution-policies` to use the AdministratorAccess policy `arn:aws:iam::aws:policy/AdministratorAccess`. 
 This is the default policy that CDK uses to deploy resources, nevertheless it is possible to restrict it to any IAM policy created in the account.
 
-In V1.6.0 and later, a more restricted policy is provided and directly downloadable from the UI. This more restrictive policy can be optionally passed in to the parameter `--cloudformation-execution-policies` instead of `arn:aws:iam::aws:policy/AdministratorAccess` for the CDK Execution role.
+A more restricted policy named `DataAllCustomCDKPolicyREGION` is provided and directly downloadable from the UI. This more restrictive 
+policy can be optionally passed in to the parameter `--cloudformation-execution-policies` instead of `arn:aws:iam::aws:policy/AdministratorAccess` for the CDK Execution role.
+
+````bash
+aws cloudformation --region REGION create-stack --stack-name DataAllCustomCDKExecPolicyStack --template-body file://cdkExecPolicy.yaml --parameters ParameterKey=EnvironmentResourcePrefix,ParameterValue=dataall --capabilities CAPABILITY_NAMED_IAM && aws cloudformation wait stack-create-complete --stack-name DataAllCustomCDKExecPolicyStack --region REGION && cdk bootstrap --trust 225091619433 -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicyREGION aws://ACCOUNT_ID/REGION
+````
+
+#### Environments in multiple regions
+v2.4.0 allows the creation of multiple environments in the same AWS account and in multiple regions. We need to bootstrap every
+region that will host an environment. 
+
+!!! note "Regional CDK Execution Policy"
+    Every CDK execution role requires its own `DataAllCustomCDKPolicyREGION` IAM policy. If you are using restricted
+    CDK execution roles you need a different `DataAllCustomCDKExecPolicyStack` for each region used.
 
 
 ### 2. (For manual) Pivot role

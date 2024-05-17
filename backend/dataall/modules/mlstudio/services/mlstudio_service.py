@@ -13,9 +13,9 @@ from dataall.core.permissions.services.group_policy_service import GroupPolicySe
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.stacks.api import stack_helper
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import exceptions
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repositories import SageMakerStudioRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
@@ -165,15 +165,14 @@ class SagemakerStudioService:
                     resource_type=SagemakerStudioUser.__name__,
                 )
 
-            Stack.create_stack(
+            StackRepository.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='mlstudio',
                 target_uri=sagemaker_studio_user.sagemakerStudioUserUri,
-                target_label=sagemaker_studio_user.label,
             )
 
-        stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
+        StackService.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
 
         return sagemaker_studio_user
 
@@ -275,7 +274,7 @@ class SagemakerStudioService:
             )
 
             if delete_from_aws:
-                stack_helper.delete_stack(
+                StackService.delete_stack(
                     target_uri=uri, accountid=env.AwsAccountId, cdk_role_arn=env.CDKRoleArn, region=env.region
                 )
             return True

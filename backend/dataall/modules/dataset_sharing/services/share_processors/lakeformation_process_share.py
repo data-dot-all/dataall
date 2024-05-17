@@ -9,9 +9,11 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemActions,
     ShareableType,
 )
+from dataall.modules.dataset_sharing.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.dataset_sharing.services.share_managers import LFShareManager
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -72,6 +74,12 @@ class ProcessLakeFormationShare(LFShareManager):
             log.info('No tables to share. Skipping...')
         else:
             try:
+                if not ShareObjectService.verify_principal_role(self.session, self.share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {self.share.principalIAMRoleName} is not found. Failed to update LF policy',
+                    )
+
                 if None in [self.source_account_id, self.source_account_region, self.source_database_name]:
                     raise Exception(
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
@@ -205,6 +213,7 @@ class ProcessLakeFormationShare(LFShareManager):
                 log.info(f'Revoking access to table: {table.GlueTableName} ')
                 self.check_table_exists_in_source_database(share_item, table)
 
+                log.info('Check resource link table exists')
                 resource_link_table_exists = self.check_resource_link_table_exists_in_target_database(table)
                 other_table_shares_in_env = (
                     True
@@ -218,7 +227,9 @@ class ProcessLakeFormationShare(LFShareManager):
                 )
 
                 if resource_link_table_exists:
+                    log.info('Revoking principal permissions from resource link table')
                     self.revoke_principals_permissions_to_resource_link_table(table)
+                    log.info('Revoking principal permissions from table in target')
                     self.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
 
                     if (self.is_new_share and not other_table_shares_in_env) or not self.is_new_share:
@@ -231,6 +242,7 @@ class ProcessLakeFormationShare(LFShareManager):
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
                 ShareObjectRepository.update_share_item_health_status(
                     self.session, share_item, None, None, share_item.lastVerificationTime
                 )

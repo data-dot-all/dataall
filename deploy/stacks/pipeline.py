@@ -184,9 +184,8 @@ class PipelineStack(Stack):
                     )
                 )
 
-            self.set_db_migration_stage(
-                target_env,
-            )
+            if target_env.get('with_approval_tests', False):
+                self.set_approval_tests_stage(target_env)
 
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
@@ -560,7 +559,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        repository_name = f"{self.resource_prefix}-{target_env['envname']}-repository"
+        repository_name = f"{self.resource_prefix}-{target_env['envname']}-ecr-repository"
         ecr_stage = self.pipeline.add_stage(
             ECRStage(
                 self,
@@ -583,7 +582,7 @@ class PipelineStack(Stack):
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
+                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
@@ -655,32 +654,59 @@ class PipelineStack(Stack):
         )
         return backend_stage
 
-    def set_db_migration_stage(
+    def set_approval_tests_stage(
         self,
         target_env,
     ):
-        migration_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage")
-        migration_wave.add_post(
+        if target_env.get('custom_auth', None) is None:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role'
+        else:
+            frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
+
+        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
+        wave.add_post(
             pipelines.CodeBuildStep(
-                id='MigrateDB',
+                id='ApprovalTests',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                 ),
-                commands=[
-                    'mkdir ~/.aws/ && touch ~/.aws/config',
-                    'echo "[profile buildprofile]" > ~/.aws/config',
-                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-dbmigration-role" >> ~/.aws/config',
-                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
-                    'aws sts get-caller-identity --profile buildprofile',
-                    f'aws codebuild start-build --project-name {self.resource_prefix}-{target_env["envname"]}-dbmigration --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-id.json',
-                    f'aws codebuild batch-get-builds --ids $(jq -r .build.id codebuild-id.json) --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-output.json',
-                    f'while [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "SUCCEEDED" ] && [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "FAILED" ]; do echo "running migration"; aws codebuild batch-get-builds --ids $(jq -r .build.id codebuild-id.json) --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-output.json; echo "$(jq -r .builds[0].buildStatus codebuild-output.json)"; sleep 5; done',
-                    'if [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" = "FAILED" ]; then echo "Failed";  cat codebuild-output.json; exit -1; fi',
-                    'cat codebuild-output.json ',
-                ],
+                partial_build_spec=codebuild.BuildSpec.from_object(
+                    dict(
+                        version='0.2',
+                        phases={
+                            'build': {
+                                'commands': [
+                                    'set -eu',
+                                    'mkdir ~/.aws/ && touch ~/.aws/config',
+                                    'echo "[profile buildprofile]" > ~/.aws/config',
+                                    f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
+                                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                                    'aws sts get-caller-identity --profile buildprofile',
+                                    f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export ENVNAME={target_env["envname"]}',
+                                    f'export AWS_REGION={target_env["region"]}',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    'python -m venv env',
+                                    '. env/bin/activate',
+                                    'make integration-tests',
+                                ]
+                            },
+                        },
+                        reports={
+                            'PytestReports': {
+                                'files': ['reports/integration_tests.xml'],
+                                'base-directory': '$CODEBUILD_SRC_DIR',
+                                'file-format': 'JUNITXML',
+                            }
+                        },
+                    )
+                ),
+                commands=[],
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
-            ),
+                security_groups=[self.codebuild_sg],
+            )
         )
 
     def set_stacks_updater_stage(

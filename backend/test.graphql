@@ -1,0 +1,2181 @@
+enum EnvironmentSortField {
+  created
+  label
+}
+
+enum SortDirection {
+  asc
+  desc
+}
+
+enum OrganizationSortField {
+  created
+  updated
+  label
+}
+
+enum OrganisationUserRole {
+  Owner
+  Admin
+  Member
+  NotMember
+  Invited
+}
+
+enum EnvironmentPermission {
+  Owner
+  Admin
+  DatasetCreator
+  Invited
+  ProjectAccess
+  NotInvited
+}
+
+enum SagemakerStudioRole {
+  Creator
+  Admin
+  NoPermission
+}
+
+enum SagemakerNotebookRole {
+  CREATOR
+  ADMIN
+  NO_PERMISSION
+}
+
+enum GlossaryRole {
+  Admin
+  NoPermission
+}
+
+enum DataPipelineRole {
+  Creator
+  Admin
+  NoPermission
+}
+
+enum DatasetSortField {
+  label
+  created
+  updated
+}
+
+enum DatasetRole {
+  BusinessOwner
+  DataSteward
+  Creator
+  Admin
+  Shared
+  NoPermission
+}
+
+enum DashboardRole {
+  Creator
+  Admin
+  Shared
+  NoPermission
+}
+
+enum ShareableType {
+  Table
+  StorageLocation
+  View
+  S3Bucket
+}
+
+enum ShareSortField {
+  created
+  updated
+  label
+}
+
+enum ShareItemHealthStatus {
+  Healthy
+  Unhealthy
+  PendingVerify
+  PendingReApply
+}
+
+enum PrincipalType {
+  Any
+  Organization
+  Environment
+  User
+  Project
+  Public
+  Group
+  ConsumptionRole
+}
+
+enum EnvironmentType {
+  Data
+  Compute
+}
+
+enum DatasetType {
+  S3
+}
+
+enum ConfidentialityClassification {
+  Unclassified
+  Official
+  Secret
+}
+
+enum Language {
+  English
+  French
+  German
+}
+
+enum Topic {
+  Finances
+  HumanResources
+  Products
+  Services
+  Operations
+  Research
+  Sales
+  Orders
+  Sites
+  Energy
+  Customers
+  Misc
+}
+
+enum ShareObjectPermission {
+  Approvers
+  ApproversAndRequesters
+  Requesters
+  DatasetAdmins
+  NoPermission
+}
+
+enum ShareObjectStatus {
+  Deleted
+  Approved
+  Rejected
+  Revoked
+  Draft
+  Submitted
+  Revoke_In_Progress
+  Share_In_Progress
+  Processed
+}
+
+enum ShareItemStatus {
+  Deleted
+  PendingApproval
+  Share_Approved
+  Share_Rejected
+  Share_In_Progress
+  Share_Succeeded
+  Share_Failed
+  Revoke_Approved
+  Revoke_In_Progress
+  Revoke_Failed
+  Revoke_Succeeded
+}
+
+enum ShareObjectActions {
+  Submit
+  Approve
+  Reject
+  RevokeItems
+  Start
+  Finish
+  FinishPending
+  Delete
+  AcquireLockFailure
+}
+
+enum ShareItemActions {
+  AddItem
+  RemoveItem
+  Failure
+  Success
+}
+
+enum WorksheetRole {
+  Creator
+  Admin
+  NoPermission
+}
+
+input UpdateGroupTenantPermissionsInput {
+  permissions: [String]
+  groupUri: String!
+}
+
+input KeyValueTagInput {
+  key: String!
+  value: String!
+  cascade: Boolean!
+}
+
+input UpdateKeyValueTagsInput {
+  targetUri: String!
+  targetType: String!
+  tags: [KeyValueTagInput]
+}
+
+input AwsEnvironmentInput {
+  AwsAccountId: String!
+  region: String!
+}
+
+input ModifyEnvironmentParameterInput {
+  key: String
+  value: String
+}
+
+input NewEnvironmentInput {
+  label: String!
+  organizationUri: String!
+  SamlGroupName: String!
+  tags: [String]
+  description: String
+  AwsAccountId: String!
+  region: String!
+  EnvironmentDefaultIAMRoleArn: String
+  resourcePrefix: String
+  parameters: [ModifyEnvironmentParameterInput]
+  vpcId: String
+  subnetIds: [String]
+}
+
+input ModifyEnvironmentInput {
+  label: String
+  description: String
+  tags: [String]
+  SamlGroupName: String
+  resourcePrefix: String
+  parameters: [ModifyEnvironmentParameterInput]
+  vpcId: String
+  subnetIds: [String]
+}
+
+input EnableDataSubscriptionsInput {
+  producersTopicArn: String
+}
+
+input EnvironmentSortCriteria {
+  field: EnvironmentSortField!
+  direction: SortDirection!
+}
+
+input EnvironmentFilter {
+  term: String
+  page: Int
+  displayArchived: Boolean
+  roles: [EnvironmentPermission]
+  quicksight: Boolean
+  SamlGroupName: String
+  sort: [EnvironmentSortCriteria]
+  pageSize: Int
+}
+
+input InviteGroupOnEnvironmentInput {
+  permissions: [String]
+  environmentUri: String!
+  groupUri: String!
+  environmentIAMRoleArn: String
+}
+
+input AddConsumptionRoleToEnvironmentInput {
+  consumptionRoleName: String!
+  groupUri: String!
+  IAMRoleArn: String!
+  environmentUri: String!
+  dataallManaged: Boolean!
+}
+
+input ConsumptionRoleFilter {
+  term: String
+  page: Int
+  pageSize: Int
+  groupUri: String
+}
+
+input UpdateConsumptionRoleInput {
+  consumptionRoleName: String
+  groupUri: String
+}
+
+input VpcFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input NewVpcInput {
+  label: String!
+  environmentUri: String!
+  vpcId: String!
+  publicSubnetIds: [String]
+  privateSubnetIds: [String]
+  description: String
+  SamlGroupName: String!
+  tags: [String]
+}
+
+input NewOrganizationInput {
+  label: String
+  description: String
+  tags: [String]
+  SamlGroupName: String
+}
+
+input ModifyOrganizationInput {
+  label: String
+  description: String
+  SamlGroupName: String
+  tags: [String]
+}
+
+input OrganizationSortCriteria {
+  field: OrganizationSortField!
+  direction: SortDirection!
+}
+
+input OrganizationFilter {
+  term: String
+  displayArchived: Boolean
+  sort: [OrganizationSortCriteria]
+  page: Int
+  pageSize: Int
+  roles: [OrganisationUserRole]
+  tags: [String]
+}
+
+input InviteGroupToOrganizationInput {
+  organizationUri: String!
+  groupUri: String!
+}
+
+input GroupFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input ServiceProviderGroupFilter {
+  type: String
+  uri: String
+}
+
+input NewSagemakerStudioUserInput {
+  label: String!
+  description: String
+  environmentUri: String!
+  tags: [String]
+  topics: String
+  SamlAdminGroupName: String!
+}
+
+input ModifySagemakerStudioUserInput {
+  label: String
+  tags: [String]
+  description: String
+}
+
+input SagemakerStudioUserFilter {
+  term: String
+  page: Int
+  pageSize: Int
+  sort: String
+  limit: Int
+  offset: Int
+}
+
+input NewSagemakerNotebookInput {
+  label: String!
+  description: String
+  environmentUri: String!
+  SamlAdminGroupName: String!
+  tags: [String]
+  topics: String
+  VpcId: String
+  SubnetId: String
+  VolumeSizeInGB: Int
+  InstanceType: String
+}
+
+input ModifySagemakerNotebookInput {
+  label: String
+  tags: [String]
+  description: String
+}
+
+input SagemakerNotebookFilter {
+  term: String
+  page: Int
+  pageSize: Int
+  sort: String
+  limit: Int
+  offset: Int
+}
+
+input NotificationFilter {
+  term: String
+  read: Boolean
+  unread: Boolean
+  archived: Boolean
+  type: String
+  page: Int
+  pageSize: Int
+}
+
+input CreateGlossaryInput {
+  label: String!
+  readme: String!
+  status: String
+  admin: String
+}
+
+input UpdateGlossaryInput {
+  label: String
+  readme: String
+  status: String
+  admin: String
+}
+
+input CreateCategoryInput {
+  label: String!
+  readme: String!
+  status: String
+}
+
+input UpdateCategoryInput {
+  label: String
+  readme: String
+  status: String
+}
+
+input CreateTermInput {
+  label: String!
+  readme: String!
+  status: String
+}
+
+input UpdateTermInput {
+  label: String
+  readme: String
+  status: String
+}
+
+input GlossaryFilter {
+  term: String
+  status: String
+  page: Int
+  pageSize: Int
+}
+
+input CategoryFilter {
+  term: String
+  page: Int
+  status: String
+  pageSize: Int
+}
+
+input TermFilter {
+  status: String
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input GlossaryTermTargetFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input GlossaryNodeSearchFilter {
+  term: String
+  nodeType: String
+  page: Int
+  pageSize: Int
+}
+
+input FeedMessageInput {
+  content: String
+}
+
+input FeedMessageFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input VoteInput {
+  targetUri: String!
+  targetType: String!
+  upvote: Boolean!
+}
+
+input NewDataPipelineInput {
+  label: String!
+  environmentUri: String!
+  description: String
+  SamlGroupName: String!
+  tags: [String]
+  devStrategy: String!
+}
+
+input NewDataPipelineEnvironmentInput {
+  stage: String!
+  order: Int!
+  pipelineUri: String!
+  environmentLabel: String!
+  environmentUri: String!
+  samlGroupName: String!
+}
+
+input UpdateDataPipelineInput {
+  label: String
+  description: String
+  tags: [String]
+}
+
+input DataPipelineFilter {
+  term: String
+  region: [String]
+  tags: [String]
+  type: [String]
+  page: Int
+  pageSize: Int
+}
+
+input DataPipelineEnvironmentFilter {
+  term: String
+  page: Int
+  pageSize: Int
+  pipelineUri: String
+}
+
+input DataPipelineBrowseInput {
+  DataPipelineUri: String!
+  branch: String!
+  folderPath: String
+}
+
+input DataPipelineFileContentInput {
+  DataPipelineUri: String!
+  branch: String!
+  absolutePath: String!
+}
+
+input DatasetTableColumnFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input DatasetTableColumnInput {
+  description: String
+  classification: Int
+  tags: Int
+  topics: Int
+}
+
+input StartDatasetProfilingRunInput {
+  datasetUri: String!
+  GlueTableName: String
+  tableUri: String
+}
+
+input DatasetProfilingRunFilter {
+  page: Int
+  pageSize: Int
+  term: String
+}
+
+input NewDatasetStorageLocationInput {
+  label: String!
+  description: String
+  tags: [String]
+  terms: [String]
+  prefix: String!
+}
+
+input ModifyDatasetStorageLocationInput {
+  locationUri: String
+  label: String
+  description: String
+  tags: [String]
+  terms: [String]
+}
+
+input DatasetStorageLocationFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input DatasetAccessPointFilter {
+  page: Int
+  pageSize: Int
+}
+
+input ModifyDatasetTableInput {
+  label: String
+  prefix: String
+  description: String
+  tags: [String]
+  terms: [String]
+  topics: [String]
+}
+
+input DatasetSortCriteria {
+  field: DatasetSortField!
+  direction: SortDirection
+}
+
+input DatasetTableFilter {
+  term: String
+  sort: [DatasetSortCriteria]
+  page: Int
+  pageSize: Int
+}
+
+input NewDatasetInput {
+  label: String!
+  organizationUri: String!
+  environmentUri: String!
+  description: String
+  tags: [String]
+  owner: String
+  language: Language
+  topics: [Topic]
+  SamlAdminGroupName: String!
+  businessOwnerEmail: String
+  businessOwnerDelegationEmails: [String]
+  confidentiality: String
+  stewards: String
+  autoApprovalEnabled: Boolean
+}
+
+input ModifyDatasetInput {
+  label: String
+  description: String
+  tags: [String]
+  topics: [Topic]
+  terms: [String]
+  businessOwnerDelegationEmails: [String]
+  businessOwnerEmail: String
+  language: Language
+  confidentiality: String
+  stewards: String
+  KmsAlias: String!
+  autoApprovalEnabled: Boolean
+}
+
+input DatasetFilter {
+  term: String
+  roles: [DatasetRole]
+  InProject: String
+  notInProject: String
+  displayArchived: Boolean
+  sort: [DatasetSortCriteria]
+  page: Int
+  pageSize: Int
+}
+
+input DatasetPresignedUrlInput {
+  fileName: String
+  prefix: String
+}
+
+input CrawlerInput {
+  prefix: String
+}
+
+input ImportDatasetInput {
+  label: String!
+  organizationUri: String!
+  environmentUri: String!
+  description: String
+  bucketName: String!
+  glueDatabaseName: String
+  KmsKeyAlias: String!
+  adminRoleName: String
+  tags: [String]
+  owner: String!
+  language: Language
+  topics: [Topic]
+  SamlAdminGroupName: String!
+  businessOwnerEmail: String
+  businessOwnerDelegationEmails: [String]
+  confidentiality: String
+  stewards: String
+  autoApprovalEnabled: Boolean
+}
+
+input ShareObjectSelectorInput {
+  datasetUri: String!
+  shareUris: [String]!
+}
+
+input ImportDashboardInput {
+  label: String!
+  environmentUri: String!
+  description: String
+  SamlGroupName: String
+  tags: [String]
+  dashboardId: String!
+  terms: [String]
+}
+
+input UpdateDashboardInput {
+  dashboardUri: String!
+  label: String
+  description: String
+  tags: [String]
+  terms: [String]
+}
+
+input DashboardFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input DashboardShareFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input NewShareObjectInput {
+  environmentUri: String!
+  groupUri: String!
+  principalId: String!
+  principalType: String!
+  requestPurpose: String
+  attachMissingPolicies: Boolean!
+}
+
+input AddSharedItemInput {
+  itemUri: String!
+  itemType: ShareableType!
+}
+
+input ShareItemSelectorInput {
+  shareUri: String!
+  itemUris: [String]!
+}
+
+input ShareSortCriteria {
+  field: ShareSortField!
+  direction: SortDirection!
+}
+
+input ShareObjectFilter {
+  term: String
+  sort: [ShareSortCriteria]
+  page: Int
+  pageSize: Int
+  status: [String]
+  dataset_owners: [String]
+  datasets_uris: [String]
+  share_requesters: [String]
+  share_iam_roles: [String]
+}
+
+input ShareableObjectFilter {
+  term: String
+  tags: [String]
+  isShared: Boolean
+  isRevokable: Boolean
+  isHealthy: Boolean
+  page: Int
+  pageSize: Int
+}
+
+input EnvironmentDataItemFilter {
+  itemTypes: [String]
+  term: String
+  page: Int
+  pageSize: Int
+  uniqueShares: Boolean
+}
+
+input PrincipalFilter {
+  page: Int
+  pageSize: Int
+  principalType: PrincipalType
+  term: String
+}
+
+input NewWorksheetInput {
+  label: String
+  description: String
+  tags: [String]
+  SamlAdminGroupName: String!
+}
+
+input UpdateWorksheetInput {
+  label: String
+  description: String
+  tags: [String]
+  sqlBody: String
+  chartConfig: WorksheetChartConfigInput
+}
+
+input WorksheetChartInput {
+  chartConfig: String
+  label: String
+  description: String
+}
+
+input WorksheetQueryInput {
+  sqlBody: String
+  AthenaQueryId: String
+  environmentUri: String!
+}
+
+input WorksheetFilter {
+  term: String
+  page: Int
+  pageSize: Int
+}
+
+input WorksheetDimensionInput {
+  columnName: String
+}
+
+input WorksheetMeasureInput {
+  columnName: String
+  aggregationName: String
+}
+
+input WorksheetChartConfigInput {
+  chartType: String
+  dimensions: [WorksheetDimensionInput]
+  measures: [WorksheetMeasureInput]
+}
+
+union GlossaryNode = Glossary | Category | Term
+
+union FeedTarget = DataPipeline | DatasetStorageLocation | DatasetTable | Dataset | Dashboard
+
+union ShareableObject = DatasetTable | DatasetStorageLocation
+
+type Permission {
+  permissionUri: String!
+  type: String
+  name: String!
+  description: String!
+}
+
+type PermissionSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Permission]
+}
+
+type Tenant {
+  tenantUri: ID
+  name: String
+  created: String
+}
+
+type Vpc {
+  VpcId: String!
+  vpcUri: ID!
+  environment: Environment
+  label: String
+  owner: String
+  name: String
+  description: String
+  tags: [String]
+  AwsAccountId: String!
+  region: String!
+  privateSubnetIds: [String]
+  publicSubnetIds: [String]
+  SamlGroupName: String
+  default: Boolean
+}
+
+type VpcSearchResult {
+  count: Int
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Vpc]
+}
+
+type OrganizationStats {
+  groups: Int
+  users: Int
+  environments: Int
+}
+
+type Organization {
+  organizationUri: ID
+  label: String
+  name: String
+  description: String
+  tags: [String]
+  owner: String
+  SamlGroupName: String
+  userRoleInOrganization: OrganisationUserRole
+  environments(filter: EnvironmentFilter): EnvironmentSearchResult
+  created: String
+  updated: String
+  stats: OrganizationStats
+}
+
+type OrganizationSearchResult {
+  count: Int
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Organization]
+}
+
+type OrganizationSimplified {
+  organizationUri: ID
+  label: String
+  name: String
+}
+
+type EnvironmentUserPermission {
+  userName: String
+  created: String
+  updated: String
+  userRoleInEnvironment: EnvironmentPermission
+}
+
+type EnvironmentUserPermissionSearchResult {
+  count: Int
+  nodes: [EnvironmentUserPermission]
+}
+
+type EnvironmentGroupPermission {
+  groupUri: String
+  created: String
+  updated: String
+  groupRoleInEnvironment: EnvironmentPermission
+  Group: Group
+}
+
+type EnvironmentGroupPermissionSearchResult {
+  count: Int
+  nodes: [EnvironmentGroupPermission]
+}
+
+type EnvironmentParameter {
+  key: String
+  value: String
+}
+
+type Environment {
+  environmentUri: ID
+  label: String
+  name: String
+  description: String
+  owner: String
+  created: String
+  updated: String
+  deleted: String
+  tags: [String]
+  admins: [String]
+  environmentType: String
+  AwsAccountId: String
+  region: String
+  SamlGroupName: String
+  resourcePrefix: String
+  EnvironmentDefaultIAMRoleArn: String
+  EnvironmentDefaultIAMRoleName: String
+  EnvironmentDefaultIAMRoleImported: Boolean
+  datasets: String
+  organization: OrganizationSimplified
+  userRoleInEnvironment: EnvironmentPermission
+  validated: Boolean
+  roleCreated: Boolean
+  isOrganizationDefaultEnvironment: Boolean
+  stack: Stack
+  subscriptionsEnabled: Boolean
+  subscriptionsProducersTopicImported: Boolean
+  subscriptionsConsumersTopicImported: Boolean
+  subscriptionsConsumersTopicName: String
+  subscriptionsProducersTopicName: String
+  EnvironmentDefaultBucketName: String
+  EnvironmentDefaultAthenaWorkGroup: String
+  networks: [Vpc]
+  parameters: [EnvironmentParameter]
+}
+
+type EnvironmentSearchResult {
+  count: Int
+  nodes: [Environment]
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type EnvironmentSimplified {
+  environmentUri: ID
+  label: String
+  region: String
+  organization: OrganizationSimplified
+  networks: [Vpc]
+}
+
+type EnvironmentSimplifiedSearchResult {
+  count: Int
+  nodes: [EnvironmentSimplified]
+}
+
+type RoleManagedPolicy {
+  policy_name: String
+  policy_type: String
+  exists: Boolean
+  attached: Boolean
+}
+
+type ConsumptionRole {
+  consumptionRoleUri: String
+  consumptionRoleName: String
+  groupUri: String
+  environmentUri: String
+  IAMRoleArn: String
+  IAMRoleName: String
+  dataallManaged: Boolean
+  created: String
+  updated: String
+  deleted: String
+  managedPolicies: [RoleManagedPolicy]
+}
+
+type ConsumptionRoleSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [ConsumptionRole]
+}
+
+type Stack {
+  stackUri: ID
+  targetUri: String!
+  stack: String!
+  environmentUri: String
+  name: String
+  accountid: String!
+  region: String!
+  status: String
+  stackid: String
+  link: String
+  outputs: String
+  resources: String
+  error: String
+  events: String
+  EcsTaskArn: String
+  EcsTaskId: String
+}
+
+type StackLog {
+  logStream: String
+  logGroup: String
+  timestamp: String
+  message: String
+}
+
+type KeyValueTag {
+  tagUri: ID
+  targetType: String
+  targetUri: String
+  key: String
+  value: String
+  cascade: Boolean
+}
+
+type Group {
+  groupUri: String
+  invitedBy: String
+  owner: String
+  label: String
+  name: String
+  description: String
+  tags: [String]
+  created: String
+  updated: String
+  environmentIAMRoleArn: String
+  environmentIAMRoleName: String
+  environmentAthenaWorkGroup: String
+  environmentPermissions(environmentUri: String): [Permission]
+  tenantPermissions: [Permission]
+}
+
+type GroupSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Group]
+}
+
+type GroupsInfo {
+  groupName: String
+}
+
+type SagemakerStudioUserApps {
+  DomainId: String
+  UserName: String
+  AppType: String
+  AppName: String
+  Status: String
+}
+
+type SagemakerStudioUser {
+  sagemakerStudioUserUri: ID
+  environmentUri: String!
+  label: String
+  description: String
+  tags: [String]
+  name: String
+  owner: String
+  created: String
+  updated: String
+  SamlAdminGroupName: String
+  userRoleForSagemakerStudioUser: SagemakerStudioRole
+  sagemakerStudioUserStatus: String
+  sagemakerStudioUserApps: [SagemakerStudioUserApps]
+  environment: Environment
+  organization: Organization
+  stack: Stack
+}
+
+type SagemakerStudioUserSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [SagemakerStudioUser]
+}
+
+type SagemakerStudioDomain {
+  sagemakerStudioUri: ID
+  environmentUri: String!
+  sagemakerStudioDomainName: String
+  DefaultDomainRoleName: String
+  label: String
+  name: String
+  vpcType: String
+  vpcId: String
+  subnetIds: [String]
+  owner: String
+  created: String
+  updated: String
+  deleted: String
+  environment: Environment
+}
+
+type SagemakerNotebook {
+  notebookUri: ID
+  environmentUri: String!
+  label: String
+  description: String
+  tags: [String]
+  name: String
+  owner: String
+  created: String
+  updated: String
+  SamlAdminGroupName: String
+  VpcId: String
+  SubnetId: String
+  InstanceType: String
+  RoleArn: String
+  VolumeSizeInGB: Int
+  userRoleForNotebook: SagemakerNotebookRole
+  NotebookInstanceStatus: String
+  environment: Environment
+  organization: Organization
+  stack: Stack
+}
+
+type SagemakerNotebookSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [SagemakerNotebook]
+}
+
+type Notification {
+  notificationUri: String!
+  type: String
+  message: String
+  username: String!
+  target_uri: String!
+  is_read: Boolean
+  created: String
+  updated: String
+}
+
+type NotificationSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Notification]
+}
+
+type GlossaryChildrenSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [GlossaryNode]
+}
+
+type Glossary {
+  nodeUri: ID
+  parentUri: String!
+  status: String
+  owner: String!
+  path: String!
+  label: String!
+  name: String!
+  admin: String
+  userRoleForGlossary: GlossaryRole
+  readme: String
+  created: String!
+  updated: String
+  deleted: String
+  isMatch: Boolean
+  assetLink(targetUri: String): GlossaryTermLink
+  stats: GlossaryNodeStatistics
+  tree(filter: GlossaryNodeSearchFilter): GlossaryChildrenSearchResult
+  children(filter: GlossaryNodeSearchFilter): GlossaryChildrenSearchResult
+  categories(filter: CategoryFilter): CategorySearchResult
+  associations(filter: GlossaryTermTargetFilter): TermLinkSearchResults
+}
+
+type Category {
+  nodeUri: ID
+  parentUri: String!
+  owner: String!
+  path: String!
+  label: String!
+  status: String!
+  name: String!
+  readme: String
+  created: String!
+  updated: String
+  deleted: String
+  isMatch: Boolean
+  assetLink(targetUri: String): GlossaryTermLink
+  stats: GlossaryNodeStatistics
+  children(filter: GlossaryNodeSearchFilter): GlossaryChildrenSearchResult
+  categories(filter: CategoryFilter): CategorySearchResult
+  terms(filter: TermFilter): TermSearchResult
+  associations(filter: GlossaryTermTargetFilter): TermLinkSearchResults
+}
+
+type Term {
+  nodeUri: ID
+  parentUri: String!
+  owner: String!
+  path: String!
+  label: String!
+  name: String!
+  status: String!
+  readme: String
+  created: String!
+  updated: String
+  deleted: String
+  isMatch: Boolean
+  assetLink(targetUri: String): GlossaryTermLink
+  children(filter: GlossaryNodeSearchFilter): GlossaryChildrenSearchResult
+  stats: GlossaryNodeStatistics
+  glossary: Glossary
+  associations(filter: GlossaryTermTargetFilter): TermLinkSearchResults
+}
+
+type TermLinkSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [GlossaryTermLink]
+}
+
+type TermSearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Term]
+}
+
+type CategorySearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Category]
+}
+
+type GlossarySearchResult {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Glossary]
+}
+
+type GlossaryTermLinkTarget {
+  label: String
+}
+
+type GlossaryTermLink {
+  linkUri: ID
+  created: String!
+  updated: String
+  deleted: String
+  owner: String
+  nodeUri: String!
+  targetUri: String!
+  targetType: String!
+  approvedByOwner: Boolean!
+  approvedBySteward: Boolean!
+  term: Term
+  target: GlossaryTermLinkTarget
+}
+
+type GlossaryNodeStatistics {
+  categories: Int
+  terms: Int
+  associations: Int
+}
+
+type Feed {
+  feedTargetUri: String!
+  feedTargetType: String!
+  messages(filter: FeedMessageFilter): FeedMessages
+}
+
+type FeedMessage {
+  feedMessageUri: ID
+  creator: String!
+  content: String
+  created: String
+}
+
+type FeedMessages {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [FeedMessage]
+}
+
+type Vote {
+  voteUri: ID
+  targetType: String
+  targetUri: String
+  upvote: Boolean
+  created: String
+}
+
+type DataPipeline {
+  DataPipelineUri: ID
+  name: String
+  label: String
+  description: String
+  tags: [String]
+  created: String
+  updated: String
+  owner: String
+  repo: String
+  SamlGroupName: String
+  organization: Organization
+  environment: Environment
+  developmentEnvironments: DataPipelineEnvironmentSearchResults
+  template: String
+  devStrategy: String
+  cloneUrlHttp: String
+  stack: Stack
+  userRoleForPipeline: DataPipelineRole
+}
+
+type DataPipelineSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [DataPipeline]
+}
+
+type DataPipelineEnvironment {
+  envPipelineUri: String
+  environmentUri: String
+  environmentLabel: String
+  pipelineUri: String
+  pipelineLabel: String
+  stage: String
+  order: Int
+  region: String
+  AwsAccountId: String
+  samlGroupName: String
+}
+
+type DataPipelineEnvironmentSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [DataPipelineEnvironment]
+}
+
+type DatasetTableColumn {
+  tableUri: ID
+  columnUri: ID
+  label: String
+  name: String
+  description: String
+  owner: String
+  created: String
+  updated: String
+  AwsAccountId: String
+  GlueDatabaseName: String
+  GlueTableName: String
+  typeName: String
+  columnType: String
+  region: String
+  classification: String
+  topics: [String]
+  tags: [String]
+  terms: TermLinkSearchResults
+}
+
+type DatasetTableColumnSearchResult {
+  nodes: [DatasetTableColumn]
+  count: Int
+  pages: Int
+  page: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type DatasetProfilingRun {
+  profilingRunUri: String!
+  datasetUri: String!
+  GlueJobName: String
+  GlueJobRunId: String
+  GlueTriggerSchedule: String
+  GlueTriggerName: String
+  GlueTableName: String
+  AwsAccountId: String
+  results: String
+  created: String
+  updated: String
+  owner: String
+  status: String
+  dataset: Dataset
+}
+
+type DatasetProfilingRunSearchResults {
+  count: Int
+  pages: Int
+  page: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [DatasetProfilingRun]
+}
+
+type DatasetStorageLocation {
+  locationUri: ID
+  label: String
+  name: String
+  description: String
+  owner: String
+  created: String
+  updated: String
+  region: String
+  tags: [String]
+  AwsAccountId: String
+  S3BucketName: String
+  S3Prefix: String
+  locationCreated: Boolean
+  dataset: Dataset
+  userRoleForStorageLocation: DatasetRole
+  environmentEndPoint: String
+  terms: TermSearchResult
+}
+
+type DatasetStorageLocationSearchResult {
+  nodes: [DatasetStorageLocation]
+  count: Int
+  pages: Int
+  page: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type DatasetAccessPoint {
+  accessPointUri: ID
+  location: DatasetStorageLocation
+  dataset: Dataset
+  name: String
+  description: String
+  owner: String
+  created: String
+  updated: String
+  region: String
+  AwsAccountId: String
+  S3BucketName: String
+  S3Prefix: String
+  S3AccessPointName: String
+}
+
+type DatasetAccessPointSearchResult {
+  count: Int
+  page: Int
+  pageSize: Int
+  pages: Int
+  hasNext: Int
+  hasPrevious: Int
+  nodes: [DatasetAccessPoint]
+}
+
+type DatasetStatistics {
+  tables: Int
+  locations: Int
+  upvotes: Int
+}
+
+type Dataset {
+  datasetUri: ID
+  label: String
+  name: String
+  description: String
+  tags: [String]
+  owner: String
+  created: String
+  updated: String
+  admins: [String]
+  AwsAccountId: String
+  region: String
+  S3BucketName: String
+  GlueDatabaseName: String
+  GlueCrawlerName: String
+  GlueCrawlerSchedule: String
+  GlueProfilingJobName: String
+  GlueProfilingTriggerSchedule: String
+  IAMDatasetAdminRoleArn: String
+  KmsAlias: String
+  bucketCreated: Boolean
+  glueDatabaseCreated: Boolean
+  iamAdminRoleCreated: Boolean
+  lakeformationLocationCreated: Boolean
+  bucketPolicyCreated: Boolean
+  SamlAdminGroupName: String
+  businessOwnerEmail: String
+  businessOwnerDelegationEmails: [String]
+  importedS3Bucket: Boolean
+  importedGlueDatabase: Boolean
+  importedKmsKey: Boolean
+  importedAdminRole: Boolean
+  imported: Boolean
+  environment: Environment
+  organization: Organization
+  owners: String
+  stewards: String
+  tables(filter: DatasetTableFilter): DatasetTableSearchResult
+  locations(filter: DatasetStorageLocationFilter): DatasetStorageLocationSearchResult
+  userRoleForDataset: DatasetRole
+  userRoleInEnvironment: EnvironmentPermission
+  statistics: DatasetStatistics
+  terms: TermSearchResult
+  topics: [Topic]
+  confidentiality: String
+  language: Language
+  projectPermission(projectUri: String): DatasetRole
+  isPublishedInEnvironment(environmentUri: String): Boolean
+  stack: Stack
+  autoApprovalEnabled: Boolean
+}
+
+type DatasetSearchResult {
+  count: Int
+  nodes: [Dataset]
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type GlueCrawler {
+  Name: ID
+  AwsAccountId: String
+  region: String
+  status: String
+}
+
+type TablePermission {
+  userName: String
+  created: String
+}
+
+type TablePermissionSearchResult {
+  count: Int
+  nodes: [TablePermission]
+}
+
+type DatasetTable {
+  tableUri: ID
+  datasetUri: String
+  dataset: Dataset
+  label: String
+  name: String
+  description: String
+  owner: String
+  created: String
+  updated: String
+  admins: [String]
+  AwsAccountId: String
+  GlueDatabaseName: String
+  GlueTableName: String
+  LastGlueTableStatus: String
+  S3Prefix: String
+  GlueTableConfig: String
+  GlueTableProperties: String
+  region: String
+  tags: [String]
+  userRoleForTable: DatasetRole
+  stage: String
+  columns: DatasetTableColumnSearchResult
+  terms: TermSearchResult
+}
+
+type DatasetTableSearchResult {
+  nodes: [DatasetTable]
+  count: Int
+  pages: Int
+  page: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type DatasetTableRecord {
+  data: String
+}
+
+type DatasetTableMetadataItem {
+  Name: String
+  Type: String
+}
+
+type SharedDatasetTableItem {
+  tableUri: String
+  GlueTableName: String
+}
+
+type QueryPreviewResult {
+  fields: [String]
+  rows: [String]
+}
+
+type Dashboard {
+  dashboardUri: ID
+  name: String
+  label: String
+  description: String
+  DashboardId: String
+  tags: [String]
+  created: String
+  updated: String
+  owner: String
+  SamlGroupName: String
+  organization: Organization
+  environment: Environment
+  userRoleForDashboard: DashboardRole
+  terms: TermSearchResult
+  upvotes: Int
+}
+
+type DashboardShare {
+  shareUri: ID
+  dashboardUri: ID
+  name: String
+  label: String
+  SamlGroupName: String
+  status: String
+  owner: String
+  tags: [String]
+  created: String
+  updated: String
+}
+
+type DashboardSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Dashboard]
+}
+
+type DashboardShareSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [DashboardShare]
+}
+
+type ShareItem {
+  shareUri: String
+  shareItemUri: ID
+  itemUri: String
+  status: ShareItemStatus
+  action: String
+  itemType: ShareableType
+  itemName: String
+  description: String
+  healthStatus: ShareItemHealthStatus
+  healthMessage: String
+  lastVerificationTime: String
+  sharedObject: ShareableObject
+}
+
+type NotSharedItem {
+  itemUri: String
+  shareItemUri: String
+  itemType: ShareableType
+  label: String
+  tags: [String]
+  created: String
+}
+
+type NotSharedItemsSearchResult {
+  count: Int
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [NotSharedItem]
+}
+
+type SharedItemSearchResult {
+  count: Int
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [ShareItem]
+}
+
+type ShareObjectStatistic {
+  locations: Int
+  tables: Int
+  sharedItems: Int
+  revokedItems: Int
+  failedItems: Int
+  pendingItems: Int
+}
+
+type DatasetLink {
+  datasetUri: String
+  datasetName: String
+  SamlAdminGroupName: String
+  environmentName: String
+  AwsAccountId: String
+  region: String
+  exists: Boolean
+  description: String
+}
+
+type ConsumptionData {
+  s3AccessPointName: String
+  sharedGlueDatabase: String
+  s3bucketName: String
+}
+
+type ShareObject {
+  shareUri: ID
+  status: ShareObjectStatus
+  owner: String
+  created: String
+  deleted: String
+  updated: String
+  datasetUri: String
+  requestPurpose: String
+  rejectPurpose: String
+  dataset: DatasetLink
+  consumptionData: ConsumptionData
+  existingSharedItems: Boolean
+  statistics: ShareObjectStatistic
+  principal: Principal
+  environment: Environment
+  group: String
+  items(filter: ShareableObjectFilter): SharedItemSearchResult
+  userRoleForShareObject: ShareObjectPermission
+}
+
+type ShareSearchResult {
+  count: Int
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [ShareObject]
+}
+
+type EnvironmentPublishedItem {
+  shareUri: String!
+  datasetUri: String!
+  datasetName: String!
+  itemAccess: String!
+  itemType: String!
+  environmentUri: String!
+  targetEnvironmentUri: String!
+  principalId: String!
+  environmentName: String!
+  organizationUri: String!
+  organizationName: String!
+  created: String!
+  GlueDatabaseName: String
+  GlueTableName: String
+  S3AccessPointName: String
+  sharedGlueDatabaseName: String
+}
+
+type EnvironmentPublishedItemSearchResults {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [EnvironmentPublishedItem]
+}
+
+type Principal {
+  principalId: ID
+  principalType: PrincipalType
+  principalName: String
+  principalIAMRoleName: String
+  SamlGroupName: String
+  environmentName: String
+  environmentUri: String
+  AwsAccountId: String
+  region: String
+  organizationName: String
+  organizationUri: String
+}
+
+type PrincipalSearchResult {
+  count: Int
+  nodes: [Principal]
+  pageSize: Int
+  nextPage: Int
+  pages: Int
+  page: Int
+  previousPage: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+}
+
+type AthenaResultColumnDescriptor {
+  columnName: String!
+  typeName: String!
+}
+
+type AthenaResultRecordCell {
+  value: String
+  typeName: String!
+  columnName: String!
+}
+
+type AthenaResultRecord {
+  cells: [AthenaResultRecordCell]
+}
+
+type AthenaQueryResult {
+  Error: String
+  OutputLocation: String
+  AthenaQueryId: String
+  AwsAccountId: String
+  region: String
+  ElapsedTimeInMs: Int
+  DataScannedInBytes: Int
+  Status: String
+  columns: [AthenaResultColumnDescriptor]
+  rows: [AthenaResultRecord]
+}
+
+type Worksheet {
+  worksheetUri: ID
+  label: String
+  name: String
+  tags: [String]
+  description: String
+  sqlBody: String
+  chartConfig: WorksheetChartConfig
+  created: String!
+  updated: String
+  owner: String!
+  SamlAdminGroupName: String
+  lastSavedQueryResult: AthenaQueryResult
+  userRoleForWorksheet: WorksheetRole
+}
+
+type Worksheets {
+  count: Int
+  page: Int
+  pages: Int
+  hasNext: Boolean
+  hasPrevious: Boolean
+  nodes: [Worksheet]
+}
+
+type WorksheetQueryResult {
+  worksheetQueryResultUri: ID
+  queryType: String!
+  sqlBody: String!
+  AthenaQueryId: String!
+  region: String!
+  AwsAccountId: String!
+  AthenaOutputBucketName: String!
+  AthenaOutputKey: String!
+  timeElapsedInSecond: Int!
+  created: String!
+}
+
+type WorksheetChartDimension {
+  columnName: String!
+}
+
+type WorksheetChartMeasure {
+  columnName: String!
+  aggregationName: String
+}
+
+type WorksheetChartConfig {
+  AthenaQueryId: String
+  dimensions: [WorksheetChartDimension]
+  measures: [WorksheetChartMeasure]
+}
+
+type Query {
+  listTenantPermissions: [Permission]
+  listTenantGroups(filter: GroupFilter): GroupSearchResult
+  getOrganization(organizationUri: String): Organization
+  listOrganizations(filter: OrganizationFilter): OrganizationSearchResult
+  listOrganizationGroups(organizationUri: String, filter: GroupFilter): GroupSearchResult
+  getTrustAccount: String
+  getEnvironment(environmentUri: String): Environment
+  listEnvironments(filter: EnvironmentFilter): EnvironmentSearchResult
+  listValidEnvironments(filter: EnvironmentFilter): EnvironmentSimplifiedSearchResult
+  listEnvironmentNetworks(environmentUri: String, filter: VpcFilter): VpcSearchResult
+  generateEnvironmentAccessToken(environmentUri: String, groupUri: String): String
+  getEnvironmentAssumeRoleUrl(environmentUri: String, groupUri: String): String
+  listEnvironmentInvitedGroups(environmentUri: String, filter: GroupFilter): GroupSearchResult
+  listEnvironmentGroups(environmentUri: String, filter: GroupFilter): GroupSearchResult
+  listAllEnvironmentGroups(environmentUri: String, filter: GroupFilter): GroupSearchResult
+  listAllGroups(filter: GroupFilter): GroupSearchResult
+  listAllConsumptionRoles(filter: ConsumptionRoleFilter): ConsumptionRoleSearchResult
+  listEnvironmentConsumptionRoles(environmentUri: String, filter: ConsumptionRoleFilter): ConsumptionRoleSearchResult
+  listAllEnvironmentConsumptionRoles(environmentUri: String, filter: ConsumptionRoleFilter): ConsumptionRoleSearchResult
+  listEnvironmentGroupInvitationPermissions: [Permission]
+  getPivotRolePresignedUrl(organizationUri: String): String
+  getCDKExecPolicyPresignedUrl(organizationUri: String): String
+  getPivotRoleExternalId(organizationUri: String): String
+  getPivotRoleName(organizationUri: String): String
+  getStack(environmentUri: String, stackUri: String): Stack
+  getStackLogs(targetUri: String, targetType: String): [StackLog]
+  listKeyValueTags(targetUri: String, targetType: String): [KeyValueTag]
+  getGroup(groupUri: String): Group
+  listGroups(filter: ServiceProviderGroupFilter): [GroupsInfo]
+  getGroupsForUser(userid: String): [String]
+  getSagemakerStudioUser(sagemakerStudioUserUri: String): SagemakerStudioUser
+  listSagemakerStudioUsers(filter: SagemakerStudioUserFilter): SagemakerStudioUserSearchResult
+  getSagemakerStudioUserPresignedUrl(sagemakerStudioUserUri: String): String
+  getEnvironmentMLStudioDomain(environmentUri: String): SagemakerStudioDomain
+  getSagemakerNotebook(notebookUri: String): SagemakerNotebook
+  listSagemakerNotebooks(filter: SagemakerNotebookFilter): SagemakerNotebookSearchResult
+  getSagemakerNotebookPresignedUrl(notebookUri: String): String
+  listNotifications(filter: NotificationFilter): NotificationSearchResult
+  countUnreadNotifications: Int
+  countReadNotifications: Int
+  countDeletedNotifications: Int
+  getGlossary(nodeUri: String): Glossary
+  listGlossaries(filter: GlossaryFilter): GlossarySearchResult
+  searchGlossary(filter: GlossaryNodeSearchFilter): GlossaryChildrenSearchResult
+  getFeed(targetUri: String, targetType: String): Feed
+  countUpVotes(targetUri: String, targetType: String): Int
+  getVote(targetUri: String, targetType: String): Vote
+  listDataPipelines(filter: DataPipelineFilter): DataPipelineSearchResults
+  getDataPipeline(DataPipelineUri: String): DataPipeline
+  getDataPipelineCredsLinux(DataPipelineUri: String): String
+  listDatasetTableColumns(tableUri: String, filter: DatasetTableColumnFilter): DatasetTableColumnSearchResult
+  listDatasetTableProfilingRuns(tableUri: String): DatasetProfilingRunSearchResults
+  getDatasetTableProfilingRun(tableUri: String): DatasetProfilingRun
+  getDatasetStorageLocation(locationUri: String): DatasetStorageLocation
+  getDataset(datasetUri: String): Dataset
+  listDatasets(filter: DatasetFilter): DatasetSearchResult
+  listOwnedDatasets(filter: DatasetFilter): DatasetSearchResult
+  getDatasetAssumeRoleUrl(datasetUri: String): String
+  getDatasetPresignedUrl(datasetUri: String, input: DatasetPresignedUrlInput): String
+  listDatasetsOwnedByEnvGroup(environmentUri: String, groupUri: String, filter: DatasetFilter): DatasetSearchResult
+  listDatasetsCreatedInEnvironment(environmentUri: String, filter: DatasetFilter): DatasetSearchResult
+  getDatasetTable(tableUri: String): DatasetTable
+  listDatasetTables(filter: DatasetTableFilter): DatasetTableSearchResult
+  previewTable(tableUri: String): QueryPreviewResult
+  searchDashboards(filter: DashboardFilter): DashboardSearchResults
+  getDashboard(dashboardUri: String): Dashboard
+  getMonitoringDashboardId: String
+  getMonitoringVPCConnectionId: String
+  getPlatformAuthorSession(awsAccount: String): String
+  getPlatformReaderSession(dashboardId: String): String
+  getAuthorSession(dashboardUri: String, environmentUri: String): String
+  getReaderSession(dashboardUri: String): String
+  listDashboardShares(dashboardUri: String, filter: DashboardShareFilter): DashboardShareSearchResults
+  getShareObject(shareUri: String): ShareObject
+  getShareRequestsFromMe(filter: ShareObjectFilter): ShareSearchResult
+  getShareRequestsToMe(filter: ShareObjectFilter): ShareSearchResult
+  searchEnvironmentDataItems(environmentUri: String, filter: EnvironmentDataItemFilter): EnvironmentPublishedItemSearchResults
+  listDatasetShareObjects(datasetUri: String, environmentUri: String, page: Int): ShareSearchResult
+  getSharedDatasetTables(datasetUri: String, envUri: String): [SharedDatasetTableItem]
+  getDatasetSharedAssumeRoleUrl(datasetUri: String): String
+  getWorksheet(worksheetUri: String): Worksheet
+  listWorksheets(filter: WorksheetFilter): Worksheets
+  runAthenaSqlQuery(environmentUri: String, worksheetUri: String, sqlQuery: String): AthenaQueryResult
+}
+
+type Mutation {
+  updateGroupTenantPermissions(input: UpdateGroupTenantPermissionsInput): Boolean
+  updateSSMParameter(name: String, value: String): String
+  createNetwork(input: NewVpcInput): Vpc
+  deleteNetwork(vpcUri: String): Boolean
+  createOrganization(input: NewOrganizationInput): Organization
+  updateOrganization(organizationUri: String, input: ModifyOrganizationInput): Organization
+  archiveOrganization(organizationUri: String): Boolean
+  inviteGroupToOrganization(input: InviteGroupToOrganizationInput): Organization
+  removeGroupFromOrganization(organizationUri: String, groupUri: String): Organization
+  createEnvironment(input: NewEnvironmentInput): Environment
+  updateEnvironment(environmentUri: String, input: ModifyEnvironmentInput): Environment
+  inviteGroupOnEnvironment(input: InviteGroupOnEnvironmentInput): Environment
+  addConsumptionRoleToEnvironment(input: AddConsumptionRoleToEnvironmentInput): ConsumptionRole
+  updateGroupEnvironmentPermissions(input: InviteGroupOnEnvironmentInput): Environment
+  removeGroupFromEnvironment(environmentUri: String, groupUri: String): Environment
+  removeConsumptionRoleFromEnvironment(environmentUri: String, consumptionRoleUri: String): Boolean
+  deleteEnvironment(environmentUri: String, deleteFromAWS: Boolean): Boolean
+  enableDataSubscriptions(environmentUri: String, input: EnableDataSubscriptionsInput): Boolean
+  DisableDataSubscriptions(environmentUri: String): Boolean
+  updateConsumptionRole(environmentUri: String, consumptionRoleUri: String, input: UpdateConsumptionRoleInput): ConsumptionRole
+  updateStack(targetUri: String, targetType: String): Stack
+  updateKeyValueTags(input: UpdateKeyValueTagsInput): [KeyValueTag]
+  createSagemakerStudioUser(input: NewSagemakerStudioUserInput): SagemakerStudioUser
+  deleteSagemakerStudioUser(sagemakerStudioUserUri: String, deleteFromAWS: Boolean): String
+  createSagemakerNotebook(input: NewSagemakerNotebookInput): SagemakerNotebook
+  startSagemakerNotebook(notebookUri: String): String
+  stopSagemakerNotebook(notebookUri: String): String
+  deleteSagemakerNotebook(notebookUri: String, deleteFromAWS: Boolean): String
+  markNotificationAsRead(notificationUri: String): Boolean
+  deleteNotification(notificationUri: String): Boolean
+  createGlossary(input: CreateGlossaryInput): Glossary
+  updateGlossary(nodeUri: String, input: UpdateGlossaryInput): Glossary
+  deleteGlossary(nodeUri: String): Int
+  createCategory(parentUri: String, input: CreateCategoryInput): Category
+  updateCategory(nodeUri: String, input: UpdateCategoryInput): Category
+  deleteCategory(nodeUri: String): Int
+  createTerm(parentUri: String, input: CreateTermInput): Term
+  updateTerm(nodeUri: String, input: UpdateTermInput): Term
+  deleteTerm(nodeUri: String): Int
+  approveTermAssociation(linkUri: String): Boolean
+  dismissTermAssociation(linkUri: String): Boolean
+  postFeedMessage(targetUri: String, targetType: String, input: FeedMessageInput): FeedMessage
+  upVote(input: VoteInput): Vote
+  createDataPipeline(input: NewDataPipelineInput): DataPipeline
+  updateDataPipeline(DataPipelineUri: String, input: UpdateDataPipelineInput): DataPipeline
+  deleteDataPipeline(DataPipelineUri: String, deleteFromAWS: Boolean): Boolean
+  createDataPipelineEnvironment(input: NewDataPipelineEnvironmentInput): DataPipelineEnvironment
+  deleteDataPipelineEnvironment(envPipelineUri: String): Boolean
+  updateDataPipelineEnvironment(input: NewDataPipelineEnvironmentInput): DataPipelineEnvironment
+  syncDatasetTableColumns(tableUri: String): DatasetTableColumnSearchResult
+  updateDatasetTableColumn(columnUri: String, input: DatasetTableColumnInput): DatasetTableColumn
+  startDatasetProfilingRun(input: StartDatasetProfilingRunInput): DatasetProfilingRun
+  createDatasetStorageLocation(datasetUri: String, input: NewDatasetStorageLocationInput): DatasetStorageLocation
+  updateDatasetStorageLocation(locationUri: String, input: ModifyDatasetStorageLocationInput): DatasetStorageLocation
+  deleteDatasetStorageLocation(locationUri: String): Boolean
+  createDataset(input: NewDatasetInput): Dataset
+  updateDataset(datasetUri: String, input: ModifyDatasetInput): Dataset
+  generateDatasetAccessToken(datasetUri: String): String
+  deleteDataset(datasetUri: String, deleteFromAWS: Boolean): Boolean
+  importDataset(input: ImportDatasetInput): Dataset
+  startGlueCrawler(datasetUri: String, input: CrawlerInput): GlueCrawler
+  updateDatasetTable(tableUri: String, input: ModifyDatasetTableInput): DatasetTable
+  deleteDatasetTable(tableUri: String): Boolean
+  syncTables(datasetUri: String): DatasetTableSearchResult
+  importDashboard(input: ImportDashboardInput): Dashboard
+  updateDashboard(input: UpdateDashboardInput): Dashboard
+  deleteDashboard(dashboardUri: String): Boolean
+  shareDashboard(principalId: String, dashboardUri: String): DashboardShare
+  requestDashboardShare(principalId: String, dashboardUri: String): DashboardShare
+  approveDashboardShare(shareUri: String): DashboardShare
+  rejectDashboardShare(shareUri: String): DashboardShare
+  createQuicksightDataSourceSet(vpcConnectionId: String): String
+  createShareObject(datasetUri: String, itemUri: String, itemType: String, input: NewShareObjectInput): ShareObject
+  deleteShareObject(shareUri: String): Boolean
+  addSharedItem(shareUri: String, input: AddSharedItemInput): ShareItem
+  removeSharedItem(shareItemUri: String): Boolean
+  submitShareObject(shareUri: String): ShareObject
+  approveShareObject(shareUri: String): ShareObject
+  rejectShareObject(shareUri: String, rejectPurpose: String): ShareObject
+  revokeItemsShareObject(input: ShareItemSelectorInput): ShareObject
+  verifyItemsShareObject(input: ShareItemSelectorInput): ShareObject
+  reApplyItemsShareObject(input: ShareItemSelectorInput): ShareObject
+  updateShareRejectReason(shareUri: String, rejectPurpose: String): Boolean
+  updateShareRequestReason(shareUri: String, requestPurpose: String): Boolean
+  verifyDatasetShareObjects(input: ShareObjectSelectorInput): Boolean
+  createWorksheet(input: NewWorksheetInput): Worksheet
+  updateWorksheet(worksheetUri: String, input: UpdateWorksheetInput): Worksheet
+  deleteWorksheet(worksheetUri: String): Boolean
+}

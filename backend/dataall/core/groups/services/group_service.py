@@ -8,11 +8,11 @@ from dataall.base.context import get_context
 
 class GroupService:
     LOCAL_TEST_GROUPS = [
-        {'groupName': 'Engineers'},
-        {'groupName': 'Scientists'},
-        {'groupName': 'Requesters'},
-        {'groupName': 'Producers'},
-        {'groupName': 'Consumers'},
+        'Engineers',
+        'Scientists',
+        'Requesters',
+        'Producers',
+        'Consumers',
     ]
 
     @staticmethod
@@ -36,7 +36,7 @@ class GroupService:
 
         invited_groups = []
         if category == 'environment':
-            invited_groups = EnvironmentService.query_all_environment_groups(
+            invited_groups = EnvironmentService.get_all_environment_groups(
                 session=session,
                 uri=category_uri,
                 filter=None,

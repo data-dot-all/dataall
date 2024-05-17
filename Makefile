@@ -33,6 +33,9 @@ install-cdkproxy:
 install-tests:
 	pip install -r tests/requirements.txt
 
+install-integration-tests:
+	pip install -r tests_new/integration_tests/requirements.txt
+
 lint:
 	pip install ruff
 	ruff check --fix
@@ -51,6 +54,11 @@ check-security: upgrade-pip install-backend install-cdkproxy
 test:
 	export PYTHONPATH=./backend:/./tests && \
 	python -m pytest -v -ra tests/
+
+integration-tests: upgrade-pip install-integration-tests
+	export PYTHONPATH=./backend:/./tests_new && \
+	python -m pytest -v -ra tests_new/integration_tests/ \
+		--junitxml=reports/integration_tests.xml
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \

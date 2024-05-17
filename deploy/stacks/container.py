@@ -178,7 +178,7 @@ class ContainerStack(pyNestedClass):
         self.add_share_verifier_task()
         self.add_share_reapplier_task()
 
-    @run_if(['modules.datasets.active', 'modules.dashboards.active'])
+    @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -199,7 +199,7 @@ class ContainerStack(pyNestedClass):
 
         self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)
 
-    @run_if(['modules.datasets.active'])
+    @run_if(['modules.s3_datasets.active'])
     def add_share_management_task(self):
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -239,7 +239,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(share_management_task_definition.family)
 
-    @run_if(['modules.datasets.active'])
+    @run_if(['modules.s3_datasets.active'])
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -259,7 +259,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(verify_shares_task.task_definition.family)
 
-    @run_if(['modules.datasets.active'])
+    @run_if(['modules.s3_datasets.active'])
     def add_share_reapplier_task(self):
         share_reapplier_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -285,14 +285,14 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
-    @run_if(['modules.datasets.active'])
+    @run_if(['modules.s3_datasets.active'])
     def add_subscription_task(self):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
                 'python3.9',
                 '-m',
-                'dataall.modules.datasets.tasks.dataset_subscription_task',
+                'dataall.modules.dataset_sharing.tasks.dataset_subscription_task',
             ],
             container_id='container',
             ecr_repository=self._ecr_repository,
@@ -309,11 +309,11 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(subscriptions_task.task_definition.family)
 
-    @run_if(['modules.datasets.active'])
+    @run_if(['modules.s3_datasets.active'])
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
+            command=['python3.9', '-m', 'dataall.modules.s3_datasets.tasks.tables_syncer'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),

@@ -26,6 +26,7 @@ class TriggerFunctionStack(pyNestedClass):
         vpc: ec2.IVpc = None,
         vpce_connection: ec2.IConnectable = None,
         connectables: List[ec2.IConnectable] = [],
+        execute_after: List[Construct] = [],
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -54,7 +55,7 @@ class TriggerFunctionStack(pyNestedClass):
             retry_attempts=0,
             runtime=_lambda.Runtime.FROM_IMAGE,
             handler=_lambda.Handler.FROM_IMAGE,
-            execute_after=connectables,
+            execute_after=execute_after,
             execute_on_handler_change=True,
         )
 

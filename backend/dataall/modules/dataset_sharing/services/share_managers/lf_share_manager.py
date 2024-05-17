@@ -18,8 +18,8 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemActions,
     ShareItemHealthStatus,
 )
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable, Dataset
-from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
 
@@ -94,6 +94,15 @@ class LFShareManager:
             region=self.target_environment.region,
             role_name=self.share.principalIAMRoleName,
         )
+        if principal_iam_role_arn is None:
+            logger.info(
+                f'Principal IAM Role {self.share.principalIAMRoleName} not found in {self.target_environment.AwsAccountId}'
+            )
+            logger.info('Try to build arn')
+            principal_iam_role_arn = (
+                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}'
+            )
+
         principals = [principal_iam_role_arn]
         dashboard_enabled = EnvironmentService.get_boolean_env_param(
             self.session, self.target_environment, 'dashboardsEnabled'
@@ -575,7 +584,7 @@ class LFShareManager:
             f'due to: {error}'
         )
 
-        DatasetAlarmService().trigger_table_sharing_failure_alarm(table, self.share, self.target_environment)
+        DatasetSharingAlarmService().trigger_table_sharing_failure_alarm(table, self.share, self.target_environment)
         return True
 
     def handle_revoke_failure(
@@ -595,7 +604,9 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(table, self.share, self.target_environment)
+        DatasetSharingAlarmService().trigger_revoke_table_sharing_failure_alarm(
+            table, self.share, self.target_environment
+        )
         return True
 
     def handle_share_failure_for_all_tables(self, tables, error, share_item_status, reapply=False):

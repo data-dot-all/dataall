@@ -8,7 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.tasks.env_stack_finder import StackFinder
 from dataall.core.stacks.aws.ecs import Ecs
-from dataall.core.stacks.db.stack_repositories import Stack
+from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.base.db import get_engine
 from dataall.base.utils import Parameter
 
@@ -41,7 +41,7 @@ def update_stacks(engine, envname):
 
 
 def update_stack(session, envname, target_uri, wait=False):
-    stack = Stack.get_stack_by_target_uri(session, target_uri=target_uri)
+    stack = StackRepository.get_stack_by_target_uri(session, target_uri=target_uri)
     cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
     if not Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
         stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack_uri=stack.stackUri)

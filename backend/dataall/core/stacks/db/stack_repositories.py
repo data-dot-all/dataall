@@ -14,22 +14,24 @@ from dataall.base.utils.naming_convention import (
 log = logging.getLogger(__name__)
 
 
-class Stack:
+class StackRepository:
     @staticmethod
     def get_stack_by_target_uri(session, target_uri):
-        stack = Stack.find_stack_by_target_uri(session, target_uri)
+        stack = StackRepository.find_stack_by_target_uri(session, target_uri)
         if not stack:
             raise exceptions.ObjectNotFound('Stack', target_uri)
         return stack
 
     @staticmethod
-    def find_stack_by_target_uri(session, target_uri):
-        stack: models.Stack = session.query(models.Stack).filter(models.Stack.targetUri == target_uri).first()
-        return stack
+    def find_stack_by_target_uri(session, target_uri, statuses=None):
+        query = session.query(models.Stack).filter(models.Stack.targetUri == target_uri)
+        if statuses:
+            query = query.filter(models.Stack.status.in_(statuses))
+        return query.first()
 
     @staticmethod
     def get_stack_by_uri(session, stack_uri):
-        stack = Stack.find_stack_by_uri(session, stack_uri)
+        stack = StackRepository.find_stack_by_uri(session, stack_uri)
         if not stack:
             raise exceptions.ObjectNotFound('Stack', stack_uri)
         return stack
@@ -40,7 +42,7 @@ class Stack:
         return stack
 
     @staticmethod
-    def create_stack(session, environment_uri, target_label, target_uri, target_type, payload=None) -> models.Stack:
+    def create_stack(session, environment_uri, target_uri, target_type, payload=None) -> models.Stack:
         environment: Environment = session.query(Environment).get(environment_uri)
         if not environment:
             raise exceptions.ObjectNotFound('Environment', environment_uri)
@@ -60,22 +62,4 @@ class Stack:
         )
         session.add(stack)
         session.commit()
-        return stack
-
-    @staticmethod
-    def update_stack(session, uri: str, target_type: str) -> [models.Stack]:
-        if not uri:
-            raise exceptions.RequiredParameter('targetUri')
-        if not target_type:
-            raise exceptions.RequiredParameter('targetType')
-
-        context = get_context()
-        ResourcePolicyService.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=uri,
-            permission_name=TargetType.get_resource_update_permission_name(target_type),
-        )
-        stack = Stack.get_stack_by_target_uri(session, target_uri=uri)
         return stack

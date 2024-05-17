@@ -2,8 +2,20 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
+from dataall.modules.dataset_sharing.aws.share_policy_verifier import SharePolicyVerifier
+
 
 log = logging.getLogger(__name__)
+
+DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
+DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
+DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = 'DataAll-Access-Point-KMS-Decrypt'
+
+DATAALL_KMS_SIDS = [
+    DATAALL_BUCKET_KMS_DECRYPT_SID,
+    DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
+    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+]
 
 
 class KmsClient:
@@ -13,8 +25,9 @@ class KmsClient:
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
+        self.region = region
 
-    def put_key_policy(self, key_id: str, policy: str):
+    def put_key_policy(self, key_id: str, policy: str, fix_malformed_principals=True):
         try:
             self._client.put_key_policy(
                 KeyId=key_id,
@@ -26,6 +39,14 @@ class KmsClient:
                 raise Exception(
                     f'Data.all Environment Pivot Role does not have kms:PutKeyPolicy Permission for key id {key_id}: {e}'
                 )
+            elif e.response['Error']['Code'] == 'MalformedPolicyDocumentException':
+                if fix_malformed_principals:
+                    log.info('MalformedPolicy. Lets try again')
+                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(
+                        policy, DATAALL_KMS_SIDS, self._account_id, self.region
+                    )
+                    self.put_key_policy(key_id, fixed_policy, False)
+                    return
             log.error(f'Failed to attach policy to KMS key {key_id} on {self._account_id}: {e} ')
             raise e
 

@@ -1,8 +1,18 @@
 import logging
 
 from dataall.base.aws.sts import SessionHelper
+from botocore.exceptions import ClientError
+
+
+from dataall.modules.dataset_sharing.aws.share_policy_verifier import SharePolicyVerifier
 
 log = logging.getLogger(__name__)
+
+DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
+DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
+DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
+
+DATAALL_BUCKET_SIDS = [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]
 
 
 class S3ControlClient:
@@ -116,9 +126,11 @@ class S3Client:
     def __init__(self, account_id, region):
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('s3', region_name=region)
+        self.region = region
         self._account_id = account_id
 
-    def create_bucket_policy(self, bucket_name: str, policy: str):
+    # flag second_try indicates, that in case of MalformedPolicy error, we will try to fix it and try again
+    def create_bucket_policy(self, bucket_name: str, policy: str, fix_malformed_principals=True):
         try:
             s3cli = self._client
             s3cli.put_bucket_policy(
@@ -128,6 +140,17 @@ class S3Client:
                 ExpectedBucketOwner=self._account_id,
             )
             log.info(f'Created bucket policy of {bucket_name} on {self._account_id} successfully')
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'MalformedPolicy':
+                if fix_malformed_principals:
+                    log.info('MalformedPolicy. Lets try again')
+                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(
+                        policy, DATAALL_BUCKET_SIDS, self._account_id, self.region
+                    )
+                    self.create_bucket_policy(bucket_name, fixed_policy, False)
+                else:
+                    log.error(f'Failed to create bucket policy. MalformedPolicy: {policy}')
+                    raise e
         except Exception as e:
             log.error(f'Bucket policy created failed on bucket {bucket_name} of {self._account_id} : {e}')
             raise e
