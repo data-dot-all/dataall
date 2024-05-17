@@ -35,8 +35,8 @@ getDatasetPresignedUrl = gql.QueryField(
     resolver=get_file_upload_presigned_url,
 )
 
-listDatasetsOwnedByEnvGroup = gql.QueryField(
-    name='listDatasetsOwnedByEnvGroup',
+listS3DatasetsOwnedByEnvGroup = gql.QueryField(
+    name='listS3DatasetsOwnedByEnvGroup',
     type=gql.Ref('DatasetSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
