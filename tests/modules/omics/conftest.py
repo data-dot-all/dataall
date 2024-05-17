@@ -2,7 +2,7 @@ import pytest
 import typing
 
 from dataall.modules.omics.db.omics_models import OmicsRun, OmicsWorkflow
-from dataall.modules.datasets_base.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import Dataset
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 
@@ -93,7 +93,7 @@ def omics_workflow_model(db):
 
 
 @pytest.fixture(scope='module')
-def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> Dataset:
+def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> OmicsWorkflow:
     yield omics_workflow_model(environment=env_fixture, label='workflow1')
 
 
