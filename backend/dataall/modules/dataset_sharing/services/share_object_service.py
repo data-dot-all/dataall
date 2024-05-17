@@ -629,7 +629,7 @@ class ShareObjectService:
         if not ShareObjectService.check_view_log_permissions(context.username, context.groups, shareUri):
             raise exceptions.ResourceUnauthorized(
                 username=context.username,
-                action='view logs',
+                action='View Share Logs',
                 resource_uri=shareUri,
             )
 
