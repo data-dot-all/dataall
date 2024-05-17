@@ -46,19 +46,19 @@ const EnvironmentList = Loadable(
 const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetList'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetList'))
 );
 const DatasetView = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetView'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetView'))
 );
 const DatasetCreateForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetCreateForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetCreateForm'))
 );
 const DatasetImportForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetImportForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetImportForm'))
 );
 const DatasetEditForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
   lazy(() => import('./modules/Tables/views/TableView'))
@@ -238,7 +238,7 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      isModuleEnabled(ModuleNames.DATASETS) && {
+      isModuleEnabled(ModuleNames.S3_DATASETS) && {
         children: [
           {
             path: 'datasets',

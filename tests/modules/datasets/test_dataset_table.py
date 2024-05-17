@@ -1,5 +1,5 @@
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets_base.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
 
 
 def test_add_tables(table, dataset_fixture, db):
@@ -196,7 +196,9 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
             },
         ]
 
-        assert DatasetTableService.sync_existing_tables(session, dataset_fixture.datasetUri, glue_tables)
+        assert DatasetTableService.sync_existing_tables(
+            session, uri=dataset_fixture.datasetUri, glue_tables=glue_tables
+        )
         new_table: DatasetTable = session.query(DatasetTable).filter(DatasetTable.name == 'new_table').first()
         assert new_table
         assert new_table.GlueTableName == 'new_table'

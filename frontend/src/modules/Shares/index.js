@@ -5,7 +5,7 @@ export const SharesModule = {
   name: 'shares',
   isEnvironmentModule: false,
   resolve_dependency: () => {
-    return getModuleActiveStatus(ModuleNames.DATASETS);
+    return getModuleActiveStatus(ModuleNames.S3_DATASETS);
   }
 };
 

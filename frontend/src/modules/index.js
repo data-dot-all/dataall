@@ -1,6 +1,6 @@
 export * from './Catalog';
 export * from './Dashboards';
-export * from './Datasets';
+export * from './S3_Datasets';
 export * from './Glossaries';
 export * from './MLStudio';
 export * from './Notebooks';
