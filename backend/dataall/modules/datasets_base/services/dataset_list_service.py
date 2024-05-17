@@ -1,8 +1,10 @@
 import logging
 from typing import List
-from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetListRepository
+from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 
 log = logging.getLogger(__name__)
 
@@ -49,3 +51,13 @@ class DatasetListService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return DatasetListRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_datasets_created_in_environment(uri: str, data: dict):
+        with get_context().db_engine.scoped_session() as session:
+            return DatasetListRepository.paginated_environment_datasets(
+                session=session,
+                uri=uri,
+                data=data,
+            )

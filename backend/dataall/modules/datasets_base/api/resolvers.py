@@ -23,6 +23,12 @@ def list_owned_datasets(context: Context, source, filter: dict = None):
     return DatasetListService.list_owned_datasets(filter)
 
 
+def list_datasets_created_in_environment(context: Context, source, environmentUri: str = None, filter: dict = None):
+    if not filter:
+        filter = {}
+    return DatasetListService.list_datasets_created_in_environment(uri=environmentUri, data=filter)
+
+
 def resolve_user_role(context: Context, source: DatasetBase, **kwargs):
     if not source:
         return None

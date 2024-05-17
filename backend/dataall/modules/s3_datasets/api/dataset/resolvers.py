@@ -145,12 +145,6 @@ def get_dataset_glossary_terms(context: Context, source: S3Dataset, **kwargs):
         return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, 'Dataset')
 
 
-def list_datasets_created_in_environment(context: Context, source, environmentUri: str = None, filter: dict = None):
-    if not filter:
-        filter = {}
-    return DatasetService.list_datasets_created_in_environment(uri=environmentUri, data=filter)
-
-
 def list_datasets_owned_by_env_group(
     context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
 ):

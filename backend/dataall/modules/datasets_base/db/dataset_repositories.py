@@ -98,3 +98,35 @@ class DatasetListRepository:
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
+
+    @staticmethod
+    def paginated_environment_datasets(
+        session,
+        uri,
+        data=None,
+    ) -> dict:
+        return paginate(
+            query=DatasetListRepository._query_environment_datasets(session, uri, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def _query_environment_datasets(session, uri, filter) -> Query:
+        query = session.query(DatasetBase).filter(
+            and_(
+                DatasetBase.environmentUri == uri,
+                DatasetBase.deleted.is_(None),
+            )
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    DatasetBase.label.ilike('%' + term + '%'),
+                    DatasetBase.description.ilike('%' + term + '%'),
+                    DatasetBase.tags.contains(f'{{{term}}}'),
+                    DatasetBase.region.ilike('%' + term + '%'),
+                )
+            )
+        return query.order_by(DatasetBase.label)

@@ -226,26 +226,6 @@ class DatasetRepository(EnvironmentResource):
         return query.order_by(S3Dataset.label)
 
     @staticmethod
-    def query_environment_datasets(session, uri, filter) -> Query:
-        query = session.query(S3Dataset).filter(
-            and_(
-                S3Dataset.environmentUri == uri,
-                S3Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    S3Dataset.label.ilike('%' + term + '%'),
-                    S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
-                    S3Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query.order_by(S3Dataset.label)
-
-    @staticmethod
     def query_environment_imported_datasets(session, uri, filter) -> Query:
         query = session.query(S3Dataset).filter(
             and_(S3Dataset.environmentUri == uri, S3Dataset.deleted.is_(None), S3Dataset.imported.is_(True))
@@ -261,18 +241,6 @@ class DatasetRepository(EnvironmentResource):
                 )
             )
         return query
-
-    @staticmethod
-    def paginated_environment_datasets(
-        session,
-        uri,
-        data=None,
-    ) -> dict:
-        return paginate(
-            query=DatasetRepository.query_environment_datasets(session, uri, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     def paginated_environment_group_datasets(session, env_uri, group_uri, data=None) -> dict:
