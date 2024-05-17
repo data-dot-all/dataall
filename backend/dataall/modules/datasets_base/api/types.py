@@ -24,6 +24,9 @@ DatasetBase = gql.ObjectType(
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
+        gql.Field(name='SamlAdminGroupName', type=gql.String),
+        gql.Field(name='businessOwnerEmail', type=gql.String),
+        gql.Field(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
         gql.Field(name='imported', type=gql.Boolean),
         gql.Field(
             name='environment',

@@ -6,7 +6,6 @@ class DatasetBaseModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         supported_modes = {
-            ImportMode.API,
             ImportMode.CDK,
             ImportMode.HANDLERS,
             ImportMode.STACK_UPDATER_TASK,
@@ -16,3 +15,16 @@ class DatasetBaseModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets_base.services.datasets_enums
+
+
+class DatasetBaseApiModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for MLStudio GraphQl lambda"""
+
+    @classmethod
+    def is_supported(cls, modes):
+        return ImportMode.API in modes
+
+    def __init__(self):
+        import dataall.modules.datasets_base.api
+        import dataall.modules.datasets_base.services.datasets_enums
+
