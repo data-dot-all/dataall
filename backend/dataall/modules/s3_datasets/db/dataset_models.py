@@ -114,7 +114,7 @@ class S3Dataset(DatasetBase):
     importedAdminRole = Column(Boolean, default=False)
 
     __mapper_args__ = {
-        'polymorphic_identity': DatasetType.S3.value,
+        'polymorphic_identity': DatasetType.S3,
     }
 
 
