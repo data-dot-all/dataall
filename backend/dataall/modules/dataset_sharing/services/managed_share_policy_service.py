@@ -69,7 +69,7 @@ class SharePolicyService(ManagedPolicy):
             additional_policy = {
                 'Sid': statement_sid,
                 'Effect': 'Allow',
-                'Action': [f'{resource_type}:*'],
+                'Action': [f'{resource_type}:List*', f'{resource_type}:Describe*', f'{resource_type}:GetObject'],
                 'Resource': target_resources,
             }
             policy_document['Statement'].append(additional_policy)
