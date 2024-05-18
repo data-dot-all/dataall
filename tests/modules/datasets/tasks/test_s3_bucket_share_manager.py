@@ -465,7 +465,9 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
     assert len(iam_policy['Statement'][kms_index]['Resource']) == 1
     assert (
         f'arn:aws:s3:::{dataset2.S3BucketName}' in iam_policy['Statement'][s3_index]['Resource']
-        and 's3:*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:List*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:Describe*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:GetObject' in iam_policy['Statement'][s3_index]['Action']
     )
     assert (
         f'arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key'
@@ -519,7 +521,9 @@ def test_grant_s3_iam_access_with_empty_policy(mocker, dataset2, share2_manager)
     assert len(iam_policy['Statement'][kms_index]['Resource']) == 1
     assert (
         f'arn:aws:s3:::{dataset2.S3BucketName}' in iam_policy['Statement'][s3_index]['Resource']
-        and 's3:*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:List*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:Describe*' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:GetObject' in iam_policy['Statement'][s3_index]['Action']
     )
     assert (
         f'arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key'
