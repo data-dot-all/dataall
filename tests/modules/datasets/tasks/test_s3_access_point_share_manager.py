@@ -343,7 +343,7 @@ def test_grant_target_role_access_policy_test_empty_policy(
             {
                 'Sid': f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:*'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
                 'Resource': [
                     f'arn:aws:s3:::{location1.S3BucketName}',
                     f'arn:aws:s3:::{location1.S3BucketName}/*',
