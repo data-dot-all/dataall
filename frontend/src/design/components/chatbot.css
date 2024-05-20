@@ -1,0 +1,38 @@
+.app-chatbot-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  padding: 10px;
+  color: #fff;
+  background-color: #0d2d44;
+  border: none;
+  position: absolute;
+  bottom: 25px;
+  z-index: 9999;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.6s ease-in-out;
+}
+.app-chatbot-button:hover {
+  transform: scale(1.1);
+}
+.app-chatbot-container {
+  margin: 40px 0;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  right: 40px;
+  bottom: 55px;
+  z-index: 9999;
+  color: blueviolet;
+  box-shadow: 5px 5px 13px rgba(91, 81, 81, 0.4);
+  border-radius: 5px;
+  /* border: 2px solid black;  */
+  height: 500px;
+  width: 300px;
+}
+.app-chatbot-button-icon {
+  fill: #fff;
+}
