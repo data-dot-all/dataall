@@ -63,7 +63,5 @@ OrganizationSimplified = gql.ObjectType(
 
 ChatbotResponse = gql.ObjectType(
     name='ChatbotResponse',
-    fields=[
-        gql.Field(name='response', type=gql.String)
-    ],
+    fields=[gql.Field(name='response', type=gql.String)],
 )
