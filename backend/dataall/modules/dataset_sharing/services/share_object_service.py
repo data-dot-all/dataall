@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from warnings import warn
 
@@ -45,6 +46,11 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset,
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
+from dataall.base.utils import Parameter
+from dataall.base.db import exceptions
+from dataall.core.stacks.aws.cloudwatch import CloudWatch
+
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -52,8 +58,13 @@ log = logging.getLogger(__name__)
 
 class ShareObjectService:
     @staticmethod
+    def check_view_log_permissions(username, groups, shareUri):
+        with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
+
+    @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         role_name = share.principalIAMRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
@@ -592,6 +603,11 @@ class ShareObjectService:
                 log.info(
                     f'Resource permission policy {DATASET_FOLDER_READ} to table {location.itemUri} for group {share.groupUri} already exists. Skip... '
                 )
+
+    @staticmethod
+    def get_share_logs_name_query(shareUri):
+        log.info(f'Get share Logs stream name for share {shareUri}')
+
         query = f"""fields @logStream
                         |filter  @message like '{shareUri}'
                         | sort @timestamp desc
@@ -614,3 +630,28 @@ class ShareObjectService:
             raise exceptions.ResourceUnauthorized(
                 username=context.username,
                 action='View Share Logs',
+                resource_uri=shareUri,
+            )
+
+        envname = os.getenv('envname', 'local')
+        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
+
+        query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
+        name_query_result = CloudWatch.run_query(
+            query=query_for_name,
+            log_group_name=log_group_name,
+            days=1,
+        )
+        if len(name_query_result) == 0:
+            return []
+
+        name = name_query_result[0]['logStream']
+
+        query = ShareObjectService.get_share_logs_query(log_stream_name=name)
+        results = CloudWatch.run_query(
+            query=query,
+            log_group_name=log_group_name,
+            days=1,
+        )
+        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
+        return results
