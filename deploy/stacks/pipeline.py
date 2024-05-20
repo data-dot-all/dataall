@@ -9,6 +9,7 @@ from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
+from aws_cdk.aws_codebuild import BuildEnvironmentVariable, BuildEnvironmentVariableType
 from aws_cdk.pipelines import CodePipelineSource
 
 from .albfront_stage import AlbFrontStage
@@ -648,8 +649,11 @@ class PipelineStack(Stack):
                 cognito_user_session_timeout_inmins=target_env.get('cognito_user_session_timeout_inmins', 43200),
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
+                with_approval_tests=target_env.get('with_approval_tests', False),
             )
         )
+        if target_env.get('custom_auth') is None:
+            backend_stage.add_post(self.cognito_config_action(target_env))
         return backend_stage
 
     def set_approval_tests_stage(
@@ -667,6 +671,12 @@ class PipelineStack(Stack):
                 id='ApprovalTests',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+                    environment_variables={
+                        'USERDATA': BuildEnvironmentVariable(
+                            value=f'{self.resource_prefix}-{target_env["envname"]}-cognito-test-users',
+                            type=BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        ),
+                    },
                 ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
@@ -767,7 +777,7 @@ class PipelineStack(Stack):
                     f'export internet_facing={target_env.get("internet_facing", True)}',
                     f'export custom_domain={str(True) if target_env.get("custom_domain") else str(False)}',
                     f'export deployment_region={target_env.get("region", self.region)}',
-                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) is None }',
+                    f'export enable_cw_rum={target_env.get("enable_cw_rum", False) and target_env.get("custom_auth", None) is None}',
                     f'export resource_prefix={self.resource_prefix}',
                     f'export reauth_ttl={str(target_env.get("reauth_config", {}).get("ttl", 5))}',
                     f'export custom_auth_provider={str(target_env.get("custom_auth", {}).get("provider", "None"))}',
@@ -803,11 +813,6 @@ class PipelineStack(Stack):
                 vpc=self.vpc,
             ),
         )
-        if target_env.get('custom_auth', None) is None:
-            front_stage_actions = (
-                *front_stage_actions,
-                self.cognito_config_action(target_env),
-            )
         if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             front_stage_actions = (
                 *front_stage_actions,
@@ -881,6 +886,7 @@ class PipelineStack(Stack):
                 f'export custom_domain={str(True) if target_env.get("custom_domain") else str(False)}',
                 f'export deployment_region={target_env.get("region", self.region)}',
                 f'export enable_cw_canaries={target_env.get("enable_cw_canaries", False)}',
+                f'export with_approval_tests={target_env.get("with_approval_tests", False)}',
                 'mkdir ~/.aws/ && touch ~/.aws/config',
                 'echo "[profile buildprofile]" > ~/.aws/config',
                 f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
@@ -970,9 +976,6 @@ class PipelineStack(Stack):
         )
         if target_env.get('custom_auth') is None:
             albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
-
-        if target_env.get('custom_auth') is None:
-            albfront_stage.add_post(self.cognito_config_action(target_env))
 
         if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))

@@ -20,6 +20,7 @@ def setup_cognito(
     internet_facing='True',
     custom_domain='False',
     enable_cw_canaries='False',
+    with_approval_tests='False',
 ):
     ssm = boto3.client('ssm', region_name=region)
     user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')['Parameter']['Value']
@@ -94,59 +95,66 @@ def setup_cognito(
             sm = boto3.client('secretsmanager', region_name=region)
             secret = sm.get_secret_value(SecretId=f'{resource_prefix}-{envname}-cognito-canary-user')
             creds = json.loads(secret['SecretString'])
-            username = creds['username']
-            print('Creating Canaries user...')
-            try:
-                response = cognito.admin_create_user(
-                    UserPoolId=user_pool_id,
-                    Username=username,
-                    UserAttributes=[{'Name': 'email', 'Value': f'{username}@amazonaws.com'}],
-                    TemporaryPassword='da@'
-                    + shuffle_password(
-                        random.SystemRandom().choice(string.ascii_uppercase)
-                        + random.SystemRandom().choice(string.digits)
-                        + ''.join(
-                            random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(11)
-                        )
-                    ),
-                    MessageAction='SUPPRESS',
-                )
-                print(f'User Created Successfully...: {response}')
-            except ClientError as e:
-                if 'UsernameExistsException' in str(e):
-                    print('User already exists')
-                else:
-                    raise e
+            create_user(cognito, user_pool_id, creds['username'], creds['password'], ['CWCanaries'])
 
-            print('Updating Canaries user password...')
-            response = cognito.admin_set_user_password(
-                UserPoolId=user_pool_id,
-                Username=username,
-                Password=creds['password'],
-                Permanent=True,
-            )
-            print(f'User password updated Successfully...: {response}')
-            try:
-                response = cognito.create_group(
-                    GroupName='CWCanaries',
-                    UserPoolId=user_pool_id,
-                    Description='CW Canary group',
-                )
-                print(f'Canaries group created Successfully...: {response}')
-            except ClientError as e:
-                if 'GroupExistsException' in str(e):
-                    print('Group already exists')
-                else:
-                    raise e
-
-            response = cognito.admin_add_user_to_group(
-                GroupName='CWCanaries', UserPoolId=user_pool_id, Username=username
-            )
-            print(f'User added to group Successfully...: {response}')
+        if with_approval_tests == 'True':
+            sm = boto3.client('secretsmanager', region_name=region)
+            secret = sm.get_secret_value(SecretId=f'{resource_prefix}-{envname}-cognito-test-users')
+            users = json.loads(secret['SecretString'])
+            for username, data in users.items():
+                create_user(cognito, user_pool_id, username, data['password'], data['groups'])
 
     except ClientError as e:
         print(f'Failed to setup cognito due to: {e}')
         raise e
+
+
+def create_user(cognito, user_pool_id, username, password, groups=[]):
+    print('Creating  user...')
+    try:
+        response = cognito.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=username,
+            UserAttributes=[{'Name': 'email', 'Value': f'{username}@amazonaws.com'}],
+            TemporaryPassword='da@'
+            + shuffle_password(
+                random.SystemRandom().choice(string.ascii_uppercase)
+                + random.SystemRandom().choice(string.digits)
+                + ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(11))
+            ),
+            MessageAction='SUPPRESS',
+        )
+        print(f'User Created Successfully...: {response}')
+    except ClientError as e:
+        if 'UsernameExistsException' in str(e):
+            print('User already exists')
+        else:
+            raise e
+
+    print('Updating Canaries user password...')
+    response = cognito.admin_set_user_password(
+        UserPoolId=user_pool_id,
+        Username=username,
+        Password=password,
+        Permanent=True,
+    )
+    print(f'User password updated Successfully...: {response}')
+
+    for group in groups:
+        try:
+            response = cognito.create_group(
+                GroupName=group,
+                UserPoolId=user_pool_id,
+            )
+            print(f'Group created Successfully...: {response}')
+        except ClientError as e:
+            if 'GroupExistsException' in str(e):
+                print('Group already exists')
+            else:
+                raise e
+
+        response = cognito.admin_add_user_to_group(GroupName=group, UserPoolId=user_pool_id, Username=username)
+        print(f'User added to group Successfully...: {response}')
 
 
 if __name__ == '__main__':
@@ -157,6 +165,7 @@ if __name__ == '__main__':
     custom_domain = os.environ.get('custom_domain')
     enable_cw_canaries = os.environ.get('enable_cw_canaries')
     resource_prefix = os.environ.get('resource_prefix')
+    with_approval_tests = os.environ.get('with_approval_tests')
     setup_cognito(
         region,
         resource_prefix,
@@ -164,5 +173,6 @@ if __name__ == '__main__':
         internet_facing,
         custom_domain,
         enable_cw_canaries,
+        with_approval_tests,
     )
     print('Cognito Configuration Finished Successfully')

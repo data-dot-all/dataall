@@ -12,6 +12,7 @@ from aws_cdk import (
     Duration,
     CustomResource,
 )
+from aws_cdk.aws_cognito import AuthFlow
 
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
@@ -32,6 +33,7 @@ class IdpStack(pyNestedClass):
         tooling_account_id=None,
         enable_cw_rum=False,
         cognito_user_session_timeout_inmins=43200,
+        with_approval_tests=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -93,11 +95,11 @@ class IdpStack(pyNestedClass):
                 domain_prefix=f"{resource_prefix.replace('-', '')}{envname}{self.region.replace('-', '')}{self.account}"
             ),
         )
-
         self.client = cognito.UserPoolClient(
             self,
             f'AppClient-{envname}',
             user_pool=self.user_pool,
+            auth_flows=AuthFlow(user_password=with_approval_tests, user_srp=True, custom=True),
             prevent_user_existence_errors=True,
             refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
         )

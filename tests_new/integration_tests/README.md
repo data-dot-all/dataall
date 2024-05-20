@@ -3,7 +3,18 @@ The purpose of these tests is to automatically validate functionalities of data.
 
 ## Pre-requisites
 - A real deployment of data.all in AWS
-- 4 Cognito users (at the moment only Cognito is supported) like the ones defined in `conftest`(e.g. `testUser1` with password `Pass1Word!`)
+- A SecretManager secret (`'{self.resource_prefix}-{target_env["envname"]}-cognito-test-users'`) with the followings contents
+    ```
+    {
+        "testUserTenant": {"password": "yourPassword", "groups": ["DAAdministrators"]},
+        "testUser1": {"password": "yourPassword", "groups": ["testGroup1"]},
+        "testUser2": {"password": "yourPassword", "groups": ["testGroup2"]},
+        "testUser3": {"password": "yourPassword", "groups": ["testGroup3"]},
+        "testUser4": {"password": "yourPassword", "groups": ["testGroup4"]}
+    }
+    ```
+- If you are not using Cognito then you must manually create the users/groups
+- If you are using Cognito the pipeline will create the users/groups
 
 ## Run tests
 
