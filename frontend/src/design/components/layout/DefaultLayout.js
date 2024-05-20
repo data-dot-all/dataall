@@ -5,6 +5,7 @@ import { Box } from '@mui/material';
 import { DefaultNavbar } from './DefaultNavbar';
 import { DefaultSidebar } from './DefaultSidebar';
 import { ErrorNotification } from '../ErrorNotification';
+import { DataallChatbot } from '../DataallChatbot';
 
 export const DefaultLayoutRoot = styled(Box)(({ theme }) => ({
   ...(theme.palette.mode === 'light' && {
@@ -65,6 +66,7 @@ export const DefaultLayout = () => {
   return (
     <DefaultLayoutRoot>
       <DefaultMain>
+        <DataallChatbot />
         <DefaultNavbar
           openDrawer={openDrawer}
           onOpenDrawerChange={setOpenDrawer}

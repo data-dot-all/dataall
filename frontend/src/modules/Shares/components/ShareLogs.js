@@ -38,7 +38,7 @@ export const ShareLogs = (props) => {
   }, [client, dispatch, shareUri]);
 
   useEffect(() => {
-    if (client) {
+    if (client && open) {
       getLogs().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
   }, [client, dispatch, getLogs]);
