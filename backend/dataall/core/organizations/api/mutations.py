@@ -4,7 +4,7 @@ from .input_types import (
     NewOrganizationInput,
     InviteGroupToOrganizationInput,
 )
-from .resolvers import archive_organization, create_organization, invite_group, remove_group, update_organization
+from .resolvers import archive_organization, create_organization, invite_group, remove_group, update_organization, send_query_chatbot
 from .types import Organization
 
 createOrganization = gql.MutationField(
@@ -48,4 +48,13 @@ removeGroupFromOrganization = gql.MutationField(
     ],
     type=gql.Ref('Organization'),
     resolver=remove_group,
+)
+
+sendQueryChatbot = gql.MutationField(
+    name='sendQueryChatbot',
+    type=gql.Ref('ChatbotResponse'),
+    args=[
+        gql.Argument(name='queryString', type=gql.NonNullableType(gql.String)),
+    ],
+    resolver=send_query_chatbot,
 )

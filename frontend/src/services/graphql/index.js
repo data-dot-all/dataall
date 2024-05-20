@@ -19,3 +19,4 @@ export * from './Stack';
 export * from './Test';
 export * from './User';
 export * from './Vote';
+export * from './Chatbot';
