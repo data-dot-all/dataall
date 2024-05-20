@@ -60,8 +60,8 @@ class ShareObjectService:
     @staticmethod
     def check_view_log_permissions(username, groups, shareUri):
         with get_context().db_engine.scoped_session() as session:
-            share: ShareObject = ShareObjectRepository.get_share_by_uri(session, shareUri)
-            ds: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
+            ds = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
 
     @staticmethod
@@ -608,8 +608,8 @@ class ShareObjectService:
     def get_share_logs_name_query(shareUri):
         log.info(f'Get share Logs stream name for share {shareUri}')
 
-        query = """fields @logStream
-                        |filter  @message like 'bmm02skg'
+        query = f"""fields @logStream
+                        |filter  @message like '{shareUri}'
                         | sort @timestamp desc
                         | limit 1
                     """
@@ -629,7 +629,7 @@ class ShareObjectService:
         if not ShareObjectService.check_view_log_permissions(context.username, context.groups, shareUri):
             raise exceptions.ResourceUnauthorized(
                 username=context.username,
-                action='view logs',
+                action='View Share Logs',
                 resource_uri=shareUri,
             )
 

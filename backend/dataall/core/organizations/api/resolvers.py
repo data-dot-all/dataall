@@ -87,3 +87,7 @@ def resolve_organization_by_env(context, source, **kwargs):
         return None
 
     return OrganizationService.resolve_organization_by_env(uri=source.environmentUri)
+
+
+def send_query_chatbot(context, source, queryString):
+    return {'response': 'Response'}
