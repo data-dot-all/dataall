@@ -4,7 +4,14 @@ from .input_types import (
     NewOrganizationInput,
     InviteGroupToOrganizationInput,
 )
-from .resolvers import archive_organization, create_organization, invite_group, remove_group, update_organization, send_query_chatbot
+from .resolvers import (
+    archive_organization,
+    create_organization,
+    invite_group,
+    remove_group,
+    update_organization,
+    send_query_chatbot,
+)
 from .types import Organization
 
 createOrganization = gql.MutationField(
