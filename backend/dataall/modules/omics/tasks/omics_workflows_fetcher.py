@@ -24,8 +24,8 @@ def fetch_omics_workflows(engine):
     with engine.scoped_session() as session:
         environments = session.query(Environment)
         for env in environments:
-            ready_workflows = OmicsClient.list_workflows(
-                awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.READY2RUN.value
+            ready_workflows = OmicsClient(awsAccountId=env.AwsAccountId, region=env.region).list_workflows(
+                type=OmicsWorkflowType.READY2RUN.value
             )
             # Removing private workflows until fully supported after initial launch
             # private_workflows = OmicsClient.list_workflows(awsAccountId=env.AwsAccountId, region=env.region, type=OmicsWorkflowType.PRIVATE.value)

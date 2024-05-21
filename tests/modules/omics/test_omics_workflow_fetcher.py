@@ -25,6 +25,10 @@ def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, mod
         {'arn': 'some-arn-1', 'id': 'id-1', 'name': 'name-1', 'status': 'ACTIVE', 'type': 'READY2RUN'},
         {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
+    module_mocker.patch(
+        'dataall.modules.omics.aws.omics_client.OmicsClient.client',
+        return_value=True,
+    )
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
         return_value=items,
@@ -54,6 +58,10 @@ def test_omics_workflow_fetcher_new_workflows_multiple_environments(
         {'arn': 'some-arn-1', 'id': 'id-1', 'name': 'name-1', 'status': 'ACTIVE', 'type': 'READY2RUN'},
         {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
+    module_mocker.patch(
+        'dataall.modules.omics.aws.omics_client.OmicsClient.client',
+        return_value=True,
+    )
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
         return_value=items,
@@ -87,6 +95,10 @@ def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module
         {'arn': 'some-arn-2', 'id': 'id-2', 'name': 'name-2', 'status': 'ACTIVE', 'type': 'READY2RUN'},
         {'arn': workflow1.arn, 'id': workflow1.id, 'name': workflow1.name, 'status': 'ACTIVE', 'type': 'READY2RUN'},
     ]
+    module_mocker.patch(
+        'dataall.modules.omics.aws.omics_client.OmicsClient.client',
+        return_value=True,
+    )
     mocker = module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.list_workflows',
         return_value=items,

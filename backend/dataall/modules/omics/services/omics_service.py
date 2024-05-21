@@ -71,6 +71,8 @@ class OmicsService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, data['destination'])
             enabled = EnvironmentService.get_boolean_env_param(session, environment, 'omicsEnabled')
+            workflow = OmicsRepository(session=session).get_workflow(workflowUri=data['workflowUri'])
+            group = EnvironmentService.get_environment_group(session, admin_group, environment.environmentUri)
 
             if not enabled and enabled.lower() != 'true':
                 raise exceptions.UnauthorizedOperation(
@@ -92,7 +94,9 @@ class OmicsService:
 
             OmicsRepository(session).save_omics_run(omics_run)
 
-            response = OmicsClient.run_omics_workflow(omics_run, session)
+            response = OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).run_omics_workflow(
+                omics_workflow=workflow, omics_run=omics_run, role_arn=group.environmentIAMRoleArn
+            )
             omics_run.runUri = response['id']
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -113,14 +117,20 @@ class OmicsService:
     @staticmethod
     def get_omics_run_details_from_aws(uri: str):
         with _session() as session:
-            return OmicsClient.get_omics_run(session, uri)
+            omics_run = OmicsRepository(session).get_omics_run(runUri=uri)
+            environment = EnvironmentService.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
+            return OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).get_omics_run(uri)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def get_omics_workflow(uri: str) -> dict:
         """Get Omics workflow."""
         with _session() as session:
-            response = OmicsClient.get_omics_workflow(workflowUri=uri, session=session)
+            workflow = OmicsRepository(session).get_workflow(workflowUri=uri)
+            environment = EnvironmentService.get_environment_by_uri(session=session, uri=workflow.environmentUri)
+            response = OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).get_omics_workflow(
+                workflow
+            )
             parameterTemplateJson = json.dumps(response['parameterTemplate'])
             response['parameterTemplate'] = parameterTemplateJson
             response['workflowUri'] = uri
@@ -155,10 +165,13 @@ class OmicsService:
         """Deletes Omics run from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_run = OmicsService._get_omics_run(uri)
+            environment = EnvironmentService.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
             if not omics_run:
                 raise exceptions.ObjectNotFound('OmicsRun', uri)
             if delete_from_aws:
-                OmicsClient.delete_omics_run(session=session, omics_run=omics_run)
+                OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).delete_omics_run(
+                    uri=omics_run.runUri
+                )
             session.delete(omics_run)
 
             ResourcePolicyService.delete_resource_policy(

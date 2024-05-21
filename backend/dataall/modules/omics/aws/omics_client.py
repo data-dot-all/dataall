@@ -2,11 +2,8 @@ import logging
 import json
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.modules.omics.db.omics_models import OmicsRun
-from dataall.modules.omics.db.omics_repository import OmicsRepository
+from dataall.modules.omics.db.omics_models import OmicsRun, OmicsWorkflow
 from botocore.exceptions import ClientError
-from dataall.core.environment.services.environment_service import EnvironmentService
 
 
 logger = logging.getLogger(__name__)
@@ -17,49 +14,37 @@ class OmicsClient:
     An Omics proxy client that is used to send requests to AWS
     """
 
-    @staticmethod
-    def client(awsAccountId: str, region: str):
-        session = SessionHelper.remote_session(awsAccountId, region)
-        return session.client('omics', region_name=region)
+    def __init__(self, awsAccountId: str, region: str):
+        self.awsAccountId = awsAccountId
+        self.region = region
+        self._client = self.client()
 
-    @staticmethod
-    def get_omics_workflow(workflowUri: str, session):
-        workflow = OmicsRepository(session).get_workflow(workflowUri=workflowUri)
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=workflow.environmentUri)
-        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+    def client(self):
+        session = SessionHelper.remote_session(self.awsAccountId, self.region)
+        return session.client('omics', region_name=self.region)
+
+    def get_omics_workflow(self, workflow: OmicsWorkflow):
         try:
-            response = client.get_workflow(id=workflow.id, type='READY2RUN')
+            response = self._client.get_workflow(id=workflow.id, type='READY2RUN')
             return response
         except ClientError as e:
             logger.error(f'Could not retrieve Ready2Run Omics Workflows status due to: {e} ')
             raise e
 
-    @staticmethod
-    def get_omics_run(session, runUri: str):
-        omics_db = OmicsRepository(session)
-        omics_run = omics_db.get_omics_run(runUri=runUri)
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
-        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+    def get_omics_run(self, uri: str):
         try:
-            response = client.get_run(id=omics_run.runUri)
+            response = self._client.get_run(id=uri)
             return response
         except ClientError as e:
             logger.error(f'Could not retrieve workflow run status due to: {e} ')
             raise e
 
-    @staticmethod
-    def run_omics_workflow(omics_run: OmicsRun, session):
-        group = EnvironmentService.get_environment_group(
-            session, omics_run.SamlAdminGroupName, omics_run.environmentUri
-        )
-        workflow = OmicsRepository(session=session).get_workflow(workflowUri=omics_run.workflowUri)
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
-        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+    def run_omics_workflow(self, omics_workflow: OmicsWorkflow, omics_run: OmicsRun, role_arn: str):
         try:
-            response = client.start_run(
-                workflowId=workflow.id,
-                workflowType=workflow.type,
-                roleArn=group.environmentIAMRoleArn,
+            response = self._client.start_run(
+                workflowId=omics_workflow.id,
+                workflowType=omics_workflow.type,
+                roleArn=role_arn,
                 parameters=json.loads(omics_run.parameterTemplate),
                 outputUri=omics_run.outputUri,
                 tags={'Team': f'{omics_run.SamlAdminGroupName}'},
@@ -69,12 +54,10 @@ class OmicsClient:
             logger.error(f'Could not retrieve workflow run status due to: {e} ')
             raise e
 
-    @staticmethod
-    def list_workflows(awsAccountId, region, type) -> list:
+    def list_workflows(self, type: str) -> list:
         try:
             found_workflows = []
-            client = OmicsClient.client(awsAccountId=awsAccountId, region=region)
-            paginator = client.get_paginator('list_workflows')
+            paginator = self._client.get_paginator('list_workflows')
             response_pages = paginator.paginate(
                 type=type,
                 PaginationConfig={
@@ -90,17 +73,10 @@ class OmicsClient:
             logger.error(f'Could not retrieve {type} Omics Workflows status due to: {e} ')
             raise e
 
-    @staticmethod
-    def delete_omics_run(session, omics_run: OmicsRun):
-        environment = EnvironmentRepository.get_environment_by_uri(session=session, uri=omics_run.environmentUri)
-        client = OmicsClient.client(awsAccountId=environment.AwsAccountId, region=environment.region)
+    def delete_omics_run(self, uri: str):
         try:
-            response = client.delete_run(id=omics_run.runUri)
+            response = self._client.delete_run(id=uri)
             return response
         except ClientError as e:
             logger.error(f'Could not delete run due to: {e} ')
             raise e
-
-
-def client() -> OmicsClient:
-    return OmicsClient()

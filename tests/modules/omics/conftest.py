@@ -10,6 +10,10 @@ from dataall.core.organizations.db.organization_models import Organization
 @pytest.fixture(scope='module')
 def patch_aws(module_mocker):
     module_mocker.patch(
+        'dataall.modules.omics.aws.omics_client.OmicsClient.client',
+        return_value=True,
+    )
+    module_mocker.patch(
         'dataall.modules.omics.aws.omics_client.OmicsClient.run_omics_workflow',
         return_value={'id': 'run-id'},
     )
