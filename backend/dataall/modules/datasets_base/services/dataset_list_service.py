@@ -1,4 +1,5 @@
 import logging
+from sqlalchemy.orm import Query
 from typing import List
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.base.context import get_context
@@ -15,7 +16,7 @@ class DatasetListService:
         cls._interfaces.append(interface)
 
     @classmethod
-    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
+    def _list_all_user_interface_datasets(cls, session, username, groups) -> List[Query]:
         """All list_datasets from other modules that need to be appended to the list of datasets"""
         return [
             query
