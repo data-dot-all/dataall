@@ -18,7 +18,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     ShareItemActions,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -30,7 +30,7 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         tables: [DatasetTable],
         source_environment: Environment,

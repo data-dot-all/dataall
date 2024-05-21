@@ -3,7 +3,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.s3_datasets.services.dataset_location_service import DatasetLocationService
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 
 @is_feature_enabled('modules.s3_datasets.features.file_actions')
@@ -44,7 +44,7 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        d = session.query(Dataset).get(source.datasetUri)
+        d = session.query(S3Dataset).get(source.datasetUri)
     return d
 
 

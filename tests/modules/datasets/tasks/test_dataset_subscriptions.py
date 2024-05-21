@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
     PrincipalType,
 )
 from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.dataset_sharing.tasks.dataset_subscription_task import DatasetSubscriptionService
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -44,7 +44,7 @@ def dataset(create_dataset, org_fixture, env_fixture):
 
 @pytest.fixture(scope='module')
 def share(
-    dataset: Dataset,
+    dataset: S3Dataset,
     db: Engine,
     otherenv: Environment,
 ):
