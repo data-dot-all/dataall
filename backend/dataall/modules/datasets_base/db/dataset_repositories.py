@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.base.db import paginate
@@ -41,7 +42,7 @@ class DatasetListRepository:
     """DAO layer for Listing Datasets in Environments"""
 
     @staticmethod
-    def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
+    def paginated_all_user_datasets(session, username, groups, all_subqueries: List[Query], data=None) -> dict:
         return paginate(
             query=DatasetListRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
             page=data.get('page', 1),
@@ -49,7 +50,7 @@ class DatasetListRepository:
         ).to_dict()
 
     @staticmethod
-    def _query_all_user_datasets(session, username, groups, all_subqueries, filter) -> Query:
+    def _query_all_user_datasets(session, username, groups, all_subqueries: List[Query], filter: dict = None) -> Query:
         query = session.query(DatasetBase).filter(
             or_(
                 DatasetBase.owner == username,
