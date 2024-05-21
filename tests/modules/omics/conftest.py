@@ -2,7 +2,7 @@ import pytest
 import typing
 
 from dataall.modules.omics.db.omics_models import OmicsRun, OmicsWorkflow
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 
@@ -40,9 +40,9 @@ def env_params():
 def dataset_model(db):
     def factory(
         organization: Organization, environment: Environment, label: str, autoApprovalEnabled: bool = False
-    ) -> Dataset:
+    ) -> S3Dataset:
         with db.scoped_session() as session:
-            dataset = Dataset(
+            dataset = S3Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -68,7 +68,7 @@ def dataset_model(db):
 
 
 @pytest.fixture(scope='module')
-def dataset1(dataset_model: typing.Callable, org_fixture, env_fixture) -> Dataset:
+def dataset1(dataset_model: typing.Callable, org_fixture, env_fixture) -> S3Dataset:
     yield dataset_model(organization=org_fixture, environment=env_fixture, label='datasetomics')
 
 

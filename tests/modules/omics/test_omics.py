@@ -211,7 +211,7 @@ def test_delete_omics_run_does_not_exist(client, user, group, run1):
     response = client.query(
         query,
         input={
-            'runUris': ["random-string"],
+            'runUris': ['random-string'],
             'deleteFromAWS': True,
         },
         username=user.username,
