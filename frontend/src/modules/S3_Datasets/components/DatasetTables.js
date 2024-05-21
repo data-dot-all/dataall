@@ -276,7 +276,7 @@ export const DatasetTables = (props) => {
                           <IconButton
                             onClick={() => {
                               navigate(
-                                `/console/datasets/table/${table.tableUri}`
+                                `/console/s3-datasets/table/${table.tableUri}`
                               );
                             }}
                           >
