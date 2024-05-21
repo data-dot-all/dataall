@@ -12,7 +12,7 @@ from dataall.modules.omics.db.omics_models import OmicsWorkflow, OmicsRun
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 
 
-class OmicsRepository(EnvironmentResource):
+class OmicsRepository:
     """DAO layer for Omics"""
 
     _DEFAULT_PAGE = 1
@@ -83,12 +83,3 @@ class OmicsRepository(EnvironmentResource):
             page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
-
-    def count_resources(self, environment, group_uri):
-        return (
-            self._session.query(OmicsRun)
-            .filter(
-                and_(OmicsRun.environmentUri == environment.environmentUri, OmicsRun.SamlAdminGroupName == group_uri)
-            )
-            .count()
-        )
