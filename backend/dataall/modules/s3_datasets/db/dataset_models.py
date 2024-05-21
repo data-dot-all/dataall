@@ -120,7 +120,7 @@ class S3Dataset(DatasetBase):
 
 class DatasetBucket(Resource, Base):
     __tablename__ = 'dataset_bucket'
-    datasetUri = Column(String, ForeignKey('dataset.datasetUri', ondelete='CASCADE'), nullable=False)
+    datasetUri = Column(String, ForeignKey('s3_dataset.datasetUri', ondelete='CASCADE'), nullable=False)
     bucketUri = Column(String, primary_key=True, default=utils.uuid('bucket'))
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
