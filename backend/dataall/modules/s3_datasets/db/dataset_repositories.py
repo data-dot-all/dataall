@@ -226,26 +226,6 @@ class DatasetRepository(EnvironmentResource):
         return query.order_by(S3Dataset.label)
 
     @staticmethod
-    def query_environment_datasets(session, uri, filter) -> Query:
-        query = session.query(S3Dataset).filter(
-            and_(
-                S3Dataset.environmentUri == uri,
-                S3Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    S3Dataset.label.ilike('%' + term + '%'),
-                    S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
-                    S3Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query.order_by(S3Dataset.label)
-
-    @staticmethod
     def query_environment_imported_datasets(session, uri, filter) -> Query:
         query = session.query(S3Dataset).filter(
             and_(S3Dataset.environmentUri == uri, S3Dataset.deleted.is_(None), S3Dataset.imported.is_(True))
@@ -261,18 +241,6 @@ class DatasetRepository(EnvironmentResource):
                 )
             )
         return query
-
-    @staticmethod
-    def paginated_environment_datasets(
-        session,
-        uri,
-        data=None,
-    ) -> dict:
-        return paginate(
-            query=DatasetRepository.query_environment_datasets(session, uri, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     def paginated_environment_group_datasets(session, env_uri, group_uri, data=None) -> dict:
@@ -294,32 +262,6 @@ class DatasetRepository(EnvironmentResource):
             )
             .all()
         )
-
-    @staticmethod
-    def paginated_user_datasets(session, username, groups, data=None) -> dict:
-        return paginate(
-            query=DatasetRepository._query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def _query_user_datasets(session, username, groups, filter) -> Query:
-        query = session.query(S3Dataset).filter(
-            or_(
-                S3Dataset.owner == username,
-                S3Dataset.SamlAdminGroupName.in_(groups),
-                S3Dataset.stewards.in_(groups),
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    S3Dataset.description.ilike(filter.get('term') + '%%'),
-                    S3Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
-        return query.order_by(S3Dataset.label).distinct(S3Dataset.datasetUri, S3Dataset.label)
 
     @staticmethod
     def _set_import_data(dataset, data):

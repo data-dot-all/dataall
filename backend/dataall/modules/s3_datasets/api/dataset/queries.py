@@ -1,29 +1,16 @@
 from dataall.base.api import gql
-from dataall.modules.datasets_base.api.input_types import DatasetFilter
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset,
-    list_owned_datasets,
     get_dataset_assume_role_url,
     get_file_upload_presigned_url,
     list_datasets_owned_by_env_group,
-    list_datasets_created_in_environment,
 )
-from dataall.modules.s3_datasets.api.dataset.types import DatasetSearchResult
 
 getDataset = gql.QueryField(
     name='getDataset',
     args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('Dataset'),
     resolver=get_dataset,
-    test_scope='Dataset',
-)
-
-
-listOwnedDatasets = gql.QueryField(
-    name='listOwnedDatasets',
-    args=[gql.Argument('filter', DatasetFilter)],
-    type=DatasetSearchResult,
-    resolver=list_owned_datasets,
     test_scope='Dataset',
 )
 
@@ -47,8 +34,8 @@ getDatasetPresignedUrl = gql.QueryField(
     resolver=get_file_upload_presigned_url,
 )
 
-listDatasetsOwnedByEnvGroup = gql.QueryField(
-    name='listDatasetsOwnedByEnvGroup',
+listS3DatasetsOwnedByEnvGroup = gql.QueryField(
+    name='listS3DatasetsOwnedByEnvGroup',
     type=gql.Ref('DatasetSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
@@ -56,16 +43,5 @@ listDatasetsOwnedByEnvGroup = gql.QueryField(
         gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
     ],
     resolver=list_datasets_owned_by_env_group,
-    test_scope='Dataset',
-)
-
-listDatasetsCreatedInEnvironment = gql.QueryField(
-    name='listDatasetsCreatedInEnvironment',
-    type=gql.Ref('DatasetSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
-    ],
-    resolver=list_datasets_created_in_environment,
     test_scope='Dataset',
 )

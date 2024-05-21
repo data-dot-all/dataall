@@ -27,10 +27,8 @@ export const listDatasetsCreatedInEnvironment = ({
           label
           AwsAccountId
           region
-          GlueDatabaseName
           SamlAdminGroupName
           name
-          S3BucketName
           created
           owner
           stack {

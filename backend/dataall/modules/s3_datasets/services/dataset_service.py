@@ -32,7 +32,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET,
     MANAGE_DATASETS,
     UPDATE_DATASET,
-    LIST_ENVIRONMENT_DATASETS,
     CREATE_DATASET,
     DATASET_ALL,
     DATASET_READ,
@@ -224,12 +223,6 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
-
-    @staticmethod
-    def list_owned_datasets(data: dict):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
 
     @staticmethod
     def list_locations(dataset_uri, data: dict):
@@ -454,16 +447,6 @@ class DatasetService:
                 'user_name': dataset.S3BucketName,
             },
         )
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
-    def list_datasets_created_in_environment(uri: str, data: dict):
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_environment_datasets(
-                session=session,
-                uri=uri,
-                data=data,
-            )
 
     @staticmethod
     def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):

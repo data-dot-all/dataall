@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const listDatasetsOwnedByEnvGroup = ({
+export const listS3DatasetsOwnedByEnvGroup = ({
   filter,
   environmentUri,
   groupUri
@@ -11,12 +11,12 @@ export const listDatasetsOwnedByEnvGroup = ({
     filter
   },
   query: gql`
-    query listDatasetsOwnedByEnvGroup(
+    query listS3DatasetsOwnedByEnvGroup(
       $filter: DatasetFilter
       $environmentUri: String
       $groupUri: String
     ) {
-      listDatasetsOwnedByEnvGroup(
+      listS3DatasetsOwnedByEnvGroup(
         environmentUri: $environmentUri
         groupUri: $groupUri
         filter: $filter

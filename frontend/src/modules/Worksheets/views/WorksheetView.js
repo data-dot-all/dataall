@@ -32,7 +32,6 @@ import {
   listDatasetTables,
   getSharedDatasetTables,
   listDatasetTableColumns,
-  listDatasetsOwnedByEnvGroup,
   listValidEnvironments,
   searchEnvironmentDataItems,
   useClient
@@ -40,6 +39,7 @@ import {
 import {
   deleteWorksheet,
   getWorksheet,
+  listS3DatasetsOwnedByEnvGroup,
   runAthenaSqlQuery,
   updateWorksheet
 } from '../services';
@@ -121,7 +121,7 @@ const WorksheetView = () => {
       let ownedDatabases = [];
       let sharedWithDatabases = [];
       let response = await client.query(
-        listDatasetsOwnedByEnvGroup({
+        listS3DatasetsOwnedByEnvGroup({
           filter: Defaults.selectListFilter,
           environmentUri: environment.environmentUri,
           groupUri: team
@@ -130,8 +130,8 @@ const WorksheetView = () => {
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      if (response.data.listDatasetsOwnedByEnvGroup.nodes) {
-        ownedDatabases = response.data.listDatasetsOwnedByEnvGroup.nodes?.map(
+      if (response.data.listS3DatasetsOwnedByEnvGroup.nodes) {
+        ownedDatabases = response.data.listS3DatasetsOwnedByEnvGroup.nodes?.map(
           (d) => ({
             ...d,
             value: d.datasetUri,
