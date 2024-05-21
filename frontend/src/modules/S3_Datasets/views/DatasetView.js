@@ -2,6 +2,7 @@ import {
   ForumOutlined,
   Info,
   LocalOffer,
+  LockOpen,
   ShareOutlined,
   Upload,
   ViewArrayOutlined
@@ -49,6 +50,7 @@ import {
   DatasetUpload
 } from '../components';
 import { isFeatureEnabled } from 'utils';
+import { RequestAccessModal } from '../../Catalog/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -122,6 +124,16 @@ const DatasetView = () => {
     [client]
   );
 
+  const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const handleRequestAccessModalOpen = () => {
+    setIsOpeningModal(true);
+    setIsRequestAccessOpen(true);
+  };
+
+  const handleRequestAccessModalClose = () => {
+    setIsRequestAccessOpen(false);
+  };
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
     if (!response.errors && response.data.countUpVotes !== null) {
@@ -262,50 +274,78 @@ const DatasetView = () => {
                 </Link>
               </Breadcrumbs>
             </Grid>
-            {isAdmin && (
-              <Grid item>
-                <Box sx={{ m: -1 }}>
-                  <UpVoteButton
-                    upVoted={isUpVoted}
-                    onClick={() => upVoteDataset(dataset.datasetUri)}
-                    upVotes={upVotes}
-                  />
+
+            <Grid item>
+              <Box sx={{ m: -1 }}>
+                {isAdmin && (
+                  <span>
+                    <UpVoteButton
+                      upVoted={isUpVoted}
+                      onClick={() => upVoteDataset(dataset.datasetUri)}
+                      upVotes={upVotes}
+                    />
+                    <Button
+                      color="primary"
+                      startIcon={<ForumOutlined fontSize="small" />}
+                      sx={{ mt: 1, mr: 1 }}
+                      onClick={() => setOpenFeed(true)}
+                      type="button"
+                      variant="outlined"
+                    >
+                      Chat
+                    </Button>
+                    {isFeatureEnabled('s3_datasets', 'aws_actions') && (
+                      <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                    )}
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ mt: 1, mr: 1 }}
+                      to={`/console/datasets/${dataset.datasetUri}/edit`}
+                      variant="outlined"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      color="primary"
+                      startIcon={<FaTrash size={15} />}
+                      sx={{ mt: 1 }}
+                      onClick={handleDeleteObjectModalOpen}
+                      type="button"
+                      variant="outlined"
+                    >
+                      Delete
+                    </Button>
+                  </span>
+                )}
+                {isOpeningModal ? (
+                  <CircularProgress size={20} />
+                ) : (
                   <Button
                     color="primary"
-                    startIcon={<ForumOutlined fontSize="small" />}
-                    sx={{ mt: 1, mr: 1 }}
-                    onClick={() => setOpenFeed(true)}
+                    startIcon={<LockOpen size={15} />}
+                    onClick={handleRequestAccessModalOpen}
                     type="button"
+                    sx={{ mt: 1, ml: 1 }}
                     variant="outlined"
                   >
-                    Chat
+                    Request Access
                   </Button>
-                  {isFeatureEnabled('s3_datasets', 'aws_actions') && (
-                    <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
-                  )}
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ mt: 1, mr: 1 }}
-                    to={`/console/datasets/${dataset.datasetUri}/edit`}
-                    variant="outlined"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<FaTrash size={15} />}
-                    sx={{ mt: 1 }}
-                    onClick={handleDeleteObjectModalOpen}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              </Grid>
-            )}
+                )}
+                <RequestAccessModal
+                  onApply={handleRequestAccessModalClose}
+                  onClose={handleRequestAccessModalClose}
+                  open={isRequestAccessOpen}
+                  stopLoader={() => setIsOpeningModal(false)}
+                  hit={{
+                    _id: dataset.datasetUri,
+                    resourceKind: 'dataset',
+                    label: dataset.label
+                  }}
+                />
+              </Box>
+            </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
             <Tabs
