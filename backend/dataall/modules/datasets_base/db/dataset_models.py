@@ -40,3 +40,15 @@ class DatasetBase(Resource, Base):
 
 
 DatasetBase.__name__ = 'Dataset'
+
+
+class DatasetLock(Base):
+    __tablename__ = 'dataset_lock'
+    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), nullable=False, primary_key=True)
+    isLocked = Column(Boolean, default=False)
+    acquiredBy = Column(String, nullable=True)
+
+    def __init__(self, datasetUri, isLocked=False, acquiredBy=None):
+        self.datasetUri = datasetUri
+        self.isLocked = isLocked
+        self.acquiredBy = acquiredBy
