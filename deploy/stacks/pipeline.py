@@ -653,8 +653,6 @@ class PipelineStack(Stack):
                 with_approval_tests=target_env.get('with_approval_tests', False),
             )
         )
-        if target_env.get('custom_auth') is None:
-            backend_stage.add_post(self.cognito_config_action(target_env))
         return backend_stage
 
     def set_approval_tests_stage(
@@ -869,34 +867,6 @@ class PipelineStack(Stack):
                 'pip install --upgrade pip',
                 'pip install boto3==1.34.35',
                 'python deploy/configs/rum_config.py',
-            ],
-            role=self.expanded_codebuild_role.without_policy_updates(),
-            vpc=self.vpc,
-        )
-
-    def cognito_config_action(self, target_env):
-        return pipelines.CodeBuildStep(
-            id='ConfigureCognito',
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-            ),
-            commands=[
-                f'export envname={target_env["envname"]}',
-                f'export resource_prefix={self.resource_prefix}',
-                f'export internet_facing={target_env.get("internet_facing", True)}',
-                f'export custom_domain={str(True) if target_env.get("custom_domain") else str(False)}',
-                f'export deployment_region={target_env.get("region", self.region)}',
-                f'export enable_cw_canaries={target_env.get("enable_cw_canaries", False)}',
-                f'export with_approval_tests={target_env.get("with_approval_tests", False)}',
-                'mkdir ~/.aws/ && touch ~/.aws/config',
-                'echo "[profile buildprofile]" > ~/.aws/config',
-                f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cognito-config-role" >> ~/.aws/config',
-                'echo "credential_source = EcsContainer" >> ~/.aws/config',
-                'aws sts get-caller-identity --profile buildprofile',
-                'export AWS_PROFILE=buildprofile',
-                'pip install --upgrade pip',
-                'pip install boto3==1.34.35',
-                'python deploy/configs/cognito_urls_config.py',
             ],
             role=self.expanded_codebuild_role.without_policy_updates(),
             vpc=self.vpc,

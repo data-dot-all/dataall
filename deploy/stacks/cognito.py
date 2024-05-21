@@ -13,6 +13,7 @@ from aws_cdk import (
     CustomResource,
 )
 from aws_cdk.aws_cognito import AuthFlow
+from aws_cdk.triggers import TriggerFunction
 
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
@@ -312,6 +313,82 @@ class IdpStack(pyNestedClass):
             sync_cr.node.add_dependency(clientid)
             sync_cr.node.add_dependency(domain_name)
             sync_cr.node.add_dependency(pool_arn)
+
+        cognito_config_assets = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'custom_resources',
+                'cognito_config',
+            )
+        )
+
+        cognito_config_code = _lambda.Code.from_asset(
+            path=cognito_config_assets,
+            bundling=BundlingOptions(
+                image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                local=SolutionBundling(source_path=cognito_config_assets),
+            ),
+        )
+
+        TriggerFunction(
+            self,
+            'TriggerFunction-CognitoConfig',
+            function_name=f'{resource_prefix}-{envname}-cognito_config',
+            description='dataall CognitoConfig trigger function',
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'cognito-idp:AddCustomAttributes',
+                        'cognito-idp:UpdateUserPool',
+                        'cognito-idp:DescribeUserPoolClient',
+                        'cognito-idp:CreateGroup',
+                        'cognito-idp:UpdateUserPoolClient',
+                        'cognito-idp:AdminSetUserPassword',
+                        'cognito-idp:AdminCreateUser',
+                        'cognito-idp:DescribeUserPool',
+                        'cognito-idp:AdminAddUserToGroup',
+                        'secretsmanager:DescribeSecret',
+                        'secretsmanager:GetSecretValue',
+                        'ssm:GetParameterHistory',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        'ssm:GetParametersByPath',
+                        'kms:Decrypt',
+                        'kms:GenerateDataKey',
+                        'kms:DescribeKey',
+                        'rum:GetAppMonitor',
+                    ],
+                    resources=[
+                        self.user_pool.user_pool_arn,
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:rum:{self.region}:{self.account}:appmonitor/*dataall*',
+                    ],
+                ),
+            ],
+            code=cognito_config_code,
+            vpc=vpc,
+            memory_size=256,
+            timeout=Duration.minutes(15),
+            environment={
+                'envname': envname,
+                'deployment_region': self.region,
+                'internet_facing': str(internet_facing),
+                'custom_domain': str(not domain_name),
+                'enable_cw_canaries': str(enable_cw_rum),
+                'resource_prefix': resource_prefix,
+                'with_approval_tests': str(with_approval_tests),
+            },
+            tracing=_lambda.Tracing.ACTIVE,
+            retry_attempts=0,
+            runtime=_lambda.Runtime.PYTHON_3_9,
+            handler='cognito_urls_config.handler',
+            execute_after=[self.client],
+            execute_on_handler_change=True,
+        )
 
         CfnOutput(
             self,

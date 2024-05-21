@@ -3,13 +3,13 @@ import logging
 import os
 import random
 import string
-import sys
 
 import boto3
 from botocore.exceptions import ClientError
 
-logging.basicConfig(stream=sys.stdout, level=os.environ.get('LOG_LEVEL', 'INFO'))
-log = logging.getLogger(os.path.basename(__file__))
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+log = logging.getLogger(__name__)
 
 
 def shuffle_password(pwd):
@@ -158,7 +158,7 @@ def create_user(cognito, user_pool_id, username, password, groups=[]):
         log.info(f'User added to group Successfully...: {response}')
 
 
-if __name__ == '__main__':
+def handler(event, context) -> None:
     log.info('Starting Cognito Configuration...')
     envname = os.environ.get('envname')
     region = os.environ.get('deployment_region')
