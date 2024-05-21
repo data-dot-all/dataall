@@ -102,9 +102,10 @@ def setup_cognito(
         create_user(cognito, user_pool_id, creds['username'], creds['password'], ['CWCanaries'])
 
     if with_approval_tests == 'True':
-        sm = boto3.client('secretsmanager', region_name=region)
-        secret = sm.get_secret_value(SecretId=f'{resource_prefix}-{envname}-cognito-test-users')
-        users = json.loads(secret['SecretString'])
+        ssm = boto3.client('ssm', region_name=region)
+        users = json.loads(
+            ssm.get_parameter(Name=os.path.join('/dataall', envname, 'cognito-test-users'))['Parameter']['Value']
+        )
         for username, data in users.items():
             create_user(cognito, user_pool_id, username, data['password'], data['groups'])
 

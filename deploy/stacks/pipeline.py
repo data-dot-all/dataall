@@ -1,3 +1,4 @@
+import os
 import re
 import uuid
 from typing import List
@@ -673,8 +674,8 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     environment_variables={
                         'USERDATA': BuildEnvironmentVariable(
-                            value=f'{self.resource_prefix}-{target_env["envname"]}-cognito-test-users',
-                            type=BuildEnvironmentVariableType.SECRETS_MANAGER,
+                            value=os.path.join('/', self.resource_prefix, target_env['envname'], 'cognito-test-users'),
+                            type=BuildEnvironmentVariableType.PARAMETER_STORE,
                         ),
                     },
                 ),
