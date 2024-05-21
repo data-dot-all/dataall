@@ -20,10 +20,9 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET_FOLDER,
     CREDENTIALS_DATASET,
 )
-
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.s3_datasets.services.dataset_service import DatasetServiceInterface
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, DatasetType
+from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 
 import logging
@@ -32,6 +31,10 @@ log = logging.getLogger(__name__)
 
 
 class DatasetSharingService(DatasetServiceInterface):
+    @property
+    def dataset_type(self):
+        return DatasetType.S3
+
     @staticmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
         """Implemented as part of the DatasetServiceInterface"""

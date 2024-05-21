@@ -22,7 +22,6 @@ export const listDatasets = ({ filter }) => ({
           SamlAdminGroupName
           userRoleForDataset
           userRoleInEnvironment
-          GlueDatabaseName
           tags
           topics
           organization {
@@ -38,11 +37,7 @@ export const listDatasets = ({ filter }) => ({
           stack {
             status
           }
-          statistics {
-            tables
-            locations
-            upvotes
-          }
+          datasetType
         }
       }
     }
