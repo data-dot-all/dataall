@@ -43,11 +43,11 @@ class DatasetApiModuleInterface(ModuleInterface):
         import dataall.modules.s3_datasets.api
         from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
         from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-        from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
         FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
-        FeedRegistry.register(FeedDefinition('Dataset', Dataset))
+        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
@@ -59,7 +59,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         )
 
         GlossaryRegistry.register(
-            GlossaryDefinition(target_type='Dataset', object_type='Dataset', model=Dataset, reindexer=DatasetIndexer)
+            GlossaryDefinition(target_type='Dataset', object_type='Dataset', model=S3Dataset, reindexer=DatasetIndexer)
         )
 
         GlossaryRegistry.register(
@@ -77,7 +77,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         EnvironmentResourceManager.register(DatasetRepository())
 
-        log.info('API of datasets has been imported')
+        log.info('API of S3 datasets has been imported')
 
 
 class DatasetAsyncHandlersModuleInterface(ModuleInterface):
@@ -99,7 +99,7 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
         import dataall.modules.s3_datasets.db.dataset_repositories
         import dataall.modules.s3_datasets.services.dataset_permissions
 
-        log.info('Dataset handlers have been imported')
+        log.info('S3 Dataset handlers have been imported')
 
 
 class DatasetCdkModuleInterface(ModuleInterface):
@@ -124,7 +124,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
         EnvironmentSetup.register(DatasetGlueProfilerExtension)
         EnvironmentSetup.register(DatasetCustomResourcesExtension)
 
-        log.info('Dataset stacks have been imported')
+        log.info('S3 Dataset stacks have been imported')
 
 
 class DatasetStackUpdaterModuleInterface(ModuleInterface):
@@ -142,7 +142,7 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
         DatasetStackFinder()
-        log.info('Dataset stack updater task has been loaded')
+        log.info('S3 Dataset stack updater task has been loaded')
 
 
 class DatasetCatalogIndexerModuleInterface(ModuleInterface):
@@ -161,4 +161,4 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer
 
         DatasetCatalogIndexer()
-        log.info('Dataset catalog indexer task has been loaded')
+        log.info('S3 Dataset catalog indexer task has been loaded')

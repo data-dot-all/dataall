@@ -10,7 +10,7 @@ from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
 from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
 
 SOURCE_ENV_ACCOUNT = '111111111111'
 SOURCE_ENV_ROLE_NAME = 'dataall-ProducerEnvironment-i6v1v1c2'
@@ -79,18 +79,18 @@ def dataset2(create_dataset: Callable, org_fixture: Organization, source_environ
 
 
 @pytest.fixture(scope='module')
-def bucket2(bucket: Callable, dataset2: Dataset) -> DatasetBucket:
+def bucket2(bucket: Callable, dataset2: S3Dataset) -> DatasetBucket:
     yield bucket(dataset2, 'bucket2')
 
 
 @pytest.fixture(scope='module')
-def bucket3(bucket: Callable, dataset_imported: Dataset) -> DatasetBucket:
+def bucket3(bucket: Callable, dataset_imported: S3Dataset) -> DatasetBucket:
     yield bucket(dataset_imported, 'bucket3')
 
 
 @pytest.fixture(scope='module')
 def share2(
-    share: Callable, dataset2: Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
+    share: Callable, dataset2: S3Dataset, target_environment: Environment, target_environment_group: EnvironmentGroup
 ) -> ShareObject:
     share2 = share(dataset2, target_environment, target_environment_group)
     yield share2
@@ -99,7 +99,7 @@ def share2(
 @pytest.fixture(scope='module')
 def share3(
     share: Callable,
-    dataset_imported: Dataset,
+    dataset_imported: S3Dataset,
     target_environment: Environment,
     target_environment_group: EnvironmentGroup,
 ) -> ShareObject:

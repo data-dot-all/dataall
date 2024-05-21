@@ -23,7 +23,7 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from dataall.modules.s3_datasets.db.dataset_models import Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class S3BucketShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         target_bucket: DatasetBucket,
         source_environment: Environment,

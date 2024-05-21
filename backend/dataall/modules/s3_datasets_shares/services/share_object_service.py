@@ -41,7 +41,7 @@ from dataall.modules.shares_base.services.share_permissions import (
 )
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset, DatasetStorageLocation
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetStorageLocation
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 from dataall.base.aws.iam import IAM
 
@@ -101,7 +101,7 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:

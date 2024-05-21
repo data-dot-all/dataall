@@ -5,12 +5,12 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 log = logging.getLogger(__name__)
 
 
-def get_table(context, source: Dataset, tableUri: str = None):
+def get_table(context, source: S3Dataset, tableUri: str = None):
     return DatasetTableService.get_table(uri=tableUri)
 
 

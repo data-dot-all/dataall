@@ -21,7 +21,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREDENTIALS_DATASET,
 )
 
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.services.dataset_service import DatasetServiceInterface
 
@@ -130,7 +130,7 @@ class DatasetSharingService(DatasetServiceInterface):
         return True
 
     @staticmethod
-    def list_dataset_share_objects(dataset: Dataset, data: dict = None):
+    def list_dataset_share_objects(dataset: S3Dataset, data: dict = None):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
 

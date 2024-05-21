@@ -31,7 +31,7 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -42,7 +42,7 @@ class S3AccessPointShareManager:
     def __init__(
         self,
         session,
-        dataset: Dataset,
+        dataset: S3Dataset,
         share: ShareObject,
         target_folder: DatasetStorageLocation,
         source_environment: Environment,
@@ -700,7 +700,7 @@ class S3AccessPointShareManager:
 
     def delete_dataset_bucket_key_policy(
         self,
-        dataset: Dataset,
+        dataset: S3Dataset,
     ):
         logger.info('Deleting dataset bucket KMS key policy...')
         key_alias = f'alias/{dataset.KmsAlias}'
