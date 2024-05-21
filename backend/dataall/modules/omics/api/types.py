@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import *
+from .resolvers import resolve_omics_workflow, resolve_omics_run_details
 from dataall.core.organizations.api.resolvers import resolve_organization_by_env
 from dataall.core.environment.api.resolvers import resolve_environment
 
@@ -66,12 +66,12 @@ OmicsRun = gql.ObjectType(
         ),
         gql.Field(
             name='workflow',
-            type=gql.Ref('OmicsWorkflow'),
+            type=OmicsWorkflow,
             resolver=resolve_omics_workflow,
         ),
         gql.Field(
             name='status',
-            type=gql.Ref('OmicsRunStatus'),
+            type=OmicsRunStatus,
             resolver=resolve_omics_run_details,
         ),
     ],

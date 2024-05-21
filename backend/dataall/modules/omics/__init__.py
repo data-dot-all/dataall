@@ -24,7 +24,6 @@ class OmicsApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.omics.api
-        from dataall.modules.omics.services.omics_permissions import GET_OMICS_RUN, UPDATE_OMICS_RUN
 
         log.info('API of omics has been imported')
 

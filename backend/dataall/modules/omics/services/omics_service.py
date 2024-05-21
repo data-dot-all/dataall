@@ -24,7 +24,6 @@ from dataall.modules.omics.db.omics_models import OmicsRun
 from dataall.modules.omics.services.omics_permissions import (
     MANAGE_OMICS_RUNS,
     CREATE_OMICS_RUN,
-    GET_OMICS_RUN,
     OMICS_RUN_ALL,
     DELETE_OMICS_RUN,
 )
@@ -105,12 +104,6 @@ class OmicsService:
             OmicsRepository(session).save_omics_run(omics_run)
 
             return omics_run
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_OMICS_RUN)
-    def get_omics_run(*, uri: str):
-        with _session() as session:
-            return OmicsRepository(session).get_omics_run(uri)
 
     @staticmethod
     def _get_omics_run(uri: str):

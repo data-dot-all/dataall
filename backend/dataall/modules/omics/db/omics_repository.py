@@ -31,16 +31,6 @@ class OmicsRepository(EnvironmentResource):
         self._session.add(omics_workflow)
         self._session.commit()
 
-    def delete_omics_run(self, omics_run):
-        """Delete Omics run from the database"""
-        self._session.delete(omics_run)
-        self._session.commit()
-
-    def delete_omics_workflow(self, omics_workflow):
-        """Delete Omics workflow from the database"""
-        self._session.delete(omics_workflow)
-        self._session.commit()
-
     def get_workflow(self, workflowUri: str):
         return self._session.query(OmicsWorkflow).get(workflowUri)
 

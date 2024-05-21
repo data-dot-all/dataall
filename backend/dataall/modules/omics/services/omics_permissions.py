@@ -14,16 +14,12 @@ from dataall.core.permissions.services.resources_permissions import (
 )
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 
-GET_OMICS_RUN = 'GET_OMICS_RUN'
-UPDATE_OMICS_RUN = 'UPDATE_OMICS_RUN'
 DELETE_OMICS_RUN = 'DELETE_OMICS_RUN'
 CREATE_OMICS_RUN = 'CREATE_OMICS_RUN'
 MANAGE_OMICS_RUNS = 'MANAGE_OMICS_RUNS'
 
 OMICS_RUN_ALL = [
-    GET_OMICS_RUN,
     DELETE_OMICS_RUN,
-    UPDATE_OMICS_RUN,
 ]
 
 ENVIRONMENT_ALL.append(CREATE_OMICS_RUN)
@@ -38,6 +34,4 @@ RESOURCES_ALL.append(CREATE_OMICS_RUN)
 RESOURCES_ALL.extend(OMICS_RUN_ALL)
 
 RESOURCES_ALL_WITH_DESC[CREATE_OMICS_RUN] = 'Create Omics workflow runs on this environment'
-RESOURCES_ALL_WITH_DESC[GET_OMICS_RUN] = 'Permission to get Omics workflow runs'
 RESOURCES_ALL_WITH_DESC[DELETE_OMICS_RUN] = 'Permission to delete Omics workflow runs'
-RESOURCES_ALL_WITH_DESC[UPDATE_OMICS_RUN] = 'Permission to edit Omics workflow runs'
