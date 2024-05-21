@@ -50,7 +50,7 @@ import {
   DatasetUpload
 } from '../components';
 import { isFeatureEnabled } from 'utils';
-import { RequestAccessModal } from '../../Catalog/components';
+import { RequestAccessModal } from 'modules/Catalog/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
