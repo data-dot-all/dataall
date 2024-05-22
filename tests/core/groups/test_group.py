@@ -22,11 +22,12 @@ def test_list_groups_env(client, env_fixture, group, module_mocker):
           listGroups (
             filter: $filter
           ){
-            groupName
+            groupUri
           }
         }
         """,
         username='alice',
         filter={'type': 'environment', 'uri': env_fixture.environmentUri},
     )
-    assert response.data.listGroups[0].groupName == 'cognitos'
+    print(response.data)
+    assert response.data.listGroups[0].groupUri == 'cognitos'

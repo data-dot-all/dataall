@@ -72,6 +72,6 @@ class GroupService:
             groups = []
             for group in cognito_groups:
                 if group not in invited_groups:
-                    groups.append({'groupName': group})
+                    groups.append({'groupUri': group})
 
             return groups
