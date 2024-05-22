@@ -135,18 +135,19 @@ function TeamRow({ team, organization, fetchItems }) {
       </TableCell>
       <TableCell>
         <Box>
-          {team.groupUri !== organization.SamlGroupName && (
-            <LoadingButton onClick={() => handleDeleteGroupModalOpen()}>
-              <HiUserRemove
-                size={25}
-                color={
-                  theme.palette.mode === 'dark'
-                    ? theme.palette.primary.contrastText
-                    : theme.palette.primary.main
-                }
-              />
-            </LoadingButton>
-          )}
+          {team.groupUri !== organization.SamlGroupName &&
+            organization.canRemoveGroup && (
+              <LoadingButton onClick={() => handleDeleteGroupModalOpen()}>
+                <HiUserRemove
+                  size={25}
+                  color={
+                    theme.palette.mode === 'dark'
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.primary.main
+                  }
+                />
+              </LoadingButton>
+            )}
           {team.groupUri !== organization.SamlGroupName && (
             <DeleteObjectWithFrictionModal
               objectName={team.groupUri}
@@ -280,15 +281,18 @@ export const OrganizationTeams = ({ organization }) => {
             </Box>
           </Grid>
           <Grid item md={2} sm={6} xs={12}>
-            <Button
-              color="primary"
-              startIcon={<GroupAddOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              onClick={handleTeamInviteModalOpen}
-              variant="contained"
-            >
-              Invite
-            </Button>
+            {organization.canInvite && (
+              <Button
+                color="primary"
+                startIcon={<GroupAddOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                onClick={handleTeamInviteModalOpen}
+                variant="contained"
+              >
+                Invite
+              </Button>
+            )}
+
             {isTeamInviteModalOpen && (
               <OrganizationTeamInviteForm
                 organization={organization}

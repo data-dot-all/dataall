@@ -1,5 +1,10 @@
 from dataall.base.api import gql
-from dataall.core.organizations.api.resolvers import resolve_user_role, list_organization_environments, stats
+from dataall.core.organizations.api.resolvers import (
+    resolve_user_role,
+    list_organization_environments,
+    stats,
+    list_user_permissions,
+)
 from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 
 OrganizationStats = gql.ObjectType(
@@ -20,6 +25,7 @@ Organization = gql.ObjectType(
         gql.Field(name='tags', type=gql.ArrayType(gql.String)),
         gql.Field(name='owner', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='permissions', type=gql.ArrayType(gql.String), resolver=list_user_permissions),
         gql.Field(
             name='userRoleInOrganization',
             type=OrganisationUserRole.toGraphQLEnum(),

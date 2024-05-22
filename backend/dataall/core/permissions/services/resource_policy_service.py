@@ -223,6 +223,13 @@ class ResourcePolicyService:
         return permissions
 
     @staticmethod
+    def list_all_resource_permissions(resource_uri) -> List[ResourcePolicyPermission]:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            policies = ResourcePolicyRepository.query_all_resource_policies(session, context.groups, resource_uri)
+            return [p.permission.name for pol in policies for p in pol.permissions]
+
+    @staticmethod
     def has_resource_permission(
         permission: str, param_name: str = None, resource_name: str = None, parent_resource: Callable = None
     ):

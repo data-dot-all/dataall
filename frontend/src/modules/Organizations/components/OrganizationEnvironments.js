@@ -129,16 +129,18 @@ export const OrganizationEnvironments = (props) => {
           </Box>
         </Grid>
         <Grid item md={2} sm={6} xs={12}>
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<Link fontSize="small" />}
-            sx={{ m: 1 }}
-            variant="contained"
-            to={`/console/organizations/${organization.organizationUri}/link`}
-          >
-            Link Environment
-          </Button>
+          {organization.canLink && (
+            <Button
+              color="primary"
+              component={RouterLink}
+              startIcon={<Link fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="contained"
+              to={`/console/organizations/${organization.organizationUri}/link`}
+            >
+              Link Environment
+            </Button>
+          )}
         </Grid>
       </Box>
       <Scrollbar>

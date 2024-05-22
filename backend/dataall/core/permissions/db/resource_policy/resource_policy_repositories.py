@@ -71,15 +71,13 @@ class ResourcePolicyRepository:
             return policy
 
     def query_all_resource_policies(
-        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
+        session, group_uris: List[str], resource_uri: str, resource_type: str = None, permissions: List[str] = None
     ):
         resource_policy = session.query(ResourcePolicy).filter(
             ResourcePolicy.resourceUri == resource_uri,
         )
-        if group_uri is not None:
-            resource_policy = resource_policy.filter(
-                ResourcePolicy.principalId == group_uri,
-            )
+        if group_uris is not None:
+            resource_policy = resource_policy.filter(ResourcePolicy.principalId.in_(group_uris))
 
         if resource_type is not None:
             resource_policy = resource_policy.filter(
@@ -104,7 +102,7 @@ class ResourcePolicyRepository:
     @staticmethod
     def find_resource_policy(session, group_uri: str, resource_uri: str, resource_type: str = None) -> ResourcePolicy:
         resource_policy = ResourcePolicyRepository.query_all_resource_policies(
-            session, group_uri, resource_uri, resource_type
+            session, [group_uri], resource_uri, resource_type
         )
         return resource_policy.first()
 
@@ -113,6 +111,6 @@ class ResourcePolicyRepository:
         session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
     ) -> List[ResourcePolicy]:
         resource_policy = ResourcePolicyRepository.query_all_resource_policies(
-            session, group_uri, resource_uri, resource_type, permissions
+            session, [group_uri], resource_uri, resource_type, permissions
         )
         return resource_policy.all()

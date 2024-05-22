@@ -2,6 +2,7 @@ from dataall.base.api.context import Context
 from dataall.base.db import exceptions
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.organizations.services.organization_service import OrganizationService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 
 def create_organization(context: Context, source, input=None):
@@ -50,6 +51,10 @@ def stats(context, source: models.Organization, **kwargs):
 
 def resolve_user_role(context: Context, source: models.Organization):
     return OrganizationService.resolve_user_role(organization=source)
+
+
+def list_user_permissions(context: Context, source: models.Organization):
+    return ResourcePolicyService.list_all_resource_permissions(source.organizationUri)
 
 
 def archive_organization(context: Context, source, organizationUri: str = None):

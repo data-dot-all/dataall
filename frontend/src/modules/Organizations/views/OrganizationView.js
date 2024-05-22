@@ -95,6 +95,14 @@ const OrganizationView = () => {
   const fetchItem = useCallback(async () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
+      var org = response.data.getOrganization;
+      org.canEdit = org.permissions.includes('UPDATE_ORGANIZATION');
+      org.canInvite = org.permissions.includes('INVITE_ORGANIZATION_GROUP');
+      org.canDelete = org.permissions.includes('DELETE_ORGANIZATION');
+      org.canLink = org.permissions.includes('LINK_ENVIRONMENT');
+      org.canRemoveGroup = org.permissions.includes(
+        'REMOVE_ORGANIZATION_GROUP'
+      );
       setOrg(response.data.getOrganization);
       setLoading(false);
     }
@@ -162,25 +170,29 @@ const OrganizationView = () => {
               </Grid>
               <Grid item>
                 <Box sx={{ m: -1 }}>
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    to={`/console/organizations/${org.organizationUri}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<ArchiveOutlined />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    onClick={handleArchiveObjectModalOpen}
-                  >
-                    Archive
-                  </Button>
+                  {org.canEdit && (
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      to={`/console/organizations/${org.organizationUri}/edit`}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {org.canDelete && (
+                    <Button
+                      color="primary"
+                      startIcon={<ArchiveOutlined />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={handleArchiveObjectModalOpen}
+                    >
+                      Archive
+                    </Button>
+                  )}
                 </Box>
               </Grid>
             </Grid>

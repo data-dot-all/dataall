@@ -13,6 +13,7 @@ export const getOrganization = (organizationUri) => ({
         created
         description
         userRoleInOrganization
+        permissions
         stats {
           environments
           groups
