@@ -77,13 +77,6 @@ class ResourcePolicyService:
             return resource_policy
 
     @staticmethod
-    def check_group_resource_permission(session, group, resource_uri: str, resource_type, permission_name: str):
-        policies = ResourcePolicyService.find_resource_policies(
-            session, group, resource_uri, resource_type, [permission_name]
-        )
-        return len(policies) > 0
-
-    @staticmethod
     def find_resource_policies(session, group, resource_uri, resource_type, permissions: List[str] = None):
         """
 

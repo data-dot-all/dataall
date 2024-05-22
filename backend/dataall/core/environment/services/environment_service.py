@@ -422,20 +422,13 @@ class EnvironmentService:
             )
 
             # Attach the organization policy to the group, if group hasn't it yet
-            if not ResourcePolicyService.check_group_resource_permission(
+            ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=environment.organizationUri,
+                permissions=[GET_ORGANIZATION],
                 resource_type=Organization.__name__,
-                permission_name=GET_ORGANIZATION,
-            ):
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=group,
-                    resource_uri=environment.organizationUri,
-                    permissions=[GET_ORGANIZATION],
-                    resource_type=Organization.__name__,
-                )
+            )
 
             return environment, environment_group
 
