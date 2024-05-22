@@ -15,7 +15,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM, ShareObjectSM
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService

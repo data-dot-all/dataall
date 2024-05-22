@@ -2,7 +2,7 @@ import logging
 from sqlalchemy import and_
 
 from dataall.base.db import exceptions
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 
 logger = logging.getLogger(__name__)
 
