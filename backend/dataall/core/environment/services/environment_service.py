@@ -87,6 +87,7 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('region')
         EnvironmentRequestValidationService.validate_resource_prefix(data)
         EnvironmentRequestValidationService.validate_account_region(data, session)
+        EnvironmentRequestValidationService.validate_saml_group(data, session)
 
     @staticmethod
     def validate_resource_prefix(data):
@@ -115,6 +116,15 @@ class EnvironmentRequestValidationService:
             raise exceptions.UnauthorizedOperation(
                 action=LINK_ENVIRONMENT,
                 message=f'User: {get_context().username} is not a member of the group {data["SamlGroupName"]}',
+            )
+
+    @staticmethod
+    def validate_saml_group(data, session):
+        org_uri = data.get('organizationUri')
+        if not OrganizationRepository.is_group_invited(session, org_uri, data['SamlGroupName']):
+            raise Exception(
+                f'Group {data["SamlGroupName"]} is not a member of the organization {data.get("organizationUri")}. '
+                f'Invite this group to the organisation before linking the environment.'
             )
 
     @staticmethod
@@ -215,12 +225,6 @@ class EnvironmentService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
-            if not OrganizationRepository.is_group_invited(session, uri, data['SamlGroupName']):
-                raise Exception(
-                    f'Group {data["SamlGroupName"]} is not a member of the organization {data.get("organizationUri")}. '
-                    f'Invite this group to the organisation before linking the environment.'
-                )
-
             cdk_role_name = EnvironmentService.check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
             env = Environment(
                 organizationUri=data.get('organizationUri'),
