@@ -34,6 +34,7 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.create_redshift_dataset(
                 session=session, username=context.username, env=environment, data=data
             )
+            #TODO: ADD LOGIC TO CREATE REDSHIFT DATASHARE
 
             ResourcePolicyService.attach_resource_policy(
                 session=session,

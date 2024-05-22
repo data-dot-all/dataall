@@ -37,7 +37,8 @@ class RedshiftDatasetRepository(EnvironmentResource):
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
-            # TODO: add redshift fields
+            connectionUri=data.get('connectionUri'),
+            importPattern=data.get('importPattern'),
         )
         session.add(dataset)
         session.commit()
