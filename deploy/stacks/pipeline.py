@@ -670,12 +670,6 @@ class PipelineStack(Stack):
                 id='ApprovalTests',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    environment_variables={
-                        'USERDATA': BuildEnvironmentVariable(
-                            value=os.path.join('/', self.resource_prefix, target_env['envname'], 'cognito-test-users'),
-                            type=BuildEnvironmentVariableType.PARAMETER_STORE,
-                        ),
-                    },
                 ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
@@ -691,6 +685,7 @@ class PipelineStack(Stack):
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export USERDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito-test-users --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
                                     f'export AWS_REGION={target_env["region"]}',
                                     f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
