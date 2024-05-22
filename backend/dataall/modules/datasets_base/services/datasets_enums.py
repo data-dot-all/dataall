@@ -7,6 +7,7 @@ custom_confidentiality_mapping = config.get_property('modules.s3_datasets.featur
 
 class DatasetType(GraphQLEnumMapper):
     S3 = 'S3'
+    Redshift = 'Redshift'
 
 
 class DatasetRole(GraphQLEnumMapper):
