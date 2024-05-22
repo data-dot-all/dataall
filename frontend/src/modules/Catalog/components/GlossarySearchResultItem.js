@@ -88,7 +88,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -99,7 +99,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/table/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/table/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -110,7 +110,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/folder/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/folder/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}

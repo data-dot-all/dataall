@@ -66,7 +66,7 @@ function FolderEditHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${folder.dataset.datasetUri}`}
+            to={`/console/s3-datasets/${folder.dataset.datasetUri}`}
             variant="subtitle2"
           >
             {folder.dataset.label}
@@ -76,7 +76,7 @@ function FolderEditHeader(props) {
               underline="hover"
               color="textPrimary"
               component={RouterLink}
-              to={`/console/datasets/folder/${folder.locationUri}`}
+              to={`/console/s3-datasets/folder/${folder.locationUri}`}
               variant="subtitle2"
             >
               {folder.label}
@@ -94,7 +94,7 @@ function FolderEditHeader(props) {
             component={RouterLink}
             startIcon={<ArrowLeftIcon fontSize="small" />}
             sx={{ mt: 1 }}
-            to={`/console/datasets/folder/${folder.locationUri}`}
+            to={`/console/s3-datasets/folder/${folder.locationUri}`}
             variant="outlined"
           >
             Cancel
@@ -190,7 +190,7 @@ const FolderEditForm = () => {
         },
         variant: 'success'
       });
-      navigate(`/console/datasets/folder/${folder.locationUri}`);
+      navigate(`/console/s3-datasets/folder/${folder.locationUri}`);
     } catch (err) {
       setStatus({ success: false });
       setErrors({ submit: err.message });

@@ -24,6 +24,7 @@ export const listDatasetsCreatedInEnvironment = ({
         hasPrevious
         nodes {
           datasetUri
+          datasetType
           label
           AwsAccountId
           region

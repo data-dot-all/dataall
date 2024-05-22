@@ -217,7 +217,7 @@ export const DatasetFolders = (props) => {
                             underline="hover"
                             color="textPrimary"
                             component={RouterLink}
-                            to={`/console/datasets/folder/${folder.locationUri}`}
+                            to={`/console/s3-datasets/folder/${folder.locationUri}`}
                             variant="subtitle2"
                           >
                             {folder.name}
@@ -241,7 +241,7 @@ export const DatasetFolders = (props) => {
                           <IconButton
                             onClick={() => {
                               navigate(
-                                `/console/datasets/folder/${folder.locationUri}`
+                                `/console/s3-datasets/folder/${folder.locationUri}`
                               );
                             }}
                           >
