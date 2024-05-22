@@ -6,9 +6,9 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation

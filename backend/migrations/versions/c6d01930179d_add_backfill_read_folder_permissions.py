@@ -18,10 +18,9 @@ from dataall.core.permissions.services.permission_service import PermissionServi
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType
+from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareableType
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
-
 
 # revision identifiers, used by Alembic.
 revision = 'c6d01930179d'
