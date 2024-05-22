@@ -492,7 +492,7 @@ class EnvironmentService:
                 resource_type=Environment.__name__,
             )
 
-            # if group is no longer invited to organization or environments inside it, remove GET_ORGAISATION policy
+            # if group is no longer invited to organization or environments inside it, remove GET_ORGANISATION policy
             is_invited_to_org = OrganizationRepository.is_group_invited(session, environment.organizationUri, group)
             is_invited_to_environments = EnvironmentRepository.is_group_invited_another_envs(
                 session, environment.organizationUri, group
