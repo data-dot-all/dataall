@@ -1,3 +1,4 @@
+export * from './EnvironmentConnections';
 export * from './EnvironmentConsoleAccess';
 export * from './EnvironmentDatasets';
 export * from './EnvironmentFeatures';

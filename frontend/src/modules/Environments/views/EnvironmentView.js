@@ -38,6 +38,7 @@ import { useClient } from 'services';
 import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import {
+  EnvironmentConnections,
   EnvironmentDatasets,
   EnvironmentMLStudio,
   EnvironmentOverview,
@@ -59,6 +60,12 @@ const tabs = [
     value: 'datasets',
     icon: <FolderOpen fontSize="small" />,
     active: isModuleEnabled(ModuleNames.S3_DATASETS)
+  },
+  {
+    label: 'Connections',
+    value: 'connections',
+    icon: <FolderOpen fontSize="small" />
+    //active: isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) //TODO ADD CONDITION
   },
   {
     label: 'ML Studio Domain',
@@ -264,6 +271,9 @@ const EnvironmentView = () => {
             {currentTab === 'teams' && <EnvironmentTeams environment={env} />}
             {currentTab === 'datasets' && (
               <EnvironmentDatasets environment={env} />
+            )}
+            {currentTab === 'connections' && (
+              <EnvironmentConnections environment={env} />
             )}
             {currentTab === 'networks' && (
               <EnvironmentNetworks environment={env} />
