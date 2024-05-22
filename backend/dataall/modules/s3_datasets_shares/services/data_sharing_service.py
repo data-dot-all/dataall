@@ -5,9 +5,9 @@ from time import sleep
 from datetime import datetime
 
 from dataall.base.db import Engine
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import (
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
-    ShareObjectRepository,
     ShareItemSM,
 )
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
