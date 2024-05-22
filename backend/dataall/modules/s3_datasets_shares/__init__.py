@@ -25,11 +25,13 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets_shares import api
         from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
         from dataall.modules.s3_datasets.services.dataset_service import DatasetService
+        from dataall.modules.datasets_base.services.dataset_list_service import DatasetListService
         from dataall.modules.s3_datasets_shares.services.dataset_sharing_service import DatasetSharingService
         from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareEnvironmentResource
 
         EnvironmentResourceManager.register(ShareEnvironmentResource())
         DatasetService.register(DatasetSharingService())
+        DatasetListService.register(DatasetSharingService())
         log.info('API of dataset sharing has been imported')
 
 

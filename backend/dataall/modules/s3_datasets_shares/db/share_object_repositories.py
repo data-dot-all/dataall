@@ -22,6 +22,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 logger = logging.getLogger(__name__)
 
@@ -1002,10 +1003,10 @@ class ShareObjectRepository:
     def query_user_shared_datasets(session, username, groups) -> Query:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
-            session.query(S3Dataset)
+            session.query(DatasetBase)
             .outerjoin(
                 ShareObject,
-                ShareObject.datasetUri == S3Dataset.datasetUri,
+                ShareObject.datasetUri == DatasetBase.datasetUri,
             )
             .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
             .filter(
@@ -1021,7 +1022,7 @@ class ShareObjectRepository:
                 )
             )
         )
-        return query.distinct(S3Dataset.datasetUri)
+        return query.distinct(DatasetBase.datasetUri)
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):

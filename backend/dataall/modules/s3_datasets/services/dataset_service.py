@@ -2,7 +2,6 @@ import os
 import json
 import logging
 from typing import List
-from abc import ABC, abstractmethod
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -33,7 +32,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET,
     MANAGE_DATASETS,
     UPDATE_DATASET,
-    LIST_ENVIRONMENT_DATASETS,
     CREATE_DATASET,
     DATASET_ALL,
     DATASET_READ,
@@ -45,46 +43,9 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 log = logging.getLogger(__name__)
-
-
-class DatasetServiceInterface(ABC):
-    @staticmethod
-    @abstractmethod
-    def check_before_delete(session, uri, **kwargs) -> bool:
-        """Abstract method to be implemented by dependent modules that want to add checks before deletion for dataset objects"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def execute_on_delete(session, uri, **kwargs) -> bool:
-        """Abstract method to be implemented by dependent modules that want to add clean-up actions when a dataset object is deleted"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def append_to_list_user_datasets(session, username, groups):
-        """Abstract method to be implemented by dependent modules that want to add datasets to the list_datasets that list all datasets that the user has access to"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def resolve_additional_dataset_user_role(session, uri, username, groups):
-        """Abstract method to be implemented by dependent modules that want to add new types of user role in relation to a Dataset"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def extend_attach_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
-        """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
-        ...
 
 
 class DatasetService:
@@ -115,16 +76,6 @@ class DatasetService:
         for interface in cls._interfaces:
             interface.execute_on_delete(session, uri, **kwargs)
         return True
-
-    @classmethod
-    def _list_all_user_interface_datasets(cls, session, username, groups) -> List:
-        """All list_datasets from other modules that need to be appended to the list of datasets"""
-        return [
-            query
-            for interface in cls._interfaces
-            for query in [interface.append_to_list_user_datasets(session, username, groups)]
-            if query.first() is not None
-        ]
 
     @classmethod
     def _attach_additional_steward_permissions(cls, session, dataset, new_stewards):
@@ -272,21 +223,6 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             return S3DatasetClient(dataset).get_file_upload_presigned_url(data)
-
-    @staticmethod
-    def list_all_user_datasets(data: dict):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            all_subqueries = DatasetService._list_all_user_interface_datasets(session, context.username, context.groups)
-            return DatasetRepository.paginated_all_user_datasets(
-                session, context.username, context.groups, all_subqueries, data=data
-            )
-
-    @staticmethod
-    def list_owned_datasets(data: dict):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_user_datasets(session, context.username, context.groups, data=data)
 
     @staticmethod
     def list_locations(dataset_uri, data: dict):
@@ -511,16 +447,6 @@ class DatasetService:
                 'user_name': dataset.S3BucketName,
             },
         )
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
-    def list_datasets_created_in_environment(uri: str, data: dict):
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_environment_datasets(
-                session=session,
-                uri=uri,
-                data=data,
-            )
 
     @staticmethod
     def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):
