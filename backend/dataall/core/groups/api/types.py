@@ -45,6 +45,18 @@ GroupSearchResult = gql.ObjectType(
 GroupsInfo = gql.ObjectType(
     name='GroupsInfo',
     fields=[
-        gql.Field(name='groupName', type=gql.String),
+        gql.Field(name='groupUri', type=gql.String),
+    ],
+)
+
+OrganizationReadersSearchResult = gql.ObjectType(
+    name='OrganizationReaders',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='nodes', type=gql.ArrayType(GroupsInfo)),
     ],
 )

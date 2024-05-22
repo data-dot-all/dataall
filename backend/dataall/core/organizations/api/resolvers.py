@@ -84,6 +84,13 @@ def list_organization_groups(context: Context, source, organizationUri=None, fil
     return OrganizationService.list_organization_groups(filter=filter, uri=organizationUri)
 
 
+def list_organization_read_only_groups(context: Context, source, organizationUri=None, filter=None):
+    if filter is None:
+        filter = {}
+
+    return OrganizationService.list_organization_read_only_groups(filter=filter, uri=organizationUri)
+
+
 def resolve_organization_by_env(context, source, **kwargs):
     """
     Resolves the organization for environmental resource.

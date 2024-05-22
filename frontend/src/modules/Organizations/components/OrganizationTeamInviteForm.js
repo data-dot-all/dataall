@@ -48,8 +48,8 @@ export const OrganizationTeamInviteForm = (props) => {
         setGroupOptions(
           response.data.listGroups.map((g) => ({
             ...g,
-            value: g.groupName,
-            label: g.groupName
+            value: g.groupUri,
+            label: g.groupUri
           }))
         );
       } else {

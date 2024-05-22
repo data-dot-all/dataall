@@ -123,6 +123,39 @@ class OrganizationRepository:
         return query.order_by(models.OrganizationGroup.groupUri)
 
     @staticmethod
+    def query_organization_readers(session, uri, filter) -> Query:
+        org_groups = OrganizationRepository.query_organization_groups(session, uri, None).all()
+        org_groups = [group.groupUri for group in org_groups]
+        query = (
+            session.query(ResourcePolicy.principalId.label('groupUri'))
+            .join(
+                ResourcePolicyPermission,
+                ResourcePolicy.sid == ResourcePolicyPermission.sid,
+            )
+            .join(
+                Permission,
+                Permission.permissionUri == ResourcePolicyPermission.permissionUri,
+            )
+            .filter(
+                or_(
+                    and_(
+                        Permission.name == GET_ORGANIZATION,
+                        ResourcePolicy.principalType == 'GROUP',
+                        ResourcePolicy.principalId.notin_(org_groups),
+                    ),
+                )
+            )
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    ResourcePolicy.principalId.ilike('%' + filter.get('term') + '%'),
+                )
+            )
+
+        return query.distinct().order_by(ResourcePolicy.principalId)
+
+    @staticmethod
     def is_group_invited(session, uri, group) -> bool:
         return (
             session.query(models.OrganizationGroup)
@@ -139,6 +172,14 @@ class OrganizationRepository:
     def paginated_organization_groups(session, uri, data=None) -> dict:
         return paginate(
             query=OrganizationRepository.query_organization_groups(session, uri, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def paginated_organization_readers(session, uri, data=None) -> dict:
+        return paginate(
+            query=OrganizationRepository.query_organization_readers(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()

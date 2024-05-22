@@ -7,7 +7,7 @@ export const listGroups = ({ filter }) => ({
   query: gql`
     query listGroups($filter: ServiceProviderGroupFilter) {
       listGroups(filter: $filter) {
-        groupName
+        groupUri
       }
     }
   `

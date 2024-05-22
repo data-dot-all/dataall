@@ -32,11 +32,15 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getOrganization, useClient } from 'services';
-import { archiveOrganization } from '../services';
+import {
+  archiveOrganization,
+  listOrganizationGroups,
+  listOrganizationReadOnlyGroups
+} from '../services';
 import {
   OrganizationEnvironments,
   OrganizationOverview,
-  OrganizationTeams
+  TeamsTableCard
 } from '../components';
 
 const tabs = [
@@ -222,7 +226,30 @@ const OrganizationView = () => {
                 <OrganizationOverview organization={org} />
               )}
               {currentTab === 'teams' && (
-                <OrganizationTeams organization={org} />
+                <Grid container spacing={3}>
+                  <Grid item md={8} xl={8} xs={16}>
+                    <TeamsTableCard
+                      organization={org}
+                      showActions={true}
+                      showPermissions={true}
+                      showInvite={true}
+                      teamsName={'Administrators'}
+                      queryFunction={listOrganizationGroups}
+                      resultName={'listOrganizationGroups'}
+                    />
+                  </Grid>
+                  <Grid item md={4} xl={4} xs={8}>
+                    <TeamsTableCard
+                      organization={org}
+                      showActions={false}
+                      showPermissions={false}
+                      showInvite={false}
+                      teamsName={'Readers'}
+                      queryFunction={listOrganizationReadOnlyGroups}
+                      resultName={'listOrganizationReadOnlyGroups'}
+                    />
+                  </Grid>
+                </Grid>
               )}
               {currentTab === 'environments' && (
                 <OrganizationEnvironments organization={org} />

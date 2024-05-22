@@ -1,6 +1,11 @@
 from dataall.base.api import gql
 from .input_types import OrganizationFilter
-from .resolvers import get_organization, list_organization_groups, list_organizations
+from .resolvers import (
+    get_organization,
+    list_organization_groups,
+    list_organizations,
+    list_organization_read_only_groups,
+)
 from .types import (
     Organization,
     OrganizationSearchResult,
@@ -32,4 +37,14 @@ listOrganizationGroups = gql.QueryField(
         gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
     ],
     resolver=list_organization_groups,
+)
+
+listOrganizationReadOnlyGroups = gql.QueryField(
+    name='listOrganizationReadOnlyGroups',
+    type=gql.Ref('GroupSearchResult'),
+    args=[
+        gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
+    ],
+    resolver=list_organization_read_only_groups,
 )

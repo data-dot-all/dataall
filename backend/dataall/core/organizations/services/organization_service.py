@@ -255,6 +255,17 @@ class OrganizationService:
             )
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
+    def list_organization_read_only_groups(filter, uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return OrganizationRepository.paginated_organization_readers(
+                session=session,
+                uri=uri,
+                data=filter,
+            )
+
+    @staticmethod
     def resolve_organization_by_env(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
