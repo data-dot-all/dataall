@@ -8,6 +8,10 @@ from dataall.core.organizations.db import organization_models as models
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.context import get_context
 
+from dataall.core.permissions.db.permission.permission_models import Permission
+from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy, ResourcePolicyPermission
+from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,13 +34,25 @@ class OrganizationRepository:
         query = (
             session.query(models.Organization)
             .outerjoin(
-                models.OrganizationGroup,
-                models.Organization.organizationUri == models.OrganizationGroup.organizationUri,
+                ResourcePolicy,
+                ResourcePolicy.resourceUri == models.Organization.organizationUri,
+            )
+            .join(
+                ResourcePolicyPermission,
+                ResourcePolicy.sid == ResourcePolicyPermission.sid,
+            )
+            .join(
+                Permission,
+                Permission.permissionUri == ResourcePolicyPermission.permissionUri,
             )
             .filter(
                 or_(
                     models.Organization.owner == username,
-                    models.OrganizationGroup.groupUri.in_(groups),
+                    and_(
+                        Permission.name == GET_ORGANIZATION,
+                        ResourcePolicy.principalType == 'GROUP',
+                        ResourcePolicy.principalId.in_(groups),
+                    ),
                 )
             )
         )
