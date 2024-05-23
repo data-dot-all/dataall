@@ -140,7 +140,7 @@ class ShareNotificationService:
             - share.owner (person that opened the request) OR share.groupUri (if group_notifications=true)
         """
         share_notification_config = config.get_property(
-            'modules.s3_datasets.features.share_notifications', default=None
+            'modules.datasets_base.features.share_notifications', default=None
         )
         if share_notification_config:
             for share_notification_config_type in share_notification_config.keys():
