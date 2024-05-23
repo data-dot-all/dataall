@@ -6,7 +6,7 @@ Defines functions and business logic to be performed for maintenance window
 import logging
 import os
 
-from dataall.base.aws.event_bridge import EventBridge
+from dataall.modules.maintenance.aws.event_bridge import EventBridge
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.context import get_context
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
@@ -51,8 +51,8 @@ class MaintenanceService:
             # Disable scheduled ECS tasks
             # Get all the SSM Params related to the scheduled tasks
             ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
-            event_bridge_client = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
-            event_bridge_client.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
+            event_bridge = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
+            event_bridge.disable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f'Error occurred while starting maintenance window due to {e}')
@@ -81,12 +81,12 @@ class MaintenanceService:
                     logger.error('Maintenance window already in INACTIVE state. Cannot stop maintenance window')
                     return False
                 MaintenanceRepository(session).save_maintenance_status_and_mode(
-                    maintenance_status='INACTIVE', maintenance_mode=''
+                    maintenance_status=MaintenanceStatus.INACTIVE.value, maintenance_mode=''
                 )
             # Enable scheduled ECS tasks
             ecs_scheduled_rules_list = MaintenanceService._get_ecs_rules()
-            event_bridge_client = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
-            event_bridge_client.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
+            event_bridge = EventBridge(region=os.getenv('AWS_REGION', 'eu-west-1'))
+            event_bridge.enable_scheduled_ecs_tasks(ecs_scheduled_rules_list)
             return True
         except Exception as e:
             logger.error(f'Error occurred while stopping maintenance window due to {e}')

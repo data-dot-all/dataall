@@ -115,7 +115,6 @@ def handler(event, context):
         groups: list = extract_groups(user_id=user_id, claims=claims)
         attach_tenant_policy_for_groups(groups=groups)
 
-        # Set Context
         set_context(RequestContext(ENGINE, username, groups, user_id))
         app_context = {
             'engine': ENGINE,

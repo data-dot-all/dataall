@@ -1,5 +1,4 @@
 from dataall.base.api.context import Context
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.maintenance.api.enums import MaintenanceModes
 from dataall.modules.maintenance.api.types import Maintenance
 from dataall.modules.maintenance.services.maintenance_service import MaintenanceService
