@@ -41,7 +41,7 @@ listOrganizationGroups = gql.QueryField(
 
 listOrganizationReadOnlyGroups = gql.QueryField(
     name='listOrganizationReadOnlyGroups',
-    type=gql.Ref('GroupSearchResult'),
+    type=gql.Ref('OrganizationReadersSearchResult'),
     args=[
         gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
