@@ -16,7 +16,7 @@ from dataall.core.permissions.services.organization_permissions import GET_ORGAN
 
 # revision identifiers, used by Alembic.
 revision = '11b716ddb036'
-down_revision = '458572580709'
+down_revision = '5cdcf6cc1d73'
 branch_labels = None
 depends_on = None
 
