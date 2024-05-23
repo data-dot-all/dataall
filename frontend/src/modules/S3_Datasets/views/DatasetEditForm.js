@@ -175,7 +175,9 @@ const DatasetEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/${response.data.updateDataset.datasetUri}`);
+        navigate(
+          `/console/s3-datasets/${response.data.updateDataset.datasetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -231,7 +233,7 @@ const DatasetEditForm = (props) => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/datasets/${dataset.datasetUri}`}
+                  to={`/console/s3-datasets/${dataset.datasetUri}`}
                   variant="subtitle2"
                 >
                   {dataset.label}
@@ -248,7 +250,7 @@ const DatasetEditForm = (props) => {
                   component={RouterLink}
                   startIcon={<ArrowLeftIcon fontSize="small" />}
                   sx={{ mt: 1 }}
-                  to={`/console/datasets/${dataset.datasetUri}`}
+                  to={`/console/s3-datasets/${dataset.datasetUri}`}
                   variant="outlined"
                 >
                   Cancel

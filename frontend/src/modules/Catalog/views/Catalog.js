@@ -33,6 +33,7 @@ import {
 } from 'design';
 import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
 import config from '../../../generated/config.json';
+import { DatasetCreateWindow } from 'modules/DatasetsBase/components';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -174,6 +175,14 @@ const Catalog = () => {
   const [openMenu, setOpenMenu] = useState(false);
   const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const handleCreateModalOpen = () => {
+    setIsCreateModalOpen(true);
+  };
+  const handleCreateModalClose = () => {
+    setIsCreateModalOpen(false);
+  };
+
   if (config.modules.s3_datasets.features.topics_dropdown === true)
     dataFieldList.push('topics');
   if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
@@ -302,14 +311,16 @@ const Catalog = () => {
               <Box sx={{ m: -1 }}>
                 <Button
                   color="primary"
-                  component={RouterLink}
                   startIcon={<PlusIcon fontSize="small" />}
                   sx={{ m: 1 }}
-                  to="/console/datasets/new"
+                  onClick={handleCreateModalOpen}
                   variant="contained"
                 >
                   New Dataset
                 </Button>
+                {isCreateModalOpen && (
+                  <DatasetCreateWindow open onClose={handleCreateModalClose} />
+                )}
               </Box>
             </Grid>
           </Grid>

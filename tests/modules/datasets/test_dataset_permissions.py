@@ -9,7 +9,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_READ,
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 from tests.core.permissions.test_permission import *
@@ -25,7 +25,7 @@ def test_attach_resource_policy(db, user, group, dataset_fixture):
             group=group.name,
             permissions=DATASET_WRITE,
             resource_uri=dataset_fixture.datasetUri,
-            resource_type=Dataset.__name__,
+            resource_type=DatasetBase.__name__,
         )
         assert ResourcePolicyService.check_user_resource_permission(
             session=session,

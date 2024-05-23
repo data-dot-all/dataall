@@ -16,7 +16,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 
 class DatasetLocationService:
@@ -106,7 +106,7 @@ class DatasetLocationService:
         )
 
     @staticmethod
-    def _attach_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
+    def _attach_dataset_folder_read_permission(session, dataset: S3Dataset, location_uri):
         """
         Attach Folder permissions to dataset groups
         """
@@ -124,7 +124,7 @@ class DatasetLocationService:
             )
 
     @staticmethod
-    def _delete_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
+    def _delete_dataset_folder_read_permission(session, dataset: S3Dataset, location_uri):
         """
         Delete Folder permissions to dataset groups
         """

@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import SortDirection
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetSortField
+from dataall.modules.datasets_base.services.datasets_enums import DatasetSortField
 
 
 ModifyDatasetTableInput = gql.InputType(
