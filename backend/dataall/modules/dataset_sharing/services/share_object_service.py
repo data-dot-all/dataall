@@ -608,8 +608,8 @@ class ShareObjectService:
     def get_share_logs_name_query(shareUri):
         log.info(f'Get share Logs stream name for share {shareUri}')
 
-        query = """fields @logStream
-                        |filter  @message like 'bmm02skg'
+        query = f"""fields @logStream
+                        |filter  @message like '{shareUri}'
                         | sort @timestamp desc
                         | limit 1
                     """
