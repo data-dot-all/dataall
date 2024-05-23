@@ -41,7 +41,7 @@ export const ShareLogs = (props) => {
     if (client && open) {
       getLogs().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client, dispatch, getLogs]);
+  }, [client, dispatch, getLogs, open]);
 
   return (
     <Dialog maxWidth="md" fullWidth onClose={onClose} open={open}>
