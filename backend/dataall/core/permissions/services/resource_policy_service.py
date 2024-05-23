@@ -227,7 +227,7 @@ class ResourcePolicyService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             policies = ResourcePolicyRepository.query_all_resource_policies(session, context.groups, resource_uri)
-            return [p.permission.name for pol in policies for p in pol.permissions]
+            return list({p.permission.name for pol in policies for p in pol.permissions})
 
     @staticmethod
     def has_resource_permission(
