@@ -148,9 +148,7 @@ class OrganizationRepository:
         )
         if filter and filter.get('term'):
             query = query.filter(
-                or_(
                     ResourcePolicy.principalId.ilike('%' + filter.get('term') + '%'),
-                )
             )
 
         return query.distinct().order_by(ResourcePolicy.principalId)
