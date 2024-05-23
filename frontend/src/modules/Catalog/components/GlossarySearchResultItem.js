@@ -7,6 +7,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  Button,
   Link,
   Tooltip,
   Typography
@@ -87,7 +88,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -98,7 +99,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/table/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/table/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -109,7 +110,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/datasets/folder/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/s3-datasets/folder/${hit._id}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -281,19 +282,18 @@ export const GlossarySearchResultItem = ({ hit }) => {
           {isOpeningModal || isOpeningDashboardModal ? (
             <CircularProgress size={20} />
           ) : (
-            <Tooltip title="Request Access">
-              <IconButton
-                color="primary"
-                edge="end"
-                onClick={() =>
-                  hit.resourceKind === 'dashboard'
-                    ? handleRequestDashboardAccessModalOpen()
-                    : handleRequestAccessModalOpen()
-                }
-              >
-                <LockOpen fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Button
+              color="primary"
+              startIcon={<LockOpen fontSize="small" />}
+              onClick={() =>
+                hit.resourceKind === 'dashboard'
+                  ? handleRequestDashboardAccessModalOpen()
+                  : handleRequestAccessModalOpen()
+              }
+              type="button"
+            >
+              Request Access
+            </Button>
           )}
           <RequestAccessModal
             hit={hit}

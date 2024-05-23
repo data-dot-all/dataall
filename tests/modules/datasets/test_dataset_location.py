@@ -2,11 +2,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from dataall.base.config import config
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 
 @pytest.fixture(scope='module')
-def dataset1(env_fixture, org_fixture, dataset, group) -> Dataset:
+def dataset1(env_fixture, org_fixture, dataset, group) -> S3Dataset:
     yield dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
 
 

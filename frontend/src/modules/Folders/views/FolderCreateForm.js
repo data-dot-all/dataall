@@ -59,7 +59,7 @@ function FolderCreateHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${dataset.datasetUri}`}
+            to={`/console/s3-datasets/${dataset.datasetUri}`}
             variant="subtitle2"
           >
             {dataset.name}
@@ -73,7 +73,7 @@ function FolderCreateHeader(props) {
             component={RouterLink}
             startIcon={<ArrowLeftIcon fontSize="small" />}
             sx={{ mt: 1 }}
-            to={`/console/datasets/${dataset.datasetUri}`}
+            to={`/console/s3-datasets/${dataset.datasetUri}`}
             variant="outlined"
           >
             Cancel
@@ -139,7 +139,7 @@ const FolderCreateForm = () => {
           variant: 'success'
         });
         navigate(
-          `/console/datasets/folder/${response.data.createDatasetStorageLocation.locationUri}`
+          `/console/s3-datasets/folder/${response.data.createDatasetStorageLocation.locationUri}`
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });

@@ -6,7 +6,7 @@ from dataall.base.utils.iam_policy_utils import (
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from aws_cdk import aws_iam as iam
 
 
@@ -146,7 +146,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 session, uri=self.environmentUri, filter=None
             )
             if datasets:
-                dataset: Dataset
+                dataset: S3Dataset
                 for dataset in datasets:
                     imported_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
                     if dataset.importedKmsKey:

@@ -3,7 +3,6 @@ export * from './deleteDataset';
 export * from './generateDatasetAccessToken';
 export * from './getDatasetPresignedUrl';
 export * from './importDataset';
-export * from './listDatasets';
 export * from './listDatasetStorageLocations';
 export * from './startGlueCrawler';
 export * from './syncTables';
