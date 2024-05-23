@@ -8,7 +8,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
 
 

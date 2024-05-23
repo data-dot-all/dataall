@@ -10,7 +10,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
 )
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets_shares.tasks.dataset_subscription_task import DatasetSubscriptionService
 from dataall.core.environment.api.enums import EnvironmentPermission

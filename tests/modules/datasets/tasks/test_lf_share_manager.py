@@ -15,7 +15,7 @@ from dataall.core.groups.db.group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.s3_datasets_shares.services.share_processors.lakeformation_process_share import (

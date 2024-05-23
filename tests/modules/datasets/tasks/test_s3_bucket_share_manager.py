@@ -7,7 +7,7 @@ from typing import Callable
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
 from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket

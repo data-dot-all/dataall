@@ -5,7 +5,7 @@ import os
 from dataall.base.config import config
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.base.context import get_context
 from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus

@@ -7,7 +7,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_service import DatasetSharingService
