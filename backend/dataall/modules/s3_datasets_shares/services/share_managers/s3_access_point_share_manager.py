@@ -1,4 +1,3 @@
-import abc
 import logging
 import json
 import time
@@ -49,7 +48,9 @@ class S3AccessPointShareManager:
         target_environment: Environment,
         source_env_group: EnvironmentGroup,
         env_group: EnvironmentGroup,
+        reapply: bool = False,
     ):
+        self.reapply = reapply
         self.session = session
         self.source_env_group = source_env_group
         self.env_group = env_group
@@ -75,18 +76,6 @@ class S3AccessPointShareManager:
         self.dataset_region = dataset.region
         self.s3_prefix = target_folder.S3Prefix
         self.folder_errors = []
-
-    @abc.abstractmethod
-    def process_approved_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def process_revoked_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def verify_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
 
     @staticmethod
     def build_access_point_name(share):

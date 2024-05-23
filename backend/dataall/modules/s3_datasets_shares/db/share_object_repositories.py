@@ -73,7 +73,7 @@ class ShareObjectRepository:
             return session.query(DatasetTable).get(item_uri)
         if item_type == ShareableType.StorageLocation.value:
             return session.query(DatasetStorageLocation).get(item_uri)
-        if item_type == ShareableType.S3Bucket.value:
+        if item_type == ShareableType.S3Bucket.value:  # TODO:ShareableType.DatasetBucket.value:
             return session.query(DatasetBucket).get(item_uri)
 
     @staticmethod
@@ -127,7 +127,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
+    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:  ## TODO: Already in shares_base
         return (
             session.query(ShareObjectItem)
             .filter(
@@ -261,7 +261,7 @@ class ShareObjectRepository:
         s3_buckets = (
             session.query(
                 DatasetBucket.bucketUri.label('itemUri'),
-                func.coalesce('S3Bucket').label('itemType'),
+                func.coalesce('S3Bucket').label('itemType'),  # TODO ShareableType.DatasetBucket
                 DatasetBucket.S3BucketName.label('itemName'),
                 DatasetBucket.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
@@ -417,7 +417,7 @@ class ShareObjectRepository:
         session,
         uri: str,
         status: str,
-    ) -> ShareObjectItem:
+    ) -> ShareObjectItem:  ## TODO: Already in shares_base
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
@@ -486,7 +486,7 @@ class ShareObjectRepository:
         return True
 
     @staticmethod
-    def get_share_data(session, share_uri):
+    def get_share_data(session, share_uri):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
@@ -541,7 +541,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
+    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
         (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
             session, share_uri, status, healthStatus
         )
@@ -561,7 +561,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
+    def get_share_data_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
@@ -583,7 +583,9 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+    def _find_all_share_item(
+        session, share, status, healthStatus, share_type_model, share_type_uri
+    ):  ## TODO: Already in shares_base
         query = (
             session.query(share_type_model)
             .join(

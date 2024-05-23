@@ -1,4 +1,3 @@
-import abc
 import logging
 import time
 from datetime import datetime
@@ -23,11 +22,12 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Datase
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.sharing_service import SharesManagerInterface
 
 logger = logging.getLogger(__name__)
 
 
-class LFShareManager:
+class LFShareManager(SharesManagerInterface):
     def __init__(
         self,
         session,
@@ -37,7 +37,9 @@ class LFShareManager:
         source_environment: Environment,
         target_environment: Environment,
         env_group: EnvironmentGroup,
+        reapply: bool = False,
     ):
+        self.reapply = reapply
         self.session = session
         self.env_group = env_group
         self.dataset = dataset
@@ -59,18 +61,6 @@ class LFShareManager:
         self.glue_client_in_target = None
         self.lf_client_in_source = None
         self.lf_client_in_target = None
-
-    @abc.abstractmethod
-    def process_approved_shares(self) -> [str]:
-        return NotImplementedError
-
-    @abc.abstractmethod
-    def process_revoked_shares(self) -> [str]:
-        return NotImplementedError
-
-    @abc.abstractmethod
-    def verify_shares(self) -> bool:
-        raise NotImplementedError
 
     def init_source_account_details(self):
         """

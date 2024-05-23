@@ -4,8 +4,13 @@ from dataall.base.api.constants import GraphQLEnumMapper
 class ShareableType(GraphQLEnumMapper):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
-    View = 'View'
-    S3Bucket = 'S3Bucket'
+    S3Bucket = 'S3Bucket'  # TODO: This should be DatasetBucket --> migration script for existing ShareItems!
+
+
+class ShareableTypeUri(GraphQLEnumMapper):
+    DatasetTable = 'DatasetTable.tableUri'
+    DatasetStorageLocation = 'DatasetStorageLocation.locationUri'
+    DatasetBucket = 'DatasetBucket.bucketUri'
 
 
 class ShareObjectPermission(GraphQLEnumMapper):

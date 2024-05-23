@@ -12,13 +12,13 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
 )
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_processors.lakeformation_process_share import (
+from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
     ProcessLakeFormationShare,
 )
-from dataall.modules.s3_datasets_shares.services.share_processors.s3_access_point_process_share import (
+from dataall.modules.s3_datasets_shares.services.share_processors.s3_access_point_share_processor import (
     ProcessS3AccessPointShare,
 )
-from dataall.modules.s3_datasets_shares.services.share_processors.s3_bucket_process_share import ProcessS3BucketShare
+from dataall.modules.s3_datasets_shares.services.share_processors.s3_bucket_share_processor import ProcessS3BucketShare
 
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
@@ -117,8 +117,7 @@ class DataSharingService:
                         return False
 
                     log.info(f'Granting permissions to folders: {shared_folders}')
-
-                    approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+                    s3_access_points_manager = ProcessS3AccessPointShare.initialize_share_manager(
                         session,
                         dataset,
                         share,
@@ -128,11 +127,13 @@ class DataSharingService:
                         source_env_group,
                         env_group,
                     )
+                    approved_folders_succeed = ProcessS3AccessPointShare.process_approved_shares(
+                        s3_access_points_manager
+                    )
                     log.info(f'sharing folders succeeded = {approved_folders_succeed}')
 
                     log.info('Granting permissions to S3 buckets')
-
-                    approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(
+                    s3_bucket_manager = ProcessS3BucketShare.initialize_share_manager(
                         session,
                         dataset,
                         share,
@@ -142,18 +143,14 @@ class DataSharingService:
                         source_env_group,
                         env_group,
                     )
+                    approved_s3_buckets_succeed = ProcessS3BucketShare.process_approved_shares(s3_bucket_manager)
                     log.info(f'sharing s3 buckets succeeded = {approved_s3_buckets_succeed}')
 
                     log.info(f'Granting permissions to tables: {shared_tables}')
-                    approved_tables_succeed = ProcessLakeFormationShare(
-                        session,
-                        dataset,
-                        share,
-                        shared_tables,
-                        source_environment,
-                        target_environment,
-                        env_group,
-                    ).process_approved_shares()
+                    lf_share_manager = ProcessLakeFormationShare.initialize_share_manager(
+                        session, dataset, share, shared_tables, source_environment, target_environment, env_group
+                    )
+                    approved_tables_succeed = ProcessLakeFormationShare.process_approved_shares(lf_share_manager)
                     log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
                     share_successful = (
@@ -276,7 +273,7 @@ class DataSharingService:
 
                 log.info(f'Revoking permissions to folders: {revoked_folders}')
 
-                revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(
+                s3_access_points_manager = ProcessS3AccessPointShare.initialize_share_manager(
                     session,
                     dataset,
                     share,
@@ -286,13 +283,14 @@ class DataSharingService:
                     source_env_group,
                     env_group,
                 )
+                revoked_folders_succeed = ProcessS3AccessPointShare.process_revoked_shares(s3_access_points_manager)
                 log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
                 if share.groupUri != dataset.SamlAdminGroupName and share.groupUri != dataset.stewards:
                     log.info('Deleting FOLDER READ permissions...')
                     ShareItemService.delete_dataset_folder_read_permission(session, share)
                 log.info('Revoking permissions to S3 buckets')
 
-                revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(
+                s3_bucket_manager = ProcessS3BucketShare.initialize_share_manager(
                     session,
                     dataset,
                     share,
@@ -302,12 +300,14 @@ class DataSharingService:
                     source_env_group,
                     env_group,
                 )
+                revoked_s3_buckets_succeed = ProcessS3BucketShare.process_revoked_shares(s3_bucket_manager)
                 log.info(f'revoking s3 buckets succeeded = {revoked_s3_buckets_succeed}')
 
                 log.info(f'Revoking permissions to tables: {revoked_tables}')
-                revoked_tables_succeed = ProcessLakeFormationShare(
+                lf_share_manager = ProcessLakeFormationShare.initialize_share_manager(
                     session, dataset, share, revoked_tables, source_environment, target_environment, env_group
-                ).process_revoked_shares()
+                )
+                revoked_tables_succeed = ProcessLakeFormationShare.process_revoked_shares(lf_share_manager)
 
                 log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
                 if share.groupUri != dataset.SamlAdminGroupName and share.groupUri != dataset.stewards:
@@ -496,7 +496,7 @@ class DataSharingService:
             return
 
         log.info(f'Verifying permissions to folders: {folders_to_verify}')
-        ProcessS3AccessPointShare.verify_shares(
+        s3_access_points_manager = ProcessS3AccessPointShare.initialize_share_manager(
             session,
             dataset,
             share,
@@ -506,9 +506,10 @@ class DataSharingService:
             source_env_group,
             env_group,
         )
+        ProcessS3AccessPointShare.verify_shares(s3_access_points_manager)
 
         log.info(f'Verifying permissions to S3 buckets: {buckets_to_verify}')
-        ProcessS3BucketShare.verify_shares(
+        s3_bucket_manager = ProcessS3BucketShare.initialize_share_manager(
             session,
             dataset,
             share,
@@ -518,17 +519,13 @@ class DataSharingService:
             source_env_group,
             env_group,
         )
+        ProcessS3BucketShare.verify_shares(s3_bucket_manager)
 
         log.info(f'Verifying permissions to tables: {tables_to_verify}')
-        ProcessLakeFormationShare(
-            session,
-            dataset,
-            share,
-            tables_to_verify,
-            source_environment,
-            target_environment,
-            env_group,
-        ).verify_shares()
+        lf_share_manager = ProcessLakeFormationShare.initialize_share_manager(
+            session, dataset, share, tables_to_verify, source_environment, target_environment, env_group
+        )
+        ProcessLakeFormationShare.verify_shares(lf_share_manager)
         return
 
     @classmethod
