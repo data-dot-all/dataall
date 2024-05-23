@@ -50,7 +50,7 @@ GroupsInfo = gql.ObjectType(
 )
 
 OrganizationReadersSearchResult = gql.ObjectType(
-    name='OrganizationReaders',
+    name='OrganizationReadersSearchResult',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),
