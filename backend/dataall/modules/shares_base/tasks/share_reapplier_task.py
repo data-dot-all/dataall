@@ -1,10 +1,11 @@
 import logging
 import os
 import sys
-from dataall.modules.s3_datasets_shares.api.types import ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus
-from dataall.modules.s3_datasets_shares.services.data_sharing_service import DataSharingService
+from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.base.db import get_engine
 
 root = logging.getLogger()
@@ -34,7 +35,7 @@ def reapply_shares(engine):
                 old_status=ShareItemHealthStatus.Unhealthy.value,
                 new_status=ShareItemHealthStatus.PendingReApply.value,
             )
-            DataSharingService.reapply_share(engine, share_uri=share_object.shareUri)
+            SharingService.reapply_share(engine, share_uri=share_object.shareUri)
         return processed_share_objects
 
 

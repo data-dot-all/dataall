@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from warnings import warn
 from datetime import datetime
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -24,15 +25,15 @@ log = logging.getLogger(__name__)
 
 class ProcessLakeFormationShare(SharesProcessorInterface):
     @staticmethod
-    def initialize_share_manager(
+    def initialize_share_managers(
         session, dataset, share, items, source_environment, target_environment, env_group, reapply
-    ) -> LFShareManager:
-        return LFShareManager(
+    ) -> List[LFShareManager]:
+        return [LFShareManager(
             session, dataset, share, items, source_environment, target_environment, env_group, reapply
-        )
+        )]
 
     @staticmethod
-    def process_approved_shares(share_manager: LFShareManager) -> bool:
+    def process_approved_shares(share_managers: List[LFShareManager]) -> bool:
         """
         0) Check if source account details are properly initialized and initialize the Glue and LF clients
         1) Grant ALL permissions to pivotRole for source database in source account
@@ -55,7 +56,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         True if share is granted successfully
         False if share fails
         """
-
+        share_manager = share_managers[0]
         log.info('##### Starting Sharing tables #######')
         success = True
         if not share_manager.tables:
@@ -163,7 +164,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         return success
 
     @staticmethod
-    def process_revoked_shares(share_manager: LFShareManager) -> bool:
+    def process_revoked_shares(share_managers: List[LFShareManager]) -> bool:
         """
         0) Check if source account details are properly initialized and initialize the Glue and LF clients
         1) Grant Pivot Role all database permissions to the shared database
@@ -186,6 +187,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         False if revoke fails
         """
         log.info('##### Starting Revoking tables #######')
+        share_manager = share_managers[0]
         success = True
         try:
             if None in [
@@ -312,8 +314,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         return success
 
     @staticmethod
-    def verify_shares(share_manager: LFShareManager) -> bool:
+    def verify_shares(share_managers: List[LFShareManager]) -> bool:
         log.info('##### Starting Verify tables #######')
+        share_manager = share_managers[0]
         if not share_manager.tables:
             log.info('No tables to verify. Skipping...')
         else:

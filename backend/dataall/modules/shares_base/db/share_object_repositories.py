@@ -11,7 +11,7 @@ from dataall.modules.shares_base.services.shares_enums import ShareableType, Sha
 logger = logging.getLogger(__name__)
 
 
-class ShareObjectRepository:  # Slowly moving db models and repositories to shares_base
+class ShareObjectRepository:  # TODO: Slowly moving db models and repositories to shares_base, Then we can break down the single ShareObjectRepository into smaller repos
     @staticmethod
     def get_share_by_uri(session, uri):
         share = session.query(ShareObject).get(uri)
@@ -66,6 +66,7 @@ class ShareObjectRepository:  # Slowly moving db models and repositories to shar
             )
         )
         return True
+
 
     @staticmethod
     def get_share_data(session, share_uri):
@@ -185,3 +186,25 @@ class ShareObjectRepository:  # Slowly moving db models and repositories to shar
             )
             .all()
         )
+
+    @staticmethod
+    def list_all_active_share_objects(session) -> [ShareObject]:
+        return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
+
+    @staticmethod
+    def update_share_item_health_status_batch(
+        session,
+        share_uri: str,
+        old_status: str,
+        new_status: str,
+    ) -> bool:
+        (
+            session.query(ShareObjectItem)
+            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
+            .update(
+                {
+                    ShareObjectItem.healthStatus: new_status,
+                }
+            )
+        )
+        return True

@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 class ProcessS3AccessPointShare(SharesProcessorInterface):
     @staticmethod
-    def initialize_share_manager(
+    def initialize_share_managers(
         session, dataset, share, items, source_environment, target_environment, env_group, reapply=False
     ) -> List[S3AccessPointShareManager]:
         managers = []

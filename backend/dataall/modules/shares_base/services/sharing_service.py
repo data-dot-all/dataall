@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List
 from abc import ABC, abstractmethod
 from sqlalchemy import and_
 from time import sleep
@@ -47,27 +47,27 @@ class SharesManagerInterface(ABC):
 class SharesProcessorInterface(ABC):
     @staticmethod
     @abstractmethod
-    def initialize_share_manager(
+    def initialize_share_managers(
         session, dataset, share, items, source_environment, target_environment, source_env_group, env_group, reapply
-    ) -> Union[SharesManagerInterface, List[SharesManagerInterface]]:
+    ) -> List[SharesManagerInterface]:
         """Initializes the specific technology share manager that encapsulates all API calls for sharing"""
         ...
 
     @staticmethod
     @abstractmethod
-    def process_approved_shares(share_manager: Union[SharesManagerInterface, List[SharesManagerInterface]]) -> bool:
+    def process_approved_shares(share_managers: List[SharesManagerInterface]) -> bool:
         """Executes a series of actions to share items using the share manager. Returns True if the sharing was successful"""
         ...
 
     @staticmethod
     @abstractmethod
-    def process_revoked_shares(share_manager: Union[SharesManagerInterface, List[SharesManagerInterface]]) -> bool:
+    def process_revoked_shares(share_managers: List[SharesManagerInterface]) -> bool:
         """Executes a series of actions to revoke share items using the share manager. Returns True if the revoking was successful"""
         ...
 
     @staticmethod
     @abstractmethod
-    def verify_shares(share_manager: Union[SharesManagerInterface, List[SharesManagerInterface]]) -> bool:
+    def verify_shares(share_managers: List[SharesManagerInterface]) -> bool:
         """Executes a series of actions to verify share items using the share manager. Returns True if the verifying was successful"""
         ...
 
@@ -189,15 +189,18 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                 if not lock_released:
                     log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
 
-    def revoke_share(self):
+    @classmethod
+    def revoke_share(cls, engine: Engine, share_uri: str) -> bool:
         # TODO
         pass
 
-    def verify_share(self):
+    @classmethod
+    def verify_share(cls, engine: Engine, share_uri: str, status: str, healthStatus) -> bool:
         # TODO
         pass
 
-    def reapply_share(self):
+    @classmethod
+    def reapply_share(cls, engine: Engine, share_uri: str) -> bool:
         # TODO
         pass
 

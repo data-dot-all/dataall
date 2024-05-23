@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 class ProcessS3BucketShare(SharesProcessorInterface):
     @staticmethod
-    def initialize_share_manager(
+    def initialize_share_managers(
         session, dataset, share, items, source_environment, target_environment, env_group, reapply
     ) -> List[S3BucketShareManager]:
         managers = []
@@ -34,7 +34,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         return managers
 
     @staticmethod
-    def process_approved_shares(share_manager: List[S3BucketShareManager]) -> bool:
+    def process_approved_shares(share_managers: List[S3BucketShareManager]) -> bool:
         """
         1) update_share_item_status with Start action
         2) manage_bucket_policy - grants permission in the bucket policy
@@ -48,7 +48,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         """
         log.info('##### Starting S3 bucket share #######')
         success = True
-        for manager in share_manager:
+        for manager in share_managers:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 manager.session,
                 manager.share.shareUri,
@@ -90,7 +90,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         return success
 
     @staticmethod
-    def process_revoked_shares(share_manager: List[S3BucketShareManager]) -> bool:
+    def process_revoked_shares(share_managers: List[S3BucketShareManager]) -> bool:
         """
         1) update_share_item_status with Start action
         2) remove access from bucket policy
@@ -106,7 +106,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
 
         log.info('##### Starting Revoking S3 bucket share #######')
         success = True
-        for manager in share_manager:
+        for manager in share_managers:
             removing_item = ShareObjectRepository.find_sharable_item(
                 manager.session,
                 manager.share.shareUri,
@@ -145,9 +145,9 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         return success
 
     @staticmethod
-    def verify_shares(share_manager: List[S3BucketShareManager]) -> bool:
+    def verify_shares(share_managers: List[S3BucketShareManager]) -> bool:
         log.info('##### Verifying S3 bucket share #######')
-        for manager in share_manager:
+        for manager in share_managers:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 manager.session,
                 manager.share.shareUri,
