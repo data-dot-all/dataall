@@ -5,7 +5,7 @@ export const createRedshiftConnection = (input) => ({
     input
   },
   mutation: gql`
-    mutation createRedshiftConnection($input: NewRedshiftConnection) {
+    mutation createRedshiftConnection($input: CreateRedshiftConnectionInput) {
       createRedshiftConnection(input: $input) {
         connectionUri
       }

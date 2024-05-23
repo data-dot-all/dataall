@@ -21,5 +21,3 @@ ImportRedshiftDatasetInput = gql.InputType(
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
-
-# TODO: ADD REDSHIFT CONNECTION!
