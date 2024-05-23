@@ -5,7 +5,6 @@ from dataall.modules.maintenance.services.maintenance_service import Maintenance
 
 
 def start_maintenance_window(context: Context, source: Maintenance, mode: str):
-    """Starts the maintenance window"""
     if mode not in [item.value for item in list(MaintenanceModes)]:
         raise Exception('Mode is not conforming to the MaintenanceModes enum')
     return MaintenanceService.start_maintenance_window(mode=mode)
