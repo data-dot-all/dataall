@@ -13,7 +13,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.base.db import utils
 from datetime import datetime
 
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus, ShareItemStatus
+from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus, ShareItemStatus
 
 # revision identifiers, used by Alembic.
 revision = '509997f0a51e'

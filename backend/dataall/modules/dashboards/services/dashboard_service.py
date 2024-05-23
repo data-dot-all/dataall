@@ -7,7 +7,8 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.dashboards import DashboardRepository, Dashboard
+from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
+from dataall.modules.dashboards.db.dashboard_models import Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 from dataall.modules.dashboards.services.dashboard_permissions import (

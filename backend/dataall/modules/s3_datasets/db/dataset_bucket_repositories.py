@@ -1,13 +1,13 @@
 import logging
 
-from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket, S3Dataset
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetBucketRepository:
     @staticmethod
-    def create_dataset_bucket(session, dataset: Dataset, data: dict = None) -> DatasetBucket:
+    def create_dataset_bucket(session, dataset: S3Dataset, data: dict = None) -> DatasetBucket:
         bucket = DatasetBucket(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),

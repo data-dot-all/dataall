@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.sql import and_
 
 from dataall.base.db import exceptions
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable, S3Dataset
 from dataall.base.utils import json_utils
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class DatasetTableRepository:
         session.add(table)
 
     @staticmethod
-    def create_synced_table(session, dataset: Dataset, table: dict):
+    def create_synced_table(session, dataset: S3Dataset, table: dict):
         updated_table = DatasetTable(
             datasetUri=dataset.datasetUri,
             label=table['Name'],
