@@ -189,6 +189,17 @@ def get_policies(context: Context, source, **kwargs):
     ).get_all_policies()
 
 
+def get_consumption_role_policies(context: Context, source, environmentUri, IAMRoleName):
+    environment = EnvironmentService.find_environment_by_uri(uri=environmentUri)
+    return PolicyManager(
+        role_name=IAMRoleName,
+        environmentUri=environmentUri,
+        account=environment.AwsAccountId,
+        region=environment.region,
+        resource_prefix=environment.resourcePrefix,
+    ).get_all_policies()
+
+
 def resolve_environment_networks(context: Context, source, **kwargs):
     return VpcService.get_environment_networks(environment_uri=source.environmentUri)
 
