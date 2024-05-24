@@ -21,7 +21,6 @@ from dataall.core.environment.api.resolvers import (
     list_environments,
     list_groups,
     list_valid_environments,
-    get_policies,
     get_consumption_role_policies,
 )
 from dataall.core.environment.api.types import (
