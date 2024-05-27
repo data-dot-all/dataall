@@ -59,7 +59,7 @@ class ShareObjectService:
         return principal_role is not None
 
     @staticmethod
-    def update_all_share_items_status(
+    def update_all_share_items_status(  # TODO: moved to ShareObject
         session, shareUri, new_health_status: str, message, previous_health_status: str = None
     ):
         for item in ShareObjectRepository.get_all_shareable_items(
@@ -523,70 +523,3 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
-
-    @staticmethod
-    def attach_dataset_table_read_permission(session, share):
-        """
-        Attach Table permissions to share groups
-        """
-        share_table_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Share_Succeeded.value]
-        )
-        for table in share_table_items:
-            existing_policy = ResourcePolicyService.find_resource_policies(
-                session,
-                group=share.groupUri,
-                resource_uri=table.itemUri,
-                resource_type=DatasetTable.__name__,
-                permissions=DATASET_TABLE_READ,
-            )
-            # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
-            if len(existing_policy) == 0:
-                log.info(
-                    f'Attaching new resource permission policy {DATASET_TABLE_READ} to table {table.itemUri} for group {share.groupUri}'
-                )
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    permissions=DATASET_TABLE_READ,
-                    resource_uri=table.itemUri,
-                    resource_type=DatasetTable.__name__,
-                )
-            else:
-                log.info(
-                    f'Resource permission policy {DATASET_TABLE_READ} to table {table.itemUri} for group {share.groupUri} already exists. Skip... '
-                )
-
-    @staticmethod
-    def attach_dataset_folder_read_permission(session, share):
-        """
-        Attach Table permissions to share groups
-        """
-        share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Share_Succeeded.value]
-        )
-        for location in share_folder_items:
-            existing_policy = ResourcePolicyService.find_resource_policies(
-                session,
-                group=share.groupUri,
-                resource_uri=location.itemUri,
-                resource_type=DatasetStorageLocation.__name__,
-                permissions=DATASET_FOLDER_READ,
-            )
-            # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
-            if len(existing_policy) == 0:
-                log.info(
-                    f'Attaching new resource permission policy {DATASET_FOLDER_READ} to folder {location.itemUri} for group {share.groupUri}'
-                )
-
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    permissions=DATASET_FOLDER_READ,
-                    resource_uri=location.itemUri,
-                    resource_type=DatasetStorageLocation.__name__,
-                )
-            else:
-                log.info(
-                    f'Resource permission policy {DATASET_FOLDER_READ} to table {location.itemUri} for group {share.groupUri} already exists. Skip... '
-                )

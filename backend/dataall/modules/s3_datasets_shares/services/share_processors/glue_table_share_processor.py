@@ -2,7 +2,6 @@ import logging
 from typing import List
 from warnings import warn
 from datetime import datetime
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -10,15 +9,17 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareableType,
 )
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 
-from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface
+from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
 
 log = logging.getLogger(__name__)
 
@@ -26,11 +27,9 @@ log = logging.getLogger(__name__)
 class ProcessLakeFormationShare(SharesProcessorInterface):
     @staticmethod
     def initialize_share_managers(
-        session, dataset, share, items, source_environment, target_environment, env_group, reapply
+        session, share_data: ShareData, items: List[DatasetTable], reapply: bool = False
     ) -> List[LFShareManager]:
-        return [LFShareManager(
-            session, dataset, share, items, source_environment, target_environment, env_group, reapply
-        )]
+        return [LFShareManager(session=session, share_data=share_data, tables=items, reapply=reapply)]
 
     @staticmethod
     def process_approved_shares(share_managers: List[LFShareManager]) -> bool:
@@ -147,6 +146,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     ShareObjectRepository.update_share_item_health_status(
                         share_manager.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
+                    ShareItemService.attach_dataset_table_read_permission(
+                        share_manager.session, share_manager.share, table
+                    )
                 except Exception as e:
                     if not share_manager.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
@@ -255,6 +257,14 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 ShareObjectRepository.update_share_item_health_status(
                     share_manager.session, share_item, None, None, share_item.lastVerificationTime
                 )
+                if (
+                    share_manager.share.groupUri != share_manager.dataset.SamlAdminGroupName
+                    and share_manager.share.groupUri != share_manager.dataset.stewards
+                ):
+                    log.info('Deleting TABLE READ permissions...')
+                    ShareItemService.delete_dataset_table_read_permission(
+                        share_manager.session, share_manager.share, table
+                    )
 
             except Exception as e:
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)

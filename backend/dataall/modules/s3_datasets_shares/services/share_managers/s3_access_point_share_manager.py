@@ -31,49 +31,45 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
+from dataall.modules.shares_base.services.sharing_service import SharesManagerInterface, ShareData
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
 
 
-class S3AccessPointShareManager:
+class S3AccessPointShareManager(SharesManagerInterface):
     def __init__(
         self,
         session,
-        dataset: S3Dataset,
-        share: ShareObject,
+        share_data: ShareData,
         target_folder: DatasetStorageLocation,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
         reapply: bool = False,
     ):
         self.reapply = reapply
         self.session = session
-        self.source_env_group = source_env_group
-        self.env_group = env_group
-        self.dataset = dataset
-        self.share = share
+        self.source_env_group = share_data.source_env_group
+        self.env_group = share_data.env_group
+        self.dataset = share_data.dataset
+        self.share = share_data.share
         self.target_folder = target_folder
-        self.source_environment = source_environment
-        self.target_environment = target_environment
+        self.source_environment = share_data.source_environment
+        self.target_environment = share_data.target_environment
         self.share_item = ShareObjectRepository.find_sharable_item(
             session,
-            share.shareUri,
+            share_data.share.shareUri,
             target_folder.locationUri,
         )
         self.access_point_name = self.share_item.S3AccessPointName
 
-        self.source_account_id = dataset.AwsAccountId
-        self.target_account_id = target_environment.AwsAccountId
-        self.source_env_admin = source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share.principalIAMRoleName
+        self.source_account_id = share_data.dataset.AwsAccountId
+        self.target_account_id = share_data.target_environment.AwsAccountId
+        self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
+        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
         self.bucket_name = target_folder.S3BucketName
-        self.dataset_admin = dataset.IAMDatasetAdminRoleArn
-        self.dataset_account_id = dataset.AwsAccountId
-        self.dataset_region = dataset.region
+        self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
+        self.dataset_account_id = share_data.dataset.AwsAccountId
+        self.dataset_region = share_data.dataset.region
         self.s3_prefix = target_folder.S3Prefix
         self.folder_errors = []
 

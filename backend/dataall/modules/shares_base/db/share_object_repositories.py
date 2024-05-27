@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from sqlalchemy import and_
 
 from dataall.base.db import exceptions
@@ -6,7 +7,13 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.shares_base.services.shares_enums import ShareableType, ShareableTypeUri
+from dataall.modules.shares_base.services.shares_enums import (
+    ShareItemHealthStatus,
+    ShareObjectStatus,
+    ShareItemStatus,
+    ShareableType,
+    PrincipalType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +25,14 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
         if not share:
             raise exceptions.ObjectNotFound('Share', uri)
         return share
+
+    @staticmethod
+    def get_share_item_by_uri(session, uri):
+        share_item: ShareObjectItem = session.query(ShareObjectItem).get(uri)
+        if not share_item:
+            raise exceptions.ObjectNotFound('ShareObjectItem', uri)
+
+        return share_item
 
     @staticmethod
     def update_share_object_status(session, share_uri: str, status: str) -> ShareObject:
@@ -67,7 +82,6 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
         )
         return True
 
-
     @staticmethod
     def get_share_data(session, share_uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
@@ -114,26 +128,17 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
             )
 
         return (
-            source_env_group,
-            env_group,
-            dataset,
             share,
+            dataset,
             source_environment,
             target_environment,
+            source_env_group,
+            env_group,
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
-        items = {}
-        for type in ShareableType:
-            items[type.value] = ShareObjectRepository._find_all_share_item(
-                session, share, status, healthStatus, type.value, ShareableTypeUri[type.value].value
-            )
-        return items
-
-    @staticmethod
-    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+    def get_share_data_items_by_type(session, share, share_type_model, share_type_uri, status=None, healthStatus=None):
+        logger.info(f'Getting share items for share {share_type_model}')
         query = (
             session.query(share_type_model)
             .join(
@@ -172,20 +177,24 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
         )
 
     @staticmethod
-    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
-        shared_items_dict = ShareObjectRepository.get_share_data_items(session, share_uri, status, healthStatus)
-        uris = []
-        uris.extend([item.itemUri for item in list(shared_items_dict.values())])
-        return (
+    def get_all_share_items_in_share(session, share_uri, status=None, healthStatus=None):
+        query = (
             session.query(ShareObjectItem)
+            .join(
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
             .filter(
                 and_(
-                    ShareObjectItem.itemUri.in_(uris),
-                    ShareObjectItem.shareUri == share_uri,
+                    ShareObject.shareUri == share_uri,
                 )
             )
-            .all()
         )
+        if status:
+            query = query.filter(ShareObjectItem.status == status)
+        if healthStatus:
+            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
+        return query.all()
 
     @staticmethod
     def list_all_active_share_objects(session) -> [ShareObject]:
@@ -208,3 +217,35 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
             )
         )
         return True
+
+    @staticmethod
+    def check_pending_share_items(session, uri):
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
+        shared_items = (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value]),
+                )
+            )
+            .all()
+        )
+        if shared_items:
+            return True
+        return False
+
+    @staticmethod
+    def update_all_share_items_status(
+        session, shareUri, new_health_status: str, message, previous_health_status: str = None
+    ):
+        for item in ShareObjectRepository.get_all_shareable_items(
+            session, shareUri, healthStatus=previous_health_status
+        ):
+            ShareObjectRepository.update_share_item_health_status(
+                session,
+                share_item=item,
+                healthStatus=new_health_status,
+                healthMessage=message,
+                timestamp=datetime.now(),
+            )

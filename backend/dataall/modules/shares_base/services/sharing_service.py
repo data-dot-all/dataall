@@ -1,22 +1,20 @@
 import logging
-from typing import List
+from datetime import datetime
+from typing import List, Any, Dict
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from sqlalchemy import and_
 from time import sleep
 from dataall.base.db import Engine
 from dataall.base.aws.iam import IAM
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareItemHealthStatus,
-    ShareObjectActions,
-    ShareItemStatus,
-    PrincipalType,
-)
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus, ShareObjectActions, ShareItemStatus
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
@@ -26,21 +24,20 @@ MAX_RETRIES = 10
 RETRY_INTERVAL = 60
 
 
+@dataclass
+class ShareData:
+    share: ShareObject
+    dataset: Any
+    source_environment: Environment
+    target_environment: Environment
+    source_env_group: EnvironmentGroup
+    env_group: EnvironmentGroup
+
+
 class SharesManagerInterface(ABC):
     @abstractmethod
-    def __init__(
-        self,
-        session,
-        dataset,
-        share,
-        items,
-        source_environment,
-        target_environment,
-        source_env_group,
-        env_group,
-        reapply,
-    ):
-        """Ensures that the manager used is initalized with the paramters passed"""
+    def __init__(self, session, share_data: ShareData, *args, **kwargs):
+        """Ensures that the manager used is initalized with the parameters passed"""
         ...
 
 
@@ -48,7 +45,7 @@ class SharesProcessorInterface(ABC):
     @staticmethod
     @abstractmethod
     def initialize_share_managers(
-        session, dataset, share, items, source_environment, target_environment, source_env_group, env_group, reapply
+        session, share_data: ShareData, items: List[Any], reapply: bool
     ) -> List[SharesManagerInterface]:
         """Initializes the specific technology share manager that encapsulates all API calls for sharing"""
         ...
@@ -72,18 +69,27 @@ class SharesProcessorInterface(ABC):
         ...
 
 
-class SharingService:  # Replaces DataSharingService, Still unused I just left it to explain the usage of the SharesProcessorInterface
-    _SHARING_SERVICES = {}
+@dataclass
+class SharingProcessorDefinition:
+    name: str
+    Processor: Any
+    shareable_type: Any
+    shareable_uri: Any
 
-    def register_service(self, service_name: str, service: SharesProcessorInterface):
-        SharingService._SHARING_SERVICES[service_name] = service
+
+class SharingService:  # Replaces DataSharingService, Still unused I just left it to explain the usage of the SharesProcessorInterface
+    _SHARING_PROCESSORS: Dict[str, SharingProcessorDefinition] = {}
+
+    @classmethod
+    def register_processor(cls, processor: SharingProcessorDefinition) -> None:
+        cls._SHARING_PROCESSORS[processor.name] = processor
 
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
         """
         1) Updates share object State Machine with the Action: Start
         2) Retrieves share data and items in Share_Approved state
-        3) Calls corresponding SharesInterface.share_items for available items
+        3) Calls corresponding SharesInterface.process_approved_shares for available items
         4) Updates share object State Machine with the Action: Finish
 
         Parameters
@@ -96,113 +102,286 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         True if sharing succeeds,
         False if sharing fails
         """
-        try:
-            with engine.scoped_session() as session:
-                (
-                    source_env_group,
-                    env_group,
-                    dataset,
-                    share,
-                    source_environment,
-                    target_environment,
-                ) = ShareObjectRepository.get_share_data(session, share_uri)
-
-                share_sm = ShareObjectSM(share.status)
+        with engine.scoped_session() as session:
+            share_data, share_items = cls.get_share_data_and_items(
+                session, share_uri, ShareItemStatus.Share_Approved.value
+            )
+            try:
+                share_sm = ShareObjectSM(share_data.share.status)
                 new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
-                share_sm.update_state(session, share, new_share_state)
+                share_sm.update_state(session, share_data.share, new_share_state)
 
-                shared_items_dict = ShareObjectRepository.get_share_data_items(
-                    session, share_uri, ShareItemStatus.Share_Approved.value
-                )
-
-                log.info(f'Verifying principal IAM Role {share.principalIAMRoleName}')
-                share_successful = cls.verify_principal_role(session, share)
+                log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+                share_successful = cls.verify_principal_role(session, share_data.share)
                 # If principal role doesn't exist, all share items are unhealthy, no use of further checks
                 if share_successful:
-                    lock_acquired = cls.acquire_lock_with_retry(dataset.datasetUri, session, share.shareUri)
-
+                    lock_acquired = cls.acquire_lock_with_retry(
+                        share_data.dataset.datasetUri, session, share_data.share.shareUri
+                    )
                     if not lock_acquired:
-                        log.error(f'Failed to acquire lock for dataset {dataset.datasetUri}. Exiting...')
-                        for item in list(shared_items_dict.values()):
-                            share_item = ShareObjectRepository.find_sharable_item(
-                                session,
-                                share_uri,
-                                item.itemUri,  # TODO Need to verify if we can ue item.itemUri instead of table.tableUri
-                            )
-
+                        log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}. Exiting...')
+                        for share_item in share_items:
                             cls.handle_share_items_failure_during_locking(
                                 session, share_item, ShareItemStatus.Share_Approved.value
                             )
-                        share_object_SM = ShareObjectSM(share.status)
+                        share_object_SM = ShareObjectSM(share_data.share.status)
                         new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
-                        share_object_SM.update_state(session, share, new_object_state)
+                        share_object_SM.update_state(session, share_data.share, new_object_state)
                         return False
-
-                    for type, items in shared_items_dict.items():
-                        log.info(f'Granting permissions to {type}: {items}')
-                        reapply = False
-                        share_manager = cls._SHARING_SERVICES[type].initialize_share_manager(
+                    for type, processor in cls._SHARING_PROCESSORS.items():
+                        log.info(f'Granting permissions of {type}')
+                        shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                             session,
-                            dataset,
-                            share,
-                            items,
-                            source_environment,
-                            target_environment,
-                            source_env_group,
-                            env_group,
+                            share_data.share,
+                            processor.shareable_type,
+                            processor.shareable_uri,
+                            status=ShareItemStatus.Share_Approved.value,
                         )
-                        success = cls._SHARING_SERVICES[type].process_approved_shares(share_manager)
+                        share_manager = processor.Processor.initialize_share_managers(
+                            session, share_data, shareable_items
+                        )
+                        success = processor.Processor.process_approved_shares(share_manager)
                         log.info(f'Sharing {type} succeeded = {success}')
                         if not success:
                             share_successful = False
                 else:
-                    log.info(f'Principal IAM Role {share.principalIAMRoleName} does not exist')
-                    items = ShareObjectRepository.get_all_shareable_items(
-                        session,
-                        share_uri,
-                        ShareItemStatus.Share_Approved.value,
-                    )
-                    for item in items:
+                    log.info(f'Principal IAM Role {share_data.share.principalIAMRoleName} does not exist')
+                    for share_item in share_items:
                         ShareObjectRepository.update_share_item_status(
                             session,
-                            item.shareItemUri,
+                            share_item.shareItemUri,
                             ShareItemStatus.Share_Failed.value,
                         )
 
                 new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
-                share_sm.update_state(session, share, new_share_state)
-
-                log.info('Attaching TABLE/FOLDER READ permissions to successfully shared items...')
-                # TODO: move to specific processor
-                # ShareObjectService.attach_dataset_table_read_permission(session, share)
-                # ShareObjectService.attach_dataset_folder_read_permission(session, share)
+                share_sm.update_state(session, share_data.share, new_share_state)
 
                 return share_successful
 
+            except Exception as e:
+                log.error(f'Error occurred during share approval: {e}')
+                return False
+
+            finally:
+                lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
+                if not lock_released:
+                    log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+
+    @classmethod
+    def revoke_share(cls, engine: Engine, share_uri: str) -> bool:
+        """
+        1) Updates share object State Machine with the Action: Start
+        2) Retrieves share data and items in Revoke_Approved state
+        3) Calls corresponding SharesInterface.process_revoke_shares for available items
+        4) Updates share object State Machine with the Action: Finish
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        True if revoke succeeds
+        False if folder or table revoking failed
+        """
+        try:
+            with engine.scoped_session() as session:
+                share_data, share_items = cls.get_share_data_and_items(
+                    session, share_uri, ShareItemStatus.Revoke_Approved.value
+                )
+
+                share_sm = ShareObjectSM(share_data.share.status)
+                new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+                share_sm.update_state(session, share_data.share, new_share_state)
+
+                revoked_item_sm = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+
+                lock_acquired = cls.acquire_lock_with_retry(
+                    share_data.dataset.datasetUri, session, share_data.share.shareUri
+                )
+                revoke_successful = True
+                if not lock_acquired:
+                    log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}. Exiting...')
+                    for share_item in share_items:
+                        cls.handle_share_items_failure_during_locking(
+                            session, share_item, ShareItemStatus.Revoke_Approved.value
+                        )
+
+                    share_object_SM = ShareObjectSM(share_data.share.status)
+                    new_object_state = share_object_SM.run_transition(ShareObjectActions.AcquireLockFailure.value)
+                    share_object_SM.update_state(session, share_data.share, new_object_state)
+                    return False
+
+                new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
+                revoked_item_sm.update_state(session, share_uri, new_state)
+
+                for type, processor in cls._SHARING_PROCESSORS.items():
+                    shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                        session,
+                        share_data.share,
+                        processor.shareable_type,
+                        processor.shareable_uri,
+                        status=ShareItemStatus.Revoke_Approved.value,
+                    )
+                    log.info(f'Revoking permissions with {type}')
+                    share_manager = processor.Processor.initialize_share_managers(session, share_data, shareable_items)
+                    success = processor.Processor.process_revoked_shares(share_manager)
+                    log.info(f'Revoking {type} succeeded = {success}')
+                    if not success:
+                        revoke_successful = False
+
+                existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
+                if existing_pending_items:
+                    new_share_state = share_sm.run_transition(ShareObjectActions.FinishPending.value)
+                else:
+                    new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
+                share_sm.update_state(session, share_data.share, new_share_state)
+
+                return revoke_successful
+        except Exception as e:
+            log.error(f'Error occurred during share revoking: {e}')
+            return False
+
+        finally:
+            with engine.scoped_session() as session:
+                lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
+                if not lock_released:
+                    log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+
+    @classmethod
+    def verify_share(cls, engine: Engine, share_uri: str, status: str, healthStatus) -> bool:
+        """
+        1) Retrieves share data and items in specified status and health state (by default - PendingVerify)
+        2) Calls corresponding SharesInterface.verify_shares
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        """
+        with engine.scoped_session() as session:
+            share_data, share_items = cls.get_share_data_and_items(session, share_uri, status, healthStatus)
+
+            log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+            # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+            if not cls.verify_principal_role(session, share_data.share):
+                ShareObjectRepository.update_all_share_items_status(
+                    session,
+                    share_uri,
+                    previous_health_status=healthStatus,
+                    new_health_status=ShareItemHealthStatus.Unhealthy.value,
+                    message=f'Share principal Role {share_data.share.principalIAMRoleName} is not found.',
+                )
+                return True
+
+            for type, processor in cls._SHARING_PROCESSORS.items():
+                shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                    session,
+                    share_data.share,
+                    processor.shareable_type,
+                    processor.shareable_uri,
+                    status=status,
+                    healthStatus=healthStatus,
+                )
+                log.info(f'Verifying permissions with {type}')
+                share_manager = processor.Processor.initialize_share_managers(session, share_data, shareable_items)
+                processor.Processor.verify_shares(share_manager)
+
+        return True
+
+    @classmethod
+    def reapply_share(cls, engine: Engine, share_uri: str) -> bool:
+        """
+        1) Retrieves share data and items in PendingReApply health state
+        2) Calls sharing folders processor to re-apply share + update share item(s) health status
+        3) Calls sharing buckets processor to re-apply share + update share item(s) health status
+        4) Calls sharing tables processor for same or cross account sharing to re-apply share + update share item(s) health status
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        True if re-apply of share item(s) succeeds,
+        False if any re-apply of share item(s) failed
+        """
+        try:
+            with engine.scoped_session() as session:
+                share_data, share_items = cls.get_share_data_and_items(
+                    session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
+                )
+
+                log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+                # If principal role doesn't exist, all share items are unhealthy, no use of further checks
+                if not cls.verify_principal_role(session, share_data.share):
+                    return False
+
+                reapply_successful = True
+                lock_acquired = cls.acquire_lock_with_retry(
+                    share_data.dataset.datasetUri, session, share_data.share.shareUri
+                )
+                if not lock_acquired:
+                    log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}. Exiting...')
+                    error_message = (
+                        f'SHARING PROCESS TIMEOUT: Failed to acquire lock for dataset {share_data.dataset.datasetUri}'
+                    )
+                    for share_item in share_items:
+                        ShareObjectRepository.update_share_item_health_status(
+                            session, share_item, ShareItemHealthStatus.Unhealthy.value, error_message, datetime.now()
+                        )
+                    return False
+
+            for type, processor in cls._SHARING_PROCESSORS.items():
+                log.info(f'Reapplying permissions to {type}')
+                shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                    session,
+                    share_data.share,
+                    processor.shareable_type,
+                    processor.shareable_uri,
+                    None,
+                    ShareItemHealthStatus.PendingReApply.value,
+                )
+                log.info(f'Reapplying permissions with {type}')
+                share_manager = processor.Processor.initialize_share_managers(
+                    session=session, share_data=share_data, items=shareable_items, reapply=True
+                )
+                success = processor.Processor.proccess_approved_shares(share_manager)
+                log.info(f'Reapplying {type} succeeded = {success}')
+                if not success:
+                    reapply_successful = False
+
+            return reapply_successful
         except Exception as e:
             log.error(f'Error occurred during share approval: {e}')
             return False
 
         finally:
             with engine.scoped_session() as session:
-                lock_released = cls.release_lock(dataset.datasetUri, session, share.shareUri)
+                lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
                 if not lock_released:
-                    log.error(f'Failed to release lock for dataset {dataset.datasetUri}.')
+                    log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
 
-    @classmethod
-    def revoke_share(cls, engine: Engine, share_uri: str) -> bool:
-        # TODO
-        pass
-
-    @classmethod
-    def verify_share(cls, engine: Engine, share_uri: str, status: str, healthStatus) -> bool:
-        # TODO
-        pass
-
-    @classmethod
-    def reapply_share(cls, engine: Engine, share_uri: str) -> bool:
-        # TODO
-        pass
+    @staticmethod
+    def get_share_data_and_items(session, share_uri, status, healthStatus=None):
+        data = ShareObjectRepository.get_share_data(session, share_uri)
+        share_data = ShareData(
+            share=data[0],
+            dataset=data[1],
+            source_environment=data[2],
+            target_environment=data[3],
+            source_env_group=data[4],
+            env_group=data[5],
+        )
+        share_items = ShareObjectRepository.get_all_share_items_in_share(
+            session=session, share_uri=share_uri, status=status, healthStatus=healthStatus
+        )
+        return share_data, share_items
 
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:

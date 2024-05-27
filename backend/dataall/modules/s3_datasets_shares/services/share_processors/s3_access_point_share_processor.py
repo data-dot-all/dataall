@@ -5,16 +5,17 @@ from typing import List
 from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
 )
-
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface
+from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
 
 
 log = logging.getLogger(__name__)
@@ -23,19 +24,17 @@ log = logging.getLogger(__name__)
 class ProcessS3AccessPointShare(SharesProcessorInterface):
     @staticmethod
     def initialize_share_managers(
-        session, dataset, share, items, source_environment, target_environment, env_group, reapply=False
+        session, share_data: ShareData, items: List[DatasetStorageLocation], reapply: bool = False
     ) -> List[S3AccessPointShareManager]:
         managers = []
         for folder in items:
             managers.append(
-                S3AccessPointShareManager(
-                    session, dataset, share, folder, source_environment, target_environment, env_group, reapply
-                )
+                S3AccessPointShareManager(session=session, share_data=share_data, target_folder=folder, reapply=reapply)
             )
         return managers
 
     @staticmethod
-    def process_approved_shares(share_manager: List[S3AccessPointShareManager]) -> bool:
+    def process_approved_shares(share_managers: List[S3AccessPointShareManager]) -> bool:
         """
         1) update_share_item_status with Start action
         2) (one time only) manage_bucket_policy - grants permission in the bucket policy
@@ -50,7 +49,9 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         """
         log.info('##### Starting Sharing folders #######')
         success = True
-        for manager in share_manager:
+        if not share_managers:
+            log.info('No Folders to share. Skipping...')
+        for manager in share_managers:
             log.info(f'sharing folder: {manager.target_folder}')
             sharing_item = ShareObjectRepository.find_sharable_item(
                 manager.session,
@@ -81,6 +82,14 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 ShareObjectRepository.update_share_item_health_status(
                     manager.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
+                if (
+                    manager.share.groupUri != manager.dataset.SamlAdminGroupName
+                    and manager.share.groupUri != manager.dataset.stewards
+                ):
+                    log.info('Deleting FOLDER READ permissions...')
+                    ShareItemService.delete_dataset_folder_read_permission(
+                        manager.session, manager.share, manager.target_folder
+                    )
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
@@ -137,6 +146,14 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 ShareObjectRepository.update_share_item_health_status(
                     manager.session, removing_item, None, None, removing_item.lastVerificationTime
                 )
+                if (
+                    manager.share.groupUri != manager.dataset.SamlAdminGroupName
+                    and manager.share.groupUri != manager.dataset.stewards
+                ):
+                    log.info('Deleting FOLDER READ permissions...')
+                    ShareItemService.delete_dataset_folder_read_permission(
+                        manager.session, manager.share, manager.target_folder
+                    )
 
             except Exception as e:
                 # must run first to ensure state transitions to failed

@@ -11,9 +11,10 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
 )
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface
+from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
 
 
 log = logging.getLogger(__name__)
@@ -22,14 +23,12 @@ log = logging.getLogger(__name__)
 class ProcessS3BucketShare(SharesProcessorInterface):
     @staticmethod
     def initialize_share_managers(
-        session, dataset, share, items, source_environment, target_environment, env_group, reapply
+        session, share_data: ShareData, items: List[DatasetBucket], reapply: bool = False
     ) -> List[S3BucketShareManager]:
         managers = []
         for bucket in items:
             managers.append(
-                S3BucketShareManager(
-                    session, dataset, share, bucket, source_environment, target_environment, env_group, reapply
-                )
+                S3BucketShareManager(session=session, share_data=share_data, target_bucket=bucket, reapply=reapply)
             )
         return managers
 
@@ -48,6 +47,8 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         """
         log.info('##### Starting S3 bucket share #######')
         success = True
+        if not share_managers:
+            log.info('No Buckets to share. Skipping...')
         for manager in share_managers:
             sharing_item = ShareObjectRepository.find_sharable_item(
                 manager.session,

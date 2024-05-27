@@ -49,7 +49,7 @@ class ShareObjectRepository:
         session.commit()
 
     @staticmethod
-    def list_all_active_share_objects(session) -> [ShareObject]: ## TODO: Already in shares_base
+    def list_all_active_share_objects(session) -> [ShareObject]:  ## TODO: Already in shares_base
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
@@ -172,7 +172,7 @@ class ShareObjectRepository:
         return False
 
     @staticmethod
-    def check_pending_share_items(session, uri):
+    def check_pending_share_items(session, uri):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         shared_items = (
             session.query(ShareObjectItem)
@@ -189,7 +189,7 @@ class ShareObjectRepository:
         return False
 
     @staticmethod
-    def get_share_item_by_uri(session, uri):
+    def get_share_item_by_uri(session, uri):  ## TODO: Already in shares_base
         share_item: ShareObjectItem = session.query(ShareObjectItem).get(uri)
         if not share_item:
             raise exceptions.ObjectNotFound('ShareObjectItem', uri)
@@ -455,7 +455,7 @@ class ShareObjectRepository:
         share_uri: str,
         old_status: str,
         new_status: str,
-    ) -> bool: ## TODO: Already in shares_base
+    ) -> bool:  ## TODO: Already in shares_base
         (
             session.query(ShareObjectItem)
             .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
