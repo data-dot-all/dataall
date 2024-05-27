@@ -2,7 +2,6 @@ import logging
 import time
 from datetime import datetime
 from warnings import warn
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient
@@ -18,16 +17,16 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
-from dataall.modules.shares_base.services.sharing_service import SharesManagerInterface, ShareData
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 
 
-class LFShareManager(SharesManagerInterface):
+class LFShareManager:
     def __init__(
         self,
         session,

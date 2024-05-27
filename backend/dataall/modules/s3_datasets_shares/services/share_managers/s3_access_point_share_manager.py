@@ -3,7 +3,6 @@ import json
 import time
 from itertools import count
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -19,7 +18,6 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.base.aws.iam import IAM
-from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
@@ -31,14 +29,14 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
-from dataall.modules.shares_base.services.sharing_service import SharesManagerInterface, ShareData
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
 ACCESS_POINT_CREATION_RETRIES = 5
 
 
-class S3AccessPointShareManager(SharesManagerInterface):
+class S3AccessPointShareManager:
     def __init__(
         self,
         session,

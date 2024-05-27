@@ -22,19 +22,18 @@ log = logging.getLogger(__name__)
 
 
 class ProcessS3AccessPointShare(SharesProcessorInterface):
-    @staticmethod
-    def initialize_share_managers(
-        session, share_data: ShareData, items: List[DatasetStorageLocation], reapply: bool = False
-    ) -> List[S3AccessPointShareManager]:
-        managers = []
-        for folder in items:
-            managers.append(
-                S3AccessPointShareManager(session=session, share_data=share_data, target_folder=folder, reapply=reapply)
-            )
-        return managers
+    def __init__(self, session, share_data, shareable_items, reapply=False):
+        self.session = session
+        self.share_data: ShareData = share_data
+        self.folders: List[DatasetStorageLocation] = shareable_items
+        self.reapply: bool = reapply
 
-    @staticmethod
-    def process_approved_shares(share_managers: List[S3AccessPointShareManager]) -> bool:
+    def _initialize_share_manager(self, folder):
+        return S3AccessPointShareManager(
+            session=self.session, share_data=self.share_data, target_folder=folder, reapply=self.reapply
+        )
+
+    def process_approved_shares(self) -> bool:
         """
         1) update_share_item_status with Start action
         2) (one time only) manage_bucket_policy - grants permission in the bucket policy
@@ -49,63 +48,61 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         """
         log.info('##### Starting Sharing folders #######')
         success = True
-        if not share_managers:
+        if not self.folders:
             log.info('No Folders to share. Skipping...')
-        for manager in share_managers:
-            log.info(f'sharing folder: {manager.target_folder}')
+        for folder in self.folders:
+            log.info(f'sharing folder: {folder}')
+            manager = self._initialize_share_manager(folder)
             sharing_item = ShareObjectRepository.find_sharable_item(
-                manager.session,
-                manager.share.shareUri,
-                manager.target_folder.locationUri,
+                self.session,
+                self.share_data.share.shareUri,
+                folder.locationUri,
             )
-            if not manager.reapply:
+            if not self.reapply:
                 shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
                 new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
-                shared_item_SM.update_state_single_item(manager.session, sharing_item, new_state)
+                shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
 
             try:
-                if not ShareObjectService.verify_principal_role(manager.session, manager.share):
+                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {manager.share.principalIAMRoleName} is not found. Failed to update bucket policy',
+                        f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update bucket policy',
                     )
 
                 manager.manage_bucket_policy()
                 manager.grant_target_role_access_policy()
                 manager.manage_access_point_and_policy()
-                if not manager.dataset.imported or manager.dataset.importedKmsKey:
+                if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                     manager.update_dataset_bucket_key_policy()
 
-                if not manager.reapply:
+                if not self.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
-                    shared_item_SM.update_state_single_item(manager.session, sharing_item, new_state)
+                    shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
                 ShareObjectRepository.update_share_item_health_status(
-                    manager.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                    self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
                 if (
-                    manager.share.groupUri != manager.dataset.SamlAdminGroupName
-                    and manager.share.groupUri != manager.dataset.stewards
+                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
                     log.info('Deleting FOLDER READ permissions...')
-                    ShareItemService.delete_dataset_folder_read_permission(
-                        manager.session, manager.share, manager.target_folder
-                    )
+                    ShareItemService.delete_dataset_folder_read_permission(self.session, self.share_data.share, folder)
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
                 if not manager.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
-                    shared_item_SM.update_state_single_item(manager.session, sharing_item, new_state)
+                    shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
                 else:
                     ShareObjectRepository.update_share_item_health_status(
-                        manager.session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                        self.session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                     )
                 success = False
                 manager.handle_share_failure(e)
         return success
 
-    @staticmethod
-    def process_revoked_shares(share_manager: List[S3AccessPointShareManager]) -> bool:
+    def process_revoked_shares(self) -> bool:
         """
         1) update_share_item_status with Start action
         2) delete_access_point_policy for folder
@@ -118,17 +115,18 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
 
         log.info('##### Starting Revoking folders #######')
         success = True
-        for manager in share_manager:
-            log.info(f'revoking access to folder: {manager.target_folder}')
+        for folder in self.folders:
+            log.info(f'revoking access to folder: {folder}')
+            manager = self._initialize_share_manager(folder)
             removing_item = ShareObjectRepository.find_sharable_item(
-                manager.session,
-                manager.share.shareUri,
-                manager.target_folder.locationUri,
+                self.session,
+                self.share_data.share.shareUri,
+                folder,
             )
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
-            revoked_item_SM.update_state_single_item(manager.session, removing_item, new_state)
+            revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
 
             try:
                 access_point_policy = manager.revoke_access_in_access_point_policy()
@@ -139,26 +137,24 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     log.info('Cleaning up folder share resources...')
                     manager.delete_access_point()
                     manager.revoke_target_role_access_policy()
-                    if not manager.dataset.imported or manager.dataset.importedKmsKey:
-                        manager.delete_dataset_bucket_key_policy(dataset=manager.dataset)
+                    if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
+                        manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
-                revoked_item_SM.update_state_single_item(manager.session, removing_item, new_state)
+                revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
                 ShareObjectRepository.update_share_item_health_status(
-                    manager.session, removing_item, None, None, removing_item.lastVerificationTime
+                    self.session, removing_item, None, None, removing_item.lastVerificationTime
                 )
                 if (
-                    manager.share.groupUri != manager.dataset.SamlAdminGroupName
-                    and manager.share.groupUri != manager.dataset.stewards
+                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
                     log.info('Deleting FOLDER READ permissions...')
-                    ShareItemService.delete_dataset_folder_read_permission(
-                        manager.session, manager.share, manager.target_folder
-                    )
+                    ShareItemService.delete_dataset_folder_read_permission(self.session, manager.share, folder)
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
-                revoked_item_SM.update_state_single_item(manager.session, removing_item, new_state)
+                revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
                 success = False
 
                 # statements which can throw exceptions but are not critical
@@ -166,14 +162,14 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
 
         return success
 
-    @staticmethod
-    def verify_shares(share_manager: List[S3AccessPointShareManager]) -> bool:
+    def verify_shares(self) -> bool:
         log.info('##### Verifying folders shares #######')
-        for manager in share_manager:
+        for folder in self.folders:
+            manager = self._initialize_share_manager(folder)
             sharing_item = ShareObjectRepository.find_sharable_item(
-                manager.session,
-                manager.share.shareUri,
-                manager.target_folder.locationUri,
+                self.session,
+                self.share_data.share.shareUri,
+                folder,
             )
 
             try:
@@ -181,14 +177,14 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 manager.check_target_role_access_policy()
                 manager.check_access_point_and_policy()
 
-                if not manager.dataset.imported or manager.dataset.importedKmsKey:
+                if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                     manager.check_dataset_bucket_key_policy()
             except Exception as e:
                 manager.folder_errors = [str(e)]
 
             if len(manager.folder_errors):
                 ShareObjectRepository.update_share_item_health_status(
-                    manager.session,
+                    self.session,
                     sharing_item,
                     ShareItemHealthStatus.Unhealthy.value,
                     ' | '.join(manager.folder_errors),
@@ -196,6 +192,6 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 )
             else:
                 ShareObjectRepository.update_share_item_health_status(
-                    manager.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                    self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
         return True

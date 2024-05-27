@@ -34,37 +34,19 @@ class ShareData:
     env_group: EnvironmentGroup
 
 
-class SharesManagerInterface(ABC):
-    @abstractmethod
-    def __init__(self, session, share_data: ShareData, *args, **kwargs):
-        """Ensures that the manager used is initalized with the parameters passed"""
-        ...
-
-
 class SharesProcessorInterface(ABC):
-    @staticmethod
     @abstractmethod
-    def initialize_share_managers(
-        session, share_data: ShareData, items: List[Any], reapply: bool
-    ) -> List[SharesManagerInterface]:
-        """Initializes the specific technology share manager that encapsulates all API calls for sharing"""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def process_approved_shares(share_managers: List[SharesManagerInterface]) -> bool:
+    def process_approved_shares(self) -> bool:
         """Executes a series of actions to share items using the share manager. Returns True if the sharing was successful"""
         ...
 
-    @staticmethod
     @abstractmethod
-    def process_revoked_shares(share_managers: List[SharesManagerInterface]) -> bool:
+    def process_revoked_shares(self) -> bool:
         """Executes a series of actions to revoke share items using the share manager. Returns True if the revoking was successful"""
         ...
 
-    @staticmethod
     @abstractmethod
-    def verify_shares(share_managers: List[SharesManagerInterface]) -> bool:
+    def verify_shares(self) -> bool:
         """Executes a series of actions to verify share items using the share manager. Returns True if the verifying was successful"""
         ...
 
@@ -137,10 +119,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                             processor.shareable_uri,
                             status=ShareItemStatus.Share_Approved.value,
                         )
-                        share_manager = processor.Processor.initialize_share_managers(
-                            session, share_data, shareable_items
-                        )
-                        success = processor.Processor.process_approved_shares(share_manager)
+                        success = processor.Processor(session, share_data, shareable_items).process_approved_shares()
                         log.info(f'Sharing {type} succeeded = {success}')
                         if not success:
                             share_successful = False
@@ -225,8 +204,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                         status=ShareItemStatus.Revoke_Approved.value,
                     )
                     log.info(f'Revoking permissions with {type}')
-                    share_manager = processor.Processor.initialize_share_managers(session, share_data, shareable_items)
-                    success = processor.Processor.process_revoked_shares(share_manager)
+                    success = processor.Processor(session, share_data, shareable_items).process_revoked_shares()
                     log.info(f'Revoking {type} succeeded = {success}')
                     if not success:
                         revoke_successful = False
@@ -288,8 +266,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                     healthStatus=healthStatus,
                 )
                 log.info(f'Verifying permissions with {type}')
-                share_manager = processor.Processor.initialize_share_managers(session, share_data, shareable_items)
-                processor.Processor.verify_shares(share_manager)
+                processor.Processor(session, share_data, shareable_items).verify_shares()
 
         return True
 
@@ -348,10 +325,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                     ShareItemHealthStatus.PendingReApply.value,
                 )
                 log.info(f'Reapplying permissions with {type}')
-                share_manager = processor.Processor.initialize_share_managers(
-                    session=session, share_data=share_data, items=shareable_items, reapply=True
-                )
-                success = processor.Processor.proccess_approved_shares(share_manager)
+                success = processor.Processor(session, share_data, shareable_items).proccess_approved_shares()
                 log.info(f'Reapplying {type} succeeded = {success}')
                 if not success:
                     reapply_successful = False

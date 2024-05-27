@@ -4,7 +4,7 @@ from itertools import count
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.kms_client import (
     KmsClient,
@@ -22,14 +22,14 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.services.sharing_service import SharesManagerInterface, ShareData
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 
 
-class S3BucketShareManager(SharesManagerInterface):
+class S3BucketShareManager:
     def __init__(
         self,
         session,
