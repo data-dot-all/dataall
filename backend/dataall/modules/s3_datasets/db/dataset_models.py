@@ -136,3 +136,25 @@ class DatasetBucket(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.bucketUri
+
+class GlueDataQualityRule(Base):
+    __tablename__ = 'glue_data_quality_rule'
+    ruleUri = Column(String, primary_key=True, default=utils.uuid('dqrule')) #Instead of rule_id
+    name = Column(String, nullable=False) #rule_name
+    description = Column(String, nullable=False) #rule_desc
+    ruleSyntax = Column(String, nullable=False) #rule_syntax
+
+class GlueDataQualityRuleset(Base):
+    __tablename__ = 'glue_data_quality_ruleset'
+    rulesetUri = Column(String, primary_key=True, default=utils.uuid('dqruleset')) #Instead of ruleset_id
+    ruleUri = Column(String, ForeignKey('glue_data_quality_rule.ruleUri', ondelete='CASCADE'), nullable=False)
+    datasetUri = Column(String, nullable=False)  # data.all DATASET identifier - might be needed for application permissions
+    tableUri = Column(String, nullable=False) #data.all table identifier
+    GlueDatabaseName = Column(String, nullable=False)
+    GlueTableName = Column(String, nullable=False)
+
+class GlueDataQualityRulesetColumn(Base):
+    __tablename__ = 'glue_data_quality_ruleset_column'
+    uri = Column(String, primary_key=True, default=utils.uuid('dqrulesetcol'))
+    rulesetUri = Column(String, ForeignKey('glue_data_quality_ruleset.rulesetUri', ondelete='CASCADE'), nullable=False)
+    columnUri = Column(String, nullable=False) #data.all column identifier (from DatasetTableColumn)
