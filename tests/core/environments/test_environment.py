@@ -682,7 +682,7 @@ def test_external_group_invitation_and_deletion(db, client, env_fixture, org_fix
     with db.scoped_session() as session:
         org_policy = ResourcePolicyService.find_resource_policies(
             session=session,
-            group=not_in_org_group.name,
+            groups=[not_in_org_group.name],
             resource_uri=org_fixture.organizationUri,
             resource_type=Organization.__name__,
             permissions=[GET_ORGANIZATION],
@@ -711,7 +711,7 @@ def test_external_group_invitation_and_deletion(db, client, env_fixture, org_fix
     with db.scoped_session() as session:
         org_policy = ResourcePolicyService.find_resource_policies(
             session=session,
-            group=not_in_org_group.name,
+            groups=[not_in_org_group.name],
             resource_uri=org_fixture.organizationUri,
             resource_type=Organization.__name__,
             permissions=[GET_ORGANIZATION],

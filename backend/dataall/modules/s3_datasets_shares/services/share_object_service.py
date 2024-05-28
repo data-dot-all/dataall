@@ -535,7 +535,7 @@ class ShareObjectService:
         for table in share_table_items:
             existing_policy = ResourcePolicyService.find_resource_policies(
                 session,
-                group=share.groupUri,
+                groups=[share.groupUri],
                 resource_uri=table.itemUri,
                 resource_type=DatasetTable.__name__,
                 permissions=DATASET_TABLE_READ,
@@ -568,7 +568,7 @@ class ShareObjectService:
         for location in share_folder_items:
             existing_policy = ResourcePolicyService.find_resource_policies(
                 session,
-                group=share.groupUri,
+                groups=[share.groupUri],
                 resource_uri=location.itemUri,
                 resource_type=DatasetStorageLocation.__name__,
                 permissions=DATASET_FOLDER_READ,

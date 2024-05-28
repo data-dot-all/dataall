@@ -150,6 +150,16 @@ class OrganizationService:
                     session=session, uri=organization.organizationUri, groups=context.groups
                 ):
                     return OrganisationUserRole.Invited.value
+                else:
+                    permissions = ResourcePolicyService.find_resource_policies(
+                        session,
+                        groups=context.groups,
+                        resource_uri=organization.organizationUri,
+                        resource_type=models.Organization.__name__,
+                        permissions=[GET_ORGANIZATION],
+                    )
+                    if len(permissions) > 0:
+                        return OrganisationUserRole.Reader.value
         return OrganisationUserRole.NotMember.value
 
     @staticmethod

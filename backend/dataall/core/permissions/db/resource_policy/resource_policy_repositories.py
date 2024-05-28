@@ -108,9 +108,9 @@ class ResourcePolicyRepository:
 
     @staticmethod
     def find_all_resource_policies(
-        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
+        session, groups: [str], resource_uri: str, resource_type: str = None, permissions: List[str] = None
     ) -> List[ResourcePolicy]:
         resource_policy = ResourcePolicyRepository.query_all_resource_policies(
-            session, [group_uri], resource_uri, resource_type, permissions
+            session, groups, resource_uri, resource_type, permissions
         )
         return resource_policy.all()

@@ -5,5 +5,6 @@ class OrganisationUserRole(GraphQLEnumMapper):
     Owner = '999'
     Admin = '900'
     Member = '100'
+    Reader = '050'
     NotMember = '000'
     Invited = '800'

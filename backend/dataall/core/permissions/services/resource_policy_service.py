@@ -77,7 +77,7 @@ class ResourcePolicyService:
             return resource_policy
 
     @staticmethod
-    def find_resource_policies(session, group, resource_uri, resource_type, permissions: List[str] = None):
+    def find_resource_policies(session, groups, resource_uri, resource_type, permissions: List[str] = None):
         """
 
         :param session:
@@ -87,10 +87,10 @@ class ResourcePolicyService:
         :return: list: A list of ResourcePolicy objects matching the given criteria.
         """
         ResourcePolicyRequestValidationService.validate_find_or_delete_resource_policy_params(
-            group, resource_uri, resource_type
+            groups, resource_uri, resource_type
         )
         policies = ResourcePolicyRepository.find_all_resource_policies(
-            session, group_uri=group, resource_uri=resource_uri, resource_type=resource_type, permissions=permissions
+            session, groups=groups, resource_uri=resource_uri, resource_type=resource_type, permissions=permissions
         )
         return policies
 
@@ -109,7 +109,7 @@ class ResourcePolicyService:
         :param resource_type:
         :return:
         """
-        policies = ResourcePolicyService.find_resource_policies(session, group, resource_uri, resource_type)
+        policies = ResourcePolicyService.find_resource_policies(session, [group], resource_uri, resource_type)
         try:
             for policy in policies:
                 for permission in policy.permissions:

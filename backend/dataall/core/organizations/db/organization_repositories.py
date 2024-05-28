@@ -197,7 +197,7 @@ class OrganizationRepository:
         return groups
 
     @staticmethod
-    def find_organization_membership(session, uri, groups) -> int:
+    def find_organization_membership(session, uri, groups) -> bool:
         groups = (
             session.query(models.OrganizationGroup)
             .filter(
