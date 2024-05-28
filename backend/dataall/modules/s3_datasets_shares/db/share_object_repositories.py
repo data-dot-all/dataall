@@ -73,7 +73,7 @@ class ShareObjectRepository:
             return session.query(DatasetTable).get(item_uri)
         if item_type == ShareableType.StorageLocation.value:
             return session.query(DatasetStorageLocation).get(item_uri)
-        if item_type == ShareableType.S3Bucket.value:  # TODO:ShareableType.DatasetBucket.value:
+        if item_type == ShareableType.S3Bucket.value:
             return session.query(DatasetBucket).get(item_uri)
 
     @staticmethod
@@ -261,7 +261,7 @@ class ShareObjectRepository:
         s3_buckets = (
             session.query(
                 DatasetBucket.bucketUri.label('itemUri'),
-                func.coalesce('S3Bucket').label('itemType'),  # TODO ShareableType.DatasetBucket
+                func.coalesce('S3Bucket').label('itemType'),
                 DatasetBucket.S3BucketName.label('itemName'),
                 DatasetBucket.description.label('description'),
                 ShareObjectItem.shareItemUri.label('shareItemUri'),

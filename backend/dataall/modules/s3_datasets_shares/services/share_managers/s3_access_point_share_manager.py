@@ -42,9 +42,7 @@ class S3AccessPointShareManager:
         session,
         share_data: ShareData,
         target_folder: DatasetStorageLocation,
-        reapply: bool = False,
     ):
-        self.reapply = reapply
         self.session = session
         self.source_env_group = share_data.source_env_group
         self.env_group = share_data.env_group

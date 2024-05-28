@@ -68,7 +68,7 @@ class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
         log.info('CDK module data_sharing has been imported')
 
 
-class S3DatasetsSharesShareModuleInterface(ModuleInterface):
+class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
     """Implements ModuleInterface for data sharing"""
 
     @staticmethod
@@ -107,4 +107,4 @@ class S3DatasetsSharesShareModuleInterface(ModuleInterface):
             )
         )
 
-        log.info('Share module s3_data_sharing has been imported')
+        log.info('ECS Share module s3_data_sharing has been imported')

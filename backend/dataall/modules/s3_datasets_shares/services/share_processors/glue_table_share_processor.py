@@ -32,13 +32,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         self.reapply: bool = reapply
 
     def _initialize_share_manager(self, tables):
-        return LFShareManager(session=self.session, share_data=self.share_data, tables=tables, reapply=self.reapply)
-
-    @staticmethod
-    def initialize_share_managers(
-        session, share_data: ShareData, items: List[DatasetTable], reapply: bool = False
-    ) -> List[LFShareManager]:
-        return [LFShareManager(session=session, share_data=share_data, tables=items, reapply=reapply)]
+        return LFShareManager(session=self.session, share_data=self.share_data, tables=tables)
 
     def process_approved_shares(self) -> bool:
         """

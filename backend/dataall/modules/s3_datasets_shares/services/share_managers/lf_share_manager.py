@@ -32,9 +32,7 @@ class LFShareManager:
         session,
         share_data: ShareData,
         tables: [DatasetTable],
-        reapply: bool = False,
     ):
-        self.reapply = reapply
         self.session = session
         self.tables = tables
         self.env_group = share_data.env_group

@@ -24,16 +24,6 @@ MAX_RETRIES = 10
 RETRY_INTERVAL = 60
 
 
-@dataclass
-class ShareData:
-    share: ShareObject
-    dataset: Any
-    source_environment: Environment
-    target_environment: Environment
-    source_env_group: EnvironmentGroup
-    env_group: EnvironmentGroup
-
-
 class SharesProcessorInterface(ABC):
     @abstractmethod
     def process_approved_shares(self) -> bool:
@@ -59,7 +49,17 @@ class SharingProcessorDefinition:
     shareable_uri: Any
 
 
-class SharingService:  # Replaces DataSharingService, Still unused I just left it to explain the usage of the SharesProcessorInterface
+@dataclass
+class ShareData:
+    share: ShareObject
+    dataset: Any
+    source_environment: Environment
+    target_environment: Environment
+    source_env_group: EnvironmentGroup
+    env_group: EnvironmentGroup
+
+
+class SharingService:
     _SHARING_PROCESSORS: Dict[str, SharingProcessorDefinition] = {}
 
     @classmethod
@@ -85,7 +85,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         False if sharing fails
         """
         with engine.scoped_session() as session:
-            share_data, share_items = cls.get_share_data_and_items(
+            share_data, share_items = cls._get_share_data_and_items(
                 session, share_uri, ShareItemStatus.Share_Approved.value
             )
             try:
@@ -94,7 +94,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                 share_sm.update_state(session, share_data.share, new_share_state)
 
                 log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
-                share_successful = cls.verify_principal_role(session, share_data.share)
+                share_successful = cls._verify_principal_role(session, share_data.share)
                 # If principal role doesn't exist, all share items are unhealthy, no use of further checks
                 if share_successful:
                     lock_acquired = cls.acquire_lock_with_retry(
@@ -166,7 +166,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         """
         try:
             with engine.scoped_session() as session:
-                share_data, share_items = cls.get_share_data_and_items(
+                share_data, share_items = cls._get_share_data_and_items(
                     session, share_uri, ShareItemStatus.Revoke_Approved.value
                 )
 
@@ -242,11 +242,11 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         -------
         """
         with engine.scoped_session() as session:
-            share_data, share_items = cls.get_share_data_and_items(session, share_uri, status, healthStatus)
+            share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
 
             log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
             # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-            if not cls.verify_principal_role(session, share_data.share):
+            if not cls._verify_principal_role(session, share_data.share):
                 ShareObjectRepository.update_all_share_items_status(
                     session,
                     share_uri,
@@ -290,13 +290,13 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         """
         try:
             with engine.scoped_session() as session:
-                share_data, share_items = cls.get_share_data_and_items(
+                share_data, share_items = cls._get_share_data_and_items(
                     session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
                 )
 
                 log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
                 # If principal role doesn't exist, all share items are unhealthy, no use of further checks
-                if not cls.verify_principal_role(session, share_data.share):
+                if not cls._verify_principal_role(session, share_data.share):
                     return False
 
                 reapply_successful = True
@@ -342,7 +342,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
                     log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
 
     @staticmethod
-    def get_share_data_and_items(session, share_uri, status, healthStatus=None):
+    def _get_share_data_and_items(session, share_uri, status, healthStatus=None):
         data = ShareObjectRepository.get_share_data(session, share_uri)
         share_data = ShareData(
             share=data[0],
@@ -358,7 +358,7 @@ class SharingService:  # Replaces DataSharingService, Still unused I just left i
         return share_data, share_items
 
     @staticmethod
-    def verify_principal_role(session, share: ShareObject) -> bool:
+    def _verify_principal_role(session, share: ShareObject) -> bool:
         role_name = share.principalIAMRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)

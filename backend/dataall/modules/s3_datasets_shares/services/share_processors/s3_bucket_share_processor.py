@@ -29,7 +29,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
 
     def _initialize_share_manager(self, bucket):
         return S3BucketShareManager(
-            session=self.session, share_data=self.share_data, target_bucket=bucket, reapply=self.reapply
+            session=self.session, share_data=self.share_data, target_bucket=bucket
         )
 
     def process_approved_shares(self) -> bool:
