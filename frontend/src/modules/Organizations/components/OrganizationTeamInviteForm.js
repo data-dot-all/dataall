@@ -68,11 +68,13 @@ export const OrganizationTeamInviteForm = (props) => {
       setPermissions([
         {
           name: 'LINK_ENVIRONMENTS',
-          description: 'Link environments to this organization'
+          description: 'Link environments to this organization',
+          selected: true
         },
         {
           name: 'INVITE_ENVIRONMENT_GROUP',
-          description: 'Invite teams to this organization'
+          description: 'Invite teams to this organization',
+          selected: true
         }
       ]);
     } catch (e) {
@@ -98,7 +100,10 @@ export const OrganizationTeamInviteForm = (props) => {
       const response = await client.mutate(
         inviteGroupToOrganization({
           groupUri: values.groupUri,
-          organizationUri: organization.organizationUri
+          organizationUri: organization.organizationUri,
+          permissions: values.permissions
+            .filter((p) => p.selected)
+            .map((p) => p.name)
         })
       );
       if (!response.errors) {
@@ -166,7 +171,8 @@ export const OrganizationTeamInviteForm = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                groupUri: ''
+                groupUri: '',
+                permissions: permissions
               }}
               validationSchema={Yup.object().shape({
                 groupUri: Yup.string()
@@ -217,20 +223,22 @@ export const OrganizationTeamInviteForm = (props) => {
                       <CardHeader title="Organization Permissions" />
                       <Divider />
                       <CardContent sx={{ ml: 2 }}>
-                        {permissions.length > 0 ? (
-                          permissions.map((perm) => (
+                        {values.permissions.length > 0 ? (
+                          values.permissions.map((perm) => (
                             <Box>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
                                   control={
                                     <Switch
-                                      disabled
                                       defaultChecked
                                       color="primary"
                                       edge="start"
                                       name={perm.name}
                                       value={perm.name}
+                                      onChange={() => {
+                                        perm.selected = !perm.selected;
+                                      }}
                                     />
                                   }
                                   label={perm.description}
