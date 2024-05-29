@@ -14,7 +14,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
 
 

@@ -22,7 +22,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_state_machines import (
+from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )

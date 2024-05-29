@@ -17,7 +17,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
 )
-from dataall.modules.shares_base.db.share_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket

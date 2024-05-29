@@ -6,7 +6,7 @@ from sqlalchemy import and_
 from time import sleep
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.shares_base.db.share_state_machines import (
+from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
