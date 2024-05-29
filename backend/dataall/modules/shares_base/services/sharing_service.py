@@ -137,7 +137,14 @@ class SharingService:
                         ShareObjectRepository.update_share_item_status_batch(
                             session,
                             share_uri,
-                            old_status=[ShareItemStatus.Share_Approved.value, ShareItemStatus.Share_In_Progress],
+                            old_status=ShareItemStatus.Share_Approved.value,
+                            new_status=ShareItemStatus.Share_Failed.value,
+                            share_item_type=processor.type.value,
+                        )
+                        ShareObjectRepository.update_share_item_status_batch(
+                            session,
+                            share_uri,
+                            old_status=ShareItemStatus.Share_In_Progress.value,
                             new_status=ShareItemStatus.Share_Failed.value,
                             share_item_type=processor.type.value,
                         )
@@ -218,7 +225,14 @@ class SharingService:
                         ShareObjectRepository.update_share_item_status_batch(
                             session,
                             share_uri,
-                            old_status=[ShareItemStatus.Revoke_Approved.value, ShareItemStatus.Revoke_In_Progress],
+                            old_status=ShareItemStatus.Revoke_Approved.value,
+                            new_status=ShareItemStatus.Revoke_Failed.value,
+                            share_item_type=processor.type.value,
+                        )
+                        ShareObjectRepository.update_share_item_status_batch(
+                            session,
+                            share_uri,
+                            old_status=ShareItemStatus.Revoke_In_Progress.value,
                             new_status=ShareItemStatus.Revoke_Failed.value,
                             share_item_type=processor.type.value,
                         )

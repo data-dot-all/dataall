@@ -255,7 +255,7 @@ class ShareItemSM:
             else:
                 logger.info(f'Updating share items in DB from {self._state} to state {new_state}')
                 ShareObjectRepository.update_share_item_status_batch(
-                    session=session, share_uri=share_uri, old_status=[self._state], new_status=new_state
+                    session=session, share_uri=share_uri, old_status=self._state, new_status=new_state
                 )
             self._state = new_state
         else:

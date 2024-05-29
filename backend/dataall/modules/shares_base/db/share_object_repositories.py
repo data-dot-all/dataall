@@ -69,12 +69,12 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
     def update_share_item_status_batch(
         session,
         share_uri: str,
-        old_status: List[str],
+        old_status: str,
         new_status: str,
         share_item_type: ShareableType = None,
     ) -> bool:
         query = session.query(ShareObjectItem).filter(
-            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status.in_(old_status))
+            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status)
         )
         if share_item_type:
             query = query.filter(ShareObjectItem.shareableType == share_item_type.value)
