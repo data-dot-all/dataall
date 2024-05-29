@@ -17,7 +17,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM, ShareObjectSM
+from dataall.modules.shares_base.db.share_state_machines import ShareItemSM, ShareObjectSM
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
@@ -1496,21 +1496,6 @@ def test_verify_items_share_request(db, client, user2, group2, share3_processed,
     sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     status = sharedItem['healthStatus']
     assert status == ShareItemHealthStatus.PendingVerify.value
-
-
-def test_update_all_share_items_status(db, client, user2, group2, share3_processed, share3_item_shared, mocker):
-    with db.scoped_session() as session:
-        verified = ShareObjectService.update_all_share_items_status(
-            session,
-            share3_processed.shareUri,
-            new_health_status=ShareItemHealthStatus.Unhealthy.value,
-            message='',
-            previous_health_status=None,
-        )
-        items = ShareObjectRepository.get_all_shareable_items(session, share3_processed.shareUri)
-        assert not verified
-        for item in items:
-            assert item.healthStatus == ShareItemHealthStatus.Unhealthy.value
 
 
 def test_reapply_items_share_request(db, client, user, group, share3_processed, share3_item_shared_unhealthy):

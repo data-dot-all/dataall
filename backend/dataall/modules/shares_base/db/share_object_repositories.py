@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from sqlalchemy import and_
+from typing import List
 
 from dataall.base.db import exceptions
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -68,17 +69,20 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
     def update_share_item_status_batch(
         session,
         share_uri: str,
-        old_status: str,
+        old_status: List[str],
         new_status: str,
+        share_item_type: ShareableType = None,
     ) -> bool:
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status))
-            .update(
-                {
-                    ShareObjectItem.status: new_status,
-                }
-            )
+        query = session.query(ShareObjectItem).filter(
+            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status.in_(old_status))
+        )
+        if share_item_type:
+            query = query.filter(ShareObjectItem.shareableType == share_item_type.value)
+
+        query.update(
+            {
+                ShareObjectItem.status: new_status,
+            }
         )
         return True
 
@@ -227,21 +231,6 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
                 }
             )
         return True
-
-    @staticmethod
-    def update_all_share_items_status(
-        session, shareUri, new_health_status: str, message, previous_health_status: str = None
-    ):
-        for item in ShareObjectRepository.get_all_shareable_items(
-            session, shareUri, healthStatus=previous_health_status
-        ):
-            ShareObjectRepository.update_share_item_health_status(
-                session,
-                share_item=item,
-                healthStatus=new_health_status,
-                healthMessage=message,
-                timestamp=datetime.now(),
-            )
 
     @staticmethod
     def check_pending_share_items(session, uri):

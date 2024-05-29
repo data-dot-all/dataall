@@ -6,7 +6,7 @@ from dataall.base.db import exceptions
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository

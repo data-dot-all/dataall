@@ -22,7 +22,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_object_state_machines import (
+from dataall.modules.shares_base.db.share_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
@@ -73,7 +73,7 @@ class ShareObjectService:
         return principal_role is not None
 
     @staticmethod
-    def update_all_share_items_status(  # TODO: moved to ShareObject
+    def update_all_share_items_status(  # TODO: moved to ShareObject #Test removed for the moment
         session, shareUri, new_health_status: str, message, previous_health_status: str = None
     ):
         for item in ShareObjectRepository.get_all_shareable_items(

@@ -13,7 +13,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
 
 
@@ -53,7 +53,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update KMS key policy',
             )
         for bucket in self.buckets:
-            log.info(f'Sharing bucket {bucket.bucketUri}/{bucket.bucketName} ')
+            log.info(f'Sharing bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
             manager = self._initialize_share_manager(bucket)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
@@ -109,7 +109,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not self.buckets:
             log.info('No Buckets to revoke. Skipping...')
         for bucket in self.buckets:
-            log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.bucketName} ')
+            log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
             manager = self._initialize_share_manager(bucket)
             removing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
@@ -153,7 +153,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not self.buckets:
             log.info('No Buckets to verify. Skipping...')
         for bucket in self.buckets:
-            log.info(f'Verifying access to bucket {bucket.bucketUri}/{bucket.bucketName} ')
+            log.info(f'Verifying access to bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
             manager = self._initialize_share_manager(bucket)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,

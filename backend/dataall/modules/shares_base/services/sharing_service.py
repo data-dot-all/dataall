@@ -5,10 +5,8 @@ from abc import ABC, abstractmethod
 from sqlalchemy import and_
 from time import sleep
 from dataall.base.db import Engine
-from dataall.base.aws.iam import IAM
-from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.shares_base.db.share_object_state_machines import (
+from dataall.modules.shares_base.db.share_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
@@ -17,12 +15,17 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
     ShareItemStatus,
+    ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.services.share_object_service import (
     ShareObjectService,
-)  # TODO move to shares_base
+)  # TODO move to shares_base in following PR
+from dataall.modules.s3_datasets_shares.services.share_exceptions import (
+    PrincipalRoleNotFound,
+    DatasetLockTimeout,
+)  # TODO move to shares_base in following PR
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
 log = logging.getLogger(__name__)
@@ -50,7 +53,7 @@ class SharesProcessorInterface(ABC):
 
 @dataclass
 class SharingProcessorDefinition:
-    name: str
+    type: ShareableType
     Processor: Any
     shareable_type: Any
     shareable_uri: Any
@@ -67,11 +70,11 @@ class ShareData:
 
 
 class SharingService:
-    _SHARING_PROCESSORS: Dict[str, SharingProcessorDefinition] = {}
+    _SHARING_PROCESSORS: Dict[ShareableType, SharingProcessorDefinition] = {}
 
     @classmethod
     def register_processor(cls, processor: SharingProcessorDefinition) -> None:
-        cls._SHARING_PROCESSORS[processor.name] = processor
+        cls._SHARING_PROCESSORS[processor.type] = processor
 
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
@@ -103,25 +106,21 @@ class SharingService:
             log.info(f'Starting share {share_data.share.shareUri}')
             new_share_state = share_object_sm.run_transition(ShareObjectActions.Start.value)
             share_object_sm.update_state(session, share_data.share, new_share_state)
+            share_successful = True
             try:
-                log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
-                share_successful = ShareObjectService.verify_principal_role(session, share_data.share)
-                if not share_successful:
-                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, exiting...')
-                    new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
-                    share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                    return False
-                else:
-                    lock_acquired = cls.acquire_lock_with_retry(
-                        share_data.dataset.datasetUri, session, share_data.share.shareUri
+                if not ShareObjectService.verify_principal_role(session, share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
                     )
-                    if not lock_acquired:
-                        log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}, exiting...')
-                        new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
-                        share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                        return False
-                    for type, processor in cls._SHARING_PROCESSORS.items():
-                        log.info(f'Granting permissions of {type}')
+                if not cls.acquire_lock_with_retry(share_data.dataset.datasetUri, session, share_data.share.shareUri):
+                    raise DatasetLockTimeout(
+                        'process approved shares',
+                        f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
+                    )
+                for type, processor in cls._SHARING_PROCESSORS.items():
+                    try:
+                        log.info(f'Granting permissions of {type.value}')
                         shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                             session,
                             share_data.share,
@@ -130,9 +129,19 @@ class SharingService:
                             status=ShareItemStatus.Share_Approved.value,
                         )
                         success = processor.Processor(session, share_data, shareable_items).process_approved_shares()
-                        log.info(f'Sharing {type} succeeded = {success}')
+                        log.info(f'Sharing {type.value} succeeded = {success}')
                         if not success:
                             share_successful = False
+                    except Exception as e:
+                        log.error(f'Error occurred during sharing of {type.value}: {e}')
+                        ShareObjectRepository.update_share_item_status_batch(
+                            session,
+                            share_uri,
+                            old_status=[ShareItemStatus.Share_Approved.value, ShareItemStatus.Share_In_Progress],
+                            new_status=ShareItemStatus.Share_Failed.value,
+                            share_item_type=processor.type.value,
+                        )
+                        share_successful = False
                 return share_successful
 
             except Exception as e:
@@ -179,28 +188,40 @@ class SharingService:
             new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
             share_sm.update_state(session, share_data.share, new_share_state)
             try:
-                lock_acquired = cls.acquire_lock_with_retry(
-                    share_data.dataset.datasetUri, session, share_data.share.shareUri
-                )
-                revoke_successful = True
-                if not lock_acquired:
-                    log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}, exiting...')
-                    new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
-                    share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                    return False
+                if not ShareObjectService.verify_principal_role(session, share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process revoked shares',
+                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
+                    )
+                if not cls.acquire_lock_with_retry(share_data.dataset.datasetUri, session, share_data.share.shareUri):
+                    raise DatasetLockTimeout(
+                        'process revoked shares',
+                        f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
+                    )
 
                 for type, processor in cls._SHARING_PROCESSORS.items():
-                    shareable_items = ShareObjectRepository.get_share_data_items_by_type(
-                        session,
-                        share_data.share,
-                        processor.shareable_type,
-                        processor.shareable_uri,
-                        status=ShareItemStatus.Revoke_Approved.value,
-                    )
-                    log.info(f'Revoking permissions with {type}')
-                    success = processor.Processor(session, share_data, shareable_items).process_revoked_shares()
-                    log.info(f'Revoking {type} succeeded = {success}')
-                    if not success:
+                    try:
+                        shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                            session,
+                            share_data.share,
+                            processor.shareable_type,
+                            processor.shareable_uri,
+                            status=ShareItemStatus.Revoke_Approved.value,
+                        )
+                        log.info(f'Revoking permissions with {type.value}')
+                        success = processor.Processor(session, share_data, shareable_items).process_revoked_shares()
+                        log.info(f'Revoking {type.value} succeeded = {success}')
+                        if not success:
+                            revoke_successful = False
+                    except Exception as e:
+                        log.error(f'Error occurred during share revoking of {type.value}: {e}')
+                        ShareObjectRepository.update_share_item_status_batch(
+                            session,
+                            share_uri,
+                            old_status=[ShareItemStatus.Revoke_Approved.value, ShareItemStatus.Revoke_In_Progress],
+                            new_status=ShareItemStatus.Revoke_Failed.value,
+                            share_item_type=processor.type.value,
+                        )
                         revoke_successful = False
 
                 return revoke_successful
@@ -254,16 +275,19 @@ class SharingService:
                 return True
 
             for type, processor in cls._SHARING_PROCESSORS.items():
-                shareable_items = ShareObjectRepository.get_share_data_items_by_type(
-                    session,
-                    share_data.share,
-                    processor.shareable_type,
-                    processor.shareable_uri,
-                    status=status,
-                    healthStatus=healthStatus,
-                )
-                log.info(f'Verifying permissions with {type}')
-                processor.Processor(session, share_data, shareable_items).verify_shares()
+                try:
+                    shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                        session,
+                        share_data.share,
+                        processor.shareable_type,
+                        processor.shareable_uri,
+                        status=status,
+                        healthStatus=healthStatus,
+                    )
+                    log.info(f'Verifying permissions with {type.value}')
+                    processor.Processor(session, share_data, shareable_items).verify_shares()
+                except Exception as e:
+                    log.error(f'Error occurred during share verifying of {type.value}: {e}')
 
         return True
 
@@ -312,20 +336,26 @@ class SharingService:
                         return False
 
                     for type, processor in cls._SHARING_PROCESSORS.items():
-                        log.info(f'Reapplying permissions to {type}')
-                        shareable_items = ShareObjectRepository.get_share_data_items_by_type(
-                            session,
-                            share_data.share,
-                            processor.shareable_type,
-                            processor.shareable_uri,
-                            None,
-                            ShareItemHealthStatus.PendingReApply.value,
-                        )
-                        log.info(f'Reapplying permissions with {type}')
-                        success = processor.Processor(session, share_data, shareable_items).proccess_approved_shares()
-                        log.info(f'Reapplying {type} succeeded = {success}')
-                        if not success:
-                            reapply_successful = False
+                        try:
+                            log.info(f'Reapplying permissions to {type.value}')
+                            shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                                session,
+                                share_data.share,
+                                processor.shareable_type,
+                                processor.shareable_uri,
+                                None,
+                                ShareItemHealthStatus.PendingReApply.value,
+                            )
+                            log.info(f'Reapplying permissions with {type.value}')
+                            success = processor.Processor(
+                                session, share_data, shareable_items
+                            ).proccess_approved_shares()
+                            log.info(f'Reapplying {type.value} succeeded = {success}')
+                            if not success:
+                                reapply_successful = False
+                        except Exception as e:
+                            log.error(f'Error occurred during share reapplying of {type.value}: {e}')
+
                 return reapply_successful
             except Exception as e:
                 log.error(f'Error occurred during share approval: {e}')
