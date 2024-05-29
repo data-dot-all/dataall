@@ -29,9 +29,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         self.reapply: bool = reapply
 
     def _initialize_share_manager(self, folder):
-        return S3AccessPointShareManager(
-            session=self.session, share_data=self.share_data, target_folder=folder
-        )
+        return S3AccessPointShareManager(session=self.session, share_data=self.share_data, target_folder=folder)
 
     def process_approved_shares(self) -> bool:
         """
