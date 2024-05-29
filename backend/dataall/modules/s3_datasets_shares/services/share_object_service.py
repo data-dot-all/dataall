@@ -65,7 +65,8 @@ class ShareObjectService:
             return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
 
     @staticmethod
-    def verify_principal_role(session, share: ShareObject) -> bool:  # TODO: moved to shares_base sharing_service
+    def verify_principal_role(session, share: ShareObject) -> bool:
+        log.info('Verifying principal IAM role...')
         role_name = share.principalIAMRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)

@@ -49,7 +49,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         if not self.folders:
             log.info('No Folders to share. Skipping...')
         for folder in self.folders:
-            log.info(f'sharing folder: {folder}')
+            log.info(f'Sharing folder {folder.locationUri}/{folder.name}')
             manager = self._initialize_share_manager(folder)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
@@ -74,7 +74,9 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.update_dataset_bucket_key_policy()
 
                 log.info('Attaching FOLDER READ permissions...')
-                ShareItemService.attach_dataset_folder_read_permission(self.session, self.share_data.share, folder)
+                ShareItemService.attach_dataset_folder_read_permission(
+                    self.session, self.share_data.share, folder.locationUri
+                )
 
                 if not self.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
@@ -112,12 +114,12 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         if not self.folders:
             log.info('No Folders to revoke. Skipping...')
         for folder in self.folders:
-            log.info(f'revoking access to folder: {folder}')
+            log.info(f'Revoking access to folder {folder.locationUri}/{folder.name}')
             manager = self._initialize_share_manager(folder)
             removing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
                 self.share_data.share.shareUri,
-                folder,
+                folder.locationUri,
             )
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
@@ -140,8 +142,10 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
                     and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
-                    log.info('Deleting FOLDER READ permissions...')
-                    ShareItemService.delete_dataset_folder_read_permission(self.session, manager.share, folder)
+                    log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
+                    ShareItemService.delete_dataset_folder_read_permission(
+                        self.session, manager.share, folder.locationUri
+                    )
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
@@ -165,6 +169,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
         if not self.folders:
             log.info('No Folders to verify. Skipping...')
         for folder in self.folders:
+            log.info(f'Verifying access to folder {folder.locationUri}/{folder.name}')
             manager = self._initialize_share_manager(folder)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,

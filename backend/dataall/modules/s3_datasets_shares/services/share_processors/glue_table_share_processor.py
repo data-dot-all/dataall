@@ -64,7 +64,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         else:
             manager = self._initialize_share_manager(self.tables)
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share.share):
+                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
                         f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update LF policy',
@@ -94,7 +94,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 return False
 
             for table in self.tables:
-                log.info(f'Sharing table {table.GlueTableName}...')
+                log.info(f'Sharing table {table.tableUri}/{table.GlueTableName}...')
 
                 share_item = ShareObjectRepository.find_sharable_item(
                     self.session, self.share_data.share.shareUri, table.tableUri
@@ -144,7 +144,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.grant_principals_permissions_to_resource_link_table(table)
 
                     log.info('Attaching TABLE READ permissions...')
-                    ShareItemService.attach_dataset_table_read_permission(self.session, self.share_data.share, table)
+                    ShareItemService.attach_dataset_table_read_permission(
+                        self.session, self.share_data.share, table.tableUri
+                    )
 
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
@@ -215,6 +217,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 return False
 
             for table in self.tables:
+                log.info(f'Revoking access to table {table.tableUri}/{table.GlueTableName}...')
                 share_item = ShareObjectRepository.find_sharable_item(
                     self.session, self.share_data.share.shareUri, table.tableUri
                 )
@@ -264,7 +267,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     ):
                         log.info('Deleting TABLE READ permissions...')
                         ShareItemService.delete_dataset_table_read_permission(
-                            self.session, self.share_data.share, table
+                            self.session, self.share_data.share, table.tableUri
                         )
 
                     new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
@@ -361,6 +364,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 manager.db_level_errors = [str(e)]
 
             for table in self.tables:
+                log.info(f'Verifying access to table {table.tableUri}/{table.GlueTableName}...')
                 try:
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share_data.share.shareUri, table.tableUri

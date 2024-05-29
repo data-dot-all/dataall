@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Any, Dict
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -21,6 +20,9 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.services.share_object_service import (
+    ShareObjectService,
+)  # TODO move to shares_base
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
 log = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class SharingService:
             share_object_sm.update_state(session, share_data.share, new_share_state)
             try:
                 log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
-                share_successful = cls._verify_principal_role(session, share_data.share)
+                share_successful = ShareObjectService.verify_principal_role(session, share_data.share)
                 if not share_successful:
                     log.error(f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, exiting...')
                     new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
@@ -238,7 +240,7 @@ class SharingService:
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
 
             log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
-            if not cls._verify_principal_role(session, share_data.share):
+            if not ShareObjectService.verify_principal_role(session, share_data.share):
                 log.error(
                     f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, updating health status...'
                 )
@@ -247,7 +249,7 @@ class SharingService:
                     share_uri,
                     old_status=healthStatus,
                     new_status=ShareItemHealthStatus.Unhealthy.value,
-                    message=f'Share principal Role {share_data.share.principalIAMRoleName} not found.',
+                    message=f'Share principal Role {share_data.share.principalIAMRoleName} not found. Check the team or consumption IAM role used.',
                 )
                 return True
 
@@ -289,7 +291,7 @@ class SharingService:
             )
             try:
                 log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
-                reapply_successful = cls._verify_principal_role(session, share_data.share)
+                reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
                 if not reapply_successful:
                     log.error(f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, exiting...')
                     return False
@@ -350,13 +352,6 @@ class SharingService:
             session=session, share_uri=share_uri, status=status, healthStatus=healthStatus
         )
         return share_data, share_items
-
-    @staticmethod
-    def _verify_principal_role(session, share: ShareObject) -> bool:
-        role_name = share.principalIAMRoleName
-        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
-        return principal_role is not None
 
     @staticmethod
     def acquire_lock(dataset_uri, session, share_uri):

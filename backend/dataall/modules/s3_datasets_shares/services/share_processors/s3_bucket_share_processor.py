@@ -46,8 +46,14 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         success = True
         if not self.buckets:
             log.info('No Buckets to share. Skipping...')
+            return success
+        if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
+            raise PrincipalRoleNotFound(
+                'process approved shares',
+                f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update KMS key policy',
+            )
         for bucket in self.buckets:
-            log.info(f'sharing bucket: {bucket}')
+            log.info(f'Sharing bucket {bucket.bucketUri}/{bucket.bucketName} ')
             manager = self._initialize_share_manager(bucket)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
@@ -60,11 +66,6 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
 
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
-                    raise PrincipalRoleNotFound(
-                        'process approved shares',
-                        f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update KMS key policy',
-                    )
                 manager.grant_role_bucket_policy()
                 manager.grant_s3_iam_access()
                 if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
@@ -108,7 +109,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not self.buckets:
             log.info('No Buckets to revoke. Skipping...')
         for bucket in self.buckets:
-            log.info(f'revoking bucket: {bucket}')
+            log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.bucketName} ')
             manager = self._initialize_share_manager(bucket)
             removing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
@@ -152,6 +153,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not self.buckets:
             log.info('No Buckets to verify. Skipping...')
         for bucket in self.buckets:
+            log.info(f'Verifying access to bucket {bucket.bucketUri}/{bucket.bucketName} ')
             manager = self._initialize_share_manager(bucket)
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
