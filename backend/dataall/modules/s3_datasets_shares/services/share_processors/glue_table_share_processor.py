@@ -142,13 +142,16 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.check_if_exists_and_create_resource_link_table_in_shared_database(table)
                     manager.grant_principals_permissions_to_table_in_target(table)
                     manager.grant_principals_permissions_to_resource_link_table(table)
+
+                    log.info('Attaching TABLE READ permissions...')
+                    ShareItemService.attach_dataset_table_read_permission(self.session, self.share_data.share, table)
+
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     ShareObjectRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
-                    ShareItemService.attach_dataset_table_read_permission(self.session, self.share_data.share, table)
                 except Exception as e:
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
@@ -255,12 +258,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     if not other_table_shares_in_env:
                         manager.revoke_external_account_access_on_source_account(table)
 
-                    new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
-                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-
-                    ShareObjectRepository.update_share_item_health_status(
-                        self.session, share_item, None, None, share_item.lastVerificationTime
-                    )
                     if (
                         self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
                         and self.share_data.share.groupUri != self.share_data.dataset.stewards
@@ -269,6 +266,13 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         ShareItemService.delete_dataset_table_read_permission(
                             self.session, self.share_data.share, table
                         )
+
+                    new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
+                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+                    ShareObjectRepository.update_share_item_health_status(
+                        self.session, share_item, None, None, share_item.lastVerificationTime
+                    )
 
                 except Exception as e:
                     new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)

@@ -60,7 +60,6 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
                 new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
                 shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
-
             try:
                 if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
@@ -74,22 +73,19 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                     manager.update_dataset_bucket_key_policy()
 
+                log.info('Attaching FOLDER READ permissions...')
+                ShareItemService.attach_dataset_folder_read_permission(self.session, self.share_data.share, folder)
+
                 if not self.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
                 ShareObjectRepository.update_share_item_health_status(
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
-                if (
-                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
-                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
-                ):
-                    log.info('Deleting FOLDER READ permissions...')
-                    ShareItemService.delete_dataset_folder_read_permission(self.session, self.share_data.share, folder)
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
-                if not manager.reapply:
+                if not self.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
                 else:
@@ -139,17 +135,19 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.revoke_target_role_access_policy()
                     if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                         manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
-                new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
-                revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
-                ShareObjectRepository.update_share_item_health_status(
-                    self.session, removing_item, None, None, removing_item.lastVerificationTime
-                )
+
                 if (
                     self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
                     and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
                     log.info('Deleting FOLDER READ permissions...')
                     ShareItemService.delete_dataset_folder_read_permission(self.session, manager.share, folder)
+
+                new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
+                revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
+                ShareObjectRepository.update_share_item_health_status(
+                    self.session, removing_item, None, None, removing_item.lastVerificationTime
+                )
 
             except Exception as e:
                 # must run first to ensure state transitions to failed
