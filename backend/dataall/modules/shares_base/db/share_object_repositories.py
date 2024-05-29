@@ -138,7 +138,7 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
 
     @staticmethod
     def get_share_data_items_by_type(session, share, share_type_model, share_type_uri, status=None, healthStatus=None):
-        logger.info(f'Getting share items for share {share_type_model}')
+        logger.info(f'Getting share items {status=}, {healthStatus=} for {share_type_model=} with {share_type_uri=}')
         query = (
             session.query(share_type_model)
             .join(
@@ -206,17 +206,42 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
         share_uri: str,
         old_status: str,
         new_status: str,
+        message: str = None,
     ) -> bool:
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
-            .update(
+        query = session.query(ShareObjectItem).filter(
+            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status)
+        )
+
+        if message:
+            query.update(
+                {
+                    ShareObjectItem.healthStatus: new_status,
+                    ShareObjectItem.healthMessage: message,
+                    ShareObjectItem.lastVerificationTime: datetime.now(),
+                }
+            )
+        else:
+            query.update(
                 {
                     ShareObjectItem.healthStatus: new_status,
                 }
             )
-        )
         return True
+
+    @staticmethod
+    def update_all_share_items_status(
+        session, shareUri, new_health_status: str, message, previous_health_status: str = None
+    ):
+        for item in ShareObjectRepository.get_all_shareable_items(
+            session, shareUri, healthStatus=previous_health_status
+        ):
+            ShareObjectRepository.update_share_item_health_status(
+                session,
+                share_item=item,
+                healthStatus=new_health_status,
+                healthMessage=message,
+                timestamp=datetime.now(),
+            )
 
     @staticmethod
     def check_pending_share_items(session, uri):
@@ -234,18 +259,3 @@ class ShareObjectRepository:  # TODO: Slowly moving db models and repositories t
         if shared_items:
             return True
         return False
-
-    @staticmethod
-    def update_all_share_items_status(
-        session, shareUri, new_health_status: str, message, previous_health_status: str = None
-    ):
-        for item in ShareObjectRepository.get_all_shareable_items(
-            session, shareUri, healthStatus=previous_health_status
-        ):
-            ShareObjectRepository.update_share_item_health_status(
-                session,
-                share_item=item,
-                healthStatus=new_health_status,
-                healthMessage=message,
-                timestamp=datetime.now(),
-            )

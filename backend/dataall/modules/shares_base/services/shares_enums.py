@@ -57,7 +57,6 @@ class ShareObjectActions(GraphQLEnumMapper):
     Finish = 'Finish'
     FinishPending = 'FinishPending'
     Delete = 'Delete'
-    AcquireLockFailure = 'AcquireLockFailure'
 
 
 class ShareItemActions(GraphQLEnumMapper):

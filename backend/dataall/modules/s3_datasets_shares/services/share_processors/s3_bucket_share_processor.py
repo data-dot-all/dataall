@@ -105,6 +105,8 @@ class ProcessS3BucketShare(SharesProcessorInterface):
 
         log.info('##### Starting Revoking S3 bucket share #######')
         success = True
+        if not self.buckets:
+            log.info('No Buckets to revoke. Skipping...')
         for bucket in self.buckets:
             log.info(f'revoking bucket: {bucket}')
             manager = self._initialize_share_manager(bucket)
@@ -147,6 +149,8 @@ class ProcessS3BucketShare(SharesProcessorInterface):
 
     def verify_shares(self) -> bool:
         log.info('##### Verifying S3 bucket share #######')
+        if not self.buckets:
+            log.info('No Buckets to verify. Skipping...')
         for bucket in self.buckets:
             manager = self._initialize_share_manager(bucket)
             sharing_item = ShareObjectRepository.find_sharable_item(

@@ -190,135 +190,146 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         log.info('##### Starting Revoking tables #######')
         success = True
         manager = self._initialize_share_manager(self.tables)
-        try:
-            if None in [
-                manager.source_account_id,
-                manager.source_account_region,
-                manager.source_database_name,
-            ]:
-                raise Exception(
-                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+        if not self.tables:
+            log.info('No tables to revoke. Skipping...')
+        else:
+            try:
+                if None in [
+                    manager.source_account_id,
+                    manager.source_account_region,
+                    manager.source_database_name,
+                ]:
+                    raise Exception(
+                        'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                    )
+                manager.initialize_clients()
+                manager.grant_pivot_role_all_database_permissions_to_shared_database()
+            except Exception as e:
+                log.error(f'Failed to process revoked tables due to {e}')
+                manager.handle_share_failure_for_all_tables(
+                    tables=self.tables, error=e, share_item_status=ShareItemStatus.Revoke_Approved.value
                 )
-            manager.initialize_clients()
-            manager.grant_pivot_role_all_database_permissions_to_shared_database()
-        except Exception as e:
-            log.error(f'Failed to process revoked tables due to {e}')
-            manager.handle_share_failure_for_all_tables(
-                tables=self.tables, error=e, share_item_status=ShareItemStatus.Revoke_Approved.value
-            )
-            return False
+                return False
 
-        for table in self.tables:
-            share_item = ShareObjectRepository.find_sharable_item(
-                self.session, self.share_data.share.shareUri, table.tableUri
-            )
+            for table in self.tables:
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share_data.share.shareUri, table.tableUri
+                )
 
-            revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
-            new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
-            revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+                new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
+                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+                try:
+                    log.info(f'Revoking access to table: {table.GlueTableName} ')
+                    manager.check_table_exists_in_source_database(share_item, table)
+
+                    log.info('Check resource link table exists')
+                    resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(table)
+                    other_table_shares_in_env = (
+                        True
+                        if ShareObjectRepository.other_approved_share_item_table_exists(
+                            self.session,
+                            self.share_data.target_environment.environmentUri,
+                            share_item.itemUri,
+                            share_item.shareItemUri,
+                        )
+                        else False
+                    )
+
+                    if resource_link_table_exists:
+                        log.info('Revoking principal permissions from resource link table')
+                        manager.revoke_principals_permissions_to_resource_link_table(table)
+                        log.info('Revoking principal permissions from table in target')
+                        manager.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
+
+                        if (manager.is_new_share and not other_table_shares_in_env) or not manager.is_new_share:
+                            warn(
+                                'share_manager.is_new_share will be deprecated in v2.6.0',
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            manager.grant_pivot_role_drop_permissions_to_resource_link_table(table)
+                            manager.delete_resource_link_table_in_shared_database(table)
+
+                    if not other_table_shares_in_env:
+                        manager.revoke_external_account_access_on_source_account(table)
+
+                    new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
+                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+                    ShareObjectRepository.update_share_item_health_status(
+                        self.session, share_item, None, None, share_item.lastVerificationTime
+                    )
+                    if (
+                        self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                        and self.share_data.share.groupUri != self.share_data.dataset.stewards
+                    ):
+                        log.info('Deleting TABLE READ permissions...')
+                        ShareItemService.delete_dataset_table_read_permission(
+                            self.session, self.share_data.share, table
+                        )
+
+                except Exception as e:
+                    new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
+                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    success = False
+
+                    manager.handle_revoke_failure(table=table, error=e)
 
             try:
-                log.info(f'Revoking access to table: {table.GlueTableName} ')
-                manager.check_table_exists_in_source_database(share_item, table)
-
-                log.info('Check resource link table exists')
-                resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(table)
-                other_table_shares_in_env = (
-                    True
-                    if ShareObjectRepository.other_approved_share_item_table_exists(
-                        self.session,
-                        self.share_data.target_environment.environmentUri,
-                        share_item.itemUri,
-                        share_item.shareItemUri,
+                if self.tables:
+                    existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
+                        session=self.session, uri=self.share_data.share.shareUri, item_type=ShareableType.Table.value
                     )
-                    else False
-                )
+                    log.info(f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
 
-                if resource_link_table_exists:
-                    log.info('Revoking principal permissions from resource link table')
-                    manager.revoke_principals_permissions_to_resource_link_table(table)
-                    log.info('Revoking principal permissions from table in target')
-                    manager.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
+                    if not existing_shared_tables_in_share:
+                        log.info('Revoking permissions to target shared database...')
+                        manager.revoke_principals_database_permissions_to_shared_database()
 
-                    if (manager.is_new_share and not other_table_shares_in_env) or not manager.is_new_share:
-                        warn(
-                            'share_manager.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2
+                        if not manager.is_new_share:
+                            log.info('Deleting OLD target shared database...')
+                            warn(
+                                'share_manager.is_new_share will be deprecated in v2.6.0',
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            manager.delete_shared_database_in_target()
+
+                    existing_shares_with_shared_tables_in_environment = (
+                        ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
+                            session=self.session,
+                            dataset_uri=self.share_data.dataset.datasetUri,
+                            environment_uri=self.share_data.target_environment.environmentUri,
+                            item_type=ShareableType.Table.value,
                         )
-                        manager.grant_pivot_role_drop_permissions_to_resource_link_table(table)
-                        manager.delete_resource_link_table_in_shared_database(table)
-
-                if not other_table_shares_in_env:
-                    manager.revoke_external_account_access_on_source_account(table)
-
-                new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
-                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-
-                ShareObjectRepository.update_share_item_health_status(
-                    self.session, share_item, None, None, share_item.lastVerificationTime
-                )
-                if (
-                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
-                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
-                ):
-                    log.info('Deleting TABLE READ permissions...')
-                    ShareItemService.delete_dataset_table_read_permission(self.session, self.share_data.share, table)
-
-            except Exception as e:
-                new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
-                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-                success = False
-
-                manager.handle_revoke_failure(table=table, error=e)
-
-        try:
-            if self.tables:
-                existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
-                    session=self.session, uri=self.share_data.share.shareUri, item_type=ShareableType.Table.value
-                )
-                log.info(f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
-
-                if not existing_shared_tables_in_share:
-                    log.info('Revoking permissions to target shared database...')
-                    manager.revoke_principals_database_permissions_to_shared_database()
-
-                    if not manager.is_new_share:
-                        log.info('Deleting OLD target shared database...')
+                    )
+                    warn(
+                        'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                    existing_old_shares_bool = [
+                        manager.glue_client_in_target.database_exists(item['databaseName'])
+                        for item in existing_shares_with_shared_tables_in_environment
+                    ]
+                    log.info(
+                        f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}'
+                    )
+                    if manager.is_new_share and False not in existing_old_shares_bool:
+                        log.info('Deleting target shared database...')
                         warn(
                             'share_manager.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2
                         )
                         manager.delete_shared_database_in_target()
-
-                existing_shares_with_shared_tables_in_environment = (
-                    ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
-                        session=self.session,
-                        dataset_uri=self.share_data.dataset.datasetUri,
-                        environment_uri=self.share_data.target_environment.environmentUri,
-                        item_type=ShareableType.Table.value,
-                    )
+            except Exception as e:
+                log.error(
+                    f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
+                    f'due to: {e}'
                 )
-                warn(
-                    'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                existing_old_shares_bool = [
-                    manager.glue_client_in_target.database_exists(item['databaseName'])
-                    for item in existing_shares_with_shared_tables_in_environment
-                ]
-                log.info(
-                    f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}'
-                )
-                if manager.is_new_share and False not in existing_old_shares_bool:
-                    log.info('Deleting target shared database...')
-                    warn('share_manager.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                    manager.delete_shared_database_in_target()
-        except Exception as e:
-            log.error(
-                f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
-                f'due to: {e}'
-            )
-            success = False
-        return success
+                success = False
+            return success
 
     def verify_shares(self) -> bool:
         log.info('##### Starting Verify tables #######')

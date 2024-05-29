@@ -113,6 +113,8 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
 
         log.info('##### Starting Revoking folders #######')
         success = True
+        if not self.folders:
+            log.info('No Folders to revoke. Skipping...')
         for folder in self.folders:
             log.info(f'revoking access to folder: {folder}')
             manager = self._initialize_share_manager(folder)
@@ -162,6 +164,8 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
 
     def verify_shares(self) -> bool:
         log.info('##### Verifying folders shares #######')
+        if not self.folders:
+            log.info('No Folders to verify. Skipping...')
         for folder in self.folders:
             manager = self._initialize_share_manager(folder)
             sharing_item = ShareObjectRepository.find_sharable_item(

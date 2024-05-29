@@ -430,7 +430,7 @@ class ShareObjectRepository:
         healthStatus: str = None,
         healthMessage: str = None,
         timestamp: datetime = None,
-    ) -> ShareObjectItem:
+    ) -> ShareObjectItem:  ## TODO: Already in shares_base
         share_item.healthStatus = healthStatus
         share_item.healthMessage = healthMessage
         share_item.lastVerificationTime = timestamp
