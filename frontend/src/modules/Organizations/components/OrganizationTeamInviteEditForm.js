@@ -70,7 +70,6 @@ export const OrganizationTeamInviteEditForm = (props) => {
                           color="primary"
                           control={
                             <Switch
-                              disabled
                               defaultChecked
                               color="primary"
                               edge="start"

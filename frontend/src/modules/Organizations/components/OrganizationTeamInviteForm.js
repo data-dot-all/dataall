@@ -67,12 +67,12 @@ export const OrganizationTeamInviteForm = (props) => {
       setLoading(true);
       setPermissions([
         {
-          name: 'LINK_ENVIRONMENTS',
+          name: 'LINK_ENVIRONMENT',
           description: 'Link environments to this organization',
           selected: true
         },
         {
-          name: 'INVITE_ENVIRONMENT_GROUP',
+          name: 'INVITE_ORGANIZATION_GROUP',
           description: 'Invite teams to this organization',
           selected: true
         }

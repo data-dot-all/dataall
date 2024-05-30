@@ -7,6 +7,7 @@ from dataall.base.db import exceptions
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.db.permission.permission_models import Permission
 from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_INVITED_DESCRIPTIONS
 from dataall.core.permissions.services.resources_permissions import RESOURCES_ALL_WITH_DESC
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL_WITH_DESC
 
@@ -43,7 +44,7 @@ class PermissionService:
 
     @staticmethod
     def check_and_save_permissions(
-        session: Session, db_perms: [str], app_perms: dict[str, str], perm_type: PermissionType
+            session: Session, db_perms: [str], app_perms: dict[str, str], perm_type: PermissionType
     ):
         perms = []
         logger.info(f'db  perms {sorted(db_perms)}')
@@ -89,3 +90,15 @@ class PermissionService:
             TENANT_ALL_WITH_DESC,
             PermissionType.TENANT,
         )
+
+    @staticmethod
+    def list_invited_organization_permissions_with_descriptions() -> dict:
+        permissions = []
+        for p in ORGANIZATION_INVITED_DESCRIPTIONS:
+            permissions.append(
+                {
+                    "name": p,
+                    "description": ORGANIZATION_INVITED_DESCRIPTIONS[p]
+                }
+            )
+        return ORGANIZATION_INVITED_DESCRIPTIONS

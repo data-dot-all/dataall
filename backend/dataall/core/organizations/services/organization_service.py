@@ -11,12 +11,11 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ORGANIZATIONS
 from dataall.core.permissions.services.organization_permissions import (
     ORGANIZATION_ALL,
-    ORGANIZATION_INVITED,
     UPDATE_ORGANIZATION,
     GET_ORGANIZATION,
     INVITE_ORGANIZATION_GROUP,
     REMOVE_ORGANIZATION_GROUP,
-    DELETE_ORGANIZATION,
+    DELETE_ORGANIZATION, ORGANIZATION_INVITED_READONLY,
 )
 
 
@@ -197,11 +196,13 @@ class OrganizationService:
                 invitedBy=context.username,
             )
             session.add(org_group)
+            permissions = ORGANIZATION_INVITED_READONLY
+            permissions.extend(data.get('permissions', []))
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
                 resource_uri=organization.organizationUri,
-                permissions=ORGANIZATION_INVITED,
+                permissions=permissions,
                 resource_type=models.Organization.__name__,
             )
 

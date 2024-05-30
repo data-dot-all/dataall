@@ -4,6 +4,7 @@ import os
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.db.exceptions import RequiredParameter
+from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
 log = logging.getLogger(__name__)
@@ -34,3 +35,7 @@ def update_ssm_parameter(context, source, name: str = None, value: str = None):
         parameter_value=value,
     )
     return response
+
+
+def  list_invited_organization_permissions_with_descriptions(context, source):
+    return PermissionService.list_invited_organization_permissions_with_descriptions()
