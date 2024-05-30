@@ -18,7 +18,7 @@ class ObjectType:
         directives_gql = ''
         description_str = ''
         if self.description:
-            description_str = f" \"\"\"{self.description}\"\"\" {n}"
+            description_str = f' """{self.description}""" {n}'
         if len(self.directives):
             directives_gql = f'{n} {n.join([d.gql() for d in self.directives])}'
         if with_directives:

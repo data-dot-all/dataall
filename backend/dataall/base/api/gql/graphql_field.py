@@ -49,11 +49,11 @@ class Field:
             t = self.type.name
         else:
             raise Exception(f'Invalid type for field `{self.name}`: {type(self.type)}')
-        
+
         gql = ''
-        n = "\n"
+        n = '\n'
         if self.description:
-            gql = f" \"\"\"{self.description}\"\"\" {n}"
+            gql = f' """{self.description}""" {n}'
 
         if self.args is not None:
             for a in self.args:

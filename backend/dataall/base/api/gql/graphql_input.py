@@ -2,6 +2,7 @@ import textwrap
 
 from ._cache import cache_instances
 
+
 @cache_instances
 class InputType:
     def __init__(self, name, arguments, description=''):
@@ -11,9 +12,9 @@ class InputType:
 
     def gql(self):
         description_str = ''
-        n = "\n"
+        n = '\n'
         if self.description:
-            description_str = f" \"\"\"{self.description}\"\"\" {n}"
+            description_str = f' """{self.description}""" {n}'
 
         # args = f"{', '.join([arg.name+':'+ arg.type.gql() for arg in self.arguments])}"
         args = f"{', '.join([arg.gql() for arg in self.arguments])}"

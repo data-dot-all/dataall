@@ -18,9 +18,9 @@ class Argument:
 
     def gql(self):
         description_str = ''
-        n = "\n"
+        n = '\n'
         if self.description:
-            description_str = f" \"\"\"{self.description}\"\"\" {n}"
+            description_str = f' """{self.description}""" {n}'
 
         if isinstance(self.type, Enum):
             return f'{description_str} {self.name} : {self.type.name}'
