@@ -22,9 +22,9 @@ class ObjectType:
         if len(self.directives):
             directives_gql = f'{n} {n.join([d.gql() for d in self.directives])}'
         if with_directives:
-            return f'{description_str} type {self.name} {directives_gql} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
+            return f'{description_str}type {self.name} {directives_gql} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
         else:
-            return f'{description_str} type {self.name} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
+            return f'{description_str}type {self.name} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
 
     def field(self, name):
         return next(filter(lambda f: f.name == name, self.fields), None)

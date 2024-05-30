@@ -23,14 +23,14 @@ class Argument:
             description_str = f' """{self.description}""" {n}'
 
         if isinstance(self.type, Enum):
-            return f'{description_str} {self.name} : {self.type.name}'
+            return f'{description_str}{self.name} : {self.type.name}'
         elif isinstance(self.type, Ref):
-            return f'{description_str} {self.name} : {self.type.name}'
+            return f'{description_str}{self.name} : {self.type.name}'
         elif isinstance(self.type, Scalar):
-            return f'{description_str} {self.name} : {self.type.name}'
+            return f'{description_str}{self.name} : {self.type.name}'
         elif isinstance(self.type, InputType):
-            return f'{description_str} {self.name} : {self.type.name}'
+            return f'{description_str}{self.name} : {self.type.name}'
         elif isinstance(self.type, (ArrayType, NonNullableType)):
-            return f'{description_str} {self.name} : {self.type.gql()}'
+            return f'{description_str}{self.name} : {self.type.gql()}'
         elif isinstance(self.type, Thunk):
-            return f'{description_str} {self.name} : {self.type.target.gql()}'
+            return f'{description_str}{self.name} : {self.type.target.gql()}'
