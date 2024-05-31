@@ -86,7 +86,7 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('region')
         EnvironmentRequestValidationService.validate_resource_prefix(data)
         EnvironmentRequestValidationService.validate_account_region(data, session)
-        EnvironmentRequestValidationService.validate_org_group(data["organizationUri"], data["SamlGroupName"], session)
+        EnvironmentRequestValidationService.validate_org_group(data['organizationUri'], data['SamlGroupName'], session)
 
     @staticmethod
     def validate_resource_prefix(data):
@@ -129,7 +129,7 @@ class EnvironmentRequestValidationService:
         if not OrganizationRepository.is_group_invited(session, org_uri, group):
             raise Exception(
                 f'Group {group} is not a member of the organization {org_uri}. '
-                f'Invite this group to the organisation before linking the environment.'
+                f'Invite this group to the organisation before giving it access to the environment.'
             )
 
 
@@ -362,6 +362,8 @@ class EnvironmentService:
             EnvironmentService.validate_permissions(session, uri, data['permissions'], group)
 
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+
+            EnvironmentRequestValidationService.validate_org_group(environment.organizationUri, group, session)
 
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
             if group_membership:
@@ -863,7 +865,7 @@ class EnvironmentService:
                 raise exceptions.EnvironmentResourcesFound(
                     action='Delete Environment',
                     message=f'Found {env_resources} resources on environment {environment.label} - Delete all environment '
-                            f'related objects before proceeding',
+                    f'related objects before proceeding',
                 )
             else:
                 PolicyManager(
@@ -1014,8 +1016,8 @@ class EnvironmentService:
 
     @staticmethod
     def get_environment_assume_role_url(
-            environmentUri: str = None,
-            groupUri: str = None,
+        environmentUri: str = None,
+        groupUri: str = None,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
