@@ -13,7 +13,7 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService

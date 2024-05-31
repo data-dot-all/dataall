@@ -20,7 +20,7 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.base.aws.iam import IAM
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound

@@ -141,7 +141,9 @@ const DatasetImportForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/${response.data.importDataset.datasetUri}`);
+        navigate(
+          `/console/s3-datasets/${response.data.importDataset.datasetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }

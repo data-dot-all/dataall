@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetStorageLocation, DatasetBucket
 from dataall.base.utils.alarm_service import AlarmService
 

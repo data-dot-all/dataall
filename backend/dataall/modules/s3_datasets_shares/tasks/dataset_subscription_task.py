@@ -9,7 +9,7 @@ from dataall.base.aws.sqs import SqsQueue
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import get_engine
-from dataall.modules.s3_datasets_shares.db.share_object_models import ShareObjectItem
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.services.share_notification_service import ShareNotificationService
 from dataall.modules.s3_datasets.aws.sns_dataset_client import SnsDatasetClient

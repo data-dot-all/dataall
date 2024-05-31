@@ -138,7 +138,9 @@ const DatasetCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/${response.data.createDataset.datasetUri}`);
+        navigate(
+          `/console/s3-datasets/${response.data.createDataset.datasetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
