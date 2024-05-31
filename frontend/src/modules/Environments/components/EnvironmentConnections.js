@@ -9,7 +9,7 @@ import {
   InputAdornment,
   TextField
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
 import {
   GroupAddOutlined,
   SupervisedUserCircleRounded
@@ -19,19 +19,36 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { Defaults, RefreshTableMenu, Scrollbar, SearchIcon } from 'design';
+import {
+  Defaults,
+  DeleteObjectWithFrictionModal,
+  RefreshTableMenu,
+  Scrollbar,
+  SearchIcon
+} from 'design';
 
 import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConnectionAddForm';
-import { listEnvironmentConnections } from '../services';
+import {
+  listEnvironmentConnections,
+  deleteRedshiftConnection
+} from '../services';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import { useSnackbar } from 'notistack';
 
 export const EnvironmentConnections = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [inputValue, setInputValue] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [rowModesModel, setRowModesModel] = useState({});
+  const [isDeleteModalOpenId, setIsDeleteModalOpen] = useState(0);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -60,7 +77,20 @@ export const EnvironmentConnections = ({ environment }) => {
     }
   };
 
-  const [rowModesModel, setRowModesModel] = useState({});
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true }
+    });
+  };
 
   const handleRowEditStart = (params, event) => {
     event.defaultMuiPrevented = true;
@@ -70,9 +100,42 @@ export const EnvironmentConnections = ({ environment }) => {
     event.defaultMuiPrevented = true;
   };
 
+  const handleDeleteModalOpen = (id) => {
+    setIsDeleteModalOpen(id);
+  };
+  const handleDeleteModalClosed = (id) => {
+    setIsDeleteModalOpen(0);
+  };
+
   const processRowUpdate = async (newRow) => {
     //INTRODUCE HERE FUNCTION TO UPDATE THE CONNECTION
     return newRow;
+  };
+
+  const deleteConnection = async (connectionUri, connectionType) => {
+    try {
+      if (connectionType === 'ConnectionType.Redshift') {
+        const response = await client.mutate(
+          deleteRedshiftConnection({
+            connectionUri: connectionUri
+          })
+        );
+        if (!response.errors) {
+          enqueueSnackbar('Redshift connection removed from environment', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+          fetchItems();
+        } else {
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
   };
 
   const fetchItems = useCallback(async () => {
@@ -191,14 +254,73 @@ export const EnvironmentConnections = ({ environment }) => {
                   {
                     field: 'connectionType',
                     headerName: 'Type',
-                    flex: 1
+                    flex: 1,
+                    editable: false
                   },
                   {
                     field: 'SamlGroupName',
                     headerName: 'Team',
                     flex: 1,
                     editable: false
-                  } //TODO: add other columns and deletion
+                  },
+                  {
+                    field: 'actions',
+                    headerName: 'Actions',
+                    flex: 0.5,
+                    type: 'actions',
+                    cellClassName: 'actions',
+                    getActions: ({ id, ...props }) => {
+                      const name = props.row.name;
+                      const connectionType = props.row.connectionType;
+                      const isInEditMode =
+                        rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                      if (isInEditMode) {
+                        return [
+                          <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            sx={{
+                              color: 'primary.main'
+                            }}
+                            onClick={handleSaveClick(id)}
+                          />,
+                          <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            className="textPrimary"
+                            onClick={handleCancelClick(id)}
+                            color="inherit"
+                          />
+                        ];
+                      }
+                      return [
+                        <GridActionsCellItem
+                          icon={<EditIcon />}
+                          label="Edit"
+                          className="textPrimary"
+                          onClick={handleEditClick(id)}
+                          color="inherit"
+                        />,
+                        <GridActionsCellItem
+                          icon={<DeleteIcon />}
+                          label="Delete"
+                          onClick={() => handleDeleteModalOpen(id)}
+                          color="inherit"
+                        />,
+                        <DeleteObjectWithFrictionModal
+                          objectName={name}
+                          onApply={() => handleDeleteModalClosed(id)}
+                          onClose={() => handleDeleteModalClosed(id)}
+                          open={isDeleteModalOpenId === id}
+                          isAWSResource={false}
+                          deleteFunction={() =>
+                            deleteConnection(id, connectionType)
+                          }
+                        />
+                      ];
+                    }
+                  }
                 ]}
                 editMode="row"
                 rowModesModel={rowModesModel}

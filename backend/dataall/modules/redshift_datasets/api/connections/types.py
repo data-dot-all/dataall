@@ -4,7 +4,7 @@ RedshiftConnection = gql.ObjectType(
     name='RedshiftConnection',
     fields=[
         gql.Field(name='connectionUri', type=gql.ID),
-        gql.Field(name='connectionName', type=gql.String),
+        gql.Field(name='name', type=gql.String),
         gql.Field(name='connectionType', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
         gql.Field(name='label', type=gql.String),
@@ -15,16 +15,4 @@ RedshiftConnection = gql.ObjectType(
         gql.Field(name='redshiftUser', type=gql.String),
         gql.Field(name='secretArn', type=gql.String)
     ]
-)
-
-RedshiftConnectionSearchResult = gql.ObjectType(
-    name='RedshiftConnectionSearchResult',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(RedshiftConnection)),
-    ],
 )

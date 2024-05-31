@@ -4,10 +4,9 @@ Connection = gql.ObjectType(
     name='Connection',
     fields=[
         gql.Field(name='connectionUri', type=gql.ID),
-        gql.Field(name='connectionName', type=gql.String),
+        gql.Field(name='name', type=gql.String),
         gql.Field(name='connectionType', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
-        gql.Field(name='label', type=gql.String),
     ]
 )
 

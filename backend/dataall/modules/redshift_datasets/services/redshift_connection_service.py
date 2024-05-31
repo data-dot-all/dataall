@@ -82,7 +82,7 @@ class RedshiftConnectionService:
         return True
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS) #TODO: not used at the moment, later in dataset creation
     def list_environment_redshift_connections(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:

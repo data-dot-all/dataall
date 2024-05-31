@@ -15,7 +15,6 @@ export const listEnvironmentConnections = ({ filter }) => ({
         nodes {
           name
           connectionUri
-          connectionName
           connectionType
           SamlGroupName
         }

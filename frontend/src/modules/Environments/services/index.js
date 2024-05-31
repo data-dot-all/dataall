@@ -3,6 +3,7 @@ export * from './archiveEnvironment';
 export * from './createEnvironment';
 export * from './createNetwork';
 export * from './createRedshiftConnection';
+export * from './deleteRedshiftConnection';
 export * from './deleteNetwork';
 export * from './disableDataSubscriptions';
 export * from './enableDataSubscriptions';
