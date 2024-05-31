@@ -172,12 +172,7 @@ const Catalog = () => {
   const classes = useStyles();
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
-  const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
-
-  if (config.modules.s3_datasets.features.topics_dropdown === true)
-    dataFieldList.push('topics');
-  if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
-    dataFieldList.push('classification');
+  const dataFieldList = ['label', 'name', 'description', 'tags'];
 
   const filterItemsInit = [
     {
