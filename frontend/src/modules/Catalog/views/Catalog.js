@@ -183,7 +183,6 @@ const Catalog = () => {
     setIsCreateModalOpen(false);
   };
 
-
   const filterItemsInit = [
     {
       title: 'Type',
