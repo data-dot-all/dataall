@@ -141,3 +141,16 @@ class OrganizationRepository:
             .count()
         )
         return groups >= 1
+
+    @staticmethod
+    def is_group_invited(session, uri, group) -> bool:
+        return (
+            session.query(models.OrganizationGroup)
+            .filter(
+                and_(
+                    models.OrganizationGroup.organizationUri == uri,
+                    models.OrganizationGroup.groupUri == group,
+                )
+            )
+            .count()
+        ) > 0
