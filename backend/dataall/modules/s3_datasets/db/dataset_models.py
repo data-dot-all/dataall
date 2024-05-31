@@ -152,6 +152,7 @@ class GlueDataQualityRuleset(Base):
     tableUri = Column(String, nullable=False) #data.all table identifier
     GlueDatabaseName = Column(String, nullable=False)
     GlueTableName = Column(String, nullable=False)
+    dqExpression = Column(String, nullable=True) #dq_expression
 
 class GlueDataQualityRulesetColumn(Base):
     __tablename__ = 'glue_data_quality_ruleset_column'

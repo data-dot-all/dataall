@@ -34,7 +34,8 @@ import {
   TableColumns,
   TableMetrics,
   TableOverview,
-  TablePreview
+  TablePreview,
+  TableQuality
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 
@@ -43,7 +44,8 @@ const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 const tabs = [
   { label: 'Overview', value: 'overview' },
   { label: 'Columns', value: 'columns' },
-  { label: 'Metrics', value: 'metrics' }
+  { label: 'Metrics', value: 'metrics' },
+  { label: 'Quality', value: 'quality' }
 ];
 
 if (previewDataEnabled) {
@@ -273,6 +275,9 @@ const TableView = () => {
             )}
             {currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'quality' && (
+              <TableQuality table={table} isAdmin={isAdmin} />
             )}
           </Box>
         </Container>
