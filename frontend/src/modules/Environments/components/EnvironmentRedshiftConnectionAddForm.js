@@ -37,7 +37,6 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
     try {
       const response = await client.mutate(
         createRedshiftConnection({
-          connectionType: values.connectionType,
           connectionName: values.connectionName,
           SamlGroupName: values.SamlGroupName,
           environmentUri: environment.environmentUri,
@@ -52,7 +51,7 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('IAM role added to environment', {
+        enqueueSnackbar('Redshift connection added to environment', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'

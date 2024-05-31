@@ -15,7 +15,7 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
     REDSHIFT_DATASET_READ,
 )
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
-from dataall.modules.redshift_datasets.db.redshift_dataset_models import RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 
 
 log = logging.getLogger(__name__)

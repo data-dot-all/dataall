@@ -9,7 +9,7 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.redshift_datasets.db.redshift_dataset_models import RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 
 logger = logging.getLogger(__name__)
 

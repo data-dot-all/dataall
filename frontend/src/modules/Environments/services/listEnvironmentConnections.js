@@ -1,25 +1,19 @@
 import { gql } from 'apollo-boost';
 
-export const listEnvironmentConnections = ({ filter, environmentUri }) => ({
+export const listEnvironmentConnections = ({ filter }) => ({
   variables: {
-    environmentUri,
     filter
   },
   query: gql`
-    query listEnvironmentConnections(
-      $filter: ConnectionsFilter
-      $environmentUri: String!
-    ) {
-      listEnvironmentConnections(
-        environmentUri: $environmentUri
-        filter: $filter
-      ) {
+    query listEnvironmentConnections($filter: ConnectionFilter) {
+      listEnvironmentConnections(filter: $filter) {
         count
         page
         pages
         hasNext
         hasPrevious
         nodes {
+          name
           connectionUri
           connectionName
           connectionType

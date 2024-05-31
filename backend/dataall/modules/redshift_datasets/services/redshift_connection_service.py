@@ -1,10 +1,12 @@
 import logging
-
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.modules.connections_base.api.enums import ConnectionType
+from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
 
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
@@ -17,7 +19,7 @@ from dataall.modules.redshift_datasets.services.redshift_connection_permissions 
     UPDATE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
 )
-from dataall.modules.redshift_datasets.db.redshift_dataset_models import RedshiftConnection
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
 
 log = logging.getLogger(__name__)
@@ -33,11 +35,12 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             connection = RedshiftConnection(
-                name=data.get('name'),
+                label=data.get('connectionName'),
+                name=data.get('connectionName'),
+                owner=context.username,
                 environmentUri=environment.environmentUri,
                 SamlGroupName=admin_group,
-                connectionName=data.get('connectionName'),
-                connectionType=data.get('connectionType'),
+                connectionType=ConnectionType.Redshift,
                 redshiftType=data.get('redshiftType'),
                 clusterId=data.get('clusterId', ''),
                 nameSpaceId=data.get('nameSpaceId', ''),
@@ -45,8 +48,7 @@ class RedshiftConnectionService:
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
             )
-            session.add(connection)
-            session.commit()
+            RedshiftConnectionRepository.save_redshift_connection(session, connection)
 
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -58,11 +60,18 @@ class RedshiftConnectionService:
             return connection
 
     @staticmethod
+    def _get_connection(session, uri) -> RedshiftConnection:
+        connection = RedshiftConnectionRepository.find_redshift_connection(session, uri)
+        if not connection:
+            raise exceptions.ObjectNotFound('RedshiftConnection', uri)
+        return connection
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_REDSHIFT_CONNECTION)
     def delete_redshift_connection(uri) -> bool:
         context = get_context()
         with (context.db_engine.scoped_session() as session):
-            connection = RedshiftConnection.get_by_uri(session, uri)
+            connection = RedshiftConnectionService._get_connection(session, uri)
             ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=connection.connectionUri,
@@ -71,3 +80,11 @@ class RedshiftConnectionService:
             session.delete(connection)
             session.commit()
         return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    def list_environment_redshift_connections(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connections = RedshiftConnectionRepository.paginated_user_redshift_connections(session, context.username, context.groups, filter)
+            return connections

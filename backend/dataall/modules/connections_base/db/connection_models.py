@@ -9,7 +9,6 @@ class Connection(Resource, Base):
     __tablename__ = 'connection'
     environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     connectionUri = Column(String, primary_key=True, default=utils.uuid('connection'))
-    connectionName = Column(String, nullable=False)
     connectionType = Column(Enum(ConnectionType), nullable=False, default=ConnectionType.Redshift)
     SamlGroupName = Column(String, nullable=False)
 

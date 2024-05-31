@@ -5,22 +5,24 @@ import {
   CardHeader,
   CircularProgress,
   Divider,
-  Grid
+  Grid,
+  InputAdornment,
+  TextField
 } from '@mui/material';
-
 import { DataGrid } from '@mui/x-data-grid';
-
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
-import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
-import { listEnvironmentConnections } from '../services';
-import { Defaults, RefreshTableMenu, Scrollbar } from '../../../design';
 import {
   GroupAddOutlined,
   SupervisedUserCircleRounded
 } from '@mui/icons-material';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { Defaults, RefreshTableMenu, Scrollbar, SearchIcon } from 'design';
+
 import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConnectionAddForm';
+import { listEnvironmentConnections } from '../services';
 
 export const EnvironmentConnections = ({ environment }) => {
   const client = useClient();
@@ -28,7 +30,21 @@ export const EnvironmentConnections = ({ environment }) => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
+  const [inputValue, setInputValue] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+    setFilter({ ...filter, term: event.target.value });
+  };
+
+  const handleInputKeyup = (event) => {
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  };
   const handleCreateModalOpen = () => {
     setIsCreateModalOpen(true);
   };
@@ -63,8 +79,7 @@ export const EnvironmentConnections = ({ environment }) => {
     try {
       const response = await client.query(
         listEnvironmentConnections({
-          environmentUri: environment.environmentUri,
-          filter
+          filter: { ...filter, environmentUri: environment.environmentUri }
         })
       );
       if (!response.errors) {
@@ -114,6 +129,31 @@ export const EnvironmentConnections = ({ environment }) => {
               p: 2
             }}
           >
+            <Grid item md={10} sm={6} xs={12}>
+              <Box
+                sx={{
+                  m: 1,
+                  maxWidth: '100%',
+                  width: 500
+                }}
+              >
+                <TextField
+                  fullWidth
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
+                  onChange={handleInputChange}
+                  onKeyUp={handleInputKeyup}
+                  placeholder="Search"
+                  value={inputValue}
+                  variant="outlined"
+                />
+              </Box>
+            </Grid>
             <Grid item md={2} sm={6} xs={12}>
               <Button
                 color="primary"
@@ -143,7 +183,7 @@ export const EnvironmentConnections = ({ environment }) => {
                 columns={[
                   { field: 'id', hide: true },
                   {
-                    field: 'connectionName',
+                    field: 'name',
                     headerName: 'Name',
                     flex: 0.5,
                     editable: true

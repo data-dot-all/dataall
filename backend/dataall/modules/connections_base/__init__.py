@@ -11,3 +11,7 @@ class ConnectionsBaseModuleInterface(ModuleInterface):
             ImportMode.API
         }
         return modes & supported_modes
+
+    def __init__(self):
+        import dataall.modules.connections_base.api
+        import dataall.modules.connections_base.api.enums

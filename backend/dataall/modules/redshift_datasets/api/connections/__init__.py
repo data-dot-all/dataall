@@ -1,3 +1,9 @@
-from dataall.modules.redshift_datasets.api.datasets import input_types, mutations, queries, types, resolvers
+from . import (
+    input_types,
+    queries,
+    mutations,
+    resolvers,
+    types,
+)
 
-__all__ = ['types', 'input_types', 'queries', 'mutations', 'resolvers']
+__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations']

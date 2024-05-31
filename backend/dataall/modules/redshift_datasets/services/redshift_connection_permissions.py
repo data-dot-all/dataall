@@ -1,11 +1,4 @@
 from itertools import chain
-
-from dataall.core.permissions.services.environment_permissions import (
-    ENVIRONMENT_INVITED,
-    ENVIRONMENT_INVITATION_REQUEST,
-    ENVIRONMENT_ALL,
-)
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL,
     RESOURCES_ALL_WITH_DESC,
@@ -32,8 +25,11 @@ REDSHIFT_CONNECTION_WRITE = [
 REDSHIFT_CONNECTION_ALL = list(set(REDSHIFT_CONNECTION_WRITE + REDSHIFT_CONNECTION_READ))
 RESOURCES_ALL.extend(REDSHIFT_CONNECTION_ALL)
 
+for perm in chain(REDSHIFT_CONNECTION_ALL):
+    RESOURCES_ALL_WITH_DESC[perm] = perm
+
 
 """
 CONNECTION PERMISSIONS FOR ENVIRONMENT
 """
-# No permissions defined for environment because we will use IMPORT_REDSHIFT_DATASET permission
+# CREATE_CONNECTION is verified by checking IMPORT_REDSHIFT_DATASET permissions in environment
