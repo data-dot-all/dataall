@@ -26,12 +26,11 @@ import { listGroups, useClient } from 'services';
 import { inviteGroupToOrganization } from '../services';
 
 export const OrganizationTeamInviteForm = (props) => {
-  const { organization, onClose, open, reloadTeams, ...other } = props;
+  const { organization, permissions, onClose, open, reloadTeams, ...other } =
+    props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
 
@@ -62,38 +61,13 @@ export const OrganizationTeamInviteForm = (props) => {
     }
   }, [client, dispatch, organization.organizationUri]);
 
-  const fetchItems = useCallback(async () => {
-    try {
-      setLoading(true);
-      setPermissions([
-        {
-          name: 'LINK_ENVIRONMENT',
-          description: 'Link environments to this organization',
-          selected: true
-        },
-        {
-          name: 'INVITE_ORGANIZATION_GROUP',
-          description: 'Invite teams to this organization',
-          selected: true
-        }
-      ]);
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch]);
-
   useEffect(() => {
     if (client) {
       fetchGroups().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
-  }, [client, dispatch, fetchItems, fetchGroups]);
+  }, [client, dispatch, fetchGroups]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -138,7 +112,7 @@ export const OrganizationTeamInviteForm = (props) => {
     return null;
   }
 
-  if (loading || loadingGroups) {
+  if (loadingGroups) {
     return <CircularProgress size={10} />;
   }
 
@@ -236,8 +210,8 @@ export const OrganizationTeamInviteForm = (props) => {
                                       edge="start"
                                       name={perm.name}
                                       value={perm.name}
-                                      onChange={() => {
-                                        perm.selected = !perm.selected;
+                                      onChange={(evt) => {
+                                        perm.selected = evt.target.checked;
                                       }}
                                     />
                                   }
@@ -284,5 +258,6 @@ OrganizationTeamInviteForm.propTypes = {
   organization: PropTypes.object.isRequired,
   onClose: PropTypes.func,
   reloadTeams: PropTypes.func,
-  open: PropTypes.bool.isRequired
+  open: PropTypes.bool.isRequired,
+  permissions: PropTypes.any
 };

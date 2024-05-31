@@ -15,7 +15,8 @@ from dataall.core.permissions.services.organization_permissions import (
     GET_ORGANIZATION,
     INVITE_ORGANIZATION_GROUP,
     REMOVE_ORGANIZATION_GROUP,
-    DELETE_ORGANIZATION, ORGANIZATION_INVITED_READONLY,
+    DELETE_ORGANIZATION,
+    ORGANIZATION_INVITED_READONLY,
 )
 
 
@@ -179,6 +180,8 @@ class OrganizationService:
     @ResourcePolicyService.has_resource_permission(INVITE_ORGANIZATION_GROUP)
     def invite_group(uri, data):
         context = get_context()
+        if not data.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
         with context.db_engine.scoped_session() as session:
             group: str = data['groupUri']
 
@@ -188,7 +191,7 @@ class OrganizationService:
             if group_membership:
                 raise exceptions.UnauthorizedOperation(
                     action='INVITE_TEAM',
-                    message=f'Team {group} is already admin of the organization {organization.name}',
+                    message=f'Team {group} is already invited into the organization {organization.name}',
                 )
             org_group = OrganizationGroup(
                 organizationUri=organization.organizationUri,
@@ -196,7 +199,7 @@ class OrganizationService:
                 invitedBy=context.username,
             )
             session.add(org_group)
-            permissions = ORGANIZATION_INVITED_READONLY
+            permissions = ORGANIZATION_INVITED_READONLY[:]
             permissions.extend(data.get('permissions', []))
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -204,6 +207,38 @@ class OrganizationService:
                 resource_uri=organization.organizationUri,
                 permissions=permissions,
                 resource_type=models.Organization.__name__,
+            )
+
+            return organization
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
+    @ResourcePolicyService.has_resource_permission(INVITE_ORGANIZATION_GROUP)
+    def update_group(uri, data):
+        context = get_context()
+        if not data.get('groupUri'):
+            raise exceptions.RequiredParameter('groupUri')
+        with context.db_engine.scoped_session() as session:
+            group: str = data['groupUri']
+
+            organization = OrganizationRepository.get_organization_by_uri(session, uri)
+
+            group_membership = OrganizationRepository.find_group_membership(session, group, organization)
+            if not group_membership:
+                raise exceptions.UnauthorizedOperation(
+                    action='UPDATE_TEAM',
+                    message=f'Team {group} is not invited into the organization {organization.name}',
+                )
+
+            permissions = ORGANIZATION_INVITED_READONLY[:]
+            permissions.extend(data.get('permissions', []))
+            ResourcePolicyService.update_resource_policy(
+                session=session,
+                resource_uri=organization.organizationUri,
+                resource_type=models.Organization.__name__,
+                old_group=group,
+                new_group=group,
+                new_permissions=permissions,
             )
 
             return organization
@@ -261,3 +296,11 @@ class OrganizationService:
         with context.db_engine.scoped_session() as session:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
             return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
+
+    @staticmethod
+    def list_group_organizaton_perissions(organizationUri, groupUri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return ResourcePolicyService.get_resource_policy_permissions(
+                session=session, group_uri=groupUri, resource_uri=organizationUri
+            )

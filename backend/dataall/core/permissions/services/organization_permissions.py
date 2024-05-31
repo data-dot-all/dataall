@@ -21,6 +21,6 @@ ORGANIZATION_ALL = [
 ORGANIZATION_INVITED_DESCRIPTIONS = {
     LINK_ENVIRONMENT: 'Link environments to this organization',
     INVITE_ORGANIZATION_GROUP: 'Invite teams to this organization',
-    REMOVE_ORGANIZATION_GROUP: 'Remove teams from this organization'
+    REMOVE_ORGANIZATION_GROUP: 'Remove teams from this organization',
 }
 ORGANIZATION_INVITED_READONLY = [GET_ORGANIZATION]

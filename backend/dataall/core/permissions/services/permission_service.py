@@ -44,7 +44,7 @@ class PermissionService:
 
     @staticmethod
     def check_and_save_permissions(
-            session: Session, db_perms: [str], app_perms: dict[str, str], perm_type: PermissionType
+        session: Session, db_perms: [str], app_perms: dict[str, str], perm_type: PermissionType
     ):
         perms = []
         logger.info(f'db  perms {sorted(db_perms)}')
@@ -92,13 +92,8 @@ class PermissionService:
         )
 
     @staticmethod
-    def list_invited_organization_permissions_with_descriptions() -> dict:
+    def list_invited_organization_permissions_with_descriptions():
         permissions = []
         for p in ORGANIZATION_INVITED_DESCRIPTIONS:
-            permissions.append(
-                {
-                    "name": p,
-                    "description": ORGANIZATION_INVITED_DESCRIPTIONS[p]
-                }
-            )
-        return ORGANIZATION_INVITED_DESCRIPTIONS
+            permissions.append({'name': p, 'description': ORGANIZATION_INVITED_DESCRIPTIONS[p]})
+        return permissions

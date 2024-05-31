@@ -37,5 +37,5 @@ def update_ssm_parameter(context, source, name: str = None, value: str = None):
     return response
 
 
-def  list_invited_organization_permissions_with_descriptions(context, source):
+def list_invited_organization_permissions_with_descriptions(context, source):
     return PermissionService.list_invited_organization_permissions_with_descriptions()

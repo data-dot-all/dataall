@@ -1,6 +1,9 @@
 from dataall.base.api import gql
-from .resolvers import list_tenant_groups, list_tenant_permissions, list_all_organization_permissions_with_descriptions, \
-    list_invited_organization_permissions_with_descriptions
+from .resolvers import (
+    list_tenant_groups,
+    list_tenant_permissions,
+    list_invited_organization_permissions_with_descriptions,
+)
 
 listTenantPermissions = gql.QueryField(
     name='listTenantPermissions',
