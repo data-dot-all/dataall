@@ -8,7 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.connections_base.api.enums import ConnectionType
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
-
+from dataall.modules.connections_base.services.connection_list_permissions import LIST_ENVIRONMENT_CONNECTIONS
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET
@@ -82,7 +82,8 @@ class RedshiftConnectionService:
         return True
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS) #TODO: not used at the moment, later in dataset creation
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_CONNECTIONS)
     def list_environment_redshift_connections(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
