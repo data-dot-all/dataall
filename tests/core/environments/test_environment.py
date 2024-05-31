@@ -38,6 +38,50 @@ def get_env(client, env_fixture, group):
     )
 
 
+def test_create_environment_with_external_group(db, client, org_fixture, user, group, not_in_org_group):
+    response = client.query(
+        """mutation CreateEnv($input:NewEnvironmentInput){
+            createEnvironment(input:$input){
+                organization{
+                    organizationUri
+                }
+                environmentUri
+                label
+                AwsAccountId
+                SamlGroupName
+                region
+                name
+                owner
+                EnvironmentDefaultIAMRoleName
+                EnvironmentDefaultIAMRoleImported
+                resourcePrefix
+                networks{
+                 VpcId
+                 region
+                 privateSubnetIds
+                 publicSubnetIds
+                 default
+                }
+            }
+        }""",
+        username=user.username,
+        groups=[group.name, not_in_org_group.name],
+        input={
+            'label': f'dev',
+            'description': f'test',
+            'EnvironmentDefaultIAMRoleArn': 'arn:aws:iam::444444444444:role/myOwnIamRole',
+            'organizationUri': org_fixture.organizationUri,
+            'AwsAccountId': '444444444444',
+            'tags': ['a', 'b', 'c'],
+            'region': 'eu-west-1',
+            'SamlGroupName': not_in_org_group.name,
+            'resourcePrefix': 'customer-prefix',
+        },
+    )
+
+    assert 'is not a member of the organization' in response.errors[0].message
+
+
 def test_create_environment_invalid_account_region(client, org_fixture, env_fixture, group):
     response = client.query(
         """mutation CreateEnv($input:NewEnvironmentInput){
@@ -371,6 +415,10 @@ def test_group_invitation(db, client, env_fixture, org_fixture, group2, user, gr
     env_permissions = [p.name for p in response.data.listEnvironmentGroupInvitationPermissions]
     mocker.patch(
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.create_all_policies', return_value=True
+    )
+    mocker.patch(
+        'dataall.core.organizations.db.organization_repositories.OrganizationRepository.is_group_invited',
+        return_value=True,
     )
 
     response = client.query(
