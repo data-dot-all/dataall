@@ -34,7 +34,7 @@
                 }
             }
         },
-        "dataset_sharing": {
+        "s3_datasets_shares": {
             "active": true
         },
         "worksheets": {

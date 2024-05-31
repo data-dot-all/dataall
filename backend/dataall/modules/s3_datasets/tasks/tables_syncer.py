@@ -11,7 +11,7 @@ from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.s3_datasets.services.dataset_alarm_service import DatasetAlarmService
 
@@ -25,9 +25,9 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
+        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session)
         log.info(f'Found {len(all_datasets)} datasets for tables sync')
-        dataset: Dataset
+        dataset: S3Dataset
         for dataset in all_datasets:
             log.info(f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables')
             env: Environment = (

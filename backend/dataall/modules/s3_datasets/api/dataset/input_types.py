@@ -1,6 +1,4 @@
 from dataall.base.api import gql
-from dataall.base.api.constants import SortDirection
-from dataall.modules.s3_datasets.services.datasets_enums import DatasetSortField
 
 
 NewDatasetInput = gql.InputType(
@@ -38,31 +36,6 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
-    ],
-)
-
-DatasetSortCriteria = gql.InputType(
-    name='DatasetSortCriteria',
-    arguments=[
-        gql.Argument(name='field', type=gql.NonNullableType(DatasetSortField.toGraphQLEnum())),
-        gql.Argument(name='direction', type=SortDirection.toGraphQLEnum()),
-    ],
-)
-
-
-DatasetFilter = gql.InputType(
-    name='DatasetFilter',
-    arguments=[
-        gql.Argument('term', gql.String),
-        gql.Argument('roles', gql.ArrayType(gql.Ref('DatasetRole'))),
-        gql.Argument('InProject', gql.String),
-        gql.Argument('notInProject', gql.String),
-        gql.Argument('displayArchived', gql.Boolean),
-        # gql.Argument("organization", gql.String),
-        # gql.Argument("environment", gql.String),
-        gql.Argument('sort', gql.ArrayType(DatasetSortCriteria)),
-        gql.Argument('page', gql.Integer),
-        gql.Argument('pageSize', gql.Integer),
     ],
 )
 

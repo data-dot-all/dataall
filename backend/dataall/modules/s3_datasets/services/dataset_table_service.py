@@ -16,8 +16,8 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     SYNC_DATASET,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.services.datasets_enums import ConfidentialityClassification
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_READ,
@@ -123,7 +123,7 @@ class DatasetTableService:
 
     @staticmethod
     def sync_existing_tables(session, uri, glue_tables=None):
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         if dataset:
             existing_tables = DatasetTableRepository.find_dataset_tables(session, uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]
@@ -146,7 +146,7 @@ class DatasetTableService:
         return True
 
     @staticmethod
-    def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
+    def _attach_dataset_table_permission(session, dataset: S3Dataset, table_uri):
         """
         Attach Table permissions to dataset groups
         """

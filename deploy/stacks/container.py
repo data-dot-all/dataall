@@ -216,7 +216,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('DEBUG'),
-            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-manager'),
@@ -243,7 +243,7 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_verifier_task'],
+            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
@@ -276,7 +276,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('INFO'),
-            command=['python3.9', '-m', 'dataall.modules.dataset_sharing.tasks.share_reapplier_task'],
+            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_reapplier_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
@@ -292,7 +292,7 @@ class ContainerStack(pyNestedClass):
             command=[
                 'python3.9',
                 '-m',
-                'dataall.modules.dataset_sharing.tasks.dataset_subscription_task',
+                'dataall.modules.s3_datasets_shares.tasks.dataset_subscription_task',
             ],
             container_id='container',
             ecr_repository=self._ecr_repository,

@@ -3,14 +3,14 @@ from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 log = logging.getLogger(__name__)
 PIVOT_ROLE_NAME_PREFIX = 'dataallPivotRole'
 
 
 class LakeFormationDatasetClient:
-    def __init__(self, env: Environment, dataset: Dataset):
+    def __init__(self, env: Environment, dataset: S3Dataset):
         session = SessionHelper.remote_session(env.AwsAccountId, env.region)
         self._client = session.client('lakeformation', region_name=env.region)
         self._dataset = dataset

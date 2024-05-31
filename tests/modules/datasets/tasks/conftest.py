@@ -2,14 +2,14 @@ import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, Dataset, DatasetBucket
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
 
 
 @pytest.fixture(scope='module')
@@ -20,9 +20,9 @@ def create_dataset(db):
         label: str,
         imported: bool = False,
         autoApprovalEnabled: bool = False,
-    ) -> Dataset:
+    ) -> S3Dataset:
         with db.scoped_session() as session:
-            dataset = Dataset(
+            dataset = S3Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -50,7 +50,7 @@ def create_dataset(db):
 
 @pytest.fixture(scope='module')
 def location(db):
-    def factory(dataset: Dataset, label: str) -> DatasetStorageLocation:
+    def factory(dataset: S3Dataset, label: str) -> DatasetStorageLocation:
         with db.scoped_session() as session:
             ds_location = DatasetStorageLocation(
                 name=label,
@@ -70,7 +70,7 @@ def location(db):
 
 @pytest.fixture(scope='module')
 def table(db):
-    def factory(dataset: Dataset, label: str) -> DatasetTable:
+    def factory(dataset: S3Dataset, label: str) -> DatasetTable:
         with db.scoped_session() as session:
             table = DatasetTable(
                 name=label,
@@ -94,7 +94,7 @@ def table(db):
 def bucket(db):
     cache = {}
 
-    def factory(dataset: Dataset, name) -> DatasetBucket:
+    def factory(dataset: S3Dataset, name) -> DatasetBucket:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -121,7 +121,7 @@ def bucket(db):
 
 @pytest.fixture(scope='module')
 def share(db):
-    def factory(dataset: Dataset, environment: Environment, env_group: EnvironmentGroup) -> ShareObject:
+    def factory(dataset: S3Dataset, environment: Environment, env_group: EnvironmentGroup) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,

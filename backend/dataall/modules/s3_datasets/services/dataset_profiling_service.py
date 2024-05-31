@@ -13,7 +13,7 @@ from dataall.modules.s3_datasets.db.dataset_profiling_repositories import Datase
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun, DatasetTable
 from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
 

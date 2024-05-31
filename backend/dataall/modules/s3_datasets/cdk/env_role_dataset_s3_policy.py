@@ -3,7 +3,7 @@ from aws_cdk import aws_iam as iam
 
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 
 class DatasetS3Policy(S3Policy):
@@ -16,12 +16,12 @@ class DatasetS3Policy(S3Policy):
         return DatasetS3Policy._generate_dataset_statements(datasets)
 
     @staticmethod
-    def _generate_dataset_statements(datasets: List[Dataset]):
+    def _generate_dataset_statements(datasets: List[S3Dataset]):
         allowed_buckets = []
         allowed_access_points = []
         statements = []
         if datasets:
-            dataset: Dataset
+            dataset: S3Dataset
             for dataset in datasets:
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
                 allowed_access_points.append(
@@ -70,7 +70,7 @@ class DatasetS3Policy(S3Policy):
         if datasets:
             # Datasets belonging to a team and an environment are present in same region and aws account
             imported_dataset_resources = [f'arn:aws:kms:{datasets[0].region}:{datasets[0].AwsAccountId}:key/*']
-            dataset: Dataset
+            dataset: S3Dataset
             for dataset in datasets:
                 if dataset.imported and dataset.importedKmsKey:
                     imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
