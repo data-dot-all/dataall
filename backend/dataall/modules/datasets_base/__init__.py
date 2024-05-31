@@ -10,6 +10,7 @@ class DatasetBaseModuleInterface(ModuleInterface):
             ImportMode.HANDLERS,
             ImportMode.STACK_UPDATER_TASK,
             ImportMode.CATALOG_INDEXER_TASK,
+            ImportMode.SHARES_TASK,
         }
         return modes & supported_modes
 

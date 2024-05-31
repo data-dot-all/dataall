@@ -174,7 +174,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,
                 self.share_data.share.shareUri,
-                folder,
+                folder.locationUri,
             )
 
             try:

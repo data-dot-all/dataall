@@ -6,8 +6,6 @@ from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 
-load_modules(modes={ImportMode.SHARES_TASK})
-
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 if not root.hasHandlers():
@@ -17,6 +15,7 @@ log = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     try:
+        load_modules(modes={ImportMode.SHARES_TASK})
         ENVNAME = os.environ.get('envname', 'local')
         ENGINE = get_engine(envname=ENVNAME)
 

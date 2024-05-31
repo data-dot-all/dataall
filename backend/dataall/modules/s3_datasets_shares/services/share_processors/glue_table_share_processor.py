@@ -339,7 +339,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             return success
 
     def verify_shares(self) -> bool:
-        log.info('##### Starting Verify tables #######')
+        log.info('##### Verifying tables #######')
         if not self.tables:
             log.info('No tables to verify. Skipping...')
         else:

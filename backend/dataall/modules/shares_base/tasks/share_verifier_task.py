@@ -9,8 +9,6 @@ from dataall.base.db import get_engine
 
 from dataall.base.loader import load_modules, ImportMode
 
-load_modules(modes={ImportMode.SHARES_TASK})
-
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 if not root.hasHandlers():
@@ -40,6 +38,7 @@ def verify_shares(engine):
 
 
 if __name__ == '__main__':
+    load_modules(modes={ImportMode.SHARES_TASK})
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     verify_shares(engine=ENGINE)

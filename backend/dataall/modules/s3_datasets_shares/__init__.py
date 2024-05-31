@@ -46,9 +46,9 @@ class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetAsyncHandlersModuleInterface
-        from dataall.modules.shares_base import SharesBaseAsyncModuleInterface
+        from dataall.modules.shares_base import SharesBaseModuleInterface
 
-        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface, SharesBaseAsyncModuleInterface]
+        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
 
     def __init__(self):
         log.info('S3 Sharing handlers have been imported')
@@ -74,6 +74,13 @@ class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes):
         return ImportMode.SHARES_TASK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.shares_base import SharesBaseECSTaskModuleInterface
+        from dataall.modules.notifications import NotificationsModuleInterface
+
+        return [SharesBaseECSTaskModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
         from dataall.modules.shares_base.services.sharing_service import SharingService, SharingProcessorDefinition

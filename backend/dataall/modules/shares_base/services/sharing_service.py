@@ -258,7 +258,13 @@ class SharingService:
                     log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
 
     @classmethod
-    def verify_share(cls, engine: Engine, share_uri: str, status: str, healthStatus) -> bool:
+    def verify_share(
+        cls,
+        engine: Engine,
+        share_uri: str,
+        status: str = None,
+        healthStatus: str = ShareItemHealthStatus.PendingVerify.value,
+    ) -> bool:
         """
         1) Retrieves share data and items in specified status and health state (by default - PendingVerify)
         2) Calls corresponding SharesInterface.verify_shares
@@ -360,10 +366,9 @@ class SharingService:
                                 None,
                                 ShareItemHealthStatus.PendingReApply.value,
                             )
-                            log.info(f'Reapplying permissions with {type.value}')
                             success = processor.Processor(
                                 session, share_data, shareable_items
-                            ).proccess_approved_shares()
+                            ).process_approved_shares()
                             log.info(f'Reapplying {type.value} succeeded = {success}')
                             if not success:
                                 reapply_successful = False
