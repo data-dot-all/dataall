@@ -2,7 +2,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 class GlueDatasetProfilerClient:
     """Controls glue profiling jobs in AWS"""
 
-    def __init__(self, dataset: Dataset):
+    def __init__(self, dataset: S3Dataset):
         session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = session.client('glue', region_name=dataset.region)
         self._name = dataset.GlueProfilingJobName

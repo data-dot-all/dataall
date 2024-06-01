@@ -9,7 +9,7 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset, DatasetLock
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -22,9 +22,9 @@ class DatasetRepository(EnvironmentResource):
     """DAO layer for Datasets"""
 
     @classmethod
-    def build_dataset(cls, username: str, env: Environment, data: dict) -> Dataset:
+    def build_dataset(cls, username: str, env: Environment, data: dict) -> S3Dataset:
         """Builds a datasets based on the request data, but doesn't save it in the database"""
-        dataset = Dataset(
+        dataset = S3Dataset(
             label=data.get('label'),
             owner=username,
             description=data.get('description', 'No description provided'),
@@ -52,8 +52,8 @@ class DatasetRepository(EnvironmentResource):
         return dataset
 
     @staticmethod
-    def get_dataset_by_uri(session, dataset_uri) -> Dataset:
-        dataset: Dataset = session.query(Dataset).get(dataset_uri)
+    def get_dataset_by_uri(session, dataset_uri) -> S3Dataset:
+        dataset: S3Dataset = session.query(S3Dataset).get(dataset_uri)
         if not dataset:
             raise ObjectNotFound('Dataset', dataset_uri)
         return dataset
@@ -61,13 +61,15 @@ class DatasetRepository(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
         return (
-            session.query(Dataset)
-            .filter(and_(Dataset.environmentUri == environment.environmentUri, Dataset.SamlAdminGroupName == group_uri))
+            session.query(S3Dataset)
+            .filter(
+                and_(S3Dataset.environmentUri == environment.environmentUri, S3Dataset.SamlAdminGroupName == group_uri)
+            )
             .count()
         )
 
     @classmethod
-    def create_dataset(cls, session, env: Environment, dataset: Dataset, data: dict):
+    def create_dataset(cls, session, env: Environment, dataset: S3Dataset, data: dict):
         organization = OrganizationRepository.get_organization_by_uri(session, env.organizationUri)
         session.add(dataset)
         session.commit()
@@ -86,7 +88,7 @@ class DatasetRepository(EnvironmentResource):
         return dataset
 
     @staticmethod
-    def _set_dataset_aws_resources(dataset: Dataset, data, environment):
+    def _set_dataset_aws_resources(dataset: S3Dataset, data, environment):
         bucket_name = NamingConventionService(
             target_uri=dataset.datasetUri,
             target_label=dataset.label,
@@ -137,51 +139,6 @@ class DatasetRepository(EnvironmentResource):
         return dataset
 
     @staticmethod
-    def create_dataset_lock(session, dataset: Dataset):
-        dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
-        session.add(dataset_lock)
-        session.commit()
-
-    @staticmethod
-    def delete_dataset_lock(session, dataset: Dataset):
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
-        session.delete(dataset_lock)
-        session.commit()
-
-    @staticmethod
-    def paginated_all_user_datasets(session, username, groups, all_subqueries, data=None) -> dict:
-        return paginate(
-            query=DatasetRepository._query_all_user_datasets(session, username, groups, all_subqueries, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def _query_all_user_datasets(session, username, groups, all_subqueries, filter) -> Query:
-        query = session.query(Dataset).filter(
-            or_(
-                Dataset.owner == username,
-                Dataset.SamlAdminGroupName.in_(groups),
-                Dataset.stewards.in_(groups),
-            )
-        )
-        if query.first() is not None:
-            all_subqueries.append(query)
-        if len(all_subqueries) == 1:
-            query = all_subqueries[0]
-        elif len(all_subqueries) > 1:
-            query = all_subqueries[0].union(*all_subqueries[1:])
-
-        if filter and filter.get('term'):
-            union_query = query.filter(
-                or_(
-                    Dataset.description.ilike(filter.get('term') + '%%'),
-                    Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
-        return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
-
-    @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
         query = (
             session.query(DatasetTable)
@@ -203,19 +160,6 @@ class DatasetRepository(EnvironmentResource):
                 )
             )
         return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
-
-    @staticmethod
-    def update_dataset_activity(session, dataset, username):
-        activity = Activity(
-            action='dataset:update',
-            label='dataset:update',
-            owner=username,
-            summary=f'{username} updated dataset {dataset.name}',
-            targetUri=dataset.datasetUri,
-            targetType='dataset',
-        )
-        session.add(activity)
-        session.commit()
 
     @staticmethod
     def update_bucket_status(session, dataset_uri):
@@ -245,16 +189,16 @@ class DatasetRepository(EnvironmentResource):
         return True
 
     @staticmethod
-    def list_all_datasets(session) -> [Dataset]:
-        return session.query(Dataset).all()
+    def list_all_datasets(session) -> [S3Dataset]:
+        return session.query(S3Dataset).all()
 
     @staticmethod
-    def list_all_active_datasets(session) -> [Dataset]:
-        return session.query(Dataset).filter(Dataset.deleted.is_(None)).all()
+    def list_all_active_datasets(session) -> [S3Dataset]:
+        return session.query(S3Dataset).filter(S3Dataset.deleted.is_(None)).all()
 
     @staticmethod
-    def get_dataset_by_bucket_name(session, bucket) -> [Dataset]:
-        return session.query(Dataset).filter(Dataset.S3BucketName == bucket).first()
+    def get_dataset_by_bucket_name(session, bucket) -> [S3Dataset]:
+        return session.query(S3Dataset).filter(S3Dataset.S3BucketName == bucket).first()
 
     @staticmethod
     def count_dataset_tables(session, dataset_uri):
@@ -262,73 +206,41 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def query_environment_group_datasets(session, env_uri, group_uri, filter) -> Query:
-        query = session.query(Dataset).filter(
+        query = session.query(S3Dataset).filter(
             and_(
-                Dataset.environmentUri == env_uri,
-                Dataset.SamlAdminGroupName == group_uri,
-                Dataset.deleted.is_(None),
+                S3Dataset.environmentUri == env_uri,
+                S3Dataset.SamlAdminGroupName == group_uri,
+                S3Dataset.deleted.is_(None),
             )
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    Dataset.label.ilike('%' + term + '%'),
-                    Dataset.description.ilike('%' + term + '%'),
-                    Dataset.tags.contains(f'{{{term}}}'),
-                    Dataset.region.ilike('%' + term + '%'),
+                    S3Dataset.label.ilike('%' + term + '%'),
+                    S3Dataset.description.ilike('%' + term + '%'),
+                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.region.ilike('%' + term + '%'),
                 )
             )
-        return query.order_by(Dataset.label)
-
-    @staticmethod
-    def query_environment_datasets(session, uri, filter) -> Query:
-        query = session.query(Dataset).filter(
-            and_(
-                Dataset.environmentUri == uri,
-                Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    Dataset.label.ilike('%' + term + '%'),
-                    Dataset.description.ilike('%' + term + '%'),
-                    Dataset.tags.contains(f'{{{term}}}'),
-                    Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query.order_by(Dataset.label)
+        return query.order_by(S3Dataset.label)
 
     @staticmethod
     def query_environment_imported_datasets(session, uri, filter) -> Query:
-        query = session.query(Dataset).filter(
-            and_(Dataset.environmentUri == uri, Dataset.deleted.is_(None), Dataset.imported.is_(True))
+        query = session.query(S3Dataset).filter(
+            and_(S3Dataset.environmentUri == uri, S3Dataset.deleted.is_(None), S3Dataset.imported.is_(True))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    Dataset.label.ilike('%' + term + '%'),
-                    Dataset.description.ilike('%' + term + '%'),
-                    Dataset.tags.contains(f'{{{term}}}'),
-                    Dataset.region.ilike('%' + term + '%'),
+                    S3Dataset.label.ilike('%' + term + '%'),
+                    S3Dataset.description.ilike('%' + term + '%'),
+                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.region.ilike('%' + term + '%'),
                 )
             )
         return query
-
-    @staticmethod
-    def paginated_environment_datasets(
-        session,
-        uri,
-        data=None,
-    ) -> dict:
-        return paginate(
-            query=DatasetRepository.query_environment_datasets(session, uri, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     def paginated_environment_group_datasets(session, env_uri, group_uri, data=None) -> dict:
@@ -341,41 +253,15 @@ class DatasetRepository(EnvironmentResource):
     @staticmethod
     def list_group_datasets(session, environment_id, group_uri):
         return (
-            session.query(Dataset)
+            session.query(S3Dataset)
             .filter(
                 and_(
-                    Dataset.environmentUri == environment_id,
-                    Dataset.SamlAdminGroupName == group_uri,
+                    S3Dataset.environmentUri == environment_id,
+                    S3Dataset.SamlAdminGroupName == group_uri,
                 )
             )
             .all()
         )
-
-    @staticmethod
-    def paginated_user_datasets(session, username, groups, data=None) -> dict:
-        return paginate(
-            query=DatasetRepository._query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def _query_user_datasets(session, username, groups, filter) -> Query:
-        query = session.query(Dataset).filter(
-            or_(
-                Dataset.owner == username,
-                Dataset.SamlAdminGroupName.in_(groups),
-                Dataset.stewards.in_(groups),
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    Dataset.description.ilike(filter.get('term') + '%%'),
-                    Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
-        return query.order_by(Dataset.label).distinct(Dataset.datasetUri, Dataset.label)
 
     @staticmethod
     def _set_import_data(dataset, data):

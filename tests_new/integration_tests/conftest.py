@@ -1,4 +1,7 @@
+import json
+import os
 from dataclasses import dataclass
+from typing import List
 
 import pytest
 
@@ -11,36 +14,45 @@ class User:
     username: str
     password: str
 
+    @staticmethod
+    def from_userdata(userdata, username):
+        return User(username, userdata[username]['password'])
+
 
 @pytest.fixture(scope='module', autouse=True)
-def userTenant():
+def userdata():
+    yield json.loads(os.getenv('USERDATA'))
+
+
+@pytest.fixture(scope='module', autouse=True)
+def userTenant(userdata):
     # Existing user with name and password
     # This user needs to belong to `DAAdministrators` group
-    yield User('testUserTenant', 'Pass1Word!')
+    yield User.from_userdata(userdata, 'testUserTenant')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user1():
+def user1(userdata):
     # Existing user with name and password
-    yield User('testUser1', 'Pass1Word!')
+    yield User.from_userdata(userdata, 'testUser1')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user2():
+def user2(userdata):
     # Existing user with name and password
-    yield User('testUser2', 'Pass1Word!')
+    yield User.from_userdata(userdata, 'testUser2')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user3():
+def user3(userdata):
     # Existing user with name and password
-    yield User('testUser3', 'Pass1Word!')
+    yield User.from_userdata(userdata, 'testUser3')
 
 
 @pytest.fixture(scope='module', autouse=True)
-def user4():
+def user4(userdata):
     # Existing user with name and password
-    yield User('testUser4', 'Pass1Word!')
+    yield User.from_userdata(userdata, 'testUser4')
 
 
 @pytest.fixture(scope='module', autouse=True)

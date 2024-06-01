@@ -24,13 +24,12 @@ export const listDatasetsCreatedInEnvironment = ({
         hasPrevious
         nodes {
           datasetUri
+          datasetType
           label
           AwsAccountId
           region
-          GlueDatabaseName
           SamlAdminGroupName
           name
-          S3BucketName
           created
           owner
           stack {

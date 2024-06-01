@@ -106,7 +106,7 @@ function FolderPageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${folder?.dataset?.datasetUri}`}
+            to={`/console/s3-datasets/${folder?.dataset?.datasetUri}`}
             variant="subtitle2"
           >
             {folder?.dataset?.name}
@@ -115,7 +115,7 @@ function FolderPageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/folder/${folder.locationUri}`}
+            to={`/console/s3-datasets/folder/${folder.locationUri}`}
             variant="subtitle2"
           >
             {folder.label}
@@ -154,7 +154,7 @@ function FolderPageHeader(props) {
               component={RouterLink}
               startIcon={<PencilAltIcon fontSize="small" />}
               sx={{ m: 1 }}
-              to={`/console/datasets/folder/${folder.locationUri}/edit`}
+              to={`/console/s3-datasets/folder/${folder.locationUri}/edit`}
               variant="outlined"
             >
               Edit
@@ -224,7 +224,7 @@ const FolderView = () => {
         },
         variant: 'success'
       });
-      navigate(`/console/datasets/${folder.dataset.datasetUri}`);
+      navigate(`/console/s3-datasets/${folder.dataset.datasetUri}`);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

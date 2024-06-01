@@ -178,15 +178,16 @@ def get_parent_organization(context: Context, source, **kwargs):
     return org
 
 
-def get_policies(context: Context, source, **kwargs):
-    environment = EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
-    return PolicyManager(
-        role_name=source.IAMRoleName,
-        environmentUri=environment.environmentUri,
-        account=environment.AwsAccountId,
-        region=environment.region,
-        resource_prefix=environment.resourcePrefix,
-    ).get_all_policies()
+# used from ConsumptionRole type as field resolver
+def resolve_consumption_role_policies(context: Context, source, **kwargs):
+    return EnvironmentService.resolve_consumption_role_policies(
+        uri=source.environmentUri, IAMRoleName=source.IAMRoleName
+    )
+
+
+# used from getConsumptionRolePolicies query -- query resolver
+def get_consumption_role_policies(context: Context, source, environmentUri, IAMRoleName):
+    return EnvironmentService.resolve_consumption_role_policies(uri=environmentUri, IAMRoleName=IAMRoleName)
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):
