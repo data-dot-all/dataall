@@ -17,10 +17,7 @@ class Argument:
             raise Exception('Invalid Argument Type')
 
     def gql(self):
-        description_str = ''
-        n = '\n'
-        if self.description:
-            description_str = f' """{self.description}""" {n}'
+        description_str = f'"""{self.description}"""\n' if self.description else ''
 
         if isinstance(self.type, Enum):
             return f'{description_str}{self.name} : {self.type.name}'

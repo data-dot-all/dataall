@@ -50,18 +50,15 @@ class Field:
         else:
             raise Exception(f'Invalid type for field `{self.name}`: {type(self.type)}')
 
-        gql = ''
-        n = '\n'
-        if self.description:
-            gql = f' """{self.description}""" {n}'
+        description_str = f'"""{self.description}"""\n' if self.description else ''
 
         if self.args is not None:
             for a in self.args:
                 if not isinstance(a, Argument):
                     raise Exception(f'Found wrong argument in field {self.name}')
-            gql += f'{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
+            gql = f'{description_str}{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
         else:
-            gql += f'{self.name} : {t}'
+            gql = f'{description_str}{self.name} : {t}'
 
         if not len(self.directives):
             return gql
