@@ -15,14 +15,3 @@ CreateRedshiftConnectionInput = gql.InputType(
         gql.Argument('secretArn', gql.String)
     ],
 )
-
-RedshiftConnectionFilter = gql.InputType(
-    name='RedshiftConnectionFilter',
-    arguments=[
-        gql.Argument('term', gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-        gql.Argument(name='environmentUri', type=gql.String),
-    ],
-)
-

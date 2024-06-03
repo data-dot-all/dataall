@@ -53,11 +53,12 @@ const RSDatasetImportForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [connectionOptions, setConnectionOptions] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
-      config.modules.s3_datasets.features.custom_confidentiality_mapping
+    config.modules.datasets_base.features.confidentiality_dropdown === true &&
+      config.modules.datasets_base.features.custom_confidentiality_mapping
       ? Object.keys(
-          config.modules.s3_datasets.features.custom_confidentiality_mapping
+          config.modules.datasets_base.features.custom_confidentiality_mapping
         )
       : ConfidentialityList
   );
@@ -107,18 +108,19 @@ const RSDatasetImportForm = (props) => {
     }
   };
 
-  const fetchRedshiftConnections = async (environmentUri) => {
+  const fetchRedshiftConnections = async (environmentUri, groupUri) => {
     try {
       const response = await client.query(
         listEnvironmentRedshiftConnections({
           filter: {
             ...Defaults.selectListFilter,
-            environmentUri: environmentUri
+            environmentUri: environmentUri,
+            groupUri: groupUri
           }
         })
       );
       if (!response.errors) {
-        setGroupOptions(
+        setConnectionOptions(
           response.data.listEnvironmentRedshiftConnections.nodes.map((g) => ({
             value: g.connectionUri,
             label: g.name
@@ -274,13 +276,13 @@ const RSDatasetImportForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
-                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'), //TODO: ADD REDSHIFT CONNECTION
                 confidentiality: isFeatureEnabled(
-                  's3_datasets',
+                  'datasets_base',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -291,7 +293,9 @@ const RSDatasetImportForm = (props) => {
                   '*AutoApproval property is required'
                 ),
                 connectionUri: Yup.string().required('*Connection is required'),
-                database: Yup.string().required('*Database is required'),
+                database: Yup.string().required(
+                  '*Redshift Database is required'
+                ),
                 schema: Yup.string().required('*Schema is required'),
                 includePattern: Yup.string(),
                 excludePattern: Yup.string()
@@ -365,55 +369,9 @@ const RSDatasetImportForm = (props) => {
                         </CardContent>
                       </Card>
                       <Card sx={{ mt: 3 }}>
-                        <CardHeader title="Governance" />
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
-                            )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            label="Team"
-                            name="SamlGroupName"
-                            onChange={handleChange}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <Autocomplete
-                            id="stewards"
-                            freeSolo
-                            options={groupOptions.map((option) => option.value)}
-                            onChange={(event, value) => {
-                              setFieldValue('stewards', value);
-                            }}
-                            renderInput={(renderParams) => (
-                              <TextField
-                                {...renderParams}
-                                label="Stewards"
-                                margin="normal"
-                                onChange={handleChange}
-                                value={values.stewards}
-                                variant="outlined"
-                              />
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
-                      <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          's3_datasets',
+                          'datasets_base',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>
@@ -442,7 +400,10 @@ const RSDatasetImportForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled(
+                          'datasets_base',
+                          'topics_dropdown'
+                        ) && (
                           <CardContent>
                             <Autocomplete
                               multiple
@@ -490,7 +451,7 @@ const RSDatasetImportForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.s3_datasets.features
+                          {config.modules.datasets_base.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (
@@ -515,8 +476,8 @@ const RSDatasetImportForm = (props) => {
                       </Card>
                     </Grid>
                     <Grid item lg={6} md={6} xs={12}>
-                      <Card sx={{ mb: 3 }}>
-                        <CardHeader title="Deployment" />
+                      <Card>
+                        <CardHeader title="Governance" />
                         <CardContent>
                           <TextField
                             fullWidth
@@ -531,11 +492,6 @@ const RSDatasetImportForm = (props) => {
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
                               fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              fetchRedshiftConnections(
                                 event.target.value.environmentUri
                               ).catch((e) =>
                                 dispatch({ type: SET_ERROR, error: e.message })
@@ -560,20 +516,6 @@ const RSDatasetImportForm = (props) => {
                           <TextField
                             disabled
                             fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
                             label="Organization"
                             name="organization"
                             value={
@@ -586,14 +528,144 @@ const RSDatasetImportForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.label && errors.label)}
                             fullWidth
-                            helperText={touched.label && errors.label}
-                            label="Dataset name"
-                            name="label"
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
+                            label="Team"
+                            name="SamlGroupName"
+                            onChange={(event) => {
+                              fetchRedshiftConnections(
+                                values.environment.environmentUri,
+                                event.target.value
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                              setFieldValue(
+                                'SamlGroupName',
+                                event.target.value
+                              );
+                            }}
+                            select
+                            value={values.SamlGroupName}
+                            variant="outlined"
+                          >
+                            {groupOptions.map((group) => (
+                              <MenuItem key={group.value} value={group.value}>
+                                {group.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <Autocomplete
+                            id="stewards"
+                            freeSolo
+                            options={groupOptions.map((option) => option.value)}
+                            onChange={(event, value) => {
+                              setFieldValue('stewards', value);
+                            }}
+                            renderInput={(renderParams) => (
+                              <TextField
+                                {...renderParams}
+                                label="Stewards"
+                                margin="normal"
+                                onChange={handleChange}
+                                value={values.stewards}
+                                variant="outlined"
+                              />
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                      <Card sx={{ mt: 3 }}>
+                        <CardHeader title="Deployment" />
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.connectionUri && errors.connectionUri
+                            )}
+                            helperText={
+                              touched.connectionUri && errors.connectionUri
+                            }
+                            label="Redshift Connection"
+                            name="connectionUri"
+                            onChange={handleChange}
+                            select
+                            value={values.connectionUri}
+                            variant="outlined"
+                          >
+                            {connectionOptions.map((connection) => (
+                              <MenuItem
+                                key={connection.value}
+                                value={connection.value}
+                              >
+                                {connection.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.database && errors.database)}
+                            fullWidth
+                            helperText={touched.database && errors.database}
+                            label="Redshift database name"
+                            name="database"
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.label}
+                            value={values.database}
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.schema && errors.schema)}
+                            fullWidth
+                            helperText={touched.schema && errors.schema}
+                            label="Redshift database schema"
+                            name="schema"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.schema}
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(
+                              touched.includePattern && errors.includePattern
+                            )}
+                            fullWidth
+                            helperText={
+                              touched.includePattern && errors.includePattern
+                            }
+                            label="(optional) Include pattern"
+                            name="includePattern"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.includePattern}
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(
+                              touched.excludePattern && errors.excludePattern
+                            )}
+                            fullWidth
+                            helperText={
+                              touched.excludePattern && errors.excludePattern
+                            }
+                            label="(optional) Exclude pattern"
+                            name="excludePattern"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.excludePattern}
                             variant="outlined"
                           />
                         </CardContent>

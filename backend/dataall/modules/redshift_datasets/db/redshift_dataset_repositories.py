@@ -38,7 +38,10 @@ class RedshiftDatasetRepository(EnvironmentResource):
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
             connectionUri=data.get('connectionUri'),
-            importPattern=data.get('importPattern'),
+            database=data.get('database'),
+            schema=data.get('schema'),
+            includePattern=data.get('includePattern'),
+            excludePattern=data.get('excludePattern'),
         )
         session.add(dataset)
         session.commit()

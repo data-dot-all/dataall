@@ -38,6 +38,8 @@ class RedshiftConnectionRepository:
         )
         if filter and filter.get('environmentUri'):
             query = query.filter(RedshiftConnection.environmentUri == filter.get('environmentUri'))
+        if filter and filter.get('groupUri'):
+            query = query.filter(RedshiftConnection.SamlGroupName == filter.get('groupUri'))
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
