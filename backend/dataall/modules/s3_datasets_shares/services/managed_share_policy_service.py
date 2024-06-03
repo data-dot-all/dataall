@@ -66,10 +66,15 @@ class SharePolicyService(ManagedPolicy):
         index = self._get_statement_by_sid(policy_document, statement_sid)
         if index is None:
             log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'creating statement...')
+            policy_actions = (
+                [f'{resource_type}:List*', f'{resource_type}:Describe*', f'{resource_type}:GetObject']
+                if resource_type == 's3'
+                else [f'{resource_type}:*']
+            )
             additional_policy = {
                 'Sid': statement_sid,
                 'Effect': 'Allow',
-                'Action': [f'{resource_type}:*'],
+                'Action': policy_actions,
                 'Resource': target_resources,
             }
             policy_document['Statement'].append(additional_policy)
@@ -209,7 +214,7 @@ class SharePolicyService(ManagedPolicy):
             additional_policy = {
                 'Sid': f'{statement_sid}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:*', 's3:List*', 's3:Describe*'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
                 'Resource': existing_s3,
             }
             policy['Statement'].append(additional_policy)
