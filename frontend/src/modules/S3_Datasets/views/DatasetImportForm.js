@@ -51,7 +51,7 @@ const DatasetImportForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
+    config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.s3_datasets.features.custom_confidentiality_mapping
       ? Object.keys(
           config.modules.s3_datasets.features.custom_confidentiality_mapping
@@ -241,7 +241,7 @@ const DatasetImportForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
-                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
@@ -252,7 +252,7 @@ const DatasetImportForm = (props) => {
                   .max(255)
                   .required('*S3 bucket name is required'),
                 confidentiality: isFeatureEnabled(
-                  's3_datasets',
+                  'datasets_base',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -334,7 +334,7 @@ const DatasetImportForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          's3_datasets',
+                          'datasets_base',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>
@@ -363,7 +363,10 @@ const DatasetImportForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled(
+                          'datasets_base',
+                          'topics_dropdown'
+                        ) && (
                           <CardContent>
                             <Autocomplete
                               multiple
@@ -411,7 +414,7 @@ const DatasetImportForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.s3_datasets.features
+                          {config.modules.datasets_base.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (
