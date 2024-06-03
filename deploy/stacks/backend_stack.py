@@ -435,7 +435,7 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(['modules.s3_datasets.features.share_notifications.email.active'])
+    @run_if(['modules.datasets_base.features.share_notifications.email.active'])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
         if custom_domain is None or None in [
             custom_domain.get('hosted_zone_name', None),

@@ -1115,3 +1115,15 @@ class EnvironmentService:
                 )
 
             return S3_client.get_presigned_url(region, resource_bucket, template_key)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
+    def resolve_consumption_role_policies(uri, IAMRoleName):
+        environment = EnvironmentService.find_environment_by_uri(uri=uri)
+        return PolicyManager(
+            role_name=IAMRoleName,
+            environmentUri=uri,
+            account=environment.AwsAccountId,
+            region=environment.region,
+            resource_prefix=environment.resourcePrefix,
+        ).get_all_policies()
