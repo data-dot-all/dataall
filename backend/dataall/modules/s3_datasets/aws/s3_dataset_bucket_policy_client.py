@@ -4,13 +4,13 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 log = logging.getLogger(__name__)
 
 
 class S3DatasetBucketPolicyClient:
-    def __init__(self, dataset: Dataset):
+    def __init__(self, dataset: S3Dataset):
         session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
         self._client = session.client('s3')
         self._dataset = dataset

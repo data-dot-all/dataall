@@ -1,4 +1,5 @@
 import {
+  Article,
   BlockOutlined,
   CheckCircleOutlined,
   CopyAllOutlined,
@@ -73,6 +74,7 @@ import {
   UpdateRequestReason
 } from '../components';
 import { generateShareItemLabel } from 'utils';
+import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
 
 function ShareViewHeader(props) {
@@ -91,6 +93,8 @@ function ShareViewHeader(props) {
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
+  const [openLogsModal, setOpenLogsModal] = useState(null);
+
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
   const submit = async () => {
     setSubmitting(true);
@@ -135,6 +139,13 @@ function ShareViewHeader(props) {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
+  };
+
+  const handleOpenLogsModal = () => {
+    setOpenLogsModal(true);
+  };
+  const handleCloseOpenLogs = () => {
+    setOpenLogsModal(false);
   };
 
   const handleRejectShareModalOpen = () => {
@@ -237,7 +248,7 @@ function ShareViewHeader(props) {
               color="textSecondary"
               variant="subtitle2"
               component={RouterLink}
-              to={`/console/datasets/${share.dataset?.datasetUri}`}
+              to={`/console/s3-datasets/${share.dataset?.datasetUri}`}
             >
               {share.dataset?.datasetName}
             </Typography>
@@ -258,6 +269,17 @@ function ShareViewHeader(props) {
               >
                 Refresh
               </Button>
+              {share.canViewLogs && (
+                <Button
+                  color="primary"
+                  startIcon={<Article fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={handleOpenLogsModal}
+                >
+                  Logs
+                </Button>
+              )}
               {(share.userRoleForShareObject === 'Approvers' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -343,6 +365,13 @@ function ShareViewHeader(props) {
           enqueueSnackbar={enqueueSnackbar}
           fetchItem={fetchItem}
           sharedItems={sharedItems}
+        />
+      )}
+      {share.canViewLogs && (
+        <ShareLogs
+          shareUri={share.shareUri}
+          onClose={handleCloseOpenLogs}
+          open={openLogsModal && share.canViewLogs}
         />
       )}
     </>

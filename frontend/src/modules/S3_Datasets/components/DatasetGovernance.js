@@ -49,7 +49,7 @@ export const DatasetGovernance = (props) => {
           </Label>
         </Box>
       </CardContent>
-      {isFeatureEnabled('s3_datasets', 'confidentiality_dropdown') && (
+      {isFeatureEnabled('datasets_base', 'confidentiality_dropdown') && (
         <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
             Classification
@@ -59,7 +59,7 @@ export const DatasetGovernance = (props) => {
           </Box>
         </CardContent>
       )}
-      {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+      {isFeatureEnabled('datasets_base', 'topics_dropdown') && (
         <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
             Topics

@@ -6,13 +6,13 @@ from aws_cdk import App
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.s3_datasets.cdk.dataset_stack import DatasetStack
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset(db, env_fixture: Environment) -> Dataset:
+def dataset(db, env_fixture: Environment) -> S3Dataset:
     with db.scoped_session() as session:
-        dataset = Dataset(
+        dataset = S3Dataset(
             label='thisdataset',
             environmentUri=env_fixture.environmentUri,
             organizationUri=env_fixture.organizationUri,

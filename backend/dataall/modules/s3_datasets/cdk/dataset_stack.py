@@ -23,7 +23,7 @@ from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.s3_datasets.aws.lf_dataset_client import LakeFormationDatasetClient
-from dataall.modules.s3_datasets.db.dataset_models import Dataset
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
 from dataall.base.config import config
 
@@ -61,18 +61,18 @@ class DatasetStack(Stack):
             env = EnvironmentService.get_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
         return env
 
-    def get_target_with_uri(self, target_uri) -> Dataset:
+    def get_target_with_uri(self, target_uri) -> S3Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(Dataset).get(target_uri)
+            dataset = session.query(S3Dataset).get(target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_target(self) -> Dataset:
+    def get_target(self) -> S3Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(Dataset).get(self.target_uri)
+            dataset = session.query(S3Dataset).get(self.target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
@@ -501,9 +501,9 @@ class DatasetStack(Stack):
             )
             trigger.node.add_dependency(job)
 
-        if config.get_property('modules.s3_datasets.features.confidentiality_dropdown', False):
+        if config.get_property('modules.datasets_base.features.confidentiality_dropdown', False):
             Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(stack=self, model=Dataset, target_type='dataset')
+        TagsUtil.add_tags(stack=self, model=S3Dataset, target_type='dataset')
 
         CDKNagUtil.check_rules(self)
