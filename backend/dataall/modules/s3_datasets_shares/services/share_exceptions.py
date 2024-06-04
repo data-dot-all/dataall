@@ -19,3 +19,8 @@ class ShareItemsFound(BaseShareException):
 class PrincipalRoleNotFound(BaseShareException):
     def __init__(self, action, message):
         super().__init__('PrincipalRoleNotFound', action, message)
+
+
+class DatasetLockTimeout(BaseShareException):
+    def __init__(self, action, message):
+        super().__init__('DatasetLockTimeout', action, message)

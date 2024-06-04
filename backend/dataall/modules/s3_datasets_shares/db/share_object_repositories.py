@@ -49,7 +49,7 @@ class ShareObjectRepository:
         session.commit()
 
     @staticmethod
-    def list_all_active_share_objects(session) -> [ShareObject]:
+    def list_all_active_share_objects(session) -> [ShareObject]:  ## TODO: Already in shares_base
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
@@ -127,7 +127,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
+    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:  ## TODO: Already in shares_base
         return (
             session.query(ShareObjectItem)
             .filter(
@@ -172,7 +172,7 @@ class ShareObjectRepository:
         return False
 
     @staticmethod
-    def check_pending_share_items(session, uri):
+    def check_pending_share_items(session, uri):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         shared_items = (
             session.query(ShareObjectItem)
@@ -189,7 +189,7 @@ class ShareObjectRepository:
         return False
 
     @staticmethod
-    def get_share_item_by_uri(session, uri):
+    def get_share_item_by_uri(session, uri):  ## TODO: Already in shares_base
         share_item: ShareObjectItem = session.query(ShareObjectItem).get(uri)
         if not share_item:
             raise exceptions.ObjectNotFound('ShareObjectItem', uri)
@@ -417,7 +417,7 @@ class ShareObjectRepository:
         session,
         uri: str,
         status: str,
-    ) -> ShareObjectItem:
+    ) -> ShareObjectItem:  ## TODO: Already in shares_base
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
@@ -430,7 +430,7 @@ class ShareObjectRepository:
         healthStatus: str = None,
         healthMessage: str = None,
         timestamp: datetime = None,
-    ) -> ShareObjectItem:
+    ) -> ShareObjectItem:  ## TODO: Already in shares_base
         share_item.healthStatus = healthStatus
         share_item.healthMessage = healthMessage
         share_item.lastVerificationTime = timestamp
@@ -455,7 +455,7 @@ class ShareObjectRepository:
         share_uri: str,
         old_status: str,
         new_status: str,
-    ) -> bool:
+    ) -> bool:  ## TODO: Already in shares_base
         (
             session.query(ShareObjectItem)
             .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
@@ -486,7 +486,7 @@ class ShareObjectRepository:
         return True
 
     @staticmethod
-    def get_share_data(session, share_uri):
+    def get_share_data(session, share_uri):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
@@ -541,7 +541,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):
+    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
         (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
             session, share_uri, status, healthStatus
         )
@@ -561,7 +561,7 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_data_items(session, share_uri, status=None, healthStatus=None):
+    def get_share_data_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
@@ -583,7 +583,9 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def _find_all_share_item(session, share, status, healthStatus, share_type_model, share_type_uri):
+    def _find_all_share_item(
+        session, share, status, healthStatus, share_type_model, share_type_uri
+    ):  ## TODO: Already in shares_base
         query = (
             session.query(share_type_model)
             .join(

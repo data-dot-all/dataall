@@ -1498,21 +1498,6 @@ def test_verify_items_share_request(db, client, user2, group2, share3_processed,
     assert status == ShareItemHealthStatus.PendingVerify.value
 
 
-def test_update_all_share_items_status(db, client, user2, group2, share3_processed, share3_item_shared, mocker):
-    with db.scoped_session() as session:
-        verified = ShareObjectService.update_all_share_items_status(
-            session,
-            share3_processed.shareUri,
-            new_health_status=ShareItemHealthStatus.Unhealthy.value,
-            message='',
-            previous_health_status=None,
-        )
-        items = ShareObjectRepository.get_all_shareable_items(session, share3_processed.shareUri)
-        assert not verified
-        for item in items:
-            assert item.healthStatus == ShareItemHealthStatus.Unhealthy.value
-
-
 def test_reapply_items_share_request(db, client, user, group, share3_processed, share3_item_shared_unhealthy):
     # Given
     # Existing share object in status Processed (-> fixture share3_processed)

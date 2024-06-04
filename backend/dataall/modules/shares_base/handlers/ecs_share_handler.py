@@ -4,7 +4,7 @@ import os
 from dataall.core.tasks.service_handlers import Worker
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.s3_datasets_shares.services.data_sharing_service import DataSharingService
+from dataall.modules.shares_base.services.sharing_service import SharingService
 
 log = logging.getLogger(__name__)
 
@@ -13,22 +13,22 @@ class EcsShareHandler:
     @staticmethod
     @Worker.handler(path='ecs.share.approve')
     def approve_share(engine, task: Task):
-        return EcsShareHandler._manage_share(engine, task, DataSharingService.approve_share, 'approve_share')
+        return EcsShareHandler._manage_share(engine, task, SharingService.approve_share, 'approve_share')
 
     @staticmethod
     @Worker.handler(path='ecs.share.revoke')
     def revoke_share(engine, task: Task):
-        return EcsShareHandler._manage_share(engine, task, DataSharingService.revoke_share, 'revoke_share')
+        return EcsShareHandler._manage_share(engine, task, SharingService.revoke_share, 'revoke_share')
 
     @staticmethod
     @Worker.handler(path='ecs.share.verify')
     def verify_share(engine, task: Task):
-        return EcsShareHandler._manage_share(engine, task, DataSharingService.verify_share, 'verify_share')
+        return EcsShareHandler._manage_share(engine, task, SharingService.verify_share, 'verify_share')
 
     @staticmethod
     @Worker.handler(path='ecs.share.reapply')
     def reapply_share(engine, task: Task):
-        return EcsShareHandler._manage_share(engine, task, DataSharingService.reapply_share, 'reapply_share')
+        return EcsShareHandler._manage_share(engine, task, SharingService.reapply_share, 'reapply_share')
 
     @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):

@@ -1,11 +1,13 @@
 import logging
 import os
 import sys
-from dataall.modules.s3_datasets_shares.api.types import ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
-from dataall.modules.s3_datasets_shares.services.data_sharing_service import DataSharingService
+from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.base.db import get_engine
+
+from dataall.base.loader import load_modules, ImportMode
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -29,13 +31,14 @@ def verify_shares(engine):
                 f'Verifying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
             )
             processed_share_objects.append(share_object.shareUri)
-            DataSharingService.verify_share(
+            SharingService.verify_share(
                 engine, share_uri=share_object.shareUri, status=ShareItemStatus.Share_Succeeded.value, healthStatus=None
             )
         return processed_share_objects
 
 
 if __name__ == '__main__':
+    load_modules(modes={ImportMode.SHARES_TASK})
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     verify_shares(engine=ENGINE)

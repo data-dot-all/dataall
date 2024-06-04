@@ -1,11 +1,10 @@
-import abc
 import json
 import logging
 from itertools import count
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.kms_client import (
     KmsClient,
@@ -23,8 +22,9 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 
@@ -33,47 +33,30 @@ class S3BucketShareManager:
     def __init__(
         self,
         session,
-        dataset: S3Dataset,
-        share: ShareObject,
+        share_data: ShareData,
         target_bucket: DatasetBucket,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
     ):
         self.session = session
-        self.source_env_group = source_env_group
-        self.env_group = env_group
-        self.dataset = dataset
-        self.share = share
+        self.source_env_group = share_data.source_env_group
+        self.env_group = share_data.env_group
+        self.dataset = share_data.dataset
+        self.share = share_data.share
         self.target_bucket = target_bucket
-        self.source_environment = source_environment
-        self.target_environment = target_environment
+        self.source_environment = share_data.source_environment
+        self.target_environment = share_data.target_environment
         self.share_item = ShareObjectRepository.find_sharable_item(
             session,
-            share.shareUri,
+            share_data.share.shareUri,
             target_bucket.bucketUri,
         )
         self.source_account_id = target_bucket.AwsAccountId
-        self.target_account_id = target_environment.AwsAccountId
-        self.source_env_admin = source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share.principalIAMRoleName
+        self.target_account_id = share_data.target_environment.AwsAccountId
+        self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
+        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
         self.bucket_name = target_bucket.S3BucketName
-        self.dataset_admin = dataset.IAMDatasetAdminRoleArn
+        self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.bucket_region = target_bucket.region
         self.bucket_errors = []
-
-    @abc.abstractmethod
-    def process_approved_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def process_revoked_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def verify_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
 
     def check_s3_iam_access(self) -> None:
         """
