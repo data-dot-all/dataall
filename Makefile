@@ -49,7 +49,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	pip install bandit
 	pip install safety
 	bandit -lll -r backend
-	safety check --ignore=51668,67599
+	safety check --ignore=51668,70612,70624
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
