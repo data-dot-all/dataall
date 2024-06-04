@@ -208,7 +208,6 @@ class ShareObjectService:
                         itemName=item.name,
                         status=ShareItemStatus.PendingApproval.value,
                         owner=context.username,
-                        GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else '',
                         S3AccessPointName=s3_access_point_name
                         if item_type == ShareableType.StorageLocation.value
                         else '',

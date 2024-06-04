@@ -845,7 +845,7 @@ class ShareObjectRepository:
                 ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
                 S3Dataset.GlueDatabaseName.label('GlueDatabaseName'),
-                ShareObjectItem.GlueTableName.label('GlueTableName'),
+                DatasetTable.GlueTableName.label('GlueTableName'),
                 ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
                 Organization.organizationUri.label('organizationUri'),
                 Organization.name.label('organizationName'),
