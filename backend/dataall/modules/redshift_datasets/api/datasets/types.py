@@ -8,6 +8,8 @@ from dataall.modules.redshift_datasets.api.datasets.resolvers import (
     resolve_dataset_stewards_group,
     resolve_user_role,
     resolve_dataset_glossary_terms,
+    resolve_dataset_connection,
+    resolve_dataset_upvotes,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -30,7 +32,6 @@ RedshiftDataset = gql.ObjectType(
         gql.Field(name='businessOwnerEmail', type=gql.String),
         gql.Field(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
         gql.Field(name='imported', type=gql.Boolean),
-        # TODO:ADD REDSHIFT SPECIFIC FIELDS
         gql.Field(
             name='environment',
             type=gql.Ref('Environment'),
@@ -66,5 +67,13 @@ RedshiftDataset = gql.ObjectType(
         gql.Field(name='confidentiality', type=gql.String),
         gql.Field(name='language', type=gql.Ref('Language')),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Field(name='includePattern', type=gql.String),
+        gql.Field(name='excludePattern', type=gql.String),
+        gql.Field(name='upvotes', type=gql.Integer, resolver=resolve_dataset_upvotes),
+        gql.Field(
+            name='connection',
+            type=gql.Ref('RedshiftConnection'),
+            resolver=resolve_dataset_connection,
+        ),
     ],
 )

@@ -9,11 +9,12 @@ log = logging.getLogger(__name__)
 
 
 class ConnectionListService:
-
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_CONNECTIONS)
     def list_environment_connections(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            connections = ConnectionRepository.paginated_user_connections(session, context.username, context.groups, filter)
+            connections = ConnectionRepository.paginated_user_connections(
+                session, context.username, context.groups, filter
+            )
             return connections

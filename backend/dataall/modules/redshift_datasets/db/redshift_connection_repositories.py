@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
+from dataall.base.db import exceptions
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
@@ -26,7 +27,10 @@ class RedshiftConnectionRepository:
     @staticmethod
     def find_redshift_connection(session, uri) -> RedshiftConnection:
         """Find Redshift Connection by URI"""
-        return session.query(RedshiftConnection).get(uri)
+        connection = session.query(RedshiftConnection).get(uri)
+        if not connection:
+            raise exceptions.ObjectNotFound('RedshiftConnection', uri)
+        return connection
 
     @staticmethod
     def _query_user_redshift_connections(session, username, groups, filter) -> Query:

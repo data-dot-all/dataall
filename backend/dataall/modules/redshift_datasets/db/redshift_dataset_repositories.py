@@ -18,7 +18,7 @@ class RedshiftDatasetRepository(EnvironmentResource):
     """DAO layer for Redshift Datasets"""
 
     @classmethod
-    def create_redshift_dataset(cls, session, username, env: Environment, data: dict):
+    def create_redshift_dataset(cls, session, username, env: Environment, data: dict) -> RedshiftDataset:
         organization = OrganizationRepository.get_organization_by_uri(session, env.organizationUri)
         dataset = RedshiftDataset(
             label=data.get('label'),
@@ -55,4 +55,11 @@ class RedshiftDatasetRepository(EnvironmentResource):
             targetType='redshift-dataset',
         )
         session.add(activity)
+        return dataset
+
+    @staticmethod
+    def get_redshift_dataset_by_uri(session, dataset_uri) -> RedshiftDataset:
+        dataset: RedshiftDataset = session.query(RedshiftDataset).get(dataset_uri)
+        if not dataset:
+            raise ObjectNotFound('RedshiftDataset', dataset_uri)
         return dataset

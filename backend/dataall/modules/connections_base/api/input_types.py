@@ -11,4 +11,3 @@ ConnectionFilter = gql.InputType(
         gql.Argument(name='groupUri', type=gql.String),
     ],
 )
-

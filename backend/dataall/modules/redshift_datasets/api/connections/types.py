@@ -13,8 +13,8 @@ RedshiftConnection = gql.ObjectType(
         gql.Field(name='nameSpaceId', type=gql.String),
         gql.Field(name='workgroupId', type=gql.String),
         gql.Field(name='redshiftUser', type=gql.String),
-        gql.Field(name='secretArn', type=gql.String)
-    ]
+        gql.Field(name='secretArn', type=gql.String),
+    ],
 )
 
 RedshiftConnectionSearchResult = gql.ObjectType(

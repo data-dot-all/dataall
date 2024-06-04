@@ -12,6 +12,7 @@ def required_uri(uri):
     if not uri:
         raise exceptions.RequiredParameter('URI')
 
+
 def list_environment_connections(context: Context, source, filter):
     uri = filter.get('environmentUri', None)
     required_uri(uri)

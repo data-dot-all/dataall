@@ -13,13 +13,15 @@ class RedshiftDataset(DatasetBase):
     schema = Column(String, nullable=False)
     includePattern = Column(String, nullable=True)
     excludePattern = Column(String, nullable=True)
-    datashareArn =  Column(String, nullable=True)
+    datashareArn = Column(String, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': DatasetType.Redshift,
     }
 
-#TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
+
+# TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
+
 
 class RedshiftConnection(Connection):
     __tablename__ = 'redshift_connection'
@@ -34,7 +36,3 @@ class RedshiftConnection(Connection):
     __mapper_args__ = {
         'polymorphic_identity': ConnectionType.Redshift,
     }
-
-
-
-

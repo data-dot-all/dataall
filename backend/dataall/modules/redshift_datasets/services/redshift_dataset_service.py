@@ -5,6 +5,9 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.tasks.db.task_models import Task
+from dataall.core.tasks.service_handlers import Worker
+from dataall.modules.vote.db.vote_repositories import VoteRepository
 
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 
@@ -15,7 +18,9 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
     REDSHIFT_DATASET_READ,
 )
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
+from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
+from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
 
 
 log = logging.getLogger(__name__)
@@ -34,7 +39,19 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.create_redshift_dataset(
                 session=session, username=context.username, env=environment, data=data
             )
-            #TODO: ADD LOGIC TO CREATE REDSHIFT DATASHARE
+
+            connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.redshiftConnectionId)
+            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{dataset.label.lower()}-{dataset.uri}'
+
+            task = Task(
+                targetUri=dataset.datasetUri,
+                action='redshift.datashare.import',
+                payload={},
+            )
+            session.add(task)
+            session.commit()
+
+            Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -66,3 +83,18 @@ class RedshiftDatasetService:
         dataset.userRoleForDataset = DatasetRole.Creator.value
 
         return dataset
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    def get_redshift_dataset(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
+            if dataset.SamlAdminGroupName in context.groups:
+                dataset.userRoleForDataset = DatasetRole.Admin.value
+            return dataset
+
+    @staticmethod
+    def get_dataset_upvotes(uri):
+        with get_context().db_engine.scoped_session() as session:
+            return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0

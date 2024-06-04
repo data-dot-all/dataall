@@ -18,6 +18,12 @@ import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 
 export const DatasetListItem = (props) => {
   const { dataset } = props;
+  const datasetTypeLink =
+    dataset.datasetType === 'DatasetType.S3'
+      ? `s3-datasets`
+      : dataset.datasetType === 'DatasetType.Redshift'
+      ? `redshift-datasets`
+      : '-';
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
@@ -41,9 +47,7 @@ export const DatasetListItem = (props) => {
                     variant="h6"
                     onClick={() => {
                       navigate(
-                        dataset.datasetType === 'DatasetType.S3'
-                          ? `/console/s3-datasets/${dataset.datasetUri}`
-                          : '-'
+                        `/console/${datasetTypeLink}/${dataset.datasetUri}`
                       );
                     }}
                     sx={{

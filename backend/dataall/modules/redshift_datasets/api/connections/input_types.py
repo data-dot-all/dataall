@@ -12,6 +12,6 @@ CreateRedshiftConnectionInput = gql.InputType(
         gql.Argument('nameSpaceId', gql.String),
         gql.Argument('workgroupId', gql.String),
         gql.Argument('redshiftUser', gql.String),
-        gql.Argument('secretArn', gql.String)
+        gql.Argument('secretArn', gql.String),
     ],
 )

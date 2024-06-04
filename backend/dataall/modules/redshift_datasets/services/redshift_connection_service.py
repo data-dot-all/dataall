@@ -11,7 +11,7 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.connections_base.services.connection_list_permissions import LIST_ENVIRONMENT_CONNECTIONS
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
-    IMPORT_REDSHIFT_DATASET
+    IMPORT_REDSHIFT_DATASET,
 )
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     REDSHIFT_CONNECTION_ALL,
@@ -60,18 +60,23 @@ class RedshiftConnectionService:
             return connection
 
     @staticmethod
-    def _get_connection(session, uri) -> RedshiftConnection:
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    def get_redshift_connection_by_uri(uri, session) -> RedshiftConnection:
         connection = RedshiftConnectionRepository.find_redshift_connection(session, uri)
         if not connection:
             raise exceptions.ObjectNotFound('RedshiftConnection', uri)
         return connection
 
     @staticmethod
+    def _get_redshift_connection(session, uri) -> RedshiftConnection:
+        return RedshiftConnectionRepository.find_redshift_connection(session, uri)
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(DELETE_REDSHIFT_CONNECTION)
     def delete_redshift_connection(uri) -> bool:
         context = get_context()
-        with (context.db_engine.scoped_session() as session):
-            connection = RedshiftConnectionService._get_connection(session, uri)
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService._get_redshift_connection(session=session, uri=uri)
             ResourcePolicyService.delete_resource_policy(
                 session=session,
                 resource_uri=connection.connectionUri,
@@ -87,5 +92,7 @@ class RedshiftConnectionService:
     def list_environment_redshift_connections(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            connections = RedshiftConnectionRepository.paginated_user_redshift_connections(session, context.username, context.groups, filter)
+            connections = RedshiftConnectionRepository.paginated_user_redshift_connections(
+                session, context.username, context.groups, filter
+            )
             return connections

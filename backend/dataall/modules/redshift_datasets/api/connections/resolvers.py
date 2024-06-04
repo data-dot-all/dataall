@@ -14,8 +14,10 @@ def create_redshift_connection(context: Context, source, input=None):
     uri = input['environmentUri']
     return RedshiftConnectionService.create_redshift_connection(uri=uri, admin_group=admin_group, data=input)
 
+
 def delete_redshift_connection(context: Context, source, connectionUri):
     return RedshiftConnectionService.delete_redshift_connection(uri=connectionUri)
+
 
 def list_environment_redshift_connections(context: Context, source, filter):
     # At the moment this resolver is not

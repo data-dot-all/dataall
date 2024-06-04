@@ -7,7 +7,7 @@ Connection = gql.ObjectType(
         gql.Field(name='name', type=gql.String),
         gql.Field(name='connectionType', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
-    ]
+    ],
 )
 
 ConnectionSearchResult = gql.ObjectType(

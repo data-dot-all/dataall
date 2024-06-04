@@ -1,4 +1,5 @@
 """The package contains the database models that are related to the environment connections"""
+
 from sqlalchemy import Column, Enum, String, ForeignKey
 from dataall.base.db import Resource, Base, utils
 
@@ -13,4 +14,3 @@ class Connection(Resource, Base):
     SamlGroupName = Column(String, nullable=False)
 
     __mapper_args__ = {'polymorphic_identity': 'connection', 'polymorphic_on': connectionType}
-

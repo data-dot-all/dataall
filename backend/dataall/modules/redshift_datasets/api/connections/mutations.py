@@ -1,7 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.redshift_datasets.api.connections.resolvers import (
     create_redshift_connection,
-    delete_redshift_connection
+    delete_redshift_connection,
 )
 from dataall.modules.redshift_datasets.api.connections.types import (
     RedshiftConnection,
