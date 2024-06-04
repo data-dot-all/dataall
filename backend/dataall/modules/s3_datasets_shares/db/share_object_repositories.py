@@ -815,7 +815,7 @@ class ShareObjectRepository:
             query = query.filter(ShareObjectItem.itemType == item_type)
         shares_datasets = []
         for share in query.all():
-            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             shares_datasets.append(
                 {'shareUri': share.shareUri, 'databaseName': f'{dataset.GlueDatabaseName}_shared_{share.shareUri}'}
             )
@@ -844,7 +844,7 @@ class ShareObjectRepository:
                 ShareObject.principalType.label('principalType'),
                 ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
-                ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+                S3Dataset.GlueDatabaseName.label('GlueDatabaseName'),
                 ShareObjectItem.GlueTableName.label('GlueTableName'),
                 ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
                 Organization.organizationUri.label('organizationUri'),
