@@ -16,9 +16,9 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetApiModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAPIModuleInterface
 
-        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseAPIModuleInterface]
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
