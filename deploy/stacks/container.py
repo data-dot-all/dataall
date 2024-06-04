@@ -617,6 +617,15 @@ class ContainerStack(pyNestedClass):
             rule_name=scheduled_task_id,
             security_groups=[security_group],
         )
+
+        # Add the rule of the scheduled task to parameter store
+        ssm.StringParameter(
+            self,
+            f'ECSTaskRule-{scheduled_task_id}',
+            parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{scheduled_task_id}',
+            string_value=scheduled_task.event_rule.rule_name,
+        )
+
         return scheduled_task, task
 
     @property

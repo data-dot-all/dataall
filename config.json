@@ -47,6 +47,9 @@
         },
         "dashboards": {
             "active": true
+        },
+        "maintenance": {
+            "active" : true
         }
     },
     "core": {
