@@ -1,4 +1,4 @@
-"""Contains the code related to X"""
+"""Contains the code related to HealthOmics"""
 
 import logging
 from typing import Set, List, Type

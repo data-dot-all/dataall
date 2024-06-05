@@ -31,27 +31,6 @@ from dataall.modules.omics.services.omics_permissions import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class OmicsRunCreationRequest:
-    """A request dataclass for Omics pipeline creation. Adds default values for missed parameters"""
-
-    label: str
-    SamlAdminGroupName: str
-    environment: Dict = field(default_factory=dict)
-    description: str = 'No description provided'
-    tags: List[str] = field(default_factory=list)
-    S3InputBucket: str = 'No input bucket provided'
-    S3InputPrefix: str = ''
-    S3OutputBucket: str = 'No output bucket provided'
-    S3OutputPrefix: str = ''
-
-    @classmethod
-    def from_dict(cls, env):
-        """Copies only required fields from the dictionary and creates an instance of class"""
-        fields = set([f.name for f in dataclasses.fields(cls)])
-        return cls(**{k: v for k, v in env.items() if k in fields})
-
-
 class OmicsService:
     """
     Encapsulate the logic of interactions with Omics.

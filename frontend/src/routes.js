@@ -406,7 +406,7 @@ const routes = [
           }
         ]
       },
-      {
+      isModuleEnabled(ModuleNames.OMICS) && {
         children: [
           {
             path: 'omics',

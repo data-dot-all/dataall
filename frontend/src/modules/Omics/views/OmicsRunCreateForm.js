@@ -24,14 +24,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   useClient,
   listEnvironmentGroups,
-  listEnvironments,
+  listValidEnvironments,
   listDatasetsOwnedByEnvGroup
 } from 'services';
 import { getOmicsWorkflow, createOmicsRun } from '../services';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
-  // ChipInput,
   Defaults,
   useSettings
 } from 'design';
@@ -51,7 +50,6 @@ const OmicsRunCreateForm = (props) => {
     const response = await client.query(getOmicsWorkflow(params.uri));
     if (!response.errors) {
       setOmicsWorkflow(response.data.getOmicsWorkflow);
-      console.log(omicsWorkflow); // eslint-disable-line no-console
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -68,11 +66,11 @@ const OmicsRunCreateForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.SelectListFilter })
+      listValidEnvironments({ filter: Defaults.SelectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
-        response.data.listEnvironments.nodes.map((e) => ({
+        response.data.listValidEnvironments.nodes.map((e) => ({
           ...e,
           value: e.environmentUri,
           label: e.label
@@ -305,7 +303,7 @@ const OmicsRunCreateForm = (props) => {
                             disabled
                             fullWidth
                             label="Workflow Id"
-                            name="workflowUri"
+                            name="workflowId"
                             value={omicsWorkflow ? omicsWorkflow.id : ''}
                             variant="outlined"
                           />

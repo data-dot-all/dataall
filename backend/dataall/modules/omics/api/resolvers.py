@@ -25,7 +25,10 @@ class RequestValidator:
 
         required(data, 'environmentUri')
         required(data, 'SamlAdminGroupName')
-
+        required(data, 'workflowUri')
+        required(data, 'parameterTemplate')
+        required(data, 'destination')
+        
     @staticmethod
     def _required(data: dict, name: str):
         if not data.get(name):
@@ -34,7 +37,6 @@ class RequestValidator:
 
 def create_omics_run(context: Context, source, input=None):
     RequestValidator.validate_creation_request(input)
-    # request = OmicsRunCreationRequest.from_dict(input)
     return OmicsService.create_omics_run(
         uri=input['environmentUri'], admin_group=input['SamlAdminGroupName'], data=input
     )

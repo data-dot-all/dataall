@@ -52,7 +52,7 @@ class OmicsRepository:
                     OmicsWorkflow.name.ilike('%%' + filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(OmicsWorkflow.label)
 
     def paginated_omics_workflows(self, filter=None) -> dict:
         return paginate(
@@ -75,7 +75,7 @@ class OmicsRepository:
                     OmicsRun.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(OmicsRun.label)
 
     def paginated_user_runs(self, username, groups, filter=None) -> dict:
         return paginate(
