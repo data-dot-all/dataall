@@ -389,7 +389,7 @@ ShareViewHeader.propTypes = {
   loading: PropTypes.bool
 };
 
-function SharedItem(props) {
+export function SharedItem(props) {
   const {
     item,
     client,
