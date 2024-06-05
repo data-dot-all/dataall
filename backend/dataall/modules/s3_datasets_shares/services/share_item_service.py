@@ -22,7 +22,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareItemSM,
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
-from dataall.modules.s3_datasets_shares.services.share_notification_service import ShareNotificationService
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     GET_SHARE_OBJECT,
     ADD_ITEM,
