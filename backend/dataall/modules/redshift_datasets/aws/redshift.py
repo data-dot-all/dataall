@@ -18,9 +18,19 @@ class Redshift:
 
     def authorize_catalog_datashare(self, datashare_arn: str, account: str) -> None:
         try:
+            log.info(f'Authorizing datashare {datashare_arn=} to consumer DataCatalog/{account}')
             self.client.authorize_data_share(
                 DataShareArn=datashare_arn, ConsumerIdentifier=f'DataCatalog/{account}', AllowWrites=False
             )
+        except ClientError as e:
+            log.error(e)
+            raise e
+
+    def describe_datashare_status(self, datashare_arn: str):
+        try:
+            log.info(f'Checking status of datashare {datashare_arn=}')
+            response = self.client.describe_data_shares(DataShareArn=datashare_arn)
+            return response.get('DataShares', [])[0].get('DataShareAssociations', [])[0].get('Status')
         except ClientError as e:
             log.error(e)
             raise e

@@ -24,6 +24,16 @@ def get_redshift_dataset(context, source, datasetUri=None):
     return RedshiftDatasetService.get_redshift_dataset(uri=datasetUri)
 
 
+def retry_redshift_datashare(context, source, datasetUri=None):
+    return RedshiftDatasetService.retry_redshift_datashare(uri=datasetUri)
+
+
+def resolve_datashare_state(context, source: RedshiftDataset, **kwargs):
+    if not source:
+        return None
+    return RedshiftDatasetService.get_datashare_status(uri=source.datasetUri)
+
+
 def resolve_dataset_organization(context, source: RedshiftDataset, **kwargs):
     if not source:
         return None
@@ -70,8 +80,7 @@ def resolve_dataset_glossary_terms(context: Context, source: RedshiftDataset, **
 
 
 def resolve_dataset_connection(context: Context, source: RedshiftDataset, **kwargs):
-    with context.engine.scoped_session() as session:
-        return RedshiftConnectionService.get_redshift_connection_by_uri(uri=source.connectionUri, session=session)
+    return RedshiftConnectionService.get_redshift_connection_by_uri(uri=source.connectionUri)
 
 
 def resolve_dataset_upvotes(context: Context, source: RedshiftDataset, **kwargs):

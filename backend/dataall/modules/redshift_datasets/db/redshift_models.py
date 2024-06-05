@@ -29,7 +29,7 @@ class RedshiftConnection(Connection):
     redshiftType = Column(String, nullable=False)
     clusterId = Column(String, nullable=True)
     nameSpaceId = Column(String, nullable=True)
-    workgroupId = Column(String, nullable=True)
+    workgroup = Column(String, nullable=True)
     redshiftUser = Column(String, nullable=True)
     secretArn = Column(String, nullable=True)
 

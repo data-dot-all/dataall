@@ -2,30 +2,32 @@ import logging
 import time
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection, RedshiftDataset
 
 
 log = logging.getLogger(__name__)
 
 
 class RedshiftData:
-    def __init__(self, account_id: str, region: str, connection: RedshiftConnection) -> None:
+    def __init__(self, account_id: str, region: str, connection: RedshiftConnection, dataset: RedshiftDataset) -> None:
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self.client = session.client(service_name='redshift-data', region_name=region)
-        self.schema = connection.schema
+        self.schema = dataset.schema
+        self.database = dataset.database
         self.execute_connection_params = {
-            'Database': connection.database,
+            'Database': dataset.database,
         }
-        if connection.workgroupId:
-            self.execute_connection_params['WorkgroupName'] = connection.workgroupId
+        if connection.workgroup:
+            self.execute_connection_params['WorkgroupName'] = connection.workgroup
         if connection.clusterId:
             self.execute_connection_params['ClusterIdentifier'] = connection.clusterId
         if connection.secretArn:
-            self.execute_connection_params['secretArn'] = connection.secretArn
-        if connection.dbUser:
+            self.execute_connection_params['SecretArn'] = connection.secretArn
+        if connection.redshiftUser:
             self.execute_connection_params['DbUser'] = connection.redshiftUser
 
     def execute_statement(self, sql: str):
+        log.info(f'Executing {sql=} with connection {self.execute_connection_params}...')
         execute_dict = self.execute_connection_params
         execute_dict['Sql'] = sql
         execute_statement_response = self.client.execute_statement(**execute_dict)
@@ -47,9 +49,8 @@ class RedshiftData:
     def identifier(name: str) -> str:
         return f'"{name}"'
 
-    @staticmethod
-    def fully_qualified_table_name(database: str, schema: str, table_name: str) -> str:
-        return f'{RedshiftData.identifier(database)}.{RedshiftData.identifier(schema)}.{RedshiftData.identifier(table_name)}'
+    def fully_qualified_table_name(self, table_name: str) -> str:
+        return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(self.schema)}.{RedshiftData.identifier(table_name)}'
 
     def create_datashare(self, datashare: str):
         try:
@@ -85,7 +86,7 @@ class RedshiftData:
     def grant_usage_to_datashare_via_catalog(self, datashare: str, account: str):
         log.info(f'Grant usage on {datashare=} via catalog...')
         sql_statement = (
-            f"GRANT USAGE ON DATASHARE {RedshiftData.identifier(datashare)} TO ACCOUNT '{account}' VIA CATALOG;"
+            f"GRANT USAGE ON DATASHARE {RedshiftData.identifier(datashare)} TO ACCOUNT '{account}' VIA DATA CATALOG;"
         )
         self.execute_statement(sql=sql_statement)
 

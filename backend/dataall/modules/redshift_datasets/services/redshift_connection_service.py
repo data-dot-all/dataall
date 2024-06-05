@@ -44,7 +44,7 @@ class RedshiftConnectionService:
                 redshiftType=data.get('redshiftType'),
                 clusterId=data.get('clusterId', ''),
                 nameSpaceId=data.get('nameSpaceId', ''),
-                workgroupId=data.get('workgroupId', ''),
+                workgroup=data.get('workgroup', ''),
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
             )
@@ -61,11 +61,12 @@ class RedshiftConnectionService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
-    def get_redshift_connection_by_uri(uri, session) -> RedshiftConnection:
-        connection = RedshiftConnectionRepository.find_redshift_connection(session, uri)
-        if not connection:
-            raise exceptions.ObjectNotFound('RedshiftConnection', uri)
-        return connection
+    def get_redshift_connection_by_uri(uri) -> RedshiftConnection:
+        with get_context().db_engine.scoped_session() as session:
+            connection = RedshiftConnectionRepository.find_redshift_connection(session, uri)
+            if not connection:
+                raise exceptions.ObjectNotFound('RedshiftConnection', uri)
+            return connection
 
     @staticmethod
     def _get_redshift_connection(session, uri) -> RedshiftConnection:

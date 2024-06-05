@@ -57,12 +57,14 @@ export const getRedshiftDataset = (datasetUri) => ({
           redshiftType
           clusterId
           nameSpaceId
-          workgroupId
+          workgroup
           redshiftUser
           secretArn
         }
         includePattern
         excludePattern
+        datashareStatus
+        datashareArn
       }
     }
   `

@@ -10,6 +10,7 @@ from dataall.modules.redshift_datasets.api.datasets.resolvers import (
     resolve_dataset_glossary_terms,
     resolve_dataset_connection,
     resolve_dataset_upvotes,
+    resolve_datashare_state,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -69,6 +70,8 @@ RedshiftDataset = gql.ObjectType(
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
         gql.Field(name='includePattern', type=gql.String),
         gql.Field(name='excludePattern', type=gql.String),
+        gql.Field(name='datashareArn', type=gql.String),
+        gql.Field(name='datashareStatus', type=gql.String, resolver=resolve_datashare_state),
         gql.Field(name='upvotes', type=gql.Integer, resolver=resolve_dataset_upvotes),
         gql.Field(
             name='connection',

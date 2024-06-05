@@ -43,7 +43,7 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
           redshiftType: values.redshiftType,
           clusterId: values.clusterId,
           nameSpaceId: values.nameSpaceId,
-          workgroupId: values.workgroupId,
+          workgroup: values.workgroup,
           redshiftUser: values.redshiftUser,
           secretArn: values.secretArn
         })
@@ -107,7 +107,7 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
               redshiftType: '',
               clusterId: '',
               nameSpaceId: '',
-              workgroupId: '',
+              workgroup: '',
               redshiftUser: '',
               secretArn: ''
             }}
@@ -223,17 +223,15 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                         <CardContent>
                           <TextField
                             error={Boolean(
-                              touched.workgroupId && errors.workgroupId
+                              touched.workgroup && errors.workgroup
                             )}
                             fullWidth
-                            helperText={
-                              touched.workgroupId && errors.workgroupId
-                            }
-                            label="Workgroup Id"
+                            helperText={touched.workgroup && errors.workgroup}
+                            label="Workgroup"
                             placeholder="Redshift Serverless Workgroup"
-                            name="workgroupId"
+                            name="workgroup"
                             onChange={handleChange}
-                            value={values.workgroupId}
+                            value={values.workgroup}
                             variant="outlined"
                           />
                         </CardContent>
