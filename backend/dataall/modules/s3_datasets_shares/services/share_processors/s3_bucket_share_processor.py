@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 
-from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import (

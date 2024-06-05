@@ -22,10 +22,10 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_object_service import (
     ShareObjectService,
 )  # TODO move to shares_base in following PR
-from dataall.modules.s3_datasets_shares.services.share_exceptions import (
+from dataall.modules.shares_base.services.share_exceptions import (
     PrincipalRoleNotFound,
     DatasetLockTimeout,
-)  # TODO move to shares_base in following PR
+)
 from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 
 log = logging.getLogger(__name__)
