@@ -827,7 +827,7 @@ export const RequestAccessModal = (props) => {
                         multiline
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        rows={5}
+                        rows={3}
                         value={values.comment}
                         variant="outlined"
                       />
@@ -859,6 +859,16 @@ export const RequestAccessModal = (props) => {
                     >
                       Create Request
                     </LoadingButton>
+
+                    <Button
+                      sx={{ mt: 2 }}
+                      onClick={onApply}
+                      fullWidth
+                      color="primary"
+                      variant="outlined"
+                    >
+                      Cancel
+                    </Button>
                   </CardContent>
                 </form>
               )}
