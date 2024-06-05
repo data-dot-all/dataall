@@ -135,9 +135,7 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                   items.nodes.map((item) => (
                     <TableRow hover key={item.itemUri}>
                       <TableCell>{item.itemType}</TableCell>
-                      <TableCell>
-                        {item.itemName}
-                      </TableCell>
+                      <TableCell>{item.itemName}</TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>
                       <TableCell>{item.principalId}</TableCell>

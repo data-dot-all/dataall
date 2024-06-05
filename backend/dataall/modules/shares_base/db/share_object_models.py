@@ -57,5 +57,3 @@ class ShareObjectItem(Base):
     healthStatus = Column(String, nullable=True)
     healthMessage = Column(String, nullable=True)
     lastVerificationTime = Column(DateTime, nullable=True)
-
-    # todo: MIGRATION SCRIPT TO REMOVE GlueDatabaseName, GlueTableName, S3AccessPointName --> replaced by itemConsumptionDetails
