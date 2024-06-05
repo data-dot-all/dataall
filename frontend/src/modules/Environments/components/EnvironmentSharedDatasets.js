@@ -136,7 +136,7 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                     <TableRow hover key={item.itemUri}>
                       <TableCell>{item.itemType}</TableCell>
                       <TableCell>
-                        {item.GlueTableName || item.S3AccessPointName}
+                        {item.itemName}
                       </TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>

@@ -52,11 +52,10 @@ class ShareObjectItem(Base):
     updated = Column(DateTime, nullable=True, onupdate=datetime.now)
     deleted = Column(DateTime, nullable=True)
     owner = Column(String, nullable=False)
-    S3AccessPointName = Column(String, nullable=True)  # TODO: remove
     status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
     healthStatus = Column(String, nullable=True)
     healthMessage = Column(String, nullable=True)
     lastVerificationTime = Column(DateTime, nullable=True)
 
-    # todo: MIGRATION SCRIPT TO REMOVE GlueDatabaseName, GlueTableName, S3AccessPointName
+    # todo: MIGRATION SCRIPT TO REMOVE GlueDatabaseName, GlueTableName, S3AccessPointName --> replaced by itemConsumptionDetails
