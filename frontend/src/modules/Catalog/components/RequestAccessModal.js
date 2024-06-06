@@ -10,11 +10,6 @@ import {
   FormHelperText,
   MenuItem,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography
 } from '@mui/material';
@@ -23,7 +18,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { Defaults, Pager, ShareStatus } from 'design';
+import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createShareObject,
@@ -34,161 +29,12 @@ import {
   getConsumptionRolePolicies,
   useClient
 } from 'services';
-import { useNavigate } from 'react-router-dom';
-import {
-  addSharedItem,
-  getShareObject,
-  removeSharedItem,
-  revokeItemsShareObject,
-  submitApproval,
-  updateShareRequestReason
-} from '../../Shares/services';
-import { DeleteOutlined } from '@mui/icons-material';
-
-const ItemRow = (props) => {
-  const { share, item, onAction, enqueueSnackbar, dispatch, client } = props;
-
-  const whatToDo = () => {
-    if (!item.status) return 'Request';
-    if (item.status === 'Revoke_Succeeded' || item.status === 'PendingApproval')
-      return 'Delete';
-    if (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed')
-      return 'Revoke';
-    return 'Nothing';
-  };
-
-  const possibleAction = whatToDo();
-
-  const removeShareItem = async () => {
-    const response = await client.mutate(
-      removeSharedItem({ shareItemUri: item.shareItemUri })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Item added', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await onAction();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
-
-  const revokeShareItem = async () => {
-    const response = await client.mutate(
-      revokeItemsShareObject({
-        input: {
-          shareUri: share.shareUri,
-          itemUris: [item.itemUri]
-        }
-      })
-    );
-
-    if (!response.errors) {
-      enqueueSnackbar('Item added', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await onAction();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
-
-  const addShareItem = async () => {
-    const response = await client.mutate(
-      addSharedItem({
-        shareUri: share.shareUri,
-        input: {
-          itemUri: item.itemUri,
-          itemType: item.itemType
-        }
-      })
-    );
-
-    if (!response.errors) {
-      enqueueSnackbar('Item added', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await onAction();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
-
-  return (
-    <TableRow>
-      <TableCell>{item.itemType}</TableCell>
-      <TableCell>{item.itemName}</TableCell>
-      <TableCell>
-        {item.status ? <ShareStatus status={item.status} /> : 'Not requested'}
-      </TableCell>
-      {(share.status === 'Draft' ||
-        share.status === 'Processed' ||
-        share.status === 'Rejected' ||
-        share.status === 'Submitted') && (
-        <TableCell>
-          {possibleAction === 'Delete' && (
-            <Button
-              color="primary"
-              startIcon={<DeleteOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={removeShareItem}
-            >
-              Delete
-            </Button>
-          )}
-          {possibleAction === 'Revoke' && (
-            <Button
-              variant="contained"
-              onClick={revokeShareItem}
-              startIcon={<SendIcon fontSize="small" />}
-              color="primary"
-            >
-              Revoke
-            </Button>
-          )}
-          {possibleAction === 'Request' && (
-            <Button
-              variant="contained"
-              onClick={addShareItem}
-              startIcon={<SendIcon fontSize="small" />}
-              color="primary"
-            >
-              Request
-            </Button>
-          )}
-          {possibleAction === 'Nothing' && (
-            <Typography color="textSecondary" variant="subtitle2">
-              Wait until this item is processed
-            </Typography>
-          )}
-        </TableCell>
-      )}
-    </TableRow>
-  );
-};
-
-ItemRow.propTypes = {
-  item: PropTypes.object,
-  onAction: PropTypes.func
-};
+import { ShareEditForm } from '../../Shared/Shares/ShareEditForm';
+import { getShareObject } from '../../Shares/services';
 
 export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const client = useClient();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
@@ -201,11 +47,8 @@ export const RequestAccessModal = (props) => {
   const [policyName, setPolicyName] = useState('');
 
   const [step, setStep] = useState(0);
-  const [share, setShare] = useState({});
-  const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
-  const [filter, setFilter] = useState(Defaults.filter);
+  const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [requestPurpose, setRequestPurpose] = useState('');
 
   const fetchEnvironments = useCallback(async () => {
     setStep(0);
@@ -234,6 +77,15 @@ export const RequestAccessModal = (props) => {
       stopLoader();
     }
   }, [client, dispatch]);
+
+  const fetchShareObject = async (shareUri) => {
+    const response = await client.query(getShareObject({ shareUri: shareUri }));
+    if (!response.errors) {
+      setShare(response.data.getShareObject);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
@@ -369,121 +221,6 @@ export const RequestAccessModal = (props) => {
     }
   };
 
-  const fetchShareObject = async (shareUri) => {
-    setLoading(true);
-    const response = await client.query(getShareObject({ shareUri: shareUri }));
-    if (!response.errors) {
-      setShare(response.data.getShareObject);
-      setSharedItems({ ...response.data.getShareObject.items });
-      setRequestPurpose(response.data.getShareObject.requestPurpose);
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  };
-
-  const sendRequest = async () => {
-    setStep(0);
-    if (requestPurpose !== share.requestPurpose) {
-      await updateRequestPurpose();
-    }
-    setLoading(true);
-    const response = await client.mutate(
-      submitApproval({
-        shareUri: share.shareUri
-      })
-    );
-
-    if (!response.errors) {
-      enqueueSnackbar('Share request submitted', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-
-    if (onApply) {
-      onApply();
-    }
-  };
-
-  const draftRequest = async () => {
-    setStep(0);
-    if (requestPurpose !== share.requestPurpose) {
-      await updateRequestPurpose();
-    }
-    if (onApply) {
-      onApply();
-    }
-    navigate(`/console/shares/${share.shareUri}`);
-  };
-
-  const getExplanation = (status) => {
-    const descriptions = {
-      Draft:
-        'The request for the selected principal is currently in draft status. You can edit and submit the request for approval.',
-      Approved:
-        'The request for the selected principal has already been approved by the data owner. You can make changes after the request is processed. Track its progress in the Shares menu on the left or click the "View share" button.',
-      Rejected:
-        'The request for the selected principal has already been rejected by the data owner. You can make changes and submit the request again. For more information, click the "View share" button.',
-      Submitted:
-        'The request for the selected principal has already been submitted for approval. You can edit the request. For more information, click the "View share" button.',
-      Processed:
-        'Request for the selected principal was already created and processed. You can make changes and submit request again. For more information click the button "View share".',
-      Revoked:
-        'The access for the selected principal has been revoked. A request to revoke access is currently in progress.  Track its progress in the Shares menu on the left or click the "View share" button.',
-      Revoke_In_Progress:
-        'The access for the selected principal has been revoked. A request to revoke access is currently in progress. Track its progress in the Shares menu on the left or click the "View share" button.',
-      Share_In_Progress:
-        'A request to share data with the selected principal is currently in progress. Track its progress in the Shares menu on the left or click the "View share" button.'
-    };
-    return descriptions[status];
-  };
-  const updateRequestPurpose = async () => {
-    const response = await client.mutate(
-      updateShareRequestReason({
-        shareUri: share.shareUri,
-        requestPurpose: requestPurpose
-      })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Share request reason updated', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
-
-  const fetchShareItems = async () => {
-    setLoading(true);
-
-    const response = await client.query(
-      getShareObject({
-        shareUri: share.shareUri,
-        filter: {
-          ...filter
-        }
-      })
-    );
-    if (!response.errors) {
-      setShare(response.data.getShareObject);
-      setSharedItems({ ...response.data.getShareObject.items });
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  };
-
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       let response;
@@ -501,6 +238,15 @@ export const RequestAccessModal = (props) => {
       if (response && !response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
+        setLoading(true);
+
+        if (hit.resourceKind === 'dashboard') {
+          await fetchShareObject(response.data.requestDashboardShare.shareUri);
+        } else {
+          await fetchShareObject(response.data.createShareObject.shareUri);
+        }
+        setStep(1);
+        setLoading(false);
         enqueueSnackbar('Draft share request created', {
           anchorOrigin: {
             horizontal: 'right',
@@ -508,8 +254,6 @@ export const RequestAccessModal = (props) => {
           },
           variant: 'success'
         });
-        fetchShareObject(response.data.createShareObject.shareUri);
-        setStep(1);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -522,19 +266,18 @@ export const RequestAccessModal = (props) => {
     }
   }
 
+  const beforeApply = () => {
+    setStep(0);
+    onApply();
+  };
+
   if (!hit || loadingEnvs) {
     return null;
   }
 
-  const handlePageChange = async (event, value) => {
-    if (value <= sharedItems.pages && value !== sharedItems.page) {
-      await setFilter({ ...filter, isShared: true, page: value });
-    }
-  };
-
   return (
     <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
-      {step === 0 && !loading && (
+      {step === 0 && (
         <Box sx={{ p: 3, minHeight: 800 }}>
           <Typography
             align="center"
@@ -868,182 +611,59 @@ export const RequestAccessModal = (props) => {
                       )}
                     </CardContent>
                   </Box>
-                  <CardContent>
-                    <LoadingButton
-                      fullWidth
-                      startIcon={<SendIcon fontSize="small" />}
-                      color="primary"
-                      disabled={
-                        isSubmitting ||
-                        (values.consumptionRoleObj &&
-                          !(
-                            values.consumptionRoleObj.dataallManaged ||
-                            isSharePolicyAttached ||
-                            values.attachMissingPolicies
-                          ))
-                      }
-                      type="submit"
-                      variant="contained"
-                    >
-                      Create Request
-                    </LoadingButton>
+                  {isSubmitting || loading ? (
+                    <CardContent>
+                      <CircularProgress sx={{ ml: '45%' }} size={50} />
+                    </CardContent>
+                  ) : (
+                    <CardContent>
+                      <LoadingButton
+                        fullWidth
+                        startIcon={<SendIcon fontSize="small" />}
+                        color="primary"
+                        disabled={
+                          isSubmitting ||
+                          loading ||
+                          (values.consumptionRoleObj &&
+                            !(
+                              values.consumptionRoleObj.dataallManaged ||
+                              isSharePolicyAttached ||
+                              values.attachMissingPolicies
+                            ))
+                        }
+                        type="submit"
+                        variant="contained"
+                      >
+                        Create Request
+                      </LoadingButton>
 
-                    <Button
-                      sx={{ mt: 2 }}
-                      onClick={onApply}
-                      fullWidth
-                      color="primary"
-                      variant="outlined"
-                    >
-                      Cancel
-                    </Button>
-                  </CardContent>
+                      <Button
+                        sx={{ mt: 2 }}
+                        onClick={onApply}
+                        fullWidth
+                        color="primary"
+                        variant="outlined"
+                        disabled={isSubmitting || loading}
+                      >
+                        Cancel
+                      </Button>
+                    </CardContent>
+                  )}
                 </form>
               )}
             </Formik>
           </Box>
         </Box>
       )}
-      {step === 1 && !loading && (
-        <Box sx={{ p: 3, minHeight: 800 }}>
-          <Typography
-            align="center"
-            color="textPrimary"
-            gutterBottom
-            variant="h4"
-          >
-            Share status: {share.status}
-          </Typography>
-          <Typography align="center" color="textSecondary" variant="subtitle2">
-            {getExplanation(share.status)}
-          </Typography>
-          <Box>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Status</TableCell>
-                  {(share.status === 'Draft' ||
-                    share.status === 'Processed' ||
-                    share.status === 'Rejected' ||
-                    share.status === 'Submitted') && (
-                    <TableCell>Action</TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sharedItems.nodes.length > 0 ? (
-                  sharedItems.nodes.map((sharedItem) => (
-                    <ItemRow
-                      share={share}
-                      item={sharedItem}
-                      dispatch={dispatch}
-                      enqueueSnackbar={enqueueSnackbar}
-                      onAction={fetchShareItems}
-                      client={client}
-                    ></ItemRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell>No items added.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            {sharedItems.nodes.length > 0 && (
-              <Pager
-                mgTop={2}
-                mgBottom={2}
-                items={sharedItems}
-                onChange={handlePageChange}
-              />
-            )}
-            <Box>
-              <CardContent>
-                <TextField
-                  FormHelperTextProps={{
-                    sx: {
-                      textAlign: 'right',
-                      mr: 0
-                    }
-                  }}
-                  fullWidth
-                  helperText={`${200 - requestPurpose.length} characters left`}
-                  label="Request purpose"
-                  name="requestPurpose"
-                  multiline
-                  rows={5}
-                  disabled={
-                    share.status !== 'Draft' &&
-                    share.status !== 'Processed' &&
-                    share.status !== 'Rejected' &&
-                    share.status !== 'Submitted'
-                  }
-                  value={requestPurpose}
-                  variant="outlined"
-                  onChange={(event) => {
-                    setRequestPurpose(event.target.value);
-                  }}
-                />
-              </CardContent>
-            </Box>
-          </Box>
-          {share.status.toUpperCase() === 'DRAFT' && (
-            <CardContent>
-              <Button
-                onClick={sendRequest}
-                fullWidth
-                startIcon={<SendIcon fontSize="small" />}
-                color="primary"
-                variant="contained"
-              >
-                Submit request
-              </Button>
-            </CardContent>
-          )}
-          {share.status.toUpperCase() === 'DRAFT' && (
-            <CardContent>
-              <Button
-                onClick={draftRequest}
-                fullWidth
-                color="primary"
-                variant="outlined"
-              >
-                Draft request
-              </Button>
-            </CardContent>
-          )}
-          {share.status.toUpperCase() !== 'DRAFT' && (
-            <CardContent>
-              <Button
-                onClick={draftRequest}
-                fullWidth
-                color="primary"
-                variant="contained"
-              >
-                View share
-              </Button>
-            </CardContent>
-          )}
-          {share.status.toUpperCase() !== 'DRAFT' && (
-            <CardContent>
-              <Button
-                onClick={onApply}
-                fullWidth
-                color="primary"
-                variant="outlined"
-              >
-                Cancel
-              </Button>
-            </CardContent>
-          )}
-        </Box>
-      )}
-      {loading && (
-        <Box sx={{ p: 3, minHeight: 800 }}>
-          <CircularProgress sx={{ mt: '25%', ml: '40%' }} size={140} />
-        </Box>
+      {step === 1 && (
+        <ShareEditForm
+          share={share}
+          dispatch={dispatch}
+          enqueueSnackbar={enqueueSnackbar}
+          client={client}
+          onApply={beforeApply}
+          showViewShare={true}
+        ></ShareEditForm>
       )}
     </Dialog>
   );

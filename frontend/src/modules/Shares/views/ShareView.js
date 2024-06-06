@@ -4,8 +4,7 @@ import {
   CheckCircleOutlined,
   CopyAllOutlined,
   DeleteOutlined,
-  RefreshRounded,
-  RemoveCircleOutlineOutlined
+  RefreshRounded
 } from '@mui/icons-material';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import GppBadIcon from '@mui/icons-material/GppBad';
@@ -47,7 +46,7 @@ import {
   ChevronRightIcon,
   Defaults,
   Pager,
-  PlusIcon,
+  PencilAltIcon,
   Scrollbar,
   ShareStatus,
   TextAvatar,
@@ -158,6 +157,12 @@ function ShareViewHeader(props) {
 
   const handleSubmitShareModalOpen = () => {
     setIsSubmitShareModalOpen(true);
+  };
+
+  const handleSubmitShareModalApplied = () => {
+    setIsSubmitShareModalOpen(false);
+    fetchItem();
+    fetchItems();
   };
 
   const handleSubmitShareModalClose = () => {
@@ -311,7 +316,17 @@ function ShareViewHeader(props) {
                   )}
                 </>
               )}
-
+              <LoadingButton
+                loading={submitting}
+                color="primary"
+                startIcon={<PencilAltIcon />}
+                sx={{ m: 1 }}
+                onClick={handleSubmitShareModalOpen}
+                type="button"
+                variant="outlined"
+              >
+                Edit
+              </LoadingButton>
               {(share.userRoleForShareObject === 'Requesters' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -356,7 +371,7 @@ function ShareViewHeader(props) {
       {isSubmitShareModalOpen && (
         <ShareSubmitModal
           share={share}
-          onApply={handleSubmitShareModalClose}
+          onApply={handleSubmitShareModalApplied}
           onClose={handleSubmitShareModalClose}
           open={isSubmitShareModalOpen}
           submitFunction={submit}
@@ -531,16 +546,10 @@ const ShareView = () => {
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
 
-  const handleAddItemModalOpen = () => {
-    setIsAddItemModalOpen(true);
-  };
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
   };
 
-  const handleRevokeItemModalOpen = () => {
-    setIsRevokeItemsModalOpen(true);
-  };
   const handleRevokeItemModalClose = () => {
     setIsRevokeItemsModalOpen(false);
   };
@@ -1055,25 +1064,6 @@ const ShareView = () => {
                     title="Shared Items"
                     action={
                       <Box>
-                        <LoadingButton
-                          color="primary"
-                          onClick={handleAddItemModalOpen}
-                          startIcon={<PlusIcon fontSize="small" />}
-                          sx={{ m: 1 }}
-                          variant="outlined"
-                        >
-                          Add Item
-                        </LoadingButton>
-                        <LoadingButton
-                          color="error"
-                          startIcon={<RemoveCircleOutlineOutlined />}
-                          sx={{ m: 1 }}
-                          onClick={handleRevokeItemModalOpen}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Revoke Items
-                        </LoadingButton>
                         <LoadingButton
                           color="info"
                           startIcon={<SecurityIcon />}
