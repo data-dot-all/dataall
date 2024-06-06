@@ -14,8 +14,6 @@ from dataall.modules.maintenance.services.maintenance_service import Maintenance
 from dataall.base.config import config
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 
-logger = logging.getLogger()
-logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 log = logging.getLogger(__name__)
 
 ENVNAME = os.getenv('envname', 'local')
