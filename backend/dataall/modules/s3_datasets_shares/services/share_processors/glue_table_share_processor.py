@@ -10,7 +10,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
-from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
