@@ -662,6 +662,7 @@ export const RequestAccessModal = (props) => {
           enqueueSnackbar={enqueueSnackbar}
           client={client}
           onApply={beforeApply}
+          onCancel={beforeApply}
           showViewShare={true}
         ></ShareEditForm>
       )}
