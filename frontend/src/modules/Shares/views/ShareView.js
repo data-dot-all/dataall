@@ -224,7 +224,8 @@ function ShareViewHeader(props) {
       <Grid container justifyContent="space-between" spacing={3}>
         <Grid item>
           <Typography color="textPrimary" variant="h5">
-            Share object for {share.dataset?.datasetName}
+            Share object for {share.dataset?.datasetName}{' '}
+            {share.status === 'Draft' ? '(DRAFT)' : ''}
           </Typography>
           <Breadcrumbs
             aria-label="breadcrumb"

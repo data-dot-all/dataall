@@ -634,7 +634,7 @@ export const RequestAccessModal = (props) => {
                         type="submit"
                         variant="contained"
                       >
-                        Create Request
+                        Create Draft Request
                       </LoadingButton>
 
                       <Button
