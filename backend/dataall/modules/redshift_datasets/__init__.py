@@ -18,7 +18,6 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets_base import DatasetBaseApiModuleInterface
-        from dataall.modules.connections_base import ConnectionsBaseModuleInterface
         from dataall.modules.catalog import CatalogApiModuleInterface
         from dataall.modules.feed import FeedApiModuleInterface
         from dataall.modules.vote import VoteApiModuleInterface
@@ -26,7 +25,6 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
         return [
             DatasetBaseApiModuleInterface,
             CatalogApiModuleInterface,
-            ConnectionsBaseModuleInterface,
             FeedApiModuleInterface,
             VoteApiModuleInterface,
         ]
@@ -47,9 +45,8 @@ class RedshiftDatasetAsyncHandlersModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets_base import DatasetBaseModuleInterface
-        from dataall.modules.connections_base import ConnectionsBaseModuleInterface
 
-        return [DatasetBaseModuleInterface, ConnectionsBaseModuleInterface]
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         import dataall.modules.redshift_datasets.handlers
@@ -67,9 +64,8 @@ class RedshiftDatasetCdkModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets_base import DatasetBaseModuleInterface
-        from dataall.modules.connections_base import ConnectionsBaseModuleInterface
 
-        return [DatasetBaseModuleInterface, ConnectionsBaseModuleInterface]
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         import dataall.modules.redshift_datasets.cdk

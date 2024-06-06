@@ -8,6 +8,7 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftData
 from dataall.modules.redshift_datasets.aws.redshift import Redshift
 from dataall.modules.redshift_datasets.aws.lakeformation import LakeFormation
+from dataall.modules.redshift_datasets.aws.glue import Glue
 
 log = logging.getLogger(__name__)
 
@@ -32,10 +33,21 @@ class RedshiftDataShareHandler:
             )
 
             redshift_client = Redshift(account_id=dataset.AwsAccountId, region=dataset.region)
-            redshift_client.authorize_catalog_datashare(
+            redshift_client.authorize_datashare_to_catalog(
                 datashare_arn=dataset.datashareArn, account=dataset.AwsAccountId
+            )
+            redshift_client.associate_data_share_catalog(
+                datashare_arn=dataset.datashareArn, account=dataset.AwsAccountId, region=dataset.region
             )
 
             lakeformation_client = LakeFormation(account_id=dataset.AwsAccountId, region=dataset.region)
             lakeformation_client.register_resource_datashare(datashare_arn=dataset.datashareArn)
-            return dataset
+
+            glue_client = Glue(account_id=dataset.AwsAccountId, region=dataset.region)
+            # TODO: think - single dataset, duplicated datasets, same dataset imported twice
+            glue_client.create_database_from_redshift_datashare(
+                name=dataset.label, datashare_arn=dataset.datashareArn, account=dataset.AwsAccountId
+            )
+
+            # TODO: AS iac - CustomResource and maybe a few thingys - examine and discussion
+            #

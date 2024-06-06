@@ -34,12 +34,10 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   listEnvironmentGroups,
   listValidEnvironments,
+  listEnvironmentRedshiftConnections,
   useClient
 } from 'services';
-import {
-  importRedshiftDataset,
-  listEnvironmentRedshiftConnections
-} from '../services';
+import { importRedshiftDataset } from '../services';
 import { Topics, ConfidentialityList } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';

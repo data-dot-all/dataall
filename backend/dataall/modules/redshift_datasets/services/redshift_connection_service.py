@@ -5,10 +5,8 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.connections_base.api.enums import ConnectionType
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
-from dataall.modules.connections_base.services.connection_list_permissions import LIST_ENVIRONMENT_CONNECTIONS
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET,
@@ -18,6 +16,7 @@ from dataall.modules.redshift_datasets.services.redshift_connection_permissions 
     DELETE_REDSHIFT_CONNECTION,
     UPDATE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
+    LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
@@ -40,7 +39,6 @@ class RedshiftConnectionService:
                 owner=context.username,
                 environmentUri=environment.environmentUri,
                 SamlGroupName=admin_group,
-                connectionType=ConnectionType.Redshift,
                 redshiftType=data.get('redshiftType'),
                 clusterId=data.get('clusterId', ''),
                 nameSpaceId=data.get('nameSpaceId', ''),
@@ -89,7 +87,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS)
     def list_environment_redshift_connections(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:

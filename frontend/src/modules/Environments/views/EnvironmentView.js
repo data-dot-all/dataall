@@ -38,7 +38,7 @@ import { useClient } from 'services';
 import { archiveEnvironment, getEnvironment } from '../services';
 import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
 import {
-  EnvironmentConnections,
+  EnvironmentRedshiftConnections,
   EnvironmentDatasets,
   EnvironmentMLStudio,
   EnvironmentOverview,
@@ -273,7 +273,7 @@ const EnvironmentView = () => {
               <EnvironmentDatasets environment={env} />
             )}
             {currentTab === 'connections' && (
-              <EnvironmentConnections environment={env} />
+              <EnvironmentRedshiftConnections environment={env} />
             )}
             {currentTab === 'networks' && (
               <EnvironmentNetworks environment={env} />

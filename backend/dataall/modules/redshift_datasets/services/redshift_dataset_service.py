@@ -14,6 +14,8 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET,
+    GET_REDSHIFT_DATASET,
+    RETRY_REDSHIFT_DATASHARE,
     REDSHIFT_DATASET_ALL,
     REDSHIFT_DATASET_READ,
 )
@@ -82,6 +84,7 @@ class RedshiftDatasetService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_redshift_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -92,6 +95,7 @@ class RedshiftDatasetService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(RETRY_REDSHIFT_DATASHARE)
     def retry_redshift_datashare(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -102,6 +106,7 @@ class RedshiftDatasetService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_datashare_status(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -111,6 +116,8 @@ class RedshiftDatasetService:
             )
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0

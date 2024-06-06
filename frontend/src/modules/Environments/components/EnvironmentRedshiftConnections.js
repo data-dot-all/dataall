@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
+import { listEnvironmentRedshiftConnections, useClient } from 'services';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
@@ -28,17 +28,14 @@ import {
 } from 'design';
 
 import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConnectionAddForm';
-import {
-  listEnvironmentConnections,
-  deleteRedshiftConnection
-} from '../services';
+import { deleteRedshiftConnection } from '../services';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useSnackbar } from 'notistack';
 
-export const EnvironmentConnections = ({ environment }) => {
+export const EnvironmentRedshiftConnections = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -141,7 +138,7 @@ export const EnvironmentConnections = ({ environment }) => {
   const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(
-        listEnvironmentConnections({
+        listEnvironmentRedshiftConnections({
           filter: { ...filter, environmentUri: environment.environmentUri }
         })
       );
@@ -353,6 +350,6 @@ export const EnvironmentConnections = ({ environment }) => {
   );
 };
 
-EnvironmentConnections.propTypes = {
+EnvironmentRedshiftConnections.propTypes = {
   environment: PropTypes.object.isRequired
 };

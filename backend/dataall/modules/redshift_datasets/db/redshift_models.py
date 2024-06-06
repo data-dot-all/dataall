@@ -1,8 +1,7 @@
 from sqlalchemy import Column, String, ForeignKey
-from dataall.modules.connections_base.db.connection_models import Connection
-from dataall.modules.connections_base.api.enums import ConnectionType
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.datasets_enums import DatasetType
+from dataall.base.db import Resource, Base, utils
 
 
 class RedshiftDataset(DatasetBase):
@@ -23,16 +22,14 @@ class RedshiftDataset(DatasetBase):
 # TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
 
 
-class RedshiftConnection(Connection):
+class RedshiftConnection(Base, Resource):
     __tablename__ = 'redshift_connection'
-    connectionUri = Column(String, ForeignKey('connection.connectionUri'), primary_key=True)
+    connectionUri = Column(String, primary_key=True, default=utils.uuid('connection'))
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+    SamlGroupName = Column(String, nullable=False)
     redshiftType = Column(String, nullable=False)
     clusterId = Column(String, nullable=True)
     nameSpaceId = Column(String, nullable=True)
     workgroup = Column(String, nullable=True)
     redshiftUser = Column(String, nullable=True)
     secretArn = Column(String, nullable=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': ConnectionType.Redshift,
-    }

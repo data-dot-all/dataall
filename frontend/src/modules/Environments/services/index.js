@@ -18,7 +18,6 @@ export * from './inviteGroup';
 export * from './listAllEnvironmentConsumptionRoles';
 export * from './listAllEnvironmentGroups';
 export * from './listDatasetsCreatedInEnvironment';
-export * from './listEnvironmentConnections';
 export * from './listEnvironmentNetworks';
 export * from './listEnvironmentPermissions';
 export * from './removeConsumptionRole';
