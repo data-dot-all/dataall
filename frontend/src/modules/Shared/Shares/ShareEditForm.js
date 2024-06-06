@@ -148,7 +148,7 @@ const ItemRow = (props) => {
               startIcon={<SendIcon fontSize="small" />}
               color="primary"
             >
-              Request
+              Include
             </Button>
           )}
           {possibleAction === 'Nothing' && (
