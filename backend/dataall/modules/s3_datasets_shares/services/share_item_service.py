@@ -140,7 +140,7 @@ class ShareItemService:
                 raise UnauthorizedOperation(
                     action=ADD_ITEM,
                     message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.GlueTableName} is in {item.region} and target environment '
+                    f'Table {item.itemUri} is in {item.region} and target environment '
                     f'{target_environment.name} is in {target_environment.region} ',
                 )
 
@@ -163,13 +163,6 @@ class ShareItemService:
                     itemName=item.name,
                     status=ShareItemStatus.PendingApproval.value,
                     owner=context.username,
-                    GlueDatabaseName=ShareItemService._get_glue_database_for_share(
-                        dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                    )
-                    if item_type == ShareableType.Table.value
-                    else '',
-                    GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else '',
-                    S3AccessPointName=s3_access_point_name if item_type == ShareableType.StorageLocation.value else '',
                 )
                 session.add(share_item)
         return share_item

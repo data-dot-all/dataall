@@ -28,10 +28,10 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
           datasetUri
           datasetName
           itemType
+          itemName
           itemAccess
           GlueDatabaseName
           GlueTableName
-          S3AccessPointName
           created
           principalId
           sharedGlueDatabaseName

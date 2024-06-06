@@ -56,7 +56,7 @@ class S3AccessPointShareManager:
             share_data.share.shareUri,
             target_folder.locationUri,
         )
-        self.access_point_name = self.share_item.S3AccessPointName
+        self.access_point_name = self.build_access_point_name(share=share_data.share)
 
         self.source_account_id = share_data.dataset.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
