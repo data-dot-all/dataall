@@ -9,6 +9,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.base.context import get_context
 from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class ShareNotificationService:
         - share.owner (person that opened the request) OR share.groupUri (if group_notifications=true)
     """
 
-    def __init__(self, session, dataset, share: ShareObject):
+    def __init__(self, session, dataset: DatasetBase, share: ShareObject):
         self.dataset = dataset
         self.share = share
         self.session = session
