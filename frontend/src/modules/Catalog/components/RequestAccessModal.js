@@ -48,14 +48,16 @@ import { DeleteOutlined } from '@mui/icons-material';
 const ItemRow = (props) => {
   const { share, item, onAction, enqueueSnackbar, dispatch, client } = props;
 
-  const whatToDo = (status) => {
-    if (!status) return 'Request';
-    if (status === 'Revoke_Succeeded' || status === 'PendingApproval')
+  const whatToDo = () => {
+    if (!item.status) return 'Request';
+    if (item.status === 'Revoke_Succeeded' || item.status === 'PendingApproval')
       return 'Delete';
-    if (status === 'Share_Succeeded' || status === 'Revoke_Failed')
+    if (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed')
       return 'Revoke';
     return 'Nothing';
   };
+
+  const possibleAction = whatToDo();
 
   const removeShareItem = async () => {
     const response = await client.mutate(
@@ -131,44 +133,49 @@ const ItemRow = (props) => {
       <TableCell>
         {item.status ? <ShareStatus status={item.status} /> : 'Not requested'}
       </TableCell>
-      <TableCell>
-        {whatToDo(item.status) === 'Delete' && (
-          <Button
-            color="primary"
-            startIcon={<DeleteOutlined fontSize="small" />}
-            sx={{ m: 1 }}
-            variant="outlined"
-            onClick={removeShareItem}
-          >
-            Delete
-          </Button>
-        )}
-        {whatToDo(item.status) === 'Revoke' && (
-          <Button
-            variant="contained"
-            onClick={revokeShareItem}
-            startIcon={<SendIcon fontSize="small" />}
-            color="primary"
-          >
-            Revoke
-          </Button>
-        )}
-        {whatToDo(item.status) === 'Request' && (
-          <Button
-            variant="contained"
-            onClick={addShareItem}
-            startIcon={<SendIcon fontSize="small" />}
-            color="primary"
-          >
-            Request
-          </Button>
-        )}
-        {whatToDo(item.status) === 'Nothing' && (
-          <Typography color="textSecondary" variant="subtitle2">
-            Wait until this item is processed
-          </Typography>
-        )}
-      </TableCell>
+      {(share.status === 'Draft' ||
+        share.status === 'Processed' ||
+        share.status === 'Rejected' ||
+        share.status === 'Submitted') && (
+        <TableCell>
+          {possibleAction === 'Delete' && (
+            <Button
+              color="primary"
+              startIcon={<DeleteOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={removeShareItem}
+            >
+              Delete
+            </Button>
+          )}
+          {possibleAction === 'Revoke' && (
+            <Button
+              variant="contained"
+              onClick={revokeShareItem}
+              startIcon={<SendIcon fontSize="small" />}
+              color="primary"
+            >
+              Revoke
+            </Button>
+          )}
+          {possibleAction === 'Request' && (
+            <Button
+              variant="contained"
+              onClick={addShareItem}
+              startIcon={<SendIcon fontSize="small" />}
+              color="primary"
+            >
+              Request
+            </Button>
+          )}
+          {possibleAction === 'Nothing' && (
+            <Typography color="textSecondary" variant="subtitle2">
+              Wait until this item is processed
+            </Typography>
+          )}
+        </TableCell>
+      )}
     </TableRow>
   );
 };
@@ -416,6 +423,27 @@ export const RequestAccessModal = (props) => {
     navigate(`/console/shares/${share.shareUri}`);
   };
 
+  const getExplanation = (status) => {
+    const descriptions = {
+      Draft:
+        'The request for the selected principal is currently in draft status. You can edit and submit the request for approval.',
+      Approved:
+        'The request for the selected principal has already been approved by the data owner. You can make changes after the request is processed. Track its progress in the Shares menu on the left or click the "View share" button.',
+      Rejected:
+        'The request for the selected principal has already been rejected by the data owner. You can make changes and submit the request again. For more information, click the "View share" button.',
+      Submitted:
+        'The request for the selected principal has already been submitted for approval. You can edit the request. For more information, click the "View share" button.',
+      Processed:
+        'Request for the selected principal was already created and processed. You can make changes and submit request again. For more information click the button "View share".',
+      Revoked:
+        'The access for the selected principal has been revoked. A request to revoke access is currently in progress.  Track its progress in the Shares menu on the left or click the "View share" button.',
+      Revoke_In_Progress:
+        'The access for the selected principal has been revoked. A request to revoke access is currently in progress. Track its progress in the Shares menu on the left or click the "View share" button.',
+      Share_In_Progress:
+        'A request to share data with the selected principal is currently in progress. Track its progress in the Shares menu on the left or click the "View share" button.'
+    };
+    return descriptions[status];
+  };
   const updateRequestPurpose = async () => {
     const response = await client.mutate(
       updateShareRequestReason({
@@ -878,6 +906,17 @@ export const RequestAccessModal = (props) => {
       )}
       {step === 1 && !loading && (
         <Box sx={{ p: 3, minHeight: 800 }}>
+          <Typography
+            align="center"
+            color="textPrimary"
+            gutterBottom
+            variant="h4"
+          >
+            Share status: {share.status}
+          </Typography>
+          <Typography align="center" color="textSecondary" variant="subtitle2">
+            {getExplanation(share.status)}
+          </Typography>
           <Box>
             <Table>
               <TableHead>
@@ -885,7 +924,12 @@ export const RequestAccessModal = (props) => {
                   <TableCell>Type</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Action</TableCell>
+                  {(share.status === 'Draft' ||
+                    share.status === 'Processed' ||
+                    share.status === 'Rejected' ||
+                    share.status === 'Submitted') && (
+                    <TableCell>Action</TableCell>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -930,6 +974,12 @@ export const RequestAccessModal = (props) => {
                   name="requestPurpose"
                   multiline
                   rows={5}
+                  disabled={
+                    share.status !== 'Draft' &&
+                    share.status !== 'Processed' &&
+                    share.status !== 'Rejected' &&
+                    share.status !== 'Submitted'
+                  }
                   value={requestPurpose}
                   variant="outlined"
                   onChange={(event) => {
@@ -970,9 +1020,21 @@ export const RequestAccessModal = (props) => {
                 onClick={draftRequest}
                 fullWidth
                 color="primary"
-                variant="outlined"
+                variant="contained"
               >
                 View share
+              </Button>
+            </CardContent>
+          )}
+          {share.status.toUpperCase() !== 'DRAFT' && (
+            <CardContent>
+              <Button
+                onClick={onApply}
+                fullWidth
+                color="primary"
+                variant="outlined"
+              >
+                Cancel
               </Button>
             </CardContent>
           )}
