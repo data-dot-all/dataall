@@ -46,7 +46,7 @@ const ItemRow = (props) => {
       removeSharedItem({ shareItemUri: item.shareItemUri })
     );
     if (!response.errors) {
-      enqueueSnackbar('Item added', {
+      enqueueSnackbar('Item removed', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -64,13 +64,13 @@ const ItemRow = (props) => {
       revokeItemsShareObject({
         input: {
           shareUri: share.shareUri,
-          itemUris: [item.itemUri]
+          itemUris: [item.shareItemUri]
         }
       })
     );
 
     if (!response.errors) {
-      enqueueSnackbar('Item added', {
+      enqueueSnackbar('Item revoked', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
