@@ -173,6 +173,7 @@ class ShareObjectService:
             elif not attached:
                 share_policy_service.attach_policy()
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+            already_existed = share is not None
             if not share:
                 share = ShareObject(
                     datasetUri=dataset.datasetUri,
@@ -257,6 +258,7 @@ class ShareObjectService:
                     resource_uri=share.shareUri,
                     resource_type=ShareObject.__name__,
                 )
+            share.alreadyExisted = already_existed
             return share
 
     @classmethod

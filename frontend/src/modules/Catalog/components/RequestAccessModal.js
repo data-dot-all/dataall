@@ -49,6 +49,7 @@ export const RequestAccessModal = (props) => {
   const [step, setStep] = useState(0);
   const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [alreadyExisted, setAlreadyExisted] = useState(false);
 
   const fetchEnvironments = useCallback(async () => {
     setStep(0);
@@ -243,11 +244,15 @@ export const RequestAccessModal = (props) => {
         if (hit.resourceKind === 'dashboard') {
           await fetchShareObject(response.data.requestDashboardShare.shareUri);
         } else {
+          setAlreadyExisted(response.data.createShareObject.alreadyExisted);
           await fetchShareObject(response.data.createShareObject.shareUri);
         }
         setStep(1);
         setLoading(false);
-        enqueueSnackbar('Draft share request created', {
+        const message = response.data.createShareObject.alreadyExisted
+          ? 'Redirecting to the existing share'
+          : 'Draft share request created';
+        enqueueSnackbar(message, {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -658,6 +663,7 @@ export const RequestAccessModal = (props) => {
       {step === 1 && (
         <ShareEditForm
           share={share}
+          alreadyExisted={alreadyExisted}
           dispatch={dispatch}
           enqueueSnackbar={enqueueSnackbar}
           client={client}

@@ -188,6 +188,7 @@ ItemRow.propTypes = {
 export const ShareEditForm = (props) => {
   const {
     share,
+    alreadyExisted,
     dispatch,
     enqueueSnackbar,
     client,
@@ -345,6 +346,11 @@ export const ShareEditForm = (props) => {
       <Typography align="center" color="textPrimary" gutterBottom variant="h4">
         Share status: {shareStatus}
       </Typography>
+      {alreadyExisted && (
+        <Typography align="center" color="red" variant="subtitle2">
+          Share object for the selected principal and target already exists.
+        </Typography>
+      )}
       <Typography align="center" color="textSecondary" variant="subtitle2">
         {getExplanation(shareStatus)}
       </Typography>
