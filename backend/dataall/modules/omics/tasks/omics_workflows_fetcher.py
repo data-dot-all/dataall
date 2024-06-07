@@ -22,7 +22,7 @@ def fetch_omics_workflows(engine):
     """List Omics workflows."""
     log.info('Starting omics workflows fetcher')
     with engine.scoped_session() as session:
-        environments = session.query(Environment)
+        environments = OmicsRepository(session).list_environments_with_omics_enabled()
         # designed for ready2run and private workflows; when private workflow support is
         # introduced, we will need go over all environments
         env = environments[0]

@@ -8,8 +8,8 @@ from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import paginate, exceptions
+from dataall.core.environment.db.environment_models import Environment, EnvironmentParameter
 from dataall.modules.omics.db.omics_models import OmicsWorkflow, OmicsRun
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 
 
 class OmicsRepository:
@@ -83,3 +83,14 @@ class OmicsRepository:
             page=filter.get('page', OmicsRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', OmicsRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
+
+    def list_environments_with_omics_enabled(self):
+        query = (
+            self._session.query(Environment)
+            .join(
+                EnvironmentParameter,
+                EnvironmentParameter.environmentUri == Environment.environmentUri,
+            )
+            .filter(and_(EnvironmentParameter.key == 'omicsEnabled', EnvironmentParameter.value == 'true'))
+        )
+        return query.order_by(Environment.label).all()
