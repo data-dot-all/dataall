@@ -33,6 +33,8 @@ const ItemRow = (props) => {
     shareStatus,
     item,
     onAction,
+    onLoadingStart,
+    onLoadingEnd,
     enqueueSnackbar,
     dispatch,
     client
@@ -54,9 +56,11 @@ const ItemRow = (props) => {
   const possibleAction = whatToDo();
 
   const removeShareItem = async () => {
+    onLoadingStart();
     const response = await client.mutate(
       removeSharedItem({ shareItemUri: item.shareItemUri })
     );
+    onLoadingEnd();
     if (!response.errors) {
       enqueueSnackbar('Item removed', {
         anchorOrigin: {
@@ -72,6 +76,7 @@ const ItemRow = (props) => {
   };
 
   const revokeShareItem = async () => {
+    onLoadingStart();
     const response = await client.mutate(
       revokeItemsShareObject({
         input: {
@@ -80,7 +85,7 @@ const ItemRow = (props) => {
         }
       })
     );
-
+    onLoadingEnd();
     if (!response.errors) {
       enqueueSnackbar('Item revoked', {
         anchorOrigin: {
@@ -96,6 +101,7 @@ const ItemRow = (props) => {
   };
 
   const addShareItem = async () => {
+    onLoadingStart();
     const response = await client.mutate(
       addSharedItem({
         shareUri: share.shareUri,
@@ -105,7 +111,7 @@ const ItemRow = (props) => {
         }
       })
     );
-
+    onLoadingEnd();
     if (!response.errors) {
       enqueueSnackbar('Item added', {
         anchorOrigin: {
@@ -364,6 +370,12 @@ export const ShareEditForm = (props) => {
                   dispatch={dispatch}
                   enqueueSnackbar={enqueueSnackbar}
                   onAction={fetchShareItems}
+                  onLoadingStart={() => {
+                    setLoading(true);
+                  }}
+                  onLoadingEnd={() => {
+                    setLoading(false);
+                  }}
                   client={client}
                 ></ItemRow>
               ))
