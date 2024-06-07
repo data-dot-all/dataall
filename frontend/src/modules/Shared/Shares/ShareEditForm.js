@@ -40,7 +40,11 @@ const ItemRow = (props) => {
 
   const whatToDo = () => {
     if (!item.status) return 'Request';
-    if (item.status === 'Revoke_Succeeded' || item.status === 'PendingApproval')
+    if (
+      item.status === 'Revoke_Succeeded' ||
+      item.status === 'PendingApproval' ||
+      item.status === 'Share_Rejected'
+    )
       return 'Delete';
     if (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed')
       return 'Revoke';
