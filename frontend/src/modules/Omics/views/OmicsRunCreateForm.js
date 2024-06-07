@@ -25,15 +25,10 @@ import {
   useClient,
   listEnvironmentGroups,
   listValidEnvironments,
-  listDatasetsOwnedByEnvGroup
+  listS3DatasetsOwnedByEnvGroup
 } from 'services';
 import { getOmicsWorkflow, createOmicsRun } from '../services';
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-  Defaults,
-  useSettings
-} from 'design';
+import { ArrowLeftIcon, ChevronRightIcon, Defaults, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
 const OmicsRunCreateForm = (props) => {
@@ -110,14 +105,14 @@ const OmicsRunCreateForm = (props) => {
     let ownedDatasets = [];
     try {
       const response = await client.query(
-        listDatasetsOwnedByEnvGroup({
+        listS3DatasetsOwnedByEnvGroup({
           filter: Defaults.SelectListFilter,
           environmentUri: currentEnv,
           groupUri: groupUri
         })
       );
       if (!response.errors) {
-        ownedDatasets = response.data.listDatasetsOwnedByEnvGroup.nodes?.map(
+        ownedDatasets = response.data.listS3DatasetsOwnedByEnvGroup.nodes?.map(
           (dataset) => ({
             value: dataset.datasetUri,
             label: dataset.label
