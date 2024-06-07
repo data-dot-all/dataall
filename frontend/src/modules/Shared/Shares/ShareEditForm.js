@@ -28,7 +28,15 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
 const ItemRow = (props) => {
-  const { share, item, onAction, enqueueSnackbar, dispatch, client } = props;
+  const {
+    share,
+    shareStatus,
+    item,
+    onAction,
+    enqueueSnackbar,
+    dispatch,
+    client
+  } = props;
 
   const whatToDo = () => {
     if (!item.status) return 'Request';
@@ -115,10 +123,10 @@ const ItemRow = (props) => {
       <TableCell>
         {item.status ? <ShareStatus status={item.status} /> : 'Not requested'}
       </TableCell>
-      {(share.status === 'Draft' ||
-        share.status === 'Processed' ||
-        share.status === 'Rejected' ||
-        share.status === 'Submitted') && (
+      {(shareStatus === 'Draft' ||
+        shareStatus === 'Processed' ||
+        shareStatus === 'Rejected' ||
+        shareStatus === 'Submitted') && (
         <TableCell>
           {possibleAction === 'Delete' && (
             <Button
@@ -179,7 +187,7 @@ export const ShareEditForm = (props) => {
   } = props;
   const navigate = useNavigate();
   const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
-  const [shareStatus, setShareStatus] = useState(false);
+  const [shareStatus, setShareStatus] = useState('');
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(false);
   const [requestPurpose, setRequestPurpose] = useState('');
@@ -308,6 +316,7 @@ export const ShareEditForm = (props) => {
       fetchShareItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      setShareStatus(share.status);
       setRequestPurpose(share.requestPurpose);
     }
   }, [client, fetchShareItems, dispatch, share]);
@@ -323,7 +332,7 @@ export const ShareEditForm = (props) => {
   return (
     <Box sx={{ p: 3, minHeight: 800 }}>
       <Typography align="center" color="textPrimary" gutterBottom variant="h4">
-        Share status: {share.status}
+        Share status: {shareStatus}
       </Typography>
       <Typography align="center" color="textSecondary" variant="subtitle2">
         {getExplanation(shareStatus)}
@@ -335,10 +344,10 @@ export const ShareEditForm = (props) => {
               <TableCell>Type</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Status</TableCell>
-              {(share.status === 'Draft' ||
-                share.status === 'Processed' ||
-                share.status === 'Rejected' ||
-                share.status === 'Submitted') && <TableCell>Action</TableCell>}
+              {(shareStatus === 'Draft' ||
+                shareStatus === 'Processed' ||
+                shareStatus === 'Rejected' ||
+                shareStatus === 'Submitted') && <TableCell>Action</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -346,6 +355,7 @@ export const ShareEditForm = (props) => {
               sharedItems.nodes.map((sharedItem) => (
                 <ItemRow
                   share={share}
+                  shareStatus={shareStatus}
                   item={sharedItem}
                   dispatch={dispatch}
                   enqueueSnackbar={enqueueSnackbar}
@@ -384,10 +394,10 @@ export const ShareEditForm = (props) => {
               multiline
               rows={3}
               disabled={
-                share.status !== 'Draft' &&
-                share.status !== 'Processed' &&
-                share.status !== 'Rejected' &&
-                share.status !== 'Submitted'
+                shareStatus !== 'Draft' &&
+                shareStatus !== 'Processed' &&
+                shareStatus !== 'Rejected' &&
+                shareStatus !== 'Submitted'
               }
               value={requestPurpose}
               variant="outlined"
@@ -398,7 +408,7 @@ export const ShareEditForm = (props) => {
           </CardContent>
         </Box>
       </Box>
-      {share.status.toUpperCase() === 'DRAFT' && (
+      {shareStatus.toUpperCase() === 'DRAFT' && (
         <CardContent>
           <Button
             onClick={sendRequest}
@@ -411,7 +421,7 @@ export const ShareEditForm = (props) => {
           </Button>
         </CardContent>
       )}
-      {share.status.toUpperCase() === 'DRAFT' && (
+      {shareStatus.toUpperCase() === 'DRAFT' && (
         <CardContent>
           <Button
             onClick={draftRequest}
@@ -423,7 +433,7 @@ export const ShareEditForm = (props) => {
           </Button>
         </CardContent>
       )}
-      {share.status.toUpperCase() !== 'DRAFT' && showViewShare && (
+      {shareStatus.toUpperCase() !== 'DRAFT' && showViewShare && (
         <CardContent>
           <Button
             onClick={draftRequest}
@@ -435,7 +445,7 @@ export const ShareEditForm = (props) => {
           </Button>
         </CardContent>
       )}
-      {share.status.toUpperCase() !== 'DRAFT' && (
+      {shareStatus.toUpperCase() !== 'DRAFT' && (
         <CardContent>
           <Button
             onClick={onCancel}
@@ -443,7 +453,7 @@ export const ShareEditForm = (props) => {
             color="primary"
             variant="outlined"
           >
-            Cancel
+            Close
           </Button>
         </CardContent>
       )}
