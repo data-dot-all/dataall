@@ -28,7 +28,7 @@ class RequestValidator:
         required(data, 'workflowUri')
         required(data, 'parameterTemplate')
         required(data, 'destination')
-        
+
     @staticmethod
     def _required(data: dict, name: str):
         if not data.get(name):

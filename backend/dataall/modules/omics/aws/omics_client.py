@@ -42,12 +42,13 @@ class OmicsClient:
     def run_omics_workflow(self, omics_workflow: OmicsWorkflow, omics_run: OmicsRun, role_arn: str):
         try:
             response = self._client.start_run(
+                name=omics_run.label,
                 workflowId=omics_workflow.id,
                 workflowType=omics_workflow.type,
                 roleArn=role_arn,
                 parameters=json.loads(omics_run.parameterTemplate),
                 outputUri=omics_run.outputUri,
-                tags={'Team': f'{omics_run.SamlAdminGroupName}'},
+                tags={'Team': f'{omics_run.SamlAdminGroupName}', 'dataall': True},
             )
             return response
         except ClientError as e:
