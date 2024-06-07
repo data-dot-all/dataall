@@ -58,18 +58,6 @@ def get_file_upload_presigned_url(context, source, datasetUri: str = None, input
     return DatasetService.get_file_upload_presigned_url(uri=datasetUri, data=input)
 
 
-def list_all_user_datasets(context: Context, source, filter: dict = None):
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_all_user_datasets(filter)
-
-
-def list_owned_datasets(context: Context, source, filter: dict = None):
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetService.list_owned_datasets(filter)
-
-
 def list_locations(context, source: S3Dataset, filter: dict = None):
     if not source:
         return None
@@ -155,12 +143,6 @@ def get_dataset_glossary_terms(context: Context, source: S3Dataset, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, 'Dataset')
-
-
-def list_datasets_created_in_environment(context: Context, source, environmentUri: str = None, filter: dict = None):
-    if not filter:
-        filter = {}
-    return DatasetService.list_datasets_created_in_environment(uri=environmentUri, data=filter)
 
 
 def list_datasets_owned_by_env_group(

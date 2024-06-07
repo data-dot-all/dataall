@@ -62,7 +62,7 @@ function TableEditHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${table.datasetUri}`}
+            to={`/console/s3-datasets/${table.datasetUri}`}
             variant="subtitle2"
           >
             {table.dataset.name}
@@ -72,7 +72,7 @@ function TableEditHeader(props) {
               underline="hover"
               color="textPrimary"
               component={RouterLink}
-              to={`/console/datasets/table/${table.tableUri}`}
+              to={`/console/s3-datasets/table/${table.tableUri}`}
               variant="subtitle2"
             >
               {table.GlueTableName}
@@ -90,7 +90,7 @@ function TableEditHeader(props) {
             component={RouterLink}
             startIcon={<ArrowLeftIcon fontSize="small" />}
             sx={{ mt: 1 }}
-            to={`/console/datasets/table/${table.tableUri}`}
+            to={`/console/s3-datasets/table/${table.tableUri}`}
             variant="outlined"
           >
             Cancel
@@ -138,7 +138,7 @@ const TableEditForm = () => {
         },
         variant: 'success'
       });
-      navigate(`/console/datasets/table/${table.tableUri}`);
+      navigate(`/console/s3-datasets/table/${table.tableUri}`);
     } catch (err) {
       console.error(err);
       setStatus({ success: false });

@@ -14,11 +14,11 @@ from typing import Callable
 from dataall.core.groups.db.group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
-from dataall.modules.dataset_sharing.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.dataset_sharing.services.share_processors.lakeformation_process_share import (
+from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
+from dataall.modules.s3_datasets_shares.services.share_processors.lakeformation_process_share import (
     ProcessLakeFormationShare,
 )
 from dataall.base.db import exceptions
@@ -144,7 +144,7 @@ def processor_with_mocks(
 @pytest.fixture(scope='function')
 def mock_glue_client(mocker):
     mock_client = MagicMock()
-    mocker.patch('dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient', mock_client)
+    mocker.patch('dataall.modules.s3_datasets_shares.services.share_managers.lf_share_manager.GlueClient', mock_client)
     yield mock_client
 
 

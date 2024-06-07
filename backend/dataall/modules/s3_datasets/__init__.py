@@ -17,13 +17,13 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
+        from dataall.modules.datasets_base import DatasetBaseApiModuleInterface
         from dataall.modules.catalog import CatalogApiModuleInterface
         from dataall.modules.feed import FeedApiModuleInterface
         from dataall.modules.vote import VoteApiModuleInterface
 
         return [
-            DatasetBaseModuleInterface,
+            DatasetBaseApiModuleInterface,
             CatalogApiModuleInterface,
             FeedApiModuleInterface,
             VoteApiModuleInterface,

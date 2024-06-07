@@ -3,7 +3,7 @@ from dataall.base.api import gql
 from dataall.core.environment.api.resolvers import (
     get_environment_stack,
     get_parent_organization,
-    get_policies,
+    resolve_consumption_role_policies,
     resolve_environment_networks,
     resolve_parameters,
     resolve_user_role,
@@ -180,7 +180,9 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
-        gql.Field(name='managedPolicies', type=gql.ArrayType(RoleManagedPolicy), resolver=get_policies),
+        gql.Field(
+            name='managedPolicies', type=gql.ArrayType(RoleManagedPolicy), resolver=resolve_consumption_role_policies
+        ),
     ],
 )
 

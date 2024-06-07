@@ -51,7 +51,7 @@ const DatasetCreateForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
+    config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.s3_datasets.features.custom_confidentiality_mapping
       ? Object.keys(
           config.modules.s3_datasets.features.custom_confidentiality_mapping
@@ -138,7 +138,9 @@ const DatasetCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/${response.data.createDataset.datasetUri}`);
+        navigate(
+          `/console/s3-datasets/${response.data.createDataset.datasetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -231,14 +233,14 @@ const DatasetCreateForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Owners team is required'),
-                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: isFeatureEnabled(
-                  's3_datasets',
+                  'datasets_base',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -319,7 +321,7 @@ const DatasetCreateForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          's3_datasets',
+                          'datasets_base',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>
@@ -348,7 +350,10 @@ const DatasetCreateForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled(
+                          'datasets_base',
+                          'topics_dropdown'
+                        ) && (
                           <CardContent>
                             <Autocomplete
                               multiple
@@ -396,7 +401,7 @@ const DatasetCreateForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.s3_datasets.features
+                          {config.modules.datasets_base.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (

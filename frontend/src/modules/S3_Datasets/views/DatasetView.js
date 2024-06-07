@@ -50,7 +50,7 @@ import {
   DatasetUpload
 } from '../components';
 import { isFeatureEnabled } from 'utils';
-import { RequestAccessModal } from '../../Catalog/components';
+import { RequestAccessModal } from 'modules/Catalog/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -267,7 +267,7 @@ const DatasetView = () => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/datasets/${dataset.datasetUri}`}
+                  to={`/console/s3-datasets/${dataset.datasetUri}`}
                   variant="subtitle2"
                 >
                   {dataset.label}
@@ -302,7 +302,7 @@ const DatasetView = () => {
                       component={RouterLink}
                       startIcon={<PencilAltIcon fontSize="small" />}
                       sx={{ mt: 1, mr: 1 }}
-                      to={`/console/datasets/${dataset.datasetUri}/edit`}
+                      to={`/console/s3-datasets/${dataset.datasetUri}/edit`}
                       variant="outlined"
                     >
                       Edit

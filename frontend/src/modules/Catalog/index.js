@@ -7,7 +7,8 @@ export const CatalogsModule = {
   resolve_dependency: () => {
     return (
       getModuleActiveStatus(ModuleNames.S3_DATASETS) ||
-      getModuleActiveStatus(ModuleNames.DASHBOARDS)
+      getModuleActiveStatus(ModuleNames.DASHBOARDS) ||
+      getModuleActiveStatus(ModuleNames.DATASETS_BASE)
     );
   }
 };

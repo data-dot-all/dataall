@@ -254,7 +254,7 @@ export const DatasetTables = (props) => {
                             underline="hover"
                             color="textPrimary"
                             component={RouterLink}
-                            to={`/console/datasets/table/${table.tableUri}`}
+                            to={`/console/s3-datasets/table/${table.tableUri}`}
                             variant="subtitle2"
                           >
                             {table.GlueTableName}
@@ -276,7 +276,7 @@ export const DatasetTables = (props) => {
                           <IconButton
                             onClick={() => {
                               navigate(
-                                `/console/datasets/table/${table.tableUri}`
+                                `/console/s3-datasets/table/${table.tableUri}`
                               );
                             }}
                           >

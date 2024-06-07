@@ -55,7 +55,7 @@ const DatasetEditForm = (props) => {
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
+    config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.s3_datasets.features.custom_confidentiality_mapping
       ? Object.keys(
           config.modules.s3_datasets.features.custom_confidentiality_mapping
@@ -175,7 +175,9 @@ const DatasetEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/${response.data.updateDataset.datasetUri}`);
+        navigate(
+          `/console/s3-datasets/${response.data.updateDataset.datasetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -231,7 +233,7 @@ const DatasetEditForm = (props) => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/datasets/${dataset.datasetUri}`}
+                  to={`/console/s3-datasets/${dataset.datasetUri}`}
                   variant="subtitle2"
                 >
                   {dataset.label}
@@ -248,7 +250,7 @@ const DatasetEditForm = (props) => {
                   component={RouterLink}
                   startIcon={<ArrowLeftIcon fontSize="small" />}
                   sx={{ mt: 1 }}
-                  to={`/console/datasets/${dataset.datasetUri}`}
+                  to={`/console/s3-datasets/${dataset.datasetUri}`}
                   variant="outlined"
                 >
                   Cancel
@@ -276,12 +278,12 @@ const DatasetEditForm = (props) => {
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
                 KmsAlias: Yup.string().max(255),
-                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 confidentiality: isFeatureEnabled(
-                  's3_datasets',
+                  'datasets_base',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -363,7 +365,7 @@ const DatasetEditForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          's3_datasets',
+                          'datasets_base',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>
@@ -393,7 +395,10 @@ const DatasetEditForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled(
+                          'datasets_base',
+                          'topics_dropdown'
+                        ) && (
                           <CardContent>
                             <Autocomplete
                               multiple
@@ -482,7 +487,7 @@ const DatasetEditForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.s3_datasets.features
+                          {config.modules.datasets_base.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (
