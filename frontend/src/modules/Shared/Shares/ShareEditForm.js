@@ -204,7 +204,7 @@ export const ShareEditForm = (props) => {
 
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
-      await setFilter({ ...filter, isShared: true, page: value });
+      await setFilter({ ...filter, page: value });
     }
   };
 
@@ -308,7 +308,8 @@ export const ShareEditForm = (props) => {
       getShareObject({
         shareUri: share.shareUri,
         filter: {
-          ...filter
+          ...filter,
+          pageSize: 5
         }
       })
     );
@@ -319,7 +320,7 @@ export const ShareEditForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, share, dispatch]);
+  }, [client, filter, dispatch]);
 
   useEffect(() => {
     if (client) {
