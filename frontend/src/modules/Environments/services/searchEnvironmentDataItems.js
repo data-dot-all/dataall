@@ -30,11 +30,8 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
           itemType
           itemName
           itemAccess
-          GlueDatabaseName
-          GlueTableName
           created
           principalId
-          sharedGlueDatabaseName
         }
       }
     }

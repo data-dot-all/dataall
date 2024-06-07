@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from warnings import warn
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
@@ -27,7 +26,6 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareItemSM,
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.shares_base.services.share_permissions import (
@@ -40,10 +38,8 @@ from dataall.modules.shares_base.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
 )
-from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetStorageLocation
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.base.aws.iam import IAM
 
 from dataall.base.utils import Parameter
@@ -414,8 +410,6 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_statistics(uri):
         with get_context().db_engine.scoped_session() as session:
-            tables = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetTable')
-            locations = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
             shared_items = ShareObjectRepository.count_items_in_states(
                 session, uri, ShareItemSM.get_share_item_shared_states()
             )
@@ -428,46 +422,10 @@ class ShareObjectService:
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
             return {
-                'tables': tables,
-                'locations': locations,
                 'sharedItems': shared_items,
                 'revokedItems': revoked_items,
                 'failedItems': failed_items,
                 'pendingItems': pending_items,
-            }
-
-    @staticmethod
-    def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
-        with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
-            if dataset:
-                environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-                S3AccessPointName = utils.slugify(
-                    datasetUri + '-' + principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern='[^a-zA-Z0-9-]',
-                    separator='-',
-                )
-                # Check if the share was made with a Glue Database
-                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
-                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                )
-                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
-                database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
-                ).get_glue_database()
-                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
-                return {
-                    's3AccessPointName': S3AccessPointName,
-                    'sharedGlueDatabase': sharedGlueDatabase,
-                    's3bucketName': dataset.S3BucketName,
-                }
-            return {
-                's3AccessPointName': 'Not Created',
-                'sharedGlueDatabase': 'Not Created',
-                's3bucketName': 'Not Created',
             }
 
     @staticmethod
