@@ -6,11 +6,13 @@ from aws_cdk import (
     aws_ssm as ssm,
     aws_iam as iam,
     aws_wafv2 as wafv2,
+    aws_kms as kms,
     aws_lambda as _lambda,
     CfnOutput,
     BundlingOptions,
     Duration,
     CustomResource,
+    RemovalPolicy,
 )
 from aws_cdk.aws_cognito import AuthFlow
 from aws_cdk.triggers import TriggerFunction
@@ -278,6 +280,33 @@ class IdpStack(pyNestedClass):
                     'sync_congito_params',
                 )
             )
+            lambda_env_key = kms.Key(
+                self,
+                f'{resource_prefix}-cogn-lambda-env-var-key',
+                removal_policy=RemovalPolicy.DESTROY,
+                alias=f'{resource_prefix}-cogn-lambda-env-var-key',
+                enable_key_rotation=True,
+                policy=iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            resources=['*'],
+                            effect=iam.Effect.ALLOW,
+                            principals=[
+                                iam.AccountPrincipal(account_id=self.account),
+                            ],
+                            actions=['kms:*'],
+                        ),
+                        iam.PolicyStatement(
+                            resources=['*'],
+                            effect=iam.Effect.ALLOW,
+                            principals=[
+                                iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                            ],
+                            actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                        ),
+                    ],
+                ),
+            )
             cognito_sync_handler = _lambda.Function(
                 self,
                 f'CognitoParamsSyncHandler{envname}',
@@ -295,11 +324,17 @@ class IdpStack(pyNestedClass):
                 description='dataall Custom resource to sync cognito params to us-east-1',
                 timeout=Duration.seconds(5 * 60),
                 environment={'envname': envname, 'LOG_LEVEL': 'DEBUG'},
+                environment_encryption=lambda_env_key,
                 vpc=vpc,
                 runtime=_lambda.Runtime.PYTHON_3_9,
             )
 
-            sync_provider = cr.Provider(self, f'CognitoProvider{envname}', on_event_handler=cognito_sync_handler)
+            sync_provider = cr.Provider(
+                self,
+                f'CognitoProvider{envname}',
+                on_event_handler=cognito_sync_handler,
+                provider_function_env_encryption=lambda_env_key,
+            )
 
             sync_cr = CustomResource(
                 self,

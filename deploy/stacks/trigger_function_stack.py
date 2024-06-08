@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_ecr as ecr,
     aws_lambda as _lambda,
 )
+from aws_cdk.aws_kms import IKey
 from aws_cdk.triggers import TriggerFunction
 from constructs import Construct
 
@@ -28,6 +29,7 @@ class TriggerFunctionStack(pyNestedClass):
         connectables: List[ec2.IConnectable] = [],
         execute_after: List[Construct] = [],
         additional_policy_statements: List[iam.PolicyStatement] = [],
+        env_var_encryption_key: IKey = None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -52,6 +54,7 @@ class TriggerFunctionStack(pyNestedClass):
             memory_size=256,
             timeout=Duration.minutes(15),
             environment=env,
+            environment_encryption=env_var_encryption_key,
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
             runtime=_lambda.Runtime.FROM_IMAGE,
