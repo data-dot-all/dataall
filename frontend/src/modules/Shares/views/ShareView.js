@@ -840,15 +840,19 @@ const ShareView = () => {
                             <Grid item md={1} xl={1} xs={2}>
                               {(share.userRoleForShareObject === 'Requesters' ||
                                 share.userRoleForShareObject ===
-                                  'ApproversAndRequesters') && (
-                                <UpdateRequestReason
-                                  share={share}
-                                  client={client}
-                                  dispatch={dispatch}
-                                  enqueueSnackbar={enqueueSnackbar}
-                                  fetchItem={fetchItem}
-                                />
-                              )}
+                                  'ApproversAndRequesters') &&
+                                (share.status === 'Draft' ||
+                                  share.status === 'Processed' ||
+                                  share.status === 'Rejected' ||
+                                  share.status === 'Submitted') && (
+                                  <UpdateRequestReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                                )}
                             </Grid>
                           </Grid>
 
@@ -874,15 +878,17 @@ const ShareView = () => {
                             <Grid item md={1} xl={1} xs={2}>
                               {(share.userRoleForShareObject === 'Approvers' ||
                                 share.userRoleForShareObject ===
-                                  'ApproversAndRequesters') && (
-                                <UpdateRejectReason
-                                  share={share}
-                                  client={client}
-                                  dispatch={dispatch}
-                                  enqueueSnackbar={enqueueSnackbar}
-                                  fetchItem={fetchItem}
-                                />
-                              )}
+                                  'ApproversAndRequesters') &&
+                                (share.status === 'Submitted' ||
+                                  share.status === 'Draft') && (
+                                  <UpdateRejectReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                                )}
                             </Grid>
                           </Grid>
 
