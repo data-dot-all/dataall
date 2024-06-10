@@ -37,7 +37,7 @@ def patch_aws(module_mocker):
 
 @pytest.fixture(scope='module', autouse=True)
 def env_params():
-    yield {'omicsEnabled': 'True'}
+    yield {'omicsEnabled': 'true'}
 
 
 @pytest.fixture(scope='module')

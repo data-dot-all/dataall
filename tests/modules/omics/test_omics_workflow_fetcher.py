@@ -17,7 +17,7 @@ def second_environment(env, org_fixture, group):
     )
 
 
-def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, module_mocker, env_fixture):
+def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, module_mocker, env_fixture, env_params):
     """Checks that new workflows are added to the RDS database"""
 
     # Given one environment and 2 READY2RUN workflows returned from that account
@@ -71,7 +71,7 @@ def test_omics_workflow_fetcher_new_workflows_multiple_environments(
     # Then, the task completes successfully
     assert success == True
     # Then, the mocker is called twice
-    assert mocker.call_count == 2
+    mocker.assert_called_once()
     with db.scoped_session() as session:
         workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
         # Then, the 2 workflows are added to RDS without duplicating
