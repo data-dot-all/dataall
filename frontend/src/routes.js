@@ -153,6 +153,17 @@ const GlossaryCreateForm = Loadable(
   lazy(() => import('./modules/Glossaries/views/GlossaryCreateForm'))
 );
 
+const OmicsList = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsList'))
+);
+
+const OmicsWorkflowView = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsWorkflowView'))
+);
+
+const OmicsRunCreateForm = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsRunCreateForm'))
+);
 const AdministrationView = Loadable(
   lazy(() => import('./modules/Administration/views/AdministrationView'))
 );
@@ -398,6 +409,22 @@ const routes = [
           {
             path: 'glossaries/new',
             element: <GlossaryCreateForm />
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.OMICS) && {
+        children: [
+          {
+            path: 'omics',
+            element: <OmicsList />
+          },
+          {
+            path: 'omics/workflows/:uri',
+            element: <OmicsWorkflowView />
+          },
+          {
+            path: 'omics/workflows/:uri/runs/new',
+            element: <OmicsRunCreateForm />
           }
         ]
       },
