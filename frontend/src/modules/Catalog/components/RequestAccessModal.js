@@ -586,35 +586,6 @@ export const RequestAccessModal = (props) => {
                         />
                       </CardContent>
                     )}
-                    <CardContent>
-                      <TextField
-                        FormHelperTextProps={{
-                          sx: {
-                            textAlign: 'right',
-                            mr: 0
-                          }
-                        }}
-                        fullWidth
-                        helperText={`${
-                          200 - values.comment.length
-                        } characters left`}
-                        label="Request purpose"
-                        name="comment"
-                        multiline
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        rows={3}
-                        value={values.comment}
-                        variant="outlined"
-                      />
-                      {touched.comment && errors.comment && (
-                        <Box sx={{ mt: 2 }}>
-                          <FormHelperText error>
-                            {errors.comment}
-                          </FormHelperText>
-                        </Box>
-                      )}
-                    </CardContent>
                   </Box>
                   {isSubmitting || loading ? (
                     <CardContent>
