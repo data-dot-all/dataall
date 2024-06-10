@@ -45,7 +45,8 @@ const ItemRow = (props) => {
     if (
       item.status === 'Revoke_Succeeded' ||
       item.status === 'PendingApproval' ||
-      item.status === 'Share_Rejected'
+      item.status === 'Share_Rejected' ||
+      item.status === 'Share_Failed'
     )
       return 'Delete';
     if (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed')
