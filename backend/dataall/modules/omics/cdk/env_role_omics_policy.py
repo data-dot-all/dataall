@@ -26,7 +26,7 @@ class OmicsPolicy(ServicePolicy):
                 sid='OmicsRunActions',
                 actions=['omics:ListRuns', 'omics:DeleteRun', 'omics:GetRun', 'omics:ListRunTasks', 'omics:CancelRun'],
                 resources=[
-                    f'arn:aws:omics:{self.region}:{self.account}:run/{self.resource_prefix}*',
+                    f'arn:aws:omics:{self.region}:{self.account}:run/*',
                 ],
                 conditions={
                     'StringEquals': {f'omics:ResourceTag/{self.tag_key}': [self.tag_value]},
