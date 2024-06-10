@@ -381,7 +381,7 @@ def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mo
         username=user.username,
         groups=[group.name],
     )
-    assert response.data.getDataset is None
+    assert response.data.getDataset == None
 
     response = client.query(
         """
