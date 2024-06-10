@@ -21,7 +21,7 @@ class Field:
         resolver=None,
         test_scope: str = None,
         test_cases: typing.List[str] = ['*'],
-        doc='',
+        description='',
     ):
         self.name: str = name
         self.type: typing.Union[Scalar, ObjectType, Ref] = type
@@ -30,6 +30,7 @@ class Field:
         self.resolver: typing.Callable = resolver
         self.test_scope: str = test_scope
         self.test_cases: typing.List[str] = test_cases
+        self.description = description
 
     def gql(self, with_directives=True) -> str:
         if isinstance(self.type, GraphqlEnum):
@@ -48,13 +49,16 @@ class Field:
             t = self.type.name
         else:
             raise Exception(f'Invalid type for field `{self.name}`: {type(self.type)}')
+
+        description_str = f'"""{self.description}"""\n' if self.description else ''
+
         if self.args is not None:
             for a in self.args:
                 if not isinstance(a, Argument):
                     raise Exception(f'Found wrong argument in field {self.name}')
-            gql = f'{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
+            gql = f'{description_str}{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
         else:
-            gql = f'{self.name} : {t}'
+            gql = f'{description_str}{self.name} : {t}'
 
         if not len(self.directives):
             return gql

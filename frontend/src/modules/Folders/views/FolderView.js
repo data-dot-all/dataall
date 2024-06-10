@@ -32,7 +32,8 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   useClient,
   deleteDatasetStorageLocation,
-  getDatasetAssumeRoleUrl
+  getDatasetAssumeRoleUrl,
+  getDatasetSharedAssumeRoleUrl
 } from 'services';
 import { getDatasetStorageLocation } from '../services';
 
@@ -51,13 +52,24 @@ function FolderPageHeader(props) {
 
   const goToS3Console = async () => {
     setIsLoadingUI(true);
-    const response = await client.query(
-      getDatasetAssumeRoleUrl(folder.dataset.datasetUri)
-    );
-    if (!response.errors) {
-      window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
+    if (isAdmin) {
+      const response = await client.query(
+        getDatasetAssumeRoleUrl(folder.dataset.datasetUri)
+      );
+      if (!response.errors) {
+        window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
     } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      const response = await client.query(
+        getDatasetSharedAssumeRoleUrl(folder.dataset.datasetUri)
+      );
+      if (!response.errors) {
+        window.open(response.data.getDatasetSharedAssumeRoleUrl, '_blank');
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
     }
     setIsLoadingUI(false);
   };
@@ -94,7 +106,7 @@ function FolderPageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${folder?.dataset?.datasetUri}`}
+            to={`/console/s3-datasets/${folder?.dataset?.datasetUri}`}
             variant="subtitle2"
           >
             {folder?.dataset?.name}
@@ -103,7 +115,7 @@ function FolderPageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/folder/${folder.locationUri}`}
+            to={`/console/s3-datasets/folder/${folder.locationUri}`}
             variant="subtitle2"
           >
             {folder.label}
@@ -124,7 +136,7 @@ function FolderPageHeader(props) {
               Chat
             </Button>
           )}
-          {isFeatureEnabled('datasets', 'aws_actions') && (
+          {isFeatureEnabled('s3_datasets', 'aws_actions') && (
             <LoadingButton
               loading={isLoadingUI}
               startIcon={<FaExternalLinkAlt size={15} />}
@@ -142,7 +154,7 @@ function FolderPageHeader(props) {
               component={RouterLink}
               startIcon={<PencilAltIcon fontSize="small" />}
               sx={{ m: 1 }}
-              to={`/console/datasets/folder/${folder.locationUri}/edit`}
+              to={`/console/s3-datasets/folder/${folder.locationUri}/edit`}
               variant="outlined"
             >
               Edit
@@ -212,7 +224,7 @@ const FolderView = () => {
         },
         variant: 'success'
       });
-      navigate(`/console/datasets/${folder.dataset.datasetUri}`);
+      navigate(`/console/s3-datasets/${folder.dataset.datasetUri}`);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

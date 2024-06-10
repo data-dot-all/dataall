@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import List
+from dataall.base.context import get_context
 
 
 class EnvironmentResource(ABC):
@@ -44,12 +45,13 @@ class EnvironmentResourceManager:
         return counter
 
     @classmethod
-    def deploy_updated_stack(cls, session, prev_prefix, environment, **kwargs):
+    def deploy_updated_stack(cls, prev_prefix, environment, **kwargs):
         deploy_stack = prev_prefix != environment.resourcePrefix
-        for resource in cls._resources:
-            deploy_stack |= resource.update_env(session, environment, **kwargs)
+        with get_context().db_engine.scoped_session() as session:
+            for resource in cls._resources:
+                deploy_stack |= resource.update_env(session, environment, **kwargs)
 
-        return deploy_stack
+            return deploy_stack
 
     @classmethod
     def delete_env(cls, session, environment):

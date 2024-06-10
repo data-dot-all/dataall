@@ -9,13 +9,18 @@ Create Date: 2024-04-11 15:03:35.157904
 from alembic import op
 from sqlalchemy import orm
 from sqlalchemy import and_
+from sqlalchemy import Column, String, Boolean
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.ext.declarative import declarative_base
+from dataall.base.db import utils, Resource
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.datasets_base.services.permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
-from dataall.modules.datasets_base.db.dataset_models import DatasetStorageLocation, Dataset
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareItemStatus, ShareableType
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareableType
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
 revision = 'c6d01930179d'
@@ -28,6 +33,53 @@ def get_session():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     return session
+
+
+Base = declarative_base()
+
+
+class Dataset(Resource, Base):
+    __tablename__ = 'dataset'
+    environmentUri = Column(String, nullable=False)
+    organizationUri = Column(String, nullable=False)
+    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
+    region = Column(String, default='eu-west-1')
+    AwsAccountId = Column(String, nullable=False)
+    S3BucketName = Column(String, nullable=False)
+    GlueDatabaseName = Column(String, nullable=False)
+    GlueProfilingJobName = Column(String)
+    GlueProfilingTriggerSchedule = Column(String)
+    GlueProfilingTriggerName = Column(String)
+    GlueDataQualityJobName = Column(String)
+    GlueDataQualitySchedule = Column(String)
+    GlueDataQualityTriggerName = Column(String)
+    IAMDatasetAdminRoleArn = Column(String, nullable=False)
+    IAMDatasetAdminUserArn = Column(String, nullable=False)
+    KmsAlias = Column(String, nullable=False)
+    language = Column(String, nullable=False, default=Language.English.value)
+    topics = Column(postgresql.ARRAY(String), nullable=True)
+    confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
+    tags = Column(postgresql.ARRAY(String))
+
+    bucketCreated = Column(Boolean, default=False)
+    glueDatabaseCreated = Column(Boolean, default=False)
+    iamAdminRoleCreated = Column(Boolean, default=False)
+    iamAdminUserCreated = Column(Boolean, default=False)
+    kmsAliasCreated = Column(Boolean, default=False)
+    lakeformationLocationCreated = Column(Boolean, default=False)
+    bucketPolicyCreated = Column(Boolean, default=False)
+
+    businessOwnerEmail = Column(String, nullable=True)
+    businessOwnerDelegationEmails = Column(postgresql.ARRAY(String), nullable=True)
+    stewards = Column(String, nullable=True)
+
+    SamlAdminGroupName = Column(String, nullable=True)
+
+    importedS3Bucket = Column(Boolean, default=False)
+    importedGlueDatabase = Column(Boolean, default=False)
+    importedKmsKey = Column(Boolean, default=False)
+    importedAdminRole = Column(Boolean, default=False)
+    imported = Column(Boolean, default=False)
 
 
 def attach_dataset_folder_read_permission(session, dataset: Dataset, location_uri):
@@ -97,12 +149,12 @@ def upgrade():
                 .all()
             )
 
-            for location in share_folder_items:
+            for item in share_folder_items:
                 ResourcePolicyService.attach_resource_policy(
                     session=session,
                     group=share.groupUri,
                     permissions=DATASET_FOLDER_READ,
-                    resource_uri=location.locationUri,
+                    resource_uri=item.itemUri,
                     resource_type=DatasetStorageLocation.__name__,
                 )
 

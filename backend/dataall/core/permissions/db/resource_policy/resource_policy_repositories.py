@@ -1,8 +1,7 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.sql import and_
-
 
 from dataall.core.permissions.db.permission.permission_models import Permission
 from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy, ResourcePolicyPermission
@@ -71,16 +70,49 @@ class ResourcePolicyRepository:
         else:
             return policy
 
-    @staticmethod
-    def find_resource_policy(session, group_uri: str, resource_uri: str) -> ResourcePolicy:
-        resource_policy = (
-            session.query(ResourcePolicy)
-            .filter(
-                and_(
-                    ResourcePolicy.principalId == group_uri,
-                    ResourcePolicy.resourceUri == resource_uri,
-                )
-            )
-            .first()
+    def query_all_resource_policies(
+        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
+    ):
+        resource_policy = session.query(ResourcePolicy).filter(
+            ResourcePolicy.resourceUri == resource_uri,
         )
+        if group_uri is not None:
+            resource_policy = resource_policy.filter(
+                ResourcePolicy.principalId == group_uri,
+            )
+
+        if resource_type is not None:
+            resource_policy = resource_policy.filter(
+                ResourcePolicy.resourceType == resource_type,
+            )
+
+        if permissions is not None:
+            resource_policy = (
+                resource_policy.join(
+                    ResourcePolicyPermission,
+                    ResourcePolicy.sid == ResourcePolicyPermission.sid,
+                )
+                .join(
+                    Permission,
+                    ResourcePolicyPermission.permissionUri == Permission.permissionUri,
+                )
+                .filter(Permission.name.in_(permissions))
+            )
+
         return resource_policy
+
+    @staticmethod
+    def find_resource_policy(session, group_uri: str, resource_uri: str, resource_type: str = None) -> ResourcePolicy:
+        resource_policy = ResourcePolicyRepository.query_all_resource_policies(
+            session, group_uri, resource_uri, resource_type
+        )
+        return resource_policy.first()
+
+    @staticmethod
+    def find_all_resource_policies(
+        session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
+    ) -> List[ResourcePolicy]:
+        resource_policy = ResourcePolicyRepository.query_all_resource_policies(
+            session, group_uri, resource_uri, resource_type, permissions
+        )
+        return resource_policy.all()

@@ -75,6 +75,10 @@ export const useClient = () => {
                 if (extensions?.code === 'REAUTH') {
                   setReAuth(operation);
                 }
+                // Dispatch to show message when a 4xx network error is returned
+                if (networkError) {
+                  dispatch({ type: SET_ERROR, error: `${message}` });
+                }
               }
             );
           }

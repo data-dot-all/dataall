@@ -58,7 +58,7 @@ const tabs = [
     label: 'Datasets',
     value: 'datasets',
     icon: <FolderOpen fontSize="small" />,
-    active: isModuleEnabled(ModuleNames.DATASETS)
+    active: isModuleEnabled(ModuleNames.S3_DATASETS)
   },
   {
     label: 'ML Studio Domain',

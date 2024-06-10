@@ -8,11 +8,11 @@ from dataall.base.context import get_context
 
 class GroupService:
     LOCAL_TEST_GROUPS = [
-        {'groupName': 'Engineers'},
-        {'groupName': 'Scientists'},
-        {'groupName': 'Requesters'},
-        {'groupName': 'Producers'},
-        {'groupName': 'Consumers'},
+        'Engineers',
+        'Scientists',
+        'Requesters',
+        'Producers',
+        'Consumers',
     ]
 
     @staticmethod

@@ -1,5 +1,6 @@
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetLock
-from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 
 def get_env(client, env_fixture, group):
@@ -42,8 +43,8 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     )
     response = client.query(
         """
-        query listEnvironmentGroupInvitationPermissions($environmentUri:String){
-            listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
+        query listEnvironmentGroupInvitationPermissions{
+            listEnvironmentGroupInvitationPermissions{
                     permissionUri
                     name
                     type
@@ -118,7 +119,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     with db.scoped_session() as session:
         dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
         session.delete(dataset_lock)
-        dataset = session.query(Dataset).get(dataset.datasetUri)
+        dataset = session.query(S3Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()
 

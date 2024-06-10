@@ -5,6 +5,6 @@ export const NotificationsModule = {
   name: 'notifications',
   isEnvironmentModule: false,
   resolve_dependency: () => {
-    return getModuleActiveStatus(ModuleNames.DATASETS);
+    return getModuleActiveStatus(ModuleNames.S3_DATASETS);
   }
 };

@@ -52,7 +52,7 @@ class NotebookRepository(EnvironmentResource):
                     SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(SagemakerNotebook.label)
 
     def count_resources(self, environment_uri, group_uri):
         return (

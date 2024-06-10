@@ -6,40 +6,43 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareableType, PrincipalType
-from dataall.modules.dataset_sharing.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.modules.datasets_base.db.dataset_models import Dataset, DatasetTable, DatasetStorageLocation
-from dataall.modules.datasets.services.dataset_permissions import DATASET_ALL
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_dataset_methods(module_mocker):
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
     )
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
     )
     s3_mock_client = MagicMock()
     glue_mock_client = MagicMock()
-    module_mocker.patch('dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client)
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
+        'dataall.modules.s3_datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
+    )
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
     )
     s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
     glue_mock_client().run_job.return_value = True
 
     module_mocker.patch(
-        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification.validate_confidentiality_level',
+        'dataall.modules.datasets_base.services.datasets_enums.ConfidentialityClassification.validate_confidentiality_level',
         return_value=True,
     )
 
     confidentiality_classification_mocker = MagicMock()
     module_mocker.patch(
-        'dataall.modules.datasets_base.services.datasets_base_enums.ConfidentialityClassification',
+        'dataall.modules.datasets_base.services.datasets_enums.ConfidentialityClassification',
         return_value=confidentiality_classification_mocker,
     )
     # Return the input when mocking. This mock avoids checking the custom_confidentiality_mapping value in the actual function and just returns  whatever confidentiality value is supplied for pytests
@@ -58,7 +61,7 @@ def dataset(client, patch_es, patch_dataset_methods):
         group: str,
         confidentiality: str = None,
         autoApprovalEnabled: bool = False,
-    ) -> Dataset:
+    ) -> S3Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
             print('found in cache ', cache[key])
@@ -111,11 +114,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     organization{
                         organizationUri
                         label
-                    }
-                    shares{
-                        nodes{
-                         shareUri
-                        }
                     }
                     terms{
                         count
@@ -176,7 +174,7 @@ def dataset(client, patch_es, patch_dataset_methods):
 def table(db):
     cache = {}
 
-    def factory(dataset: Dataset, name, username) -> DatasetTable:
+    def factory(dataset: S3Dataset, name, username) -> DatasetTable:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -209,7 +207,7 @@ def table(db):
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
+def dataset_fixture(env_fixture, org_fixture, dataset, group) -> S3Dataset:
     yield dataset(
         org=org_fixture,
         env=env_fixture,
@@ -220,7 +218,7 @@ def dataset_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
 
 
 @pytest.fixture(scope='module')
-def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> Dataset:
+def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> S3Dataset:
     yield dataset(
         org=org_fixture,
         env=env_fixture,
@@ -282,9 +280,9 @@ def folder_fixture(db, dataset_fixture):
 def dataset_model(db):
     def factory(
         organization: Organization, environment: Environment, label: str, autoApprovalEnabled: bool = False
-    ) -> Dataset:
+    ) -> S3Dataset:
         with db.scoped_session() as session:
-            dataset = Dataset(
+            dataset = S3Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -310,7 +308,7 @@ def dataset_model(db):
                 group=environment.SamlGroupName,
                 permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
+                resource_type=DatasetBase.__name__,
             )
             return dataset
 
@@ -321,7 +319,7 @@ def dataset_model(db):
 def location(db):
     cache = {}
 
-    def factory(dataset: Dataset, name, username) -> DatasetStorageLocation:
+    def factory(dataset: S3Dataset, name, username) -> DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -370,7 +368,7 @@ def share_item(db):
 @pytest.fixture(scope='module')
 def share(db):
     def factory(
-        dataset: Dataset, environment: Environment, env_group: EnvironmentGroup, owner: str, status: str
+        dataset: S3Dataset, environment: Environment, env_group: EnvironmentGroup, owner: str, status: str
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(

@@ -25,6 +25,7 @@ import {
   listEnvironmentGroups,
   listValidEnvironments,
   requestDashboardShare,
+  getConsumptionRolePolicies,
   useClient
 } from 'services';
 import { useNavigate } from 'react-router-dom';
@@ -41,6 +42,8 @@ export const RequestAccessModal = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
+  const [isSharePolicyAttached, setIsSharePolicyAttached] = useState(true);
+  const [policyName, setPolicyName] = useState('');
 
   const fetchEnvironments = useCallback(async () => {
     setLoadingEnvs(true);
@@ -64,12 +67,10 @@ export const RequestAccessModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      if (stopLoader) {
-        stopLoader();
-      }
       setLoadingEnvs(false);
+      stopLoader();
     }
-  }, [client, dispatch, stopLoader]);
+  }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
@@ -111,15 +112,39 @@ export const RequestAccessModal = (props) => {
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionRoleUri,
             label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
-            dataallManaged: g.dataallManaged,
-            isSharePolicyAttached: g.managedPolicies.find(
-              (policy) => policy.policy_type === 'SharePolicy'
-            ).attached,
-            policyName: g.managedPolicies.find(
-              (policy) => policy.policy_type === 'SharePolicy'
-            ).policy_name
+            IAMRoleName: g.IAMRoleName,
+            dataallManaged: g.dataallManaged
           }))
         );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
+  const fetchRolePolicies = async (environmentUri, IAMRoleName) => {
+    setLoadingRoles(true);
+    try {
+      const response = await client.query(
+        getConsumptionRolePolicies({
+          environmentUri,
+          IAMRoleName
+        })
+      );
+      if (!response.errors) {
+        var isSharePolicyAttached =
+          response.data.getConsumptionRolePolicies.find(
+            (policy) => policy.policy_type === 'SharePolicy'
+          ).attached;
+        setIsSharePolicyAttached(isSharePolicyAttached);
+        var policyName = response.data.getConsumptionRolePolicies.find(
+          (policy) => policy.policy_type === 'SharePolicy'
+        ).policy_name;
+        setPolicyName(policyName);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -437,6 +462,15 @@ export const RequestAccessModal = (props) => {
                                     'consumptionRoleObj',
                                     event.target.value
                                   );
+                                  fetchRolePolicies(
+                                    values.environment.environmentUri,
+                                    event.target.value.IAMRoleName
+                                  ).catch((e) =>
+                                    dispatch({
+                                      type: SET_ERROR,
+                                      error: e.message
+                                    })
+                                  );
                                 }}
                                 select
                                 value={values.consumptionRoleObj}
@@ -470,10 +504,9 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     </Box>
                   )}
-
                   {!values.consumptionRole ||
                   values.consumptionRoleObj.dataallManaged ||
-                  values.consumptionRoleObj.isSharePolicyAttached ? (
+                  isSharePolicyAttached ? (
                     <Box />
                   ) : (
                     <CardContent sx={{ ml: 2 }}>
@@ -498,16 +531,13 @@ export const RequestAccessModal = (props) => {
                             {values.consumptionRoleObj &&
                             !(
                               values.consumptionRoleObj.dataallManaged ||
-                              values.consumptionRoleObj.isSharePolicyAttached ||
+                              isSharePolicyAttached ||
                               values.attachMissingPolicies
                             ) ? (
                               <FormHelperText error>
                                 Selected consumption role is managed by
                                 customer, but the share policy{' '}
-                                <strong>
-                                  {values.consumptionRoleObj.policyName}
-                                </strong>{' '}
-                                is not attached.
+                                <strong>{policyName}</strong> is not attached.
                                 <br />
                                 Please attach it or let Data.all attach it for
                                 you.
@@ -558,7 +588,7 @@ export const RequestAccessModal = (props) => {
                       (values.consumptionRoleObj &&
                         !(
                           values.consumptionRoleObj.dataallManaged ||
-                          values.consumptionRoleObj.isSharePolicyAttached ||
+                          isSharePolicyAttached ||
                           values.attachMissingPolicies
                         ))
                     }

@@ -15,6 +15,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         requestPurpose
         rejectPurpose
         userRoleForShareObject
+        canViewLogs
         consumptionData {
           s3AccessPointName
           sharedGlueDatabase
