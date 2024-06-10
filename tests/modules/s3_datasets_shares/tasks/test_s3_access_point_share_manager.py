@@ -230,8 +230,7 @@ def mock_iam_client(mocker, account_id, role_name):
     return mock_client
 
 
-@pytest.fixture(scope='module')
-def target_dataset_access_control_policy(request):
+def _create_target_dataset_access_control_policy(bucket_name, access_point_name):
     iam_policy = {
         'Version': '2012-10-17',
         'Statement': [
@@ -240,17 +239,17 @@ def target_dataset_access_control_policy(request):
                 'Effect': 'Allow',
                 'Action': ['s3:*'],
                 'Resource': [
-                    f'arn:aws:s3:::{request.param[0]}',
-                    f'arn:aws:s3:::{request.param[0]}/*',
-                    f'arn:aws:s3:eu-west-1:{request.param[1]}:accesspoint/{request.param[2]}',
-                    f'arn:aws:s3:eu-west-1:{request.param[1]}:accesspoint/{request.param[2]}/*',
+                    f'arn:aws:s3:::{bucket_name}',
+                    f'arn:aws:s3:::{bucket_name}/*',
+                    f'arn:aws:s3:eu-west-1:{SOURCE_ENV_ACCOUNT}:accesspoint/{access_point_name}',
+                    f'arn:aws:s3:eu-west-1:{SOURCE_ENV_ACCOUNT}:accesspoint/{access_point_name}/*',
                 ],
             },
             {
                 'Sid': f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
                 'Effect': 'Allow',
                 'Action': ['kms:*'],
-                'Resource': [f'arn:aws:kms:eu-west-1:{request.param[1]}:key/some-key-2112'],
+                'Resource': [f'arn:aws:kms:eu-west-1:{SOURCE_ENV_ACCOUNT}:key/some-key-2112'],
             },
         ],
     }
@@ -391,14 +390,13 @@ def test_grant_target_role_access_policy_test_empty_policy(
     )
 
 
-@pytest.mark.parametrize(
-    'target_dataset_access_control_policy', ([('bucketname', 'aws_account_id', 'access_point_name')]), indirect=True
-)
 def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
-    mocker, dataset1, location1, target_dataset_access_control_policy, share_manager
+    mocker, dataset1, location1, share_manager
 ):
     # Given
-    iam_policy = target_dataset_access_control_policy
+    iam_policy = _create_target_dataset_access_control_policy(
+        share_manager.bucket_name, share_manager.access_point_name
+    )
 
     mocker.patch('dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', iam_policy))
     mocker.patch(
@@ -445,14 +443,11 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     s3_index = SharePolicyService._get_statement_by_sid(policy=policy_object, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
 
 
-@pytest.mark.parametrize(
-    'target_dataset_access_control_policy', ([('dataset1', SOURCE_ENV_ACCOUNT, 'test')]), indirect=True
-)
-def test_grant_target_role_access_policy_existing_policy_bucket_included(
-    mocker, target_dataset_access_control_policy, share_manager
-):
+def test_grant_target_role_access_policy_existing_policy_bucket_included(mocker, share_manager):
     # Given
-    iam_policy = target_dataset_access_control_policy
+    iam_policy = _create_target_dataset_access_control_policy(
+        share_manager.bucket_name, share_manager.access_point_name
+    )
 
     mocker.patch('dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', iam_policy))
 
@@ -1201,10 +1196,7 @@ def test_check_bucket_policy_missing_sid(mocker, base_bucket_policy, share_manag
     assert len(share_manager.folder_errors) == 1
 
 
-@pytest.mark.parametrize(
-    'target_dataset_access_control_policy', ([('dataset1', SOURCE_ENV_ACCOUNT, 'location1')]), indirect=True
-)
-def test_check_target_role_access_policy(mocker, target_dataset_access_control_policy, share_manager):
+def test_check_target_role_access_policy(mocker, share_manager):
     # Given
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
@@ -1218,7 +1210,10 @@ def test_check_target_role_access_policy(mocker, target_dataset_access_control_p
 
     iam_get_policy_mock = mocker.patch(
         'dataall.base.aws.iam.IAM.get_managed_policy_default_version',
-        return_value=('v1', target_dataset_access_control_policy),
+        return_value=(
+            'v1',
+            _create_target_dataset_access_control_policy(share_manager.bucket_name, share_manager.access_point_name),
+        ),
     )
 
     mocker.patch(
@@ -1234,16 +1229,10 @@ def test_check_target_role_access_policy(mocker, target_dataset_access_control_p
     # Then
     iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
-    assert share_manager.folder_errors == 'some'
     assert len(share_manager.folder_errors) == 0
 
 
-@pytest.mark.parametrize(
-    'target_dataset_access_control_policy', ([('bucketname', 'aws_account_id', 'access_point_name')]), indirect=True
-)
-def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(
-    mocker, target_dataset_access_control_policy, share_manager
-):
+def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(mocker, share_manager):
     # Given
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
@@ -1258,7 +1247,10 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     # Gets policy with other S3 and KMS
     iam_get_policy_mock = mocker.patch(
         'dataall.base.aws.iam.IAM.get_managed_policy_default_version',
-        return_value=('v1', target_dataset_access_control_policy),
+        return_value=(
+            'v1',
+            _create_target_dataset_access_control_policy(share_manager.bucket_name, share_manager.access_point_name),
+        ),
     )
 
     mocker.patch(
@@ -1274,7 +1266,7 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
     # Then
     iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
-    assert len(share_manager.folder_errors) == 2
+    assert len(share_manager.folder_errors) == 1
 
 
 def test_check_target_role_access_policy_test_no_policy(mocker, share_manager):

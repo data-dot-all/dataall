@@ -8,7 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+from dataall.modules.datasets_base.db.dataset_models import DatasetLock, DatasetBase
 from tests.core.stacks.test_stack import update_stack_query
 
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
@@ -352,6 +352,7 @@ def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mo
     with db.scoped_session() as session:
         session.query(DatasetLock).delete()
         session.query(S3Dataset).delete()
+        session.query(DatasetBase).delete()
         session.commit()
     deleted_dataset = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=user.username, group=group.name)
     response = client.query(
