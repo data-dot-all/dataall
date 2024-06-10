@@ -204,10 +204,20 @@ export const ShareEditForm = (props) => {
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(false);
   const [requestPurpose, setRequestPurpose] = useState('');
+  const [smthChanged, setSmthChanged] = useState(false);
 
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
       await setFilter({ ...filter, page: value });
+    }
+  };
+
+  const beforeClose = async () => {
+    if (smthChanged || requestPurpose !== share.requestPurpose) {
+      await updateRequestPurpose();
+      onApply();
+    } else {
+      onCancel();
     }
   };
 
@@ -319,6 +329,7 @@ export const ShareEditForm = (props) => {
     if (!response.errors) {
       setSharedItems({ ...response.data.getShareObject.items });
       setShareStatus(response.data.getShareObject.status);
+      setSmthChanged(true);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -327,9 +338,11 @@ export const ShareEditForm = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchShareItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      fetchShareItems()
+        .then((resp) => {
+          setSmthChanged(false);
+        })
+        .catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
       setShareStatus(share.status);
       setRequestPurpose(share.requestPurpose);
     }
@@ -346,7 +359,8 @@ export const ShareEditForm = (props) => {
   return (
     <Box sx={{ p: 3, minHeight: 800 }}>
       <Typography align="center" color="textPrimary" gutterBottom variant="h4">
-        Share status: {shareStatus}
+        Share status: {shareStatus}{' '}
+        {smthChanged || requestPurpose !== share.requestPurpose ? 'yes' : 'no'}
       </Typography>
       {alreadyExisted && (
         <Typography align="center" color="red" variant="subtitle2">
@@ -483,28 +497,16 @@ export const ShareEditForm = (props) => {
           </Button>
         </CardContent>
       )}
+
       {shareStatus.toUpperCase() !== 'DRAFT' && (
         <CardContent>
           <Button
-            onClick={draftRequest}
-            fullWidth
-            color="primary"
-            variant="outlined"
-            disabled={requestPurpose === share.requestPurpose}
-          >
-            Save
-          </Button>
-        </CardContent>
-      )}
-      {shareStatus.toUpperCase() !== 'DRAFT' && (
-        <CardContent>
-          <Button
-            onClick={onCancel}
+            onClick={beforeClose}
             fullWidth
             color="primary"
             variant="outlined"
           >
-            Close
+            Save & Close
           </Button>
         </CardContent>
       )}
