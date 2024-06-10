@@ -8,6 +8,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
   TextField,
   Typography
 } from '@mui/material';
@@ -434,15 +435,28 @@ export const ShareEditForm = (props) => {
       </Box>
       {shareStatus.toUpperCase() === 'DRAFT' && (
         <CardContent>
-          <Button
-            onClick={sendRequest}
-            fullWidth
-            startIcon={<SendIcon fontSize="small" />}
-            color="primary"
-            variant="contained"
+          <Tooltip
+            title={
+              sharedItems.nodes.filter((item) => item.status).length === 0
+                ? 'There is no items added into the request.'
+                : ''
+            }
           >
-            Submit request
-          </Button>
+            <span>
+              <Button
+                onClick={sendRequest}
+                fullWidth
+                startIcon={<SendIcon fontSize="small" />}
+                color="primary"
+                variant="contained"
+                disabled={
+                  sharedItems.nodes.filter((item) => item.status).length === 0
+                }
+              >
+                Submit request
+              </Button>
+            </span>
+          </Tooltip>
         </CardContent>
       )}
       {shareStatus.toUpperCase() === 'DRAFT' && (
