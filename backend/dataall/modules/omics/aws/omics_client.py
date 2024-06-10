@@ -48,7 +48,7 @@ class OmicsClient:
                 roleArn=role_arn,
                 parameters=json.loads(omics_run.parameterTemplate),
                 outputUri=omics_run.outputUri,
-                tags={'Team': f'{omics_run.SamlAdminGroupName}', 'dataall': True},
+                tags={'Team': f'{omics_run.SamlAdminGroupName}', 'dataall': 'True'},
             )
             return response
         except ClientError as e:

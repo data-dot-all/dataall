@@ -4,6 +4,7 @@ from dataall.core.organizations.db import organization_models as models
 from dataall.core.organizations.services.organization_service import OrganizationService
 import boto3
 
+
 def create_organization(context: Context, source, input=None):
     if not input:
         raise exceptions.RequiredParameter(input)
@@ -90,10 +91,7 @@ def resolve_organization_by_env(context, source, **kwargs):
 
 
 def send_query_chatbot(context, source, queryString):
-    bedrock_agent_runtime_client = boto3.client(
-      service_name="bedrock-agent-runtime", 
-      region_name='us-east-1'
-    )
+    bedrock_agent_runtime_client = boto3.client(service_name='bedrock-agent-runtime', region_name='us-east-1')
 
     response = bedrock_agent_runtime_client.invoke_agent(
         agentId='U1CIKQUNAP',
@@ -102,11 +100,11 @@ def send_query_chatbot(context, source, queryString):
         inputText=queryString,
     )
 
-    completion = ""
+    completion = ''
 
-    for event in response.get("completion"):
-        chunk = event["chunk"]
-        completion += chunk["bytes"].decode()
+    for event in response.get('completion'):
+        chunk = event['chunk']
+        completion += chunk['bytes'].decode()
 
     print(completion)
     return {'response': completion}

@@ -71,12 +71,13 @@ class OmicsService:
                 outputDatasetUri=dataset.datasetUri,
             )
 
-            OmicsRepository(session).save_omics_run(omics_run)
-
             response = OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).run_omics_workflow(
                 omics_workflow=workflow, omics_run=omics_run, role_arn=group.environmentIAMRoleArn
             )
+
             omics_run.runUri = response['id']
+            OmicsRepository(session).save_omics_run(omics_run)
+
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=omics_run.SamlAdminGroupName,
