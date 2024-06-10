@@ -85,7 +85,8 @@
     "ip": "1.1.9",
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
-    "express": "4.19.2"
+    "express": "4.19.2",
+    "ejs": "3.1.10"
   },
   "resolutions": {
     "react-redux": "^7.2.6",
@@ -98,7 +99,8 @@
     "ip": "1.1.9",
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
-    "express": "4.19.2"
+    "express": "4.19.2",
+    "ejs": "3.1.10"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",

@@ -236,7 +236,7 @@ function ShareViewHeader(props) {
               color="textSecondary"
               variant="subtitle2"
               component={RouterLink}
-              to={`/console/datasets/${share.dataset?.datasetUri}`}
+              to={`/console/s3-datasets/${share.dataset?.datasetUri}`}
             >
               {share.dataset?.datasetName}
             </Typography>

@@ -6,7 +6,7 @@ import { useAuth } from '../hooks';
 import {
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
-} from '../../utils';
+} from 'utils';
 
 export const AuthGuard = (props) => {
   const { children } = props;

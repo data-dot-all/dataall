@@ -1,13 +1,13 @@
 import pytest
 
 from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
 def sync_dataset(org_fixture, env_fixture, db):
     with db.scoped_session() as session:
-        dataset = Dataset(
+        dataset = S3Dataset(
             organizationUri=org_fixture.organizationUri,
             environmentUri=env_fixture.environmentUri,
             label='label',

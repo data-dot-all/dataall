@@ -19,12 +19,12 @@ from datetime import datetime
 
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import (
+from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     ShareableType,
     ShareItemStatus,
 )
-from dataall.modules.dataset_sharing.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { AuthGuard, GuestGuard } from 'authentication';
+import { AuthGuard, GuestGuard, MaintenanceGuard } from 'authentication';
 import { ReAuthModal } from 'reauthentication';
 import { DefaultLayout, LoadingScreen } from 'design';
 import { ModuleNames, isModuleEnabled } from 'utils';
@@ -46,7 +46,7 @@ const EnvironmentList = Loadable(
 const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
-  lazy(() => import('./modules/S3_Datasets/views/DatasetList'))
+  lazy(() => import('./modules/DatasetsBase/views/DatasetList'))
 );
 const DatasetView = Loadable(
   lazy(() => import('./modules/S3_Datasets/views/DatasetView'))
@@ -174,12 +174,14 @@ const routes = [
     path: 'console',
     element: (
       <AuthGuard>
-        <DefaultLayout />
-        {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
-          <ReAuthModal />
-        ) : (
-          <></>
-        )}
+        <MaintenanceGuard>
+          <DefaultLayout />
+          {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
+            <ReAuthModal />
+          ) : (
+            <></>
+          )}
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [
@@ -227,50 +229,54 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      isModuleEnabled(ModuleNames.S3_DATASETS) && {
+      isModuleEnabled(ModuleNames.DATASETS_BASE) && {
         children: [
           {
             path: 'datasets',
             element: <DatasetList />
-          },
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.S3_DATASETS) && {
+        children: [
           {
-            path: 'datasets/:uri',
+            path: 's3-datasets/:uri',
             element: <DatasetView />
           },
           {
-            path: 'datasets/new',
+            path: 's3-datasets/new',
             element: <DatasetCreateForm />
           },
           {
-            path: 'datasets/import',
+            path: 's3-datasets/import',
             element: <DatasetImportForm />
           },
           {
-            path: 'datasets/:uri/edit',
+            path: 's3-datasets/:uri/edit',
             element: <DatasetEditForm />
           },
           {
-            path: 'datasets/:uri/edit',
+            path: 's3-datasets/:uri/edit',
             element: <DatasetEditForm />
           },
           {
-            path: 'datasets/table/:uri',
+            path: 's3-datasets/table/:uri',
             element: <TableView />
           },
           {
-            path: 'datasets/table/:uri/edit',
+            path: 's3-datasets/table/:uri/edit',
             element: <TableEditForm />
           },
           {
-            path: 'datasets/:uri/newfolder',
+            path: 's3-datasets/:uri/newfolder',
             element: <FolderCreateForm />
           },
           {
-            path: 'datasets/folder/:uri',
+            path: 's3-datasets/folder/:uri',
             element: <FolderView />
           },
           {
-            path: 'datasets/folder/:uri/edit',
+            path: 's3-datasets/folder/:uri/edit',
             element: <FolderEditForm />
           }
         ]
@@ -409,7 +415,9 @@ const routes = [
     path: '*',
     element: (
       <AuthGuard>
-        <DefaultLayout />
+        <MaintenanceGuard>
+          <DefaultLayout />
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [

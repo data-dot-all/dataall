@@ -57,6 +57,7 @@ class BackendStack(Stack):
         cognito_user_session_timeout_inmins=43200,
         custom_auth=None,
         custom_waf_rules=None,
+        with_approval_tests=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -127,6 +128,7 @@ class BackendStack(Stack):
                 vpc=vpc,
                 cognito_user_session_timeout_inmins=cognito_user_session_timeout_inmins,
                 custom_waf_rules=custom_waf_rules,
+                with_approval_tests=with_approval_tests,
                 **kwargs,
             )
         else:
@@ -304,6 +306,7 @@ class BackendStack(Stack):
             lambdas=[
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
+                self.lambda_api_stack.elasticsearch_proxy_handler,
             ],
             ecs_security_groups=self.ecs_stack.ecs_security_groups,
             prod_sizing=prod_sizing,
@@ -311,10 +314,10 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        db_migrations = TriggerFunctionStack(
+        db_snapshots = TriggerFunctionStack(
             self,
-            'DbMigrations',
-            handler='dbmigrations_handler.handler',
+            'DbSnapshots',
+            handler='deployment_triggers.dbsnapshots_handler.handler',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -323,13 +326,43 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[aurora_stack.cluster],
             connectables=[aurora_stack.cluster],
+            additional_policy_statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['rds:AddTagsToResource', 'rds:CreateDBClusterSnapshot'],
+                    resources=[
+                        f'arn:aws:rds:*:{self.account}:cluster-snapshot:{resource_prefix}*',
+                        f'arn:aws:rds:*:{self.account}:cluster:{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['rds:DescribeDBClusters'],
+                    resources=['*'],
+                ),
+            ],
+            **kwargs,
+        )
+
+        db_migrations = TriggerFunctionStack(
+            self,
+            'DbMigrations',
+            handler='deployment_triggers.dbmigrations_handler.handler',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            vpc=vpc,
+            vpce_connection=vpce_connection,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            execute_after=[db_snapshots.trigger_function],
+            connectables=[aurora_stack.cluster],
             **kwargs,
         )
 
         TriggerFunctionStack(
             self,
             'SavePerms',
-            handler='saveperms_handler.handler',
+            handler='deployment_triggers.saveperms_handler.handler',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -404,7 +437,7 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(['modules.s3_datasets.features.share_notifications.email.active'])
+    @run_if(['modules.datasets_base.features.share_notifications.email.active'])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):
         if custom_domain is None or None in [
             custom_domain.get('hosted_zone_name', None),

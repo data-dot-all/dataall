@@ -3,9 +3,9 @@ import logging
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.modules.dashboards import DashboardRepository
-from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
+from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import Dashboard
+from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 log = logging.getLogger(__name__)
 

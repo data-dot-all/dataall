@@ -157,7 +157,7 @@ export const GlossaryAssociations = ({ glossary }) => {
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/console/datasets/${item.targetUri}`}
+                              to={`/console/s3-datasets/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
@@ -169,7 +169,7 @@ export const GlossaryAssociations = ({ glossary }) => {
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/console/datasets/table/${item.targetUri}`}
+                              to={`/console/s3-datasets/table/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
@@ -181,7 +181,7 @@ export const GlossaryAssociations = ({ glossary }) => {
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/console/datasets/folder/${item.targetUri}`}
+                              to={`/console/s3-datasets/folder/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
