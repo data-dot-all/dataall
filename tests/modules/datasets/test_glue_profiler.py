@@ -1,4 +1,4 @@
-from dataall.modules.datasets.cdk.dataset_glue_profiler_extension import DatasetGlueProfilerExtension
+from dataall.modules.s3_datasets.cdk.dataset_glue_profiler_extension import DatasetGlueProfilerExtension
 from pathlib import Path
 
 

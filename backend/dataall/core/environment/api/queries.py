@@ -21,9 +21,14 @@ from dataall.core.environment.api.resolvers import (
     list_environments,
     list_groups,
     list_valid_environments,
+    get_consumption_role_policies,
 )
-from dataall.core.environment.api.types import Environment, EnvironmentSearchResult, EnvironmentSimplifiedSearchResult
-
+from dataall.core.environment.api.types import (
+    Environment,
+    EnvironmentSearchResult,
+    EnvironmentSimplifiedSearchResult,
+    RoleManagedPolicy,
+)
 
 getTrustAccount = gql.QueryField(
     name='getTrustAccount',
@@ -166,9 +171,6 @@ listAllEnvironmentConsumptionRoles = gql.QueryField(
 
 listEnvironmentGroupInvitationPermissions = gql.QueryField(
     name='listEnvironmentGroupInvitationPermissions',
-    args=[
-        gql.Argument(name='environmentUri', type=gql.String),
-    ],
     type=gql.ArrayType(gql.Ref('Permission')),
     resolver=list_environment_group_invitation_permissions,
 )
@@ -205,5 +207,16 @@ getPivotRoleName = gql.QueryField(
     args=[gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=get_pivot_role_name,
+    test_scope='Environment',
+)
+
+getConsumptionRolePolicies = gql.QueryField(
+    name='getConsumptionRolePolicies',
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMRoleName', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.ArrayType(RoleManagedPolicy),
+    resolver=get_consumption_role_policies,
     test_scope='Environment',
 )

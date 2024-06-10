@@ -33,6 +33,7 @@ import {
 } from 'design';
 import { GlossarySearchWrapper, GlossarySearchResultItem } from '../components';
 import config from '../../../generated/config.json';
+import { DatasetCreateWindow } from 'modules/DatasetsBase/components';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -172,12 +173,15 @@ const Catalog = () => {
   const classes = useStyles();
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
-  const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
+  const dataFieldList = ['label', 'name', 'description', 'tags'];
 
-  if (config.modules.datasets.features.topics_dropdown === true)
-    dataFieldList.push('topics');
-  if (config.modules.datasets.features.confidentiality_dropdown === true)
-    dataFieldList.push('classification');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const handleCreateModalOpen = () => {
+    setIsCreateModalOpen(true);
+  };
+  const handleCreateModalClose = () => {
+    setIsCreateModalOpen(false);
+  };
 
   const filterItemsInit = [
     {
@@ -200,14 +204,14 @@ const Catalog = () => {
     }
   ];
 
-  if (config.modules.datasets.features.topics_dropdown === true)
+  if (config.modules.datasets_base.features.topics_dropdown === true)
     filterItemsInit.push({
       title: 'Topics',
       dataField: 'topics',
       componentId: 'TopicSensor',
       filterLabel: 'Topics'
     });
-  if (config.modules.datasets.features.confidentiality_dropdown === true)
+  if (config.modules.datasets_base.features.confidentiality_dropdown === true)
     filterItemsInit.push({
       title: 'Classification',
       dataField: 'classification',
@@ -302,14 +306,16 @@ const Catalog = () => {
               <Box sx={{ m: -1 }}>
                 <Button
                   color="primary"
-                  component={RouterLink}
                   startIcon={<PlusIcon fontSize="small" />}
                   sx={{ m: 1 }}
-                  to="/console/datasets/new"
+                  onClick={handleCreateModalOpen}
                   variant="contained"
                 >
                   New Dataset
                 </Button>
+                {isCreateModalOpen && (
+                  <DatasetCreateWindow open onClose={handleCreateModalClose} />
+                )}
               </Box>
             </Grid>
           </Grid>
@@ -347,7 +353,7 @@ const Catalog = () => {
                     innerClass={{ input: classes.mainSearch, list: listClass }}
                     autoSuggest
                     showIcon
-                    fuzziness="AUTO"
+                    fuzziness={0}
                     componentId="SearchSensor"
                     filterLabel="text"
                     dataField={dataFieldList}

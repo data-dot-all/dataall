@@ -33,6 +33,7 @@ class ImportMode(Enum):
     HANDLERS = auto()
     STACK_UPDATER_TASK = auto()
     CATALOG_INDEXER_TASK = auto()
+    SHARES_TASK = auto()
 
     @staticmethod
     def all():

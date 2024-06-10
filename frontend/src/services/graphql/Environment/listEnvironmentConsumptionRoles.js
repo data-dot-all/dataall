@@ -28,12 +28,8 @@ export const listEnvironmentConsumptionRoles = ({
           environmentUri
           groupUri
           IAMRoleArn
+          IAMRoleName
           dataallManaged
-          managedPolicies {
-            policy_type
-            policy_name
-            attached
-          }
         }
       }
     }

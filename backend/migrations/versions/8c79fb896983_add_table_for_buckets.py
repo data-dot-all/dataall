@@ -16,10 +16,10 @@ from sqlalchemy.dialects import postgresql
 
 from dataall.base.db import get_engine, has_table
 from dataall.base.db import utils, Resource
-from dataall.modules.dataset_sharing.services.dataset_sharing_enums import ShareObjectStatus
+from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus
 from datetime import datetime
 
-from dataall.modules.datasets_base.services.datasets_base_enums import ConfidentialityClassification, Language
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 
 
 # revision identifiers, used by Alembic.

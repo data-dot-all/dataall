@@ -75,7 +75,7 @@ class DashboardRepository(EnvironmentResource):
                     Dashboard.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(Dashboard.label).distinct()
 
     @staticmethod
     def paginated_user_dashboards(session, username, groups, data=None) -> dict:
@@ -110,7 +110,7 @@ class DashboardRepository(EnvironmentResource):
                     Dashboard.label.ilike(filter.get('term') + '%%'),
                 )
             )
-        return query
+        return query.order_by(DashboardShare.shareUri)
 
     @staticmethod
     def query_all_user_groups_shareddashboard(session, groups, uri) -> [str]:

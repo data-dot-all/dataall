@@ -16,12 +16,9 @@ export const useGroups = () => {
     ) {
       setGroups(['Engineers', 'Scientists', 'DAAdministrators']);
     } else if (process.env.REACT_APP_CUSTOM_AUTH) {
-      if (!auth.user) {
-        dispatch({
-          type: SET_ERROR,
-          error: 'Cannot Set User Groups as the User is not defined'
-        });
-      }
+      // Returning when auth.user is not present
+      // Not dispatching error as useGroups is triggered in auth guard when the user is not authenticated
+      if (!auth.user) return;
       // return if the client is null, and then trigger this when the client is present
       if (client == null) return;
       const response = await client.query(getGroupsForUser(auth.user.short_id));

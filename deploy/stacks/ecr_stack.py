@@ -26,6 +26,8 @@ class ECRRepositoryStack(Stack):
             repository_name=repository_name,
             image_scan_on_push=True,
             removal_policy=RemovalPolicy.DESTROY,
+            encryption=ecr.RepositoryEncryption.KMS,
+            image_tag_mutability=ecr.TagMutability.IMMUTABLE,
         )
 
         repo.add_lifecycle_rule(max_image_count=200)

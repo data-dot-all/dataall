@@ -3,10 +3,7 @@
 import logging
 from typing import Type, List
 
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
-from dataall.modules.worksheets.db.worksheet_models import Worksheet
-from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +16,8 @@ class WorksheetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
+        from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
         import dataall.modules.worksheets.api
 
         EnvironmentResourceManager.register(WorksheetRepository())
@@ -26,7 +25,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets import DatasetApiModuleInterface
+        from dataall.modules.s3_datasets import DatasetApiModuleInterface
 
         return [DatasetApiModuleInterface]
 
@@ -45,6 +44,6 @@ class WorksheetCdkModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets import DatasetCdkModuleInterface
+        from dataall.modules.s3_datasets import DatasetCdkModuleInterface
 
         return [DatasetCdkModuleInterface]

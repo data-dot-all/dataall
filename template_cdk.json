@@ -20,6 +20,7 @@
         "account": "string_DEPLOYMENT_ACCOUNT|REQUIRED",
         "region": "string_DEPLOYMENT_REGION|REQUIRED",
         "with_approval": "boolean_ADD_CODEPIPELINE_APPROVAL_STEP|DEFAULT=false",
+        "with_approval_tests": "boolean_ADD_CODEPIPELINE_APPROVAL_TESTS_STEP|DEFAULT=false",
         "vpc_id": "string_DEPLOY_WITHIN_AN_EXISTING_VPC|DEFAULT=None",
         "vpc_endpoints_sg": "string_DEPLOY_WITHIN_EXISTING_VPC_SG|DEFAULT=None",
         "vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",

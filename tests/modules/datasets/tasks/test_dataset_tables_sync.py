@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from dataall.modules.datasets_base.db.dataset_models import DatasetTable
-from dataall.modules.datasets.tasks.tables_syncer import sync_tables
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
+from dataall.modules.s3_datasets.tasks.tables_syncer import sync_tables
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -31,7 +31,7 @@ def table_fixture(org, env, db, sync_dataset):
 
 def test_tables_sync(db, org, env, sync_dataset, table_fixture, mocker):
     mock_crawler = MagicMock()
-    mocker.patch('dataall.modules.datasets.tasks.tables_syncer.DatasetCrawler', mock_crawler)
+    mocker.patch('dataall.modules.s3_datasets.tasks.tables_syncer.DatasetCrawler', mock_crawler)
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
         return_value='arn:role',
@@ -88,10 +88,10 @@ def test_tables_sync(db, org, env, sync_dataset, table_fixture, mocker):
         },
     ]
 
-    mocker.patch('dataall.modules.datasets.tasks.tables_syncer.is_assumable_pivot_role', return_value=True)
+    mocker.patch('dataall.modules.s3_datasets.tasks.tables_syncer.is_assumable_pivot_role', return_value=True)
 
     mock_client = MagicMock()
-    mocker.patch('dataall.modules.datasets.tasks.tables_syncer.LakeFormationTableClient', mock_client)
+    mocker.patch('dataall.modules.s3_datasets.tasks.tables_syncer.LakeFormationTableClient', mock_client)
     mock_client.grant_principals_all_table_permissions = True
 
     processed_tables = sync_tables(engine=db)

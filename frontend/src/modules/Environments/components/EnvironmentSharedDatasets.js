@@ -134,19 +134,15 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                 {items.nodes.length > 0 ? (
                   items.nodes.map((item) => (
                     <TableRow hover key={item.itemUri}>
-                      <TableCell>
-                        {item.GlueTableName ? 'Table' : 'Folder'}
-                      </TableCell>
-                      <TableCell>
-                        {item.GlueTableName || item.S3AccessPointName}
-                      </TableCell>
+                      <TableCell>{item.itemType}</TableCell>
+                      <TableCell>{item.itemName}</TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>
                       <TableCell>{item.principalId}</TableCell>
                       <TableCell>
                         <IconButton
                           onClick={() => {
-                            navigate(`/console/datasets/${item.datasetUri}`);
+                            navigate(`/console/s3-datasets/${item.datasetUri}`);
                           }}
                         >
                           <ArrowRightIcon fontSize="small" />

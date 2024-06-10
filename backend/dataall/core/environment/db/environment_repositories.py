@@ -8,6 +8,7 @@ from sqlalchemy.sql import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.base.db import exceptions
+from typing import List
 
 
 class EnvironmentParameterRepository:
@@ -141,7 +142,7 @@ class EnvironmentRepository:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query.order_by(ConsumptionRole.consumptionRoleUri)
+        return query.order_by(ConsumptionRole.consumptionRoleName)
 
     @staticmethod
     def query_user_environment_consumption_roles(session, groups, uri, filter) -> Query:
@@ -165,7 +166,7 @@ class EnvironmentRepository:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query.order_by(ConsumptionRole.consumptionRoleUri)
+        return query.order_by(ConsumptionRole.consumptionRoleName)
 
     @staticmethod
     def query_environment_invited_groups(session, uri, filter) -> Query:
@@ -189,7 +190,7 @@ class EnvironmentRepository:
                     EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
-        return query
+        return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
     def query_user_environment_groups(session, groups, uri, filter) -> Query:
@@ -205,7 +206,7 @@ class EnvironmentRepository:
                     EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
-        return query
+        return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
     def query_all_environment_groups(session, uri, filter) -> Query:
@@ -217,7 +218,7 @@ class EnvironmentRepository:
                     EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
-        return query
+        return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
     def query_user_consumption_roles(session, username, groups, filter) -> Query:
@@ -241,7 +242,7 @@ class EnvironmentRepository:
                     ConsumptionRole.groupUri == group,
                 )
             )
-        return query
+        return query.order_by(ConsumptionRole.consumptionRoleName)
 
     @staticmethod
     def query_user_groups(session, username, groups, filter) -> Query:
@@ -257,7 +258,7 @@ class EnvironmentRepository:
                     EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
-        return query
+        return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
@@ -286,7 +287,7 @@ class EnvironmentRepository:
             )
         if filter and filter.get('SamlGroupName') and filter.get('SamlGroupName') in groups:
             query = query.filter(EnvironmentGroup.groupUri == filter.get('SamlGroupName'))
-        return query
+        return query.order_by(Environment.label).distinct()
 
     @staticmethod
     def is_user_invited_to_environment(session, groups, uri):
@@ -301,3 +302,11 @@ class EnvironmentRepository:
             .first()
         )
         return env_group is not None
+
+    @staticmethod
+    def query_all_active_environments(session) -> List[Environment]:
+        return session.query(Environment).filter(Environment.deleted.is_(None)).all()
+
+    @staticmethod
+    def query_environment_groups(session, uri):
+        return session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()

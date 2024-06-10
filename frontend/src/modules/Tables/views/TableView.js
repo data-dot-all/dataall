@@ -38,7 +38,7 @@ import {
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 
-const previewDataEnabled = isFeatureEnabled('datasets', 'preview_data');
+const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 
 const tabs = [
   { label: 'Overview', value: 'overview' },
@@ -86,7 +86,7 @@ function TablePageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/${table?.dataset?.datasetUri}`}
+            to={`/console/s3-datasets/${table?.dataset?.datasetUri}`}
             variant="subtitle2"
           >
             {table?.dataset?.name}
@@ -95,7 +95,7 @@ function TablePageHeader(props) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/datasets/table/${table.tableUri}`}
+            to={`/console/s3-datasets/table/${table.tableUri}`}
             variant="subtitle2"
           >
             {table.GlueTableName}
@@ -120,7 +120,7 @@ function TablePageHeader(props) {
               component={RouterLink}
               startIcon={<PencilAltIcon fontSize="small" />}
               sx={{ m: 1 }}
-              to={`/console/datasets/table/${table.tableUri}/edit`}
+              to={`/console/s3-datasets/table/${table.tableUri}/edit`}
               variant="outlined"
             >
               Edit
@@ -180,7 +180,7 @@ const TableView = () => {
       deleteDatasetTable({ tableUri: table.tableUri })
     );
     if (!response.errors) {
-      navigate(`/console/datasets/${table.datasetUri}`);
+      navigate(`/console/s3-datasets/${table.datasetUri}`);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

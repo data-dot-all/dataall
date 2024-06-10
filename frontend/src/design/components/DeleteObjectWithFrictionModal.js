@@ -29,6 +29,7 @@ export const DeleteObjectWithFrictionModal = (props) => {
   const handleChange = (event) => {
     setConfirmValue(event.target.value);
   };
+
   return (
     <Dialog maxWidth="sm" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>

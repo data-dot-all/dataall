@@ -46,19 +46,19 @@ const EnvironmentList = Loadable(
 const Catalog = Loadable(lazy(() => import('./modules/Catalog/views/Catalog')));
 
 const DatasetList = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetList'))
+  lazy(() => import('./modules/DatasetsBase/views/DatasetList'))
 );
 const DatasetView = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetView'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetView'))
 );
 const DatasetCreateForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetCreateForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetCreateForm'))
 );
 const DatasetImportForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetImportForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetImportForm'))
 );
 const DatasetEditForm = Loadable(
-  lazy(() => import('./modules/Datasets/views/DatasetEditForm'))
+  lazy(() => import('./modules/S3_Datasets/views/DatasetEditForm'))
 );
 const TableView = Loadable(
   lazy(() => import('./modules/Tables/views/TableView'))
@@ -227,50 +227,54 @@ const routes = [
         path: 'catalog',
         element: <Catalog />
       },
-      isModuleEnabled(ModuleNames.DATASETS) && {
+      isModuleEnabled(ModuleNames.DATASETS_BASE) && {
         children: [
           {
             path: 'datasets',
             element: <DatasetList />
-          },
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.S3_DATASETS) && {
+        children: [
           {
-            path: 'datasets/:uri',
+            path: 's3-datasets/:uri',
             element: <DatasetView />
           },
           {
-            path: 'datasets/new',
+            path: 's3-datasets/new',
             element: <DatasetCreateForm />
           },
           {
-            path: 'datasets/import',
+            path: 's3-datasets/import',
             element: <DatasetImportForm />
           },
           {
-            path: 'datasets/:uri/edit',
+            path: 's3-datasets/:uri/edit',
             element: <DatasetEditForm />
           },
           {
-            path: 'datasets/:uri/edit',
+            path: 's3-datasets/:uri/edit',
             element: <DatasetEditForm />
           },
           {
-            path: 'datasets/table/:uri',
+            path: 's3-datasets/table/:uri',
             element: <TableView />
           },
           {
-            path: 'datasets/table/:uri/edit',
+            path: 's3-datasets/table/:uri/edit',
             element: <TableEditForm />
           },
           {
-            path: 'datasets/:uri/newfolder',
+            path: 's3-datasets/:uri/newfolder',
             element: <FolderCreateForm />
           },
           {
-            path: 'datasets/folder/:uri',
+            path: 's3-datasets/folder/:uri',
             element: <FolderView />
           },
           {
-            path: 'datasets/folder/:uri/edit',
+            path: 's3-datasets/folder/:uri/edit',
             element: <FolderEditForm />
           }
         ]
