@@ -486,6 +486,19 @@ export const ShareEditForm = (props) => {
       {shareStatus.toUpperCase() !== 'DRAFT' && (
         <CardContent>
           <Button
+            onClick={draftRequest}
+            fullWidth
+            color="primary"
+            variant="outlined"
+            disabled={requestPurpose === share.requestPurpose}
+          >
+            Save
+          </Button>
+        </CardContent>
+      )}
+      {shareStatus.toUpperCase() !== 'DRAFT' && (
+        <CardContent>
+          <Button
             onClick={onCancel}
             fullWidth
             color="primary"

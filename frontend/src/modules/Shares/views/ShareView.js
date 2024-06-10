@@ -333,17 +333,28 @@ function ShareViewHeader(props) {
                 <>
                   {(share.status === 'Draft' ||
                     share.status === 'Rejected') && (
-                    <LoadingButton
-                      loading={submitting}
-                      color="primary"
-                      startIcon={<CheckCircleOutlined />}
-                      sx={{ m: 1 }}
-                      onClick={handleSubmitShareModalOpen}
-                      type="button"
-                      variant="contained"
+                    <Tooltip
+                      title={
+                        sharedItems.nodes.length === 0
+                          ? 'There is no items added into the request.'
+                          : ''
+                      }
                     >
-                      Submit
-                    </LoadingButton>
+                      <span>
+                        <LoadingButton
+                          loading={submitting}
+                          color="primary"
+                          startIcon={<CheckCircleOutlined />}
+                          sx={{ m: 1 }}
+                          onClick={submit}
+                          type="button"
+                          variant="contained"
+                          disabled={sharedItems.nodes.length === 0}
+                        >
+                          Submit
+                        </LoadingButton>
+                      </span>
+                    </Tooltip>
                   )}
                 </>
               )}
