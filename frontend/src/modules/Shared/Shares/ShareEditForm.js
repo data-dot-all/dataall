@@ -359,8 +359,7 @@ export const ShareEditForm = (props) => {
   return (
     <Box sx={{ p: 3, minHeight: 800 }}>
       <Typography align="center" color="textPrimary" gutterBottom variant="h4">
-        Share status: {shareStatus}{' '}
-        {smthChanged || requestPurpose !== share.requestPurpose ? 'yes' : 'no'}
+        Share status: {shareStatus}
       </Typography>
       {alreadyExisted && (
         <Typography align="center" color="red" variant="subtitle2">
