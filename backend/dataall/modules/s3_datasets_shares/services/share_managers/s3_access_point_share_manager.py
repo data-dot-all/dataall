@@ -192,6 +192,7 @@ class S3AccessPointShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_environment.AwsAccountId, self.target_environment.region, share_resource_policy_name
         )
+        logger.info(f'Policy... {policy_document}')
 
         s3_statement_index = SharePolicyService._get_statement_by_sid(
             policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3'
