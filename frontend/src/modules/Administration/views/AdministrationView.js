@@ -16,11 +16,13 @@ import { ChevronRightIcon, useSettings } from 'design';
 import { AdministrationTeams, DashboardViewer } from '../components';
 import { MaintenanceViewer } from '../../Maintenance/components/MaintenanceViewer';
 import { isModuleEnabled, ModuleNames } from 'utils';
+import config from '../../../generated/config.json';
 
-const tabs = [
-  { label: 'Teams', value: 'teams' },
-  { label: 'Monitoring', value: 'dashboard' }
-];
+const tabs = [{ label: 'Teams', value: 'teams' }];
+
+if (config.core.enable_quicksight_monitoring) {
+  tabs.push({ label: 'Monitoring', value: 'dashboard' });
+}
 
 if (isModuleEnabled(ModuleNames.MAINTENANCE)) {
   tabs.push({ label: 'Maintenance', value: 'maintenance' });

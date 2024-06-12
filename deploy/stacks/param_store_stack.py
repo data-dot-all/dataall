@@ -7,6 +7,7 @@ from aws_cdk import aws_ssm, custom_resources as cr
 
 from .pyNestedStack import pyNestedClass
 from .deploy_config import deploy_config
+from .run_if import run_if
 
 
 class ParamStoreStack(pyNestedClass):
@@ -18,7 +19,6 @@ class ParamStoreStack(pyNestedClass):
         resource_prefix='dataall',
         custom_domain=None,
         enable_cw_canaries=False,
-        quicksight_enabled=False,
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
         pivot_role_name='dataallPivotRole',
@@ -68,19 +68,8 @@ class ParamStoreStack(pyNestedClass):
                 string_value='updateme(e.g: eu-west-1)',
             )
 
-        if quicksight_enabled:
-            aws_ssm.StringParameter(
-                self,
-                f'QSVPCConnectionIdEnv{envname}',
-                parameter_name=f'/dataall/{envname}/quicksightmonitoring/VPCConnectionId',
-                string_value='updateme',
-            )
-            aws_ssm.StringParameter(
-                self,
-                f'QSDashboardIdEnv{envname}',
-                parameter_name=f'/dataall/{envname}/quicksightmonitoring/DashboardId',
-                string_value='updateme',
-            )
+        self.create_quicksight_monitoring_params(envname=envname)
+
         if reauth_apis:
             aws_ssm.StringParameter(
                 self,
@@ -145,6 +134,21 @@ class ParamStoreStack(pyNestedClass):
                     ]
                 ),
             )
+
+    @run_if(['core.enable_quicksight_monitoring'])
+    def create_quicksight_monitoring_params(self, envname):
+        aws_ssm.StringParameter(
+            self,
+            f'QSVPCConnectionIdEnv{envname}',
+            parameter_name=f'/dataall/{envname}/quicksightmonitoring/VPCConnectionId',
+            string_value='updateme',
+        )
+        aws_ssm.StringParameter(
+            self,
+            f'QSDashboardIdEnv{envname}',
+            parameter_name=f'/dataall/{envname}/quicksightmonitoring/DashboardId',
+            string_value='updateme',
+        )
 
 
 def _get_external_id_value(envname, account_id, region):
