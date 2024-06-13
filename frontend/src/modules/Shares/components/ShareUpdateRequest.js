@@ -14,6 +14,7 @@ import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 import { updateShareRequestReason } from '../services';
+import { PencilAltIcon } from '../../../design';
 
 export const UpdateRequestReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =
@@ -54,17 +55,12 @@ export const UpdateRequestReason = (props) => {
 
   return (
     <>
-      <LoadingButton
+      <PencilAltIcon
+        fontSize="small"
+        onClick={handleUpdateRequestModalOpen}
         loading={updating}
         color="primary"
-        startIcon={<SendIcon fontSize="small" />}
-        sx={{ m: 2 }}
-        onClick={handleUpdateRequestModalOpen}
-        type="button"
-        variant="outlined"
-      >
-        Edit
-      </LoadingButton>
+      />
       <Dialog
         maxWidth="sm"
         fullWidth
