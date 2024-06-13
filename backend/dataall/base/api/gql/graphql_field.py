@@ -57,15 +57,7 @@ class Field:
             for a in self.args:
                 if not isinstance(a, Argument):
                     raise Exception(f'Found wrong argument in field {self.name}')
-                else:
-                    arg_description = f'"""{a.description}"""\n' if a.description else ''
-
-                if isinstance(a.type, (ArrayType, NonNullableType)):
-                    args_list.append(arg_description + a.name + ':' + a.type.gql())
-                elif isinstance(a.type, Thunk):
-                    args_list.append(arg_description + a.name + ':' + a.type.target.gql())
-                else:
-                    args_list.append(arg_description + a.name + ':' + a.type.name)
+                args_list.append(a.gql())
 
             gql = f'{description_str}{self.name}({", ".join(args_list)}) : {t}'
         else:
