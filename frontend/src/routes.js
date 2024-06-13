@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { AuthGuard, GuestGuard } from 'authentication';
+import { AuthGuard, GuestGuard, MaintenanceGuard } from 'authentication';
 import { ReAuthModal } from 'reauthentication';
 import { DefaultLayout, LoadingScreen } from 'design';
 import { ModuleNames, isModuleEnabled } from 'utils';
@@ -174,12 +174,14 @@ const routes = [
     path: 'console',
     element: (
       <AuthGuard>
-        <DefaultLayout />
-        {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
-          <ReAuthModal />
-        ) : (
-          <></>
-        )}
+        <MaintenanceGuard>
+          <DefaultLayout />
+          {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
+            <ReAuthModal />
+          ) : (
+            <></>
+          )}
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [
@@ -413,7 +415,9 @@ const routes = [
     path: '*',
     element: (
       <AuthGuard>
-        <DefaultLayout />
+        <MaintenanceGuard>
+          <DefaultLayout />
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [

@@ -21,7 +21,7 @@ listGlossaries = gql.QueryField(
 
 SearchGlossary = gql.QueryField(
     name='searchGlossary',
-    doc='Search glossary ',
+    description='Search glossary ',
     type=gql.Ref('GlossaryChildrenSearchResult'),
     args=[gql.Argument(name='filter', type=gql.Ref('GlossaryNodeSearchFilter'))],
     resolver=search_glossary,

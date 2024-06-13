@@ -205,6 +205,7 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='datasetName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='itemAccess', type=gql.NonNullableType(gql.String)),
         gql.Field(name='itemType', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='itemName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='targetEnvironmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
@@ -212,9 +213,8 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='organizationName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='created', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
-        gql.Field(name='S3AccessPointName', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),  # TODO: remove when splitting API calls
+        gql.Field(name='GlueTableName', type=gql.String),  # TODO: remove when splitting API calls
         gql.Field(
             'sharedGlueDatabaseName',
             type=gql.String,

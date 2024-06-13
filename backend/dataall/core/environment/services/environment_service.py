@@ -984,7 +984,9 @@ class EnvironmentService:
                     message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
                 )
         else:
-            env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+            env_group = EnvironmentService.get_environment_group(
+                session, group_uri=groupUri, environment_uri=environment.environmentUri
+            )
             if not env_group:
                 raise exceptions.UnauthorizedOperation(
                     action='ENVIRONMENT_AWS_ACCESS',

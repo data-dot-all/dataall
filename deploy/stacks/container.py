@@ -216,7 +216,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('DEBUG'),
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_manager_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-manager'),
@@ -243,7 +243,7 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_verifier_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
@@ -276,7 +276,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('INFO'),
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_reapplier_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
@@ -617,6 +617,15 @@ class ContainerStack(pyNestedClass):
             rule_name=scheduled_task_id,
             security_groups=[security_group],
         )
+
+        # Add the rule of the scheduled task to parameter store
+        ssm.StringParameter(
+            self,
+            f'ECSTaskRule-{scheduled_task_id}',
+            parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{scheduled_task_id}',
+            string_value=scheduled_task.event_rule.rule_name,
+        )
+
         return scheduled_task, task
 
     @property

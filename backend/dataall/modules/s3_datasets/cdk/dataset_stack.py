@@ -289,6 +289,7 @@ class DatasetStack(Stack):
                         f'arn:aws:glue:*:{dataset.AwsAccountId}:catalog',
                         f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}',
                         f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*',
+                        f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:crawler/{dataset.GlueCrawlerName}',
                     ],
                 ),
                 iam.PolicyStatement(
