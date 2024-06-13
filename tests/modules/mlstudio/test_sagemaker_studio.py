@@ -6,7 +6,7 @@ def test_create_sagemaker_studio_domain(
 ):
     response = client.query(
         """
-        query getEnvironmentMLStudioDomain($environmentUri: String) {
+        query getEnvironmentMLStudioDomain($environmentUri: String!) {
           getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
             sagemakerStudioUri
             environmentUri
@@ -96,7 +96,7 @@ def test_delete_sagemaker_studio_user(client, db, group, sagemaker_studio_user):
 
 def update_env_query():
     query = """
-        mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
+        mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput!){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
                 organization{
                     organizationUri
@@ -133,7 +133,7 @@ def test_update_env_delete_domain(client, org_fixture, env_with_mlstudio, group,
 
     response = client.query(
         """
-        query getEnvironmentMLStudioDomain($environmentUri: String) {
+        query getEnvironmentMLStudioDomain($environmentUri: String!) {
           getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
             sagemakerStudioUri
             environmentUri
@@ -170,7 +170,7 @@ def test_update_env_create_domain_with_vpc(db, client, org_fixture, env_with_mls
 
     response = client.query(
         """
-        query getEnvironmentMLStudioDomain($environmentUri: String) {
+        query getEnvironmentMLStudioDomain($environmentUri: String!) {
           getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
             sagemakerStudioUri
             environmentUri
