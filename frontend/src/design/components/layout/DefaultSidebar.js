@@ -13,6 +13,7 @@ import { AiOutlineExperiment } from 'react-icons/ai';
 import * as BiIcons from 'react-icons/bi';
 import * as BsIcons from 'react-icons/bs';
 import { FiCodesandbox, FiPackage } from 'react-icons/fi';
+import { FaDna } from 'react-icons/fa6';
 import { MdShowChart } from 'react-icons/md';
 import { SiJupyter } from 'react-icons/si';
 import { VscBook } from 'react-icons/vsc';
@@ -87,6 +88,13 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       active: isModuleEnabled(ModuleNames.DATAPIPELINES)
     };
 
+    const omicsSection = {
+      title: 'Omics',
+      path: '/console/omics',
+      icon: <FaDna size={15} />,
+      active: isModuleEnabled(ModuleNames.OMICS)
+    };
+
     const organizationsSection = {
       title: 'Organizations',
       path: '/console/organizations',
@@ -119,7 +127,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
             notebooksSection,
             mlStudioSection,
             pipelinesSection,
-            dashboardsSection
+            dashboardsSection,
+            omicsSection
           ]
         },
         {
