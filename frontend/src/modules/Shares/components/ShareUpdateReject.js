@@ -14,6 +14,7 @@ import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 import { updateShareRejectReason } from '../services';
+import { PencilAltIcon } from '../../../design';
 
 export const UpdateRejectReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =
@@ -53,17 +54,12 @@ export const UpdateRejectReason = (props) => {
 
   return (
     <>
-      <LoadingButton
+      <PencilAltIcon
+        fontSize="small"
+        onClick={handleUpdateRejectModalOpen}
         loading={updating}
         color="primary"
-        startIcon={<SendIcon fontSize="small" />}
-        sx={{ m: 2 }}
-        onClick={handleUpdateRejectModalOpen}
-        type="button"
-        variant="outlined"
-      >
-        Edit
-      </LoadingButton>
+      />
       <Dialog
         maxWidth="sm"
         fullWidth

@@ -81,8 +81,6 @@ def share(
             itemUri=table.tableUri,
             itemType=ShareableType.Table.value,
             itemName=table.GlueTableName,
-            GlueDatabaseName=table.GlueDatabaseName,
-            GlueTableName=table.GlueTableName,
             status=ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
