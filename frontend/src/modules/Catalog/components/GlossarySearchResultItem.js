@@ -298,7 +298,6 @@ export const GlossarySearchResultItem = ({ hit }) => {
           <RequestAccessModal
             hit={hit}
             onApply={handleRequestAccessModalClose}
-            onClose={handleRequestAccessModalClose}
             open={isRequestAccessOpen}
             stopLoader={() => setIsOpeningModal(false)}
           />
