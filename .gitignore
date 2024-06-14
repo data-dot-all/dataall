@@ -4,9 +4,10 @@ _site
 .jekyll-metadata
 vendor
 .DS_Store
-.venv
-__pycache__
-cdk.out
-node_modules
-frontend
-backend
+*cdk.out*
+/node_modules/
+*venv*
+*__pycache__*
+*__pytest_cache__*
+/frontend/
+/backend/
