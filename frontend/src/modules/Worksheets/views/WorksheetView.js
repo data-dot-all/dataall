@@ -164,17 +164,17 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = '';
-      if (dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')) {
+      if (dataset.label.includes(dataset.value + '_shared')) {
         response = await client.query(
           getSharedDatasetTables({
-            datasetUri: dataset.datasetUri,
+            datasetUri: dataset.value,
             envUri: environment.environmentUri
           })
         );
       } else {
         response = await client.query(
           listDatasetTables({
-            datasetUri: dataset.datasetUri,
+            datasetUri: dataset.value,
             filter: Defaults.selectListFilter
           })
         );
@@ -182,7 +182,7 @@ const WorksheetView = () => {
 
       if (
         !response.errors &&
-        dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')
+        dataset.label.includes(dataset.value + '_shared')
       ) {
         setTableOptions(
           response.data.getSharedDatasetTables.map((t) => ({
@@ -355,7 +355,7 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(
-      `SELECT * FROM "${selectedDatabase.GlueDatabaseName}"."${event.target.value.GlueTableName}" limit 10;`
+      `SELECT * FROM "${selectedDatabase.label}"."${event.target.value.GlueTableName}" limit 10;`
     );
   }
 

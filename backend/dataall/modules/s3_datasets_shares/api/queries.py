@@ -42,7 +42,7 @@ getS3ConsumptionData = gql.QueryField(
     args=[gql.Argument(name='shareUri', type=gql.String)],
     type=gql.Ref('S3ConsumptionData'),
     resolver=get_s3_consumption_data,
-)  # todo: Once PR 1277 is merged modify shareView to use this query
+)
 
 
 listS3DatasetsSharedWithEnvGroup = gql.QueryField(

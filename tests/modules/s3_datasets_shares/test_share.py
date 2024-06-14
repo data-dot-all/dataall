@@ -813,9 +813,7 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
                     datasetUri
                     datasetName
                     itemType
-                    itemAccess
-                    GlueDatabaseName
-                    GlueTableName
+                    itemName
                     created
                     principalId
                 }

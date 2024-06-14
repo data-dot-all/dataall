@@ -29,7 +29,6 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
           datasetName
           itemType
           itemName
-          itemAccess
           created
           principalId
         }

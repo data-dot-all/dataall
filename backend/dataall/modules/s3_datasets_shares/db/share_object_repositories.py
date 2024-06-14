@@ -847,23 +847,6 @@ class ShareObjectRepository:
                 ShareObjectItem.itemName.label('itemName'),
                 Organization.organizationUri.label('organizationUri'),
                 Organization.name.label('organizationName'),
-                case(
-                    [
-                        (
-                            ShareObjectItem.itemType == ShareableType.Table.value,
-                            func.concat(
-                                DatasetTable.GlueDatabaseName,
-                                '.',
-                                DatasetTable.GlueTableName,
-                            ),
-                        ),
-                        (
-                            ShareObjectItem.itemType == ShareableType.StorageLocation.value,
-                            func.concat(DatasetStorageLocation.name),
-                        ),
-                    ],
-                    else_='XXX XXXX',
-                ).label('itemAccess'),
             )
             .join(
                 ShareObject,
@@ -889,7 +872,7 @@ class ShareObjectRepository:
             )
         )
 
-        if data.get('datasetUri'):  # TODO review filter
+        if data.get('datasetUri'):
             dataset_uri = data.get('datasetUri')
             q = q.filter(ShareObject.datasetUri == dataset_uri)
 

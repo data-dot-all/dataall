@@ -128,6 +128,7 @@ ShareObject = gql.ObjectType(
         gql.Field(name='requestPurpose', type=gql.String),
         gql.Field(name='rejectPurpose', type=gql.String),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
+        gql.Field(name='alreadyExisted', type=gql.Boolean),
         gql.Field(name='existingSharedItems', type=gql.Boolean, resolver=resolve_existing_shared_items),
         gql.Field(
             name='statistics',
