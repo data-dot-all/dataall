@@ -487,6 +487,9 @@ the different configuration options.
         },
         "dashboards": {
             "active": true
+        },
+        "maintenance": {
+            "active": true
         }
     },
     "core": {
@@ -510,20 +513,21 @@ The following table contains a list of the available modules and their dependenc
 functionality. If you want to know more about each module, 
 check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
 
-| **Module**      | **depends on**                                      | **Description**                                                                       |   
-|-----------------|-----------------------------------------------------|---------------------------------------------------------------------------------------|
-| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.         |
-| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
-| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
-| s3_datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
-| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
-| datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                      |
-| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                         |
-| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
-| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
-| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
-| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
-| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                      |
+| **Module**      | **depends on**                                      | **Description**                                                                                                            |   
+|-----------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.                                              |
+| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| s3_datasets     | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
+| datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                            |
+| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                                                              |
+| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications                                      |
+| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI                                                   |
+| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
+| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                                                     |
+| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                                                           |
+| maintenance     | None                                                | Starts maintenance mode which restricts user actions in data.all. Creates much safer environment for deploying new updates | 
 
 
 ### Disable module features
