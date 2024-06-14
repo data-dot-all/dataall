@@ -417,6 +417,7 @@ class IdpStack(pyNestedClass):
                 'resource_prefix': resource_prefix,
                 'with_approval_tests': str(with_approval_tests),
             },
+            environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
             runtime=_lambda.Runtime.PYTHON_3_9,

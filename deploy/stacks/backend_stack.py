@@ -402,6 +402,7 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[db_migrations.trigger_function],
             connectables=[aurora_stack.cluster],
+            env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
 
