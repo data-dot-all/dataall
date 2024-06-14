@@ -74,7 +74,7 @@ class OmicsService:
             response = OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).run_omics_workflow(
                 omics_workflow=workflow, omics_run=omics_run, role_arn=group.environmentIAMRoleArn
             )
-
+            
             omics_run.runUri = response['id']
             OmicsRepository(session).save_omics_run(omics_run)
 
