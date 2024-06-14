@@ -90,7 +90,6 @@ def test_omics_workflow_fetcher_new_workflows_multiple_environments(
             session.delete(second_environment)
 
 
-
 def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module_mocker):
     """Checks that existing workflows are updated in the RDS database"""
 
