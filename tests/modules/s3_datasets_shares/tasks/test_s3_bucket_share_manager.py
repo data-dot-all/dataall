@@ -11,6 +11,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
 from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 SOURCE_ENV_ACCOUNT = '111111111111'
 SOURCE_ENV_ROLE_NAME = 'dataall-ProducerEnvironment-i6v1v1c2'
@@ -107,6 +108,34 @@ def share3(
     yield share3
 
 
+@pytest.fixture(scope='module')
+def share_data2(
+    share2, dataset2, source_environment, target_environment, source_environment_group, target_environment_group
+):
+    yield ShareData(
+        share=share2,
+        dataset=dataset2,
+        source_environment=source_environment,
+        target_environment=target_environment,
+        source_env_group=source_environment_group,
+        env_group=target_environment_group,
+    )
+
+
+@pytest.fixture(scope='module')
+def share_data3(
+    share3, dataset_imported, source_environment, target_environment, source_environment_group, target_environment_group
+):
+    yield ShareData(
+        share=share3,
+        dataset=dataset_imported,
+        source_environment=source_environment,
+        target_environment=target_environment,
+        source_env_group=source_environment_group,
+        env_group=target_environment_group,
+    )
+
+
 @pytest.fixture(scope='function')
 def base_bucket_policy(dataset2):
     bucket_policy = {
@@ -127,50 +156,22 @@ def base_bucket_policy(dataset2):
 @pytest.fixture(scope='function')
 def share2_manager(
     db,
-    dataset2,
-    share2,
     bucket2,
-    source_environment,
-    target_environment,
-    source_environment_group,
-    target_environment_group,
+    share_data2,
 ):
     with db.scoped_session() as session:
-        manager = S3BucketShareManager(
-            session,
-            dataset2,
-            share2,
-            bucket2,
-            source_environment,
-            target_environment,
-            source_environment_group,
-            target_environment_group,
-        )
+        manager = S3BucketShareManager(session, share_data2, bucket2)
     yield manager
 
 
 @pytest.fixture(scope='function')
 def share3_manager(
     db,
-    dataset_imported,
-    share3,
     bucket3,
-    source_environment,
-    target_environment,
-    source_environment_group,
-    target_environment_group,
+    share_data3,
 ):
     with db.scoped_session() as session:
-        manager = S3BucketShareManager(
-            session,
-            dataset_imported,
-            share3,
-            bucket3,
-            source_environment,
-            target_environment,
-            source_environment_group,
-            target_environment_group,
-        )
+        manager = S3BucketShareManager(session, share_data3, bucket3)
     yield manager
 
 

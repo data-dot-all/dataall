@@ -816,7 +816,6 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
                     itemAccess
                     GlueDatabaseName
                     GlueTableName
-                    S3AccessPointName
                     created
                     principalId
                 }

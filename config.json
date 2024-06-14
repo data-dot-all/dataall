@@ -9,6 +9,9 @@
         "datapipelines": {
             "active": true
         },
+        "omics": {
+            "active": false
+        },
         "datasets_base": {
             "active": true,
             "features": {
