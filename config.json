@@ -10,7 +10,7 @@
             "active": true
         },
         "omics": {
-            "active": true
+            "active": false
         },
         "datasets_base": {
             "active": true,
