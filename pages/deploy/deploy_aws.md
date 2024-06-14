@@ -527,7 +527,7 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
 | dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                                                     |
 | notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                                                           |
-| maintenance     | None                                                | Starts maintenance mode which restricts user actions in data.all. Creates much safer environment for deploying new updates | 
+| maintenance     | None                                                | Admin control to start/stop data.all maintenance mode to restrict user actions in data.all and allow a stable window for deploying new updates | 
 
 
 ### Disable module features
