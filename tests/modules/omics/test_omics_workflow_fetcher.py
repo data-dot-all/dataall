@@ -35,17 +35,21 @@ def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, mod
     )
     # When we run the omics workflows fetcher
     success = fetch_omics_workflows(db)
-    # Then, the task completes successfully
-    assert success == True
-    # Then, the mocker is called only once
-    mocker.assert_called_once()
-    with db.scoped_session() as session:
-        workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
-        # Then, the 2 workflows are added to RDS
-        assert workflows.get('count') == 2
-        # Finally, clean_up test
-        for workflow in workflows.get('nodes'):
-            session.delete(workflow)
+    try:
+        # Then, the task completes successfully
+        assert success == True
+        # Then, the mocker is called only once
+        mocker.assert_called_once()
+        with db.scoped_session() as session:
+            workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
+            # Then, the 2 workflows are added to RDS
+            assert workflows.get('count') == 2
+    finally:
+        with db.scoped_session() as session:
+            workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
+            # Finally, clean_up test
+            for workflow in workflows.get('nodes'):
+                session.delete(workflow)
 
 
 def test_omics_workflow_fetcher_new_workflows_multiple_environments(
@@ -69,17 +73,22 @@ def test_omics_workflow_fetcher_new_workflows_multiple_environments(
     # When we run the omics workflows fetcher
     success = fetch_omics_workflows(db)
     # Then, the task completes successfully
-    assert success == True
-    # Then, the mocker is called twice
-    assert mocker.call_count == 2
-    with db.scoped_session() as session:
-        workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
-        # Then, the 2 workflows are added to RDS without duplicating
-        assert workflows.get('count') == 2
-        # Finally, clean_up test
-        for workflow in workflows.get('nodes'):
-            session.delete(workflow)
-        session.delete(second_environment)
+    try:
+        assert success == True
+        # Then, the mocker is called only once
+        mocker.assert_called_once()
+        with db.scoped_session() as session:
+            workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
+            # Then, the 2 workflows are added to RDS without duplicating
+            assert workflows.get('count') == 2
+    finally:
+        with db.scoped_session() as session:
+            workflows = OmicsRepository(session).paginated_omics_workflows(filter={})
+            # Finally, clean_up test
+            for workflow in workflows.get('nodes'):
+                session.delete(workflow)
+            session.delete(second_environment)
+
 
 
 def test_omics_workflow_fetcher_existing_workflows(db: Engine, workflow1, module_mocker):
