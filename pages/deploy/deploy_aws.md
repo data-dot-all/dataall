@@ -487,6 +487,9 @@ the different configuration options.
         },
         "dashboards": {
             "active": true
+        },
+        "maintenance": {
+            "active": true
         }
     },
     "core": {
@@ -510,20 +513,21 @@ The following table contains a list of the available modules and their dependenc
 functionality. If you want to know more about each module, 
 check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
 
-| **Module**      | **depends on**                                      | **Description**                                                                       |   
-|-----------------|-----------------------------------------------------|---------------------------------------------------------------------------------------|
-| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.         |
-| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                       |
-| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                       |
-| s3_datasets        | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                       |
-| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3              |
-| datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                      |
-| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                         |
-| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications |
-| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI              |
-| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                           |
-| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                |
-| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                      |
+| **Module**      | **depends on**                                      | **Description**                                                                                                            |   
+|-----------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.                                              |
+| feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| s3_datasets     | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
+| datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                            |
+| worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                                                              |
+| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications                                      |
+| mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI                                                   |
+| notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
+| dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                                                     |
+| notifications   | None                                                | Construct to notify users on dataset sharing updates in data.all                                                           |
+| maintenance     | None                                                | Starts maintenance mode which restricts user actions in data.all. Creates much safer environment for deploying new updates | 
 
 
 ### Disable module features
@@ -721,32 +725,6 @@ When SES Stack is deployed during the pipeline stage, it will setup a <a href="h
 which will send any email bounces, delivery failures, rejects & complaints to an SNS topic. In this step, you can add subscriptions to this SNS topic to monitor email delivery problems
 In order to do that go to AWS Console -> SNS -> Select the SNS topic which would look like `{resource_prefix}-{envname}-SNS-Email-Bounce-Topic` ( where resource_prefix and envname are specified in the cdk.json ) -> Create Subscription. You can attach multiple subscriptions to
 this SNS topic and monitor and take actions in case of any delivery failure.
-
-## 12. (Optional) Enabling Maintenance Mode in data.all <a name="maintenance mode"></a>
-This is an optional feature into data.all. 
-
-When deploying new releases, patch updates, etc there may arise a situation in which a user may be performing an action 
-and, at the same time some AWS resource might be getting updated. This can put data.all created components into broken state.
-Also, there might be a need to debug ( or patch update few things in data.all ) when the data.all administrators may want to restrict actions taken by users in data.all.
-In order to protect such a deployment and create a safe environment for deployment / patch updates, data.all 
-can be put into maintenance mode. 
-
-In order to enable use of maintenance mode into your deployment of data.all, modify the config.json and add this to the modules section
-```js
-"maintenance": {
-    "active": true
-}
-```
-
-Only data.all administrators can start the maintenance mode. Maintenance window is available in the `Admin Settings` section. 
-Data.all currently supports two maintenance modes. 
-
-Read-only : In this mode, a user can visit data.all and navigate through data.all but won't be able to update/modify any data.all related components.
-No-Access : In this mode, a user is shown a blank page after the user logs into data.all. In this mode, all user actions are blocked.
-
-Note - During both the maintenance modes, data.all admins can perform all data.all actions ( i.e. an admin can login and modify data.all related components where they have access)
-
-Also, during maintenance mode all scheduled ECS tasks ( such as Catalog-Indexer, Share-verifier, etc) are disabled and enabled when maintenance mode is disabled.
 
 ## 🎉 Congratulations - What I have just done? 🎉 
 You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
