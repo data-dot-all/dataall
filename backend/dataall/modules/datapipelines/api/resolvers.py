@@ -103,7 +103,7 @@ def resolve_clone_url_http(context: Context, source: DataPipeline, **kwargs):
 def resolve_stack(context, source: DataPipeline, **kwargs):
     if not source:
         return None
-    return StackService.get_stack_with_cfn_resources(
+    return StackService.resolve_parent_obj_stack(
         targetUri=source.DataPipelineUri,
         environmentUri=source.environmentUri,
     )

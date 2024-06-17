@@ -77,7 +77,7 @@ def get_dataset_stewards_group(context, source: DatasetBase, **kwargs):
 def resolve_dataset_stack(context: Context, source: DatasetBase, **kwargs):
     if not source:
         return None
-    return StackService.get_stack_with_cfn_resources(
+    return StackService.resolve_parent_obj_stack(
         targetUri=source.datasetUri,
         environmentUri=source.environmentUri,
     )
