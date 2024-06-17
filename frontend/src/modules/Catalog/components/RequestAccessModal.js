@@ -413,7 +413,7 @@ export const RequestAccessModal = (props) => {
                                   errors.environmentUri
                                 }
                                 label="Environment"
-                                name="environmenUrit"
+                                name="environmenUri"
                                 onChange={handleChange}
                                 value={values.environmentUri}
                                 variant="outlined"
@@ -427,45 +427,46 @@ export const RequestAccessModal = (props) => {
                           ) : (
                             <Box>
                               {groupOptions.length > 0 ? (
-                                <TextField
-                                  error={Boolean(
-                                    touched.groupUri && errors.groupUri
-                                  )}
-                                  helperText={
-                                    touched.groupUri && errors.groupUri
-                                  }
-                                  fullWidth
-                                  label="Requesters Team"
-                                  name="groupUri"
-                                  onChange={(event) => {
+                                <Autocomplete
+                                  id="environment"
+                                  freeSolo
+                                  options={groupOptions.map((option) => option)}
+                                  onChange={(event, value) => {
                                     setFieldValue('consumptionRole', '');
-                                    fetchRoles(
-                                      values.environmentUri,
-                                      event.target.value
-                                    ).catch((e) =>
-                                      dispatch({
-                                        type: SET_ERROR,
-                                        error: e.message
-                                      })
-                                    );
-                                    setFieldValue(
-                                      'groupUri',
-                                      event.target.value
-                                    );
+                                    if (value && value.value) {
+                                      setFieldValue('groupUri', value.value);
+                                      fetchRoles(
+                                        values.environmentUri,
+                                        value.value
+                                      ).catch((e) =>
+                                        dispatch({
+                                          type: SET_ERROR,
+                                          error: e.message
+                                        })
+                                      );
+                                    } else {
+                                      setFieldValue('groupUri', '');
+                                      setRoleOptions([]);
+                                    }
                                   }}
-                                  select
-                                  value={values.groupUri}
-                                  variant="outlined"
-                                >
-                                  {groupOptions.map((group) => (
-                                    <MenuItem
-                                      key={group.value}
-                                      value={group.value}
-                                    >
-                                      {group.label}
-                                    </MenuItem>
-                                  ))}
-                                </TextField>
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      fullWidth
+                                      error={Boolean(
+                                        touched.groupUri && errors.groupUri
+                                      )}
+                                      helperText={
+                                        touched.groupUri && errors.groupUri
+                                      }
+                                      label="Team"
+                                      name="groupUri"
+                                      onChange={handleChange}
+                                      value={values.groupUri}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                />
                               ) : (
                                 <TextField
                                   error={Boolean(
