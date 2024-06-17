@@ -56,14 +56,6 @@ def verify_dataset_share_objects(context: Context, source, input):
     return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
 
 
-def list_dataset_share_objects(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {'page': 1, 'pageSize': 5}
-    return DatasetSharingService.list_dataset_share_objects(source, filter)
-
-
 def get_s3_consumption_data(context: Context, source, shareUri: str):
     return DatasetSharingService.get_s3_consumption_data(uri=shareUri)
 

@@ -748,24 +748,6 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
 
     @staticmethod
-    def query_dataset_shares(session, dataset_uri) -> Query:
-        return (
-            session.query(ShareObject)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObject.deleted.is_(None),
-                )
-            )
-            .order_by(ShareObject.shareUri)
-        )
-
-    @staticmethod
-    def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
-        query = ShareObjectRepository.query_dataset_shares(session, uri)
-        return paginate(query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)).to_dict()
-
-    @staticmethod
     def list_dataset_shares_with_existing_shared_items(
         session, dataset_uri, environment_uri=None, item_type=None
     ) -> [ShareObject]:

@@ -2,7 +2,6 @@ from dataall.base.api import gql
 from dataall.modules.s3_datasets_shares.api.resolvers import (
     get_dataset_shared_assume_role_url,
     list_shared_tables_by_env_dataset,
-    list_dataset_share_objects,
     list_shared_databases_tables_with_env_group,
     get_s3_consumption_data,
 )
@@ -26,16 +25,6 @@ getDatasetSharedAssumeRoleUrl = gql.QueryField(
     test_scope='Dataset',
 )
 
-listShareObjects = gql.QueryField(
-    name='listDatasetShareObjects',
-    resolver=list_dataset_share_objects,
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='environmentUri', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-    ],
-    type=gql.Ref('ShareSearchResult'),
-)
 
 getS3ConsumptionData = gql.QueryField(
     name='getS3ConsumptionData',
