@@ -1,58 +1,11 @@
 from dataall.base.api import gql
 from dataall.modules.s3_datasets_shares.api.resolvers import (
     get_dataset_shared_assume_role_url,
-    get_share_object,
-    get_share_logs,
-    list_shared_with_environment_data_items,
-    list_shares_in_my_inbox,
-    list_shares_in_my_outbox,
-    list_dataset_share_objects,
     list_shared_tables_by_env_dataset,
+    list_shared_databases_tables_with_env_group,
+    get_s3_consumption_data,
 )
 
-getShareObject = gql.QueryField(
-    name='getShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('ShareObject'),
-    resolver=get_share_object,
-)
-
-
-getShareRequestsFromMe = gql.QueryField(
-    name='getShareRequestsFromMe',
-    args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
-    type=gql.Ref('ShareSearchResult'),
-    resolver=list_shares_in_my_outbox,
-)
-
-getShareRequestsToMe = gql.QueryField(
-    name='getShareRequestsToMe',
-    args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
-    type=gql.Ref('ShareSearchResult'),
-    resolver=list_shares_in_my_inbox,
-)
-
-searchEnvironmentDataItems = gql.QueryField(
-    name='searchEnvironmentDataItems',
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('EnvironmentDataItemFilter')),
-    ],
-    resolver=list_shared_with_environment_data_items,
-    type=gql.Ref('EnvironmentPublishedItemSearchResults'),
-    test_scope='Dataset',
-)
-
-listShareObjects = gql.QueryField(
-    name='listDatasetShareObjects',
-    resolver=list_dataset_share_objects,
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='environmentUri', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-    ],
-    type=gql.Ref('ShareSearchResult'),
-)
 
 getSharedDatasetTables = gql.QueryField(
     name='getSharedDatasetTables',
@@ -73,9 +26,20 @@ getDatasetSharedAssumeRoleUrl = gql.QueryField(
 )
 
 
-getShareLogs = gql.QueryField(
-    name='getShareLogs',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    type=gql.ArrayType(gql.Ref('ShareLog')),
-    resolver=get_share_logs,
+getS3ConsumptionData = gql.QueryField(
+    name='getS3ConsumptionData',
+    args=[gql.Argument(name='shareUri', type=gql.String)],
+    type=gql.Ref('S3ConsumptionData'),
+    resolver=get_s3_consumption_data,
+)
+
+
+listS3DatasetsSharedWithEnvGroup = gql.QueryField(
+    name='listS3DatasetsSharedWithEnvGroup',
+    resolver=list_shared_databases_tables_with_env_group,
+    args=[
+        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.ArrayType(gql.Ref('SharedDatabaseTableItem')),
 )

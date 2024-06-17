@@ -1,3 +1,5 @@
+from warnings import warn
+from dataall.base.db import utils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -7,7 +9,7 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER
+from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, GET_SHARE_OBJECT
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -21,6 +23,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, DatasetType
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
+from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 
 
 import logging
@@ -131,11 +134,6 @@ class DatasetSharingService(DatasetServiceInterface):
         return True
 
     @staticmethod
-    def list_dataset_share_objects(dataset: S3Dataset, data: dict = None):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
-
-    @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -179,3 +177,55 @@ class DatasetSharingService(DatasetServiceInterface):
             bucket=dataset.S3BucketName,
         )
         return url
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
+    def get_s3_consumption_data(uri):
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+            if dataset:
+                environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+                S3AccessPointName = utils.slugify(
+                    share.datasetUri + '-' + share.principalId,
+                    max_length=50,
+                    lowercase=True,
+                    regex_pattern='[^a-zA-Z0-9-]',
+                    separator='-',
+                )
+                # Check if the share was made with a Glue Database
+                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
+                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
+                )
+                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
+                database = GlueClient(
+                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
+                ).get_glue_database()
+                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
+                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
+                return {
+                    's3AccessPointName': S3AccessPointName,
+                    'sharedGlueDatabase': sharedGlueDatabase,
+                    's3bucketName': dataset.S3BucketName,
+                }
+            return {
+                's3AccessPointName': 'Not Created',
+                'sharedGlueDatabase': 'Not Created',
+                's3bucketName': 'Not Created',
+            }
+
+    @staticmethod
+    def list_shared_databases_tables_with_env_group(environmentUri: str, groupUri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return ShareObjectRepository.query_shared_glue_databases(
+                session=session, groups=context.groups, env_uri=environmentUri, group_uri=groupUri
+            ).all()
+
+    @staticmethod
+    def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):
+        old_shared_db_name = (GlueDatabaseName + '_shared_' + shareUri)[:254]
+        database = GlueClient(
+            account_id=targetEnvAwsAccountId, database=old_shared_db_name, region=targetEnvRegion
+        ).get_glue_database()
+        return old_shared_db_name if database else GlueDatabaseName + '_shared'

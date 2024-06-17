@@ -63,7 +63,8 @@ import {
   submitApproval,
   revokeItemsShareObject,
   verifyItemsShareObject,
-  reApplyItemsShareObject
+  reApplyItemsShareObject,
+  getS3ConsumptionData
 } from '../services';
 import {
   AddShareItemModal,
@@ -95,6 +96,7 @@ function ShareViewHeader(props) {
   const [openLogsModal, setOpenLogsModal] = useState(null);
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
+
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -557,6 +559,7 @@ const ShareView = () => {
   const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
+  const [consumptionData, setConsumptionData] = useState({});
 
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
@@ -602,6 +605,22 @@ const ShareView = () => {
     );
     if (!response.errors) {
       setShare(response.data.getShareObject);
+      const response_c = await client.query(
+        getS3ConsumptionData({
+          shareUri: response.data.getShareObject.shareUri
+        })
+      );
+      if (!response_c.errors) {
+        setConsumptionData({
+          s3bucketName: response_c.data.getS3ConsumptionData.s3bucketName,
+          s3AccessPointName:
+            response_c.data.getS3ConsumptionData.s3AccessPointName,
+          sharedGlueDatabase:
+            response_c.data.getS3ConsumptionData.sharedGlueDatabase
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response_c.errors[0].message });
+      }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -1180,12 +1199,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${share.consumptionData.s3bucketName || '-'}`}
+                          {` ${consumptionData.s3bucketName || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                            text={`aws s3 ls s3://${consumptionData.s3bucketName}`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1198,7 +1217,7 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                          {`aws s3 ls s3://${consumptionData.s3bucketName}`}
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 3 }}>
@@ -1214,12 +1233,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${share.consumptionData.s3AccessPointName || '-'}`}
+                          {` ${consumptionData.s3AccessPointName || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1232,7 +1251,7 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 3 }}>
@@ -1248,14 +1267,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${
-                            share.consumptionData.sharedGlueDatabase || '-'
-                          }`}
+                          {` ${consumptionData.sharedGlueDatabase || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                            text={`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1268,7 +1285,7 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                          {`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
                         </Typography>
                       </Box>
                     </Box>
