@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from typing import List
-from backend.dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
+from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -413,7 +413,7 @@ class DatasetService:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
-            ResourceLockRepository.delete_resource_lock(session=session, resource_uri=dataset)
+            ResourceLockRepository.delete_resource_lock(session=session, resource_uri=dataset.datasetUri)
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:

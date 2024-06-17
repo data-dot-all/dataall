@@ -1,6 +1,5 @@
 import logging
 
-from backend.dataall.base.db.base import Resource
 from dataall.core.resource_lock.db.resource_lock_models import ResourceLock
 from sqlalchemy import and_, or_
 

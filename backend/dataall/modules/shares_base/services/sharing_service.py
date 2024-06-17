@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from time import sleep
 
 from sqlalchemy.orm import Session
-from backend.dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
+from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (

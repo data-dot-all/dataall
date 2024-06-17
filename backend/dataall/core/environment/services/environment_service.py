@@ -18,6 +18,7 @@ from dataall.core.permissions.services.environment_permissions import (
     CREDENTIALS_ENVIRONMENT,
 )
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
@@ -285,6 +286,12 @@ class EnvironmentService:
             )
             session.commit()
 
+            ResourceLockRepository.create_resource_lock(
+                session=session,
+                resource_uri=f'{env_group.groupUri}-{env_group.environmentUri}',
+                resource_type=env_group.__tablename__,
+            )
+
             activity = Activity(
                 action='ENVIRONMENT:CREATE',
                 label='ENVIRONMENT:CREATE',
@@ -401,6 +408,13 @@ class EnvironmentService:
             )
             session.add(environment_group)
             session.commit()
+
+            ResourceLockRepository.create_resource_lock(
+                session=session,
+                resource_uri=f'{environment_group.groupUri}-{environment_group.environmentUri}',
+                resource_type=environment_group.__tablename__,
+            )
+
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
@@ -454,6 +468,9 @@ class EnvironmentService:
             ).delete_all_policies()
 
             if group_membership:
+                ResourceLockRepository.delete_resource_lock(
+                    session=session, resource_uri=f'{group}-{environment.environmentUri}'
+                )
                 session.delete(group_membership)
                 session.commit()
 
@@ -580,6 +597,12 @@ class EnvironmentService:
             session.add(consumption_role)
             session.commit()
 
+            ResourceLockRepository.create_resource_lock(
+                session=session,
+                resource_uri=consumption_role.consumptionRoleUri,
+                resource_type=consumption_role.__tablename__,
+            )
+
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
@@ -619,6 +642,7 @@ class EnvironmentService:
                     resource_uri=consumption_role.consumptionRoleUri,
                     resource_type=ConsumptionRole.__name__,
                 )
+                ResourceLockRepository.delete_resource_lock(session=session, resource_uri=uri)
 
                 session.delete(consumption_role)
                 session.commit()
@@ -869,6 +893,9 @@ class EnvironmentService:
                 EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
                 for group in env_groups:
+                    ResourceLockRepository.delete_resource_lock(
+                        session=session, resource_uri=f'{group.groupUri}-{environment.environmentUri}'
+                    )
                     session.delete(group)
 
                     ResourcePolicyService.delete_resource_policy(
@@ -878,6 +905,7 @@ class EnvironmentService:
                     )
 
                 for role in env_roles:
+                    ResourceLockRepository.delete_resource_lock(session=session, resource_uri=role.consumptionRoleUri)
                     session.delete(role)
 
                 return session.delete(environment), environment
