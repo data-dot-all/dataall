@@ -4,7 +4,6 @@ from dataall.base.api.constants import GraphQLEnumMapper
 class ShareableType(GraphQLEnumMapper):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
-    View = 'View'
     S3Bucket = 'S3Bucket'
 
 
@@ -58,7 +57,6 @@ class ShareObjectActions(GraphQLEnumMapper):
     Finish = 'Finish'
     FinishPending = 'FinishPending'
     Delete = 'Delete'
-    AcquireLockFailure = 'AcquireLockFailure'
 
 
 class ShareItemActions(GraphQLEnumMapper):

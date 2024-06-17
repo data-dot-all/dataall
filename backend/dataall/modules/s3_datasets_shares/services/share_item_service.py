@@ -21,8 +21,8 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.s3_datasets_shares.services.share_exceptions import ShareItemsFound
-from dataall.modules.s3_datasets_shares.services.share_notification_service import ShareNotificationService
+from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     GET_SHARE_OBJECT,
     ADD_ITEM,
@@ -31,7 +31,8 @@ from dataall.modules.shares_base.services.share_permissions import (
     APPROVE_SHARE_OBJECT,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetStorageLocation
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 
 log = logging.getLogger(__name__)
 
@@ -139,7 +140,7 @@ class ShareItemService:
                 raise UnauthorizedOperation(
                     action=ADD_ITEM,
                     message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.GlueTableName} is in {item.region} and target environment '
+                    f'Table {item.itemUri} is in {item.region} and target environment '
                     f'{target_environment.name} is in {target_environment.region} ',
                 )
 
@@ -162,13 +163,6 @@ class ShareItemService:
                     itemName=item.name,
                     status=ShareItemStatus.PendingApproval.value,
                     owner=context.username,
-                    GlueDatabaseName=ShareItemService._get_glue_database_for_share(
-                        dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                    )
-                    if item_type == ShareableType.Table.value
-                    else '',
-                    GlueTableName=item.GlueTableName if item_type == ShareableType.Table.value else '',
-                    S3AccessPointName=s3_access_point_name if item_type == ShareableType.StorageLocation.value else '',
                 )
                 session.add(share_item)
         return share_item
@@ -237,57 +231,104 @@ class ShareItemService:
             raise e
 
     @staticmethod
-    def delete_dataset_table_read_permission(session, share):
+    def delete_dataset_table_read_permission(session, share, tableUri):
         """
         Delete Table permissions to share groups
         """
-        share_table_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.Table.value, [ShareItemStatus.Revoke_Succeeded.value]
+        other_shares = ShareObjectRepository.find_all_other_share_items(
+            session,
+            not_this_share_uri=share.shareUri,
+            item_uri=tableUri,
+            share_type=ShareableType.Table.value,
+            principal_type='GROUP',
+            principal_uri=share.groupUri,
+            item_status=[ShareItemStatus.Share_Succeeded.value],
         )
-        for table in share_table_items:
-            other_shares = ShareObjectRepository.find_all_other_share_items(
-                session,
-                not_this_share_uri=share.shareUri,
-                item_uri=table.itemUri,
-                share_type=ShareableType.Table.value,
-                principal_type='GROUP',
-                principal_uri=share.groupUri,
-                item_status=[ShareItemStatus.Share_Succeeded.value],
-            )
-            log.info(
-                f'Table {table.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
-            )
-            if len(other_shares) == 0:
-                log.info('Delete permissions...')
-                ResourcePolicyService.delete_resource_policy(
-                    session=session, group=share.groupUri, resource_uri=table.itemUri
-                )
+        log.info(f'Table {tableUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares')
+        if len(other_shares) == 0:
+            log.info('Delete permissions...')
+            ResourcePolicyService.delete_resource_policy(session=session, group=share.groupUri, resource_uri=tableUri)
 
     @staticmethod
-    def delete_dataset_folder_read_permission(session, share):
+    def delete_dataset_folder_read_permission(session, share, locationUri):
         """
         Delete Folder permissions to share groups
         """
-        share_folder_items = ShareObjectRepository.find_all_share_items(
-            session, share.shareUri, ShareableType.StorageLocation.value, [ShareItemStatus.Revoke_Succeeded.value]
+        other_shares = ShareObjectRepository.find_all_other_share_items(
+            session,
+            not_this_share_uri=share.shareUri,
+            item_uri=locationUri,
+            share_type=ShareableType.StorageLocation.value,
+            principal_type='GROUP',
+            principal_uri=share.groupUri,
+            item_status=[ShareItemStatus.Share_Succeeded.value],
         )
-        for location in share_folder_items:
-            other_shares = ShareObjectRepository.find_all_other_share_items(
-                session,
-                not_this_share_uri=share.shareUri,
-                item_uri=location.itemUri,
-                share_type=ShareableType.StorageLocation.value,
-                principal_type='GROUP',
-                principal_uri=share.groupUri,
-                item_status=[ShareItemStatus.Share_Succeeded.value],
+        log.info(
+            f'Location {locationUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
+        )
+        if len(other_shares) == 0:
+            log.info('Delete permissions...')
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=share.groupUri,
+                resource_uri=locationUri,
             )
+
+    @staticmethod
+    def attach_dataset_table_read_permission(session, share, tableUri):
+        """
+        Attach Table permissions to share groups
+        """
+        existing_policy = ResourcePolicyService.find_resource_policies(
+            session,
+            group=share.groupUri,
+            resource_uri=tableUri,
+            resource_type=DatasetTable.__name__,
+            permissions=DATASET_TABLE_READ,
+        )
+        # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
+        if len(existing_policy) == 0:
             log.info(
-                f'Location {location.itemUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
+                f'Attaching new resource permission policy {DATASET_TABLE_READ} to table {tableUri} for group {share.groupUri}'
             )
-            if len(other_shares) == 0:
-                log.info('Delete permissions...')
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=location.itemUri,
-                )
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=tableUri,
+                resource_type=DatasetTable.__name__,
+            )
+        else:
+            log.info(
+                f'Resource permission policy {DATASET_TABLE_READ} to table {tableUri} for group {share.groupUri} already exists. Skip... '
+            )
+
+    @staticmethod
+    def attach_dataset_folder_read_permission(session, share, locationUri):
+        """
+        Attach Folder permissions to share groups
+        """
+        existing_policy = ResourcePolicyService.find_resource_policies(
+            session,
+            group=share.groupUri,
+            resource_uri=locationUri,
+            resource_type=DatasetStorageLocation.__name__,
+            permissions=DATASET_FOLDER_READ,
+        )
+        # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
+        if len(existing_policy) == 0:
+            log.info(
+                f'Attaching new resource permission policy {DATASET_FOLDER_READ} to folder {locationUri} for group {share.groupUri}'
+            )
+
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_FOLDER_READ,
+                resource_uri=locationUri,
+                resource_type=DatasetStorageLocation.__name__,
+            )
+        else:
+            log.info(
+                f'Resource permission policy {DATASET_FOLDER_READ} to table {locationUri} for group {share.groupUri} already exists. Skip... '
+            )

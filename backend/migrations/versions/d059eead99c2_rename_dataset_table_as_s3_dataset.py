@@ -12,7 +12,7 @@ from dataall.base.api.constants import GraphQLEnumMapper
 
 # revision identifiers, used by Alembic.
 revision = 'd059eead99c2'
-down_revision = '458572580709'
+down_revision = 'b833ad41db68'
 branch_labels = None
 depends_on = None
 

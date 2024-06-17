@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { AuthGuard, GuestGuard } from 'authentication';
+import { AuthGuard, GuestGuard, MaintenanceGuard } from 'authentication';
 import { ReAuthModal } from 'reauthentication';
 import { DefaultLayout, LoadingScreen } from 'design';
 import { ModuleNames, isModuleEnabled } from 'utils';
@@ -153,6 +153,17 @@ const GlossaryCreateForm = Loadable(
   lazy(() => import('./modules/Glossaries/views/GlossaryCreateForm'))
 );
 
+const OmicsList = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsList'))
+);
+
+const OmicsWorkflowView = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsWorkflowView'))
+);
+
+const OmicsRunCreateForm = Loadable(
+  lazy(() => import('./modules/Omics/views/OmicsRunCreateForm'))
+);
 const AdministrationView = Loadable(
   lazy(() => import('./modules/Administration/views/AdministrationView'))
 );
@@ -174,12 +185,14 @@ const routes = [
     path: 'console',
     element: (
       <AuthGuard>
-        <DefaultLayout />
-        {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
-          <ReAuthModal />
-        ) : (
-          <></>
-        )}
+        <MaintenanceGuard>
+          <DefaultLayout />
+          {!process.env.REACT_APP_GRAPHQL_API.includes('localhost') ? (
+            <ReAuthModal />
+          ) : (
+            <></>
+          )}
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [
@@ -399,6 +412,22 @@ const routes = [
           }
         ]
       },
+      isModuleEnabled(ModuleNames.OMICS) && {
+        children: [
+          {
+            path: 'omics',
+            element: <OmicsList />
+          },
+          {
+            path: 'omics/workflows/:uri',
+            element: <OmicsWorkflowView />
+          },
+          {
+            path: 'omics/workflows/:uri/runs/new',
+            element: <OmicsRunCreateForm />
+          }
+        ]
+      },
       {
         children: [
           {
@@ -413,7 +442,9 @@ const routes = [
     path: '*',
     element: (
       <AuthGuard>
-        <DefaultLayout />
+        <MaintenanceGuard>
+          <DefaultLayout />
+        </MaintenanceGuard>
       </AuthGuard>
     ),
     children: [

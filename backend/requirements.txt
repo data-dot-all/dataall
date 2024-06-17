@@ -1,10 +1,10 @@
 ariadne==0.17.0
 aws-xray-sdk==2.4.3
-boto3==1.26.95
-botocore==1.29.95
+boto3==1.28.23
+botocore==1.31.23
 fastapi == 0.109.2
-Flask==2.3.2
-flask-cors==3.0.10
+Flask==3.0.3
+flask-cors==4.0.1
 nanoid==2.0.0
 opensearch-py==1.0.0
 PyAthena==2.3.0

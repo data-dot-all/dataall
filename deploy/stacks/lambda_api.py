@@ -96,7 +96,9 @@ class LambdaApiStack(pyNestedClass):
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
-
+        esproxy_env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
+        if custom_auth:
+            esproxy_env['custom_auth'] = custom_auth.get('provider', None)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
@@ -113,7 +115,7 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[esproxy_sg],
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
-            environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+            environment=esproxy_env,
             environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.esproxy_dlq,
@@ -447,6 +449,10 @@ class LambdaApiStack(pyNestedClass):
                     resources=[
                         f'arn:aws:aoss:{self.region}:{self.account}:collection/*',
                     ],
+                ),
+                iam.PolicyStatement(
+                    actions=['events:EnableRule', 'events:DisableRule'],
+                    resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
                 ),
             ],
         )

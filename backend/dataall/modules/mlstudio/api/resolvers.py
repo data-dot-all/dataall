@@ -120,7 +120,7 @@ def resolve_sagemaker_studio_user_stack(context: Context, source: SagemakerStudi
     """
     if not source:
         return None
-    return StackService.get_stack_with_cfn_resources(
+    return StackService.resolve_parent_obj_stack(
         targetUri=source.sagemakerStudioUserUri,
         environmentUri=source.environmentUri,
     )

@@ -270,14 +270,15 @@ def list_shareable_objects(context: Context, source: ShareObject, filter: dict =
     return ShareItemService.list_shareable_objects(share=source, is_revokable=is_revokable, filter=filter)
 
 
-def resolve_shared_database_name(context: Context, source):
+def resolve_shared_database_name(context: Context, source: ShareObject):
     if not source:
         return None
-    old_shared_db_name = (source.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
     with context.engine.scoped_session() as session:
         share = ShareObjectService.get_share_object_in_environment(
             uri=source.targetEnvironmentUri, shareUri=source.shareUri
         )
+        dataset = DatasetRepository.get_dataset_by_uri(session=session, dataset_uri=source.datasetUri)
+        old_shared_db_name = (dataset.GlueDatabaseName + '_shared_' + source.shareUri)[:254]
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         database = GlueClient(
             account_id=env.AwsAccountId, database=old_shared_db_name, region=env.region

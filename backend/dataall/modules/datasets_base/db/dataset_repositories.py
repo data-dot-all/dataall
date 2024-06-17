@@ -3,6 +3,7 @@ from typing import List
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 from dataall.base.db import paginate
+from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase, DatasetLock
 
@@ -36,6 +37,13 @@ class DatasetBaseRepository:
         )
         session.add(activity)
         session.commit()
+
+    @staticmethod
+    def get_dataset_by_uri(session, dataset_uri) -> DatasetBase:
+        dataset: DatasetBase = session.query(DatasetBase).get(dataset_uri)
+        if not dataset:
+            raise ObjectNotFound('Dataset', dataset_uri)
+        return dataset
 
 
 class DatasetListRepository:

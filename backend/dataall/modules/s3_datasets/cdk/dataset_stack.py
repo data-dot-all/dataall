@@ -289,6 +289,7 @@ class DatasetStack(Stack):
                         f'arn:aws:glue:*:{dataset.AwsAccountId}:catalog',
                         f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}',
                         f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*',
+                        f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:crawler/{dataset.GlueCrawlerName}',
                     ],
                 ),
                 iam.PolicyStatement(
@@ -501,7 +502,7 @@ class DatasetStack(Stack):
             )
             trigger.node.add_dependency(job)
 
-        if config.get_property('modules.s3_datasets.features.confidentiality_dropdown', False):
+        if config.get_property('modules.datasets_base.features.confidentiality_dropdown', False):
             Tags.of(self).add('Classification', dataset.confidentiality)
 
         TagsUtil.add_tags(stack=self, model=S3Dataset, target_type='dataset')

@@ -6,3 +6,4 @@ export * from './listEnvironmentGroups';
 export * from './listEnvironments';
 export * from './listValidEnvironments';
 export * from './searchEnvironmentDataItems';
+export * from './getConsumptionRolePolicy';

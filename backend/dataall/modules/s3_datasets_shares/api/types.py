@@ -143,6 +143,7 @@ ShareObject = gql.ObjectType(
         gql.Field(name='requestPurpose', type=gql.String),
         gql.Field(name='rejectPurpose', type=gql.String),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
+        gql.Field(name='alreadyExisted', type=gql.Boolean),
         gql.Field(name='consumptionData', type=gql.Ref('ConsumptionData'), resolver=resolve_consumption_data),
         gql.Field(name='existingSharedItems', type=gql.Boolean, resolver=resolve_existing_shared_items),
         gql.Field(
@@ -204,6 +205,7 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='datasetName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='itemAccess', type=gql.NonNullableType(gql.String)),
         gql.Field(name='itemType', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='itemName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='targetEnvironmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
@@ -211,9 +213,8 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='organizationName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='created', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
-        gql.Field(name='S3AccessPointName', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),  # TODO: remove when splitting API calls
+        gql.Field(name='GlueTableName', type=gql.String),  # TODO: remove when splitting API calls
         gql.Field(
             'sharedGlueDatabaseName',
             type=gql.String,

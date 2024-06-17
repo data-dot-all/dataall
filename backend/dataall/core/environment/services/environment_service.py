@@ -996,7 +996,9 @@ class EnvironmentService:
                     message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
                 )
         else:
-            env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+            env_group = EnvironmentService.get_environment_group(
+                session, group_uri=groupUri, environment_uri=environment.environmentUri
+            )
             if not env_group:
                 raise exceptions.UnauthorizedOperation(
                     action='ENVIRONMENT_AWS_ACCESS',
@@ -1127,3 +1129,15 @@ class EnvironmentService:
                 )
 
             return S3_client.get_presigned_url(region, resource_bucket, template_key)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
+    def resolve_consumption_role_policies(uri, IAMRoleName):
+        environment = EnvironmentService.find_environment_by_uri(uri=uri)
+        return PolicyManager(
+            role_name=IAMRoleName,
+            environmentUri=uri,
+            account=environment.AwsAccountId,
+            region=environment.region,
+            resource_prefix=environment.resourcePrefix,
+        ).get_all_policies()

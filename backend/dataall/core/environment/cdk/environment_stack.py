@@ -487,6 +487,7 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('databrew.amazonaws.com'),
                 iam.ServicePrincipal('codebuild.amazonaws.com'),
                 iam.ServicePrincipal('codepipeline.amazonaws.com'),
+                iam.ServicePrincipal('omics.amazonaws.com'),
                 self.pivot_role,
             ),
         )
