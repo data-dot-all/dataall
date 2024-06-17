@@ -5,7 +5,6 @@ pytest==7.3.1
 pytest-cov==3.0.0
 pytest-mock==3.6.1
 pytest-dependency==0.5.1
-pytest-xdist==3.6.1
 requests==2.31.0
 dataclasses-json==0.6.6
 werkzeug==3.0.3
