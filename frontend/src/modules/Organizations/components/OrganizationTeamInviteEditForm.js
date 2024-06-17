@@ -18,8 +18,8 @@ import {
   listOrganizationGroupPermissions,
   updateOrganizationGroup
 } from '../services';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { useClient } from '../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
 import { GroupAddOutlined } from '@mui/icons-material';
 
 export const OrganizationTeamInviteEditForm = (props) => {
