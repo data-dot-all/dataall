@@ -17,8 +17,6 @@ branch_labels = None
 depends_on = None
 
 
-
-
 def upgrade():
     print('Renaming dataset as s3_dataset...')
     op.drop_constraint(constraint_name='fk_dataset_env_uri', table_name='dataset', type_='foreignkey')

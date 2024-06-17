@@ -51,7 +51,9 @@ def upgrade():
         sa.Column('SamlAdminGroupName', sa.String(), nullable=True),
         sa.Column('autoApprovalEnabled', sa.Boolean(), default=False),
         sa.Column(
-            'datasetType', postgresql.ENUM(DatasetTypes.S3.value, name='datasettypes', create_type=False), nullable=False
+            'datasetType',
+            postgresql.ENUM(DatasetTypes.S3.value, name='datasettypes', create_type=False),
+            nullable=False,
         ),
         sa.Column('imported', sa.Boolean(), default=False),
         sa.ForeignKeyConstraint(
