@@ -32,7 +32,7 @@ import {
   getSagemakerStudioUserPresignedUrl
 } from '../services';
 import { useClient } from 'services';
-import { StackStatus, Stack } from 'modules/Shared';
+import { Stack } from 'modules/Shared';
 import { MLStudioOverview } from '../components';
 
 const tabs = [
@@ -51,7 +51,6 @@ const MLStudioView = () => {
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [mlstudio, setMLStudio] = useState(null);
-  const [stack, setStack] = useState(null);
   const [isOpeningSagemakerStudio, setIsOpeningSagemakerStudio] =
     useState(false);
 
@@ -68,9 +67,6 @@ const MLStudioView = () => {
     const response = await client.query(getSagemakerStudioUser(params.uri));
     if (!response.errors) {
       setMLStudio(response.data.getSagemakerStudioUser);
-      if (stack) {
-        setStack(response.data.getSagemakerStudioUser.stack);
-      }
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -78,7 +74,7 @@ const MLStudioView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack]);
+  }, [client, dispatch, params.uri]);
 
   const getMLStudioPresignedUrl = async () => {
     setIsOpeningSagemakerStudio(true);
@@ -133,11 +129,6 @@ const MLStudioView = () => {
       <Helmet>
         <title>ML Studio: User Details | DataStudio</title>
       </Helmet>
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={mlstudio.environment?.environmentUri}
-      />
       <Box
         sx={{
           backgroundColor: 'background.default',

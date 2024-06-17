@@ -28,12 +28,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { deleteDataPipeline, getDataPipeline } from '../services';
-import {
-  FeedComments,
-  KeyValueTagList,
-  StackStatus,
-  Stack
-} from 'modules/Shared';
+import { FeedComments, KeyValueTagList, Stack } from 'modules/Shared';
 import { PipelineOverview } from '../components';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
@@ -133,7 +128,6 @@ const PipelineView = () => {
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState(null);
-  const [stack, setStack] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const tabs = [
     { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -161,7 +155,7 @@ const PipelineView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack]);
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
@@ -207,11 +201,6 @@ const PipelineView = () => {
       <Helmet>
         <title>Pipelines: Pipelines Details | data.all</title>
       </Helmet>
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={pipeline.environment?.environmentUri}
-      />
       <Box
         sx={{
           backgroundColor: 'background.default',

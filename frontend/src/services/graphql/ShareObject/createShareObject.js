@@ -23,6 +23,7 @@ export const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
         ) {
           shareUri
           created
+          alreadyExisted
         }
       }
     `

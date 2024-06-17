@@ -224,7 +224,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 
 
 def get_environment_stack(context: Context, source: Environment, **kwargs):
-    return StackService.get_stack_with_cfn_resources(
+    return StackService.resolve_parent_obj_stack(
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
     )
