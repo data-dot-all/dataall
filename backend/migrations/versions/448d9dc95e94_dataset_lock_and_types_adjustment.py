@@ -7,8 +7,6 @@ Create Date: 2024-06-17 16:42:34.851166
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 
 # revision identifiers, used by Alembic.
