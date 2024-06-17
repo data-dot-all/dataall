@@ -1,5 +1,6 @@
 import SendIcon from '@mui/icons-material/Send';
 import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import {
   Box,
   Button,
@@ -94,7 +95,7 @@ export const RequestAccessModal = (props) => {
       const response = await client.query(
         listEnvironmentGroups({
           filter: Defaults.selectListFilter,
-          environmentUri
+          environmentUri: environmentUri
         })
       );
       if (!response.errors) {
@@ -206,7 +207,7 @@ export const RequestAccessModal = (props) => {
       : values.groupUri;
 
     let inputObject = {
-      environmentUri: values.environment.environmentUri,
+      environmentUri: values.environmentUri,
       groupUri: values.groupUri,
       principalId: principal,
       principalType: type,
@@ -300,12 +301,14 @@ export const RequestAccessModal = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                environment: '',
+                environmentUri: '',
                 comment: '',
                 attachMissingPolicies: false
               }}
               validationSchema={Yup.object().shape({
-                environment: Yup.object().required('*Environment is required'),
+                environmentUri: Yup.string().required(
+                  '*Environment is required'
+                ),
                 groupUri: Yup.string().required('*Team is required'),
                 consumptionRole: Yup.string(),
                 comment: Yup.string().max(5000)
@@ -374,39 +377,49 @@ export const RequestAccessModal = (props) => {
                     {hit.resourceKind !== 'dashboard' && (
                       <Box>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
+                          <Autocomplete
+                            id="environment"
+                            freeSolo
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
                               setFieldValue('groupUri', '');
                               setFieldValue('consumptionRole', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
+                              if (value && value.environmentUri) {
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                                setFieldValue(
+                                  'environmentUri',
+                                  value.environmentUri
+                                );
+                              } else {
+                                setGroupOptions([]);
+                                setFieldValue('environmentUri', '');
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                name="environmenUrit"
+                                onChange={handleChange}
+                                value={values.environmentUri}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           {loadingGroups ? (
@@ -427,7 +440,7 @@ export const RequestAccessModal = (props) => {
                                   onChange={(event) => {
                                     setFieldValue('consumptionRole', '');
                                     fetchRoles(
-                                      values.environment.environmentUri,
+                                      values.environmentUri,
                                       event.target.value
                                     ).catch((e) =>
                                       dispatch({
@@ -499,7 +512,7 @@ export const RequestAccessModal = (props) => {
                                       event.target.value
                                     );
                                     fetchRolePolicies(
-                                      values.environment.environmentUri,
+                                      values.environmentUri,
                                       event.target.value.IAMRoleName
                                     ).catch((e) =>
                                       dispatch({
