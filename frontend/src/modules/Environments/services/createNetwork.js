@@ -5,7 +5,7 @@ export const createNetwork = (input) => ({
     input
   },
   mutation: gql`
-    mutation createNetwork($input: NewVpcInput) {
+    mutation createNetwork($input: NewVpcInput!) {
       createNetwork(input: $input) {
         vpcUri
         VpcId

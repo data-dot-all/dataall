@@ -16,7 +16,7 @@ def env(client):
         if cache.get(key):
             return cache[key]
         response = client.query(
-            """mutation CreateEnv($input:NewEnvironmentInput){
+            """mutation CreateEnv($input:NewEnvironmentInput!){
                 createEnvironment(input:$input){
                     organization{
                         organizationUri

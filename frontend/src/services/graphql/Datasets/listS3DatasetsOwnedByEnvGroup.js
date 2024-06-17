@@ -13,8 +13,8 @@ export const listS3DatasetsOwnedByEnvGroup = ({
   query: gql`
     query listS3DatasetsOwnedByEnvGroup(
       $filter: DatasetFilter
-      $environmentUri: String
-      $groupUri: String
+      $environmentUri: String!
+      $groupUri: String!
     ) {
       listS3DatasetsOwnedByEnvGroup(
         environmentUri: $environmentUri
