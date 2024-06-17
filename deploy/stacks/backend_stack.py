@@ -5,6 +5,8 @@ from aws_cdk import Stack
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import RemovalPolicy
 
 from .aurora import AuroraServerlessStack
 from .cognito import IdpStack
@@ -240,6 +242,34 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        lambda_env_key = kms.Key(
+            self,
+            f'{resource_prefix}-trig-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-trig-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
         db_snapshots = TriggerFunctionStack(
             self,
             'DbSnapshots',
@@ -267,6 +297,7 @@ class BackendStack(Stack):
                     resources=['*'],
                 ),
             ],
+            env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
 
@@ -282,6 +313,7 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[db_snapshots.trigger_function],
             connectables=[aurora_stack.cluster],
+            env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
 
@@ -297,6 +329,7 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[db_migrations.trigger_function],
             connectables=[aurora_stack.cluster],
+            env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
 
