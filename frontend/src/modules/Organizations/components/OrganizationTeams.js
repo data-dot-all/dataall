@@ -169,6 +169,7 @@ function TeamRow({ team, permissions, organization, fetchItems }) {
 TeamRow.propTypes = {
   team: PropTypes.any,
   organization: PropTypes.any,
+  permissions: PropTypes.any,
   fetchItems: PropTypes.any
 };
 

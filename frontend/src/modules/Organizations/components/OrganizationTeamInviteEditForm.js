@@ -141,12 +141,13 @@ export const OrganizationTeamInviteEditForm = (props) => {
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
           A Team is a group from your identity provider that you are a member
-          of. All members of that group will be able to access your environment.
+          of. All members of that group will inherit the permissions to view the
+          organization.
         </Typography>
         <Box sx={{ p: 3 }}>
           <CardContent>
             <Paper>
-              <CardHeader title="Additional Permissions" />
+              <CardHeader title="Organization Permissions" />
               <Divider />
               <CardContent sx={{ ml: 2 }}>
                 {selected_permissions.length > 0 ? (
