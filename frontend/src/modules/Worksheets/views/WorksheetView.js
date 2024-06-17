@@ -32,13 +32,13 @@ import {
   listDatasetTables,
   getSharedDatasetTables,
   listDatasetTableColumns,
+  listS3DatasetsOwnedByEnvGroup,
   listValidEnvironments,
   useClient
 } from 'services';
 import {
   deleteWorksheet,
   getWorksheet,
-  listS3DatasetsOwnedByEnvGroup,
   listS3DatasetsSharedWithEnvGroup,
   runAthenaSqlQuery,
   updateWorksheet
