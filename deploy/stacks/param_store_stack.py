@@ -135,7 +135,7 @@ class ParamStoreStack(pyNestedClass):
                 ),
             )
 
-    @run_if(['core.enable_quicksight_monitoring'])
+    @run_if(['core.features.enable_quicksight_monitoring'])
     def create_quicksight_monitoring_params(self, envname):
         aws_ssm.StringParameter(
             self,

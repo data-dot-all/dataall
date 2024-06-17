@@ -20,7 +20,7 @@ import config from '../../../generated/config.json';
 
 const tabs = [{ label: 'Teams', value: 'teams' }];
 
-if (config.core.enable_quicksight_monitoring) {
+if (config.core.features.enable_quicksight_monitoring) {
   tabs.push({ label: 'Monitoring', value: 'dashboard' });
 }
 

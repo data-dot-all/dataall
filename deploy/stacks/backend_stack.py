@@ -363,7 +363,7 @@ class BackendStack(Stack):
                 internet_facing=internet_facing,
             )
 
-    @run_if(['core.enable_quicksight_monitoring'])
+    @run_if(['core.features.enable_quicksight_monitoring'])
     def create_quicksight_role_sg_group(self, envname, resource_prefix, vpc):
         pivot_role_in_account = iam.Role(
             self,
