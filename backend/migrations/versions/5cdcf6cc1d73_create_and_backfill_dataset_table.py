@@ -16,7 +16,7 @@ from sqlalchemy.orm import query_expression
 from dataall.base.db import utils, Resource
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
-from dataall.modules.datasets_base.services.datasets_enums import DatasetType
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 # revision identifiers, used by Alembic.
 revision = '5cdcf6cc1d73'
@@ -51,7 +51,7 @@ def upgrade():
         sa.Column('SamlAdminGroupName', sa.String(), nullable=True),
         sa.Column('autoApprovalEnabled', sa.Boolean(), default=False),
         sa.Column(
-            'datasetType', postgresql.ENUM(DatasetType.S3.value, name='datasettypes', create_type=False), nullable=False
+            'datasetType', postgresql.ENUM(DatasetTypes.S3.value, name='datasettypes', create_type=False), nullable=False
         ),
         sa.Column('imported', sa.Boolean(), default=False),
         sa.ForeignKeyConstraint(
@@ -309,9 +309,9 @@ def downgrade():
         's3_dataset',
         sa.Column(
             'datasetType',
-            sa.Enum(DatasetType.S3.value, name='datasettypes'),
+            sa.Enum(DatasetTypes.S3.value, name='datasettypes'),
             nullable=False,
-            server_default=DatasetType.S3.value,
+            server_default=DatasetTypes.S3.value,
         ),
     )
     op.add_column(

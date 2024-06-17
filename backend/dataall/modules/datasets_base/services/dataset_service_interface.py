@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from dataall.modules.datasets_base.services.datasets_enums import DatasetType
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 log = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class DatasetServiceInterface(ABC):
 
     @property
     @abstractmethod
-    def dataset_type(self) -> DatasetType: ...
+    def dataset_type(self) -> DatasetTypes: ...
 
     @staticmethod
     @abstractmethod

@@ -8,7 +8,7 @@ Create Date: 2024-05-07 15:01:14.241572
 
 from alembic import op
 import sqlalchemy as sa
-from dataall.base.api.constants import GraphQLEnumMapper
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 # revision identifiers, used by Alembic.
 revision = 'd059eead99c2'
@@ -17,8 +17,6 @@ branch_labels = None
 depends_on = None
 
 
-class DatasetType(GraphQLEnumMapper):
-    S3 = 'S3'
 
 
 def upgrade():
@@ -39,9 +37,9 @@ def upgrade():
         's3_dataset',
         sa.Column(
             'datasetType',
-            sa.Enum(DatasetType.S3.value, name='datasettypes'),
+            sa.Enum(DatasetTypes.S3.value, name='datasettypes'),
             nullable=False,
-            server_default=DatasetType.S3.value,
+            server_default=DatasetTypes.S3.value,
         ),
     )
 
