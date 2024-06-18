@@ -31,6 +31,9 @@ class ContainerStack(pyNestedClass):
         tooling_account_id=None,
         s3_prefix_list=None,
         lambdas=None,
+        email_custom_domain=None,
+        ses_configuration_set=None,
+        custom_domain=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -44,11 +47,20 @@ class ContainerStack(pyNestedClass):
         self._ecr_repository = ecr_repository
         self._vpc = vpc
         self._prod_sizing = prod_sizing
+        self._email_custom_domain = email_custom_domain
+        self._ses_configuration_set = ses_configuration_set
 
         (self.scheduled_tasks_sg, self.share_manager_sg) = self.create_ecs_security_groups(
             envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas
         )
         self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.share_manager_sg]
+        self.env_vars = self._create_env('INFO')
+
+        # Check if custom domain exists and if it exists email notifications could be enabled.
+        # Create an env variable which stores the domain URL.
+        # This is used for sending data.all share weblinks in the email notifications.
+        if custom_domain and custom_domain.get('hosted_zone_name'):
+            self.env_vars.update({'frontend_domain_url': f'https://{custom_domain["hosted_zone_name"]}'})
 
         cluster = ecs.Cluster(
             self,
@@ -58,7 +70,10 @@ class ContainerStack(pyNestedClass):
             container_insights=True,
         )
 
-        self.task_role = self.create_task_role(envname, resource_prefix, pivot_role_name)
+        self.task_role = self.create_task_role(
+            envname, resource_prefix, pivot_role_name, email_custom_domain, ses_configuration_set
+        )
+
         self.cicd_stacks_updater_role = self.create_cicd_stacks_updater_role(
             envname, resource_prefix, tooling_account_id
         )
@@ -177,7 +192,7 @@ class ContainerStack(pyNestedClass):
         self.add_share_management_task()
         self.add_share_verifier_task()
         self.add_share_reapplier_task()
-        self.add_omics_fetch_workflows_task()
+        self.add_persistent_email_reminders_task()
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
@@ -250,7 +265,7 @@ class ContainerStack(pyNestedClass):
             environment=self._create_env('INFO'),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-verifier'),
-            schedule_expression=Schedule.expression('rate(7 days)'),
+            schedule_expression=Schedule.expression('rate(1 day)'),  # YAHOO ONLY CHANGE
             scheduled_task_id=f'{self._resource_prefix}-{self._envname}-share-verifier-schedule',
             task_id=f'{self._resource_prefix}-{self._envname}-share-verifier',
             task_role=self.task_role,
@@ -285,6 +300,31 @@ class ContainerStack(pyNestedClass):
             readonly_root_filesystem=True,
         )
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
+
+    @run_if(['modules.s3_datasets.features.share_notifications.email.persistent_reminders'])
+    def add_persistent_email_reminders_task(self):
+        persistent_email_reminders_task, persistent_email_reminders_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=[
+                'python3.9',
+                '-m',
+                'dataall.modules.shares_base.tasks.persistent_email_reminders_task',
+            ],
+            container_id='container',
+            ecr_repository=self._ecr_repository,
+            environment=self.env_vars,
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(self._envname, self._resource_prefix,
+                                            log_group_name='persistent-email-reminders'),
+            schedule_expression=Schedule.expression('cron(0 9 ? * 2 *)'),  # Run at 9:00 AM UTC every Monday
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-persistent-email-reminders-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-persistent-email-reminders',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(persistent_email_reminders_task.task_definition.family)
 
     @run_if(['modules.s3_datasets.active'])
     def add_subscription_task(self):
@@ -453,7 +493,8 @@ class ContainerStack(pyNestedClass):
         )
         return cicd_stacks_updater_role
 
-    def create_task_role(self, envname, resource_prefix, pivot_role_name):
+    def create_task_role(self, envname, resource_prefix, pivot_role_name, email_custom_domain=None,
+                         ses_configuration_set=None):
         role_inline_policy = iam.Policy(
             self,
             f'ECSRolePolicy{envname}',
@@ -542,6 +583,18 @@ class ContainerStack(pyNestedClass):
                 ),
             ],
         )
+
+        if email_custom_domain and ses_configuration_set:
+            role_inline_policy.document.add_statements(
+                iam.PolicyStatement(
+                    actions=['ses:SendEmail'],
+                    resources=[
+                        f'arn:aws:ses:{self.region}:{self.account}:identity/{email_custom_domain}',
+                        f'arn:aws:ses:{self.region}:{self.account}:configuration-set/{ses_configuration_set}',
+                    ],
+                )
+            )
+
         task_role = iam.Role(
             self,
             f'ECSTaskRole{envname}',
@@ -549,6 +602,7 @@ class ContainerStack(pyNestedClass):
             inline_policies={f'ECSRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         )
+
         task_role.grant_pass_role(task_role)
         return task_role
 
