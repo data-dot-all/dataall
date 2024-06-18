@@ -58,7 +58,7 @@ class ResourceLockRepository:
                 # Update the attributes of the ResourceLock object
                 for resource_lock in resource_locks:
                     resource_lock.isLocked = True
-                    resource_lock.acquiredBy = acquired_by_uri
+                    resource_lock.acquiredByUri = acquired_by_uri
                     resource_lock.acquiredByType = acquired_by_type
                 session.commit()
                 return True
@@ -106,7 +106,8 @@ class ResourceLockRepository:
 
             if resource_lock:
                 resource_lock.isLocked = False
-                resource_lock.acquiredBy = ''
+                resource_lock.acquiredByUri = ''
+                resource_lock.acquiredByType = ''
 
                 session.commit()
                 return True
