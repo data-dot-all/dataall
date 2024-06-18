@@ -212,6 +212,17 @@ class SharingService:
             log.info(f'Starting revoke {share_data.share.shareUri}')
             new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
             share_sm.update_state(session, share_data.share, new_share_state)
+
+            resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
+            resources.append(
+                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                if share_data.share.principalType == PrincipalType.ConsumptionRole.value
+                else (
+                    f'{share_data.share.principalId}-{share_data.share.environmentUri}',
+                    EnvironmentGroup.__tablename__,
+                )
+            )
+
             revoke_successful = True
             try:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
