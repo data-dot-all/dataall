@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
@@ -7,9 +6,7 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db import utils
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
@@ -20,7 +17,9 @@ from dataall.modules.shares_base.services.shares_enums import (
     PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import (
+    ShareObjectRepository,
+)  # TODO: REPOSITORY TO SHARES_BASE
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -38,8 +37,8 @@ from dataall.modules.shares_base.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
 )
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.base.aws.iam import IAM
 
 from dataall.base.utils import Parameter
@@ -54,40 +53,12 @@ log = logging.getLogger(__name__)
 
 class ShareObjectService:
     @staticmethod
-    def check_view_log_permissions(username, groups, shareUri):
-        with get_context().db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
-            ds = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
-
-    @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         log.info('Verifying principal IAM role...')
         role_name = share.principalIAMRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
         return principal_role is not None
-
-    @staticmethod
-    def update_all_share_items_status(  # TODO: moved to ShareObject #Test removed for the moment
-        session, shareUri, new_health_status: str, message, previous_health_status: str = None
-    ):
-        for item in ShareObjectRepository.get_all_shareable_items(
-            session, shareUri, healthStatus=previous_health_status
-        ):
-            ShareObjectRepository.update_share_item_health_status(
-                session,
-                share_item=item,
-                healthStatus=new_health_status,
-                healthMessage=message,
-                timestamp=datetime.now(),
-            )
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_ENVIRONMENT)
-    def get_share_object_in_environment(uri, shareUri):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_by_uri(session, shareUri)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -111,7 +82,7 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
@@ -189,14 +160,6 @@ class ShareObjectService:
                 item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
                 share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
 
-                s3_access_point_name = utils.slugify(
-                    share.datasetUri + '-' + share.principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern='[^a-zA-Z0-9-]',
-                    separator='-',
-                )
-
                 if not share_item and item:
                     new_share_item: ShareObjectItem = ShareObjectItem(
                         shareUri=share.shareUri,
@@ -270,7 +233,7 @@ class ShareObjectService:
                     action='Submit Share Object',
                     message='The request is empty of pending items. Add items to share request.',
                 )
-
+            # TODO: remove Quicksight specific table actions from here!
             env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
             dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
             if dashboard_enabled:
@@ -468,7 +431,7 @@ class ShareObjectService:
     @staticmethod
     def _get_share_data(session, uri):
         share = ShareObjectRepository.get_share_by_uri(session, uri)
-        dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
         return share, dataset, share_items_states
 
@@ -488,55 +451,3 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
-
-    @staticmethod
-    def get_share_logs_name_query(shareUri):
-        log.info(f'Get share Logs stream name for share {shareUri}')
-
-        query = f"""fields @logStream
-                        |filter  @message like '{shareUri}'
-                        | sort @timestamp desc
-                        | limit 1
-                    """
-        return query
-
-    @staticmethod
-    def get_share_logs_query(log_stream_name):
-        query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
-                    | sort @timestamp asc
-                    | filter @logStream like "{log_stream_name}"
-                    """
-        return query
-
-    @staticmethod
-    def get_share_logs(shareUri):
-        context = get_context()
-        if not ShareObjectService.check_view_log_permissions(context.username, context.groups, shareUri):
-            raise exceptions.ResourceUnauthorized(
-                username=context.username,
-                action='View Share Logs',
-                resource_uri=shareUri,
-            )
-
-        envname = os.getenv('envname', 'local')
-        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
-
-        query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
-        name_query_result = CloudWatch.run_query(
-            query=query_for_name,
-            log_group_name=log_group_name,
-            days=1,
-        )
-        if len(name_query_result) == 0:
-            return []
-
-        name = name_query_result[0]['logStream']
-
-        query = ShareObjectService.get_share_logs_query(log_stream_name=name)
-        results = CloudWatch.run_query(
-            query=query,
-            log_group_name=log_group_name,
-            days=1,
-        )
-        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
-        return results

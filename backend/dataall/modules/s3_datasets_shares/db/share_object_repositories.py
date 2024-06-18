@@ -53,7 +53,7 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
-    def find_share(session, dataset: S3Dataset, env, principal_id, group_uri) -> ShareObject:
+    def find_share(session, dataset: DatasetBase, env, principal_id, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)
             .filter(
