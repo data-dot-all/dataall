@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from .input_types import OrganizationFilter
-from .resolvers import get_organization, list_organization_groups, list_organizations, list_group_organizaton_perissions
+from .resolvers import get_organization, list_organization_groups, list_organizations, list_group_organization_permissions
 from .types import (
     Organization,
     OrganizationSearchResult,
@@ -39,5 +39,5 @@ listOrganizationGroupPermissions = gql.QueryField(
         gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
     ],
-    resolver=list_group_organizaton_perissions,
+    resolver=list_group_organization_permissions,
 )

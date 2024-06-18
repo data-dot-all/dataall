@@ -45,7 +45,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
     )
     mocker.patch(
-        'dataall.core.organizations.db.organization_repositories.OrganizationRepository.is_group_invited',
+        'dataall.core.organizations.db.organization_repositories.OrganizationRepository.find_group_membership',
         return_value=True,
     )
     response = client.query(

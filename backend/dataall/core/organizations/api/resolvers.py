@@ -91,5 +91,5 @@ def resolve_organization_by_env(context, source, **kwargs):
     return OrganizationService.resolve_organization_by_env(uri=source.environmentUri)
 
 
-def list_group_organizaton_perissions(context, source, organizationUri, groupUri):
-    return OrganizationService.list_group_organizaton_perissions(organizationUri, groupUri)
+def list_group_organization_permissions(context, source, organizationUri, groupUri):
+    return OrganizationService.list_group_organization_permissions(organizationUri, groupUri)

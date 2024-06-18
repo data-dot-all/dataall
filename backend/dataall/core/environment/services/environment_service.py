@@ -126,7 +126,7 @@ class EnvironmentRequestValidationService:
 
     @staticmethod
     def validate_org_group(org_uri, group, session):
-        if not OrganizationRepository.is_group_invited(session, org_uri, group):
+        if OrganizationRepository.find_group_membership(session, [group], org_uri) is None:
             raise Exception(
                 f'Group {group} is not a member of the organization {org_uri}. '
                 f'Invite this group to the organisation before giving it access to the environment.'

@@ -146,8 +146,8 @@ class OrganizationService:
             return OrganisationUserRole.Admin.value
         else:
             with context.db_engine.scoped_session() as session:
-                if OrganizationRepository.find_organization_membership(
-                    session=session, uri=organization.organizationUri, groups=context.groups
+                if OrganizationRepository.find_group_membership(
+                    session=session, organization=organization.organizationUri, groups=context.groups
                 ):
                     return OrganisationUserRole.Invited.value
         return OrganisationUserRole.NotMember.value
@@ -187,7 +187,7 @@ class OrganizationService:
 
             organization = OrganizationRepository.get_organization_by_uri(session, uri)
 
-            group_membership = OrganizationRepository.find_group_membership(session, group, organization)
+            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
             if group_membership:
                 raise exceptions.UnauthorizedOperation(
                     action='INVITE_TEAM',
@@ -223,8 +223,8 @@ class OrganizationService:
 
             organization = OrganizationRepository.get_organization_by_uri(session, uri)
 
-            group_membership = OrganizationRepository.find_group_membership(session, group, organization)
-            if not group_membership:
+            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
+            if group_membership is None:
                 raise exceptions.UnauthorizedOperation(
                     action='UPDATE_TEAM',
                     message=f'Team {group} is not invited into the organization {organization.name}',
@@ -266,7 +266,7 @@ class OrganizationService:
                     message=f'Team: {group} has {group_env_objects_count} linked environments on this environment.',
                 )
 
-            group_membership = OrganizationRepository.find_group_membership(session, group, organization)
+            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
             if group_membership:
                 session.delete(group_membership)
                 session.commit()
@@ -297,10 +297,12 @@ class OrganizationService:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
             return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
 
+
     @staticmethod
-    def list_group_organizaton_perissions(organizationUri, groupUri):
+    @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
+    def list_group_organization_permissions(uri, groupUri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return ResourcePolicyService.get_resource_policy_permissions(
-                session=session, group_uri=groupUri, resource_uri=organizationUri
+                session=session, group_uri=groupUri, resource_uri=uri
             )
