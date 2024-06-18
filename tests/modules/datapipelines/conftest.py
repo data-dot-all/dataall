@@ -11,7 +11,7 @@ def env_params(env, org_fixture, user, group, tenant):
 def pipeline(client, tenant, group, env_fixture):
     response = client.query(
         """
-        mutation createDataPipeline ($input:NewDataPipelineInput){
+        mutation createDataPipeline ($input:NewDataPipelineInput!){
             createDataPipeline(input:$input){
                 DataPipelineUri
                 label

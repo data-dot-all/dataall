@@ -68,7 +68,7 @@ def dataset(client, patch_es, patch_dataset_methods):
             return cache.get(key)
         response = client.query(
             """
-            mutation CreateDataset($input:NewDatasetInput){
+            mutation CreateDataset($input:NewDatasetInput!){
                 createDataset(
                 input:$input
                 ){

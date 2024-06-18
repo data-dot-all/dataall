@@ -17,7 +17,7 @@ def second_environment(env, org_fixture, group):
     )
 
 
-def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, module_mocker, env_fixture, env_params):
+def test_omics_workflow_fetcher_new_workflows_single_environment(db: Engine, module_mocker, env_fixture):
     """Checks that new workflows are added to the RDS database"""
 
     # Given one environment and 2 READY2RUN workflows returned from that account

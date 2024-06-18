@@ -1,5 +1,5 @@
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+from dataall.core.resource_lock.db.resource_lock_models import ResourceLock
 from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 
@@ -61,7 +61,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput){
+        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput!){
             inviteGroupOnEnvironment(input:$input){
                 environmentUri
             }
@@ -81,7 +81,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        query getGroup($groupUri:String!, $environmentUri:String){
+        query getGroup($groupUri:String!, $environmentUri:String!){
             getGroup(groupUri:$groupUri){
                 environmentPermissions(environmentUri:$environmentUri){
                  name
@@ -117,7 +117,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
+        dataset_lock = session.query(ResourceLock).filter(ResourceLock.resourceUri == dataset.datasetUri).first()
         session.delete(dataset_lock)
         dataset = session.query(S3Dataset).get(dataset.datasetUri)
         session.delete(dataset)

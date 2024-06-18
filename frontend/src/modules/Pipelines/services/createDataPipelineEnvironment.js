@@ -6,7 +6,7 @@ export const createDataPipelineEnvironment = ({ input }) => ({
   },
   mutation: gql`
     mutation createDataPipelineEnvironment(
-      $input: NewDataPipelineEnvironmentInput
+      $input: NewDataPipelineEnvironmentInput!
     ) {
       createDataPipelineEnvironment(input: $input) {
         envPipelineUri

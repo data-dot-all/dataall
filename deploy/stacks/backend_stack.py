@@ -47,7 +47,6 @@ class BackendStack(Stack):
         ip_ranges=None,
         apig_vpce=None,
         prod_sizing=False,
-        quicksight_enabled=False,
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
@@ -92,7 +91,6 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             custom_domain=custom_domain,
             enable_cw_canaries=enable_cw_canaries,
-            quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             pivot_role_name=self.pivot_role_name,
@@ -224,80 +222,9 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        if quicksight_enabled:
-            pivot_role_in_account = iam.Role(
-                self,
-                id='PivotRoleLimited',
-                role_name='dataallPivotRole',
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('lambda.amazonaws.com'),
-                    iam.AccountPrincipal(self.account),
-                ),
-            )
-
-            pivot_role_in_account_policies = [
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=['ssm:GetParametersByPath', 'ssm:GetParameters', 'ssm:GetParameter', 'ssm:PutParameter'],
-                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*'],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
-                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*'],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ssm:DescribeParameters',
-                        'quicksight:GetSessionEmbedUrl',
-                        'quicksight:ListUserGroups',
-                        'secretsmanager:ListSecrets',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'quicksight:RegisterUser',
-                        'quicksight:DescribeUser',
-                        'quicksight:DescribeGroup',
-                        'quicksight:CreateGroup',
-                        'quicksight:CreateGroupMembership',
-                        'quicksight:UpdateUser',
-                        'quicksight:CreateDataSource',
-                        'quicksight:DescribeDataSource',
-                        'quicksight:PassDataSource',
-                        'quicksight:GetDashboardEmbedUrl',
-                        'quicksight:DescribeDashboardPermissions',
-                        'quicksight:SearchDashboards',
-                        'quicksight:GetAuthCode',
-                        'quicksight:CreateDataSet',
-                    ],
-                    resources=[
-                        f'arn:aws:quicksight:*:{self.account}:user/*',
-                        f'arn:aws:quicksight:*:{self.account}:group/*',
-                        f'arn:aws:quicksight:*:{self.account}:datasource/*',
-                        f'arn:aws:quicksight:*:{self.account}:dashboard/*',
-                        f'arn:aws:quicksight:*:{self.account}:dataset/*',
-                    ],
-                ),
-            ]
-
-            for policy in pivot_role_in_account_policies:
-                pivot_role_in_account.add_to_policy(policy)
-
-            quicksight_monitoring_sg = ec2.SecurityGroup(
-                self,
-                f'QuicksightMonitoringDBSG{envname}',
-                security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
-                vpc=vpc,
-                allow_all_outbound=False,
-                disable_inline_rules=True,
-            )
-
-        else:
-            quicksight_monitoring_sg = None
+        quicksight_monitoring_sg = self.create_quicksight_role_sg_group(
+            envname=envname, resource_prefix=resource_prefix, vpc=vpc
+        )
 
         aurora_stack = AuroraServerlessStack(
             self,
@@ -403,6 +330,7 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[db_migrations.trigger_function],
             connectables=[aurora_stack.cluster],
+            env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
 
@@ -468,6 +396,80 @@ class BackendStack(Stack):
                 cw_alarm_action=self.monitoring_stack.cw_alarm_action,
                 internet_facing=internet_facing,
             )
+
+    @run_if(['core.features.enable_quicksight_monitoring'])
+    def create_quicksight_role_sg_group(self, envname, resource_prefix, vpc):
+        pivot_role_in_account = iam.Role(
+            self,
+            id='PivotRoleLimited',
+            role_name='dataallPivotRole',
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal('lambda.amazonaws.com'),
+                iam.AccountPrincipal(self.account),
+            ),
+        )
+
+        pivot_role_in_account_policies = [
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=['ssm:GetParametersByPath', 'ssm:GetParameters', 'ssm:GetParameter', 'ssm:PutParameter'],
+                resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*'],
+            ),
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
+                resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*'],
+            ),
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'ssm:DescribeParameters',
+                    'quicksight:GetSessionEmbedUrl',
+                    'quicksight:ListUserGroups',
+                    'secretsmanager:ListSecrets',
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'quicksight:RegisterUser',
+                    'quicksight:DescribeUser',
+                    'quicksight:DescribeGroup',
+                    'quicksight:CreateGroup',
+                    'quicksight:CreateGroupMembership',
+                    'quicksight:UpdateUser',
+                    'quicksight:CreateDataSource',
+                    'quicksight:DescribeDataSource',
+                    'quicksight:PassDataSource',
+                    'quicksight:GetDashboardEmbedUrl',
+                    'quicksight:DescribeDashboardPermissions',
+                    'quicksight:SearchDashboards',
+                    'quicksight:GetAuthCode',
+                    'quicksight:CreateDataSet',
+                ],
+                resources=[
+                    f'arn:aws:quicksight:*:{self.account}:user/*',
+                    f'arn:aws:quicksight:*:{self.account}:group/*',
+                    f'arn:aws:quicksight:*:{self.account}:datasource/*',
+                    f'arn:aws:quicksight:*:{self.account}:dashboard/*',
+                    f'arn:aws:quicksight:*:{self.account}:dataset/*',
+                ],
+            ),
+        ]
+
+        for policy in pivot_role_in_account_policies:
+            pivot_role_in_account.add_to_policy(policy)
+
+        quicksight_monitoring_sg = ec2.SecurityGroup(
+            self,
+            f'QuicksightMonitoringDBSG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+            disable_inline_rules=True,
+        )
+        return quicksight_monitoring_sg
 
     @run_if(['modules.datasets_base.features.share_notifications.email.active'])
     def create_ses_stack(self, custom_domain, envname, kwargs, resource_prefix):

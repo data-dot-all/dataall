@@ -8,7 +8,8 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock, DatasetBase
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.core.resource_lock.db.resource_lock_models import ResourceLock
 from tests.core.stacks.test_stack import update_stack_query
 
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
@@ -350,7 +351,7 @@ def test_dataset_in_environment(client, env_fixture, dataset1, group):
 def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mocker, group, user):
     # Delete any Dataset before effectuating the test
     with db.scoped_session() as session:
-        session.query(DatasetLock).delete()
+        session.query(ResourceLock).delete()
         session.query(S3Dataset).delete()
         session.query(DatasetBase).delete()
         session.commit()
@@ -486,7 +487,7 @@ def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
 def test_stewardship(client, dataset, env_fixture, org_fixture, db, group2, group, user, patch_es):
     response = client.query(
         """
-        mutation CreateDataset($input:NewDatasetInput){
+        mutation CreateDataset($input:NewDatasetInput!){
             createDataset(
             input:$input
             ){

@@ -1,11 +1,13 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from sqlalchemy import and_
 from time import sleep
+
+from sqlalchemy.orm import Session
+from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -16,17 +18,15 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareItemStatus,
     ShareableType,
+    PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.services.share_object_service import (
     ShareObjectService,
 )  # TODO move to shares_base in following PR
-from dataall.modules.shares_base.services.share_exceptions import (
-    PrincipalRoleNotFound,
-    DatasetLockTimeout,
-)
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock
+from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
+from dataall.base.db.exceptions import ResourceLockTimeout
 
 log = logging.getLogger(__name__)
 
@@ -106,6 +106,17 @@ class SharingService:
             log.info(f'Starting share {share_data.share.shareUri}')
             new_share_state = share_object_sm.run_transition(ShareObjectActions.Start.value)
             share_object_sm.update_state(session, share_data.share, new_share_state)
+
+            resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
+            resources.append(
+                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                if share_data.share.principalType == PrincipalType.ConsumptionRole.value
+                else (
+                    f'{share_data.share.principalId}-{share_data.share.environmentUri}',
+                    EnvironmentGroup.__tablename__,
+                )
+            )
+
             share_successful = True
             try:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
@@ -113,8 +124,11 @@ class SharingService:
                         'process approved shares',
                         f'Principal role {share_data.share.principalIAMRoleName} is not found.',
                     )
-                if not cls.acquire_lock_with_retry(share_data.dataset.datasetUri, session, share_data.share.shareUri):
-                    raise DatasetLockTimeout(
+
+                if not cls.acquire_lock_with_retry(
+                    resources, session, share_data.share.shareUri, share_data.share.__tablename__
+                ):
+                    raise ResourceLockTimeout(
                         'process approved shares',
                         f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
                     )
@@ -160,9 +174,13 @@ class SharingService:
             finally:
                 new_share_state = share_object_sm.run_transition(ShareObjectActions.Finish.value)
                 share_object_sm.update_state(session, share_data.share, new_share_state)
-                lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
-                if not lock_released:
-                    log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+                for resource in resources:
+                    if not ResourceLockRepository.release_lock(
+                        session, resource[0], resource[1], share_data.share.shareUri
+                    ):
+                        log.error(
+                            f'Failed to release lock for resource: resource_uri={resource[0]}, resource_type={resource[1]}'
+                        )
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str) -> bool:
@@ -194,14 +212,29 @@ class SharingService:
             log.info(f'Starting revoke {share_data.share.shareUri}')
             new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
             share_sm.update_state(session, share_data.share, new_share_state)
+
+            resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
+            resources.append(
+                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                if share_data.share.principalType == PrincipalType.ConsumptionRole.value
+                else (
+                    f'{share_data.share.principalId}-{share_data.share.environmentUri}',
+                    EnvironmentGroup.__tablename__,
+                )
+            )
+
+            revoke_successful = True
             try:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(
                         'process revoked shares',
                         f'Principal role {share_data.share.principalIAMRoleName} is not found.',
                     )
-                if not cls.acquire_lock_with_retry(share_data.dataset.datasetUri, session, share_data.share.shareUri):
-                    raise DatasetLockTimeout(
+
+                if not cls.acquire_lock_with_retry(
+                    resources, session, share_data.share.shareUri, share_data.share.__tablename__
+                ):
+                    raise ResourceLockTimeout(
                         'process revoked shares',
                         f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
                     )
@@ -253,9 +286,13 @@ class SharingService:
                     new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share_data.share, new_share_state)
 
-                lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
-                if not lock_released:
-                    log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+                for resource in resources:
+                    if not ResourceLockRepository.release_lock(
+                        session, resource[0], resource[1], share_data.share.shareUri
+                    ):
+                        log.error(
+                            f'Failed to release lock for resource: resource_uri={resource[0]}, resource_type={resource[1]}'
+                        )
 
     @classmethod
     def verify_share(
@@ -333,6 +370,16 @@ class SharingService:
             share_data, share_items = cls._get_share_data_and_items(
                 session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
             )
+            resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
+            resources.append(
+                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                if share_data.share.principalType == PrincipalType.ConsumptionRole.value
+                else (
+                    f'{share_data.share.principalId}-{share_data.share.environmentUri}',
+                    EnvironmentGroup.__tablename__,
+                )
+            )
+
             try:
                 log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
                 reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
@@ -341,8 +388,9 @@ class SharingService:
                     return False
                 else:
                     lock_acquired = cls.acquire_lock_with_retry(
-                        share_data.dataset.datasetUri, session, share_data.share.shareUri
+                        resources, session, share_data.share.shareUri, share_data.share.__tablename__
                     )
+
                     if not lock_acquired:
                         log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}, exiting...')
                         error_message = f'SHARING PROCESS TIMEOUT: Failed to acquire lock for dataset {share_data.dataset.datasetUri}'
@@ -382,9 +430,13 @@ class SharingService:
 
             finally:
                 with engine.scoped_session() as session:
-                    lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
-                    if not lock_released:
-                        log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+                    for resource in resources:
+                        if not ResourceLockRepository.release_lock(
+                            session, resource[0], resource[1], share_data.share.shareUri
+                        ):
+                            log.error(
+                                f'Failed to release lock for resource: resource_uri={resource[0]}, resource_type={resource[1]}'
+                            )
 
     @staticmethod
     def _get_share_data_and_items(session, share_uri, status, healthStatus=None):
@@ -403,103 +455,26 @@ class SharingService:
         return share_data, share_items
 
     @staticmethod
-    def acquire_lock(dataset_uri, session, share_uri):
-        """
-        Attempts to acquire a lock on the dataset identified by dataset_id.
-
-        Args:
-            dataset_uri: The ID of the dataset for which the lock is being acquired.
-            session (sqlalchemy.orm.Session): The SQLAlchemy session object used for interacting with the database.
-            share_uri: The ID of the share that is attempting to acquire the lock.
-
-        Returns:
-            bool: True if the lock is successfully acquired, False otherwise.
-        """
-        try:
-            # Execute the query to get the DatasetLock object
-            dataset_lock = (
-                session.query(DatasetLock)
-                .filter(and_(DatasetLock.datasetUri == dataset_uri, ~DatasetLock.isLocked))
-                .with_for_update()
-                .first()
-            )
-
-            # Check if dataset_lock is not None before attempting to update
-            if dataset_lock:
-                # Update the attributes of the DatasetLock object
-                dataset_lock.isLocked = True
-                dataset_lock.acquiredBy = share_uri
-
-                session.commit()
-                return True
-            else:
-                log.info('DatasetLock not found for the given criteria.')
-                return False
-        except Exception as e:
-            session.expunge_all()
-            session.rollback()
-            log.error('Error occurred while acquiring lock:', e)
-            return False
-
-    @staticmethod
-    def acquire_lock_with_retry(dataset_uri, session, share_uri):
+    def acquire_lock_with_retry(
+        resources: List[Tuple[str, str]], session: Session, acquired_by_uri: str, acquired_by_type: str
+    ):
         for attempt in range(MAX_RETRIES):
             try:
-                log.info(f'Attempting to acquire lock for dataset {dataset_uri} by share {share_uri}...')
-                lock_acquired = SharingService.acquire_lock(dataset_uri, session, share_uri)
+                log.info(f'Attempting to acquire lock for resources {resources} by share {acquired_by_uri}...')
+                lock_acquired = ResourceLockRepository.acquire_locks(
+                    resources, session, acquired_by_uri, acquired_by_type
+                )
                 if lock_acquired:
                     return True
 
-                log.info(f'Lock for dataset {dataset_uri} already acquired. Retrying in {RETRY_INTERVAL} seconds...')
+                log.info(
+                    f'Lock for one or more resources {resources} already acquired. Retrying in {RETRY_INTERVAL} seconds...'
+                )
                 sleep(RETRY_INTERVAL)
 
             except Exception as e:
                 log.error('Error occurred while retrying acquiring lock:', e)
                 return False
 
-        log.info(f'Max retries reached. Failed to acquire lock for dataset {dataset_uri}')
+        log.info(f'Max retries reached. Failed to acquire lock for one or more resources {resources}')
         return False
-
-    @staticmethod
-    def release_lock(dataset_uri, session, share_uri):
-        """
-        Releases the lock on the dataset identified by dataset_uri.
-
-        Args:
-            dataset_uri: The ID of the dataset for which the lock is being released.
-            session (sqlalchemy.orm.Session): The SQLAlchemy session object used for interacting with the database.
-            share_uri: The ID of the share that is attempting to release the lock.
-
-        Returns:
-            bool: True if the lock is successfully released, False otherwise.
-        """
-        try:
-            log.info(f'Releasing lock for dataset: {dataset_uri} last acquired by share: {share_uri}')
-            dataset_lock = (
-                session.query(DatasetLock)
-                .filter(
-                    and_(
-                        DatasetLock.datasetUri == dataset_uri,
-                        DatasetLock.isLocked == True,
-                        DatasetLock.acquiredBy == share_uri,
-                    )
-                )
-                .with_for_update()
-                .first()
-            )
-
-            if dataset_lock:
-                dataset_lock.isLocked = False
-                dataset_lock.acquiredBy = ''
-
-                session.commit()
-                return True
-            else:
-                log.info('DatasetLock not found for the given criteria.')
-                return False
-
-        except Exception as e:
-            session.expunge_all()
-            session.rollback()
-            log.error('Error occurred while releasing lock:', e)
-            return False
