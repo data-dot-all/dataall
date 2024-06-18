@@ -309,7 +309,9 @@ export const RequestAccessModal = (props) => {
                   '*Environment is required'
                 ),
                 groupUri: Yup.string().required('*Team is required'),
-                consumptionRole: Yup.object(),
+                consumptionRole: Yup.object().shape({
+                  value: Yup.object().required('*Invalid consumption role')
+                }),
                 comment: Yup.string().max(5000)
               })}
               onSubmit={async (
