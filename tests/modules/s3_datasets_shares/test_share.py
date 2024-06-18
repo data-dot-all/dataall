@@ -399,7 +399,7 @@ def create_share_object(
         $datasetUri: String!
         $itemType: String
         $itemUri: String
-        $input: NewShareObjectInput
+        $input: NewShareObjectInput!
       ) {
         createShareObject(
           datasetUri: $datasetUri
@@ -813,10 +813,7 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
                     datasetUri
                     datasetName
                     itemType
-                    itemAccess
-                    GlueDatabaseName
-                    GlueTableName
-                    S3AccessPointName
+                    itemName
                     created
                     principalId
                 }

@@ -13,7 +13,7 @@ export const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
         $datasetUri: String!
         $itemType: String
         $itemUri: String
-        $input: NewShareObjectInput
+        $input: NewShareObjectInput!
       ) {
         createShareObject(
           datasetUri: $datasetUri
@@ -23,6 +23,7 @@ export const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
         ) {
           shareUri
           created
+          alreadyExisted
         }
       }
     `

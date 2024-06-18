@@ -69,7 +69,7 @@ def update_organization(client, organizationUri):
             'organizationUri': organizationUri,
             'input': {'label': 'newlabel'},
         },
-        'query': """ mutation UpdateOrg($organizationUri:String!,$input:ModifyOrganizationInput){
+        'query': """ mutation UpdateOrg($organizationUri:String!,$input:ModifyOrganizationInput!){
                  updateOrganization(organizationUri:$organizationUri,input:$input){
                     label
                     owner
@@ -86,7 +86,7 @@ def invite_team_to_organization(client, organizationUri, group):
     query = {
         'operationName': 'inviteGroupToOrganization',
         'variables': {'input': {'organizationUri': organizationUri, 'groupUri': group}},
-        'query': """mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
+        'query': """mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput!){
             inviteGroupToOrganization(input:$input){
                 organizationUri
             }
