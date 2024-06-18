@@ -27,7 +27,7 @@ def test_create_organization_with_unauthorized_team(client_noTenantPermissions, 
         client_noTenantPermissions,
         'organization2',
         group4,
-    )
+    ).contains('UnauthorizedOperation', 'MANAGE_ORGANIZATIONS')
 
 
 def test_get_organization_organization_with_admin_team(client1, org1):
@@ -182,6 +182,5 @@ def test_archive_organization_organization_with_unauthorized_team(client3, org1)
         'DELETE_ORGANIZATION',
         org1.organizationUri,
     )
-
 
 # TODO: list_organization_environments as part of environment tests
