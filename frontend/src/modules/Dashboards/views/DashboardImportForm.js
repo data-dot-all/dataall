@@ -13,7 +13,6 @@ import {
   FormHelperText,
   Grid,
   Link,
-  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
@@ -395,38 +394,44 @@ const DashboardImportForm = (props) => {
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
+                          <Autocomplete
+                            id="environment"
+                            disablePortal
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
                               setFieldValue('SamlGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
+                              if (value && value.environmentUri) {
+                                setFieldValue('environment', value);
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('environment', '');
+                                setGroupOptions([]);
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                value={values.environment}
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           <TextField
@@ -435,7 +440,7 @@ const DashboardImportForm = (props) => {
                             label="Region"
                             name="region"
                             value={
-                              values.environment
+                              values.environment && values.environment.region
                                 ? values.environment.region
                                 : ''
                             }
@@ -449,7 +454,8 @@ const DashboardImportForm = (props) => {
                             label="Organization"
                             name="organization"
                             value={
-                              values.environment
+                              values.environment &&
+                              values.environment.organization
                                 ? values.environment.organization.label
                                 : ''
                             }
@@ -457,27 +463,27 @@ const DashboardImportForm = (props) => {
                           />
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
-                            )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            label="Team"
-                            name="SamlGroupName"
+                          <Autocomplete
+                            id="SamlGroupName"
+                            disablePortal
+                            options={groupOptions.map((option) => option)}
                             onChange={handleChange}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.SamlGroupName && errors.SamlGroupName
+                                )}
+                                helperText={
+                                  touched.SamlGroupName && errors.SamlGroupName
+                                }
+                                label="Team"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                       </Card>
                       {errors.submit && (
