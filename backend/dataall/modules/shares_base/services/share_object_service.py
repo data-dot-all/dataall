@@ -26,7 +26,6 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService  # TODO
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
