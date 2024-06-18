@@ -6,6 +6,7 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
@@ -112,29 +113,32 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            share_policy_service = SharePolicyService(  # TODO remove S3 specific logic from here
-                account=environment.AwsAccountId,
-                region=environment.region,
+            share_policy_manager = PolicyManager(
                 role_name=principal_iam_role_name,
                 environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                region=environment.region,
                 resource_prefix=environment.resourcePrefix,
             )
-            # Backwards compatibility
-            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-            # We create the policy from the inline statements
-            # In this case it could also happen that the role is the Admin of the environment
-            if not share_policy_service.check_if_policy_exists():
-                share_policy_service.create_managed_policy_from_inline_and_delete_inline()
-            # End of backwards compatibility
+            for Policy in [
+                Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+            ]:
+                # Backwards compatibility
+                # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+                # We create the policy from the inline statements
+                # In this case it could also happen that the role is the Admin of the environment
+                if not Policy.check_if_policy_exists():
+                    Policy.create_managed_policy_from_inline_and_delete_inline()
+                # End of backwards compatibility
 
-            attached = share_policy_service.check_if_policy_attached()
-            if not attached and not managed and not attachMissingPolicies:
-                raise Exception(
-                    f'Required customer managed policy {share_policy_service.generate_policy_name()} is not attached to role {principal_iam_role_name}'
-                )
-            elif not attached:
-                share_policy_service.attach_policy()
-            ## TODO end of block
+                attached = Policy.check_if_policy_attached()
+                if not attached and not managed and not attachMissingPolicies:
+                    raise Exception(
+                        f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_iam_role_name}'
+                    )
+                elif not attached:
+                    Policy.attach_policy()
+
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             already_existed = share is not None
             if not share:

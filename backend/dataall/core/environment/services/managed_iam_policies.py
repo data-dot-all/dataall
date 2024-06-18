@@ -42,6 +42,14 @@ class ManagedPolicy(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def create_managed_policy_from_inline_and_delete_inline(self) -> str:
+        """
+        Returns policy arn and needs to be implemented in the ManagedPolicies inherited classes
+        It is used for backwards compatibility. It should be deprecated and removed in future releases.
+        """
+        raise NotImplementedError
+
     def check_if_policy_exists(self) -> bool:
         policy_name = self.generate_policy_name()
         share_policy = IAM.get_managed_policy_by_name(self.account, self.region, policy_name)
