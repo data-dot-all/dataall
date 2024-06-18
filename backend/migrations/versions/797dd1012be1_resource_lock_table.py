@@ -15,7 +15,7 @@ from dataall.base.db import utils
 
 # revision identifiers, used by Alembic.
 revision = '797dd1012be1'
-down_revision = '6adce90ab470'
+down_revision = 'f2f7431c34e5'
 branch_labels = None
 depends_on = None
 
