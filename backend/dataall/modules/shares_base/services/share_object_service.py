@@ -26,7 +26,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService #TODO
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
@@ -40,11 +40,6 @@ from dataall.modules.shares_base.services.share_permissions import (
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.base.aws.iam import IAM
-
-from dataall.base.utils import Parameter
-from dataall.base.db import exceptions
-from dataall.core.stacks.aws.cloudwatch import CloudWatch
-
 
 import logging
 
@@ -118,7 +113,7 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            share_policy_service = SharePolicyService(
+            share_policy_service = SharePolicyService( #TODO remove S3 specific logic from here
                 account=environment.AwsAccountId,
                 region=environment.region,
                 role_name=principal_iam_role_name,
@@ -140,6 +135,7 @@ class ShareObjectService:
                 )
             elif not attached:
                 share_policy_service.attach_policy()
+            ## TODO end of block
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             already_existed = share is not None
             if not share:
@@ -242,6 +238,7 @@ class ShareObjectService:
                     QuicksightClient.check_quicksight_enterprise_subscription(
                         AwsAccountId=env.AwsAccountId, region=env.region
                     )
+            ## TODO end of block
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 
