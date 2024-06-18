@@ -203,7 +203,7 @@ def test_get_omics_workflow(client, user, group, workflow1):
 
 def test_delete_omics_run_does_not_exist(client, user, group, run1):
     query = """
-    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+    mutation deleteOmicsRun($input: OmicsDeleteInput!) {
       deleteOmicsRun(input: $input)
     }
     """
@@ -224,7 +224,7 @@ def test_delete_omics_run_does_not_exist(client, user, group, run1):
 
 def test_nopermissions_delete_omics_run(client, user2, group2, run1):
     query = """
-    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+    mutation deleteOmicsRun($input: OmicsDeleteInput!) {
       deleteOmicsRun(input: $input)
     }
     """
@@ -245,7 +245,7 @@ def test_nopermissions_delete_omics_run(client, user2, group2, run1):
 
 def test_delete_omics_run(client, user, group, run1):
     query = """
-        mutation deleteOmicsRun($input: OmicsDeleteInput) {
+        mutation deleteOmicsRun($input: OmicsDeleteInput!) {
           deleteOmicsRun(input: $input)
         }
         """

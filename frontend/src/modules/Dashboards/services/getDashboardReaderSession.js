@@ -5,7 +5,7 @@ export const getReaderSession = (dashboardUri) => ({
     dashboardUri
   },
   query: gql`
-    query GetReaderSession($dashboardUri: String) {
+    query GetReaderSession($dashboardUri: String!) {
       getReaderSession(dashboardUri: $dashboardUri)
     }
   `
