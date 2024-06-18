@@ -8,7 +8,7 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
   query: gql`
     query SearchEnvironmentDataItems(
       $filter: EnvironmentDataItemFilter
-      $environmentUri: String
+      $environmentUri: String!
     ) {
       searchEnvironmentDataItems(
         environmentUri: $environmentUri

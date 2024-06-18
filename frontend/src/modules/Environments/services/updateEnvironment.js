@@ -8,7 +8,7 @@ export const updateEnvironment = ({ environmentUri, input }) => ({
   mutation: gql`
     mutation UpdateEnvironment(
       $environmentUri: String!
-      $input: ModifyEnvironmentInput
+      $input: ModifyEnvironmentInput!
     ) {
       updateEnvironment(environmentUri: $environmentUri, input: $input) {
         environmentUri

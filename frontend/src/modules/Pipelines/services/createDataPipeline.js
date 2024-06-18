@@ -5,7 +5,7 @@ export const createDataPipeline = ({ input }) => ({
     input
   },
   mutation: gql`
-    mutation CreateDataPipeline($input: NewDataPipelineInput) {
+    mutation CreateDataPipeline($input: NewDataPipelineInput!) {
       createDataPipeline(input: $input) {
         DataPipelineUri
         name

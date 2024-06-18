@@ -134,11 +134,6 @@ class DatasetSharingService(DatasetServiceInterface):
         return True
 
     @staticmethod
-    def list_dataset_share_objects(dataset: S3Dataset, data: dict = None):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.paginated_dataset_shares(session=session, uri=dataset.datasetUri, data=data)
-
-    @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:

@@ -637,7 +637,6 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
-                quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
                 enable_cw_rum=target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None,
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False)
                 and target_env.get('custom_auth', None) is None,

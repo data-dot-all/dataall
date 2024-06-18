@@ -34,13 +34,6 @@ export const listEnvironments = ({ filter }) => ({
             stack
             status
             stackUri
-            targetUri
-            accountid
-            region
-            stackid
-            link
-            outputs
-            resources
           }
           organization {
             organizationUri

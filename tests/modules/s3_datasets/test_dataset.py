@@ -487,7 +487,7 @@ def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
 def test_stewardship(client, dataset, env_fixture, org_fixture, db, group2, group, user, patch_es):
     response = client.query(
         """
-        mutation CreateDataset($input:NewDatasetInput){
+        mutation CreateDataset($input:NewDatasetInput!){
             createDataset(
             input:$input
             ){
