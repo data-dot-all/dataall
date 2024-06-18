@@ -7,7 +7,6 @@ from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
@@ -26,7 +25,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService #TODO
+from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService  # TODO
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
@@ -113,7 +112,7 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            share_policy_service = SharePolicyService( #TODO remove S3 specific logic from here
+            share_policy_service = SharePolicyService(  # TODO remove S3 specific logic from here
                 account=environment.AwsAccountId,
                 region=environment.region,
                 role_name=principal_iam_role_name,
@@ -229,16 +228,6 @@ class ShareObjectService:
                     action='Submit Share Object',
                     message='The request is empty of pending items. Add items to share request.',
                 )
-            # TODO: remove Quicksight specific table actions from here!
-            env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
-            if dashboard_enabled:
-                share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
-                if share_table_items:
-                    QuicksightClient.check_quicksight_enterprise_subscription(
-                        AwsAccountId=env.AwsAccountId, region=env.region
-                    )
-            ## TODO end of block
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 

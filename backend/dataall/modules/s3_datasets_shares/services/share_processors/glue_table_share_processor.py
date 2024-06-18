@@ -2,6 +2,8 @@ import logging
 from typing import List
 from warnings import warn
 from datetime import datetime
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.aws.quicksight import QuicksightClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -77,6 +79,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 ]:
                     raise Exception(
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                    )
+                env = EnvironmentService.get_environment_by_uri(self.session, self.share_data.share.environmentUri)
+                if EnvironmentService.get_boolean_env_param(self.session, env, 'dashboardsEnabled'):
+                    QuicksightClient.check_quicksight_enterprise_subscription(
+                        AwsAccountId=env.AwsAccountId, region=env.region
                     )
                 manager.initialize_clients()
                 manager.grant_pivot_role_all_database_permissions_to_source_database()
