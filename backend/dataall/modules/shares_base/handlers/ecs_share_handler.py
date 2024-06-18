@@ -31,6 +31,13 @@ class EcsShareHandler:
         return EcsShareHandler._manage_share(engine, task, SharingService.reapply_share, 'reapply_share')
 
     @staticmethod
+    @Worker.handler(path='ecs.share.persistent_email_reminder')
+    def persistent_email_reminder(engine, task: Task):
+        return EcsShareHandler._manage_share(
+            engine, task, SharingService.persistent_email_reminder, 'persistent_email_reminder'
+        )
+
+    @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
