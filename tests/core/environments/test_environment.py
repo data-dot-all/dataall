@@ -40,7 +40,7 @@ def get_env(client, env_fixture, group):
 
 def test_create_environment_with_external_group(db, client, org_fixture, user, group, not_in_org_group):
     response = client.query(
-        """mutation CreateEnv($input:NewEnvironmentInput){
+        """mutation CreateEnv($input:NewEnvironmentInput!){
             createEnvironment(input:$input){
                 organization{
                     organizationUri
