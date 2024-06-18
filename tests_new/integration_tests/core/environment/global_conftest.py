@@ -10,7 +10,7 @@ from integration_tests.utils import poller
 log = logging.getLogger(__name__)
 
 
-@poller(check_success=lambda env: not re.match(r'.*IN_PROGRESS|PENDING', env.stack.status, re.IGNORECASE))
+@poller(check_success=lambda env: not re.match(r'.*IN_PROGRESS|PENDING', env.stack.status, re.IGNORECASE), timeout=600)
 def check_env_ready(client, env_uri):
     env = get_environment(client, env_uri)
     log.info(f'polling {env_uri=}, new {env.stack.status=}')
