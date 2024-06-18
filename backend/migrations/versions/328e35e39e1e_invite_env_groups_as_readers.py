@@ -5,13 +5,13 @@ Revises: f2f7431c34e5
 Create Date: 2024-06-18 17:00:22.910461
 
 """
+
 from alembic import op
 from sqlalchemy import orm
 from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.organizations.services.organization_service import OrganizationService
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
-
 
 
 # revision identifiers, used by Alembic.
@@ -43,7 +43,7 @@ def upgrade():
                 'groupUri': group.groupUri,
                 'permissions': [GET_ORGANIZATION],
             }
-            OrganizationService.invite_group( env_org[group.environmentUri], data)
+            OrganizationService.invite_group(env_org[group.environmentUri], data)
 
 
 def downgrade():

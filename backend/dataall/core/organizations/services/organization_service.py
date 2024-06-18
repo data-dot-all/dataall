@@ -187,7 +187,9 @@ class OrganizationService:
 
             organization = OrganizationRepository.get_organization_by_uri(session, uri)
 
-            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
+            group_membership = OrganizationRepository.find_group_membership(
+                session, [group], organization.organizationUri
+            )
             if group_membership:
                 raise exceptions.UnauthorizedOperation(
                     action='INVITE_TEAM',
@@ -223,7 +225,9 @@ class OrganizationService:
 
             organization = OrganizationRepository.get_organization_by_uri(session, uri)
 
-            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
+            group_membership = OrganizationRepository.find_group_membership(
+                session, [group], organization.organizationUri
+            )
             if group_membership is None:
                 raise exceptions.UnauthorizedOperation(
                     action='UPDATE_TEAM',
@@ -266,7 +270,9 @@ class OrganizationService:
                     message=f'Team: {group} has {group_env_objects_count} linked environments on this environment.',
                 )
 
-            group_membership = OrganizationRepository.find_group_membership(session, [group], organization.organizationUri)
+            group_membership = OrganizationRepository.find_group_membership(
+                session, [group], organization.organizationUri
+            )
             if group_membership:
                 session.delete(group_membership)
                 session.commit()
@@ -296,7 +302,6 @@ class OrganizationService:
         with context.db_engine.scoped_session() as session:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
             return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
-
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)

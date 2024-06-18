@@ -1,6 +1,11 @@
 from dataall.base.api import gql
 from .input_types import OrganizationFilter
-from .resolvers import get_organization, list_organization_groups, list_organizations, list_group_organization_permissions
+from .resolvers import (
+    get_organization,
+    list_organization_groups,
+    list_organizations,
+    list_group_organization_permissions,
+)
 from .types import (
     Organization,
     OrganizationSearchResult,
