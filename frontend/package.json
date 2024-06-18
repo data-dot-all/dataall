@@ -68,7 +68,8 @@
     "simplebar-react": "^2.3.6",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11",
-    "braces": "3.0.3"
+    "braces": "3.0.3",
+    "react-chatbot-kit":"2.2.2"
   },
   "overrides": {
     "@appbaseio/reactivesearch": {
