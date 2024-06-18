@@ -42,6 +42,7 @@ export const RequestAccessModal = (props) => {
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [loadingPolicies, setLoadingPolicies] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
   const [isSharePolicyAttached, setIsSharePolicyAttached] = useState(true);
   const [policyName, setPolicyName] = useState('');
@@ -143,7 +144,7 @@ export const RequestAccessModal = (props) => {
   };
 
   const fetchRolePolicies = async (environmentUri, IAMRoleName) => {
-    setLoadingRoles(true);
+    setLoadingPolicies(true);
     try {
       const response = await client.query(
         getConsumptionRolePolicies({
@@ -167,7 +168,7 @@ export const RequestAccessModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      setLoadingRoles(false);
+      setLoadingPolicies(false);
     }
   };
 
@@ -378,7 +379,7 @@ export const RequestAccessModal = (props) => {
                         <CardContent>
                           <Autocomplete
                             id="environment"
-                            freeSolo
+                            disablePortal
                             options={environmentOptions.map((option) => option)}
                             onChange={(event, value) => {
                               setFieldValue('groupUri', '');
@@ -397,6 +398,7 @@ export const RequestAccessModal = (props) => {
                               } else {
                                 setFieldValue('environmentUri', '');
                                 setGroupOptions([]);
+                                setRoleOptions([]);
                               }
                             }}
                             renderInput={(params) => (
@@ -412,9 +414,7 @@ export const RequestAccessModal = (props) => {
                                   errors.environmentUri
                                 }
                                 label="Environment"
-                                name="environmenUri"
                                 onChange={handleChange}
-                                value={values.environmentUri}
                                 variant="outlined"
                               />
                             )}
@@ -428,7 +428,7 @@ export const RequestAccessModal = (props) => {
                               {groupOptions.length > 0 ? (
                                 <Autocomplete
                                   id="group"
-                                  freeSolo
+                                  disablePortal
                                   options={groupOptions.map((option) => option)}
                                   onChange={(event, value) => {
                                     setFieldValue('consumptionRole', '');
@@ -459,9 +459,7 @@ export const RequestAccessModal = (props) => {
                                         touched.groupUri && errors.groupUri
                                       }
                                       label="Team"
-                                      name="groupUri"
                                       onChange={handleChange}
-                                      value={values.groupUri}
                                       variant="outlined"
                                     />
                                   )}
@@ -492,8 +490,9 @@ export const RequestAccessModal = (props) => {
                               {roleOptions.length > 0 ? (
                                 <Autocomplete
                                   id="consumptionRole"
-                                  freeSolo
+                                  disablePortal
                                   options={roleOptions.map((option) => option)}
+                                  getOptionLabel={(option) => option.label}
                                   onChange={(event, value) => {
                                     setFieldValue('consumptionRole', value);
                                     if (value && value.IAMRoleName) {
@@ -507,6 +506,7 @@ export const RequestAccessModal = (props) => {
                                         })
                                       );
                                     } else {
+                                      setFieldValue('consumptionRole', '');
                                       setPolicyName('');
                                     }
                                   }}
@@ -523,9 +523,7 @@ export const RequestAccessModal = (props) => {
                                         errors.consumptionRole
                                       }
                                       label="Consumption Role (optional)"
-                                      name="consumptionRole"
                                       onChange={handleChange}
-                                      value={values.consumptionRole.label}
                                       variant="outlined"
                                     />
                                   )}
@@ -599,7 +597,7 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     )}
                   </Box>
-                  {isSubmitting || loading ? (
+                  {isSubmitting || loading || loadingPolicies ? (
                     <CardContent>
                       <CircularProgress sx={{ ml: '45%' }} size={50} />
                     </CardContent>
