@@ -8,8 +8,8 @@ from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
@@ -132,7 +132,7 @@ def get_share_object(context, source, shareUri: str = None):
 
 
 def get_share_logs(context, source, shareUri: str):
-    return ShareObjectService.get_share_logs(shareUri)
+    return ShareLogsService.get_share_logs(shareUri)
 
 
 def resolve_user_role(context: Context, source: ShareObject, **kwargs):
@@ -168,7 +168,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 
 
 def resolve_can_view_logs(context: Context, source: ShareObject):
-    return ShareObjectService.check_view_log_permissions(context.username, context.groups, source.shareUri)
+    return ShareLogsService.check_view_log_permissions(context.username, context.groups, source.shareUri)
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):

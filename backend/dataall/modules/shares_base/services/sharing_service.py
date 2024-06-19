@@ -19,9 +19,9 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.s3_datasets_shares.services.share_object_service import (
+from dataall.modules.shares_base.services.share_object_service import (
     ShareObjectService,
-)  # TODO move to shares_base in following PR
+)
 from dataall.modules.shares_base.services.share_exceptions import (
     PrincipalRoleNotFound,
     DatasetLockTimeout,

@@ -4,7 +4,7 @@ from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
