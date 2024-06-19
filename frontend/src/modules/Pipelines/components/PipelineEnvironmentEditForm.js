@@ -17,10 +17,14 @@ import {
   TextField
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listEnvironmentGroups, useClient } from 'services';
+import {
+  listEnvironmentGroups,
+  listValidEnvironments,
+  useClient
+} from 'services';
 import {
   createDataPipelineEnvironment,
   deleteDataPipelineEnvironment,
@@ -29,7 +33,6 @@ import {
 
 export const PipelineEnvironmentEditForm = (props) => {
   const {
-    environmentOptions,
     triggerEnvSubmit,
     pipelineUri,
     pipeline,
@@ -41,6 +44,7 @@ export const PipelineEnvironmentEditForm = (props) => {
   const [envsToRemove, setEnvsToRemove] = useState([]);
   const [environments, setEnvironments] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map());
+  const [environmentOptions, setEnvironmentOptions] = useState([]);
   const stageOps = [
     { value: 'dev', label: 'dev' },
     { value: 'test', label: 'test' },
@@ -48,14 +52,6 @@ export const PipelineEnvironmentEditForm = (props) => {
     { value: 'prod', label: 'prod' },
     { value: 'other', label: 'other' }
   ];
-
-  const environmentOps =
-    environmentOptions && environmentOptions.length > 0
-      ? environmentOptions
-      : [
-          { environmentUri: 'someUri', label: 'some' },
-          { environmentUri: 'someUri', label: 'some2' }
-        ];
 
   useEffect(() => {
     if (client && pipeline) {
@@ -69,6 +65,23 @@ export const PipelineEnvironmentEditForm = (props) => {
       }
     }
   }, [client, pipeline]);
+
+  const fetchEnvironments = useCallback(async () => {
+    const response = await client.query(
+      listValidEnvironments({ filter: Defaults.selectListFilter })
+    );
+    if (!response.errors) {
+      setEnvironmentOptions(
+        response.data.listValidEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  }, [client, dispatch]);
 
   const fetchGroups = async (environment) => {
     try {
@@ -233,6 +246,11 @@ export const PipelineEnvironmentEditForm = (props) => {
   }
 
   useEffect(() => {
+    if (client && environmentOptions.length === 0) {
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
     if (client && triggerEnvSubmit && pipelineUri && envsToRemove.length > 0) {
       envsToRemove.forEach((element, index) => deleteEnv(element, index));
     }
@@ -245,7 +263,14 @@ export const PipelineEnvironmentEditForm = (props) => {
     if (client && environmentOptions.length > 0) {
       environmentOptions.forEach((element) => fetchGroups(element));
     }
-  }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
+  }, [
+    client,
+    dispatch,
+    triggerEnvSubmit,
+    pipelineUri,
+    environmentOptions,
+    fetchEnvironments
+  ]);
 
   useEffect(() => {
     if (kvEnvs.length + environments.length > 0) {
@@ -413,7 +438,7 @@ export const PipelineEnvironmentEditForm = (props) => {
                                 select
                                 variant="outlined"
                               >
-                                {environmentOps.map((environment) => (
+                                {environmentOptions.map((environment) => (
                                   <MenuItem
                                     key={environment.environmentUri}
                                     value={environment}
@@ -474,7 +499,6 @@ export const PipelineEnvironmentEditForm = (props) => {
   );
 };
 PipelineEnvironmentEditForm.propTypes = {
-  environmentOptions: PropTypes.array.isRequired,
   triggerEnvSubmit: PropTypes.bool.isRequired,
   pipelineUri: PropTypes.string.isRequired,
   pipeline: PropTypes.object.isRequired,
