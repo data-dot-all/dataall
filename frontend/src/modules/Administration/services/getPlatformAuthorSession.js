@@ -5,7 +5,7 @@ export const getPlatformAuthorSession = (awsAccount) => ({
     awsAccount
   },
   query: gql`
-    query getPlatformAuthorSession($awsAccount: String) {
+    query getPlatformAuthorSession($awsAccount: String!) {
       getPlatformAuthorSession(awsAccount: $awsAccount)
     }
   `

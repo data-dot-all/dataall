@@ -194,6 +194,7 @@ class SharingService:
             log.info(f'Starting revoke {share_data.share.shareUri}')
             new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
             share_sm.update_state(session, share_data.share, new_share_state)
+            revoke_successful = True
             try:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(

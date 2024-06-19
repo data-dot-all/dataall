@@ -25,7 +25,8 @@ import {
   SearchIcon
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { searchEnvironmentDataItems, useClient } from 'services';
+import { useClient } from 'services';
+import { searchEnvironmentDataItems } from '../services';
 
 export const EnvironmentSharedDatasets = ({ environment }) => {
   const client = useClient();

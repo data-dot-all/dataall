@@ -7,8 +7,8 @@ export const updateOrganization = ({ organizationUri, input }) => ({
   },
   mutation: gql`
     mutation UpdateOrg(
-      $organizationUri: String
-      $input: ModifyOrganizationInput
+      $organizationUri: String!
+      $input: ModifyOrganizationInput!
     ) {
       updateOrganization(organizationUri: $organizationUri, input: $input) {
         organizationUri

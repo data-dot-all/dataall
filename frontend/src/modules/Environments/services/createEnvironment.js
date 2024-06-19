@@ -5,7 +5,7 @@ export const createEnvironment = (input) => ({
     input
   },
   mutation: gql`
-    mutation CreateEnvironment($input: NewEnvironmentInput) {
+    mutation CreateEnvironment($input: NewEnvironmentInput!) {
       createEnvironment(input: $input) {
         environmentUri
         label

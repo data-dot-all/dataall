@@ -2,7 +2,7 @@ def test_update_dashboard(client, env_fixture, group, patch_es, dashboard):
     response = client.query(
         """
             mutation updateDashboard(
-                $input:UpdateDashboardInput,
+                $input:UpdateDashboardInput!,
             ){
                 updateDashboard(input:$input){
                     dashboardUri

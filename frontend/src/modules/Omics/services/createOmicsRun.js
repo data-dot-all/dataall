@@ -4,7 +4,7 @@ export const createOmicsRun = (input) => ({
     input
   },
   mutation: gql`
-    mutation createOmicsRun($input: NewOmicsRunInput) {
+    mutation createOmicsRun($input: NewOmicsRunInput!) {
       createOmicsRun(input: $input) {
         label
         runUri

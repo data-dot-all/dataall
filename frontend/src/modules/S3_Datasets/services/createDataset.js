@@ -6,7 +6,7 @@ export const createDataset = (input) => {
       input
     },
     mutation: gql`
-      mutation CreateDataset($input: NewDatasetInput) {
+      mutation CreateDataset($input: NewDatasetInput!) {
         createDataset(input: $input) {
           datasetUri
           label

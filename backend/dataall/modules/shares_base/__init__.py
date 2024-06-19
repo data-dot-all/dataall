@@ -32,10 +32,7 @@ class SharesBaseModuleInterface(ModuleInterface):
 class SharesBaseAPIModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
-        supported_modes = {
-            ImportMode.API,
-        }
-        return modes & supported_modes
+        return ImportMode.API in modes
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
@@ -48,6 +45,7 @@ class SharesBaseAPIModuleInterface(ModuleInterface):
         import dataall.modules.shares_base.services.share_permissions
         import dataall.modules.shares_base.services.sharing_service
         import dataall.modules.shares_base.handlers
+        import dataall.modules.shares_base.api
 
 
 class SharesBaseECSTaskModuleInterface(ModuleInterface):

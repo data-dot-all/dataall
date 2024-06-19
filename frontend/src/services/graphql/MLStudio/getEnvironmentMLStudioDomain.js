@@ -5,7 +5,7 @@ export const getEnvironmentMLStudioDomain = ({ environmentUri }) => ({
     environmentUri
   },
   query: gql`
-    query getEnvironmentMLStudioDomain($environmentUri: String) {
+    query getEnvironmentMLStudioDomain($environmentUri: String!) {
       getEnvironmentMLStudioDomain(environmentUri: $environmentUri) {
         sagemakerStudioUri
         environmentUri
