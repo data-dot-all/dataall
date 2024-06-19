@@ -13,7 +13,7 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
             }
         },
         'query': """
-                    mutation CreateEnvironment($input: NewEnvironmentInput) {
+                    mutation CreateEnvironment($input: NewEnvironmentInput!) {
                       createEnvironment(input: $input) {
                         environmentUri
                         label
@@ -38,7 +38,7 @@ def get_environment(client, environmentUri):
         'operationName': 'GetEnvironment',
         'variables': {'environmentUri': environmentUri},
         'query': """
-                    query GetEnvironment($environmentUri: String) {
+                    query GetEnvironment($environmentUri: String!) {
                       getEnvironment(environmentUri: $environmentUri) {
                         environmentUri
                         created
@@ -111,6 +111,37 @@ def delete_environment(client, environmentUri, deleteFromAWS=True):
                         environmentUri: $environmentUri
                         deleteFromAWS: $deleteFromAWS
                       )
+                    }
+                """,
+    }
+    response = client.query(query=query)
+    return response
+
+
+def update_environment(client, environmentUri, input: dict):
+    query = {
+        'operationName': 'UpdateEnvironment',
+        'variables': {
+            'environmentUri': environmentUri,
+            'input': input,
+        },
+        'query': """
+                    mutation UpdateEnvironment(
+                      $environmentUri: String!
+                      $input: ModifyEnvironmentInput!
+                    ) {
+                      updateEnvironment(environmentUri: $environmentUri, input: $input) {
+                        environmentUri
+                        label
+                        userRoleInEnvironment
+                        SamlGroupName
+                        AwsAccountId
+                        created
+                        parameters {
+                          key
+                          value
+                        }
+                      }
                     }
                 """,
     }
