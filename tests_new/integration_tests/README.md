@@ -47,11 +47,11 @@ The purpose of these tests is to automatically validate functionalities of data.
       },
       "envs": {
         "session_env1": {
-          "accountId": "012345678912",
+          "accountId": "...",
           "region": "eu-central-1"
         },
         "session_env2": {
-          "accountId": "012345678912",
+          "accountId": "...",
           "region": "eu-west-1"
         }
       }
