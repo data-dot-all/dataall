@@ -9,6 +9,10 @@ import { Label } from './Label';
 export const ShareHealthStatus = (props) => {
   const { status, healthStatus, lastVerificationTime } = props;
 
+  const isShared = ['Revoke_Failed', 'Share_Succeeded'].includes(status);
+  const isHealthPending = ['PendingReApply', 'PendingVerify', null].includes(
+    healthStatus
+  );
   const setStatus = () => {
     if (!healthStatus) return 'Undefined';
     return healthStatus;
@@ -18,8 +22,7 @@ export const ShareHealthStatus = (props) => {
     if (!healthStatus) return 'info';
     if (['Healthy'].includes(healthStatus)) return 'success';
     if (['Unhealthy'].includes(healthStatus)) return 'error';
-    if (['PendingReApply', 'PendingVerify'].includes(healthStatus))
-      return 'warning';
+    if (isHealthPending) return 'warning';
     return 'info';
   };
 
@@ -34,8 +37,6 @@ export const ShareHealthStatus = (props) => {
     return <DangerousOutlinedIcon color={setColor()} />;
   };
 
-  const isShared = ['Revoke_Failed', 'Share_Succeeded'].includes(status);
-
   if (!isShared) {
     return (
       <Typography color="textSecondary" variant="subtitle2">
@@ -48,14 +49,16 @@ export const ShareHealthStatus = (props) => {
     <div style={{ display: 'flex', alignItems: 'left' }}>
       {setIcon()}
       <Label color={setColor()}>{setStatus().toUpperCase()} </Label>
-      <Typography color="textSecondary" variant="subtitle2">
-        {(lastVerificationTime &&
-          lastVerificationTime.substring(
-            0,
-            lastVerificationTime.indexOf('.')
-          )) ||
-          ''}
-      </Typography>
+      {!isHealthPending && (
+        <Typography color="textSecondary" variant="subtitle2" noWrap>
+          {(lastVerificationTime &&
+            lastVerificationTime.substring(
+              0,
+              lastVerificationTime.indexOf('.')
+            )) ||
+            ''}
+        </Typography>
+      )}
     </div>
   );
 };
