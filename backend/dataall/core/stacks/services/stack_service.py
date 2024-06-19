@@ -46,7 +46,7 @@ class StackRequestVerifier:
 
 class StackService:
     @staticmethod
-    def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
+    def resolve_parent_obj_stack(targetUri: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
