@@ -5,14 +5,56 @@ The purpose of these tests is to automatically validate functionalities of data.
 ## Pre-requisites
 
 - A real deployment of data.all in AWS
-- An SSM parameter (`/{resource_prefix/{env_name}/cognito-test-users`) with the following contents
+- An SSM parameter (`/{resource_prefix/{env_name}/testdata`) with the following contents
     ```
     {
-        "testUserTenant": {"password": "yourPassword", "groups": ["DAAdministrators"]},
-        "testUser1": {"password": "yourPassword", "groups": ["testGroup1"]},
-        "testUser2": {"password": "yourPassword", "groups": ["testGroup2"]},
-        "testUser3": {"password": "yourPassword", "groups": ["testGroup3"]},
-        "testUser4": {"password": "yourPassword", "groups": ["testGroup4"]}
+      "users": {
+        "testUserTenant": {
+          "username": "testUserTenant",
+          "password": "...",
+          "groups": [
+            "DAAdministrators"
+          ]
+        },
+        "testUser1": {
+          "username": "testUser1",
+          "password": "...",
+          "groups": [
+            "testGroup1"
+          ]
+        },
+        "testUser2": {
+          "username": "testUser2",
+          "password": "...",
+          "groups": [
+            "testGroup2"
+          ]
+        },
+        "testUser3": {
+          "username": "testUser3",
+          "password": "...",
+          "groups": [
+            "testGroup3"
+          ]
+        },
+        "testUser4": {
+          "username": "testUser4",
+          "password": "...",
+          "groups": [
+            "testGroup4"
+          ]
+        }
+      },
+      "envs": {
+        "session_env1": {
+          "accountId": "...",
+          "region": "eu-central-1"
+        },
+        "session_env2": {
+          "accountId": "...",
+          "region": "eu-west-1"
+        }
+      }
     }
     ```
 - If you are not using Cognito then you must manually create the users/groups
@@ -31,13 +73,14 @@ export AWS_REGION = "Introduce backend region"
 make integration-tests
 ```
 
-or run the tests locally without credentials:
+or run the tests locally without credentials
 
 ```bash
 export ENVNAME = "Introduce deployment environment name"
 export AWS_REGION = "Introduce backend region"
 export COGNITO_CLIENT = "Introduce Cognito client id"
 export API_ENDPOINT = "Introduce API endpoint url"
+echo "add your testdata here" > testdata.json 
 make integration-tests
 ```
 
