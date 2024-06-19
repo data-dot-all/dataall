@@ -87,7 +87,7 @@ export const EnvironmentTeamDropdown = (props) => {
             disablePortal
             options={environmentOptions.map((option) => option)}
             onChange={(event, value) => {
-              setFieldValue('SamlGroupName', '');
+              setFieldValue('SamlAdminGroupName', '');
               if (value && value.environmentUri) {
                 setFieldValue('environment', value);
                 fetchGroups(value.environmentUri).catch((e) =>
@@ -145,22 +145,26 @@ export const EnvironmentTeamDropdown = (props) => {
         </CardContent>
         <CardContent>
           <Autocomplete
-            id="SamlGroupName"
+            id="SamlAdminGroupName"
             disablePortal
             options={groupOptions.map((option) => option)}
             onChange={(event, value) => {
               if (value && value.value) {
-                setFieldValue('SamlGroupName', value.value);
+                setFieldValue('SamlAdminGroupName', value.value);
               } else {
-                setFieldValue('SamlGroupName', '');
+                setFieldValue('SamlAdminGroupName', '');
               }
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 fullWidth
-                error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                helperText={touched.SamlGroupName && errors.SamlGroupName}
+                error={Boolean(
+                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                )}
+                helperText={
+                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                }
                 label="Team"
                 onChange={handleChange}
                 variant="outlined"
